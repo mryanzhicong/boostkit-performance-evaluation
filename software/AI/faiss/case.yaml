@@ -1,0 +1,33 @@
+name: faiss
+category: AI
+enabled: true
+tags: [vector-search, similarity-search]
+versions: ["1.14.2", "1.14.3"]
+execution:
+  type: command
+  entrypoint: faiss_test.sh
+  expected_outputs:
+    - version_info.json
+    - benchmark_primary.json
+    - micro_benchmark.json
+    - results.json
+    - results.txt
+    - results.log
+modes:
+  smoke:
+    timeout_minutes: 60
+    environment: {DATA_SCALE: 10K, DATA_DIM: 128, ITERATIONS: 1, K: 10}
+  full:
+    timeout_minutes: 180
+    environment: {DATA_SCALE: 100K, DATA_DIM: 128, ITERATIONS: 3, K: 10}
+metrics:
+  average_qps:
+    source: results.json
+    path: summary.avg_qps
+    unit: queries/s
+    direction: higher_is_better
+  average_latency:
+    source: results.json
+    path: summary.avg_latency_us
+    unit: us
+    direction: lower_is_better

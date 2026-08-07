@@ -1,0 +1,172 @@
+name: Manual performance evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      software:
+        description: "Software name, comma-separated names, or all"
+        required: true
+        default: all
+        type: string
+      version:
+        description: "Version, comma-separated versions, or all"
+        required: true
+        default: all
+        type: string
+      architecture:
+        description: "Target architecture; all runs both architectures"
+        required: true
+        default: all
+        type: choice
+        options: [all, x86_64, aarch64]
+      test_mode:
+        description: "smoke validates the flow; full runs formal parameters"
+        required: true
+        default: smoke
+        type: choice
+        options: [smoke, full]
+      update_baseline:
+        description: "Generate baseline candidates only; never commits automatically"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dedicated-performance-runners
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate input and build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    env:
+      X86_RUNNER_LABEL: ${{ vars.PERF_RUNNER_X86_LABEL }}
+      ARM64_RUNNER_LABEL: ${{ vars.PERF_RUNNER_ARM64_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --dev
+      - name: Validate repository runner variables
+        shell: bash
+        run: |
+          [[ -n "${X86_RUNNER_LABEL}" ]] || { echo "::error::PERF_RUNNER_X86_LABEL is not configured"; exit 1; }
+          [[ -n "${ARM64_RUNNER_LABEL}" ]] || { echo "::error::PERF_RUNNER_ARM64_LABEL is not configured"; exit 1; }
+      - name: Validate all manually maintained cases
+        run: uv run python framework/validate_case.py --all
+      - name: Generate execution matrix
+        id: matrix
+        env:
+          INPUT_SOFTWARE: ${{ inputs.software }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_ARCHITECTURE: ${{ inputs.architecture }}
+          INPUT_TEST_MODE: ${{ inputs.test_mode }}
+        shell: bash
+        run: |
+          matrix="$(uv run python framework/generate_matrix.py \
+            --software "${INPUT_SOFTWARE}" \
+            --version "${INPUT_VERSION}" \
+            --architecture "${INPUT_ARCHITECTURE}" \
+            --test-mode "${INPUT_TEST_MODE}")"
+          echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+          echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
+          echo '```json' >> "${GITHUB_STEP_SUMMARY}"
+          echo "${matrix}" | uv run python -m json.tool >> "${GITHUB_STEP_SUMMARY}"
+          echo '```' >> "${GITHUB_STEP_SUMMARY}"
+
+  performance:
+    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.arch == 'x86_64' && vars.PERF_RUNNER_X86_LABEL || vars.PERF_RUNNER_ARM64_LABEL }}
+    timeout-minutes: ${{ matrix.job_timeout_minutes }}
+    env:
+      PERF_DEDICATED_RUNNER: "true"
+      PERF_WORK_ROOT: /tmp/boostkit-perf
+      PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      PERF_SKIP_SYSTEM_PACKAGES: "true"
+      UV_PROJECT_ENVIRONMENT: /tmp/boostkit-perf/framework-venv
+      UV_CACHE_DIR: /tmp/boostkit-perf/uv-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Global cleanup before performance test
+        run: bash framework/cleanup_environment.sh --before
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - run: uv sync --frozen --dev
+      - name: Execute existing test case
+        id: execute
+        run: >-
+          uv run python framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --test-mode '${{ matrix.test_mode }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+      - name: Global cleanup after performance test
+        id: post_cleanup
+        if: always()
+        run: bash framework/cleanup_environment.sh --after
+      - name: Record cleanup result
+        if: always()
+        run: >-
+          python3 framework/mark_cleanup.py
+          --output-dir '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
+          --outcome '${{ steps.post_cleanup.outcome }}'
+      - name: Upload raw and normalized result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
+          path: .perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}
+          if-no-files-found: error
+          retention-days: 30
+
+  report:
+    name: Generate consolidated report
+    if: always()
+    needs: [prepare, performance]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --dev
+      - name: Download task artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: .perf-output/downloaded
+      - name: Generate single-run summary and cross-architecture comparison
+        run: >-
+          uv run python framework/generate_comparison.py
+          --input-root .perf-output/downloaded
+          --output-dir .perf-output/report
+      - name: Publish report in workflow summary
+        shell: bash
+        run: cat .perf-output/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .perf-output/report
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve requested baseline candidates
+        if: inputs.update_baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-candidates-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .perf-output/report/*.json
+          if-no-files-found: error
+          retention-days: 90

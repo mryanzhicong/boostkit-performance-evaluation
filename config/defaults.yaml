@@ -1,0 +1,16 @@
+architectures:
+  - x86_64
+  - aarch64
+
+output_root: .perf-output
+work_root: /tmp/boostkit-perf
+
+modes:
+  smoke:
+    timeout_minutes: 30
+  full:
+    timeout_minutes: 180
+
+runner_variables:
+  x86_64: PERF_RUNNER_X86_LABEL
+  aarch64: PERF_RUNNER_ARM64_LABEL

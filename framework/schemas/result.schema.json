@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized performance result",
+  "type": "object",
+  "required": ["software", "category", "version", "architecture", "run_id", "status", "sources"],
+  "properties": {
+    "software": {"type": "string"},
+    "category": {"type": "string"},
+    "version": {"type": "string"},
+    "architecture": {"enum": ["x86_64", "aarch64"]},
+    "run_id": {"type": "string"},
+    "status": {"enum": ["passed", "failed", "partial"]},
+    "parameter_signature": {"type": "string"},
+    "environment_before": {"type": "object"},
+    "environment_after": {"type": "object"},
+    "sources": {"type": "object"},
+    "metrics": {"type": "object"}
+  },
+  "additionalProperties": true
+}

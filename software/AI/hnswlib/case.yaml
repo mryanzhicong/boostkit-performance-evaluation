@@ -1,0 +1,36 @@
+name: hnswlib
+category: AI
+enabled: true
+tags: [vector-search, approximate-nearest-neighbor]
+versions: ["0.7.0", "0.8.0", "0.9.0"]
+execution:
+  type: command
+  entrypoint: hnswlib_test.sh
+  expected_outputs:
+    - version_info.json
+    - benchmark_ann.json
+    - micro_benchmark.json
+    - results.json
+    - results.txt
+    - results.log
+modes:
+  smoke:
+    timeout_minutes: 60
+    environment: {DATA_SCALE: 10K, DATA_DIM: 128, ITERATIONS: 1, K_VALUE: 10}
+  full:
+    timeout_minutes: 180
+    environment: {DATA_SCALE: 1M, DATA_DIM: 128, ITERATIONS: 3, K_VALUE: 10}
+version_overrides:
+  "0.9.0":
+    environment: {BUILD_METHOD: source_build}
+metrics:
+  index_construction_rate:
+    source: results.json
+    path: summary.avg_index_construction_rate
+    unit: vectors/s
+    direction: higher_is_better
+  multithread_scaling:
+    source: results.json
+    path: summary.multithread_scaling_ratio
+    unit: ratio
+    direction: higher_is_better

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Performance software case",
+  "type": "object",
+  "required": ["name", "category", "enabled", "versions", "execution", "modes", "metrics"],
+  "properties": {
+    "name": {"type": "string", "minLength": 1},
+    "category": {"type": "string", "minLength": 1},
+    "enabled": {"type": "boolean"},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "versions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "execution": {
+      "type": "object",
+      "required": ["type", "entrypoint", "expected_outputs"],
+      "properties": {
+        "type": {"enum": ["command", "adapter"]},
+        "entrypoint": {"type": "string", "minLength": 1},
+        "expected_outputs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      },
+      "additionalProperties": true
+    },
+    "modes": {"type": "object", "required": ["smoke", "full"]},
+    "metrics": {"type": "object", "minProperties": 1},
+    "thresholds": {"type": "object"},
+    "version_overrides": {"type": "object"}
+  },
+  "additionalProperties": true
+}

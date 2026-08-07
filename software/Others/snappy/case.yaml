@@ -1,0 +1,33 @@
+name: snappy
+category: Others
+enabled: true
+tags: [compression, library]
+versions: ["1.2.1", "1.2.2"]
+execution:
+  type: command
+  entrypoint: snappy_test.sh
+  expected_outputs:
+    - version_info.json
+    - benchmark_compression.json
+    - micro_benchmark.json
+    - results.json
+    - results.txt
+    - results.log
+modes:
+  smoke:
+    timeout_minutes: 60
+    environment: {DATA_SIZE: 65536, ITERATIONS: 1}
+  full:
+    timeout_minutes: 180
+    environment: {DATA_SIZE: 1048576, ITERATIONS: 5}
+metrics:
+  compression_speed:
+    source: results.json
+    path: summary.avg_compress_speed_mbs
+    unit: MB/s
+    direction: higher_is_better
+  decompression_speed:
+    source: results.json
+    path: summary.avg_decompress_speed_mbs
+    unit: MB/s
+    direction: higher_is_better
