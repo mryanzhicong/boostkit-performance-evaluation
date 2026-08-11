@@ -8,7 +8,7 @@
 
 | 参数 | 对应函数 | 用途 |
 |---|---|---|
-| `build` | `phase_build` | 克隆精确版本，逐个构建并校验捆绑依赖，再在裸机编译并安装到任务专属前缀。 |
+| `build` | `phase_build` | 克隆精确版本，按 Redis 官方 README 的 core 命令裸机编译并安装到任务专属前缀。 |
 | `validate` | `phase_validate` | 校验架构、命令、安装文件和实际 Redis 版本，生成版本信息。 |
 | `start-service` | `phase_start_service` | 从任务安装前缀启动基准使用的 Redis 服务并等待就绪。 |
 | `test` | `phase_test` | 复用已启动服务执行主基准和微基准。 |
@@ -26,8 +26,8 @@
 
 ## 裸机边界
 
-Runner 必须预装 Bash、Git、Python 3、GCC、G++、GNU ar 和 Make。脚本执行 `make` 后，以 `/tmp/boostkit-perf/.../install` 为 `PREFIX` 执行 `make install`，不使用 sudo、apt、dnf 或系统级 pip。
+Runner 必须预装 Bash、Git、Python 3、GCC、G++、GNU ar 和 Make。进入克隆后的源码目录后，脚本直接执行 Redis 官方 README 的 core 构建命令 `make -j "$(nproc)" all`，随后执行 `make install PREFIX=...` 安装到任务专属目录；不单独构建依赖，不指定 allocator、TLS 或其他编译参数，也不使用 sudo、apt、dnf 或系统级 pip。
 
-Redis 上游构建文件会忽略捆绑依赖子构建的非零退出码，可能把 Lua 等依赖的真实错误延迟成主程序链接错误。本用例先清除 Runner 继承的 `CFLAGS`、`CPPFLAGS`、`CXXFLAGS`、`LDFLAGS`、`MYCFLAGS` 和 `MYLDFLAGS`，防止宿主机变量污染固定构建；再逐个构建 hiredis、linenoise、Lua、hdr_histogram、fpconv、jemalloc，以及 Redis 8.0 源码中存在的 fast_float，并检查其静态库或对象文件存在且非空。任一依赖失败会立即终止 `build` 阶段。默认主构建并发上限为 32，依赖构建并发上限为 8，也可通过 `BUILD_JOBS` 和 `DEPENDENCY_JOBS` 显式下调。为保持跨架构结果可比，固定使用 jemalloc。
+公共框架在启动软件脚本前剔除 self-hosted Runner 服务继承的 Make 和编译参数，避免 `MAKEFLAGS`、`MYCFLAGS` 等宿主机变量改变官方构建命令；软件若确实需要编译变量，必须在自己的 `case.yaml` 中显式声明。
 
 源码、构建产物、安装前缀、服务数据和临时文件都位于 `/tmp/boostkit-perf`。国内网络环境可通过 Runner 服务环境中的 `REDIS_SOURCE_URL` 指向内部只读源码镜像。

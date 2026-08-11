@@ -75,23 +75,16 @@ def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
         assert f"{function}()" in entrypoint
 
 
-def test_redis_build_fails_on_the_actual_bundled_dependency_error() -> None:
+def test_redis_build_uses_the_official_readme_commands() -> None:
     entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
         encoding="utf-8"
     )
-    dependency_build = 'make -C "${SOURCE_DIR}/deps"'
-    redis_build = 'make -C "${SOURCE_DIR}" -j"${BUILD_JOBS}"'
-    assert "sanitize_build_environment" in entrypoint
-    assert "MYCFLAGS MYLDFLAGS" in entrypoint
-    assert dependency_build in entrypoint
-    assert entrypoint.index(dependency_build) < entrypoint.index(redis_build)
-    for artifact in (
-        "deps/hiredis/libhiredis.a",
-        "deps/linenoise/linenoise.o",
-        "deps/lua/src/liblua.a",
-        "deps/hdr_histogram/libhdrhistogram.a",
-        "deps/fpconv/libfpconv.a",
-        "deps/fast_float/libfast_float.a",
-        "deps/jemalloc/lib/libjemalloc.a",
+    assert 'make -j "$(nproc)" all' in entrypoint
+    assert 'make install PREFIX="${INSTALL_DIR}"' in entrypoint
+    for custom_build_setting in (
+        "BUILD_TLS",
+        "DEPENDENCY_JOBS",
+        "REDIS_MALLOC",
+        'make -C "${SOURCE_DIR}/deps"',
     ):
-        assert artifact in entrypoint
+        assert custom_build_setting not in entrypoint

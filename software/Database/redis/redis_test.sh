@@ -7,18 +7,6 @@ EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 RESULTS_DIR="${RESULTS_DIR:-${SCRIPT_DIR}/results/${SOFTWARE_VERSION}}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-/tmp/boostkit-perf/local/Database/redis/${SOFTWARE_VERSION}}"
 REDIS_SOURCE_URL="${REDIS_SOURCE_URL:-https://github.com/redis/redis.git}"
-AVAILABLE_BUILD_JOBS="$(nproc)"
-DEFAULT_BUILD_JOBS="${AVAILABLE_BUILD_JOBS}"
-if (( DEFAULT_BUILD_JOBS > 32 )); then
-    DEFAULT_BUILD_JOBS=32
-fi
-BUILD_JOBS="${BUILD_JOBS:-${DEFAULT_BUILD_JOBS}}"
-DEFAULT_DEPENDENCY_JOBS=8
-if [[ "${BUILD_JOBS}" =~ ^[1-9][0-9]*$ ]] && (( BUILD_JOBS < DEFAULT_DEPENDENCY_JOBS )); then
-    DEFAULT_DEPENDENCY_JOBS="${BUILD_JOBS}"
-fi
-DEPENDENCY_JOBS="${DEPENDENCY_JOBS:-${DEFAULT_DEPENDENCY_JOBS}}"
-REDIS_MALLOC="${REDIS_MALLOC:-jemalloc}"
 SOURCE_DIR="${PERF_WORK_DIR}/redis-source"
 INSTALL_DIR="${PERF_WORK_DIR}/install"
 REDIS_SERVER_BIN="${INSTALL_DIR}/bin/redis-server"
@@ -53,70 +41,6 @@ require_commands() {
     [[ "${missing}" -eq 0 ]]
 }
 
-validate_build_settings() {
-    [[ "${BUILD_JOBS}" =~ ^[1-9][0-9]*$ ]] || {
-        log "ERROR: BUILD_JOBS must be a positive integer: ${BUILD_JOBS}"
-        return 20
-    }
-    [[ "${DEPENDENCY_JOBS}" =~ ^[1-9][0-9]*$ ]] || {
-        log "ERROR: DEPENDENCY_JOBS must be a positive integer: ${DEPENDENCY_JOBS}"
-        return 20
-    }
-    [[ "${REDIS_MALLOC}" == "jemalloc" ]] || {
-        log "ERROR: REDIS_MALLOC must remain jemalloc for comparable benchmark builds"
-        return 20
-    }
-}
-
-sanitize_build_environment() {
-    local variable
-    # Runner service environments are outside the case definition. In
-    # particular, Redis' bundled Lua appends MYCFLAGS verbatim; a value such as
-    # "aarch64" is interpreted by gcc as an input filename, not an architecture.
-    for variable in CFLAGS CPPFLAGS CXXFLAGS LDFLAGS MYCFLAGS MYLDFLAGS; do
-        if declare -p "${variable}" >/dev/null 2>&1; then
-            log "clearing inherited build variable: ${variable}"
-            unset "${variable}"
-        fi
-    done
-}
-
-build_redis_dependencies() {
-    local dependency artifact
-    local -a dependencies=(hiredis linenoise lua hdr_histogram fpconv)
-    local -a artifacts=(
-        "deps/hiredis/libhiredis.a"
-        "deps/linenoise/linenoise.o"
-        "deps/lua/src/liblua.a"
-        "deps/hdr_histogram/libhdrhistogram.a"
-        "deps/fpconv/libfpconv.a"
-    )
-
-    # Redis 8.0 includes fast_float; Redis 7.4 does not.
-    if [[ -d "${SOURCE_DIR}/deps/fast_float" ]]; then
-        dependencies+=(fast_float)
-        artifacts+=("deps/fast_float/libfast_float.a")
-    fi
-    dependencies+=(jemalloc)
-    artifacts+=("deps/jemalloc/lib/libjemalloc.a")
-
-    log "building Redis bundled dependencies with ${DEPENDENCY_JOBS} jobs per dependency"
-    # Redis' src/Makefile prefixes its dependency sub-make with '-', so a failure
-    # is ignored and only appears later as a misleading linker error. Build each
-    # target explicitly so the first real dependency error stops this stage.
-    for dependency in "${dependencies[@]}"; do
-        log "building bundled dependency: ${dependency}"
-        make -C "${SOURCE_DIR}/deps" -j"${DEPENDENCY_JOBS}" "${dependency}"
-    done
-
-    for artifact in "${artifacts[@]}"; do
-        [[ -s "${SOURCE_DIR}/${artifact}" ]] || {
-            log "ERROR: bundled dependency artifact is missing or empty: ${artifact}"
-            return 30
-        }
-    done
-}
-
 check_architecture() {
     local actual expected
     actual="$(normalize_arch "$(uname -m)")"
@@ -130,19 +54,22 @@ check_architecture() {
 phase_build() {
     check_architecture
     require_commands
-    validate_build_settings
-    sanitize_build_environment
     [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" ]] || {
         log "ERROR: source or install directory is not clean under ${PERF_WORK_DIR}"
         return 20
     }
     log "cloning Redis ${SOFTWARE_VERSION} from ${REDIS_SOURCE_URL}"
     git clone --branch "${SOFTWARE_VERSION}" --depth 1 "${REDIS_SOURCE_URL}" "${SOURCE_DIR}"
-    build_redis_dependencies
-    log "building Redis with ${BUILD_JOBS} jobs"
-    make -C "${SOURCE_DIR}" -j"${BUILD_JOBS}" BUILD_TLS=no MALLOC="${REDIS_MALLOC}" all
+    log "building Redis with the official README core build command"
+    (
+        cd "${SOURCE_DIR}"
+        make -j "$(nproc)" all
+    )
     log "installing Redis into ${INSTALL_DIR}"
-    make -C "${SOURCE_DIR}" install BUILD_TLS=no MALLOC="${REDIS_MALLOC}" PREFIX="${INSTALL_DIR}"
+    (
+        cd "${SOURCE_DIR}"
+        make install PREFIX="${INSTALL_DIR}"
+    )
 }
 
 phase_validate() {

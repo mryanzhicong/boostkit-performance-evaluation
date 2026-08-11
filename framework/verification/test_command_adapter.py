@@ -46,13 +46,19 @@ def context_for(tmp_path: Path) -> RunContext:
     )
 
 
-def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) -> None:
+def test_environment_contains_architecture_and_case_overrides(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("MAKEFLAGS", "MYCFLAGS=aarch64")
+    monkeypatch.setenv("MYCFLAGS", "aarch64")
     context = context_for(tmp_path)
     environment = build_environment(context)
     assert environment["EXPECTED_ARCH"] == "x86_64"
     assert environment["RESULTS_DIR"] == str(context.output_dir)
     assert environment["ITERATIONS"] == "1"
     assert environment["BUILD_METHOD"] == "pip"
+    assert "MAKEFLAGS" not in environment
+    assert "MYCFLAGS" not in environment
 
 
 def test_existing_command_streams_and_writes_to_framework_output(tmp_path: Path, capsys) -> None:
