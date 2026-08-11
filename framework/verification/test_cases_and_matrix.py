@@ -73,3 +73,25 @@ def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
         "phase_collect_report",
     ):
         assert f"{function}()" in entrypoint
+
+
+def test_redis_build_fails_on_the_actual_bundled_dependency_error() -> None:
+    entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
+        encoding="utf-8"
+    )
+    dependency_build = 'make -C "${SOURCE_DIR}/deps"'
+    redis_build = 'make -C "${SOURCE_DIR}" -j"${BUILD_JOBS}"'
+    assert "sanitize_build_environment" in entrypoint
+    assert "MYCFLAGS MYLDFLAGS" in entrypoint
+    assert dependency_build in entrypoint
+    assert entrypoint.index(dependency_build) < entrypoint.index(redis_build)
+    for artifact in (
+        "deps/hiredis/libhiredis.a",
+        "deps/linenoise/linenoise.o",
+        "deps/lua/src/liblua.a",
+        "deps/hdr_histogram/libhdrhistogram.a",
+        "deps/fpconv/libfpconv.a",
+        "deps/fast_float/libfast_float.a",
+        "deps/jemalloc/lib/libjemalloc.a",
+    ):
+        assert artifact in entrypoint
