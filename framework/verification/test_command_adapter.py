@@ -13,7 +13,8 @@ def context_for(tmp_path: Path) -> RunContext:
     script.write_text(
         '#!/usr/bin/env bash\nset -euo pipefail\n'
         'printf \'{"summary":{"qps":42}}\\n\' > "${RESULTS_DIR}/results.json"\n'
-        'command -v pip3 > "${RESULTS_DIR}/pip_path.txt"\n',
+        'command -v pip3 > "${RESULTS_DIR}/pip_path.txt"\n'
+        'printf \'%s\\n\' "${1:-all}" > "${RESULTS_DIR}/stage.txt"\n',
         encoding="utf-8",
     )
     case = {
@@ -23,8 +24,9 @@ def context_for(tmp_path: Path) -> RunContext:
             "type": "command",
             "entrypoint": "sample_test.sh",
             "expected_outputs": ["results.json", "pip_path.txt"],
+            "timeout_minutes": 1,
+            "environment": {"ITERATIONS": 1},
         },
-        "modes": {"smoke": {"timeout_minutes": 1, "environment": {"ITERATIONS": 1}}},
         "version_overrides": {"1.0": {"environment": {"BUILD_METHOD": "pip"}}},
     }
     return RunContext(
@@ -35,14 +37,13 @@ def context_for(tmp_path: Path) -> RunContext:
         software="sample",
         version="1.0",
         architecture="x86_64",
-        test_mode="smoke",
         run_id="unit-run",
         output_dir=tmp_path / "output",
         work_dir=tmp_path / "work",
     )
 
 
-def test_environment_contains_architecture_and_mode_overrides(tmp_path: Path) -> None:
+def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) -> None:
     context = context_for(tmp_path)
     environment = build_environment(context)
     assert environment["EXPECTED_ARCH"] == "x86_64"
@@ -59,3 +60,11 @@ def test_existing_command_writes_to_framework_output(tmp_path: Path) -> None:
     assert (context.output_dir / "results.json").is_file()
     pip_path = (context.output_dir / "pip_path.txt").read_text(encoding="utf-8").strip()
     assert pip_path.startswith(str(context.work_dir / "venv" / "bin"))
+
+
+def test_stage_is_forwarded_to_existing_entrypoint(tmp_path: Path) -> None:
+    context = context_for(tmp_path)
+    result = run_command(context, "build", check_outputs=False)
+    assert result.returncode == 0
+    assert result.log_path.name == "command-build.log"
+    assert (context.output_dir / "stage.txt").read_text(encoding="utf-8").strip() == "build"

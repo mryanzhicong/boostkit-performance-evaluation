@@ -7,14 +7,6 @@ set -euo pipefail
 MODE="${1:-}"
 WORK_ROOT="${PERF_WORK_ROOT:-/tmp/boostkit-perf}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly TMP_PATTERNS=(
-    "/tmp/faiss_build_*"
-    "/tmp/hnswlib_build_*"
-    "/tmp/openviking_build_*"
-    "/tmp/protobuf_build_*"
-    "/tmp/snappy_build_*"
-    "/tmp/shunit2_*"
-)
 
 log() { printf '[cleanup] %s\n' "$*"; }
 fail() { printf '[cleanup] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -28,7 +20,6 @@ fi
 if [[ "${MODE}" != "--before" && "${MODE}" != "--after" && "${MODE}" != "--verify" ]]; then
     fail "usage: $0 --before|--after|--verify"
 fi
-command -v docker >/dev/null 2>&1 || fail "docker is required to certify a clean runner"
 
 matching_processes() {
     python3 "${SCRIPT_DIR}/process_scanner.py" \
@@ -65,29 +56,6 @@ verify_clean() {
         log "mounts remain below ${WORK_ROOT}"
         dirty=1
     fi
-    if [[ -n "$(docker ps -aq)" ]]; then
-        log "Docker containers remain"
-        dirty=1
-    fi
-    if [[ -n "$(docker image ls -aq)" ]]; then
-        log "Docker images remain"
-        dirty=1
-    fi
-    if [[ -n "$(docker volume ls -q)" ]]; then
-        log "Docker volumes remain"
-        dirty=1
-    fi
-    if [[ -n "$(docker network ls --filter type=custom -q)" ]]; then
-        log "custom Docker networks remain"
-        dirty=1
-    fi
-    local pattern
-    for pattern in "${TMP_PATTERNS[@]}"; do
-        if find /tmp -maxdepth 1 -mindepth 1 -name "${pattern##*/}" -print -quit | grep -q .; then
-            log "known test temporary paths remain for ${pattern##*/}"
-            dirty=1
-        fi
-    done
     [[ "${dirty}" -eq 0 ]] || fail "runner cleanliness verification failed; quarantine this runner"
     log "runner cleanliness verification passed"
 }
@@ -108,15 +76,6 @@ if ((${#pids[@]})); then
     fi
 fi
 
-mapfile -t containers < <(docker ps -aq)
-if ((${#containers[@]})); then
-    docker rm -f "${containers[@]}"
-fi
-docker network prune --force
-docker volume prune --all --force
-docker image prune --all --force
-docker builder prune --all --force
-
 mkdir -p "${WORK_ROOT}"
 if command -v findmnt >/dev/null 2>&1; then
     mapfile -t mounts < <(matching_mounts | sort -r)
@@ -126,9 +85,5 @@ if command -v findmnt >/dev/null 2>&1; then
     done
 fi
 find "${WORK_ROOT}" -mindepth 1 -delete
-for pattern in "${TMP_PATTERNS[@]}"; do
-    # Patterns are fixed above and deliberately restricted to known case prefixes.
-    find /tmp -maxdepth 1 -mindepth 1 -name "${pattern##*/}" -exec rm -rf -- {} +
-done
 
 verify_clean

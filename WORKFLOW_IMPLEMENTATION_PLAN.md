@@ -36,7 +36,7 @@ flowchart TD
 
 - 测试定义声明化，Workflow 不硬编码软件列表。
 - x86_64 和 aarch64 使用同一份用例参数和基准实现。
-- 优先使用临时 Runner 或容器，避免污染宿主机。
+- 只在专用裸机 Runner 上源码编译安装，所有任务产物进入统一工作根目录。
 - 测试失败、取消或超时后仍然执行清理和日志上传。
 - 原始性能结果和汇总报告分离保存。
 - 性能 Workflow 仅允许具备仓库 Actions 执行权限的授权用户手动启动。
@@ -47,14 +47,13 @@ flowchart TD
 ./
 ├── README.md
 ├── pyproject.toml
-├── uv.lock
 ├── .gitignore
 ├── software/
 │   ├── AI/
 │   │   └── <software>/
 │   │       ├── case.yaml
 │   │       ├── <software>_test.sh  # 复用当前已有主入口
-│   │       ├── adapter.py          # 可选：直接入口不兼容时才增加
+│   │       ├── adapter.py          # 保留扩展位，当前 Workflow 不加载
 │   │       ├── scripts/            # 复用当前已有辅助脚本和基准
 │   │       │   ├── benchmark_*.py
 │   │       │   ├── micro_benchmark.py
@@ -119,8 +118,7 @@ flowchart TD
 | 文件 | 用途 | 设计要求 |
 |---|---|---|
 | `README.md` | 项目总入口，说明如何接入已有软件用例、手动启动 Workflow、读取报告和排查失败。 | 只描述稳定入口，不复制每个软件的具体参数。软件私有说明放在软件自己的 README。 |
-| `pyproject.toml` | 声明公共框架的 Python 版本、依赖、命令入口以及格式化和测试配置。 | 公共框架依赖集中管理，软件运行依赖仍由各自 `case.yaml` 声明。 |
-| `uv.lock` | 锁定公共框架依赖的精确版本，确保两个架构使用相同的框架依赖。 | Workflow 必须使用锁文件安装，不在执行时解析浮动版本。 |
+| `pyproject.toml` | 声明公共框架的 Python 版本、依赖以及格式化和测试配置。 | 专用裸机预装 Python 3.11+ 与 PyYAML 6.x；软件运行依赖仍由各自 `case.yaml` 声明。 |
 | `.gitignore` | 忽略 `.perf-output/`、venv、Python 缓存、构建目录和临时报告。 | 不忽略软件清单、基线和用于复现的小型 fixtures。 |
 
 ### 3.2 `software/`：软件用例实现
@@ -135,10 +133,10 @@ flowchart TD
 
 - 软件名称、主分类、标签和启用状态。
 - 需要测试的软件版本。
-- 源码、pip、二进制包或容器构建方式。
+- 裸机源码编译、安装前缀和构建参数。
 - 当前已有 `<software>_test.sh` 入口及预期结果文件。
-- 可选软件适配器；只有直接入口不兼容时才配置。
-- smoke/full 两种模式的参数。
+- `staged` 分阶段命令接口。
+- 唯一一套正式测试参数。
 - 超时、预热次数、正式迭代次数和随机种子。
 - 每个架构的绝对性能阈值。
 - 每项指标的单位和优化方向。
@@ -148,7 +146,18 @@ flowchart TD
 
 #### `software/<category>/<software>/<software>_test.sh`
 
-这是当前已有测试用例的主入口，第一阶段直接复用。公共框架通过 `case.yaml` 将软件版本、架构、模式、输出目录和运行编号传给该脚本。只做以下必要兼容改造：
+这是当前已有测试用例的主入口，第一阶段直接复用。公共框架通过 `case.yaml` 将软件版本、架构、输出目录和运行编号传给该脚本，并以阶段名调用。入口必须提供以下阶段函数：
+
+| 阶段参数 | 软件函数职责 |
+|---|---|
+| `build` | 裸机编译并安装到任务专属前缀。 |
+| `validate` | 校验架构、实际版本、安装文件和核心功能。 |
+| `start-service` | 启动被测服务并等待就绪。 |
+| `test` | 复用已启动服务执行主基准和微基准。 |
+| `stop-service` | 幂等停止服务，Workflow 使用 `if: always()` 调用。 |
+| `collect-report` | 聚合软件原始结果并检查输出完整性。 |
+
+只做以下必要兼容改造：
 
 - 接收框架指定的输出目录。
 - 支持 x86_64 和 aarch64，不再固定断言 ARM64。
@@ -156,34 +165,11 @@ flowchart TD
 - 正确返回退出码，不使用旧结果掩盖本次失败。
 - 将软件私有临时文件限制在本次 workspace。
 
-主入口仍可内部编排现有安装、功能检查、主基准、微基准和报告步骤，公共框架暂不拆解或重新生成这些步骤。
+主入口保留现有构建、校验、测试和报告函数实现；Workflow 只负责按阶段调用，不重新实现软件逻辑。
 
-#### `software/<category>/<software>/adapter.py`（可选）
+#### `software/<category>/<software>/adapter.py`（保留接口）
 
-如果已有 Shell 入口能够接收统一参数并产出约定文件，则不创建该文件，由 `framework/command_adapter.py` 直接调用。只有现有用例无法通过命令行适配时，才手工增加软件适配器。统一接口建议如下：
-
-```python
-class SoftwareAdapter:
-    def prepare(self, context): ...
-    def build(self, context): ...
-    def functional_check(self, context): ...
-    def run_primary(self, context): ...
-    def run_micro(self, context): ...
-    def collect_software_info(self, context): ...
-    def cleanup(self, context): ...
-```
-
-接口职责：
-
-- `prepare`：解析软件版本、准备软件私有目录和数据，不修改 Runner 系统环境。
-- `build`：在容器或任务隔离目录中完成安装和编译。
-- `functional_check`：确认实际软件版本、核心 API 或二进制可用。
-- `run_primary`：调用最能代表软件业务能力的主基准。
-- `run_micro`：调用核心操作微基准。
-- `collect_software_info`：返回实际版本、构建参数和依赖信息。
-- `cleanup`：停止软件私有服务和进程；Runner 全局净化仍由公共框架负责。
-
-适配器不得直接生成最终总报告，也不得自行选择 Runner。当前 7 个软件优先使用公共命令适配器，避免为了框架接入重写测试代码。
+`adapter_base.py` 仅保留为未来扩展定义，当前正式 Workflow 不加载软件专用 `adapter.py`。所有已启用软件必须实现 `staged command` 接口，避免 Workflow 出现按软件名称选择执行方式的分支。
 
 #### `software/<category>/<software>/scripts/`
 
@@ -202,7 +188,7 @@ class SoftwareAdapter:
 
 #### `fixtures/`
 
-保存可提交仓库的小型固定输入、配置模板、SQL、Proto、容器配置或期望输出。大型数据集不得提交到这里，应在 `case.yaml` 中记录不可变下载地址和校验和。
+保存可提交仓库的小型固定输入、配置模板、SQL、Proto 或期望输出。大型数据集不得提交到这里，应在 `case.yaml` 中记录不可变下载地址和校验和。
 
 #### 软件 `README.md`
 
@@ -212,39 +198,38 @@ class SoftwareAdapter:
 
 | 文件 | 用途 | 关键设计 |
 |---|---|---|
-| `adapter_base.py` | 定义可选软件适配器的抽象接口、返回类型和阶段异常。 | 仅供无法直接调用的用例使用；公共执行器不通过软件名写条件分支。 |
-| `command_adapter.py` | 将公共 context 转换为命令行参数和环境变量，直接调用已有 `<software>_test.sh`。 | 当前阶段的默认接入方式；负责超时、退出码、日志和预期结果文件检查。 |
-| `context.py` | 定义一次任务的只读上下文。 | 包含软件、版本、架构、模式、路径、参数、运行编号和日志器；避免通过全局环境变量传递状态。 |
+| `adapter_base.py` | 保留未来扩展所需的接口、返回类型和阶段异常定义。 | 当前正式 Workflow 不加载软件专用适配器。 |
+| `command_adapter.py` | 将公共 context 和阶段名转换为环境变量与命令行，调用已有 `<software>_test.sh`。 | 每个阶段独立日志；`collect-report` 阶段检查全部预期输出。 |
+| `context.py` | 定义一次任务的只读上下文。 | 包含软件、版本、架构、路径、参数、运行编号和日志器；避免通过全局环境变量传递状态。 |
 | `generate_matrix.py` | 递归发现 `software/*/*/case.yaml`，按手动输入展开矩阵。 | 默认展开两个架构；指定架构时才过滤；输出稳定、可排序的 JSON。 |
 | `validate_case.py` | 使用 Schema 校验清单，并检查目录、适配器、版本和指标定义的一致性。 | 任何校验失败都发生在占用性能 Runner 之前。 |
-| `run_case.py` | 单个矩阵任务的统一入口。 | 默认调用公共命令适配器；仅在清单显式声明时加载软件适配器；阶段状态持续写入 `status.json`。 |
-| `collect_environment.py` | 在测试前后采集真实软硬件环境。 | 采集 CPU、NUMA、内存、内核、OS、频率、governor、编译器、容器镜像摘要和关键依赖。 |
+| `run_case.py` | 单个矩阵任务的阶段控制入口。 | 响应 prepare/build/validate/start-service/test/stop-service/collect-report，持续更新 `status.json`。 |
+| `collect_environment.py` | 在测试前后采集真实软硬件环境。 | 采集 CPU、NUMA、内存、内核、OS、频率、governor、编译器和关键依赖。 |
 | `cleanup_environment.sh` | 对专用 Runner 执行全局净化和净化后验收。 | 支持 `--before`、`--after`、`--verify`；清理失败必须阻止测试或将最终任务标记失败。 |
 | `aggregate_results.py` | 合并环境、主基准、微基准和阶段状态。 | 只聚合相同软件、版本、架构、参数签名和运行编号的数据。 |
 | `generate_comparison.py` | 配对 x86_64 与 aarch64 结果并计算比值。 | 根据指标方向选择比较公式，禁止比较参数签名不同的结果。 |
 | `json_helper.py` | 提供稳定的 JSON 读取、字段检查、Schema 校验和原子写入。 | 避免各软件重复实现 JSON Shell 辅助函数。写文件采用临时文件加原子替换。 |
 
-`run_case.py` 的核心执行顺序：
+Workflow 对 `run_case.py` 的调用顺序：
 
 ```text
-加载并校验 case.yaml
-→ 创建 context 和输出目录
-→ 采集运行前环境
-→ 选择 command_adapter 或可选软件 adapter
-→ 调用当前已有 <software>_test.sh 或适配器
-→ 检查退出码和预期结果文件
-→ 采集运行后环境
-→ 聚合与单任务报告
-→ 软件私有清理（finally）
+prepare：加载并校验 case.yaml、创建 context、校验架构、采集运行前环境
+→ build：调用软件构建函数
+→ validate：调用软件安装校验函数
+→ start-service：调用软件服务启动函数
+→ test：调用软件测试函数
+→ stop-service：无条件调用软件服务停止函数
+→ collect-report：调用软件报告函数、检查输出、采集运行后环境并标准化
 ```
 
 Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边界为：
 
 ```text
 运行前全局净化及验收
-→ run_case.py
-→ 上传所需 Artifact（if: always）
+→ 分阶段调用 run_case.py
 → 运行后全局净化及验收（if: always）
+→ 回写清理状态
+→ 上传所需 Artifact（if: always）
 ```
 
 运行后全局净化不能只依赖 Python 的 `finally`，因为进程被强制终止时 `finally` 不一定执行。
@@ -272,7 +257,7 @@ Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边
 | 文件 | 用途 | 设计要求 |
 |---|---|---|
 | `categories.yaml` | 定义允许使用的分类名称和展示顺序。 | 分类固定为 AI、Bigdata、Storage、Database、Media、HPC、Middleware、Toolchain、Others；清单中的 category 必须命中该文件。 |
-| `defaults.yaml` | 定义所有软件共享的默认值。 | 包括默认双架构、架构到 Runner 标签的唯一映射、smoke/full 模式、通用超时和输出根目录；不保存机器地址。 |
+| `defaults.yaml` | 定义所有软件共享的默认值。 | 包括默认双架构、架构到 Runner 标签的唯一映射和公共路径；不保存机器地址。 |
 
 ### 3.5 `baselines/`：受控性能基线
 
@@ -289,8 +274,8 @@ baselines/<category>/<software>/<version>/<arch>.json
 | 文件 | 用途 |
 |---|---|
 | `conftest.py` | 将脚本式公共框架加入验证代码的导入路径。 |
-| `test_cases_and_matrix.py` | 验证 7 个现有用例清单、默认双架构和手动范围过滤。 |
-| `test_command_adapter.py` | 使用假 Shell 入口验证一次性 venv、参数传递、日志和预期结果检查。 |
+| `test_cases_and_matrix.py` | 验证 Redis 清单、默认双架构矩阵、手动范围过滤和 Workflow 标签单一来源。 |
+| `test_command_adapter.py` | 使用假 Shell 入口验证共享任务 venv、阶段参数、环境传递、日志和预期结果检查。 |
 | `test_results_and_reports.py` | 验证旧结果规范化、清理状态、失败结果和跨架构指标方向。 |
 
 ### 3.7 `.github/workflows/performance-test.yml`
@@ -317,14 +302,14 @@ Workflow 不包含软件专用安装和测试命令，这些逻辑只能存在�
 
 目录内包含环境快照、主基准、微基准、聚合结果、状态、日志和报告。Workflow 上传 Artifact 后，全局清理可以删除 Runner 上的本地副本。
 
-## 4. 现有测试用例接入
+## 4. 测试用例接入
 
-当前阶段不设计、不实现测试用例自动生成器，也不根据软件名称生成 `adapter.py`、主基准或微基准。首先复用当前已经存在的 Faiss、hnswlib、OpenViking、PETSc、Protobuf、Rust 和 Snappy 测试代码，将手动触发、双架构执行、全局清理、结果上传和报告链路跑通。
+当前已将 Redis 作为首个人工维护用例接入 `Database` 分类。当前阶段不设计、不实现测试用例自动生成器，也不根据软件名称生成 `adapter.py`、主基准或微基准。先用 Redis 跑通手动触发、双架构执行、全局清理、结果上传和报告链路，再接入其他真实软件。
 
-现有用例接入原则：
+用例接入原则：
 
 1. `case.yaml` 由维护人员手工编写和审核。
-2. 第一版优先由公共 `command_adapter.py` 直接调用现有入口；只有无法直接适配时才手工增加 `adapter.py`。
+2. 公共 `command_adapter.py` 使用固定阶段名调用现有入口；Workflow 不调用软件私有命令。
 3. 现有主基准和微基准逻辑尽量保持不变，只处理双架构、路径、参数和输出格式兼容。
 4. 公共框架不根据软件名称生成或修改软件代码。
 5. 流程跑通前不创建 `templates/`，也不提供脚手架命令。
@@ -332,74 +317,66 @@ Workflow 不包含软件专用安装和测试命令，这些逻辑只能存在�
 
 ### 4.1 软件测试清单
 
-为每个现有软件手工增加一个 YAML 清单，声明版本、构建方式、现有入口、运行参数和性能阈值。架构列表和 Runner 不属于软件属性，因此不写入软件清单。例如：
+为每个待接入软件手工增加一个 YAML 清单，声明版本、构建方式、执行入口、运行参数和性能阈值。架构列表和 Runner 不属于软件属性，因此不写入软件清单。结构如下：
 
 ```yaml
-name: faiss
+name: "<software>"
 enabled: true
-category: AI
+category: "<category>"
 
 versions:
-  - "1.14.2"
-  - "1.14.3"
-
-build:
-  method: source_build
-  repository: https://github.com/facebookresearch/faiss.git
-  tag: "v{version}"
+  - "<version>"
 
 execution:
   type: command
-  entrypoint: ./faiss_test.sh
+  interface: staged
+  entrypoint: ./<software>_test.sh
+  timeout_minutes: 180
+  environment:
+    ITERATIONS: 3
+    DATA_SCALE: 100K
+    RANDOM_SEED: 42
   expected_outputs:
     - version_info.json
     - benchmark_primary.json
     - micro_benchmark.json
     - results.json
 
-benchmark:
-  timeout_minutes: 90
-  parameters:
-    data_scale: 100K
-    data_dim: 128
-    iterations: 3
-    k: 10
-    random_seed: 42
-
-thresholds:
-  x86_64:
-    minimum_qps_flat: 10
-    maximum_latency_us: 5000
-  aarch64:
-    minimum_qps_flat: 10
-    maximum_latency_us: 5000
+metrics:
+  throughput:
+    source: results.json
+    path: summary.throughput
+    unit: ops/s
+    direction: higher_is_better
+  latency:
+    source: results.json
+    path: summary.latency
+    unit: ms
+    direction: lower_is_better
 ```
 
 清单至少描述：
 
 - 软件名称和是否启用。
 - 需要测试的版本列表。
-- 源码、pip 或容器构建方式。
-- 当前已有测试入口、预期结果文件和可选适配器。
+- 当前已有测试入口、分阶段接口、正式参数、超时和预期结果文件。
 - 数据规模、迭代次数、线程数和随机种子。
 - 每种架构独立的性能阈值。
 - 超时时间。
 
 软件清单默认不允许配置 `architectures` 或 `runner`。所有启用的软件默认、无条件展开为 `x86_64` 和 `aarch64` 两个任务。只有手动触发时，用户才能通过 `architecture` 输入缩小执行范围。
 
-### 4.2 现有适配器接入方式
+### 4.2 分阶段命令接入方式
 
-第一版由公共 `command_adapter.py` 完成公共框架与现有用例之间的参数和结果转换：
+公共 `command_adapter.py` 完成公共框架与人工接入用例之间的阶段、参数和结果转换：
 
 ```text
 公共 context
-→ 转换为现有脚本参数/环境变量
-→ 调用已有主测试或基准入口
+→ 转换为现有脚本参数、环境变量和阶段名
+→ 逐次调用 build/validate/start-service/test/stop-service/collect-report
 → 收集已有 JSON 和日志
 → 转换并校验为统一结果格式
 ```
-
-只有直接命令方式无法覆盖的软件，才手工编写可选 `adapter.py`，但仍不得重写其已有基准逻辑。
 
 必须优先改造的兼容点：
 
@@ -409,7 +386,7 @@ thresholds:
 - 现有脚本不得在宿主机执行不可恢复的系统级安装。
 - 测试参数由 `context` 传入，保留现有默认值作为本地调试后备。
 - 原始结果继续保留，同时生成符合统一 Schema 的标准结果。
-- 软件私有服务和进程由现有入口或可选适配器清理，Runner 全局环境由公共清理脚本处理。
+- 软件私有服务和进程由现有入口的 `stop-service` 阶段清理，Runner 全局环境由公共清理脚本处理。
 
 ### 4.3 执行矩阵生成
 
@@ -425,14 +402,14 @@ DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 {
   "include": [
     {
-      "software": "faiss",
-      "version": "1.14.2",
+      "software": "<software>",
+      "version": "<version>",
       "arch": "x86_64",
       "runner_label": "PERF_RUNNER_X86_64"
     },
     {
-      "software": "faiss",
-      "version": "1.14.2",
+      "software": "<software>",
+      "version": "<version>",
       "arch": "aarch64",
       "runner_label": "PERF_RUNNER_ARM64"
     }
@@ -456,7 +433,7 @@ DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 - `scripts/` 下的主基准、微基准和辅助脚本。
 - 软件 README 和 fixtures。
 
-这些文件先由现有代码迁移和人工维护。待全部现有用例稳定运行后，再单独评审测试用例模板和脚手架设计。
+这些文件由维护人员从真实测试代码接入并持续维护。待人工接入流程稳定后，再单独评审测试用例模板和脚手架设计。
 
 架构到 Runner 的映射只在 `config/defaults.yaml` 中管理：
 
@@ -493,13 +470,6 @@ on:
           - x86_64
           - aarch64
         default: all
-      test_mode:
-        description: "测试模式"
-        type: choice
-        options:
-          - full
-          - smoke
-        default: full
       update_baseline:
         description: "是否更新性能基线"
         type: boolean
@@ -510,12 +480,11 @@ on:
 
 | 输入 | 执行范围 |
 |---|---|
-| 默认值 | 全部启用软件 × 全部配置版本 × x86_64/aarch64 × full |
+| 默认值 | 全部启用软件 × 全部配置版本 × x86_64/aarch64 |
 | 指定软件，版本为 `all` | 指定软件全部配置版本；架构默认仍为两个 |
 | 指定软件和版本 | 指定软件版本；架构默认仍为两个 |
 | `architecture=x86_64` | 只运行 x86_64，适用于补跑 |
 | `architecture=aarch64` | 只运行 aarch64，适用于补跑 |
-| `test_mode=smoke` | 使用小数据规模和较少迭代次数 |
 | `update_baseline=true` | 成功后进入受控基线更新步骤 |
 
 手动触发主要用于：
@@ -565,10 +534,10 @@ runs-on:
 - 每台性能机器同一时间只运行一个正式性能任务。
 - 不与普通编译、发布任务共享 CPU。
 - 记录 CPU 型号、核心数、频率、NUMA、内存和内核信息。
-- 记录 CPU governor 和容器运行时版本。
+- 记录 CPU governor、编译器和构建工具版本。
 - 显式指定线程数，不依赖不同机器的默认核数。
 - x86_64 和 aarch64 尽量使用相同版本的 openEuler、编译器和依赖。
-- 优先使用一次性 Runner；固定 Runner 必须使用容器或专属工作目录隔离。
+- Runner 必须为固定的专用裸机，使用专属工作目录和独占任务隔离。
 
 同一性能资源上的任务不应相互取消：
 
@@ -584,29 +553,28 @@ concurrency:
 
 ```bash
 python3 framework/run_case.py \
-  --case software/AI/faiss/case.yaml \
-  --version 1.14.3 \
-  --arch aarch64 \
-  --run-id "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+  --case software/<category>/<software>/case.yaml \
+  --version <version> \
+  --architecture aarch64 \
+  --run-id "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+  --stage build
 ```
 
 标准生命周期：
 
 ```text
-validate
+validate-inputs
   → pre-clean
-  → prepare
-  → collect-environment-before
-  → build/install
-  → functional-check
-  → warmup
-  → primary-benchmark
-  → micro-benchmark
-  → collect-environment-after
-  → aggregate
-  → validate-result
-  → generate-report
-  → post-clean
+  → prepare-and-collect-environment-before
+  → build-and-install
+  → validate-installation
+  → start-service
+  → execute-performance-tests
+  → stop-service (always)
+  → collect-and-normalize-report (always)
+  → post-clean (always)
+  → record-cleanup-status (always)
+  → upload-artifact (always)
 ```
 
 建议统一退出码：
@@ -625,48 +593,29 @@ validate
 
 ## 8. 运行前清理
 
-正式性能测试必须运行在专用性能 Runner 上，不允许与研发、构建或发布任务共享宿主机。环境干净的首选保证方式是：每个矩阵任务启动一个由只读金镜像创建的临时 Runner，任务结束后销毁整个 Runner。
-
-不能使用临时 Runner 时，固定 Runner 必须在全局独占锁下执行“全局净化”，而不是只清理带有本次任务标识的资源。每次运行仍生成资源标识用于日志追踪，但它不是清理范围的边界：
+正式性能测试必须运行在固定的专用裸机 Runner 上，不允许与研发、构建或发布任务共享宿主机。Runner 必须在全局独占锁下执行“全局净化”，而不是只清理带有本次任务标识的资源。每次运行仍生成资源标识用于日志追踪，但它不是清理范围的边界：
 
 ```text
 RUN_KEY=<run_id>-<attempt>-<software>-<version>-<arch>
 ```
 
-所有容器、网络、临时目录和进程应关联该标识，便于定位来源；全局净化仍会处理该专用 Runner 上所有非系统测试资源，包括未正确添加标签的遗留资源。
+所有源码目录、安装前缀、临时目录和进程应关联该标识，便于定位来源；全局净化仍会处理该专用 Runner 统一工作根目录下的全部遗留资源。
 
 运行前执行：
 
 1. 获取该 Runner 的全局独占锁；获取失败则禁止开始性能测试。
-2. 停止并删除专用 Runner 上全部测试容器，不依赖项目标签或 `RUN_KEY`。
-3. 删除全部非默认容器网络、全部容器卷、全部本地容器镜像和构建缓存。
-4. 删除统一测试工作根目录下的所有历史 workspace、venv、源码和构建目录。
-5. 终止上一次测试遗留的基准、编译和被测服务进程。
-6. 检查并卸载遗留的测试挂载点。
-7. 清理测试账户产生的语言级缓存和临时文件。
-8. 检查磁盘、内存、CPU、端口占用、容器、进程和挂载状态。
-9. 创建本次运行专属的全新工作目录和结果目录。
-10. 记录全局清理结果与运行前环境快照。
+2. 终止上一次测试遗留的基准、编译和被测服务进程。
+3. 检查并卸载统一工作根目录下的遗留挂载点。
+4. 删除统一工作根目录下的历史 workspace、venv、源码、安装前缀、数据和构建目录。
+5. 检查磁盘、内存、CPU、端口占用、进程和挂载状态。
+6. 创建本次运行专属的全新源码、构建、安装、数据和结果目录。
+7. 记录全局清理结果与运行前环境快照。
 
-容器统一添加标签：
-
-```bash
-docker run \
-  --label perf.project=boostkit \
-  --label perf.run-key="${RUN_KEY}" \
-  ...
-```
-
-全局清理可能删除 Runner 上的全部容器和构建缓存，因此固定 Runner 必须是专用机器。禁止在共享 Runner 上启用本方案的正式性能 Workflow。
-
-为了使全局清理可验证，正式测试不得通过 `sudo apt/dnf` 或系统级 `pip` 修改宿主机。软件依赖必须安装在容器、临时根文件系统或本次 venv 中；否则无法仅靠文件删除可靠恢复宿主机状态。
+裸机系统编译依赖必须由管理员在 Runner 纳管阶段预装和锁定。正式测试不得通过 `sudo apt/dnf` 或系统级 `pip` 临时修改宿主机；被测软件通过源码编译，并使用 `/tmp/boostkit-perf/<run>/install` 作为安装前缀，以便全局清理可靠恢复环境。
 
 清理后执行环境验收。以下任一条件不满足时，任务直接失败并将 Runner 标记为需要维护，不得带着脏环境继续测试：
 
-- 不存在运行中或停止状态的测试容器。
-- 不存在非默认测试网络和测试卷。
-- 不存在上一次任务留下的本地容器镜像或构建缓存。
-- 不存在上一次任务的 workspace、venv 和构建目录。
+- 不存在上一次任务的 workspace、venv、源码、安装、数据和构建目录。
 - 不存在已知基准、编译或被测服务残留进程。
 - 不存在测试挂载点和测试端口占用。
 - 磁盘、内存和系统负载满足基准启动条件。
@@ -696,16 +645,14 @@ Workflow 中上传和清理步骤均使用 `if: always()`：
 
 运行后清理：
 
-- 停止并删除专用 Runner 上的全部测试容器。
-- 删除全部非默认容器网络、全部容器卷、全部本地容器镜像和构建缓存。
-- 删除统一测试工作根目录下的全部 workspace、venv、源码和构建产物。
+- 删除统一测试工作根目录下的全部 workspace、venv、源码、安装前缀、数据和构建产物。
 - 终止全部遗留的基准、编译和被测服务进程。
 - 卸载全部测试挂载点并释放测试端口。
 - 再次执行与运行前相同的环境验收。
 - 将全局清理及验收状态写入 `status.json`。
 - 清理或验收失败时将本次任务标记失败，并停止向该 Runner 分配后续性能任务。
 
-如果采用一次性 Runner，上传结果后销毁整个 Runner。下一次任务必须从金镜像重新创建，这也是防止未知遗漏、确保环境必然干净的唯一强保证。固定 Runner 的全局清理属于兼容方案，必须配合清理后验收和失败隔离机制。
+固定裸机 Runner 的全局清理必须配合清理后验收和失败隔离机制；验收失败的机器不得继续接收性能任务，需由管理员恢复到受控初始状态。
 
 ## 10. 测试一致性要求
 
@@ -716,7 +663,7 @@ x86_64 和 aarch64 必须保持：
 - 随机种子一致。
 - 预热次数和正式迭代次数一致。
 - 编译优化级别一致。
-- 依赖版本和容器基础系统尽量一致。
+- OS、系统依赖和构建工具版本尽量一致。
 - 线程数策略一致。
 - 测试超时策略一致。
 
@@ -727,7 +674,7 @@ x86_64 和 aarch64 必须保持：
 - 内存容量。
 - OS 和内核版本。
 - 编译器、Python 和关键依赖版本。
-- 容器镜像及其不可变摘要。
+- 编译器、链接器、构建参数和安装前缀。
 - 冷启动或预热测试模式。
 
 跨架构报告展示原始数据和比值，但不得脱离硬件配置直接宣称某个架构整体优于另一个架构。
@@ -738,9 +685,9 @@ x86_64 和 aarch64 必须保持：
 
 ```text
 .perf-output/
-└── AI/
-    └── faiss/
-        └── 1.14.3/
+└── <category>/
+    └── <software>/
+        └── <version>/
             ├── x86_64/
             │   └── <run_id>/
             └── aarch64/
@@ -765,8 +712,8 @@ status.json
 
 ```json
 {
-  "software": "faiss",
-  "version": "1.14.3",
+  "software": "<software>",
+  "version": "<version>",
   "architecture": "aarch64",
   "status": "passed",
   "failed_stage": null,
@@ -872,7 +819,7 @@ junit.xml
 validate-inputs
   → validate-manifests
   → generate-matrix
-  → performance-test（动态矩阵）
+  → performance-test（prepare/build/validate/start/test/stop/collect/cleanup 动态矩阵）
   → aggregate-report
   → publish-summary
 ```
@@ -880,7 +827,9 @@ validate-inputs
 关键要求：
 
 - `performance-test` 根据矩阵选择 x86_64 或 aarch64 Runner。
-- `test_mode=smoke` 时矩阵使用小规模参数；`test_mode=full` 时使用正式参数。
+- 每个阶段通过 `run_case.py --stage <name>` 调用软件入口中的对应函数。
+- `stop-service`、`collect-report`、运行后清理和 Artifact 上传使用 `if: always()`。
+- 所有矩阵任务固定使用软件清单中的唯一一套正式参数。
 - 单个测试失败不阻止其他矩阵任务运行。
 - `aggregate-report` 使用 `if: always()`，即使部分任务失败也生成报告。
 - 日志和已有结果在清理前上传。
@@ -897,9 +846,9 @@ validate-inputs
 7. 为所有随机数据固定随机种子。
 8. 统一预热次数和正式迭代次数定义。
 9. 统一 JSON Schema 和错误返回码。
-10. 将清理逻辑放入统一执行器的 `finally` 和 Workflow 的 `always()`。
+10. 将服务停止、报告收集和全局清理放入 Workflow 的 `always()` 路径。
 11. 将现有断言结果输出为统一状态 JSON 或 JUnit XML。
-12. 将公共生命周期从各软件脚本逐步收敛到统一执行器。
+12. Workflow 统一编排生命周期，软件脚本保留各阶段的具体实现。
 
 ## 15. 性能门槛和基线
 
@@ -935,15 +884,9 @@ validate-inputs
 - 环境采集和前后清理工具。
 - 单一手动触发 Workflow 骨架。
 
-### 第二阶段：用现有三类用例跑通主流程
+### 第二阶段：用首个人工用例跑通主流程
 
-建议选择：
-
-- hnswlib：Python/pip 与 ANN 基准。
-- Snappy：C++ 源码构建。
-- Rust：Docker 容器和编译基准。
-
-现有用例接入时不生成新测试代码，只手工补充清单，并优先通过公共命令适配器调用原入口。试点验收：
+从真实需求中选择一个依赖边界清楚、运行时间可控、同时支持两种架构的软件用例。接入时不生成新测试代码，只手工补充清单，并优先通过公共命令适配器调用原入口。试点验收：
 
 - 一个手工清单能被矩阵正确展开为两个架构任务。
 - 两个架构均能执行并上传结果。
@@ -951,15 +894,15 @@ validate-inputs
 - 能生成单软件及跨架构报告。
 - Runner 无本次任务残留资源。
 
-### 第三阶段：接入其余现有软件
+### 第三阶段：按分类扩展软件覆盖
 
-依次迁移 Faiss、Protobuf、OpenViking 和 PETSc，完成：
+在首个用例稳定后，按业务优先级逐个接入其他真实软件，完成：
 
 - 架构无关化。
 - 测试清单化。
 - 结果格式统一。
 - 架构独立阈值。
-- smoke 和 full 两套参数。
+- 一套可复现的正式测试参数。
 
 ### 第四阶段：性能回归
 
@@ -973,8 +916,8 @@ validate-inputs
 
 只有满足以下条件后，才开始设计测试用例模板和脚手架：
 
-- 当前 7 个软件均已使用手工清单和现有入口接入，必要的例外已由可选适配器处理。
-- x86_64 和 aarch64 的 full 流程均能稳定完成。
+- 已有一组具有代表性的软件使用手工清单和 staged command 真实入口稳定运行。
+- x86_64 和 aarch64 的正式流程均能稳定完成。
 - 软件清单、适配器接口和结果 Schema 已稳定。
 - 公共执行器中不存在按软件名称硬编码的分支。
 - 环境清理、Artifact 和跨架构报告已通过验收。
@@ -983,7 +926,7 @@ validate-inputs
 
 ## 17. 最终验收标准
 
-- 当前已有软件全部通过手工清单和现有入口接入，不依赖测试代码生成器；仅必要软件增加可选适配器。
+- 已纳入范围的软件全部通过手工清单和 staged command 真实入口接入，不依赖测试代码生成器。
 - 每个启用软件由执行矩阵展开为 x86_64 和 aarch64 两个任务。
 - Workflow 只能由授权用户通过 `workflow_dispatch` 手动启动。
 - 不存在任何自动触发配置。
@@ -995,7 +938,7 @@ validate-inputs
 - 所有结果符合统一 JSON Schema。
 - 能生成单软件报告、跨架构报告和全局汇总报告。
 - Workflow 页面能够展示失败阶段、性能回退和清理结果。
-- 专用 Runner 在测试前后均通过全局环境净化验收，不存在任何历史测试遗留的容器、网络、进程、挂载或临时目录。
+- 专用裸机 Runner 在测试前后均通过全局环境净化验收，不存在任何历史测试遗留的进程、挂载、源码、安装前缀、构建产物或临时目录。
 
 ## 18. 推荐落地顺序
 
@@ -1011,4 +954,4 @@ validate-inputs
 → 跨架构报告
 ```
 
-最小闭环验证通过后，再逐个接入现有 7 个软件，并增加性能基线和趋势能力。全部现有用例稳定后，才进入测试用例自动生成能力的独立设计阶段。
+最小闭环验证通过后，再按优先级逐个接入真实软件，并增加性能基线和趋势能力。人工维护流程稳定后，才进入测试用例自动生成能力的独立设计阶段。

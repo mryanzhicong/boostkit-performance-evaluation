@@ -19,7 +19,6 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
         "software": "sample",
         "version": "1.0",
         "architecture": architecture,
-        "test_mode": "smoke",
         "status": "passed",
         "parameter_signature": "same-parameters",
         "metrics": {
@@ -34,8 +33,10 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     output.mkdir()
     atomic_write_json(output / "results.json", {"summary": {"qps": 42.5}})
     case = {
-        "execution": {"expected_outputs": ["results.json"]},
-        "modes": {"smoke": {"environment": {"ITERATIONS": 1}}},
+        "execution": {
+            "expected_outputs": ["results.json"],
+            "environment": {"ITERATIONS": 1},
+        },
         "metrics": {
             "qps": {
                 "source": "results.json",
@@ -53,7 +54,6 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
         software="sample",
         version="1.0",
         architecture="x86_64",
-        test_mode="smoke",
         run_id="unit-run",
         output_dir=output,
         work_dir=tmp_path / "work",

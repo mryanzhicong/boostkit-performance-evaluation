@@ -41,7 +41,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     except Exception as exc:
         return None, [f"cannot load YAML: {exc}"]
 
-    required = ("name", "category", "enabled", "versions", "execution", "modes", "metrics")
+    required = ("name", "category", "enabled", "versions", "execution", "metrics")
     for field in required:
         if field not in case:
             errors.append(f"missing required field: {field}")
@@ -74,8 +74,10 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         errors.append("execution must be a mapping")
     else:
         exec_type = execution.get("type")
-        if exec_type not in {"command", "adapter"}:
-            errors.append("execution.type must be command or adapter")
+        if exec_type != "command":
+            errors.append("execution.type must be command for the staged workflow")
+        if execution.get("interface") != "staged":
+            errors.append("execution.interface must be staged")
         entrypoint = execution.get("entrypoint")
         if not isinstance(entrypoint, str) or not entrypoint:
             errors.append("execution.entrypoint must be a non-empty string")
@@ -90,10 +92,12 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         outputs = execution.get("expected_outputs")
         if not isinstance(outputs, list) or not outputs or not all(isinstance(v, str) for v in outputs):
             errors.append("execution.expected_outputs must be a non-empty string list")
-
-    modes = case.get("modes")
-    if not isinstance(modes, dict) or not {"smoke", "full"}.issubset(modes):
-        errors.append("modes must define smoke and full")
+        timeout = execution.get("timeout_minutes")
+        if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
+            errors.append("execution.timeout_minutes must be a positive integer")
+        environment = execution.get("environment")
+        if not isinstance(environment, dict):
+            errors.append("execution.environment must be a mapping")
 
     metrics = case.get("metrics")
     if not isinstance(metrics, dict) or not metrics:
@@ -127,8 +131,10 @@ def main() -> int:
 
     paths = discover_cases() if args.all else [args.case]
     if not paths:
-        print("No case manifests found", file=sys.stderr)
-        return 1
+        # An empty catalog is a valid repository baseline. Matrix generation still
+        # rejects an actual workflow run until at least one enabled case exists.
+        print("OK no case manifests found; software catalog is empty")
+        return 0
 
     failed = False
     seen: set[str] = set()

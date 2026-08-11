@@ -17,7 +17,6 @@ class RunContext:
     software: str
     version: str
     architecture: str
-    test_mode: str
     run_id: str
     output_dir: Path
     work_dir: Path
@@ -25,10 +24,6 @@ class RunContext:
     @property
     def case_dir(self) -> Path:
         return self.case_path.parent
-
-    @property
-    def mode_config(self) -> dict[str, Any]:
-        return dict(self.case.get("modes", {}).get(self.test_mode, {}))
 
     @property
     def execution(self) -> dict[str, Any]:

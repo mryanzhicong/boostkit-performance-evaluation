@@ -31,7 +31,6 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
         "SOFTWARE_VERSION": context.version,
         "EXPECTED_ARCH": context.architecture,
         "TARGET_ARCH": context.architecture,
-        "TEST_MODE": context.test_mode,
         "RESULTS_DIR": str(context.output_dir),
         "PERF_RUN_ID": context.run_id,
         "PERF_WORK_DIR": str(context.work_dir),
@@ -45,7 +44,7 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
     if case_venv is not None:
         environment["VIRTUAL_ENV"] = str(case_venv)
         environment["PATH"] = f"{case_venv / 'bin'}:{environment.get('PATH', '')}"
-    for key, value in context.mode_config.get("environment", {}).items():
+    for key, value in context.execution.get("environment", {}).items():
         environment[str(key)] = _stringify(value)
     override = context.case.get("version_overrides", {}).get(context.version, {})
     for key, value in override.get("environment", {}).items():
@@ -53,22 +52,30 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
     return environment
 
 
-def run_command(context: RunContext) -> CommandResult:
+def run_command(
+    context: RunContext,
+    stage: str | None = None,
+    *,
+    check_outputs: bool = True,
+) -> CommandResult:
     entrypoint = (context.case_dir / context.execution["entrypoint"]).resolve()
-    timeout_minutes = int(context.mode_config.get("timeout_minutes", 180))
-    log_path = context.output_dir / "command.log"
+    timeout_minutes = int(context.execution.get("timeout_minutes", 180))
+    log_path = context.output_dir / f"command-{stage or 'all'}.log"
     context.output_dir.mkdir(parents=True, exist_ok=True)
     context.work_dir.mkdir(parents=True, exist_ok=True)
     (context.work_dir / "tmp").mkdir(parents=True, exist_ok=True)
     case_venv = context.work_dir / "venv"
-    subprocess.run(
-        [sys.executable, "-m", "venv", str(case_venv)],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    if not (case_venv / "bin" / "python").is_file():
+        subprocess.run(
+            [sys.executable, "-m", "venv", str(case_venv)],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     environment = build_environment(context, case_venv)
     command = ["bash", str(entrypoint)] if entrypoint.suffix == ".sh" else [str(entrypoint)]
+    if stage is not None:
+        command.append(stage)
     with log_path.open("w", encoding="utf-8") as log:
         try:
             completed = subprocess.run(
@@ -85,8 +92,10 @@ def run_command(context: RunContext) -> CommandResult:
         except subprocess.TimeoutExpired:
             log.write(f"\n[TIMEOUT] exceeded {timeout_minutes} minutes\n")
             returncode = 124
-    missing = tuple(
-        output for output in context.execution.get("expected_outputs", [])
-        if not (context.output_dir / output).is_file()
-    )
+    missing = ()
+    if check_outputs:
+        missing = tuple(
+            output for output in context.execution.get("expected_outputs", [])
+            if not (context.output_dir / output).is_file()
+        )
     return CommandResult(returncode=returncode, log_path=log_path, missing_outputs=missing)

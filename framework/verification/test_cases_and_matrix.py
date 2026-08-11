@@ -1,40 +1,45 @@
 """Validate the manually maintained case catalog and matrix defaults."""
 
+import pytest
+
 from generate_matrix import build_matrix, configured_runner_labels
 from validate_case import ROOT, discover_cases, validate_case
 
 
-def test_all_current_cases_are_valid() -> None:
+def test_redis_is_the_only_valid_case() -> None:
     cases = discover_cases(ROOT)
-    assert len(cases) == 7
-    for path in cases:
-        case, errors = validate_case(path, ROOT)
-        assert case is not None
-        assert errors == []
+    assert cases == [ROOT / "software" / "Database" / "redis" / "case.yaml"]
+    case, errors = validate_case(cases[0], ROOT)
+    assert errors == []
+    assert case is not None
+    assert case["versions"] == ["7.4.10", "8.0.0", "8.0.6"]
+    assert case["execution"]["timeout_minutes"] == 180
+    assert case["execution"]["interface"] == "staged"
 
 
-def test_default_matrix_runs_both_architectures_with_global_runner_mapping() -> None:
-    matrix = build_matrix("all", "all", "all", "smoke")["include"]
-    labels = configured_runner_labels()
-    assert len(matrix) == 28
+def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
+    matrix = build_matrix("all", "all", "all")["include"]
+    assert len(matrix) == 6
     assert {item["arch"] for item in matrix} == {"x86_64", "aarch64"}
-    assert all(item["runner_label"] == labels[item["arch"]] for item in matrix)
+    assert {item["version"] for item in matrix} == {"7.4.10", "8.0.0", "8.0.6"}
 
 
-def test_software_and_version_filters_limit_scope() -> None:
+def test_manual_filters_limit_redis_to_one_architecture_and_version() -> None:
+    matrix = build_matrix("redis", "8.0.6", "aarch64")["include"]
+    assert len(matrix) == 1
+    assert matrix[0]["case_path"] == "software/Database/redis/case.yaml"
+    assert matrix[0]["runner_label"] == configured_runner_labels()["aarch64"]
+
+
+def test_unknown_software_is_rejected() -> None:
+    with pytest.raises(ValueError, match="unknown or disabled software"):
+        build_matrix("missing", "all", "all")
+
+
+def test_global_runner_mapping_still_defines_both_architectures() -> None:
     labels = configured_runner_labels()
-    matrix = build_matrix("faiss", "1.14.3", "x86_64", "full")["include"]
-    assert matrix == [{
-        "category": "AI",
-        "software": "faiss",
-        "version": "1.14.3",
-        "arch": "x86_64",
-        "runner_label": labels["x86_64"],
-        "test_mode": "full",
-        "timeout_minutes": 180,
-        "job_timeout_minutes": 210,
-        "case_path": "software/AI/faiss/case.yaml",
-    }]
+    assert set(labels) == {"x86_64", "aarch64"}
+    assert all(labels.values())
 
 
 def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
@@ -42,3 +47,29 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     assert "matrix.runner_label" in workflow
     assert all(label not in workflow for label in configured_runner_labels().values())
     assert "vars.PERF_RUNNER" not in workflow
+    assert "test_mode:" not in workflow
+    for stage in (
+        "prepare",
+        "build",
+        "validate",
+        "start-service",
+        "test",
+        "stop-service",
+        "collect-report",
+    ):
+        assert f"--stage {stage}" in workflow
+
+
+def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
+    entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
+        encoding="utf-8"
+    )
+    for function in (
+        "phase_build",
+        "phase_validate",
+        "phase_start_service",
+        "phase_test",
+        "phase_stop_service",
+        "phase_collect_report",
+    ):
+        assert f"{function}()" in entrypoint

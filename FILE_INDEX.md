@@ -10,33 +10,32 @@
 | `WORKFLOW_IMPLEMENTATION_PLAN.md` | Workflow 架构、触发范围、Runner、清理、报告和演进方案。 |
 | `FILE_INDEX.md` | 正式目录内所有文件的用途索引。 |
 | `pyproject.toml` | Python 版本、运行依赖、开发依赖及测试配置。 |
-| `uv.lock` | 锁定 Python 依赖，保证控制节点与两种架构安装相同版本。 |
 | `.gitignore` | 排除运行产物、缓存、历史结果和临时示例目录。 |
 
 ## `.github/workflows/`
 
 | 文件 | 用途 |
 |---|---|
-| `performance-test.yml` | 唯一入口；只支持 `workflow_dispatch`，校验输入、展开双架构矩阵、选择 Runner、前后全局清理、执行现有用例并汇总报告。 |
+| `performance-test.yml` | 唯一入口；只支持 `workflow_dispatch`，校验输入、展开双架构矩阵、选择 Runner、前后全局清理、执行启用用例并汇总报告。 |
 
 ## `config/`
 
 | 文件 | 用途 |
 |---|---|
 | `categories.yaml` | 软件分类白名单，防止目录分类自由扩散。 |
-| `defaults.yaml` | 两种默认架构、架构到 Runner 标签的唯一映射、输出/工作根目录和模式超时。 |
+| `defaults.yaml` | 两种默认架构、架构到 Runner 标签的唯一映射以及输出和工作根目录。 |
 
 ## `framework/`
 
 | 文件 | 用途 |
 |---|---|
 | `validate_case.py` | 校验人工维护的 `case.yaml`，同时禁止 Runner 标签和架构写入软件清单。 |
-| `generate_matrix.py` | 按手动输入筛选软件/版本/架构/模式；`all` 默认生成 x86_64 与 aarch64 两组任务。 |
+| `generate_matrix.py` | 按手动输入筛选软件、版本和架构；`all` 默认生成 x86_64 与 aarch64 两组正式任务。 |
 | `context.py` | 定义单个软件、版本、架构任务的不可变运行上下文。 |
-| `adapter_base.py` | 为少数无法直接调用的未来用例定义可选适配器接口；当前 7 个用例不需要。 |
-| `command_adapter.py` | 通用命令适配器；通过环境变量调用现有测试脚本并检查预期输出。 |
-| `run_case.py` | 单任务总控；校验架构、采集环境、执行、规范化结果、生成单任务报告和状态。 |
-| `cleanup_environment.sh` | 专用 Runner 全局清理及二次验证；清理所有 Docker 资源和已知用例临时目录。 |
+| `adapter_base.py` | 保留的扩展接口定义；当前 staged command 流程不加载软件专用适配器。 |
+| `command_adapter.py` | 通用分阶段命令适配器；通过环境变量和阶段名调用现有测试脚本，最终阶段检查预期输出。 |
+| `run_case.py` | 单任务阶段控制器；处理 prepare/build/validate/start-service/test/stop-service/collect-report 状态、环境采集和结果标准化。 |
+| `cleanup_environment.sh` | 专用裸机 Runner 全局清理及二次验证；清理统一工作根目录、关联进程和挂载点。 |
 | `process_scanner.py` | 扫描 `/proc` 定位真正引用工作根目录的残留进程，并排除扫描器自身，供全局清理使用。 |
 | `mark_cleanup.py` | 把 Workflow 的后置清理结果回写到任务状态和规范化结果；清理失败使用退出码 80。 |
 | `collect_environment.py` | 采集测试前后的 OS、CPU、内存、内核等环境快照。 |
@@ -52,32 +51,39 @@
 | `schemas/environment.schema.json` | 环境快照数据结构定义。 |
 | `schemas/status.schema.json` | 任务阶段与失败状态数据结构定义。 |
 
-## `software/<分类>/<软件>/`
+## `software/`
 
-每个软件目录均人工维护，不由 Workflow 自动生成。当前分类映射为：`faiss`、`hnswlib`、`openviking` 属于 `AI`，`petsc` 属于 `HPC`，`protobuf` 属于 `Middleware`，`rust` 属于 `Toolchain`，`snappy` 属于 `Others`。
+当前接入 `Database/redis`，其他分类只保留目录结构。每个软件目录均由人工维护，不由 Workflow 自动生成。
 
 | 文件或文件模式 | 用途 |
 |---|---|
-| `case.yaml` | 声明软件版本、已有脚本入口、smoke/full 参数、预期输出和指标方向；不得声明架构或 Runner。 |
-| `<software>_test.sh` | 当前已有的安装、基准测试和 shUnit2 验证入口；已支持外部 `RESULTS_DIR` 与 `EXPECTED_ARCH`。 |
-| `scripts/benchmark_ann.py` | `faiss`、`hnswlib`、`protobuf` 的主要测试负载实现。 |
-| `scripts/benchmark_context.py` | `openviking` 的上下文读写测试负载。 |
-| `scripts/benchmark_generic.py` | `petsc` 与 `rust` 的通用命令耗时负载。 |
-| `scripts/benchmark_compression.py` | `snappy` 的压缩/解压测试负载。 |
-| `scripts/micro_benchmark.py` | 各软件的细粒度、并发或补充微基准测试。 |
-| `scripts/aggregate_results.py` | 各软件理解自身原始输出并汇总成原有 `results.json`。 |
-| `scripts/generate_summary.py` | 把原有 JSON 结果转换为便于人工阅读的文本摘要。 |
-| `scripts/json_helper.py` | 原有 Shell 用例读写和断言 JSON 字段的辅助程序。 |
-| `scripts/snappy_benchmark.cc` | `snappy` 专用的本地 C++ 基准程序源码。 |
-| `results/` | 旧脚本本地运行时的兼容输出目录；不纳入版本库，正式 Workflow 写入根目录 `.perf-output/`。 |
+| `README.md` | 说明分类白名单、未来软件目录结构及人工接入规则。 |
+| `<分类>/.gitkeep` | 保存空分类目录；Database 已有 Redis，因此不需要该占位文件。 |
+| `<分类>/<软件>/case.yaml` | 声明软件版本、staged command 入口、正式参数、预期输出和指标方向；不得声明架构或 Runner。 |
+| `<分类>/<软件>/<software>_test.sh` | 实现 build、validate、start-service、test、stop-service、collect-report 分阶段函数，并接收公共运行上下文。 |
+| `<分类>/<软件>/scripts/` | 可选的软件私有基准、结果转换和辅助程序；没有需要时不创建。 |
+| `<分类>/<软件>/results/` | 本地兼容输出目录；不纳入版本库，正式 Workflow 写入根目录 `.perf-output/`。 |
+
+## `software/Database/redis/`
+
+| 文件 | 用途 |
+|---|---|
+| `README.md` | 说明 Redis 用例来源、测试范围、Runner 编译依赖、源码地址配置和指标方向。 |
+| `case.yaml` | 配置 Redis 7.4.10、8.0.0、8.0.6 的正式参数、输出和报告指标。 |
+| `redis_test.sh` | 实现 Workflow 调用的六个 Redis 阶段函数，负责裸机构建安装、校验、服务生命周期、测试和软件级报告。 |
+| `scripts/write_version_info.py` | 记录实际 Redis 版本、架构及运行环境。 |
+| `scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
+| `scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
+| `scripts/aggregate_results.py` | 聚合原始结果并计算 QPS、延迟及客户端并发扩展指标。 |
+| `scripts/generate_summary.py` | 生成包含指标优化方向的 Redis 文本摘要。 |
 
 ## `framework/verification/`
 
 | 文件 | 用途 |
 |---|---|
 | `conftest.py` | 将脚本式 `framework/` 模块加入测试导入路径。 |
-| `test_cases_and_matrix.py` | 验证 7 个清单、默认双架构 28 任务和手动筛选范围。 |
+| `test_cases_and_matrix.py` | 验证 Redis 清单、默认 6 任务矩阵、手动过滤、双架构 Runner 映射和完整分阶段 Workflow。 |
 | `test_command_adapter.py` | 验证已有脚本通过环境变量接入公共输出目录。 |
 | `test_results_and_reports.py` | 验证旧结果规范化、指标方向语义和跨架构报告配对。 |
 
-当前阶段没有用例生成器或模板文件；待现有用例在正式 Runner 上稳定运行后再单独设计。
+当前阶段没有用例生成器或模板文件；至少一个人工维护的用例在正式 Runner 上稳定运行后再单独评审是否需要。

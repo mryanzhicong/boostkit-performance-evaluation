@@ -25,7 +25,6 @@ def render(data: dict) -> str:
         f"# {data.get('software')} {data.get('version')} 性能报告",
         "",
         f"- 架构：`{data.get('architecture')}`",
-        f"- 模式：`{data.get('test_mode')}`",
         f"- 状态：`{data.get('status')}`",
         f"- Run ID：`{data.get('run_id')}`",
         "",

@@ -19,12 +19,6 @@ on:
         default: all
         type: choice
         options: [all, x86_64, aarch64]
-      test_mode:
-        description: "smoke validates the flow; full runs formal parameters"
-        required: true
-        default: smoke
-        type: choice
-        options: [smoke, full]
       update_baseline:
         description: "Generate baseline candidates only; never commits automatically"
         required: true
@@ -46,30 +40,26 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - run: uv sync --frozen --dev
+      - name: Install framework runtime dependency
+        run: python3 -m pip install --disable-pip-version-check --no-input "PyYAML>=6.0,<7.0"
       - name: Validate all manually maintained cases
-        run: uv run python framework/validate_case.py --all
+        run: python3 framework/validate_case.py --all
       - name: Generate execution matrix
         id: matrix
         env:
           INPUT_SOFTWARE: ${{ inputs.software }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ARCHITECTURE: ${{ inputs.architecture }}
-          INPUT_TEST_MODE: ${{ inputs.test_mode }}
         shell: bash
         run: |
-          matrix="$(uv run python framework/generate_matrix.py \
+          matrix="$(python3 framework/generate_matrix.py \
             --software "${INPUT_SOFTWARE}" \
             --version "${INPUT_VERSION}" \
-            --architecture "${INPUT_ARCHITECTURE}" \
-            --test-mode "${INPUT_TEST_MODE}")"
+            --architecture "${INPUT_ARCHITECTURE}")"
           echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
           echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
           echo '```json' >> "${GITHUB_STEP_SUMMARY}"
-          echo "${matrix}" | uv run python -m json.tool >> "${GITHUB_STEP_SUMMARY}"
+          echo "${matrix}" | python3 -m json.tool >> "${GITHUB_STEP_SUMMARY}"
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
   performance:
@@ -87,25 +77,74 @@ jobs:
       PERF_WORK_ROOT: /tmp/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
-      UV_PROJECT_ENVIRONMENT: /tmp/boostkit-perf/framework-venv
-      UV_CACHE_DIR: /tmp/boostkit-perf/uv-cache
     steps:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: false
-      - run: uv sync --frozen --dev
-      - name: Execute existing test case
-        id: execute
+      - name: Verify preinstalled framework runtime
         run: >-
-          uv run python framework/run_case.py
+          python3 -c "import sys, yaml;
+          assert sys.version_info >= (3, 11), sys.version;
+          print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}')"
+      - name: Prepare task and capture environment
+        run: >-
+          python3 framework/run_case.py
           --case '${{ matrix.case_path }}'
           --version '${{ matrix.version }}'
           --architecture '${{ matrix.arch }}'
-          --test-mode '${{ matrix.test_mode }}'
           --run-id '${{ env.PERF_RUN_ID }}'
+          --stage prepare
+      - name: Build and install software
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage build
+      - name: Validate installed software
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage validate
+      - name: Start software service
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage start-service
+      - name: Execute performance tests
+        id: execute
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage test
+      - name: Stop software service
+        if: always()
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage stop-service
+      - name: Collect and normalize task report
+        if: always()
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ matrix.case_path }}'
+          --version '${{ matrix.version }}'
+          --architecture '${{ matrix.arch }}'
+          --run-id '${{ env.PERF_RUN_ID }}'
+          --stage collect-report
       - name: Global cleanup after performance test
         id: post_cleanup
         if: always()
@@ -132,10 +171,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - run: uv sync --frozen --dev
+      - name: Install framework runtime dependency
+        run: python3 -m pip install --disable-pip-version-check --no-input "PyYAML>=6.0,<7.0"
       - name: Download task artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -143,7 +180,7 @@ jobs:
           path: .perf-output/downloaded
       - name: Generate single-run summary and cross-architecture comparison
         run: >-
-          uv run python framework/generate_comparison.py
+          python3 framework/generate_comparison.py
           --input-root .perf-output/downloaded
           --output-dir .perf-output/report
       - name: Publish report in workflow summary

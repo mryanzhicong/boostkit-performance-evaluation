@@ -45,7 +45,6 @@ def collect() -> dict:
         "memory": _command(["free", "-b"]),
         "numa": _command(["numactl", "--hardware"]),
         "cpu_governor": _command(["sh", "-c", "cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null"]),
-        "container_runtime": _command(["docker", "version", "--format", "{{.Server.Version}}"]),
     }
 
 

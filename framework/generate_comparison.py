@@ -51,7 +51,6 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         "category": arm["category"],
         "software": arm["software"],
         "version": arm["version"],
-        "test_mode": arm.get("test_mode"),
         "parameter_signature": arm.get("parameter_signature"),
         "metrics": metrics,
     }
@@ -71,7 +70,6 @@ def generate(input_root: Path, output_dir: Path) -> dict:
                 "software": status.get("software", "unknown"),
                 "version": status.get("version", "unknown"),
                 "architecture": status.get("architecture", "unknown"),
-                "test_mode": status.get("test_mode"),
                 "run_id": status.get("run_id"),
                 "status": status.get("status", "failed"),
                 "failed_stage": status.get("failed_stage"),
@@ -81,7 +79,7 @@ def generate(input_root: Path, output_dir: Path) -> dict:
     results = [result for result in results if result]
     grouped: dict[tuple, dict[str, dict]] = defaultdict(dict)
     for result in results:
-        key = (result.get("category"), result.get("software"), result.get("version"), result.get("test_mode"))
+        key = (result.get("category"), result.get("software"), result.get("version"))
         grouped[key][result.get("architecture")] = result
 
     output_dir.mkdir(parents=True, exist_ok=True)

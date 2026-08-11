@@ -17,8 +17,7 @@ def parameter_signature(context: RunContext) -> str:
     payload = {
         "software": context.software,
         "version": context.version,
-        "test_mode": context.test_mode,
-        "mode": context.mode_config,
+        "environment": context.execution.get("environment", {}),
     }
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(raw).hexdigest()
@@ -49,7 +48,6 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "version": context.version,
         "architecture": context.architecture,
         "run_id": context.run_id,
-        "test_mode": context.test_mode,
         "status": command_status,
         "cleanup_status": "pending",
         "parameter_signature": parameter_signature(context),

@@ -26,7 +26,7 @@ def configured_runner_labels() -> dict[str, str]:
     return {arch: labels[arch] for arch in DEFAULT_ARCHITECTURES}
 
 
-def build_matrix(software: str, version: str, architecture: str, test_mode: str) -> dict:
+def build_matrix(software: str, version: str, architecture: str) -> dict:
     selected_software = None if software == "all" else {v.strip() for v in software.split(",") if v.strip()}
     selected_versions = None if version == "all" else {v.strip() for v in version.split(",") if v.strip()}
     architectures = DEFAULT_ARCHITECTURES if architecture == "all" else (architecture,)
@@ -49,8 +49,7 @@ def build_matrix(software: str, version: str, architecture: str, test_mode: str)
             if selected_versions is not None and case_version not in selected_versions:
                 continue
             matched_versions.add(case_version)
-            mode = case["modes"][test_mode]
-            timeout = int(mode.get("timeout_minutes", 180))
+            timeout = int(case["execution"].get("timeout_minutes", 180))
             for arch in architectures:
                 include.append({
                     "category": case["category"],
@@ -58,7 +57,6 @@ def build_matrix(software: str, version: str, architecture: str, test_mode: str)
                     "version": case_version,
                     "arch": arch,
                     "runner_label": runner_labels[arch],
-                    "test_mode": test_mode,
                     "timeout_minutes": timeout,
                     "job_timeout_minutes": timeout + 30,
                     "case_path": str(path.relative_to(ROOT)),
@@ -83,11 +81,10 @@ def main() -> int:
     parser.add_argument("--software", default="all")
     parser.add_argument("--version", default="all")
     parser.add_argument("--architecture", choices=("all", *DEFAULT_ARCHITECTURES), default="all")
-    parser.add_argument("--test-mode", choices=("smoke", "full"), default="full")
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
     try:
-        matrix = build_matrix(args.software, args.version, args.architecture, args.test_mode)
+        matrix = build_matrix(args.software, args.version, args.architecture)
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

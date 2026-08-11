@@ -1,0 +1,54 @@
+name: redis
+category: Database
+enabled: true
+tags: [key-value, in-memory, database]
+versions: ["7.4.10", "8.0.0", "8.0.6"]
+execution:
+  type: command
+  interface: staged
+  entrypoint: redis_test.sh
+  timeout_minutes: 180
+  environment:
+    ITERATIONS: 3
+    BENCH_COMMANDS: SET,GET,INCR,LPUSH,LRANGE_100,SADD,HSET,ZADD
+    CONCURRENCY_LEVELS: 1,10,50,100,200
+    NUM_REQUESTS: 100000
+    DATA_SIZES: 64,256,1024,4096
+    CLIENT_COUNTS: 1,10,50,100,all
+    PERSISTENCE_MODES: none,aof,rdb
+    REDIS_SERVICE_PORT: 16379
+  expected_outputs:
+    - version_info.json
+    - benchmark_redis.json
+    - micro_benchmark.json
+    - results.json
+    - results.txt
+    - results.log
+metrics:
+  set_qps_c50:
+    source: results.json
+    path: summary.set_qps_c50
+    unit: ops/s
+    direction: higher_is_better
+    target: 1000
+  get_qps_c50:
+    source: results.json
+    path: summary.get_qps_c50
+    unit: ops/s
+    direction: higher_is_better
+    target: 1000
+  average_latency:
+    source: results.json
+    path: summary.avg_latency_ms
+    unit: ms
+    direction: lower_is_better
+  maximum_p99_latency:
+    source: results.json
+    path: summary.max_p99_latency_ms
+    unit: ms
+    direction: lower_is_better
+  client_scaling_ratio:
+    source: results.json
+    path: summary.client_scaling_ratio
+    unit: ratio
+    direction: higher_is_better
