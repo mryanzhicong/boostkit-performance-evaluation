@@ -8,9 +8,9 @@
 
 | 参数 | 对应函数 | 用途 |
 |---|---|---|
-| `build` | `phase_build` | 克隆精确版本，按 Redis 官方 README 的 core 命令裸机编译并安装到任务专属前缀。 |
-| `validate` | `phase_validate` | 校验架构、命令、安装文件和实际 Redis 版本，生成版本信息。 |
-| `start-service` | `phase_start_service` | 从任务安装前缀启动基准使用的 Redis 服务并等待就绪。 |
+| `build` | `phase_build` | 克隆精确版本，原样执行 `/root/redis/redis_test.sh` 的构建命令。 |
+| `validate` | `phase_validate` | 校验架构、命令、源码构建文件和实际 Redis 版本，生成版本信息。 |
+| `start-service` | `phase_start_service` | 从源码树的 `src/redis-server` 启动基准使用的 Redis 服务并等待就绪。 |
 | `test` | `phase_test` | 复用已启动服务执行主基准和微基准。 |
 | `stop-service` | `phase_stop_service` | 停止服务；该阶段可重复执行，Workflow 无条件调用。 |
 | `collect-report` | `phase_collect_report` | 聚合原始结果、生成 Redis 文本报告并检查输出完整性。 |
@@ -26,8 +26,8 @@
 
 ## 裸机边界
 
-Runner 必须预装 Bash、Git、Python 3、GCC、G++、GNU ar 和 Make。进入克隆后的源码目录后，脚本直接执行 Redis 官方 README 的 core 构建命令 `make -j "$(nproc)" all`，随后执行 `make install PREFIX=...` 安装到任务专属目录；不单独构建依赖，不指定 allocator、TLS 或其他编译参数，也不使用 sudo、apt、dnf 或系统级 pip。
+Runner 必须预装 Git、Python 3、GCC 和 Make。构建阶段只把原脚本的临时源码目录换成 Workflow 任务专属目录，构建命令保持为 `make -j$(nproc) BUILD_TLS=no`。构建完成后直接使用源码树中的 `src/redis-server`、`src/redis-benchmark` 和 `src/redis-cli`，不执行 `make install`，也不增加、删除或重写其他 Make 参数。
 
-公共框架在启动软件脚本前剔除 self-hosted Runner 服务继承的 Make 和编译参数，避免 `MAKEFLAGS`、`MYCFLAGS` 等宿主机变量改变官方构建命令；软件若确实需要编译变量，必须在自己的 `case.yaml` 中显式声明。
+公共框架只通过 `EXPECTED_ARCH` 告知用例预期架构，不再设置 `TARGET_ARCH`。GNU Make 的内置 C 编译规则会把 `TARGET_ARCH` 当成编译参数；此前设置为 `aarch64` 后，Lua 编译命令错误地把它当作输入文件。
 
 源码、构建产物、安装前缀、服务数据和临时文件都位于 `/tmp/boostkit-perf`。国内网络环境可通过 Runner 服务环境中的 `REDIS_SOURCE_URL` 指向内部只读源码镜像。

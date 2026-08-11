@@ -26,20 +26,6 @@ class StageTerminated(RuntimeError):
     """Raised when the runner asks an active stage to terminate."""
 
 
-INHERITED_BUILD_VARIABLES = (
-    "CFLAGS",
-    "CPPFLAGS",
-    "CXXFLAGS",
-    "LDFLAGS",
-    "MAKEFLAGS",
-    "MAKEOVERRIDES",
-    "MFLAGS",
-    "MYCFLAGS",
-    "MYLDFLAGS",
-    "MYLIBS",
-)
-
-
 def _stringify(value: object) -> str:
     if isinstance(value, bool):
         return "1" if value else "0"
@@ -81,14 +67,9 @@ def _stream_output(stream: TextIO, log: TextIO) -> None:
 
 def build_environment(context: RunContext, case_venv: Path | None = None) -> dict[str, str]:
     environment = dict(os.environ)
-    # Self-hosted Runner service variables must not silently change how a case
-    # is compiled. A case can still opt in explicitly through case.yaml below.
-    for variable in INHERITED_BUILD_VARIABLES:
-        environment.pop(variable, None)
     environment.update({
         "SOFTWARE_VERSION": context.version,
         "EXPECTED_ARCH": context.architecture,
-        "TARGET_ARCH": context.architecture,
         "RESULTS_DIR": str(context.output_dir),
         "PERF_RUN_ID": context.run_id,
         "PERF_WORK_DIR": str(context.work_dir),

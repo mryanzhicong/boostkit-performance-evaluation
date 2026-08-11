@@ -75,16 +75,19 @@ def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
         assert f"{function}()" in entrypoint
 
 
-def test_redis_build_uses_the_official_readme_commands() -> None:
+def test_redis_build_preserves_the_original_script_command() -> None:
     entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
         encoding="utf-8"
     )
-    assert 'make -j "$(nproc)" all' in entrypoint
-    assert 'make install PREFIX="${INSTALL_DIR}"' in entrypoint
-    for custom_build_setting in (
-        "BUILD_TLS",
+    assert "make -j$(nproc) BUILD_TLS=no" in entrypoint
+    assert 'REDIS_SERVER_BIN="${SOURCE_DIR}/src/redis-server"' in entrypoint
+    assert 'REDIS_BENCHMARK_BIN="${SOURCE_DIR}/src/redis-benchmark"' in entrypoint
+    assert 'REDIS_CLI_BIN="${SOURCE_DIR}/src/redis-cli"' in entrypoint
+    for structural_regression in (
+        "make install",
+        "INSTALL_DIR",
         "DEPENDENCY_JOBS",
         "REDIS_MALLOC",
         'make -C "${SOURCE_DIR}/deps"',
     ):
-        assert custom_build_setting not in entrypoint
+        assert structural_regression not in entrypoint

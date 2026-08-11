@@ -8,10 +8,9 @@ RESULTS_DIR="${RESULTS_DIR:-${SCRIPT_DIR}/results/${SOFTWARE_VERSION}}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-/tmp/boostkit-perf/local/Database/redis/${SOFTWARE_VERSION}}"
 REDIS_SOURCE_URL="${REDIS_SOURCE_URL:-https://github.com/redis/redis.git}"
 SOURCE_DIR="${PERF_WORK_DIR}/redis-source"
-INSTALL_DIR="${PERF_WORK_DIR}/install"
-REDIS_SERVER_BIN="${INSTALL_DIR}/bin/redis-server"
-REDIS_BENCHMARK_BIN="${INSTALL_DIR}/bin/redis-benchmark"
-REDIS_CLI_BIN="${INSTALL_DIR}/bin/redis-cli"
+REDIS_SERVER_BIN="${SOURCE_DIR}/src/redis-server"
+REDIS_BENCHMARK_BIN="${SOURCE_DIR}/src/redis-benchmark"
+REDIS_CLI_BIN="${SOURCE_DIR}/src/redis-cli"
 REDIS_SERVICE_PORT="${REDIS_SERVICE_PORT:-16379}"
 SERVICE_DIR="${PERF_WORK_DIR}/service"
 LOG_FILE="${RESULTS_DIR}/results.log"
@@ -32,7 +31,7 @@ normalize_arch() {
 
 require_commands() {
     local command missing=0
-    for command in ar bash git python3 gcc g++ make; do
+    for command in git python3 gcc make; do
         if ! command -v "${command}" >/dev/null 2>&1; then
             log "ERROR: required command is missing: ${command}"
             missing=1
@@ -54,22 +53,14 @@ check_architecture() {
 phase_build() {
     check_architecture
     require_commands
-    [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" ]] || {
-        log "ERROR: source or install directory is not clean under ${PERF_WORK_DIR}"
+    [[ ! -e "${SOURCE_DIR}" ]] || {
+        log "ERROR: source directory is not clean under ${PERF_WORK_DIR}"
         return 20
     }
     log "cloning Redis ${SOFTWARE_VERSION} from ${REDIS_SOURCE_URL}"
     git clone --branch "${SOFTWARE_VERSION}" --depth 1 "${REDIS_SOURCE_URL}" "${SOURCE_DIR}"
-    log "building Redis with the official README core build command"
-    (
-        cd "${SOURCE_DIR}"
-        make -j "$(nproc)" all
-    )
-    log "installing Redis into ${INSTALL_DIR}"
-    (
-        cd "${SOURCE_DIR}"
-        make install PREFIX="${INSTALL_DIR}"
-    )
+    log "building Redis with the original test script command"
+    (cd "${SOURCE_DIR}" && make -j$(nproc) BUILD_TLS=no)
 }
 
 phase_validate() {

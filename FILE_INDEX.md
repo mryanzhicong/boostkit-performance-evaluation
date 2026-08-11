@@ -70,7 +70,7 @@
 |---|---|
 | `README.md` | 说明 Redis 用例来源、测试范围、Runner 编译依赖、源码地址配置和指标方向。 |
 | `case.yaml` | 配置 Redis 7.4.10、8.0.0、8.0.6 的正式参数、输出和报告指标。 |
-| `redis_test.sh` | 实现 Workflow 调用的六个 Redis 阶段函数；按 Redis 官方 README 执行 core 构建安装，负责校验、服务生命周期、测试和软件级报告。 |
+| `redis_test.sh` | 将原 Redis 测试脚本拆成 Workflow 调用的六个阶段函数；保留原始 Make 参数和源码树二进制用法，负责校验、服务生命周期、测试和软件级报告。 |
 | `scripts/write_version_info.py` | 记录实际 Redis 版本、架构及运行环境。 |
 | `scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
 | `scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
