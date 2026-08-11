@@ -23,6 +23,8 @@ python3 -m pytest framework/verification
 
 每个矩阵任务由 Workflow 显式编排：准备环境、裸机构建安装、校验安装结果、启动服务、执行性能测试、停止服务、收集并标准化报告、全局清理。各软件入口实现同一套分阶段接口，Workflow 不包含软件名称判断。
 
+同一矩阵任务内的阶段严格串行：阶段命令及其输出转发全部结束后才进入下一步。stdout/stderr 实时显示在 Actions 控制台并同时保存为 `command-<stage>.log`；超时或中断会终止整个阶段进程组。只有 `start-service` 启动并通过就绪检查的被测服务允许保留到后续测试阶段。
+
 正式性能测试只允许在专用 Runner 上通过 `workflow_dispatch` 手动启动。
 
 ## Runner 标签

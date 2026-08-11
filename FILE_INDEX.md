@@ -33,7 +33,7 @@
 | `generate_matrix.py` | 按手动输入筛选软件、版本和架构；`all` 默认生成 x86_64 与 aarch64 两组正式任务。 |
 | `context.py` | 定义单个软件、版本、架构任务的不可变运行上下文。 |
 | `adapter_base.py` | 保留的扩展接口定义；当前 staged command 流程不加载软件专用适配器。 |
-| `command_adapter.py` | 通用分阶段命令适配器；通过环境变量和阶段名调用现有测试脚本，最终阶段检查预期输出。 |
+| `command_adapter.py` | 通用分阶段命令适配器；实时输出并保存阶段日志，等待正常退出，超时或中断时终止整个子进程组，最终阶段检查预期输出。 |
 | `run_case.py` | 单任务阶段控制器；处理 prepare/build/validate/start-service/test/stop-service/collect-report 状态、环境采集和结果标准化。 |
 | `cleanup_environment.sh` | 专用裸机 Runner 全局清理及二次验证；清理统一工作根目录、关联进程和挂载点。 |
 | `process_scanner.py` | 扫描 `/proc` 定位真正引用工作根目录的残留进程，并排除扫描器自身，供全局清理使用。 |

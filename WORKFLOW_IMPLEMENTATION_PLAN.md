@@ -199,7 +199,7 @@ flowchart TD
 | 文件 | 用途 | 关键设计 |
 |---|---|---|
 | `adapter_base.py` | 保留未来扩展所需的接口、返回类型和阶段异常定义。 | 当前正式 Workflow 不加载软件专用适配器。 |
-| `command_adapter.py` | 将公共 context 和阶段名转换为环境变量与命令行，调用已有 `<software>_test.sh`。 | 每个阶段独立日志；`collect-report` 阶段检查全部预期输出。 |
+| `command_adapter.py` | 将公共 context 和阶段名转换为环境变量与命令行，调用已有 `<software>_test.sh`。 | 实时输出并保存独立阶段日志；等待主进程和输出转发结束；超时或中断终止整个子进程组；`collect-report` 检查全部预期输出。 |
 | `context.py` | 定义一次任务的只读上下文。 | 包含软件、版本、架构、路径、参数、运行编号和日志器；避免通过全局环境变量传递状态。 |
 | `generate_matrix.py` | 递归发现 `software/*/*/case.yaml`，按手动输入展开矩阵。 | 默认展开两个架构；指定架构时才过滤；输出稳定、可排序的 JSON。 |
 | `validate_case.py` | 使用 Schema 校验清单，并检查目录、适配器、版本和指标定义的一致性。 | 任何校验失败都发生在占用性能 Runner 之前。 |
@@ -221,6 +221,8 @@ prepare：加载并校验 case.yaml、创建 context、校验架构、采集运�
 → stop-service：无条件调用软件服务停止函数
 → collect-report：调用软件报告函数、检查输出、采集运行后环境并标准化
 ```
+
+同一矩阵 Job 内的阶段严格串行。`run_case.py` 只有在阶段脚本退出且 stdout/stderr 已完整转发后才返回；GitHub Actions 随后才启动下一步。`start-service` 是唯一允许保留后台进程的阶段，它必须先通过就绪检查，并由 `stop-service` 在 `always()` 路径中停止和验收。
 
 Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边界为：
 

@@ -106,6 +106,11 @@ def main() -> int:
     context = build_context(args, case)
     context.output_dir.mkdir(parents=True, exist_ok=True)
     context.work_dir.mkdir(parents=True, exist_ok=True)
+    print(
+        f"[stage] starting {args.stage}: {context.software} {context.version} "
+        f"on {context.architecture}",
+        flush=True,
+    )
 
     from collect_environment import collect
     from reporting.single_report import render
@@ -118,6 +123,7 @@ def main() -> int:
             return 20
         atomic_write_json(context.output_dir / "environment_before.json", collect())
         update_status(context, status="running", stage="prepare")
+        print("[stage] prepare completed successfully", flush=True)
         print(context.output_dir)
         return 0
 
@@ -139,11 +145,14 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return exit_code
 
+    print(f"[stage] {args.stage} command exited with code {result.returncode}", flush=True)
+
     if args.stage == "stop-service":
         if result.returncode != 0:
             mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
             return result.returncode or STAGE_EXIT_CODES[args.stage]
         update_status(context, stage=args.stage, service_stop_status="passed")
+        print("[stage] stop-service completed successfully", flush=True)
         return 0
 
     if args.stage == "collect-report":
@@ -163,8 +172,10 @@ def main() -> int:
             return result.returncode or STAGE_EXIT_CODES[args.stage]
         if previous.get("status") == "failed":
             update_status(context, stage=args.stage)
+            print("[stage] collect-report completed; preserving the earlier failure", flush=True)
             return 0
         update_status(context, status="passed", stage="complete", exit_code=0)
+        print("[stage] collect-report completed successfully", flush=True)
         print(context.output_dir)
         return 0
 
@@ -172,6 +183,7 @@ def main() -> int:
         mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
         return result.returncode or STAGE_EXIT_CODES[args.stage]
     update_status(context, status="running", stage=args.stage)
+    print(f"[stage] {args.stage} completed successfully", flush=True)
     return 0
 
 
