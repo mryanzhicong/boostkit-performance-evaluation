@@ -1,5 +1,7 @@
 """Verify normalization and cross-architecture direction semantics."""
 
+import subprocess
+import sys
 from pathlib import Path
 
 from aggregate_results import normalize
@@ -7,6 +9,7 @@ from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
 from mark_cleanup import mark
+from process_scanner import matching_processes, references_root
 from reporting.comparison_report import render
 
 
@@ -111,3 +114,34 @@ def test_report_includes_status_when_execution_has_no_normalized_result(tmp_path
     summary = generate(tmp_path / "artifacts", tmp_path / "report")
     assert summary["total"] == 1
     assert summary["failed"] == 1
+
+
+def test_process_scanner_does_not_match_its_own_root_argument(tmp_path: Path) -> None:
+    work_root = tmp_path / "boostkit-perf"
+    scanner = Path(__file__).resolve().parents[1] / "process_scanner.py"
+    completed = subprocess.run(
+        [sys.executable, str(scanner), "--root", str(work_root)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout == ""
+    assert references_root(
+        b"python3\0worker.py\0/tmp/boostkit-perf/case-work\0",
+        Path("/tmp/boostkit-perf"),
+    )
+
+
+def test_process_scanner_finds_real_work_root_process(tmp_path: Path) -> None:
+    work_root = tmp_path / "boostkit-perf"
+    process = subprocess.Popen([
+        sys.executable,
+        "-c",
+        "import time; time.sleep(30)",
+        str(work_root / "case-work"),
+    ])
+    try:
+        assert process.pid in matching_processes(work_root)
+    finally:
+        process.terminate()
+        process.wait(timeout=5)

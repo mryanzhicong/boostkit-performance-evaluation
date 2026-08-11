@@ -6,6 +6,7 @@ set -euo pipefail
 
 MODE="${1:-}"
 WORK_ROOT="${PERF_WORK_ROOT:-/tmp/boostkit-perf}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly TMP_PATTERNS=(
     "/tmp/faiss_build_*"
     "/tmp/hnswlib_build_*"
@@ -30,9 +31,18 @@ fi
 command -v docker >/dev/null 2>&1 || fail "docker is required to certify a clean runner"
 
 matching_processes() {
-    ps -eo pid=,args= | awk -v root="${WORK_ROOT}/" '
-        index($0, root) { print $1 }
-    ' | awk -v self="$$" -v parent="${PPID}" '$1 != self && $1 != parent'
+    python3 "${SCRIPT_DIR}/process_scanner.py" \
+        --root "${WORK_ROOT}" \
+        --exclude "$$" \
+        --exclude "${PPID}"
+}
+
+describe_processes() {
+    local pid
+    while read -r pid; do
+        [[ -n "${pid}" ]] || continue
+        ps -p "${pid}" -o pid=,user=,args= 2>/dev/null || true
+    done
 }
 
 matching_mounts() {
@@ -44,7 +54,7 @@ verify_clean() {
     local dirty=0
     if [[ -n "$(matching_processes)" ]]; then
         log "residual processes still reference ${WORK_ROOT}"
-        matching_processes >&2
+        matching_processes | describe_processes >&2
         dirty=1
     fi
     if [[ -d "${WORK_ROOT}" ]] && find "${WORK_ROOT}" -mindepth 1 -print -quit | grep -q .; then

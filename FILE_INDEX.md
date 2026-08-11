@@ -37,6 +37,7 @@
 | `command_adapter.py` | 通用命令适配器；通过环境变量调用现有测试脚本并检查预期输出。 |
 | `run_case.py` | 单任务总控；校验架构、采集环境、执行、规范化结果、生成单任务报告和状态。 |
 | `cleanup_environment.sh` | 专用 Runner 全局清理及二次验证；清理所有 Docker 资源和已知用例临时目录。 |
+| `process_scanner.py` | 扫描 `/proc` 定位真正引用工作根目录的残留进程，并排除扫描器自身，供全局清理使用。 |
 | `mark_cleanup.py` | 把 Workflow 的后置清理结果回写到任务状态和规范化结果；清理失败使用退出码 80。 |
 | `collect_environment.py` | 采集测试前后的 OS、CPU、内存、内核等环境快照。 |
 | `aggregate_results.py` | 把现有脚本的 `results.json` 等结果转换成统一指标模型。 |

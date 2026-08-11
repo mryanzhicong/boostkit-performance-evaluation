@@ -81,6 +81,7 @@ flowchart TD
 │   ├── run_case.py
 │   ├── collect_environment.py
 │   ├── cleanup_environment.sh
+│   ├── process_scanner.py
 │   ├── mark_cleanup.py
 │   ├── aggregate_results.py
 │   ├── generate_comparison.py
