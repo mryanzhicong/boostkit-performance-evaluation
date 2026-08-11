@@ -8,15 +8,29 @@ import json
 import sys
 from pathlib import Path
 
-from validate_case import ROOT, discover_cases, validate_case
+from validate_case import ROOT, discover_cases, load_yaml, validate_case
 
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
+
+
+def configured_runner_labels() -> dict[str, str]:
+    defaults = load_yaml(ROOT / "config" / "defaults.yaml")
+    labels = defaults.get("runner_labels")
+    if not isinstance(labels, dict):
+        raise ValueError("config/defaults.yaml must define runner_labels")
+    missing = set(DEFAULT_ARCHITECTURES) - set(labels)
+    if missing:
+        raise ValueError(f"runner labels not configured for: {', '.join(sorted(missing))}")
+    if not all(isinstance(labels[arch], str) and labels[arch] for arch in DEFAULT_ARCHITECTURES):
+        raise ValueError("runner labels must be non-empty strings")
+    return {arch: labels[arch] for arch in DEFAULT_ARCHITECTURES}
 
 
 def build_matrix(software: str, version: str, architecture: str, test_mode: str) -> dict:
     selected_software = None if software == "all" else {v.strip() for v in software.split(",") if v.strip()}
     selected_versions = None if version == "all" else {v.strip() for v in version.split(",") if v.strip()}
     architectures = DEFAULT_ARCHITECTURES if architecture == "all" else (architecture,)
+    runner_labels = configured_runner_labels()
     include: list[dict] = []
     matched_software: set[str] = set()
     matched_versions: set[str] = set()
@@ -43,6 +57,7 @@ def build_matrix(software: str, version: str, architecture: str, test_mode: str)
                     "software": name,
                     "version": case_version,
                     "arch": arch,
+                    "runner_label": runner_labels[arch],
                     "test_mode": test_mode,
                     "timeout_minutes": timeout,
                     "job_timeout_minutes": timeout + 30,

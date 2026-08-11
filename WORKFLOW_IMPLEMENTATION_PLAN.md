@@ -143,7 +143,7 @@ flowchart TD
 - 每项指标的单位和优化方向。
 - 外部数据集地址、版本、校验和及本地缓存策略。
 
-`case.yaml` 不保存 Runner 标签，也不决定默认架构。默认双架构由公共矩阵生成器控制，Runner 映射由 GitHub Repository Variables 控制。
+`case.yaml` 不保存 Runner 标签，也不决定默认架构。默认双架构由公共矩阵生成器控制，Runner 标签只在公共 Workflow 中统一映射。
 
 #### `software/<category>/<software>/<software>_test.sh`
 
@@ -271,7 +271,7 @@ Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边
 | 文件 | 用途 | 设计要求 |
 |---|---|---|
 | `categories.yaml` | 定义允许使用的分类名称和展示顺序。 | 分类固定为 AI、Bigdata、Storage、Database、Media、HPC、Middleware、Toolchain、Others；清单中的 category 必须命中该文件。 |
-| `defaults.yaml` | 定义所有软件共享的默认值。 | 包括默认双架构、smoke/full 模式、通用超时、输出根目录和重试策略；不保存 Runner 标签和机器地址。 |
+| `defaults.yaml` | 定义所有软件共享的默认值。 | 包括默认双架构、架构到 Runner 标签的唯一映射、smoke/full 模式、通用超时和输出根目录；不保存机器地址。 |
 
 ### 3.5 `baselines/`：受控性能基线
 
@@ -418,7 +418,7 @@ thresholds:
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 ```
 
-动态矩阵只包含用例属性，不包含 Runner 标签：
+动态矩阵包含用例属性，以及从公共配置解析出的 `runner_label`；软件清单不包含 Runner 标签：
 
 ```json
 {
@@ -426,12 +426,14 @@ DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
     {
       "software": "faiss",
       "version": "1.14.2",
-      "arch": "x86_64"
+      "arch": "x86_64",
+      "runner_label": "PERF_RUNNER_X86_64"
     },
     {
       "software": "faiss",
       "version": "1.14.2",
-      "arch": "aarch64"
+      "arch": "aarch64",
+      "runner_label": "PERF_RUNNER_ARM64"
     }
   ]
 }
@@ -455,14 +457,14 @@ DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 
 这些文件先由现有代码迁移和人工维护。待全部现有用例稳定运行后，再单独评审测试用例模板和脚手架设计。
 
-架构到 Runner 的映射由 GitHub Repository Variables 或 Environment Variables 集中管理：
+架构到 Runner 的映射只在 `config/defaults.yaml` 中管理：
 
 ```text
-PERF_RUNNER_X86_LABEL=perf-x86
-PERF_RUNNER_ARM64_LABEL=perf-arm64
+x86_64  -> PERF_RUNNER_X86_64
+aarch64 -> PERF_RUNNER_ARM64
 ```
 
-Workflow 根据 `matrix.arch` 选择对应变量。更换 Runner 时只修改仓库变量或 Runner 标签，不修改任何软件清单，也不重新提交软件用例。
+矩阵生成器根据 `arch` 写入 `runner_label`，Workflow 直接消费该字段。替换机器时将新 Runner 注册为相同标签即可，不修改任何软件清单。
 
 ## 5. 手动触发
 
@@ -537,26 +539,25 @@ x86_64 Runner:
   linux
   perf
   x64
-  perf-x86
+  PERF_RUNNER_X86_64
 
 aarch64 Runner:
   self-hosted
   linux
   perf
   arm64
-  perf-arm64
+  PERF_RUNNER_ARM64
 ```
 
-Runner 标签不进入动态矩阵，也不进入软件清单。Workflow 通过仓库变量完成集中映射：
+Runner 标签不进入软件清单，只由公共配置解析后进入动态矩阵。Workflow 不重复保存标签：
 
 ```yaml
-runs-on: >-
-  ${{ matrix.arch == 'x86_64'
-      && vars.PERF_RUNNER_X86_LABEL
-      || vars.PERF_RUNNER_ARM64_LABEL }}
+runs-on:
+  - self-hosted
+  - ${{ matrix.runner_label }}
 ```
 
-Workflow 在生成矩阵前检查两个变量均非空。替换机器时，将新 Runner 注册到对应标签，或只修改变量值；全部软件会自动使用新 Runner。
+无需配置仓库变量。修改标签时只改 `config/defaults.yaml`；替换机器但保留标签时无需修改代码。
 
 ### 6.2 性能 Runner 要求
 

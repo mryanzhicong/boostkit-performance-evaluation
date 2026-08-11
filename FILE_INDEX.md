@@ -24,7 +24,7 @@
 | 文件 | 用途 |
 |---|---|
 | `categories.yaml` | 软件分类白名单，防止目录分类自由扩散。 |
-| `defaults.yaml` | 两种默认架构、输出/工作根目录、模式超时和 Runner 仓库变量名。 |
+| `defaults.yaml` | 两种默认架构、架构到 Runner 标签的唯一映射、输出/工作根目录和模式超时。 |
 
 ## `framework/`
 

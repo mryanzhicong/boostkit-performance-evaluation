@@ -44,20 +44,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-    env:
-      X86_RUNNER_LABEL: ${{ vars.PERF_RUNNER_X86_LABEL }}
-      ARM64_RUNNER_LABEL: ${{ vars.PERF_RUNNER_ARM64_LABEL }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - run: uv sync --frozen --dev
-      - name: Validate repository runner variables
-        shell: bash
-        run: |
-          [[ -n "${X86_RUNNER_LABEL}" ]] || { echo "::error::PERF_RUNNER_X86_LABEL is not configured"; exit 1; }
-          [[ -n "${ARM64_RUNNER_LABEL}" ]] || { echo "::error::PERF_RUNNER_ARM64_LABEL is not configured"; exit 1; }
       - name: Validate all manually maintained cases
         run: uv run python framework/validate_case.py --all
       - name: Generate execution matrix
@@ -86,7 +78,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
-    runs-on: ${{ matrix.arch == 'x86_64' && vars.PERF_RUNNER_X86_LABEL || vars.PERF_RUNNER_ARM64_LABEL }}
+    runs-on:
+      - self-hosted
+      - ${{ matrix.runner_label }}
     timeout-minutes: ${{ matrix.job_timeout_minutes }}
     env:
       PERF_DEDICATED_RUNNER: "true"

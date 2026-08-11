@@ -21,14 +21,14 @@ uv run pytest framework/verification
 
 正式性能测试只允许在专用 Runner 上通过 `workflow_dispatch` 手动启动。
 
-## 正式启用前配置
+## Runner 标签
 
-在 GitHub 仓库 Variables 中配置：
+Runner 标签只在 `config/defaults.yaml` 中维护，当前映射为：
 
-- `PERF_RUNNER_X86_LABEL`：x86_64 专用 Runner 池的可变标签。
-- `PERF_RUNNER_ARM64_LABEL`：aarch64 专用 Runner 池的可变标签。
+- x86_64 使用 `PERF_RUNNER_X86_64`。
+- aarch64 使用 `PERF_RUNNER_ARM64`。
 
-标签更换时只改仓库变量，无需修改任一软件清单。手动触发时 `architecture=all` 是默认值，会同时生成两种架构任务。
+矩阵生成器读取该配置，Workflow 只消费 `matrix.runner_label`，不存在第二份标签硬编码。无需配置 GitHub Actions Variables。手动触发时 `architecture=all` 是默认值，会同时生成两种架构任务；选择单个架构时只使用对应标签。
 
 Runner 必须是专用机器，推荐由只读金镜像按任务临时创建。金镜像需预装 Docker、Python 3、C/C++ 工具链及当前 7 个用例所需的系统开发库；Workflow 禁止测试脚本通过 apt/dnf 或系统级 pip 改写宿主机。Python 包、缓存和构建目录均放入 `/tmp/boostkit-perf`，任务前后执行全局清理与验收。
 
