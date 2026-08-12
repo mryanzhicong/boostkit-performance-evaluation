@@ -46,14 +46,13 @@ jobs:
         run: |
           echo "::error::update_baseline requires architecture=all"
           exit 2
-      - name: Install framework runtime dependencies from Tsinghua mirror
+      - name: Install framework runtime dependencies from PyPI
         shell: bash
         run: |
           framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
-            --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
@@ -94,14 +93,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
-      - name: Install framework runtime dependencies from Tsinghua mirror
+      - name: Install framework runtime dependencies from Aliyun mirror
         shell: bash
         run: |
           framework_deps="${PERF_WORK_ROOT}/framework-deps"
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
-            --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+            --index-url https://mirrors.aliyun.com/pypi/simple/ \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"

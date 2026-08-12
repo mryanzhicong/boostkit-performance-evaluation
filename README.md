@@ -57,7 +57,7 @@ flowchart TD
 Prepare Job 在 `ubuntu-latest` 上执行，不占用性能 Runner：
 
 1. 校验 Baseline 更新范围。
-2. 从清华 PyPI 镜像安装固定版本的 PyYAML。
+2. 从默认 PyPI 安装固定版本的 PyYAML，不为 Ubuntu 配置镜像站。
 3. 使用 `framework/catalog.py matrix` 一次完成全部软件清单校验和矩阵生成。
 4. 把矩阵写入 Job 输出和 Workflow Summary。
 
@@ -127,10 +127,10 @@ Workflow 中不硬编码具体标签，也不需要 GitHub Actions Variables。�
 PyYAML==6.0.2
 ```
 
-安装统一使用清华 PyPI 镜像：
+Ubuntu Prepare Job 使用 pip 默认的 PyPI，不配置镜像站。专用 Performance Runner 统一使用阿里云 PyPI 镜像：
 
 ```text
-https://pypi.tuna.tsinghua.edu.cn/simple
+https://mirrors.aliyun.com/pypi/simple/
 ```
 
 Prepare Job 把依赖安装到 `${RUNNER_TEMP}/boostkit-framework-deps`。每个 Performance Job 在全局前置清理后，把依赖安装到 `/tmp/boostkit-perf/framework-deps`，后续全部阶段共同复用，并在全局后置清理时统一删除。依赖不会写入 Runner 的系统 Python。
@@ -360,11 +360,18 @@ command-stop.log
 
 ## 本地检查
 
-安装本地验证依赖：
+Ubuntu 本地环境直接使用默认 PyPI 安装验证依赖：
 
 ```bash
 python3 -m pip install \
-  --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+  "PyYAML==6.0.2" "pytest>=8.0,<9.0"
+```
+
+其他环境使用阿里云镜像：
+
+```bash
+python3 -m pip install \
+  --index-url https://mirrors.aliyun.com/pypi/simple/ \
   "PyYAML==6.0.2" "pytest>=8.0,<9.0"
 ```
 
