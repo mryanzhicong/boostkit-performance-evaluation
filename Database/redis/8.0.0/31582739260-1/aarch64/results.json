@@ -1,0 +1,371 @@
+{
+  "test_time": "2026-08-12T09:28:43Z",
+  "software": "redis",
+  "version": "8.0.0",
+  "environment": {
+    "timestamp": "2026-08-12T09:25:12Z",
+    "software": "redis",
+    "software_version": "8.0.0",
+    "requested_version": "8.0.0",
+    "architecture": "aarch64",
+    "cpu_model": "aarch64",
+    "cpu_cores": 256,
+    "os": "Linux-6.6.0-159.4.3.154.oe2403sp4.aarch64-aarch64-with-glibc2.38",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.aarch64",
+    "python_version": "3.11.6"
+  },
+  "benchmarks": {
+    "primary": {
+      "benchmark": "redis_ops",
+      "software": "redis",
+      "version": "8.0.0",
+      "architecture": "aarch64",
+      "timestamp": "2026-08-12T09:28:04Z",
+      "parameters": {
+        "commands": [
+          "SET",
+          "GET",
+          "INCR",
+          "LPUSH",
+          "LRANGE_100",
+          "SADD",
+          "HSET",
+          "ZADD"
+        ],
+        "concurrency_levels": [
+          1,
+          10,
+          50,
+          100,
+          200
+        ],
+        "num_requests": 100000,
+        "iterations": 3,
+        "persistence": "none"
+      },
+      "results_summary": {
+        "SET": {
+          "concurrency_1": {
+            "qps": 43062.8867,
+            "avg_latency_ms": 0.021,
+            "p99_latency_ms": 0.0363
+          },
+          "concurrency_10": {
+            "qps": 116595.5,
+            "avg_latency_ms": 0.054,
+            "p99_latency_ms": 0.079
+          },
+          "concurrency_50": {
+            "qps": 118763.0667,
+            "avg_latency_ms": 0.2217,
+            "p99_latency_ms": 0.3003
+          },
+          "concurrency_100": {
+            "qps": 110523.4267,
+            "avg_latency_ms": 0.4663,
+            "p99_latency_ms": 0.743
+          },
+          "concurrency_200": {
+            "qps": 111305.7033,
+            "avg_latency_ms": 0.921,
+            "p99_latency_ms": 1.503
+          }
+        },
+        "GET": {
+          "concurrency_1": {
+            "qps": 45895.76,
+            "avg_latency_ms": 0.02,
+            "p99_latency_ms": 0.031
+          },
+          "concurrency_10": {
+            "qps": 114119.4667,
+            "avg_latency_ms": 0.0527,
+            "p99_latency_ms": 0.0843
+          },
+          "concurrency_50": {
+            "qps": 110120.5167,
+            "avg_latency_ms": 0.2383,
+            "p99_latency_ms": 0.3137
+          },
+          "concurrency_100": {
+            "qps": 109521.91,
+            "avg_latency_ms": 0.4697,
+            "p99_latency_ms": 0.7563
+          },
+          "concurrency_200": {
+            "qps": 108054.6433,
+            "avg_latency_ms": 0.939,
+            "p99_latency_ms": 1.2737
+          }
+        },
+        "INCR": {
+          "concurrency_1": {
+            "qps": 46116.3467,
+            "avg_latency_ms": 0.02,
+            "p99_latency_ms": 0.031
+          },
+          "concurrency_10": {
+            "qps": 111836.7767,
+            "avg_latency_ms": 0.055,
+            "p99_latency_ms": 0.0763
+          },
+          "concurrency_50": {
+            "qps": 116538.1767,
+            "avg_latency_ms": 0.2253,
+            "p99_latency_ms": 0.2977
+          },
+          "concurrency_100": {
+            "qps": 111758.8433,
+            "avg_latency_ms": 0.46,
+            "p99_latency_ms": 0.719
+          },
+          "concurrency_200": {
+            "qps": 113488.9733,
+            "avg_latency_ms": 0.8947,
+            "p99_latency_ms": 1.3057
+          }
+        },
+        "LPUSH": {
+          "concurrency_1": {
+            "qps": 46152.3833,
+            "avg_latency_ms": 0.02,
+            "p99_latency_ms": 0.0283
+          },
+          "concurrency_10": {
+            "qps": 113413.9333,
+            "avg_latency_ms": 0.055,
+            "p99_latency_ms": 0.0923
+          },
+          "concurrency_50": {
+            "qps": 114778.5867,
+            "avg_latency_ms": 0.2307,
+            "p99_latency_ms": 0.463
+          },
+          "concurrency_100": {
+            "qps": 111336.9733,
+            "avg_latency_ms": 0.4667,
+            "p99_latency_ms": 0.7323
+          },
+          "concurrency_200": {
+            "qps": 114321.52,
+            "avg_latency_ms": 0.8913,
+            "p99_latency_ms": 1.2577
+          }
+        },
+        "LRANGE_100": {
+          "concurrency_1": {
+            "qps": 33288.1833,
+            "avg_latency_ms": 0.021,
+            "p99_latency_ms": 0.031
+          },
+          "concurrency_10": {
+            "qps": 66168.23,
+            "avg_latency_ms": 0.083,
+            "p99_latency_ms": 0.1003
+          },
+          "concurrency_50": {
+            "qps": 67854.86,
+            "avg_latency_ms": 0.377,
+            "p99_latency_ms": 0.5137
+          },
+          "concurrency_100": {
+            "qps": 68758.0233,
+            "avg_latency_ms": 0.736,
+            "p99_latency_ms": 0.9457
+          },
+          "concurrency_200": {
+            "qps": 66804.3567,
+            "avg_latency_ms": 1.506,
+            "p99_latency_ms": 1.8843
+          }
+        },
+        "SADD": {
+          "concurrency_1": {
+            "qps": 44068.6333,
+            "avg_latency_ms": 0.021,
+            "p99_latency_ms": 0.0337
+          },
+          "concurrency_10": {
+            "qps": 117064.0,
+            "avg_latency_ms": 0.053,
+            "p99_latency_ms": 0.0897
+          },
+          "concurrency_50": {
+            "qps": 118863.6767,
+            "avg_latency_ms": 0.2213,
+            "p99_latency_ms": 0.3057
+          },
+          "concurrency_100": {
+            "qps": 113616.49,
+            "avg_latency_ms": 0.453,
+            "p99_latency_ms": 0.607
+          },
+          "concurrency_200": {
+            "qps": 110749.3033,
+            "avg_latency_ms": 0.9203,
+            "p99_latency_ms": 1.4843
+          }
+        },
+        "HSET": {
+          "concurrency_1": {
+            "qps": 43040.68,
+            "avg_latency_ms": 0.0207,
+            "p99_latency_ms": 0.039
+          },
+          "concurrency_10": {
+            "qps": 117234.3933,
+            "avg_latency_ms": 0.0537,
+            "p99_latency_ms": 0.095
+          },
+          "concurrency_50": {
+            "qps": 118754.3167,
+            "avg_latency_ms": 0.222,
+            "p99_latency_ms": 0.383
+          },
+          "concurrency_100": {
+            "qps": 112089.54,
+            "avg_latency_ms": 0.46,
+            "p99_latency_ms": 0.6257
+          },
+          "concurrency_200": {
+            "qps": 106215.73,
+            "avg_latency_ms": 0.9573,
+            "p99_latency_ms": 1.407
+          }
+        },
+        "ZADD": {
+          "concurrency_1": {
+            "qps": 44579.33,
+            "avg_latency_ms": 0.0203,
+            "p99_latency_ms": 0.0337
+          },
+          "concurrency_10": {
+            "qps": 110793.85,
+            "avg_latency_ms": 0.0563,
+            "p99_latency_ms": 0.0897
+          },
+          "concurrency_50": {
+            "qps": 116260.7767,
+            "avg_latency_ms": 0.2273,
+            "p99_latency_ms": 0.3083
+          },
+          "concurrency_100": {
+            "qps": 116965.3,
+            "avg_latency_ms": 0.442,
+            "p99_latency_ms": 0.6203
+          },
+          "concurrency_200": {
+            "qps": 113676.9567,
+            "avg_latency_ms": 0.895,
+            "p99_latency_ms": 1.2657
+          }
+        }
+      }
+    },
+    "micro": {
+      "benchmark": "redis_micro",
+      "software": "redis",
+      "version": "8.0.0",
+      "architecture": "aarch64",
+      "timestamp": "2026-08-12T09:28:43Z",
+      "parameters": {
+        "data_sizes": [
+          64,
+          256,
+          1024,
+          4096
+        ],
+        "client_counts": [
+          1,
+          10,
+          50,
+          100,
+          256
+        ],
+        "max_clients": 256,
+        "persistence_modes": [
+          "none",
+          "aof",
+          "rdb"
+        ]
+      },
+      "results": {
+        "data_size_sweep": {
+          "data_size_64": {
+            "qps": 111657.6667,
+            "avg_latency_ms": 0.236,
+            "p99_latency_ms": 0.3163
+          },
+          "data_size_256": {
+            "qps": 109032.6867,
+            "avg_latency_ms": 0.242,
+            "p99_latency_ms": 0.367
+          },
+          "data_size_1024": {
+            "qps": 113091.1167,
+            "avg_latency_ms": 0.2327,
+            "p99_latency_ms": 0.3217
+          },
+          "data_size_4096": {
+            "qps": 109550.7367,
+            "avg_latency_ms": 0.2407,
+            "p99_latency_ms": 0.3377
+          }
+        },
+        "client_scaling": {
+          "clients_1": {
+            "qps": 45749.4333,
+            "avg_latency_ms": 0.02,
+            "p99_latency_ms": 0.0283
+          },
+          "clients_10": {
+            "qps": 105860.2067,
+            "avg_latency_ms": 0.055,
+            "p99_latency_ms": 0.0763
+          },
+          "clients_50": {
+            "qps": 101219.32,
+            "avg_latency_ms": 0.2577,
+            "p99_latency_ms": 0.343
+          },
+          "clients_100": {
+            "qps": 97836.09,
+            "avg_latency_ms": 0.5247,
+            "p99_latency_ms": 0.6923
+          },
+          "clients_256": {
+            "qps": 94702.0733,
+            "avg_latency_ms": 1.3747,
+            "p99_latency_ms": 1.8443
+          }
+        },
+        "persistence_sweep": {
+          "persistence_none": {
+            "qps": 110742.92,
+            "avg_latency_ms": 0.238,
+            "p99_latency_ms": 0.367
+          },
+          "persistence_aof": {
+            "qps": 118432.9367,
+            "avg_latency_ms": 0.2307,
+            "p99_latency_ms": 0.4017
+          },
+          "persistence_rdb": {
+            "qps": 114116.6033,
+            "avg_latency_ms": 0.231,
+            "p99_latency_ms": 0.4043
+          }
+        }
+      }
+    }
+  },
+  "summary": {
+    "avg_qps": 94863.8006,
+    "max_qps": 118863.6767,
+    "avg_latency_ms": 0.3617,
+    "max_p99_latency_ms": 1.8843,
+    "set_qps_c50": 118763.0667,
+    "get_qps_c50": 110120.5167,
+    "client_scaling_ratio": 2.07
+  }
+}
