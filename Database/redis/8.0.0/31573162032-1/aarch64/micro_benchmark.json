@@ -1,0 +1,96 @@
+{
+  "benchmark": "redis_micro",
+  "software": "redis",
+  "version": "8.0.0",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-12T07:19:22Z",
+  "parameters": {
+    "data_sizes": [
+      64,
+      256,
+      1024,
+      4096
+    ],
+    "client_counts": [
+      1,
+      10,
+      50,
+      100,
+      256
+    ],
+    "max_clients": 256,
+    "persistence_modes": [
+      "none",
+      "aof",
+      "rdb"
+    ]
+  },
+  "results": {
+    "data_size_sweep": {
+      "data_size_64": {
+        "qps": 114567.1633,
+        "avg_latency_ms": 0.23,
+        "p99_latency_ms": 0.3083
+      },
+      "data_size_256": {
+        "qps": 114987.7633,
+        "avg_latency_ms": 0.2293,
+        "p99_latency_ms": 0.3083
+      },
+      "data_size_1024": {
+        "qps": 112501.6933,
+        "avg_latency_ms": 0.2343,
+        "p99_latency_ms": 0.3137
+      },
+      "data_size_4096": {
+        "qps": 104952.7433,
+        "avg_latency_ms": 0.251,
+        "p99_latency_ms": 0.335
+      }
+    },
+    "client_scaling": {
+      "clients_1": {
+        "qps": 43165.1967,
+        "avg_latency_ms": 0.02,
+        "p99_latency_ms": 0.031
+      },
+      "clients_10": {
+        "qps": 101320.7,
+        "avg_latency_ms": 0.058,
+        "p99_latency_ms": 0.095
+      },
+      "clients_50": {
+        "qps": 102725.5733,
+        "avg_latency_ms": 0.2533,
+        "p99_latency_ms": 0.3457
+      },
+      "clients_100": {
+        "qps": 104633.9833,
+        "avg_latency_ms": 0.4897,
+        "p99_latency_ms": 0.655
+      },
+      "clients_256": {
+        "qps": 94718.7267,
+        "avg_latency_ms": 1.374,
+        "p99_latency_ms": 1.647
+      }
+    },
+    "persistence_sweep": {
+      "persistence_none": {
+        "qps": 112212.7133,
+        "avg_latency_ms": 0.2353,
+        "p99_latency_ms": 0.4417
+      },
+      "persistence_aof": {
+        "qps": 121133.3233,
+        "avg_latency_ms": 0.227,
+        "p99_latency_ms": 0.3937
+      },
+      "persistence_rdb": {
+        "qps": 119390.3667,
+        "avg_latency_ms": 0.222,
+        "p99_latency_ms": 0.3803
+      }
+    }
+  }
+}
