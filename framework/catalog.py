@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
+SOFTWARE_STAGES = ("build", "start", "test", "stop")
 VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "target_is_better", "neutral"}
+SHELL_FUNCTION_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -135,21 +138,71 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     if not isinstance(execution, dict):
         errors.append("execution must be a mapping")
     else:
-        if execution.get("type") != "command":
-            errors.append("execution.type must be command for the four-stage workflow")
-        if execution.get("interface") != "four-stage":
-            errors.append("execution.interface must be four-stage")
-        entrypoint = execution.get("entrypoint")
-        if not isinstance(entrypoint, str) or not entrypoint:
-            errors.append("execution.entrypoint must be a non-empty string")
+        if execution.get("type") != "shell-functions":
+            errors.append("execution.type must be shell-functions")
+        for legacy_field in ("interface", "entrypoint"):
+            if legacy_field in execution:
+                errors.append(f"execution.{legacy_field} is not allowed; declare execution.stages")
+        stages = execution.get("stages")
+        if not isinstance(stages, dict):
+            errors.append("execution.stages must be a mapping")
         else:
-            resolved = (path.parent / entrypoint).resolve()
-            try:
-                resolved.relative_to(path.parent.resolve())
-            except ValueError:
-                errors.append("execution.entrypoint must remain inside the software directory")
-            if not resolved.is_file():
-                errors.append(f"execution.entrypoint does not exist: {entrypoint}")
+            stage_names = set(stages)
+            missing_stages = set(SOFTWARE_STAGES) - stage_names
+            unknown_stages = stage_names - set(SOFTWARE_STAGES)
+            if missing_stages:
+                errors.append(
+                    f"execution.stages is missing: {', '.join(sorted(missing_stages))}"
+                )
+            if unknown_stages:
+                errors.append(
+                    f"execution.stages contains unsupported stages: "
+                    f"{', '.join(sorted(str(stage) for stage in unknown_stages))}"
+                )
+            for stage in SOFTWARE_STAGES:
+                if stage not in stages:
+                    continue
+                definition = stages[stage]
+                if not isinstance(definition, dict):
+                    errors.append(f"execution.stages.{stage} must be a mapping")
+                    continue
+                unknown_fields = set(definition) - {"script", "function"}
+                if unknown_fields:
+                    errors.append(
+                        f"execution.stages.{stage} contains unsupported fields: "
+                        f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                    )
+                script = definition.get("script")
+                function = definition.get("function")
+                if not isinstance(script, str) or not script:
+                    errors.append(f"execution.stages.{stage}.script must be a non-empty string")
+                else:
+                    script_path = Path(script)
+                    if script_path.is_absolute() or ".." in script_path.parts:
+                        errors.append(
+                            f"execution.stages.{stage}.script must remain inside "
+                            "the software directory"
+                        )
+                    elif script_path.suffix != ".sh":
+                        errors.append(f"execution.stages.{stage}.script must be a Shell script")
+                    else:
+                        declared_script = path.parent / script_path
+                        try:
+                            declared_script.resolve().relative_to(path.parent.resolve())
+                        except ValueError:
+                            errors.append(
+                                f"execution.stages.{stage}.script must remain inside "
+                                "the software directory"
+                            )
+                        else:
+                            if not declared_script.is_file():
+                                errors.append(
+                                    f"execution.stages.{stage}.script does not exist: {script}"
+                                )
+                if not isinstance(function, str) or not SHELL_FUNCTION_PATTERN.fullmatch(function):
+                    errors.append(
+                        f"execution.stages.{stage}.function must be a valid Shell function name"
+                    )
         outputs = execution.get("expected_outputs")
         if not isinstance(outputs, list) or not outputs or not all(
             isinstance(value, str) and value for value in outputs

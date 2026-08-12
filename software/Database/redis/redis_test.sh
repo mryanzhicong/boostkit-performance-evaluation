@@ -15,11 +15,13 @@ REDIS_SERVICE_PORT="${REDIS_SERVICE_PORT:-16379}"
 SERVICE_DIR="${PERF_WORK_DIR}/service"
 LOG_FILE="${RESULTS_DIR}/results.log"
 
-mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
-touch "${LOG_FILE}"
-exec > >(tee -a "${LOG_FILE}") 2>&1
-
 log() { printf '[redis] %s\n' "$*"; }
+
+initialize_runtime() {
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    touch "${LOG_FILE}"
+    exec > >(tee -a "${LOG_FILE}") 2>&1
+}
 
 normalize_arch() {
     case "${1,,}" in
@@ -50,8 +52,9 @@ check_architecture() {
     }
 }
 
-phase_build() {
+build() {
     local binary actual_version actual_arch
+    initialize_runtime
     check_architecture
     require_commands
     [[ ! -e "${SOURCE_DIR}" ]] || {
@@ -75,7 +78,8 @@ phase_build() {
         "${RESULTS_DIR}/version_info.json" "${SOFTWARE_VERSION}" "${actual_version}" "${actual_arch}"
 }
 
-phase_start() {
+start() {
+    initialize_runtime
     [[ -x "${REDIS_SERVER_BIN}" && -x "${REDIS_CLI_BIN}" ]] || {
         log "ERROR: Redis is not installed"
         return 40
@@ -107,7 +111,8 @@ phase_start() {
     return 20
 }
 
-phase_test() {
+test() {
+    initialize_runtime
     "${REDIS_CLI_BIN}" -h 127.0.0.1 -p "${REDIS_SERVICE_PORT}" PING | grep -qx PONG || {
         log "ERROR: Redis service is not running on port ${REDIS_SERVICE_PORT}"
         return 50
@@ -123,8 +128,9 @@ phase_test() {
         "${RESULTS_DIR}/results.json" "${RESULTS_DIR}/results.txt"
 }
 
-phase_stop() {
+stop() {
     local pid=""
+    initialize_runtime
     if [[ -f "${SERVICE_DIR}/redis.pid" ]]; then
         pid="$(<"${SERVICE_DIR}/redis.pid")"
     fi
@@ -151,21 +157,3 @@ phase_stop() {
     fi
     log "Redis service stopped"
 }
-
-run_all() {
-    phase_build
-    phase_start
-    trap phase_stop EXIT
-    phase_test
-    phase_stop
-    trap - EXIT
-}
-
-case "${1:-all}" in
-    build) phase_build ;;
-    start) phase_start ;;
-    test) phase_test ;;
-    stop) phase_stop ;;
-    all) run_all ;;
-    *) log "ERROR: unknown stage: $1"; exit 10 ;;
-esac

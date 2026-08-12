@@ -4,9 +4,20 @@ enabled: true
 tags: [key-value, in-memory, database]
 versions: ["7.4.10", "8.0.0", "8.0.6"]
 execution:
-  type: command
-  interface: four-stage
-  entrypoint: redis_test.sh
+  type: shell-functions
+  stages:
+    build:
+      script: redis_test.sh
+      function: build
+    start:
+      script: redis_test.sh
+      function: start
+    test:
+      script: redis_test.sh
+      function: test
+    stop:
+      script: redis_test.sh
+      function: stop
   timeout_minutes: 180
   environment:
     ITERATIONS: 3

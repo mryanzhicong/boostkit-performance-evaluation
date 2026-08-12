@@ -61,7 +61,7 @@ Prepare Job 在 `ubuntu-latest` 上执行，不占用性能 Runner：
 3. 使用 `framework/catalog.py matrix` 一次完成全部软件清单校验和矩阵生成。
 4. 把矩阵写入 Job 输出和 Workflow Summary。
 
-Catalog 会检查注册表与实际 `case.yaml` 双向一致、目录与清单名称一致、软件名全局唯一、版本非空、four-stage command 入口存在、预期输出安全、指标定义完整，以及软件清单中不存在架构或 Runner 标签。登记但缺少 `case.yaml` 或存在未登记用例都会使 Prepare Job 失败。
+Catalog 会检查注册表与实际 `case.yaml` 双向一致、目录与清单名称一致、软件名全局唯一、版本非空、四阶段入口声明完整、脚本路径安全且存在、函数名合法、预期输出安全、指标定义完整，以及软件清单中不存在架构或 Runner 标签。登记但缺少 `case.yaml` 或存在未登记用例都会使 Prepare Job 失败。
 
 ### Performance Job
 
@@ -71,7 +71,7 @@ Catalog 会检查注册表与实际 `case.yaml` 双向一致、目录与清单�
 prepare → build → start → test → stop → finalize → cleanup
 ```
 
-阶段严格串行。当前阶段命令退出且 stdout/stderr 全部转发完毕后，Workflow 才会进入下一步。每个软件阶段的控制台输出同时保存为 `command-<stage>.log`。
+阶段严格串行。Workflow 只向 Framework 传入阶段名；Framework 根据 `case.yaml` 查找该阶段声明的脚本和函数，加载脚本并调用对应函数。当前阶段函数退出且 stdout/stderr 全部转发完毕后，Workflow 才会进入下一步。每个软件阶段的控制台输出同时保存为 `command-<stage>.log`。
 
 | 阶段 | 所属层 | 职责 |
 |---|---|---|
@@ -198,10 +198,37 @@ software/<category>/<software>/
 软件清单至少声明：
 
 - 软件名、分类、启用状态和版本列表；
-- `execution.type: command`；
-- `execution.interface: four-stage`；
-- 软件入口、超时时间、运行参数和预期输出；
+- `execution.type: shell-functions`；
+- `execution.stages` 中完整且仅有 build、start、test、stop 四个阶段；
+- 每个阶段的 Shell 脚本路径和函数名；
+- 超时时间、运行参数和预期输出；
 - 每个指标的来源 JSON、点路径、单位、优化方向和可选目标值。
+
+入口声明示例：
+
+```yaml
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: redis_test.sh
+      function: build
+    start:
+      script: redis_test.sh
+      function: start
+    test:
+      script: redis_test.sh
+      function: test
+    stop:
+      script: redis_test.sh
+      function: stop
+  timeout_minutes: 180
+  environment: {}
+  expected_outputs:
+    - results.json
+```
+
+阶段可以映射到同一个脚本，也可以映射到软件目录内的不同 `.sh` 文件。脚本路径必须是软件目录内的相对路径，函数名必须是合法的 Shell 标识符。Catalog 负责静态校验声明，Framework 在运行时加载脚本后使用 `declare -F` 确认函数真实存在；缺失函数会立即失败，不能回退到其他阶段或空操作。
 
 软件清单禁止声明：
 
@@ -213,15 +240,25 @@ runner_label
 
 所有已登记且启用的软件默认由 Catalog 展开为两个架构；只有手动输入可以缩小执行范围。
 
-### Four-stage command
+### 四阶段函数契约
 
-软件入口只负责以下四个阶段：
+软件脚本只暴露以下四个公共阶段函数：
 
 ```bash
-bash <software>_test.sh build
-bash <software>_test.sh start
-bash <software>_test.sh test
-bash <software>_test.sh stop
+build() { ...; }
+start() { ...; }
+test() { ...; }
+stop() { ...; }
+```
+
+脚本不得在文件末尾根据 `$1` 分发阶段，也不得提供隐式 `all` 或 `run_all` 入口。脚本被 `source` 时只应完成变量初始化和函数定义，不应自动构建、启动服务或执行测试。Framework 的统一调用链如下：
+
+```text
+workflow --stage build
+  → case.yaml execution.stages.build
+  → source 声明的 script
+  → 校验声明的 function 存在
+  → 调用 function 并原样返回退出码
 ```
 
 公共 Framework 通过环境变量传入：
@@ -424,7 +461,7 @@ python3 -m pytest framework/tests
 |---|---|
 | `framework/catalog.py` | 读取软件注册表，对登记项与实际清单做双向校验，并按手动输入生成执行矩阵。 |
 | `framework/context.py` | 定义单个软件、版本、架构任务的不可变运行上下文。 |
-| `framework/command_adapter.py` | 注入运行环境、调用 four-stage command、实时保存日志、等待退出，并在超时或中断时终止进程组。 |
+| `framework/command_adapter.py` | 解析清单中的阶段入口、注入运行环境、加载脚本并调用声明函数、实时保存日志、等待退出，并在超时或中断时终止进程组。 |
 | `framework/run_case.py` | 单任务阶段控制器；编排 prepare/finalize 和软件四阶段，维护任务状态。 |
 | `framework/collect_environment.py` | 采集测试前后的 OS、CPU、内存、内核、NUMA 和 CPU governor 信息。 |
 | `framework/normalize_results.py` | 严格检查预期文件和指标，并转换成统一指标模型。 |
@@ -443,7 +480,7 @@ python3 -m pytest framework/tests
 |---|---|
 | `framework/tests/conftest.py` | 将脚本式 Framework 模块加入测试导入路径。 |
 | `framework/tests/test_cases_and_matrix.py` | 验证软件清单、双架构矩阵、Runner 标签单一来源、Workflow 阶段和精简后的目录结构。 |
-| `framework/tests/test_command_adapter.py` | 使用假入口验证环境变量、阶段参数、日志、串行等待、超时和进程组终止。 |
+| `framework/tests/test_command_adapter.py` | 使用假入口验证显式阶段函数映射、环境变量、退出码、日志、串行等待、超时和进程组终止。 |
 | `framework/tests/test_results_and_reports.py` | 验证严格指标提取、跨架构语义、报告排序、清理状态、永久历史和 Baseline 约束。 |
 
 ### 软件目录
@@ -452,8 +489,8 @@ python3 -m pytest framework/tests
 |---|---|
 | `software/README.md` | 说明分类目录和新软件的必要文件结构。 |
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
-| `software/<category>/<software>/case.yaml` | 声明版本、four-stage command、正式参数、预期输出和指标提取契约。 |
-| `software/<category>/<software>/<software>_test.sh` | 软件唯一执行入口，只实现 build、start、test、stop。 |
+| `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、正式参数、预期输出和指标提取契约。 |
+| `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，只暴露 build、start、test、stop，不自行分发执行。 |
 | `software/<category>/<software>/scripts/` | 可选的软件私有基准、聚合和辅助程序。 |
 
 ### Redis 用例
@@ -461,7 +498,7 @@ python3 -m pytest framework/tests
 | 文件 | 用途 |
 |---|---|
 | `software/Database/redis/case.yaml` | Redis 版本、正式参数、预期输出和指标定义。 |
-| `software/Database/redis/redis_test.sh` | Redis four-stage command，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
+| `software/Database/redis/redis_test.sh` | Redis 四阶段函数实现，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
 | `software/Database/redis/scripts/write_version_info.py` | 记录实际 Redis 版本、架构和运行环境。 |
 | `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
 | `software/Database/redis/scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
@@ -472,7 +509,7 @@ python3 -m pytest framework/tests
 
 1. 在 `config/categories.yaml` 的目标分类下登记软件名。
 2. 创建对应的软件目录并人工编写 `case.yaml`，不得写入架构或 Runner 标签。
-3. 接入已有测试入口并收敛为 build、start、test、stop。
+3. 在 `case.yaml` 显式声明四阶段的脚本和函数，并在脚本中实现 build、start、test、stop。
 4. 确保所有临时资源进入 `PERF_WORK_DIR` 或公共工作根目录。
 5. 确保 test 生成全部非空预期文件和有限数值指标。
 6. 确保 stop 可重复执行，并能处理部分启动或失败状态。

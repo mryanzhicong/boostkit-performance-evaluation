@@ -140,11 +140,8 @@ def main() -> int:
         print(context.output_dir)
         return 0
 
-    if (
-        context.execution.get("type") != "command"
-        or context.execution.get("interface") != "four-stage"
-    ):
-        mark_failed(context, args.stage, 10, error="four-stage command interface is required")
+    if context.execution.get("type") != "shell-functions":
+        mark_failed(context, args.stage, 10, error="shell-functions execution is required")
         return 10
 
     previous = load_json(context.output_dir / "status.json", {})
@@ -178,7 +175,7 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return exit_code
 
-    print(f"[stage] {args.stage} command exited with code {result.returncode}", flush=True)
+    print(f"[stage] {args.stage} function exited with code {result.returncode}", flush=True)
 
     if args.stage == "stop":
         if result.returncode != 0:

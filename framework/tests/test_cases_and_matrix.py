@@ -1,6 +1,10 @@
 """Validate the manually maintained case catalog and matrix defaults."""
 
+import os
+import subprocess
+
 import pytest
+import yaml
 from catalog import (
     ROOT,
     build_matrix,
@@ -20,7 +24,11 @@ def test_redis_is_the_only_valid_case() -> None:
     assert case is not None
     assert case["versions"] == ["7.4.10", "8.0.0", "8.0.6"]
     assert case["execution"]["timeout_minutes"] == 180
-    assert case["execution"]["interface"] == "four-stage"
+    assert case["execution"]["type"] == "shell-functions"
+    assert case["execution"]["stages"] == {
+        stage: {"script": "redis_test.sh", "function": stage}
+        for stage in ("build", "start", "test", "stop")
+    }
 
 
 def test_software_registry_normalizes_empty_categories() -> None:
@@ -51,6 +59,79 @@ def test_catalog_rejects_unregistered_and_missing_cases(tmp_path) -> None:
     )
     _entries, errors = validate_catalog(tmp_path)
     assert any("registered case is missing" in error and "postgresql" in error for error in errors)
+
+
+def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> None:
+    config = tmp_path / "config"
+    config.mkdir()
+    (config / "categories.yaml").write_text(
+        "categories:\n  AI:\n    - sample\n", encoding="utf-8"
+    )
+    case_dir = tmp_path / "software" / "AI" / "sample"
+    case_dir.mkdir(parents=True)
+    (case_dir / "sample_test.sh").write_text(
+        "build() { :; }\nstart() { :; }\ntest() { :; }\nstop() { :; }\n",
+        encoding="utf-8",
+    )
+    payload = {
+        "name": "sample",
+        "category": "AI",
+        "enabled": True,
+        "versions": ["1.0"],
+        "execution": {
+            "type": "shell-functions",
+            "stages": {
+                stage: {"script": "sample_test.sh", "function": stage}
+                for stage in ("build", "start", "test", "stop")
+            },
+            "timeout_minutes": 10,
+            "environment": {},
+            "expected_outputs": ["results.json"],
+        },
+        "metrics": {
+            "throughput": {
+                "source": "results.json",
+                "path": "summary.throughput",
+                "unit": "ops/s",
+                "direction": "higher_is_better",
+            }
+        },
+    }
+    case_path = case_dir / "case.yaml"
+
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert errors == []
+
+    del payload["execution"]["stages"]["stop"]
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("execution.stages is missing: stop" in error for error in errors)
+
+    payload["execution"]["stages"]["stop"] = {
+        "script": "sample_test.sh",
+        "function": "invalid-function",
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("valid Shell function name" in error for error in errors)
+
+    payload["execution"]["stages"]["stop"] = {
+        "script": "../outside.sh",
+        "function": "stop",
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("must remain inside the software directory" in error for error in errors)
+
+    payload["execution"]["stages"]["stop"] = {
+        "script": "sample_test.sh",
+        "function": "stop",
+        "arguments": ["--legacy"],
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("contains unsupported fields: arguments" in error for error in errors)
 
 
 def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
@@ -146,24 +227,43 @@ def test_framework_uses_consolidated_catalog_results_and_report_modules() -> Non
         assert not (ROOT / removed_path).exists()
 
 
-def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
+def test_redis_script_exposes_every_declared_stage_function() -> None:
     entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
         encoding="utf-8"
     )
-    for function in (
-        "phase_build",
-        "phase_start",
-        "phase_test",
-        "phase_stop",
-    ):
+    for function in ("build", "start", "test", "stop"):
         assert f"{function}()" in entrypoint
-    for removed_function in (
-        "phase_validate",
-        "phase_start_service",
-        "phase_stop_service",
-        "phase_collect_report",
-    ):
-        assert f"{removed_function}()" not in entrypoint
+    assert "phase_build()" not in entrypoint
+    assert "run_all()" not in entrypoint
+    assert 'case "${1:-all}"' not in entrypoint
+
+
+def test_redis_script_is_safe_to_source_without_running_a_stage(tmp_path) -> None:
+    script = ROOT / "software" / "Database" / "redis" / "redis_test.sh"
+    work_dir = tmp_path / "work"
+    results_dir = tmp_path / "results"
+    environment = dict(os.environ)
+    environment.update({
+        "PERF_WORK_DIR": str(work_dir),
+        "RESULTS_DIR": str(results_dir),
+        "TMPDIR": str(work_dir / "tmp"),
+    })
+    completed = subprocess.run(
+        [
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            'source "$1"; declare -F build start test stop >/dev/null',
+            "source-contract",
+            str(script),
+        ],
+        check=False,
+        env=environment,
+    )
+    assert completed.returncode == 0
+    assert not work_dir.exists()
+    assert not results_dir.exists()
 
 
 def test_redis_build_preserves_the_original_script_command() -> None:

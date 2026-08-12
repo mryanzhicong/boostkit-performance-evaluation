@@ -1,4 +1,4 @@
-"""Check that the generic adapter invokes existing scripts through environment variables."""
+"""Verify case-declared Shell stage functions and process isolation."""
 
 import os
 import time
@@ -13,19 +13,29 @@ def context_for(tmp_path: Path) -> RunContext:
     case_dir.mkdir(parents=True)
     script = case_dir / "sample_test.sh"
     script.write_text(
-        '#!/usr/bin/env bash\nset -euo pipefail\n'
-        'printf \'entrypoint stage=%s\\n\' "${1:-all}"\n'
-        'printf \'{"summary":{"qps":42}}\\n\' > "${RESULTS_DIR}/results.json"\n'
-        'command -v pip3 > "${RESULTS_DIR}/pip_path.txt"\n'
-        'printf \'%s\\n\' "${1:-all}" > "${RESULTS_DIR}/stage.txt"\n',
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        "build() {\n"
+        "  printf 'function=build\\n'\n"
+        "  printf '{\"summary\":{\"qps\":42}}\\n' > \"${RESULTS_DIR}/results.json\"\n"
+        "  command -v pip3 > \"${RESULTS_DIR}/pip_path.txt\"\n"
+        "  printf 'build\\n' > \"${RESULTS_DIR}/stage.txt\"\n"
+        "}\n"
+        "start() { printf 'function=start\\n'; }\n"
+        "test() { printf 'function=test\\n'; }\n"
+        "stop() { printf 'function=stop\\n'; }\n",
         encoding="utf-8",
     )
+    stages = {
+        stage: {"script": "sample_test.sh", "function": stage}
+        for stage in ("build", "start", "test", "stop")
+    }
     case = {
         "name": "sample",
         "category": "AI",
         "execution": {
-            "type": "command",
-            "entrypoint": "sample_test.sh",
+            "type": "shell-functions",
+            "stages": stages,
             "expected_outputs": ["results.json", "pip_path.txt"],
             "timeout_minutes": 1,
             "environment": {"ITERATIONS": 1},
@@ -57,36 +67,78 @@ def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) ->
     assert environment["BUILD_METHOD"] == "pip"
 
 
-def test_existing_command_streams_and_writes_to_framework_output(tmp_path: Path, capsys) -> None:
+def test_declared_build_function_streams_and_writes_outputs(tmp_path: Path, capsys) -> None:
     context = context_for(tmp_path)
-    result = run_command(context)
+    result = run_command(context, "build")
     assert result.returncode == 0
     assert result.missing_outputs == ()
-    assert "entrypoint stage=all" in capsys.readouterr().out
-    assert "entrypoint stage=all" in result.log_path.read_text(encoding="utf-8")
-    assert (context.output_dir / "results.json").is_file()
+    assert "function=build" in capsys.readouterr().out
+    assert "function=build" in result.log_path.read_text(encoding="utf-8")
+    assert result.log_path.name == "command-build.log"
+    assert (context.output_dir / "stage.txt").read_text(encoding="utf-8").strip() == "build"
     pip_path = (context.output_dir / "pip_path.txt").read_text(encoding="utf-8").strip()
     assert pip_path.startswith(str(context.work_dir / "venv" / "bin"))
 
 
-def test_stage_is_forwarded_to_existing_entrypoint(tmp_path: Path) -> None:
+def test_each_stage_calls_only_its_declared_function(tmp_path: Path, capsys) -> None:
     context = context_for(tmp_path)
+    result = run_command(context, "start", check_outputs=False)
+    assert result.returncode == 0
+    output = capsys.readouterr().out
+    assert "function=start" in output
+    assert "function=build" not in output
+    assert "function=test" not in output
+    assert "function=stop" not in output
+
+
+def test_stage_uses_declared_function_instead_of_inferring_its_name(
+    tmp_path: Path, capsys
+) -> None:
+    context = context_for(tmp_path)
+    script = context.case_dir / "sample_test.sh"
+    script.write_text(
+        "compile_software() { printf 'function=compile_software\\n'; }\n"
+        "build() { printf 'ERROR: inferred build function ran\\n'; return 99; }\n",
+        encoding="utf-8",
+    )
+    context.case["execution"]["stages"]["build"]["function"] = "compile_software"
     result = run_command(context, "build", check_outputs=False)
     assert result.returncode == 0
-    assert result.log_path.name == "command-build.log"
-    assert (context.output_dir / "stage.txt").read_text(encoding="utf-8").strip() == "build"
+    output = capsys.readouterr().out
+    assert "function=compile_software" in output
+    assert "inferred build function ran" not in output
+
+
+def test_missing_declared_function_fails_without_running_another_stage(tmp_path: Path) -> None:
+    context = context_for(tmp_path)
+    context.case["execution"]["stages"]["build"]["function"] = "missing_build"
+    result = run_command(context, "build", check_outputs=False)
+    assert result.returncode == 10
+    log = result.log_path.read_text(encoding="utf-8")
+    assert "declared stage function does not exist: missing_build" in log
+    assert not (context.output_dir / "stage.txt").exists()
+
+
+def test_stage_function_return_code_is_preserved(tmp_path: Path) -> None:
+    context = context_for(tmp_path)
+    script = context.case_dir / "sample_test.sh"
+    script.write_text("build() { return 37; }\n", encoding="utf-8")
+    result = run_command(context, "build", check_outputs=False)
+    assert result.returncode == 37
 
 
 def test_timeout_terminates_the_entire_stage_process_group(tmp_path: Path) -> None:
     context = context_for(tmp_path)
     context.case["execution"]["timeout_minutes"] = 0.01
-    entrypoint = context.case_dir / "sample_test.sh"
-    entrypoint.write_text(
+    script = context.case_dir / "sample_test.sh"
+    script.write_text(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
-        "sleep 30 &\n"
-        "printf '%s\\n' \"$!\" > \"${RESULTS_DIR}/child.pid\"\n"
-        "wait\n",
+        "test() {\n"
+        "  sleep 30 &\n"
+        "  printf '%s\\n' \"$!\" > \"${RESULTS_DIR}/child.pid\"\n"
+        "  wait\n"
+        "}\n",
         encoding="utf-8",
     )
     result = run_command(context, "test", check_outputs=False)

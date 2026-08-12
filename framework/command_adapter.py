@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute an existing software test entrypoint without generating test code."""
+"""Invoke a case-declared Shell function for one software stage."""
 
 from __future__ import annotations
 
@@ -13,6 +13,19 @@ from pathlib import Path
 from typing import TextIO
 
 from context import RunContext
+
+SHELL_FUNCTION_RUNNER = r"""
+script_path="$1"
+function_name="$2"
+shift 2
+source "${script_path}"
+if ! declare -F "${function_name}" >/dev/null; then
+    printf 'ERROR: declared stage function does not exist: %s in %s\n' \
+        "${function_name}" "${script_path}" >&2
+    exit 10
+fi
+"${function_name}"
+"""
 
 
 @dataclass(frozen=True)
@@ -97,13 +110,15 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
 
 def run_command(
     context: RunContext,
-    stage: str | None = None,
+    stage: str,
     *,
     check_outputs: bool = True,
 ) -> CommandResult:
-    entrypoint = (context.case_dir / context.execution["entrypoint"]).resolve()
+    stage_definition = context.execution["stages"][stage]
+    script = (context.case_dir / stage_definition["script"]).resolve()
+    function = stage_definition["function"]
     timeout_minutes = float(context.execution.get("timeout_minutes", 180))
-    log_path = context.output_dir / f"command-{stage or 'all'}.log"
+    log_path = context.output_dir / f"command-{stage}.log"
     context.output_dir.mkdir(parents=True, exist_ok=True)
     context.work_dir.mkdir(parents=True, exist_ok=True)
     (context.work_dir / "tmp").mkdir(parents=True, exist_ok=True)
@@ -116,9 +131,16 @@ def run_command(
             stderr=subprocess.DEVNULL,
         )
     environment = build_environment(context, case_venv)
-    command = ["bash", str(entrypoint)] if entrypoint.suffix == ".sh" else [str(entrypoint)]
-    if stage is not None:
-        command.append(stage)
+    command = [
+        "bash",
+        "--noprofile",
+        "--norc",
+        "-c",
+        SHELL_FUNCTION_RUNNER,
+        "framework-stage",
+        str(script),
+        function,
+    ]
     with log_path.open("w", encoding="utf-8") as log:
         process: subprocess.Popen[str] | None = None
         output_thread: threading.Thread | None = None
@@ -141,13 +163,13 @@ def run_command(
             output_thread = threading.Thread(
                 target=_stream_output,
                 args=(process.stdout, log),
-                name=f"stage-output-{stage or 'all'}",
+                name=f"stage-output-{stage}",
             )
             output_thread.start()
             returncode = process.wait(timeout=timeout_minutes * 60)
         except subprocess.TimeoutExpired:
             assert process is not None
-            message = f"[TIMEOUT] stage {stage or 'all'} exceeded {timeout_minutes} minutes\n"
+            message = f"[TIMEOUT] stage {stage} exceeded {timeout_minutes} minutes\n"
             sys.stderr.write(message)
             sys.stderr.flush()
             log.write(message)
