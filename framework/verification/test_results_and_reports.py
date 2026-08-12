@@ -89,6 +89,12 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
     assert "越大越好" in combined
     assert "越小越好" in combined
+    assert combined.index("### aarch64") < combined.index("### x86_64")
+    arm_metrics = combined.split("### aarch64", 1)[1].split("### x86_64", 1)[0]
+    x86_metrics = combined.split("### x86_64", 1)[1].split("## 跨架构指标", 1)[0]
+    cross_architecture_metrics = combined.split("## 跨架构指标", 1)[1]
+    for section in (arm_metrics, x86_metrics, cross_architecture_metrics):
+        assert section.index("latency") < section.index("throughput")
 
 
 def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Path) -> None:
@@ -100,6 +106,8 @@ def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Pa
     generate(input_root, tmp_path / "report")
     combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
     assert "单架构指标" in combined
+    assert "### aarch64" in combined
+    assert "### x86_64" not in combined
     assert "120" in combined
     assert "越大越好" in combined
 

@@ -11,6 +11,24 @@ DIRECTION_LABELS = {
     "neutral": "仅展示",
 }
 
+ARCHITECTURE_ORDER = ("aarch64", "x86_64")
+
+
+def _result_key(item: dict) -> tuple[str, str, str]:
+    return (
+        str(item.get("category", "")),
+        str(item.get("software", "")),
+        str(item.get("version", "")),
+    )
+
+
+def _metric_names(item: dict, comparison_orders: dict[tuple[str, str, str], list[str]]) -> list[str]:
+    metrics = item.get("metrics", {})
+    comparison_order = comparison_orders.get(_result_key(item), [])
+    ordered = [name for name in comparison_order if name in metrics]
+    ordered.extend(sorted(name for name in metrics if name not in ordered))
+    return ordered
+
 
 def render(summary: dict, comparisons: list[dict] | None = None) -> str:
     lines = [
@@ -32,21 +50,40 @@ def render(summary: dict, comparisons: list[dict] | None = None) -> str:
     lines.append("")
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
     if metric_items:
-        lines.extend([
-            "## 单架构指标",
-            "",
-            "| 软件 | 版本 | 架构 | 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---|---|---|---:|---|---|",
-        ])
-        for item in metric_items:
-            for name, metric in item.get("metrics", {}).items():
-                direction = DIRECTION_LABELS.get(metric.get("direction"), metric.get("direction"))
-                lines.append(
-                    f"| {item.get('software')} | {item.get('version')} | "
-                    f"{item.get('architecture')} | {name} | {metric.get('value')} | "
-                    f"{metric.get('unit', '')} | {direction} |"
-                )
-        lines.append("")
+        comparison_orders = {
+            _result_key(comparison): list(comparison.get("metrics", {}))
+            for comparison in comparisons or []
+        }
+        available_architectures = {str(item.get("architecture")) for item in metric_items}
+        architecture_order = [
+            architecture for architecture in ARCHITECTURE_ORDER
+            if architecture in available_architectures
+        ]
+        architecture_order.extend(sorted(available_architectures - set(architecture_order)))
+        lines.extend(["## 单架构指标", ""])
+        for architecture in architecture_order:
+            lines.extend([
+                f"### {architecture}",
+                "",
+                "| 软件 | 版本 | 指标 | 数值 | 单位 | 优化方向 |",
+                "|---|---|---|---:|---|---|",
+            ])
+            architecture_items = sorted(
+                (item for item in metric_items if item.get("architecture") == architecture),
+                key=_result_key,
+            )
+            for item in architecture_items:
+                for name in _metric_names(item, comparison_orders):
+                    metric = item["metrics"][name]
+                    direction = DIRECTION_LABELS.get(
+                        metric.get("direction"), metric.get("direction")
+                    )
+                    lines.append(
+                        f"| {item.get('software')} | {item.get('version')} | "
+                        f"{name} | {metric.get('value')} | "
+                        f"{metric.get('unit', '')} | {direction} |"
+                    )
+            lines.append("")
     if comparisons:
         lines.extend([
             "## 跨架构指标",
