@@ -30,6 +30,23 @@ def render(summary: dict, comparisons: list[dict] | None = None) -> str:
             f"{item.get('architecture')} | {item.get('status')} | {item.get('cleanup_status')} |"
         )
     lines.append("")
+    metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
+    if metric_items:
+        lines.extend([
+            "## 单架构指标",
+            "",
+            "| 软件 | 版本 | 架构 | 指标 | 数值 | 单位 | 优化方向 |",
+            "|---|---|---|---|---:|---|---|",
+        ])
+        for item in metric_items:
+            for name, metric in item.get("metrics", {}).items():
+                direction = DIRECTION_LABELS.get(metric.get("direction"), metric.get("direction"))
+                lines.append(
+                    f"| {item.get('software')} | {item.get('version')} | "
+                    f"{item.get('architecture')} | {name} | {metric.get('value')} | "
+                    f"{metric.get('unit', '')} | {direction} |"
+                )
+        lines.append("")
     if comparisons:
         lines.extend([
             "## 跨架构指标",

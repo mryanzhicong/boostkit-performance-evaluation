@@ -103,6 +103,7 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         "architecture": result.get("architecture"),
         "status": result.get("status"),
         "cleanup_status": result.get("cleanup_status", "unknown"),
+        "metrics": result.get("metrics", {}),
     } for result in results]
     summary = {
         "total": len(results),

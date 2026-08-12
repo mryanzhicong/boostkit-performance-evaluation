@@ -48,6 +48,12 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     assert all(label not in workflow for label in configured_runner_labels().values())
     assert "vars.PERF_RUNNER" not in workflow
     assert "test_mode:" not in workflow
+    assert "performance-results" in workflow
+    assert "prepare_result_history.py" in workflow
+    assert "publish_result_history.sh" in workflow
+    assert "contents: write" in workflow
+    assert "baseline-candidates" not in workflow
+    assert "update_baseline requires architecture=all" in workflow
     for stage in (
         "prepare",
         "build",

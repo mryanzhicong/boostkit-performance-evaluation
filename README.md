@@ -41,3 +41,36 @@ Runner 必须是专用裸机，预装 Python 3.11+、PyYAML 6.x 和软件清单�
 ## 当前阶段边界
 
 当前只接入 `software/Database/redis`。Redis 用例由 `/root/redis` 的已有代码人工适配，不复制历史结果，也不提供测试用例生成器。Workflow 直接执行唯一一套正式参数。
+
+## 性能数据保存位置
+
+每次手动运行期间，框架先把中间结果写入 Runner 的 `.perf-output/` 目录。该目录只是本次任务的临时工作区，不作为长期存储。
+
+运行成功后，Workflow 会通过三种方式保存结果：
+
+- Workflow Summary：直接查看单架构指标和跨架构对比；
+- GitHub Actions Artifact：保存完整原始结果，架构结果保留 30 天，汇总报告保留 90 天；
+- `performance-results` 独立分支：永久保存精简后的最终指标、报告和运行元数据，不把性能历史混入主分支。
+
+`performance-results` 分支按以下结构保存：
+
+```text
+.
+└── <category>/<software>/<version>/
+    ├── baseline.json
+    └── <run_id>-<attempt>/
+        ├── manifest.json
+        ├── combined-report.md
+        ├── x86_64/
+        │   ├── normalized_result.json
+        │   ├── report.md
+        │   └── results.txt
+        ├── aarch64/
+        │   ├── normalized_result.json
+        │   ├── report.md
+        │   └── results.txt
+        ├── comparison.json
+        └── comparison.md
+```
+
+其中 `<run_id>-<attempt>` 与 GitHub Actions 运行及重试次数一一对应，历史目录不可覆盖。构建日志等大文件不提交到结果分支，仍从 Artifact 查看。手动选择 `update_baseline=true` 时，只有 x86_64 和 aarch64 两个架构都成功且清理校验通过，才会更新该版本的 `baseline.json`；单架构运行不会更新基线。

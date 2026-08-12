@@ -30,6 +30,7 @@ flowchart TD
     G2 --> I
     I --> J["生成单软件和跨架构报告"]
     J --> K["Workflow Summary 和报告 Artifact"]
+    K --> L["精简结果提交 performance-results 分支"]
 ```
 
 核心设计原则：
@@ -84,6 +85,8 @@ flowchart TD
 │   ├── mark_cleanup.py
 │   ├── aggregate_results.py
 │   ├── generate_comparison.py
+│   ├── prepare_result_history.py
+│   ├── publish_result_history.sh
 │   ├── json_helper.py
 │   ├── reporting/
 │   │   ├── single_report.py
@@ -103,8 +106,6 @@ flowchart TD
 ├── config/
 │   ├── categories.yaml
 │   └── defaults.yaml
-├── baselines/
-│   └── <category>/<software>/<version>/<arch>.json
 ├── .github/
 │   └── workflows/
 │       └── performance-test.yml
@@ -119,7 +120,7 @@ flowchart TD
 |---|---|---|
 | `README.md` | 项目总入口，说明如何接入已有软件用例、手动启动 Workflow、读取报告和排查失败。 | 只描述稳定入口，不复制每个软件的具体参数。软件私有说明放在软件自己的 README。 |
 | `pyproject.toml` | 声明公共框架的 Python 版本、依赖以及格式化和测试配置。 | 专用裸机预装 Python 3.11+ 与 PyYAML 6.x；软件运行依赖仍由各自 `case.yaml` 声明。 |
-| `.gitignore` | 忽略 `.perf-output/`、venv、Python 缓存、构建目录和临时报告。 | 不忽略软件清单、基线和用于复现的小型 fixtures。 |
+| `.gitignore` | 忽略 `.perf-output/`、venv、Python 缓存、构建目录和临时报告。 | 不忽略软件清单和用于复现的小型 fixtures；历史结果与基线存放在独立结果分支。 |
 
 ### 3.2 `software/`：软件用例实现
 
@@ -208,6 +209,8 @@ flowchart TD
 | `cleanup_environment.sh` | 对专用 Runner 执行全局净化和净化后验收。 | 支持 `--before`、`--after`、`--verify`；清理失败必须阻止测试或将最终任务标记失败。 |
 | `aggregate_results.py` | 合并环境、主基准、微基准和阶段状态。 | 只聚合相同软件、版本、架构、参数签名和运行编号的数据。 |
 | `generate_comparison.py` | 配对 x86_64 与 aarch64 结果并计算比值。 | 根据指标方向选择比较公式，禁止比较参数签名不同的结果。 |
+| `prepare_result_history.py` | 从架构 Artifact 中提取精简结果并形成永久历史。 | 只保留最终 JSON、文本指标、报告和元数据；双架构成功且显式请求时生成受控基线。 |
+| `publish_result_history.sh` | 把精简结果发布到独立结果分支。 | 提交到 `performance-results`，不向主分支写入运行数据。 |
 | `json_helper.py` | 提供稳定的 JSON 读取、字段检查、Schema 校验和原子写入。 | 避免各软件重复实现 JSON Shell 辅助函数。写文件采用临时文件加原子替换。 |
 
 Workflow 对 `run_case.py` 的调用顺序：
@@ -261,15 +264,26 @@ Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边
 | `categories.yaml` | 定义允许使用的分类名称和展示顺序。 | 分类固定为 AI、Bigdata、Storage、Database、Media、HPC、Middleware、Toolchain、Others；清单中的 category 必须命中该文件。 |
 | `defaults.yaml` | 定义所有软件共享的默认值。 | 包括默认双架构、架构到 Runner 标签的唯一映射和公共路径；不保存机器地址。 |
 
-### 3.5 `baselines/`：受控性能基线
+### 3.5 `performance-results`：永久结果独立分支
 
-基线文件路径为：
+主分支不创建结果或基线顶级目录。每次成功运行后，Workflow 将精简结果发布到独立的 `performance-results` 分支：
 
 ```text
-baselines/<category>/<software>/<version>/<arch>.json
+.
+└── <category>/<software>/<version>/
+    ├── baseline.json
+    └── <run_id>-<attempt>/
+        ├── manifest.json
+        ├── combined-report.md
+        ├── x86_64/
+        ├── aarch64/
+        ├── comparison.json
+        └── comparison.md
 ```
 
-每个基线文件保存参数签名、硬件指纹、指标中位数、样本数量、生成任务和审核信息。只有手动触发并显式设置 `update_baseline=true` 的成功任务才能生成候选基线；是否写回仓库需要单独审核。
+运行目录以 GitHub Actions 的 run ID 和 attempt 唯一标识，写入后不覆盖。结果分支只保存最终指标、规范化 JSON、报告和运行元数据，不保存构建日志、源码、二进制和缓存。
+
+普通成功运行只新增历史记录。只有手动设置 `update_baseline=true`，且 x86_64、aarch64 均测试成功、前后清理均验收通过时，才更新该软件版本的 `baseline.json`。基线记录来源运行目录、提交 SHA、Workflow URL 和两架构指标，可追溯到不可变历史。
 
 ### 3.6 `framework/verification/`：公共框架验证
 
@@ -278,7 +292,7 @@ baselines/<category>/<software>/<version>/<arch>.json
 | `conftest.py` | 将脚本式公共框架加入验证代码的导入路径。 |
 | `test_cases_and_matrix.py` | 验证 Redis 清单、默认双架构矩阵、手动范围过滤和 Workflow 标签单一来源。 |
 | `test_command_adapter.py` | 使用假 Shell 入口验证共享任务 venv、阶段参数、环境传递、日志和预期结果检查。 |
-| `test_results_and_reports.py` | 验证旧结果规范化、清理状态、失败结果和跨架构指标方向。 |
+| `test_results_and_reports.py` | 验证旧结果规范化、清理状态、失败结果、指标方向、永久历史和基线约束。 |
 
 ### 3.7 `.github/workflows/performance-test.yml`
 
@@ -291,6 +305,7 @@ baselines/<category>/<software>/<version>/<arch>.json
 5. 在清理前上传原始日志和结果。
 6. 无条件执行运行后全局净化。
 7. 下载全部 Artifact 并生成汇总报告。
+8. 将成功运行的精简结果提交到 `performance-results` 独立分支。
 
 Workflow 不包含软件专用安装和测试命令，这些逻辑只能存在于软件适配器中。
 
@@ -487,7 +502,7 @@ on:
 | 指定软件和版本 | 指定软件版本；架构默认仍为两个 |
 | `architecture=x86_64` | 只运行 x86_64，适用于补跑 |
 | `architecture=aarch64` | 只运行 aarch64，适用于补跑 |
-| `update_baseline=true` | 成功后进入受控基线更新步骤 |
+| `update_baseline=true` | 仅当选择双架构且两边全部成功时更新受控基线；单架构运行不得选择 |
 
 手动触发主要用于：
 
@@ -811,7 +826,7 @@ combined-report.md
 junit.xml
 ```
 
-第一阶段通过 GitHub Workflow Summary 展示 Markdown 报告，并将完整结果作为 Artifact 保存。HTML 或历史趋势页面在主流程稳定后再建设。
+Workflow Summary 展示 Markdown 报告，完整原始结果作为限期 Artifact 保存，成功运行的精简指标和报告永久提交到 `performance-results` 分支。HTML 或历史趋势页面在主流程稳定后再建设。
 
 ## 13. Workflow Job 设计
 
@@ -823,7 +838,8 @@ validate-inputs
   → generate-matrix
   → performance-test（prepare/build/validate/start/test/stop/collect/cleanup 动态矩阵）
   → aggregate-report
-  → publish-summary
+  → publish-summary-and-artifact
+  → publish-performance-results-branch
 ```
 
 关键要求：
@@ -835,6 +851,8 @@ validate-inputs
 - 单个测试失败不阻止其他矩阵任务运行。
 - `aggregate-report` 使用 `if: always()`，即使部分任务失败也生成报告。
 - 日志和已有结果在清理前上传。
+- 只有性能矩阵整体成功才发布永久结果；失败运行保留 Artifact 和 Summary 用于排障，不污染正式历史。
+- `performance-results` 分支写入由 Workflow 的 `contents: write` 最小权限完成，主分支保持只读。
 - 执行范围完全由手动输入参数决定，不分析 Git 变更，也不响应代码提交事件。
 
 ## 14. 现有脚本改造项
@@ -871,7 +889,7 @@ validate-inputs
 
 实际阈值由各软件特性决定。为降低测试抖动，稳定后可以采用最近 3～5 次有效结果的中位数作为基线。
 
-性能基线只能通过带有 `update_baseline=true` 的受控手动任务更新；其他手动任务只读取基线，不覆盖基线。
+每次成功的手动任务都会在 `performance-results` 分支新增一个以 `<run_id>-<attempt>` 命名的不可变历史目录。性能基线只能通过带有 `update_baseline=true` 的受控双架构手动任务更新；两个架构的测试状态和清理状态必须全部成功。其他任务只新增历史，不覆盖 `baseline.json`。
 
 ## 16. 分阶段实施
 
@@ -939,6 +957,8 @@ validate-inputs
 - 两个架构的结果路径完全隔离，不发生覆盖。
 - 所有结果符合统一 JSON Schema。
 - 能生成单软件报告、跨架构报告和全局汇总报告。
+- 成功运行的精简指标、报告和运行元数据能够永久保存到 `performance-results` 独立分支，并可从运行编号追溯。
+- 构建日志和大体积原始文件只进入限期 Artifact，不进入 Git 历史。
 - Workflow 页面能够展示失败阶段、性能回退和清理结果。
 - 专用裸机 Runner 在测试前后均通过全局环境净化验收，不存在任何历史测试遗留的进程、挂载、源码、安装前缀、构建产物或临时目录。
 
@@ -954,6 +974,7 @@ validate-inputs
 → Artifact 上传
 → 专用 Runner 全局净化与验收
 → 跨架构报告
+→ performance-results 永久历史
 ```
 
 最小闭环验证通过后，再按优先级逐个接入真实软件，并增加性能基线和趋势能力。人工维护流程稳定后，才进入测试用例自动生成能力的独立设计阶段。

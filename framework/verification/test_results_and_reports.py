@@ -1,5 +1,6 @@
 """Verify normalization and cross-architecture direction semantics."""
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
 from mark_cleanup import mark
+from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
 from reporting.comparison_report import render
 
@@ -87,6 +89,164 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
     assert "越大越好" in combined
     assert "越小越好" in combined
+
+
+def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    atomic_write_json(
+        input_root / "arm" / "normalized_result.json",
+        normalized_result("aarch64", 120, 10),
+    )
+    generate(input_root, tmp_path / "report")
+    combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
+    assert "单架构指标" in combined
+    assert "120" in combined
+    assert "越大越好" in combined
+
+
+def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
+    tmp_path: Path,
+) -> None:
+    input_root = tmp_path / "artifacts"
+    report_dir = tmp_path / "report"
+    output_root = tmp_path / "permanent"
+    run_id = "12345-1"
+    for folder, architecture, throughput, latency in (
+        ("x86", "x86_64", 100, 20),
+        ("arm", "aarch64", 120, 10),
+    ):
+        result = normalized_result(architecture, throughput, latency)
+        result.update({"run_id": run_id, "cleanup_status": "passed"})
+        result_dir = input_root / folder
+        atomic_write_json(result_dir / "normalized_result.json", result)
+        atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
+        (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
+        (result_dir / "results.log").write_text("large log\n", encoding="utf-8")
+
+    generate(input_root, report_dir)
+    prepared = prepare(
+        input_root,
+        report_dir,
+        output_root,
+        run_id=run_id,
+        repository="owner/repo",
+        source_commit="abc123",
+        workflow_url="https://github.example/actions/runs/12345",
+        update_baseline=True,
+    )
+    run_root = output_root / "AI" / "sample" / "1.0" / run_id
+    assert prepared == [run_root]
+    assert (run_root / "x86_64" / "benchmark.json").is_file()
+    assert (run_root / "aarch64" / "normalized_result.json").is_file()
+    assert not (run_root / "aarch64" / "results.log").exists()
+    assert (run_root / "comparison.json").is_file()
+    assert (run_root / "combined-report.md").is_file()
+    baseline = output_root / "AI" / "sample" / "1.0" / "baseline.json"
+    assert baseline.is_file()
+    assert '"run_id": "12345-1"' in baseline.read_text(encoding="utf-8")
+
+
+def test_baseline_update_rejects_a_single_architecture(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    result = normalized_result("aarch64", 120, 10)
+    result.update({"run_id": "12345-1", "cleanup_status": "passed"})
+    atomic_write_json(input_root / "arm" / "normalized_result.json", result)
+    generate(input_root, tmp_path / "report")
+    import pytest
+
+    with pytest.raises(ValueError, match="requires both architectures"):
+        prepare(
+            input_root,
+            tmp_path / "report",
+            tmp_path / "permanent",
+            run_id="12345-1",
+            repository="owner/repo",
+            source_commit="abc123",
+            workflow_url="https://github.example/actions/runs/12345",
+            update_baseline=True,
+        )
+
+
+def test_permanent_history_rejects_failed_cleanup(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    result = normalized_result("aarch64", 120, 10)
+    result.update({"run_id": "12345-1", "cleanup_status": "failed"})
+    atomic_write_json(input_root / "arm" / "normalized_result.json", result)
+
+    import pytest
+
+    with pytest.raises(ValueError, match="requires passed test and cleanup"):
+        prepare(
+            input_root,
+            tmp_path / "report",
+            tmp_path / "permanent",
+            run_id="12345-1",
+            repository="owner/repo",
+            source_commit="abc123",
+            workflow_url="https://github.example/actions/runs/12345",
+        )
+
+
+def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    remote = tmp_path / "remote.git"
+    source = tmp_path / "prepared"
+    repository.mkdir()
+    source.mkdir()
+
+    subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
+    subprocess.run(["git", "init", "-b", "main"], cwd=repository, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"], cwd=repository, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=repository, check=True
+    )
+    (repository / "main-only.txt").write_text("main branch\n", encoding="utf-8")
+    subprocess.run(["git", "add", "main-only.txt"], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-m", "Initial"], cwd=repository, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "remote", "add", "origin", str(remote)], cwd=repository, check=True
+    )
+
+    result_path = source / "Database" / "redis" / "8.0.0" / "12345-1"
+    result_path.mkdir(parents=True)
+    (source / "README.md").write_text("# Results\n", encoding="utf-8")
+    (result_path / "manifest.json").write_text("{}\n", encoding="utf-8")
+    publisher = Path(__file__).resolve().parents[1] / "publish_result_history.sh"
+    environment = os.environ.copy()
+    environment.update({
+        "RUNNER_TEMP": str(tmp_path),
+        "GITHUB_RUN_ID": "12345",
+        "GITHUB_RUN_ATTEMPT": "1",
+    })
+    subprocess.run(
+        ["bash", str(publisher), str(source), "performance-results"],
+        cwd=repository,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    tree = subprocess.run(
+        ["git", f"--git-dir={remote}", "ls-tree", "-r", "--name-only", "performance-results"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    assert "Database/redis/8.0.0/12345-1/manifest.json" in tree
+    assert "README.md" in tree
+    assert "main-only.txt" not in tree
+    duplicate = subprocess.run(
+        ["bash", str(publisher), str(source), "performance-results"],
+        cwd=repository,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+    assert duplicate.returncode == 3
+    assert "immutable run already exists" in duplicate.stderr
 
 
 def test_cleanup_failure_is_persisted(tmp_path: Path) -> None:

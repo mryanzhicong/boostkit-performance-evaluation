@@ -16,7 +16,7 @@
 
 | 文件 | 用途 |
 |---|---|
-| `performance-test.yml` | 唯一入口；只支持 `workflow_dispatch`，校验输入、展开双架构矩阵、选择 Runner、前后全局清理、执行启用用例并汇总报告。 |
+| `performance-test.yml` | 唯一入口；只支持 `workflow_dispatch`，校验输入、展开双架构矩阵、选择 Runner、前后全局清理、执行启用用例、汇总报告，并把成功结果发布到 `performance-results` 分支。 |
 
 ## `config/`
 
@@ -40,11 +40,13 @@
 | `mark_cleanup.py` | 把 Workflow 的后置清理结果回写到任务状态和规范化结果；清理失败使用退出码 80。 |
 | `collect_environment.py` | 采集测试前后的 OS、CPU、内存、内核等环境快照。 |
 | `aggregate_results.py` | 把现有脚本的 `results.json` 等结果转换成统一指标模型。 |
-| `generate_comparison.py` | 配对参数一致的 x86_64/aarch64 结果，生成跨架构结果、汇总和 JUnit。 |
+| `generate_comparison.py` | 配对参数一致的 x86_64/aarch64 结果，在汇总中保留各架构指标，并生成跨架构结果、汇总和 JUnit。 |
+| `prepare_result_history.py` | 从架构 Artifact 中提取最终 JSON、文本指标和报告，生成不可变的精简运行历史；仅在双架构成功且显式请求时生成受控基线。构建日志不会进入永久历史。 |
+| `publish_result_history.sh` | 把准备好的精简结果提交并推送到独立 `performance-results` 分支，使性能历史不进入主分支，也不依赖 Artifact 保留期限。 |
 | `json_helper.py` | JSON 读取、原子写入和点路径取值的公共函数。 |
 | `reporting/single_report.py` | 生成单架构 Markdown 报告，并显示指标优化方向。 |
 | `reporting/comparison_report.py` | 生成跨架构 Markdown 对比，说明越大越好、越小越好、目标型和仅展示指标。 |
-| `reporting/summary_report.py` | 生成整次手动运行的任务状态汇总。 |
+| `reporting/summary_report.py` | 生成整次手动运行的任务状态、单架构指标和跨架构指标汇总。 |
 | `reporting/junit_report.py` | 生成供 CI 页面或外部系统消费的 JUnit XML。 |
 | `schemas/case.schema.json` | 软件清单数据结构定义。 |
 | `schemas/result.schema.json` | 统一结果数据结构定义。 |
@@ -84,6 +86,6 @@
 | `conftest.py` | 将脚本式 `framework/` 模块加入测试导入路径。 |
 | `test_cases_and_matrix.py` | 验证 Redis 清单、默认 6 任务矩阵、手动过滤、双架构 Runner 映射和完整分阶段 Workflow。 |
 | `test_command_adapter.py` | 验证已有脚本通过环境变量接入公共输出目录。 |
-| `test_results_and_reports.py` | 验证旧结果规范化、指标方向语义和跨架构报告配对。 |
+| `test_results_and_reports.py` | 验证旧结果规范化、单架构指标展示、指标方向语义、跨架构报告配对、永久历史和基线更新约束。 |
 
 当前阶段没有用例生成器或模板文件；至少一个人工维护的用例在正式 Runner 上稳定运行后再单独评审是否需要。

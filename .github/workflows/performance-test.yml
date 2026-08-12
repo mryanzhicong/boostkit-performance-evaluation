@@ -20,7 +20,7 @@ on:
         type: choice
         options: [all, x86_64, aarch64]
       update_baseline:
-        description: "Generate baseline candidates only; never commits automatically"
+        description: "Update baseline.json; requires successful x86_64 and aarch64 results"
         required: true
         default: false
         type: boolean
@@ -40,6 +40,12 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate baseline update scope
+        if: inputs.update_baseline && inputs.architecture != 'all'
+        shell: bash
+        run: |
+          echo "::error::update_baseline requires architecture=all"
+          exit 2
       - name: Install framework runtime dependency
         run: python3 -m pip install --disable-pip-version-check --no-input "PyYAML>=6.0,<7.0"
       - name: Validate all manually maintained cases
@@ -169,6 +175,9 @@ jobs:
     if: always()
     needs: [prepare, performance]
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Install framework runtime dependency
@@ -193,11 +202,25 @@ jobs:
           path: .perf-output/report
           if-no-files-found: error
           retention-days: 90
-      - name: Preserve requested baseline candidates
-        if: inputs.update_baseline
-        uses: actions/upload-artifact@v4
-        with:
-          name: baseline-candidates-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .perf-output/report/*.json
-          if-no-files-found: error
-          retention-days: 90
+      - name: Prepare permanent result history
+        if: needs.performance.result == 'success'
+        env:
+          UPDATE_BASELINE: ${{ inputs.update_baseline }}
+        shell: bash
+        run: |
+          baseline_args=()
+          if [[ "${UPDATE_BASELINE}" == "true" ]]; then
+            baseline_args+=(--update-baseline)
+          fi
+          python3 framework/prepare_result_history.py \
+            --input-root .perf-output/downloaded \
+            --report-dir .perf-output/report \
+            --output-root .perf-output/permanent \
+            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
+            --repository '${{ github.repository }}' \
+            --source-commit '${{ github.sha }}' \
+            --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            "${baseline_args[@]}"
+      - name: Publish permanent results branch
+        if: needs.performance.result == 'success'
+        run: bash framework/publish_result_history.sh .perf-output/permanent performance-results
