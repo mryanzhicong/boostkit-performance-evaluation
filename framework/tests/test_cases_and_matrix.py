@@ -1,8 +1,15 @@
 """Validate the manually maintained case catalog and matrix defaults."""
 
 import pytest
-from generate_matrix import build_matrix, configured_runner_labels
-from validate_case import ROOT, discover_cases, validate_case
+from catalog import (
+    ROOT,
+    build_matrix,
+    configured_runner_labels,
+    configured_software,
+    discover_cases,
+    validate_case,
+    validate_catalog,
+)
 
 
 def test_redis_is_the_only_valid_case() -> None:
@@ -16,11 +23,49 @@ def test_redis_is_the_only_valid_case() -> None:
     assert case["execution"]["interface"] == "four-stage"
 
 
+def test_software_registry_normalizes_empty_categories() -> None:
+    registry = configured_software(ROOT)
+    assert registry["Database"] == ["redis"]
+    assert all(
+        software == []
+        for category, software in registry.items()
+        if category != "Database"
+    )
+
+
+def test_catalog_rejects_unregistered_and_missing_cases(tmp_path) -> None:
+    config = tmp_path / "config"
+    config.mkdir()
+    (config / "categories.yaml").write_text(
+        "categories:\n  Database:\n", encoding="utf-8"
+    )
+    unregistered = tmp_path / "software" / "Database" / "redis" / "case.yaml"
+    unregistered.parent.mkdir(parents=True)
+    unregistered.write_text("{}\n", encoding="utf-8")
+    _entries, errors = validate_catalog(tmp_path)
+    assert any("case is not registered" in error for error in errors)
+
+    (config / "categories.yaml").write_text(
+        "categories:\n  Database:\n    - redis\n    - postgresql\n",
+        encoding="utf-8",
+    )
+    _entries, errors = validate_catalog(tmp_path)
+    assert any("registered case is missing" in error and "postgresql" in error for error in errors)
+
+
 def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
     matrix = build_matrix("all", "all", "all")["include"]
     assert len(matrix) == 6
     assert {item["arch"] for item in matrix} == {"x86_64", "aarch64"}
     assert {item["version"] for item in matrix} == {"7.4.10", "8.0.0", "8.0.6"}
+    assert [(item["version"], item["arch"]) for item in matrix] == [
+        ("7.4.10", "x86_64"),
+        ("7.4.10", "aarch64"),
+        ("8.0.0", "x86_64"),
+        ("8.0.0", "aarch64"),
+        ("8.0.6", "x86_64"),
+        ("8.0.6", "aarch64"),
+    ]
 
 
 def test_manual_filters_limit_redis_to_one_architecture_and_version() -> None:
@@ -53,6 +98,9 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     assert "contents: write" in workflow
     assert "baseline-candidates" not in workflow
     assert "update_baseline requires architecture=all" in workflow
+    assert "framework/catalog.py matrix" in workflow
+    assert "framework/validate_case.py" not in workflow
+    assert "framework/generate_matrix.py" not in workflow
     for stage in (
         "prepare",
         "build",
@@ -75,6 +123,24 @@ def test_workflow_installs_pinned_framework_dependency_from_tsinghua() -> None:
     assert workflow.count("--target") == 2
     assert "Verify preinstalled framework runtime" not in workflow
     assert not (ROOT / "pyproject.toml").exists()
+
+
+def test_framework_uses_consolidated_catalog_results_and_report_modules() -> None:
+    for path in (
+        "framework/catalog.py",
+        "framework/normalize_results.py",
+        "framework/reporting.py",
+    ):
+        assert (ROOT / path).is_file()
+    for removed_path in (
+        "framework/adapter_base.py",
+        "framework/aggregate_results.py",
+        "framework/generate_matrix.py",
+        "framework/validate_case.py",
+        "framework/reporting",
+        "framework/schemas",
+    ):
+        assert not (ROOT / removed_path).exists()
 
 
 def test_redis_entrypoint_exposes_every_workflow_stage() -> None:

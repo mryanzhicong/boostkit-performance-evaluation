@@ -5,14 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from aggregate_results import ResultValidationError, normalize
 from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
 from mark_cleanup import mark
+from normalize_results import ResultValidationError, normalize
 from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
-from reporting.comparison_report import render
+from reporting import render_comparison
 
 
 def normalized_result(architecture: str, higher: float, lower: float) -> dict:
@@ -118,7 +118,7 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     )
     assert comparison["metrics"]["throughput"]["relative_performance"] == 1.2
     assert comparison["metrics"]["latency"]["relative_performance"] == 2.0
-    markdown = render(comparison)
+    markdown = render_comparison(comparison)
     assert "越大越好" in markdown
     assert "越小越好" in markdown
 

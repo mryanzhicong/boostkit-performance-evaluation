@@ -57,9 +57,7 @@ jobs:
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
-      - name: Validate all manually maintained cases
-        run: python3 framework/validate_case.py --all
-      - name: Generate execution matrix
+      - name: Validate software catalog and generate execution matrix
         id: matrix
         env:
           INPUT_SOFTWARE: ${{ inputs.software }}
@@ -67,7 +65,7 @@ jobs:
           INPUT_ARCHITECTURE: ${{ inputs.architecture }}
         shell: bash
         run: |
-          matrix="$(python3 framework/generate_matrix.py \
+          matrix="$(python3 framework/catalog.py matrix \
             --software "${INPUT_SOFTWARE}" \
             --version "${INPUT_VERSION}" \
             --architecture "${INPUT_ARCHITECTURE}")"

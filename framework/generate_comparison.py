@@ -11,9 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from json_helper import atomic_write_json, load_json
-from reporting.comparison_report import render as render_comparison
-from reporting.junit_report import render as render_junit
-from reporting.summary_report import render as render_summary
+from reporting import render_comparison, render_junit, render_summary
 
 
 def _number(value: Any) -> float | None:

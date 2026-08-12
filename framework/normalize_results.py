@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-"""Normalize existing case outputs without replacing their benchmark logic."""
+"""Validate software outputs and normalize their declared metrics."""
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import math
@@ -60,11 +58,11 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
             raise ResultValidationError(
                 f"metric {metric_name} references unavailable source {source_name}"
             )
-        source = sources[source_name]
-        value = get_path(source, definition["path"], MISSING)
+        value = get_path(sources[source_name], definition["path"], MISSING)
         if value is MISSING:
             raise ResultValidationError(
-                f"metric {metric_name} path does not exist: {source_name}:{definition['path']}"
+                f"metric {metric_name} path does not exist: "
+                f"{source_name}:{definition['path']}"
             )
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ResultValidationError(
@@ -86,10 +84,7 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
 
 def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
     sources = _load_sources(context)
-
     primary = sources.get("results.json", {})
-    metrics = _extract_metrics(context, sources)
-
     return {
         "software": context.software,
         "category": context.category,
@@ -102,7 +97,7 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "environment_before": load_json(context.output_dir / "environment_before.json", {}),
         "environment_after": load_json(context.output_dir / "environment_after.json", {}),
         "sources": sources,
-        "metrics": metrics,
+        "metrics": _extract_metrics(context, sources),
         "legacy_summary": primary.get("summary", {}) if isinstance(primary, dict) else {},
     }
 
@@ -111,17 +106,3 @@ def write_normalized(context: RunContext, command_status: str) -> Path:
     output = context.output_dir / "normalized_result.json"
     atomic_write_json(output, normalize(context, command_status))
     return output
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path)
-    parser.add_argument("--output", required=True, type=Path)
-    args = parser.parse_args()
-    data = load_json(args.input)
-    atomic_write_json(args.output, data)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

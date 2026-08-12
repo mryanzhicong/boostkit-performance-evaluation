@@ -8,11 +8,13 @@ import platform
 import sys
 from pathlib import Path
 
-from aggregate_results import ResultValidationError, write_normalized
+from catalog import ROOT, validate_case
+from collect_environment import collect
 from command_adapter import run_command
 from context import RunContext
 from json_helper import atomic_write_json, load_json
-from validate_case import ROOT, validate_case
+from normalize_results import ResultValidationError, write_normalized
+from reporting import render_single
 
 STAGES = ("prepare", "build", "start", "test", "stop", "finalize")
 STAGE_EXIT_CODES = {
@@ -126,9 +128,6 @@ def main() -> int:
         flush=True,
     )
 
-    from collect_environment import collect
-    from reporting.single_report import render
-
     if args.stage == "prepare":
         actual_arch = normalize_arch(platform.machine())
         if actual_arch != args.architecture:
@@ -160,7 +159,7 @@ def main() -> int:
             mark_failed(context, args.stage, STAGE_EXIT_CODES[args.stage], error=str(exc))
             print(f"ERROR: result validation failed: {exc}", file=sys.stderr)
             return STAGE_EXIT_CODES[args.stage]
-        report = render(load_json(normalized_path, {}))
+        report = render_single(load_json(normalized_path, {}))
         (context.output_dir / "report.md").write_text(report, encoding="utf-8")
         if previous.get("status") == "failed":
             update_status(context, stage=args.stage)

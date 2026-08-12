@@ -1,16 +1,12 @@
-#!/usr/bin/env python3
 """Collect real runner environment data before and after a benchmark."""
 
 from __future__ import annotations
 
-import argparse
 import os
 import platform
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-
-from json_helper import atomic_write_json
 
 
 def _command(args: list[str]) -> str:
@@ -44,17 +40,9 @@ def collect() -> dict:
         "python_version": platform.python_version(),
         "memory": _command(["free", "-b"]),
         "numa": _command(["numactl", "--hardware"]),
-        "cpu_governor": _command(["sh", "-c", "cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null"]),
+        "cpu_governor": _command([
+            "sh",
+            "-c",
+            "cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null",
+        ]),
     }
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output", required=True, type=Path)
-    args = parser.parse_args()
-    atomic_write_json(args.output, collect())
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

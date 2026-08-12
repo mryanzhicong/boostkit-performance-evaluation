@@ -2,7 +2,9 @@
 
 `software/` 当前包含 `Database/redis` 一个软件测试用例，其余分类保留为空目录。
 
-允许的分类由 `config/categories.yaml` 统一定义：`AI`、`Bigdata`、`Storage`、`Database`、`Media`、`HPC`、`Middleware`、`Toolchain` 和 `Others`。空分类目录中的 `.gitkeep` 只用于让目录能够被 Git 保存。
+分类和各分类的软件注册列表由 `config/categories.yaml` 统一定义。空分类在 YAML 中直接留空；有软件时在分类下列出软件名。空分类目录中的 `.gitkeep` 只用于让目录能够被 Git 保存。
+
+加入软件时必须同时完成注册和目录接入。Catalog 会双向校验：登记的软件必须存在对应 `case.yaml`，实际存在的用例也必须已经登记；同一软件不能出现在多个分类。
 
 后续人工接入软件时，目录结构为：
 
