@@ -9,7 +9,6 @@
 | `README.md` | 项目入口、正式目录和本地验证命令。 |
 | `WORKFLOW_IMPLEMENTATION_PLAN.md` | Workflow 架构、触发范围、Runner、清理、报告和演进方案。 |
 | `FILE_INDEX.md` | 正式目录内所有文件的用途索引。 |
-| `pyproject.toml` | Python 版本、运行依赖、开发依赖及测试配置。 |
 | `.gitignore` | 排除运行产物、缓存、历史结果和临时示例目录。 |
 
 ## `.github/workflows/`
@@ -70,7 +69,6 @@
 
 | 文件 | 用途 |
 |---|---|
-| `README.md` | 说明 Redis 用例来源、测试范围、Runner 编译依赖、源码地址配置和指标方向。 |
 | `case.yaml` | 配置 Redis 7.4.10、8.0.0、8.0.6 的正式参数、输出和报告指标。 |
 | `redis_test.sh` | 将原 Redis 测试脚本收敛为 build、start、test、stop 四阶段；保留原始 Make 参数和源码树二进制用法，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
 | `scripts/write_version_info.py` | 记录实际 Redis 版本、架构及运行环境。 |

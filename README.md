@@ -13,11 +13,15 @@
 ## 本地检查
 
 ```bash
-python3 -m pip install "PyYAML>=6.0,<7.0" "pytest>=8.0,<9.0"
+python3 -m pip install \
+  --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+  "PyYAML==6.0.2" "pytest>=8.0,<9.0"
 python3 framework/validate_case.py --all
 python3 framework/generate_matrix.py --software all --version all --architecture all
 python3 -m pytest framework/verification
 ```
+
+Workflow 的运行依赖直接固定在 `.github/workflows/performance-test.yml` 中。只有需要解析 YAML 的 Prepare 和 Performance Job 从清华 PyPI 镜像安装 PyYAML；不使用该依赖的 Report Job 不安装。本地的 `pytest` 仅用于框架验证。
 
 当前接入 Redis 一个软件，配置 `7.4.10`、`8.0.0` 和 `8.0.6` 三个版本。默认矩阵为三个版本分别运行 x86_64 与 aarch64，共 6 个正式任务。
 
@@ -38,7 +42,7 @@ Runner 标签只在 `config/defaults.yaml` 中维护，当前映射为：
 
 矩阵生成器读取该配置，Workflow 只消费 `matrix.runner_label`，不存在第二份标签硬编码。无需配置 GitHub Actions Variables。手动触发时 `architecture=all` 是默认值，会同时生成两种架构任务；选择单个架构时只使用对应标签。
 
-Runner 必须是专用裸机，预装 Python 3.11+、PyYAML 6.x 和软件清单明确要求的编译依赖。性能任务直接在裸机编译安装，禁止测试脚本在任务期间通过 apt/dnf 或系统级 pip 改写宿主机。源码、安装前缀、缓存、数据和构建目录均必须放入 `/tmp/boostkit-perf`，任务前后执行全局清理与验收。
+Runner 必须是专用裸机，预装 Python 3.11+、pip 和软件清单明确要求的编译依赖。Performance Job 在全局前置清理后，从清华 PyPI 镜像把固定版本的 PyYAML 安装到本次任务私有目录；build、start、test、stop 和 finalize 全程复用，最后由全局后置清理统一删除，不修改系统 Python。性能任务直接在裸机编译安装，禁止测试脚本在任务期间通过 apt/dnf 或系统级 pip 改写宿主机。源码、安装前缀、缓存、数据和构建目录均必须放入 `/tmp/boostkit-perf`，任务前后执行全局清理与验收。
 
 ## 当前阶段边界
 

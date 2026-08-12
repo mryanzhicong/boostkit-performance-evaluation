@@ -66,6 +66,17 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
         assert f"--stage {removed_stage}" not in workflow
 
 
+def test_workflow_installs_pinned_framework_dependency_from_tsinghua() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(
+        encoding="utf-8"
+    )
+    assert workflow.count("https://pypi.tuna.tsinghua.edu.cn/simple") == 2
+    assert workflow.count('"PyYAML==6.0.2"') == 2
+    assert workflow.count("--target") == 2
+    assert "Verify preinstalled framework runtime" not in workflow
+    assert not (ROOT / "pyproject.toml").exists()
+
+
 def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
     entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
         encoding="utf-8"

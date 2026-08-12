@@ -47,7 +47,6 @@ flowchart TD
 ```text
 ./
 ├── README.md
-├── pyproject.toml
 ├── .gitignore
 ├── software/
 │   ├── AI/
@@ -119,8 +118,9 @@ flowchart TD
 | 文件 | 用途 | 设计要求 |
 |---|---|---|
 | `README.md` | 项目总入口，说明如何接入已有软件用例、手动启动 Workflow、读取报告和排查失败。 | 只描述稳定入口，不复制每个软件的具体参数。软件私有说明放在软件自己的 README。 |
-| `pyproject.toml` | 声明公共框架的 Python 版本、依赖以及格式化和测试配置。 | 专用裸机预装 Python 3.11+ 与 PyYAML 6.x；软件运行依赖仍由各自 `case.yaml` 声明。 |
 | `.gitignore` | 忽略 `.perf-output/`、venv、Python 缓存、构建目录和临时报告。 | 不忽略软件清单和用于复现的小型 fixtures；历史结果与基线存放在独立结果分支。 |
+
+公共框架运行依赖直接固定在 `.github/workflows/performance-test.yml` 中。只有实际解析 YAML 的 Prepare 和每个双架构 Performance 任务从清华 PyPI 镜像安装 PyYAML；Report Job 不使用 YAML，因此不安装。Performance Job 在全局前置清理后安装一次，全部软件阶段复用，最后由全局后置清理统一删除，不依赖 Runner 的全局 Python 包，也不修改系统 Python。
 
 ### 3.2 `software/`：软件用例实现
 
@@ -297,7 +297,7 @@ Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边
 这是唯一 Workflow 文件，并且只声明 `workflow_dispatch`。它负责：
 
 1. 校验手动输入。
-2. 安装锁定的公共框架依赖。
+2. 仅在需要解析 YAML 的 Job 中，从清华 PyPI 镜像把锁定的公共框架依赖安装到任务私有目录。
 3. 校验软件清单并生成动态矩阵。
 4. 将矩阵任务分配到对应架构 Runner。
 5. 在清理前上传原始日志和结果。
@@ -625,7 +625,7 @@ PERF_PROCESS_TOKEN=boostkit-perf:<run_id>-<attempt>:<category>:<software>:<versi
 6. 创建本次运行专属的全新源码、构建、安装、数据和结果目录。
 7. 记录全局清理结果与运行前环境快照。
 
-裸机系统编译依赖必须由管理员在 Runner 纳管阶段预装和锁定。正式测试不得通过 `sudo apt/dnf` 或系统级 `pip` 临时修改宿主机；被测软件通过源码编译，并使用 `/tmp/boostkit-perf/<run>/install` 作为安装前缀，以便全局清理可靠恢复环境。
+裸机系统编译依赖必须由管理员在 Runner 纳管阶段预装和锁定。Runner 只需预装 Python 3.11+ 与 pip，Workflow 会从清华 PyPI 镜像把固定版本的公共 Python 依赖安装到 `/tmp/boostkit-perf/framework-deps`，并在任务结束时随工作根目录一起清理。正式测试不得通过 `sudo apt/dnf` 或系统级 `pip` 临时修改宿主机；被测软件通过源码编译，并使用 `/tmp/boostkit-perf/<run>/install` 作为安装前缀，以便全局清理可靠恢复环境。
 
 清理后执行环境验收。以下任一条件不满足时，任务直接失败并将 Runner 标记为需要维护，不得带着脏环境继续测试：
 
@@ -863,7 +863,7 @@ validate-inputs
 2. 从实际系统采集架构、OS、CPU 和硬件信息。
 3. 结果目录增加软件、版本、架构和运行编号。
 4. 将软件入口收敛为 build/start/test/stop，准备、严格结果校验、报告和清理由 Framework 统一实现。
-5. 避免向 Runner 的系统 Python 直接安装依赖。
+5. 公共 Python 依赖每次从清华镜像安装到任务私有目录，避免写入 Runner 的系统 Python。
 6. 通过清单读取参数和架构独立阈值。
 7. 为所有随机数据固定随机种子。
 8. 统一预热次数和正式迭代次数定义。

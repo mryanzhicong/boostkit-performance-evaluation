@@ -46,8 +46,17 @@ jobs:
         run: |
           echo "::error::update_baseline requires architecture=all"
           exit 2
-      - name: Install framework runtime dependency
-        run: python3 -m pip install --disable-pip-version-check --no-input "PyYAML>=6.0,<7.0"
+      - name: Install framework runtime dependencies from Tsinghua mirror
+        shell: bash
+        run: |
+          framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-input \
+            --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+            --target "${framework_deps}" \
+            "PyYAML==6.0.2"
+          echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
       - name: Validate all manually maintained cases
         run: python3 framework/validate_case.py --all
       - name: Generate execution matrix
@@ -87,10 +96,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
-      - name: Verify preinstalled framework runtime
+      - name: Install framework runtime dependencies from Tsinghua mirror
+        shell: bash
+        run: |
+          framework_deps="${PERF_WORK_ROOT}/framework-deps"
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-input \
+            --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+            --target "${framework_deps}" \
+            "PyYAML==6.0.2"
+          echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
+      - name: Verify installed framework runtime
         run: >-
           python3 -c "import sys, yaml;
           assert sys.version_info >= (3, 11), sys.version;
+          assert yaml.__version__ == '6.0.2', yaml.__version__;
           print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}')"
       - name: Prepare task and capture environment
         run: >-
@@ -172,8 +193,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install framework runtime dependency
-        run: python3 -m pip install --disable-pip-version-check --no-input "PyYAML>=6.0,<7.0"
       - name: Download task artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
