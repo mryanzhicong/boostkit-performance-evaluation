@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from aggregate_results import normalize
+from aggregate_results import ResultValidationError, normalize
 from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
@@ -22,6 +22,7 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
         "version": "1.0",
         "architecture": architecture,
         "status": "passed",
+        "cleanup_status": "passed",
         "parameter_signature": "same-parameters",
         "metrics": {
             "throughput": {"value": higher, "unit": "ops/s", "direction": "higher_is_better"},
@@ -65,6 +66,51 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     assert result["metrics"]["qps"]["direction"] == "higher_is_better"
 
 
+def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
+    import pytest
+
+    output = tmp_path / "output"
+    output.mkdir()
+    case = {
+        "execution": {"expected_outputs": ["results.json"]},
+        "metrics": {
+            "qps": {
+                "source": "results.json",
+                "path": "summary.qps",
+                "unit": "queries/s",
+                "direction": "higher_is_better",
+            }
+        },
+    }
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case=case,
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=output,
+        work_dir=tmp_path / "work",
+    )
+
+    (output / "results.json").write_text("", encoding="utf-8")
+    with pytest.raises(ResultValidationError, match="empty"):
+        normalize(context, "passed")
+    atomic_write_json(output / "results.json", {"summary": {}})
+    with pytest.raises(ResultValidationError, match="path does not exist"):
+        normalize(context, "passed")
+    atomic_write_json(output / "results.json", {"summary": {"qps": "fast"}})
+    with pytest.raises(ResultValidationError, match="must be numeric"):
+        normalize(context, "passed")
+    (output / "results.json").write_text(
+        '{"summary":{"qps":NaN}}\n', encoding="utf-8"
+    )
+    with pytest.raises(ResultValidationError, match="must be finite"):
+        normalize(context, "passed")
+
+
 def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     comparison = compare_pair(
         normalized_result("x86_64", higher=100, lower=20),
@@ -77,10 +123,31 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "越小越好" in markdown
 
 
+def test_comparison_rejects_incompatible_metric_contracts() -> None:
+    import pytest
+
+    x86 = normalized_result("x86_64", higher=100, lower=20)
+    arm = normalized_result("aarch64", higher=120, lower=10)
+    arm["metrics"]["throughput"]["unit"] = "requests/s"
+    with pytest.raises(ValueError, match="units differ"):
+        compare_pair(x86, arm)
+
+    arm = normalized_result("aarch64", higher=120, lower=10)
+    del arm["metrics"]["latency"]
+    with pytest.raises(ValueError, match="metric sets differ"):
+        compare_pair(x86, arm)
+
+
 def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     input_root = tmp_path / "artifacts"
-    atomic_write_json(input_root / "x86" / "normalized_result.json", normalized_result("x86_64", 100, 20))
-    atomic_write_json(input_root / "arm" / "normalized_result.json", normalized_result("aarch64", 120, 10))
+    atomic_write_json(
+        input_root / "x86" / "normalized_result.json",
+        normalized_result("x86_64", 100, 20),
+    )
+    atomic_write_json(
+        input_root / "arm" / "normalized_result.json",
+        normalized_result("aarch64", 120, 10),
+    )
     summary = generate(input_root, tmp_path / "report")
     assert summary["total"] == 2
     assert summary["comparisons"] == 1
@@ -212,7 +279,12 @@ def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) 
     )
     (repository / "main-only.txt").write_text("main branch\n", encoding="utf-8")
     subprocess.run(["git", "add", "main-only.txt"], cwd=repository, check=True)
-    subprocess.run(["git", "commit", "-m", "Initial"], cwd=repository, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial"],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
     subprocess.run(
         ["git", "remote", "add", "origin", str(remote)], cwd=repository, check=True
     )
@@ -308,6 +380,35 @@ def test_process_scanner_finds_real_work_root_process(tmp_path: Path) -> None:
         "import time; time.sleep(30)",
         str(work_root / "case-work"),
     ])
+    try:
+        assert process.pid in matching_processes(work_root)
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+
+def test_process_scanner_finds_isolated_process_without_root_in_command(tmp_path: Path) -> None:
+    work_root = tmp_path / "boostkit-perf"
+    environment = os.environ.copy()
+    environment["PERF_PROCESS_TOKEN"] = "boostkit-perf:old-run:AI:sample:1.0:x86_64"
+    process = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        env=environment,
+    )
+    try:
+        assert process.pid in matching_processes(work_root)
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+
+def test_process_scanner_finds_process_with_work_root_as_cwd(tmp_path: Path) -> None:
+    work_root = tmp_path / "boostkit-perf"
+    work_root.mkdir()
+    process = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        cwd=work_root,
+    )
     try:
         assert process.pid in matching_processes(work_root)
     finally:

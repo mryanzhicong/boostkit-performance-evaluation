@@ -72,6 +72,10 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
         "EXPECTED_ARCH": context.architecture,
         "RESULTS_DIR": str(context.output_dir),
         "PERF_RUN_ID": context.run_id,
+        "PERF_PROCESS_TOKEN": (
+            f"boostkit-perf:{context.run_id}:{context.category}:"
+            f"{context.software}:{context.version}:{context.architecture}"
+        ),
         "PERF_WORK_DIR": str(context.work_dir),
         "PIP_CACHE_DIR": str(context.work_dir / "pip-cache"),
         "XDG_CACHE_HOME": str(context.work_dir / "cache"),

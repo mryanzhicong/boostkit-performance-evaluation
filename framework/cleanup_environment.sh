@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Global cleanup for dedicated performance runners. This intentionally removes
-# resources left by any previous job, not only resources tagged by this run.
+# Global cleanup for dedicated performance runners. Software processes inherit
+# a run isolation token; cwd/exe/fd and work-root references provide a fallback.
 
 MODE="${1:-}"
 WORK_ROOT="${PERF_WORK_ROOT:-/tmp/boostkit-perf}"
@@ -44,7 +44,7 @@ matching_mounts() {
 verify_clean() {
     local dirty=0
     if [[ -n "$(matching_processes)" ]]; then
-        log "residual processes still reference ${WORK_ROOT}"
+        log "residual isolated performance processes still exist"
         matching_processes | describe_processes >&2
         dirty=1
     fi

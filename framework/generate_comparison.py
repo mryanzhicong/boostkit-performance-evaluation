@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -22,15 +23,35 @@ def _number(value: Any) -> float | None:
 
 
 def compare_pair(x86: dict, arm: dict) -> dict:
+    for field in ("category", "software", "version"):
+        if x86.get(field) != arm.get(field):
+            raise ValueError(f"result identity differs for {field}")
     if x86.get("parameter_signature") != arm.get("parameter_signature"):
         raise ValueError("parameter signatures differ")
+    x_metrics = x86.get("metrics", {})
+    a_metrics = arm.get("metrics", {})
+    if not isinstance(x_metrics, dict) or not isinstance(a_metrics, dict) or not x_metrics:
+        raise ValueError("both architectures must contain metrics")
+    if set(x_metrics) != set(a_metrics):
+        raise ValueError("metric sets differ between architectures")
     metrics: dict[str, Any] = {}
-    for name in sorted(set(x86.get("metrics", {})) | set(arm.get("metrics", {}))):
-        x_metric = x86.get("metrics", {}).get(name, {})
-        a_metric = arm.get("metrics", {}).get(name, {})
+    for name in sorted(x_metrics):
+        x_metric = x_metrics[name]
+        a_metric = a_metrics[name]
+        if x_metric.get("unit") != a_metric.get("unit"):
+            raise ValueError(f"metric {name} units differ between architectures")
+        if x_metric.get("direction") != a_metric.get("direction"):
+            raise ValueError(f"metric {name} directions differ between architectures")
         x_value = _number(x_metric.get("value"))
         a_value = _number(a_metric.get("value"))
-        direction = a_metric.get("direction", x_metric.get("direction", "neutral"))
+        if (
+            x_value is None
+            or a_value is None
+            or not math.isfinite(x_value)
+            or not math.isfinite(a_value)
+        ):
+            raise ValueError(f"metric {name} must contain finite numeric values")
+        direction = a_metric["direction"]
         raw_ratio = a_value / x_value if x_value not in (None, 0) and a_value is not None else None
         relative = None
         if raw_ratio is not None:
@@ -87,10 +108,14 @@ def generate(input_root: Path, output_dir: Path) -> dict:
     for key, architectures in sorted(grouped.items()):
         if "x86_64" not in architectures or "aarch64" not in architectures:
             continue
-        try:
-            comparison = compare_pair(architectures["x86_64"], architectures["aarch64"])
-        except ValueError:
+        x86 = architectures["x86_64"]
+        arm = architectures["aarch64"]
+        if any(
+            result.get("status") != "passed" or result.get("cleanup_status") != "passed"
+            for result in (x86, arm)
+        ):
             continue
+        comparison = compare_pair(x86, arm)
         comparisons.append(comparison)
         stem = f"{comparison['category']}-{comparison['software']}-{comparison['version']}"
         atomic_write_json(output_dir / f"{stem}.json", comparison)
@@ -112,7 +137,10 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         "comparisons": len(comparisons),
         "items": items,
     }
-    atomic_write_json(output_dir / "combined-report.json", {"summary": summary, "comparisons": comparisons})
+    atomic_write_json(
+        output_dir / "combined-report.json",
+        {"summary": summary, "comparisons": comparisons},
+    )
     (output_dir / "combined-report.md").write_text(
         render_summary(summary, comparisons), encoding="utf-8"
     )

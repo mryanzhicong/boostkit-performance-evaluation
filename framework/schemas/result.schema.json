@@ -2,7 +2,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Normalized performance result",
   "type": "object",
-  "required": ["software", "category", "version", "architecture", "run_id", "status", "sources"],
+  "required": [
+    "software",
+    "category",
+    "version",
+    "architecture",
+    "run_id",
+    "status",
+    "cleanup_status",
+    "parameter_signature",
+    "sources",
+    "metrics"
+  ],
   "properties": {
     "software": {"type": "string"},
     "category": {"type": "string"},
@@ -10,11 +21,28 @@
     "architecture": {"enum": ["x86_64", "aarch64"]},
     "run_id": {"type": "string"},
     "status": {"enum": ["passed", "failed", "partial"]},
+    "cleanup_status": {"enum": ["pending", "passed", "failed"]},
     "parameter_signature": {"type": "string"},
     "environment_before": {"type": "object"},
     "environment_after": {"type": "object"},
     "sources": {"type": "object"},
-    "metrics": {"type": "object"}
+    "metrics": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["value", "unit", "direction"],
+        "properties": {
+          "value": {"type": "number"},
+          "unit": {"type": "string", "minLength": 1},
+          "direction": {
+            "enum": ["higher_is_better", "lower_is_better", "target_is_better", "neutral"]
+          },
+          "target": {"type": ["number", "null"]}
+        },
+        "additionalProperties": true
+      }
+    }
   },
   "additionalProperties": true
 }

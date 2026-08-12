@@ -13,8 +13,17 @@ class SoftwareAdapter(ABC):
         self.context = context
 
     @abstractmethod
-    def run(self) -> None:
-        """Run the existing software case and write expected outputs."""
+    def build(self) -> None:
+        """Build, install, and validate the software."""
 
-    def cleanup(self) -> None:
-        """Clean software-private processes. Global runner cleanup is external."""
+    @abstractmethod
+    def start(self) -> None:
+        """Start the software service and wait until it is ready."""
+
+    @abstractmethod
+    def test(self) -> None:
+        """Run benchmarks and write the declared software result files."""
+
+    @abstractmethod
+    def stop(self) -> None:
+        """Idempotently stop the software service and verify it exited."""

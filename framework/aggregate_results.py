@@ -6,11 +6,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
 from context import RunContext
 from json_helper import atomic_write_json, get_path, load_json
+
+
+class ResultValidationError(ValueError):
+    """Raised when a software result violates the common result contract."""
+
+
+MISSING = object()
 
 
 def parameter_signature(context: RunContext) -> str:
@@ -23,24 +31,64 @@ def parameter_signature(context: RunContext) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
+def _load_sources(context: RunContext) -> dict[str, Any]:
     sources: dict[str, Any] = {}
     for filename in context.execution.get("expected_outputs", []):
         path = context.output_dir / filename
-        sources[filename] = load_json(path, {}) if path.suffix == ".json" else {"path": str(path)}
+        if not path.is_file():
+            raise ResultValidationError(f"required result file is missing: {filename}")
+        if path.stat().st_size == 0:
+            raise ResultValidationError(f"required result file is empty: {filename}")
+        if path.suffix == ".json":
+            try:
+                value = load_json(path)
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ResultValidationError(f"invalid JSON result file {filename}: {exc}") from exc
+            if not isinstance(value, dict):
+                raise ResultValidationError(f"JSON result root must be an object: {filename}")
+            sources[filename] = value
+        else:
+            sources[filename] = {"path": str(path), "size": path.stat().st_size}
+    return sources
 
-    primary = sources.get("results.json", {})
+
+def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     for metric_name, definition in context.case.get("metrics", {}).items():
-        source_name = definition.get("source", "results.json")
-        source = sources.get(source_name, {})
-        value = get_path(source, definition.get("path", "")) if definition.get("path") else None
+        source_name = definition["source"]
+        if source_name not in sources:
+            raise ResultValidationError(
+                f"metric {metric_name} references unavailable source {source_name}"
+            )
+        source = sources[source_name]
+        value = get_path(source, definition["path"], MISSING)
+        if value is MISSING:
+            raise ResultValidationError(
+                f"metric {metric_name} path does not exist: {source_name}:{definition['path']}"
+            )
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ResultValidationError(
+                f"metric {metric_name} must be numeric, got {type(value).__name__}"
+            )
+        numeric_value = float(value)
+        if not math.isfinite(numeric_value):
+            raise ResultValidationError(f"metric {metric_name} must be finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": definition.get("unit", ""),
-            "direction": definition.get("direction", "neutral"),
+            "unit": definition["unit"],
+            "direction": definition["direction"],
             "target": definition.get("target"),
         }
+    if not metrics:
+        raise ResultValidationError("no metrics were extracted")
+    return metrics
+
+
+def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
+    sources = _load_sources(context)
+
+    primary = sources.get("results.json", {})
+    metrics = _extract_metrics(context, sources)
 
     return {
         "software": context.software,

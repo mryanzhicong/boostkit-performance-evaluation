@@ -100,7 +100,7 @@ jobs:
           --architecture '${{ matrix.arch }}'
           --run-id '${{ env.PERF_RUN_ID }}'
           --stage prepare
-      - name: Build and install software
+      - name: Build, install and validate software
         run: >-
           python3 framework/run_case.py
           --case '${{ matrix.case_path }}'
@@ -108,14 +108,6 @@ jobs:
           --architecture '${{ matrix.arch }}'
           --run-id '${{ env.PERF_RUN_ID }}'
           --stage build
-      - name: Validate installed software
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage validate
       - name: Start software service
         run: >-
           python3 framework/run_case.py
@@ -123,7 +115,7 @@ jobs:
           --version '${{ matrix.version }}'
           --architecture '${{ matrix.arch }}'
           --run-id '${{ env.PERF_RUN_ID }}'
-          --stage start-service
+          --stage start
       - name: Execute performance tests
         id: execute
         run: >-
@@ -141,8 +133,8 @@ jobs:
           --version '${{ matrix.version }}'
           --architecture '${{ matrix.arch }}'
           --run-id '${{ env.PERF_RUN_ID }}'
-          --stage stop-service
-      - name: Collect and normalize task report
+          --stage stop
+      - name: Validate results and finalize task report
         if: always()
         run: >-
           python3 framework/run_case.py
@@ -150,7 +142,7 @@ jobs:
           --version '${{ matrix.version }}'
           --architecture '${{ matrix.arch }}'
           --run-id '${{ env.PERF_RUN_ID }}'
-          --stage collect-report
+          --stage finalize
       - name: Global cleanup after performance test
         id: post_cleanup
         if: always()

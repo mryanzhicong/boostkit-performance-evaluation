@@ -52,6 +52,7 @@ def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) ->
     assert environment["EXPECTED_ARCH"] == "x86_64"
     assert "TARGET_ARCH" not in environment
     assert environment["RESULTS_DIR"] == str(context.output_dir)
+    assert environment["PERF_PROCESS_TOKEN"] == "boostkit-perf:unit-run:AI:sample:1.0:x86_64"
     assert environment["ITERATIONS"] == "1"
     assert environment["BUILD_METHOD"] == "pip"
 

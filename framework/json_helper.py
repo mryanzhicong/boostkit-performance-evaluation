@@ -22,7 +22,7 @@ def atomic_write_json(path: Path, data: Any) -> None:
     fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, ensure_ascii=False)
+            json.dump(data, handle, indent=2, ensure_ascii=False, allow_nan=False)
             handle.write("\n")
         os.replace(tmp_name, path)
     finally:

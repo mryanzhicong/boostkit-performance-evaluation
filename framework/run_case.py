@@ -8,20 +8,19 @@ import platform
 import sys
 from pathlib import Path
 
-from aggregate_results import write_normalized
+from aggregate_results import ResultValidationError, write_normalized
 from command_adapter import run_command
 from context import RunContext
 from json_helper import atomic_write_json, load_json
 from validate_case import ROOT, validate_case
 
-STAGES = ("prepare", "build", "validate", "start-service", "test", "stop-service", "collect-report")
+STAGES = ("prepare", "build", "start", "test", "stop", "finalize")
 STAGE_EXIT_CODES = {
     "build": 30,
-    "validate": 40,
-    "start-service": 20,
+    "start": 20,
     "test": 50,
-    "stop-service": 50,
-    "collect-report": 60,
+    "stop": 50,
+    "finalize": 60,
 }
 
 
@@ -58,8 +57,23 @@ def update_status(context: RunContext, **updates: object) -> dict:
 def build_context(args: argparse.Namespace, case: dict) -> RunContext:
     category = case["category"]
     software = case["name"]
-    output_dir = ROOT / ".perf-output" / category / software / args.version / args.architecture / args.run_id
-    work_dir = Path("/tmp/boostkit-perf") / args.run_id / category / software / args.version / args.architecture
+    output_dir = (
+        ROOT
+        / ".perf-output"
+        / category
+        / software
+        / args.version
+        / args.architecture
+        / args.run_id
+    )
+    work_dir = (
+        Path("/tmp/boostkit-perf")
+        / args.run_id
+        / category
+        / software
+        / args.version
+        / args.architecture
+    )
     return RunContext(
         root=ROOT,
         case_path=args.case.resolve(),
@@ -127,18 +141,38 @@ def main() -> int:
         print(context.output_dir)
         return 0
 
-    if context.execution.get("type") != "command" or context.execution.get("interface") != "staged":
-        mark_failed(context, args.stage, 10, error="staged command interface is required")
+    if (
+        context.execution.get("type") != "command"
+        or context.execution.get("interface") != "four-stage"
+    ):
+        mark_failed(context, args.stage, 10, error="four-stage command interface is required")
         return 10
 
     previous = load_json(context.output_dir / "status.json", {})
     update_status(context, stage=args.stage)
+
+    if args.stage == "finalize":
+        atomic_write_json(context.output_dir / "environment_after.json", collect())
+        command_status = "failed" if previous.get("status") == "failed" else "passed"
+        try:
+            normalized_path = write_normalized(context, command_status)
+        except (ResultValidationError, OSError, ValueError) as exc:
+            mark_failed(context, args.stage, STAGE_EXIT_CODES[args.stage], error=str(exc))
+            print(f"ERROR: result validation failed: {exc}", file=sys.stderr)
+            return STAGE_EXIT_CODES[args.stage]
+        report = render(load_json(normalized_path, {}))
+        (context.output_dir / "report.md").write_text(report, encoding="utf-8")
+        if previous.get("status") == "failed":
+            update_status(context, stage=args.stage)
+            print("[stage] finalize completed; preserving the earlier failure", flush=True)
+            return 0
+        update_status(context, status="passed", stage="complete", exit_code=0)
+        print("[stage] finalize completed successfully", flush=True)
+        print(context.output_dir)
+        return 0
+
     try:
-        result = run_command(
-            context,
-            args.stage,
-            check_outputs=args.stage == "collect-report",
-        )
+        result = run_command(context, args.stage, check_outputs=False)
     except Exception as exc:
         exit_code = STAGE_EXIT_CODES[args.stage]
         mark_failed(context, args.stage, exit_code, error=str(exc))
@@ -147,36 +181,12 @@ def main() -> int:
 
     print(f"[stage] {args.stage} command exited with code {result.returncode}", flush=True)
 
-    if args.stage == "stop-service":
+    if args.stage == "stop":
         if result.returncode != 0:
             mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
             return result.returncode or STAGE_EXIT_CODES[args.stage]
         update_status(context, stage=args.stage, service_stop_status="passed")
-        print("[stage] stop-service completed successfully", flush=True)
-        return 0
-
-    if args.stage == "collect-report":
-        atomic_write_json(context.output_dir / "environment_after.json", collect())
-        collection_ok = result.returncode == 0 and not result.missing_outputs
-        command_status = "passed" if collection_ok and previous.get("status") != "failed" else "failed"
-        normalized_path = write_normalized(context, command_status)
-        report = render(load_json(normalized_path, {}))
-        (context.output_dir / "report.md").write_text(report, encoding="utf-8")
-        if not collection_ok:
-            mark_failed(
-                context,
-                args.stage,
-                result.returncode or STAGE_EXIT_CODES[args.stage],
-                missing_outputs=list(result.missing_outputs),
-            )
-            return result.returncode or STAGE_EXIT_CODES[args.stage]
-        if previous.get("status") == "failed":
-            update_status(context, stage=args.stage)
-            print("[stage] collect-report completed; preserving the earlier failure", flush=True)
-            return 0
-        update_status(context, status="passed", stage="complete", exit_code=0)
-        print("[stage] collect-report completed successfully", flush=True)
-        print(context.output_dir)
+        print("[stage] stop completed successfully", flush=True)
         return 0
 
     if result.returncode != 0:

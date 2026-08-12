@@ -1,7 +1,6 @@
 """Validate the manually maintained case catalog and matrix defaults."""
 
 import pytest
-
 from generate_matrix import build_matrix, configured_runner_labels
 from validate_case import ROOT, discover_cases, validate_case
 
@@ -14,7 +13,7 @@ def test_redis_is_the_only_valid_case() -> None:
     assert case is not None
     assert case["versions"] == ["7.4.10", "8.0.0", "8.0.6"]
     assert case["execution"]["timeout_minutes"] == 180
-    assert case["execution"]["interface"] == "staged"
+    assert case["execution"]["interface"] == "four-stage"
 
 
 def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
@@ -57,13 +56,14 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     for stage in (
         "prepare",
         "build",
-        "validate",
-        "start-service",
+        "start",
         "test",
-        "stop-service",
-        "collect-report",
+        "stop",
+        "finalize",
     ):
         assert f"--stage {stage}" in workflow
+    for removed_stage in ("validate", "start-service", "stop-service", "collect-report"):
+        assert f"--stage {removed_stage}" not in workflow
 
 
 def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
@@ -72,13 +72,18 @@ def test_redis_entrypoint_exposes_every_workflow_stage() -> None:
     )
     for function in (
         "phase_build",
+        "phase_start",
+        "phase_test",
+        "phase_stop",
+    ):
+        assert f"{function}()" in entrypoint
+    for removed_function in (
         "phase_validate",
         "phase_start_service",
-        "phase_test",
         "phase_stop_service",
         "phase_collect_report",
     ):
-        assert f"{function}()" in entrypoint
+        assert f"{removed_function}()" not in entrypoint
 
 
 def test_redis_build_preserves_the_original_script_command() -> None:

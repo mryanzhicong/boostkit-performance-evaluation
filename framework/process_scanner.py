@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find processes whose command line references the performance work root."""
+"""Find processes isolated to performance runs or referencing the work root."""
 
 from __future__ import annotations
 
@@ -15,6 +15,49 @@ def references_root(command_line: bytes, root: Path) -> bool:
     return any(argument == root_bytes or prefix in argument for argument in arguments)
 
 
+def environment_references_run(environment: bytes, root: Path) -> bool:
+    entries = [entry for entry in environment.split(b"\0") if entry]
+    if any(entry.startswith(b"PERF_PROCESS_TOKEN=boostkit-perf:") for entry in entries):
+        return True
+    work_prefix = b"PERF_WORK_DIR="
+    return any(
+        entry.startswith(work_prefix) and references_root(entry[len(work_prefix):], root)
+        for entry in entries
+    )
+
+
+def linked_path_references_root(path: Path, root: Path) -> bool:
+    try:
+        target = os.readlink(path)
+    except (FileNotFoundError, PermissionError, ProcessLookupError, OSError):
+        return False
+    target = target.removesuffix(" (deleted)")
+    root_text = str(root).rstrip("/")
+    return target == root_text or target.startswith(f"{root_text}/")
+
+
+def process_references_run(process_dir: Path, root: Path) -> bool:
+    try:
+        command_line = (process_dir / "cmdline").read_bytes()
+    except (FileNotFoundError, PermissionError, ProcessLookupError, OSError):
+        return False
+    if command_line and references_root(command_line, root):
+        return True
+    try:
+        environment = (process_dir / "environ").read_bytes()
+    except (FileNotFoundError, PermissionError, ProcessLookupError, OSError):
+        environment = b""
+    if environment_references_run(environment, root):
+        return True
+    if any(linked_path_references_root(process_dir / name, root) for name in ("cwd", "exe")):
+        return True
+    try:
+        file_descriptors = list((process_dir / "fd").iterdir())
+    except (FileNotFoundError, PermissionError, ProcessLookupError, OSError):
+        file_descriptors = []
+    return any(linked_path_references_root(descriptor, root) for descriptor in file_descriptors)
+
+
 def matching_processes(root: Path, excluded: set[int] | None = None) -> list[int]:
     excluded_pids = set(excluded or ())
     excluded_pids.update({os.getpid(), os.getppid()})
@@ -26,11 +69,7 @@ def matching_processes(root: Path, excluded: set[int] | None = None) -> list[int
             continue
         if pid in excluded_pids:
             continue
-        try:
-            command_line = (process_dir / "cmdline").read_bytes()
-        except (FileNotFoundError, PermissionError, ProcessLookupError, OSError):
-            continue
-        if command_line and references_root(command_line, root):
+        if process_references_run(process_dir, root):
             matches.append(pid)
     return sorted(matches)
 

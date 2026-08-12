@@ -51,6 +51,7 @@ check_architecture() {
 }
 
 phase_build() {
+    local binary actual_version actual_arch
     check_architecture
     require_commands
     [[ ! -e "${SOURCE_DIR}" ]] || {
@@ -61,12 +62,6 @@ phase_build() {
     git clone --branch "${SOFTWARE_VERSION}" --depth 1 "${REDIS_SOURCE_URL}" "${SOURCE_DIR}"
     log "building Redis with the original test script command"
     (cd "${SOURCE_DIR}" && make -j$(nproc) BUILD_TLS=no)
-}
-
-phase_validate() {
-    local binary actual_version actual_arch
-    check_architecture
-    require_commands
     for binary in "${REDIS_SERVER_BIN}" "${REDIS_BENCHMARK_BIN}" "${REDIS_CLI_BIN}"; do
         [[ -x "${binary}" ]] || { log "ERROR: expected executable not found: ${binary}"; return 40; }
     done
@@ -80,7 +75,7 @@ phase_validate() {
         "${RESULTS_DIR}/version_info.json" "${SOFTWARE_VERSION}" "${actual_version}" "${actual_arch}"
 }
 
-phase_start_service() {
+phase_start() {
     [[ -x "${REDIS_SERVER_BIN}" && -x "${REDIS_CLI_BIN}" ]] || {
         log "ERROR: Redis is not installed"
         return 40
@@ -122,9 +117,13 @@ phase_test() {
         "${REDIS_SERVER_BIN}" "${REDIS_BENCHMARK_BIN}" "${RESULTS_DIR}/benchmark_redis.json"
     python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
         "${REDIS_SERVER_BIN}" "${REDIS_BENCHMARK_BIN}" "${RESULTS_DIR}/micro_benchmark.json"
+    python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
+        "${RESULTS_DIR}" "${RESULTS_DIR}/results.json"
+    python3 "${SCRIPT_DIR}/scripts/generate_summary.py" \
+        "${RESULTS_DIR}/results.json" "${RESULTS_DIR}/results.txt"
 }
 
-phase_stop_service() {
+phase_stop() {
     local pid=""
     if [[ -f "${SERVICE_DIR}/redis.pid" ]]; then
         pid="$(<"${SERVICE_DIR}/redis.pid")"
@@ -153,35 +152,20 @@ phase_stop_service() {
     log "Redis service stopped"
 }
 
-phase_collect_report() {
-    python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
-        "${RESULTS_DIR}" "${RESULTS_DIR}/results.json"
-    python3 "${SCRIPT_DIR}/scripts/generate_summary.py" \
-        "${RESULTS_DIR}/results.json" "${RESULTS_DIR}/results.txt"
-    local output
-    for output in version_info.json benchmark_redis.json micro_benchmark.json results.json results.txt results.log; do
-        [[ -s "${RESULTS_DIR}/${output}" ]] || { log "ERROR: missing or empty output: ${output}"; return 60; }
-    done
-}
-
 run_all() {
     phase_build
-    phase_validate
-    phase_start_service
-    trap phase_stop_service EXIT
+    phase_start
+    trap phase_stop EXIT
     phase_test
-    phase_stop_service
+    phase_stop
     trap - EXIT
-    phase_collect_report
 }
 
 case "${1:-all}" in
     build) phase_build ;;
-    validate) phase_validate ;;
-    start-service) phase_start_service ;;
+    start) phase_start ;;
     test) phase_test ;;
-    stop-service) phase_stop_service ;;
-    collect-report) phase_collect_report ;;
+    stop) phase_stop ;;
     all) run_all ;;
     *) log "ERROR: unknown stage: $1"; exit 10 ;;
 esac

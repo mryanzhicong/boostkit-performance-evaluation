@@ -136,7 +136,7 @@ flowchart TD
 - 需要测试的软件版本。
 - 裸机源码编译、安装前缀和构建参数。
 - 当前已有 `<software>_test.sh` 入口及预期结果文件。
-- `staged` 分阶段命令接口。
+- `four-stage` 软件命令接口。
 - 唯一一套正式测试参数。
 - 超时、预热次数、正式迭代次数和随机种子。
 - 每个架构的绝对性能阈值。
@@ -147,16 +147,14 @@ flowchart TD
 
 #### `software/<category>/<software>/<software>_test.sh`
 
-这是当前已有测试用例的主入口，第一阶段直接复用。公共框架通过 `case.yaml` 将软件版本、架构、输出目录和运行编号传给该脚本，并以阶段名调用。入口必须提供以下阶段函数：
+这是当前已有测试用例的主入口，第一阶段直接复用。公共框架通过 `case.yaml` 将软件版本、架构、输出目录、运行编号和进程隔离标识传给该脚本，并以阶段名调用。入口只提供以下四个软件阶段：
 
 | 阶段参数 | 软件函数职责 |
 |---|---|
-| `build` | 裸机编译并安装到任务专属前缀。 |
-| `validate` | 校验架构、实际版本、安装文件和核心功能。 |
-| `start-service` | 启动被测服务并等待就绪。 |
-| `test` | 复用已启动服务执行主基准和微基准。 |
-| `stop-service` | 幂等停止服务，Workflow 使用 `if: always()` 调用。 |
-| `collect-report` | 聚合软件原始结果并检查输出完整性。 |
+| `build` | 裸机编译安装，并校验架构、实际版本、二进制和核心功能。 |
+| `start` | 启动被测服务并等待就绪。 |
+| `test` | 执行主基准和微基准，完成软件级聚合并生成 `results.json`。 |
+| `stop` | 幂等停止服务并验收退出，Workflow 使用 `if: always()` 调用。 |
 
 只做以下必要兼容改造：
 
@@ -166,11 +164,11 @@ flowchart TD
 - 正确返回退出码，不使用旧结果掩盖本次失败。
 - 将软件私有临时文件限制在本次 workspace。
 
-主入口保留现有构建、校验、测试和报告函数实现；Workflow 只负责按阶段调用，不重新实现软件逻辑。
+主入口保留现有构建、服务和测试实现；安装校验并入 build，软件级聚合并入 test。预期文件、JSON、指标路径和数值由 Framework `finalize` 统一严格校验。
 
 #### `software/<category>/<software>/adapter.py`（保留接口）
 
-`adapter_base.py` 仅保留为未来扩展定义，当前正式 Workflow 不加载软件专用 `adapter.py`。所有已启用软件必须实现 `staged command` 接口，避免 Workflow 出现按软件名称选择执行方式的分支。
+`adapter_base.py` 仅保留为未来扩展定义，当前正式 Workflow 不加载软件专用 `adapter.py`。所有已启用软件必须实现 `four-stage command` 接口，避免 Workflow 出现按软件名称选择执行方式的分支。
 
 #### `software/<category>/<software>/scripts/`
 
@@ -199,33 +197,33 @@ flowchart TD
 
 | 文件 | 用途 | 关键设计 |
 |---|---|---|
-| `adapter_base.py` | 保留未来扩展所需的接口、返回类型和阶段异常定义。 | 当前正式 Workflow 不加载软件专用适配器。 |
-| `command_adapter.py` | 将公共 context 和阶段名转换为环境变量与命令行，调用已有 `<software>_test.sh`。 | 实时输出并保存独立阶段日志；等待主进程和输出转发结束；超时或中断终止整个子进程组；`collect-report` 检查全部预期输出。 |
+| `adapter_base.py` | 保留未来扩展所需的 build/start/test/stop 接口定义。 | 当前正式 Workflow 不加载软件专用适配器。 |
+| `command_adapter.py` | 将公共 context、进程隔离标识和阶段名转换为环境变量与命令行，调用已有 `<software>_test.sh`。 | 实时输出并保存独立阶段日志；等待主进程和输出转发结束；超时或中断终止整个子进程组。 |
 | `context.py` | 定义一次任务的只读上下文。 | 包含软件、版本、架构、路径、参数、运行编号和日志器；避免通过全局环境变量传递状态。 |
 | `generate_matrix.py` | 递归发现 `software/*/*/case.yaml`，按手动输入展开矩阵。 | 默认展开两个架构；指定架构时才过滤；输出稳定、可排序的 JSON。 |
 | `validate_case.py` | 使用 Schema 校验清单，并检查目录、适配器、版本和指标定义的一致性。 | 任何校验失败都发生在占用性能 Runner 之前。 |
-| `run_case.py` | 单个矩阵任务的阶段控制入口。 | 响应 prepare/build/validate/start-service/test/stop-service/collect-report，持续更新 `status.json`。 |
-| `collect_environment.py` | 在测试前后采集真实软硬件环境。 | 采集 CPU、NUMA、内存、内核、OS、频率、governor、编译器和关键依赖。 |
-| `cleanup_environment.sh` | 对专用 Runner 执行全局净化和净化后验收。 | 支持 `--before`、`--after`、`--verify`；清理失败必须阻止测试或将最终任务标记失败。 |
-| `aggregate_results.py` | 合并环境、主基准、微基准和阶段状态。 | 只聚合相同软件、版本、架构、参数签名和运行编号的数据。 |
-| `generate_comparison.py` | 配对 x86_64 与 aarch64 结果并计算比值。 | 根据指标方向选择比较公式，禁止比较参数签名不同的结果。 |
+| `run_case.py` | 单个矩阵任务的阶段控制入口。 | Framework 响应 prepare/finalize，软件响应 build/start/test/stop，持续更新 `status.json`。 |
+| `collect_environment.py` | 在测试前后采集真实软硬件环境。 | 采集 CPU、NUMA、内存、内核、OS、Python 和 governor。 |
+| `cleanup_environment.sh` | 对专用 Runner 执行全局净化和净化后验收。 | 通过运行隔离标识及 cmdline/cwd/exe/fd 引用定位后台进程，支持 `--before`、`--after`、`--verify`。 |
+| `process_scanner.py` | 定位属于性能运行的残留进程。 | 优先识别 `PERF_PROCESS_TOKEN`，并用命令行、工作目录、可执行文件和打开文件引用兜底。 |
+| `aggregate_results.py` | 严格校验软件输出并生成统一指标。 | 预期文件必须存在且非空，JSON 根必须为对象，指标路径必须存在且值必须为有限数字。 |
+| `generate_comparison.py` | 配对 x86_64 与 aarch64 结果并计算比值。 | 参数签名、指标集合、单位和方向必须一致，否则报告任务失败。 |
 | `prepare_result_history.py` | 从架构 Artifact 中提取精简结果并形成永久历史。 | 只保留最终 JSON、文本指标、报告和元数据；双架构成功且显式请求时生成受控基线。 |
 | `publish_result_history.sh` | 把精简结果发布到独立结果分支。 | 提交到 `performance-results`，不向主分支写入运行数据。 |
-| `json_helper.py` | 提供稳定的 JSON 读取、字段检查、Schema 校验和原子写入。 | 避免各软件重复实现 JSON Shell 辅助函数。写文件采用临时文件加原子替换。 |
+| `json_helper.py` | 提供稳定的 JSON 读取、点路径取值和原子写入。 | 禁止写出 NaN/Infinity；写文件采用临时文件加原子替换。 |
 
 Workflow 对 `run_case.py` 的调用顺序：
 
 ```text
 prepare：加载并校验 case.yaml、创建 context、校验架构、采集运行前环境
 → build：调用软件构建函数
-→ validate：调用软件安装校验函数
-→ start-service：调用软件服务启动函数
-→ test：调用软件测试函数
-→ stop-service：无条件调用软件服务停止函数
-→ collect-report：调用软件报告函数、检查输出、采集运行后环境并标准化
+→ start：调用软件服务启动函数
+→ test：调用软件测试和软件级结果聚合函数
+→ stop：无条件调用软件服务停止函数
+→ finalize：Framework 检查输出、严格提取指标、采集运行后环境并标准化
 ```
 
-同一矩阵 Job 内的阶段严格串行。`run_case.py` 只有在阶段脚本退出且 stdout/stderr 已完整转发后才返回；GitHub Actions 随后才启动下一步。`start-service` 是唯一允许保留后台进程的阶段，它必须先通过就绪检查，并由 `stop-service` 在 `always()` 路径中停止和验收。
+同一矩阵 Job 内的阶段严格串行。`run_case.py` 只有在阶段脚本退出且 stdout/stderr 已完整转发后才返回；GitHub Actions 随后才启动下一步。`start` 是唯一允许保留后台进程的阶段，它必须先通过就绪检查，并由 `stop` 在 `always()` 路径中停止和验收。
 
 Runner 全局净化位于 `run_case.py` 外层，由 Workflow 负责，完整边界为：
 
@@ -346,7 +344,7 @@ versions:
 
 execution:
   type: command
-  interface: staged
+  interface: four-stage
   entrypoint: ./<software>_test.sh
   timeout_minutes: 180
   environment:
@@ -376,23 +374,23 @@ metrics:
 
 - 软件名称和是否启用。
 - 需要测试的版本列表。
-- 当前已有测试入口、分阶段接口、正式参数、超时和预期结果文件。
+- 当前已有测试入口、四阶段接口、正式参数、超时、预期结果文件和指标提取契约。
 - 数据规模、迭代次数、线程数和随机种子。
 - 每种架构独立的性能阈值。
 - 超时时间。
 
 软件清单默认不允许配置 `architectures` 或 `runner`。所有启用的软件默认、无条件展开为 `x86_64` 和 `aarch64` 两个任务。只有手动触发时，用户才能通过 `architecture` 输入缩小执行范围。
 
-### 4.2 分阶段命令接入方式
+### 4.2 四阶段命令接入方式
 
 公共 `command_adapter.py` 完成公共框架与人工接入用例之间的阶段、参数和结果转换：
 
 ```text
 公共 context
 → 转换为现有脚本参数、环境变量和阶段名
-→ 逐次调用 build/validate/start-service/test/stop-service/collect-report
-→ 收集已有 JSON 和日志
-→ 转换并校验为统一结果格式
+→ 逐次调用软件 build/start/test/stop
+→ Framework finalize 收集并严格校验已有 JSON 和日志
+→ 转换为统一结果格式
 ```
 
 必须优先改造的兼容点：
@@ -403,7 +401,7 @@ metrics:
 - 现有脚本不得在宿主机执行不可恢复的系统级安装。
 - 测试参数由 `context` 传入，保留现有默认值作为本地调试后备。
 - 原始结果继续保留，同时生成符合统一 Schema 的标准结果。
-- 软件私有服务和进程由现有入口的 `stop-service` 阶段清理，Runner 全局环境由公共清理脚本处理。
+- 软件私有服务由现有入口的 `stop` 阶段清理；全部软件进程继承 `PERF_PROCESS_TOKEN`，Runner 全局清理再按隔离标识和 `/proc` 引用兜底终止。
 
 ### 4.3 执行矩阵生成
 
@@ -583,12 +581,11 @@ python3 framework/run_case.py \
 validate-inputs
   → pre-clean
   → prepare-and-collect-environment-before
-  → build-and-install
-  → validate-installation
-  → start-service
+  → build-install-and-validate
+  → start
   → execute-performance-tests
-  → stop-service (always)
-  → collect-and-normalize-report (always)
+  → stop (always)
+  → validate-results-and-finalize-report (always)
   → post-clean (always)
   → record-cleanup-status (always)
   → upload-artifact (always)
@@ -610,13 +607,13 @@ validate-inputs
 
 ## 8. 运行前清理
 
-正式性能测试必须运行在固定的专用裸机 Runner 上，不允许与研发、构建或发布任务共享宿主机。Runner 必须在全局独占锁下执行“全局净化”，而不是只清理带有本次任务标识的资源。每次运行仍生成资源标识用于日志追踪，但它不是清理范围的边界：
+正式性能测试必须运行在固定的专用裸机 Runner 上，不允许与研发、构建或发布任务共享宿主机。Runner 必须在全局独占锁下执行全局净化。每个软件进程同时继承隔离标识，用于准确归属后台进程；全局净化会清理所有历史隔离标识和统一工作根目录引用，而不只处理本次运行：
 
 ```text
-RUN_KEY=<run_id>-<attempt>-<software>-<version>-<arch>
+PERF_PROCESS_TOKEN=boostkit-perf:<run_id>-<attempt>:<category>:<software>:<version>:<arch>
 ```
 
-所有源码目录、安装前缀、临时目录和进程应关联该标识，便于定位来源；全局净化仍会处理该专用 Runner 统一工作根目录下的全部遗留资源。
+所有源码目录、安装前缀、临时目录和进程应关联该标识。阶段超时先终止独立进程组；运行前后清理再扫描进程环境中的隔离标识，以及 cmdline、cwd、exe、fd 对统一工作根目录的引用，处理逃逸阶段进程组的后台服务。
 
 运行前执行：
 
@@ -643,27 +640,32 @@ RUN_KEY=<run_id>-<attempt>-<software>-<version>-<arch>
 
 ```text
 测试结束
-→ 聚合现有结果
-→ 上传日志和 Artifact
+→ Framework finalize 严格校验并聚合现有结果
 → 执行清理
+→ 回写清理状态
+→ 上传日志和 Artifact
 ```
 
 Workflow 中上传和清理步骤均使用 `if: always()`：
 
 ```yaml
+- name: Cleanup environment
+  if: always()
+  run: framework/cleanup_environment.sh --after
+
+- name: Record cleanup result
+  if: always()
+  run: python3 framework/mark_cleanup.py ...
+
 - name: Upload results
   if: always()
   uses: actions/upload-artifact@v4
-
-- name: Cleanup environment
-  if: always()
-  run: framework/cleanup_environment.sh --global
 ```
 
 运行后清理：
 
 - 删除统一测试工作根目录下的全部 workspace、venv、源码、安装前缀、数据和构建产物。
-- 终止全部遗留的基准、编译和被测服务进程。
+- 终止全部携带历史运行隔离标识，或通过 cmdline/cwd/exe/fd 引用工作根目录的基准、编译和被测服务进程。
 - 卸载全部测试挂载点并释放测试端口。
 - 再次执行与运行前相同的环境验收。
 - 将全局清理及验收状态写入 `status.json`。
@@ -836,7 +838,7 @@ Workflow Summary 展示 Markdown 报告，完整原始结果作为限期 Artifac
 validate-inputs
   → validate-manifests
   → generate-matrix
-  → performance-test（prepare/build/validate/start/test/stop/collect/cleanup 动态矩阵）
+  → performance-test（prepare/build/start/test/stop/finalize/cleanup 动态矩阵）
   → aggregate-report
   → publish-summary-and-artifact
   → publish-performance-results-branch
@@ -845,8 +847,8 @@ validate-inputs
 关键要求：
 
 - `performance-test` 根据矩阵选择 x86_64 或 aarch64 Runner。
-- 每个阶段通过 `run_case.py --stage <name>` 调用软件入口中的对应函数。
-- `stop-service`、`collect-report`、运行后清理和 Artifact 上传使用 `if: always()`。
+- build/start/test/stop 通过 `run_case.py --stage <name>` 调用软件入口中的对应函数；prepare/finalize 由 Framework 实现。
+- `stop`、`finalize`、运行后清理和 Artifact 上传使用 `if: always()`。
 - 所有矩阵任务固定使用软件清单中的唯一一套正式参数。
 - 单个测试失败不阻止其他矩阵任务运行。
 - `aggregate-report` 使用 `if: always()`，即使部分任务失败也生成报告。
@@ -860,13 +862,13 @@ validate-inputs
 1. 将固定 ARM64 断言改为校验“实际架构等于矩阵期望架构”。
 2. 从实际系统采集架构、OS、CPU 和硬件信息。
 3. 结果目录增加软件、版本、架构和运行编号。
-4. 将准备、构建、测试、报告和清理拆成可独立调用阶段。
+4. 将软件入口收敛为 build/start/test/stop，准备、严格结果校验、报告和清理由 Framework 统一实现。
 5. 避免向 Runner 的系统 Python 直接安装依赖。
 6. 通过清单读取参数和架构独立阈值。
 7. 为所有随机数据固定随机种子。
 8. 统一预热次数和正式迭代次数定义。
 9. 统一 JSON Schema 和错误返回码。
-10. 将服务停止、报告收集和全局清理放入 Workflow 的 `always()` 路径。
+10. 将服务停止、Framework finalize 和全局清理放入 Workflow 的 `always()` 路径。
 11. 将现有断言结果输出为统一状态 JSON 或 JUnit XML。
 12. Workflow 统一编排生命周期，软件脚本保留各阶段的具体实现。
 
@@ -936,7 +938,7 @@ validate-inputs
 
 只有满足以下条件后，才开始设计测试用例模板和脚手架：
 
-- 已有一组具有代表性的软件使用手工清单和 staged command 真实入口稳定运行。
+- 已有一组具有代表性的软件使用手工清单和 four-stage command 真实入口稳定运行。
 - x86_64 和 aarch64 的正式流程均能稳定完成。
 - 软件清单、适配器接口和结果 Schema 已稳定。
 - 公共执行器中不存在按软件名称硬编码的分支。
@@ -946,7 +948,7 @@ validate-inputs
 
 ## 17. 最终验收标准
 
-- 已纳入范围的软件全部通过手工清单和 staged command 真实入口接入，不依赖测试代码生成器。
+- 已纳入范围的软件全部通过手工清单和 four-stage command 真实入口接入，不依赖测试代码生成器。
 - 每个启用软件由执行矩阵展开为 x86_64 和 aarch64 两个任务。
 - Workflow 只能由授权用户通过 `workflow_dispatch` 手动启动。
 - 不存在任何自动触发配置。

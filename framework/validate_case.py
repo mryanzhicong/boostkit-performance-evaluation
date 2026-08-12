@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -64,20 +65,25 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         errors.append("case.yaml must be at software/<category>/<software>/case.yaml")
 
     versions = case.get("versions")
-    if not isinstance(versions, list) or not versions or not all(isinstance(v, str) and v for v in versions):
+    if (
+        not isinstance(versions, list)
+        or not versions
+        or not all(isinstance(v, str) and v for v in versions)
+    ):
         errors.append("versions must be a non-empty list of strings")
     elif len(versions) != len(set(versions)):
         errors.append("versions must not contain duplicates")
 
+    outputs: Any = None
     execution = case.get("execution")
     if not isinstance(execution, dict):
         errors.append("execution must be a mapping")
     else:
         exec_type = execution.get("type")
         if exec_type != "command":
-            errors.append("execution.type must be command for the staged workflow")
-        if execution.get("interface") != "staged":
-            errors.append("execution.interface must be staged")
+            errors.append("execution.type must be command for the four-stage workflow")
+        if execution.get("interface") != "four-stage":
+            errors.append("execution.interface must be four-stage")
         entrypoint = execution.get("entrypoint")
         if not isinstance(entrypoint, str) or not entrypoint:
             errors.append("execution.entrypoint must be a non-empty string")
@@ -90,8 +96,21 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
             if not resolved.is_file():
                 errors.append(f"execution.entrypoint does not exist: {entrypoint}")
         outputs = execution.get("expected_outputs")
-        if not isinstance(outputs, list) or not outputs or not all(isinstance(v, str) for v in outputs):
+        if not isinstance(outputs, list) or not outputs or not all(
+            isinstance(v, str) and v for v in outputs
+        ):
             errors.append("execution.expected_outputs must be a non-empty string list")
+        elif len(outputs) != len(set(outputs)):
+            errors.append("execution.expected_outputs must not contain duplicates")
+        else:
+            for output in outputs:
+                output_path = Path(output)
+                if output_path.is_absolute() or ".." in output_path.parts:
+                    errors.append(
+                        f"expected output must remain inside the result directory: {output}"
+                    )
+            if "results.json" not in outputs:
+                errors.append("execution.expected_outputs must include results.json")
         timeout = execution.get("timeout_minutes")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
             errors.append("execution.timeout_minutes must be a positive integer")
@@ -104,15 +123,31 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         errors.append("metrics must be a non-empty mapping")
     else:
         for metric_name, metric in metrics.items():
+            if not isinstance(metric_name, str) or not metric_name:
+                errors.append("metric names must be non-empty strings")
+                continue
             if not isinstance(metric, dict):
                 errors.append(f"metric {metric_name} must be a mapping")
                 continue
             if metric.get("direction") not in VALID_DIRECTIONS:
                 errors.append(f"metric {metric_name} has invalid direction")
-            if not isinstance(metric.get("unit"), str):
-                errors.append(f"metric {metric_name} must define unit")
-            if metric.get("direction") != "neutral" and not isinstance(metric.get("path"), str):
+            if not isinstance(metric.get("unit"), str) or not metric.get("unit"):
+                errors.append(f"metric {metric_name} must define a non-empty unit")
+            if not isinstance(metric.get("source"), str) or not metric.get("source"):
+                errors.append(f"metric {metric_name} must define source")
+            elif metric.get("source") not in (outputs if isinstance(outputs, list) else []):
+                errors.append(f"metric {metric_name} source is not an expected output")
+            elif not str(metric.get("source")).endswith(".json"):
+                errors.append(f"metric {metric_name} source must be a JSON file")
+            if not isinstance(metric.get("path"), str) or not metric.get("path"):
                 errors.append(f"metric {metric_name} must define path")
+            target = metric.get("target")
+            if target is not None and (
+                isinstance(target, bool) or not isinstance(target, (int, float))
+            ):
+                errors.append(f"metric {metric_name} target must be numeric")
+            elif isinstance(target, (int, float)) and not math.isfinite(float(target)):
+                errors.append(f"metric {metric_name} target must be finite")
 
     for forbidden in ("architectures", "runner", "runner_label"):
         if forbidden in case:

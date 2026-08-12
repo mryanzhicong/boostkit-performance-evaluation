@@ -1,6 +1,6 @@
 # Redis 性能用例
 
-本目录由 `/root/redis` 中已有的 Redis 测试代码人工接入，不包含历史 `results/`。Redis 脚本继续负责自身的构建、校验、服务、测试和报告逻辑，公共 Workflow 只按统一阶段调用。
+本目录由 `/root/redis` 中已有的 Redis 测试代码人工接入，不包含历史 `results/`。Redis 脚本负责自身的构建、服务生命周期、性能测试和软件级结果聚合，公共 Framework 负责严格结果校验、指标提取和通用报告。
 
 ## 分阶段接口
 
@@ -8,14 +8,12 @@
 
 | 参数 | 对应函数 | 用途 |
 |---|---|---|
-| `build` | `phase_build` | 克隆精确版本，原样执行 `/root/redis/redis_test.sh` 的构建命令。 |
-| `validate` | `phase_validate` | 校验架构、命令、源码构建文件和实际 Redis 版本，生成版本信息。 |
-| `start-service` | `phase_start_service` | 从源码树的 `src/redis-server` 启动基准使用的 Redis 服务并等待就绪。 |
-| `test` | `phase_test` | 复用已启动服务执行主基准和微基准。 |
-| `stop-service` | `phase_stop_service` | 停止服务；该阶段可重复执行，Workflow 无条件调用。 |
-| `collect-report` | `phase_collect_report` | 聚合原始结果、生成 Redis 文本报告并检查输出完整性。 |
+| `build` | `phase_build` | 克隆精确版本，原样执行 `/root/redis/redis_test.sh` 的构建命令，随后校验架构、二进制和实际版本。 |
+| `start` | `phase_start` | 从源码树的 `src/redis-server` 启动基准使用的 Redis 服务并等待就绪。 |
+| `test` | `phase_test` | 复用已启动服务执行主基准和微基准，并聚合生成 `results.json` 与 `results.txt`。 |
+| `stop` | `phase_stop` | 停止服务并确认端口释放；该阶段可重复执行，Workflow 无条件调用。 |
 
-不传参数时按上述顺序执行完整本地流程；正式 Workflow 逐阶段调用，以便准确显示失败阶段并保证停止服务和清理必定执行。
+不传参数时按上述顺序执行完整本地流程；正式 Workflow 逐阶段调用。测试结束后由 Framework `finalize` 检查全部预期文件非空，并严格提取清单声明的数值指标。
 
 ## 测试内容
 
