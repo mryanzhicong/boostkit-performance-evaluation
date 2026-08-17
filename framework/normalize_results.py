@@ -42,7 +42,7 @@ def _load_output(
     context: RunContext,
     output_name: str,
     definition: dict[str, Any],
-) -> tuple[str, Any] | None:
+) -> Any | None:
     filename = definition["path"]
     path = context.output_dir / filename
     if not path.is_file():
@@ -64,8 +64,8 @@ def _load_output(
             raise ResultValidationError(
                 f"output {output_name} JSON root must be an object: {filename}"
             )
-        return filename, value
-    return filename, {"path": str(path), "size": path.stat().st_size}
+        return value
+    return {"path": str(path), "size": path.stat().st_size}
 
 
 def validate_stage_outputs(context: RunContext, stage: str) -> None:
@@ -81,15 +81,16 @@ def _load_sources(context: RunContext) -> dict[str, Any]:
         loaded = _load_output(context, output_name, definition)
         if loaded is None:
             continue
-        filename, value = loaded
-        sources[filename] = value
+        sources[output_name] = loaded
     return sources
 
 
 def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
-    for metric_name, definition in context.case.get("metrics", {}).items():
-        source_name = definition["source"]
+    metric_config = context.case.get("metrics", {})
+    default_source = metric_config.get("source")
+    for metric_name, definition in metric_config.get("definitions", {}).items():
+        source_name = definition.get("source", default_source)
         if source_name not in sources:
             raise ResultValidationError(
                 f"metric {metric_name} references unavailable source {source_name}"
@@ -111,7 +112,6 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
             "value": value,
             "unit": definition["unit"],
             "direction": definition["direction"],
-            "target": definition.get("target"),
         }
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
@@ -121,7 +121,6 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
 def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
     sources = _load_sources(context)
     parameters = resolved_parameters(sources)
-    primary = sources.get("results.json", {})
     return {
         "software": context.software,
         "category": context.category,
@@ -136,7 +135,6 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "environment_after": load_json(context.output_dir / "environment_after.json", {}),
         "sources": sources,
         "metrics": _extract_metrics(context, sources),
-        "legacy_summary": primary.get("summary", {}) if isinstance(primary, dict) else {},
     }
 
 

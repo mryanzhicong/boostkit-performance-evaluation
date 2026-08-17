@@ -32,7 +32,7 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
     }
 
 
-def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
+def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) -> None:
     output = tmp_path / "output"
     output.mkdir()
     atomic_write_json(
@@ -52,11 +52,13 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
             }
         },
         "metrics": {
-            "qps": {
-                "source": "results.json",
-                "path": "summary.qps",
-                "unit": "queries/s",
-                "direction": "higher_is_better",
+            "source": "result",
+            "definitions": {
+                "qps": {
+                    "path": "summary.qps",
+                    "unit": "queries/s",
+                    "direction": "higher_is_better",
+                }
             }
         },
     }
@@ -75,7 +77,8 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     result = normalize(context, "passed")
     assert result["metrics"]["qps"]["value"] == 42.5
     assert result["metrics"]["qps"]["direction"] == "higher_is_better"
-    assert result["parameters"] == {"results.json": {"iterations": 3}}
+    assert result["parameters"] == {"result": {"iterations": 3}}
+    assert result["sources"]["result"]["summary"]["qps"] == 42.5
     assert len(result["parameter_signature"]) == 64
 
 
@@ -95,11 +98,13 @@ def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path
             }
         },
         "metrics": {
-            "qps": {
-                "source": "results.json",
-                "path": "summary.qps",
-                "unit": "queries/s",
-                "direction": "higher_is_better",
+            "source": "result",
+            "definitions": {
+                "qps": {
+                    "path": "summary.qps",
+                    "unit": "queries/s",
+                    "direction": "higher_is_better",
+                }
             }
         },
     }
@@ -130,6 +135,60 @@ def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path
     )
     with pytest.raises(ResultValidationError, match="must be finite"):
         normalize(context, "passed")
+
+
+def test_metric_can_override_the_default_logical_output_source(tmp_path: Path) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    atomic_write_json(output / "primary.json", {"summary": {"qps": 42}})
+    atomic_write_json(output / "latency.json", {"summary": {"latency": 1.5}})
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "primary": {
+                    "path": "primary.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                },
+                "latency_result": {
+                    "path": "latency.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                },
+            },
+            "metrics": {
+                "source": "primary",
+                "definitions": {
+                    "qps": {
+                        "path": "summary.qps",
+                        "unit": "ops/s",
+                        "direction": "higher_is_better",
+                    },
+                    "latency": {
+                        "source": "latency_result",
+                        "path": "summary.latency",
+                        "unit": "ms",
+                        "direction": "lower_is_better",
+                    },
+                },
+            },
+        },
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=output,
+        work_dir=tmp_path / "work",
+    )
+    result = normalize(context, "passed")
+    assert result["metrics"]["qps"]["value"] == 42
+    assert result["metrics"]["latency"]["value"] == 1.5
 
 
 def test_stage_output_validation_checks_only_the_completed_stage(tmp_path: Path) -> None:

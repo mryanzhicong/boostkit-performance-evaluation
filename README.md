@@ -203,7 +203,7 @@ software/<category>/<software>/
 - 每个阶段的 Shell 脚本路径和函数名；
 - 阶段超时时间；
 - 每个输出的逻辑名称、相对路径、生成阶段、格式和必要性；
-- 每个指标的来源 JSON、点路径、单位、优化方向和可选目标值。
+- 指标的默认逻辑输出来源，以及每个指标的点路径、单位和优化方向。
 
 入口声明示例：
 
@@ -230,11 +230,20 @@ outputs:
     stage: test
     format: json
     required: true
+metrics:
+  source: aggregate_result
+  definitions:
+    throughput:
+      path: summary.throughput
+      unit: ops/s
+      direction: higher_is_better
 ```
 
 阶段可以映射到同一个脚本，也可以映射到软件目录内的不同 `.sh` 文件。脚本路径必须是软件目录内的相对路径，函数名必须是合法的 Shell 标识符。Catalog 负责静态校验声明，Framework 在运行时加载脚本后使用 `declare -F` 确认函数真实存在；缺失函数会立即失败，不能回退到其他阶段或空操作。
 
 `outputs` 是软件交付结果的结构化契约。输出路径必须位于 `RESULTS_DIR` 内且不能重复，`stage` 只能是 build、start、test、stop，`format` 支持 `json`、`text`、`binary`，`required` 必须明确为布尔值。阶段函数成功退出后，Framework 立即验收属于该阶段的输出；JSON 还会检查语法和根节点类型。可选输出不存在时不会失败，但指标来源必须是必要的 JSON 输出。
+
+`metrics.source` 引用 `outputs` 的逻辑名称，而不是文件路径，并作为所有指标的默认来源。个别指标需要读取其他结果时，可在对应 definition 内单独声明 `source` 覆盖默认值。Framework 规范化后的 `sources` 同样使用逻辑名称保存，从而允许输出文件改名而不影响指标契约。
 
 固定性能用例的工作负载参数由软件脚本唯一维护，不在 `case.yaml` 重复声明。软件产生的 JSON 应在顶级 `parameters` 字段记录可跨架构比较的工作负载定义；CPU 数量等机器相关解析值放入 `runtime_context`，不能混入参数签名。Framework 会收集工作负载定义，写入 `normalized_result.json` 并计算参数签名。双架构结果的参数内容或签名不一致时禁止生成对比。
 
@@ -318,7 +327,7 @@ Redis 的命令集合、并发级别、请求数、重复次数、数据大小�
 - 文件缺失或空文件；
 - 非法 JSON；
 - JSON 根节点不是对象；
-- 指标来源文件不可用；
+- 指标引用的逻辑输出不可用；
 - 指标点路径不存在；
 - 布尔值、字符串、`null` 或其他非数值类型；
 - NaN 或 Infinity；
@@ -330,8 +339,7 @@ Redis 的命令集合、并发级别、请求数、重复次数、数据大小�
 {
   "value": 1000,
   "unit": "ops/s",
-  "direction": "higher_is_better",
-  "target": 1000
+  "direction": "higher_is_better"
 }
 ```
 
@@ -341,7 +349,6 @@ Redis 的命令集合、并发级别、请求数、重复次数、数据大小�
 |---|---|
 | `higher_is_better` | 越大越好 |
 | `lower_is_better` | 越小越好 |
-| `target_is_better` | 越接近目标越好 |
 | `neutral` | 仅展示 |
 
 跨架构对比要求两个结果的软件、版本、工作负载定义、参数签名、指标集合、单位和优化方向全部一致。越小越好的指标会反向换算相对性能，使“相对性能大于 1”始终表示 aarch64 更优。

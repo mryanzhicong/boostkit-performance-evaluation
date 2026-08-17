@@ -58,6 +58,18 @@ def test_redis_is_the_only_valid_case() -> None:
             "required": True,
         },
     }
+    assert case["metrics"]["source"] == "aggregate_result"
+    assert list(case["metrics"]["definitions"]) == [
+        "set_qps_c50",
+        "get_qps_c50",
+        "average_latency",
+        "maximum_p99_latency",
+        "client_scaling_ratio",
+    ]
+    assert all(
+        "source" not in definition and "target" not in definition
+        for definition in case["metrics"]["definitions"].values()
+    )
 
 
 def test_software_registry_normalizes_empty_categories() -> None:
@@ -125,11 +137,13 @@ def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> Non
             }
         },
         "metrics": {
-            "throughput": {
-                "source": "results.json",
-                "path": "summary.throughput",
-                "unit": "ops/s",
-                "direction": "higher_is_better",
+            "source": "result",
+            "definitions": {
+                "throughput": {
+                    "path": "summary.throughput",
+                    "unit": "ops/s",
+                    "direction": "higher_is_better",
+                }
             }
         },
     }
@@ -205,11 +219,13 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
             }
         },
         "metrics": {
-            "throughput": {
-                "source": "results.json",
-                "path": "summary.throughput",
-                "unit": "ops/s",
-                "direction": "higher_is_better",
+            "source": "result",
+            "definitions": {
+                "throughput": {
+                    "path": "summary.throughput",
+                    "unit": "ops/s",
+                    "direction": "higher_is_better",
+                }
             }
         },
     }
@@ -234,6 +250,18 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
     case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     _case, errors = validate_case(case_path, tmp_path)
     assert any("source must be a required output" in error for error in errors)
+
+    payload["outputs"]["result"]["required"] = True
+    payload["metrics"]["definitions"]["throughput"]["target"] = 1000
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("contains unsupported fields: target" in error for error in errors)
+
+    del payload["metrics"]["definitions"]["throughput"]["target"]
+    payload["metrics"]["definitions"]["throughput"]["direction"] = "target_is_better"
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("has invalid direction" in error for error in errors)
 
 
 def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:

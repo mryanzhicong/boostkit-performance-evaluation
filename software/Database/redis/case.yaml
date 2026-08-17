@@ -43,30 +43,25 @@ outputs:
     format: json
     required: true
 metrics:
-  set_qps_c50:
-    source: results.json
-    path: summary.set_qps_c50
-    unit: ops/s
-    direction: higher_is_better
-    target: 1000
-  get_qps_c50:
-    source: results.json
-    path: summary.get_qps_c50
-    unit: ops/s
-    direction: higher_is_better
-    target: 1000
-  average_latency:
-    source: results.json
-    path: summary.avg_latency_ms
-    unit: ms
-    direction: lower_is_better
-  maximum_p99_latency:
-    source: results.json
-    path: summary.max_p99_latency_ms
-    unit: ms
-    direction: lower_is_better
-  client_scaling_ratio:
-    source: results.json
-    path: summary.client_scaling_ratio
-    unit: ratio
-    direction: higher_is_better
+  source: aggregate_result
+  definitions:
+    set_qps_c50:
+      path: summary.set_qps_c50
+      unit: ops/s
+      direction: higher_is_better
+    get_qps_c50:
+      path: summary.get_qps_c50
+      unit: ops/s
+      direction: higher_is_better
+    average_latency:
+      path: summary.avg_latency_ms
+      unit: ms
+      direction: lower_is_better
+    maximum_p99_latency:
+      path: summary.max_p99_latency_ms
+      unit: ms
+      direction: lower_is_better
+    client_scaling_ratio:
+      path: summary.client_scaling_ratio
+      unit: ratio
+      direction: higher_is_better

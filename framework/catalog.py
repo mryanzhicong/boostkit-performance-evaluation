@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import sys
 from pathlib import Path
@@ -16,7 +15,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 SOFTWARE_STAGES = ("build", "start", "test", "stop")
-VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "target_is_better", "neutral"}
+VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "neutral"}
 VALID_OUTPUT_FORMATS = {"json", "text", "binary"}
 SHELL_FUNCTION_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 OUTPUT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -212,7 +211,8 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         if "environment" in execution and not isinstance(execution["environment"], dict):
             errors.append("execution.environment must be a mapping")
 
-    output_by_path: dict[str, dict[str, Any]] = {}
+    output_by_name: dict[str, dict[str, Any]] = {}
+    output_paths: set[str] = set()
     outputs = case.get("outputs")
     if not isinstance(outputs, dict) or not outputs:
         errors.append("outputs must be a non-empty mapping")
@@ -226,6 +226,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
             if not isinstance(definition, dict):
                 errors.append(f"output {output_name} must be a mapping")
                 continue
+            output_by_name[output_name] = definition
             unknown_fields = set(definition) - {"path", "stage", "format", "required"}
             if unknown_fields:
                 errors.append(
@@ -250,12 +251,12 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         f"output {output_name}.path must remain inside the result directory"
                     )
-                elif output_path in output_by_path:
+                elif output_path in output_paths:
                     errors.append(
                         f"output path {output_path} is declared by more than one output"
                     )
                 else:
-                    output_by_path[output_path] = definition
+                    output_paths.add(output_path)
             if definition.get("stage") not in SOFTWARE_STAGES:
                 errors.append(
                     f"output {output_name}.stage must be one of {list(SOFTWARE_STAGES)}"
@@ -279,35 +280,56 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     if not isinstance(metrics, dict) or not metrics:
         errors.append("metrics must be a non-empty mapping")
     else:
-        for metric_name, metric in metrics.items():
+        unknown_metric_fields = set(metrics) - {"source", "definitions"}
+        if unknown_metric_fields:
+            errors.append(
+                "metrics contains unsupported fields: "
+                f"{', '.join(sorted(str(field) for field in unknown_metric_fields))}"
+            )
+        default_source = metrics.get("source")
+        if default_source is not None and (
+            not isinstance(default_source, str) or not default_source
+        ):
+            errors.append("metrics.source must be a non-empty output name")
+        elif isinstance(default_source, str):
+            if default_source not in output_by_name:
+                errors.append("metrics.source is not a declared output name")
+            elif output_by_name[default_source].get("format") != "json":
+                errors.append("metrics.source must reference a JSON output")
+            elif output_by_name[default_source].get("required") is not True:
+                errors.append("metrics.source must reference a required output")
+        definitions = metrics.get("definitions")
+        if not isinstance(definitions, dict) or not definitions:
+            errors.append("metrics.definitions must be a non-empty mapping")
+            definitions = {}
+        for metric_name, metric in definitions.items():
             if not isinstance(metric_name, str) or not metric_name:
                 errors.append("metric names must be non-empty strings")
                 continue
             if not isinstance(metric, dict):
                 errors.append(f"metric {metric_name} must be a mapping")
                 continue
+            unknown_fields = set(metric) - {"source", "path", "unit", "direction"}
+            if unknown_fields:
+                errors.append(
+                    f"metric {metric_name} contains unsupported fields: "
+                    f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                )
             if metric.get("direction") not in VALID_DIRECTIONS:
                 errors.append(f"metric {metric_name} has invalid direction")
             if not isinstance(metric.get("unit"), str) or not metric.get("unit"):
                 errors.append(f"metric {metric_name} must define a non-empty unit")
-            source = metric.get("source")
+            source = metric.get("source", default_source)
             if not isinstance(source, str) or not source:
-                errors.append(f"metric {metric_name} must define source")
-            elif source not in output_by_path:
-                errors.append(f"metric {metric_name} source is not a declared output path")
-            elif output_by_path[source].get("format") != "json":
+                errors.append(f"metric {metric_name} must define source or use metrics.source")
+            elif source not in output_by_name:
+                errors.append(f"metric {metric_name} source is not a declared output name")
+            elif output_by_name[source].get("format") != "json":
                 errors.append(f"metric {metric_name} source must be a JSON output")
-            elif output_by_path[source].get("required") is not True:
+            elif output_by_name[source].get("required") is not True:
                 errors.append(f"metric {metric_name} source must be a required output")
             if not isinstance(metric.get("path"), str) or not metric.get("path"):
                 errors.append(f"metric {metric_name} must define path")
-            target = metric.get("target")
-            if target is not None and (
-                isinstance(target, bool) or not isinstance(target, (int, float))
-            ):
-                errors.append(f"metric {metric_name} target must be numeric")
-            elif isinstance(target, (int, float)) and not math.isfinite(float(target)):
-                errors.append(f"metric {metric_name} target must be finite")
 
     for forbidden in ("architectures", "runner", "runner_label"):
         if forbidden in case:

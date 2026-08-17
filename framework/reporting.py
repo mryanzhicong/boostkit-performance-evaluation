@@ -7,7 +7,6 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 DIRECTION_LABELS = {
     "higher_is_better": "越大越好",
     "lower_is_better": "越小越好",
-    "target_is_better": "越接近目标越好",
     "neutral": "仅展示",
 }
 ARCHITECTURE_ORDER = ("aarch64", "x86_64")
@@ -57,7 +56,7 @@ def render_comparison(comparison: dict) -> str:
         )
     lines.extend([
         "",
-        "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。目标型指标按目标偏差判断。",
+        "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
         "",
     ])
     return "\n".join(lines)

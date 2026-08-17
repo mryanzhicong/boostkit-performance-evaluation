@@ -66,7 +66,6 @@ def compare_pair(x86: dict, arm: dict) -> dict:
             "direction": direction,
             "raw_ratio": round(raw_ratio, 4) if raw_ratio is not None else None,
             "relative_performance": round(relative, 4) if relative is not None else None,
-            "target": a_metric.get("target", x_metric.get("target")),
         }
     return {
         "category": arm["category"],
