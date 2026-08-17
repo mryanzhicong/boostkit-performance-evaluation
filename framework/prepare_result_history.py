@@ -10,8 +10,9 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from generate_comparison import build_summary
 from json_helper import atomic_write_json, load_json
-from reporting import render_comparison
+from reporting import render_summary
 
 
 PERMANENT_TEXT_FILES = {"report.md"}
@@ -32,37 +33,6 @@ def _identity(result: dict) -> tuple[str, str, str, str, str]:
     if missing:
         raise ValueError(f"normalized result is missing identity fields: {', '.join(missing)}")
     return tuple(str(result[field]) for field in REQUIRED_IDENTITY_FIELDS)  # type: ignore[return-value]
-
-
-def _combined_report(
-    *,
-    category: str,
-    software: str,
-    version: str,
-    run_id: str,
-    architecture_dirs: dict[str, Path],
-    comparison: dict | None,
-) -> str:
-    lines = [
-        f"# {software} {version} 性能结果",
-        "",
-        f"- 分类：`{category}`",
-        f"- Run ID：`{run_id}`",
-        "",
-    ]
-    for architecture, directory in sorted(architecture_dirs.items()):
-        lines.extend([f"## {architecture}", ""])
-        report = directory / "report.md"
-        if report.is_file():
-            lines.extend(report.read_text(encoding="utf-8").strip().splitlines())
-        else:
-            lines.append("单架构报告缺失。")
-        lines.append("")
-    if comparison:
-        lines.extend(["## 跨架构对比", ""])
-        lines.extend(render_comparison(comparison).strip().splitlines())
-        lines.append("")
-    return "\n".join(lines)
 
 
 def prepare(
@@ -125,15 +95,12 @@ def prepare(
         comparison = load_json(comparison_json, {}) if comparison_json.is_file() else None
         if comparison_json.is_file():
             shutil.copy2(comparison_json, run_root / "comparison.json")
+        scoped_comparisons = [comparison] if comparison else []
+        scoped_summary = build_summary(
+            [result for result, _source_dir in entries], scoped_comparisons
+        )
         (run_root / "combined-report.md").write_text(
-            _combined_report(
-                category=category,
-                software=software,
-                version=version,
-                run_id=run_id,
-                architecture_dirs=architecture_dirs,
-                comparison=comparison,
-            ),
+            render_summary(scoped_summary, scoped_comparisons),
             encoding="utf-8",
         )
         manifest = {

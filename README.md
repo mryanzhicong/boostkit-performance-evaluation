@@ -165,199 +165,13 @@ Prepare 与 Performance 是不同机器上的独立 Job，文件系统不共享�
 
 因此后台服务即使没有在命令行中显示工作根目录，也能通过进程环境或资源引用被识别。
 
-## 软件接入规范
+## 项目文档
 
-`config/categories.yaml` 是分类和软件注册的唯一配置源。空分类直接留空，不写 `[]`；Catalog 会在内存中把空值规范化为空列表：
+新增软件时不在根 README 或 Workflow 中编写软件特例。当前接入流程假定软件已经具有经过审核的构建、启动、测试和停止脚本，只进行目录、阶段入口、结果和指标契约适配：
 
-```yaml
-categories:
-  AI:
-  Bigdata:
-  Storage:
-  Database:
-    - redis
-  Media:
-  HPC:
-    - lz4
-  Middleware:
-  Toolchain:
-  Others:
-```
+- [已有测试脚本接入指南](doc/SOFTWARE_INTEGRATION.md)
 
-同一软件只能登记在一个分类下。矩阵只从这里登记且 `case.yaml` 启用的软件生成，不能通过新增目录绕过注册表。
-
-新增软件使用以下结构，不要求额外创建软件 README：
-
-```text
-software/<category>/<software>/
-├── case.yaml
-├── <software>_test.sh
-└── scripts/                 # 仅在需要辅助程序时创建
-```
-
-### `case.yaml`
-
-软件清单至少声明：
-
-- 软件名、分类、启用状态和版本列表；
-- `execution.type: shell-functions`；
-- `execution.stages` 中完整且仅有 build、start、test、stop 四个阶段；
-- 每个阶段的 Shell 脚本路径和函数名；
-- 阶段超时时间；
-- 每个输出的逻辑名称、相对路径、生成阶段、格式和必要性；
-- 指标的默认逻辑输出来源，以及每个指标的点路径、单位和优化方向。
-
-入口声明示例：
-
-```yaml
-execution:
-  type: shell-functions
-  stages:
-    build:
-      script: redis_test.sh
-      function: build_redis
-    start:
-      script: redis_test.sh
-      function: start_redis_service
-    test:
-      script: redis_test.sh
-      function: run_redis_benchmarks
-    stop:
-      script: redis_test.sh
-      function: stop_redis_service
-  timeout_minutes: 180
-outputs:
-  aggregate_result:
-    path: results.json
-    stage: test
-    format: json
-    required: true
-metrics:
-  source: aggregate_result
-  definitions:
-    throughput:
-      path: summary.throughput
-      unit: ops/s
-      direction: higher_is_better
-```
-
-阶段可以映射到同一个脚本，也可以映射到软件目录内的不同 `.sh` 文件。脚本路径必须是软件目录内的相对路径，函数名必须是合法的 Shell 标识符。Catalog 负责静态校验声明，Framework 在运行时加载脚本后使用 `declare -F` 确认函数真实存在；缺失函数会立即失败，不能回退到其他阶段或空操作。
-
-`outputs` 是软件交付结果的结构化契约。输出路径必须位于 `RESULTS_DIR` 内且不能重复，`stage` 只能是 build、start、test、stop，`format` 支持 `json`、`text`、`binary`，`required` 必须明确为布尔值。阶段函数成功退出后，Framework 立即验收属于该阶段的输出；JSON 还会检查语法和根节点类型。可选输出不存在时不会失败，但指标来源必须是必要的 JSON 输出。
-
-`build_info.json` 是 Framework 固定生成的公共文件，不在软件 `outputs` 中重复声明。软件 build 阶段只需从已构建程序中提取实际版本，并向 `PERF_ACTUAL_VERSION_FILE` 写入一行版本号；Framework 会拒绝缺失、空值、多行值以及与请求版本不一致的结果，然后统一补充分类、软件名、请求版本、架构、Run ID 和记录时间。
-
-不会在测试前后重复采集不会变化的信息。架构、CPU 型号与核数、OS、内核、Python、GCC、glibc 和 NUMA 只在 prepare 阶段采集一次并写入 `system_info.json`；内存状态和 CPU governor 可能受测试影响，分别写入 `runtime_before.json` 与 `runtime_after.json`。软件目录不得重复采集这些公共信息。
-
-`metrics.source` 引用 `outputs` 的逻辑名称，而不是文件路径，并作为所有指标的默认来源。个别指标需要读取其他结果时，可在对应 definition 内单独声明 `source` 覆盖默认值。Framework 规范化后的 `sources` 同样使用逻辑名称保存，从而允许输出文件改名而不影响指标契约。
-
-固定性能用例的工作负载参数由软件脚本唯一维护，不在 `case.yaml` 重复声明。软件产生的 JSON 应在顶级 `parameters` 字段记录可跨架构比较的工作负载定义；CPU 数量等机器相关解析值放入 `runtime_context`，不能混入参数签名。Framework 会收集工作负载定义，写入 `normalized_result.json` 并计算参数签名。双架构结果的参数内容或签名不一致时禁止生成对比。
-
-软件清单禁止声明：
-
-```text
-architectures
-runner
-runner_label
-```
-
-所有已登记且启用的软件默认由 Catalog 展开为两个架构；只有手动输入可以缩小执行范围。
-
-### 四阶段函数契约
-
-软件脚本必须为四个阶段各暴露一个职责明确的函数。阶段键固定，函数名不固定，推荐包含软件或服务语义，例如：
-
-```bash
-build_redis() { ...; }
-start_redis_service() { ...; }
-run_redis_benchmarks() { ...; }
-stop_redis_service() { ...; }
-```
-
-脚本不得在文件末尾根据 `$1` 分发阶段，也不得提供隐式 `all` 或 `run_all` 入口。脚本被 `source` 时只应完成变量初始化和函数定义，不应自动构建、启动服务或执行测试。Framework 的统一调用链如下：
-
-```text
-workflow --stage build
-  → case.yaml execution.stages.build
-  → source 声明的 script
-  → 校验声明的 function 存在
-  → 调用 build_redis 并原样返回退出码
-```
-
-公共 Framework 通过环境变量传入：
-
-- `SOFTWARE_VERSION`：当前测试版本；
-- `EXPECTED_ARCH`：期望架构；
-- `RESULTS_DIR`：结果输出目录；
-- `PERF_RUN_ID`：运行编号；
-- `PERF_PROCESS_TOKEN`：进程隔离标识；
-- `PERF_WORK_DIR`：本次软件工作目录；
-- `PERF_ACTUAL_VERSION_FILE`：build 阶段报告单行实际版本的 Framework 保留路径；
-- `TMPDIR`、`PIP_CACHE_DIR`、`XDG_CACHE_HOME`、`CARGO_HOME`、`CCACHE_DIR`：任务私有临时和缓存目录。
-
-软件脚本必须遵守：
-
-- build 包含构建、安装或源码树二进制准备、架构和基本功能校验，并把从实际产物读取的版本写入 `PERF_ACTUAL_VERSION_FILE`；
-- start 必须等待服务真正可用后再正常退出；没有后台服务的软件应校验测试运行时已准备完成；
-- test 只使用本次 start 启动的服务，并生成全部预期输出；
-- stop 必须幂等，即使服务没有启动或已经退出也能安全执行；
-- 所有阶段必须等待自身工作完成并返回准确退出码；
-- 不得使用上一次运行的结果掩盖本次失败；
-- 不得在 Workflow 中添加按软件名称判断的分支。
-
-### 当前 Redis 用例
-
-Redis 用例位于 `software/Database/redis`，支持三个版本和一套正式参数。软件脚本保留原始构建命令：
-
-```bash
-make -j$(nproc) BUILD_TLS=no
-```
-
-构建后直接使用源码树中的 `src/redis-server`、`src/redis-benchmark` 和 `src/redis-cli`，不执行 `make install`，也不额外改写 Redis Make 参数。
-
-Redis 的命令集合、并发级别、请求数、重复次数、数据大小、客户端数量、持久化模式和服务端口只在 Redis 测试脚本中定义。`benchmark_redis.json` 与 `micro_benchmark.json` 会记录工作负载参数；`all` 解析出的实际 CPU 客户端数单独记录在 `runtime_context`。Framework 以工作负载定义校验 x86_64 和 aarch64 的测试方案一致性。
-
-当前提取指标：
-
-| 指标 | 单位 | 优化方向 |
-|---|---|---|
-| `set_qps_c50` | ops/s | 越大越好 |
-| `get_qps_c50` | ops/s | 越大越好 |
-| `average_latency` | ms | 越小越好 |
-| `maximum_p99_latency` | ms | 越小越好 |
-| `client_scaling_ratio` | ratio | 越大越好 |
-
-### 当前 LZ4 用例
-
-LZ4 用例位于 `software/HPC/lz4`。源码从 LZ4 官方仓库按版本标签拉取，并使用官方构建入口：
-
-```bash
-make -C tests fullbench
-```
-
-start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下载完成后，软件私有辅助脚本逐个校验 12 个原始文件的官方大小和 MD5，再按固定顺序、文件名、权限、时间戳和所有者生成可复现的 `silesia.tar`，并强制校验生成文件的固定 SHA-256。语料及 Git checkout 全部位于本次 `PERF_WORK_DIR`，不依赖 Runner 预置数据，也不使用跨任务缓存。
-
-生成文件的大小和 SHA-256 会写入可比较参数；两个架构下载内容或生成结果不一致时，Framework 禁止生成跨架构对比。全局清理会在任务结束后删除下载内容和生成的 tar。
-
-测试阶段严格执行四条已批准的官方 fullbench 命令：
-
-```bash
-./tests/fullbench --no-prompt -i3 -B4 -c1 silesia.tar
-./tests/fullbench --no-prompt -i3 -B4 -d4 silesia.tar
-./tests/fullbench --no-prompt -i3 -B7 -c1 silesia.tar
-./tests/fullbench --no-prompt -i3 -B7 -d4 silesia.tar
-```
-
-其中 `-i3` 表示三轮迭代，`B4/B7` 分别表示 64 KiB 和 4 MiB 块，`c1` 对应 `LZ4_compress_default`，`d4` 对应 `LZ4_decompress_safe`。每条命令必须正常退出且恰好解析出一个正数速度，否则测试失败。LZ4 是进程内压缩库，没有后台服务，因此 stop 阶段为幂等的无服务收口。
-
-当前提取指标：
-
-| 指标 | 单位 | 优化方向 |
-|---|---|---|
-| `compress_speed_64k` | MB/s | 越大越好 |
-| `decompress_speed_64k` | MB/s | 越大越好 |
-| `compress_speed_4m` | MB/s | 越大越好 |
-| `decompress_speed_4m` | MB/s | 越大越好 |
+测试脚本从零开发、负载选择、测试命令设计和指标算法设计不属于当前接入指南。后续单独维护在 `doc/TEST_SCRIPT_DEVELOPMENT.md`，与已有脚本适配规范分离。
 
 ## 结果和指标契约
 
@@ -372,7 +186,7 @@ start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下�
 - NaN 或 Infinity；
 - 最终没有提取到任何指标。
 
-统一指标包含：
+Framework 从软件 JSON 提取数值后，会统一转换成以下指标结构；软件不需要自行生成这个结构：
 
 ```json
 {
@@ -394,7 +208,9 @@ start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下�
 
 单架构报告按 aarch64 和 x86_64 两个小标题分组；单架构指标顺序与跨架构指标顺序保持一致。
 
-单架构 `report.md` 和整次运行的 `combined-report.md` 都包含测试环境。报告将构建信息和静态系统信息分别成表，同一项目的 x86 与 aarch64 值按列横向对照；汇总报告再按软件和版本分组。测试前后的运行状态仍保留在结果 JSON 中，当前不在 Markdown 报告展示。因此 Workflow Summary、Artifact 和永久结果报告使用同一套环境信息。
+单架构 `report.md` 和整次运行的 `combined-report.md` 都包含测试环境。单架构报告只显示当前架构，不为另一架构生成整列 `N/A`；Workflow Summary 和汇总报告将构建信息、静态系统信息分别成表，同一项目的 x86 与 aarch64 值按列横向对照，并按软件和版本分组。测试前后的运行状态仍保留在结果 JSON 中，当前不在 Markdown 报告展示。
+
+Workflow Summary、汇总 Artifact 和 `performance-results` 中的软件版本级 `combined-report.md` 统一调用 `render_summary()`。永久报告只按当前软件和版本过滤数据，不再嵌套各架构 `report.md` 或使用另一套标题结构；各架构的独立报告仍保存在对应子目录。
 
 ## 输出目录和保存策略
 
@@ -460,7 +276,7 @@ Ubuntu 本地环境直接使用默认 PyPI 安装验证依赖：
 
 ```bash
 python3 -m pip install \
-  "PyYAML==6.0.2" "pytest>=8.0,<9.0"
+  "PyYAML==6.0.2" "pytest>=8.0,<10.0"
 ```
 
 其他环境使用阿里云镜像：
@@ -468,7 +284,7 @@ python3 -m pip install \
 ```bash
 python3 -m pip install \
   --index-url https://mirrors.aliyun.com/pypi/simple/ \
-  "PyYAML==6.0.2" "pytest>=8.0,<9.0"
+  "PyYAML==6.0.2" "pytest>=8.0,<10.0"
 ```
 
 校验软件清单：
@@ -503,7 +319,7 @@ python3 -m pytest framework/tests
 
 | 文件 | 用途 |
 |---|---|
-| `README.md` | 项目唯一文档，包含架构、操作、接入规范和全部文件职责。 |
+| `README.md` | 项目总览，包含架构、运行方式、公共流程和文档入口。 |
 | `.gitignore` | 排除运行产物、缓存、历史结果工作区和本地临时文件。 |
 | `.github/workflows/performance-test.yml` | 唯一 Workflow；处理手动输入、矩阵、双架构任务、前后清理、报告和永久历史。 |
 
@@ -513,6 +329,13 @@ python3 -m pytest framework/tests
 |---|---|
 | `config/categories.yaml` | 分类顺序和分类下软件列表的唯一注册表；空值表示当前没有软件。 |
 | `config/defaults.yaml` | 默认双架构、架构到 Runner 标签的唯一映射、输出根目录和裸机工作根目录。 |
+
+### 项目文档
+
+| 文件 | 用途 |
+|---|---|
+| `doc/SOFTWARE_INTEGRATION.md` | 将已有测试脚本适配到四阶段、结果和指标接口的正式指南。 |
+| `doc/TEST_SCRIPT_DEVELOPMENT.md` | 未来测试脚本开发说明的空白占位文档。 |
 
 ### Framework
 
@@ -547,7 +370,6 @@ python3 -m pytest framework/tests
 
 | 文件或模式 | 用途 |
 |---|---|
-| `software/README.md` | 说明分类目录和新软件的必要文件结构。 |
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
 | `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、结构化输出和指标提取契约。 |
 | `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，为 build、start、test、stop 分别暴露语义清晰的函数，不自行分发执行。 |
@@ -571,17 +393,5 @@ python3 -m pytest framework/tests
 | `software/HPC/lz4/lz4_test.sh` | LZ4 四阶段函数实现，负责官方 fullbench 构建、GitHub 语料下载、基准执行和无服务收口。 |
 | `software/HPC/lz4/scripts/prepare_silesia.py` | 校验 GitHub 镜像中的 12 个官方语料文件，并用固定元数据生成可复现的 `silesia.tar`。 |
 | `software/HPC/lz4/scripts/run_fullbench.py` | 同步执行四条已批准的 fullbench 命令，严格解析原始输出，并记录语料 SHA-256、命令和速度指标。 |
-
-## 新软件接入检查表
-
-1. 在 `config/categories.yaml` 的目标分类下登记软件名。
-2. 创建对应的软件目录并人工编写 `case.yaml`，不得写入架构或 Runner 标签。
-3. 在 `case.yaml` 显式声明四阶段的脚本和函数，并在脚本中实现 build、start、test、stop。
-4. build 必须从实际构建产物读取版本，并向 `PERF_ACTUAL_VERSION_FILE` 写入一个非空单行值。
-5. 确保所有临时资源进入 `PERF_WORK_DIR` 或公共工作根目录。
-6. 为每个软件输出声明路径、生成阶段、格式和必要性，并确保对应阶段生成全部必要输出；不要声明 Framework 的 `build_info.json`。
-7. 确保 stop 可重复执行，并能处理部分启动或失败状态。
-8. 运行 Catalog 校验、矩阵检查和 Framework 单元测试。
-9. 先手动运行单版本、单架构任务，稳定后再运行默认双架构矩阵。
 
 测试用例生成、自动触发、趋势页面和新的结果门禁不属于当前实现范围，增加前必须单独评审。

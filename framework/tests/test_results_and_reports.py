@@ -364,7 +364,14 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "### x86_64" not in environment
     assert "### 构建信息" in environment
     assert "### 系统信息" in environment
-    assert environment.count("| 项目 | x86 | aarch64 |") == 2
+    assert environment.count('<table width="1380">') == 2
+    assert environment.count('<th width="180">项目</th>') == 2
+    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">aarch64</th>') == 2
+    assert '<td width="180">CPU 型号</td>' in environment
+    assert '<td width="600">Example CPU</td>' in environment
+    assert markdown.count('<table width="1380">') == 3
+    assert "|---" not in markdown
     assert "运行状态" not in environment
     assert "before memory" not in environment
     assert "after memory" not in environment
@@ -378,7 +385,11 @@ def test_single_report_includes_build_and_system_environment() -> None:
     assert "## 测试环境" in markdown
     assert "### 构建信息" in markdown
     assert "### 系统信息" in markdown
-    assert markdown.count("| 项目 | x86 | aarch64 |") == 2
+    assert markdown.count('<table width="1380">') == 3
+    assert markdown.count('<th width="180">项目</th>') == 2
+    assert markdown.count('<th width="1200">aarch64</th>') == 2
+    assert '<th width="1200">x86</th>' not in markdown
+    assert "|---" not in markdown
     assert "实际软件版本" in markdown
     assert "Example CPU" in markdown
     assert "GCC 版本" in markdown
@@ -386,6 +397,11 @@ def test_single_report_includes_build_and_system_environment() -> None:
     assert "glibc 2.38" in markdown
     assert "运行状态" not in markdown
     assert "before memory" not in markdown and "after memory" not in markdown
+
+    x86_markdown = render_single(normalized_result("x86_64", 100, 20))
+    assert x86_markdown.count('<table width="1380">') == 3
+    assert x86_markdown.count('<th width="1200">x86</th>') == 2
+    assert '<th width="1200">aarch64</th>' not in x86_markdown
 
 
 def test_comparison_rejects_incompatible_metric_contracts() -> None:
@@ -437,7 +453,12 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "### sample 1.0" in environment
     assert "#### 构建信息" in environment
     assert "#### 系统信息" in environment
-    assert environment.count("| 项目 | x86 | aarch64 |") == 2
+    assert environment.count('<table width="1380">') == 2
+    assert environment.count('<th width="180">项目</th>') == 2
+    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">aarch64</th>') == 2
+    assert combined.count('<table width="1380">') == 6
+    assert "|---" not in combined
     assert "运行状态" not in environment
     assert "Example CPU" in combined
     assert "13.2.1" in combined
@@ -508,6 +529,11 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert (run_root / "combined-report.md").is_file()
     assert not (run_root / "comparison.md").exists()
     permanent_report = (run_root / "combined-report.md").read_text(encoding="utf-8")
+    workflow_report = (report_dir / "combined-report.md").read_text(encoding="utf-8")
+    assert permanent_report == workflow_report
+    assert permanent_report.count("# 性能测试汇总") == 1
+    assert "# sample 1.0 性能报告" not in permanent_report
+    assert "# sample 1.0 跨架构对比" not in permanent_report
     assert "跨架构对比" in permanent_report
     assert "相对性能" in permanent_report
     baseline = output_root / "AI" / "sample" / "1.0" / "baseline.json"

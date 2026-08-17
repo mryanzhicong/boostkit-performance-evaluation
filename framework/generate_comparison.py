@@ -88,6 +88,33 @@ def compare_pair(x86: dict, arm: dict) -> dict:
     }
 
 
+def build_summary(results: list[dict], comparisons: list[dict]) -> dict:
+    """Build the shared model for workflow and permanent summary reports."""
+    items = [
+        {
+            "category": result.get("category"),
+            "software": result.get("software"),
+            "version": result.get("version"),
+            "architecture": result.get("architecture"),
+            "status": result.get("status"),
+            "cleanup_status": result.get("cleanup_status", "unknown"),
+            "build_info": result.get("build_info", {}),
+            "system_info": result.get("system_info", {}),
+            "runtime_before": result.get("runtime_before", {}),
+            "runtime_after": result.get("runtime_after", {}),
+            "metrics": result.get("metrics", {}),
+        }
+        for result in results
+    ]
+    return {
+        "total": len(results),
+        "passed": sum(1 for result in results if result.get("status") == "passed"),
+        "failed": sum(1 for result in results if result.get("status") != "passed"),
+        "comparisons": len(comparisons),
+        "items": items,
+    }
+
+
 def generate(input_root: Path, output_dir: Path) -> dict:
     normalized_paths = sorted(input_root.rglob("normalized_result.json"))
     normalized_dirs = {path.parent.resolve() for path in normalized_paths}
@@ -131,26 +158,7 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         stem = f"{comparison['category']}-{comparison['software']}-{comparison['version']}"
         atomic_write_json(output_dir / f"{stem}.json", comparison)
 
-    items = [{
-        "category": result.get("category"),
-        "software": result.get("software"),
-        "version": result.get("version"),
-        "architecture": result.get("architecture"),
-        "status": result.get("status"),
-        "cleanup_status": result.get("cleanup_status", "unknown"),
-        "build_info": result.get("build_info", {}),
-        "system_info": result.get("system_info", {}),
-        "runtime_before": result.get("runtime_before", {}),
-        "runtime_after": result.get("runtime_after", {}),
-        "metrics": result.get("metrics", {}),
-    } for result in results]
-    summary = {
-        "total": len(results),
-        "passed": sum(1 for result in results if result.get("status") == "passed"),
-        "failed": sum(1 for result in results if result.get("status") != "passed"),
-        "comparisons": len(comparisons),
-        "items": items,
-    }
+    summary = build_summary(results, comparisons)
     atomic_write_json(
         output_dir / "combined-report.json",
         {"summary": summary, "comparisons": comparisons},
