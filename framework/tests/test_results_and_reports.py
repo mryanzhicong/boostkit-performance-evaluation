@@ -5,6 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import collect_environment
+from build_info import (
+    BuildInfoError,
+    actual_version_path,
+    load_build_info,
+    record_build_info,
+    reset_build_info,
+)
 from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
@@ -12,7 +20,7 @@ from mark_cleanup import mark
 from normalize_results import ResultValidationError, normalize, validate_stage_outputs
 from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
-from reporting import render_comparison
+from reporting import render_comparison, render_single
 
 
 def normalized_result(architecture: str, higher: float, lower: float) -> dict:
@@ -23,6 +31,26 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
         "architecture": architecture,
         "status": "passed",
         "cleanup_status": "passed",
+        "build_info": {
+            "requested_version": "1.0",
+            "actual_version": "1.0",
+            "recorded_at": "2026-08-17T00:00:00Z",
+        },
+        "system_info": {
+            "architecture": architecture,
+            "cpu_model": "Example CPU",
+            "cpu_count": 64,
+            "gcc_version": "13.2.1",
+            "glibc_version": "glibc 2.38",
+        },
+        "runtime_before": {
+            "memory": "before memory",
+            "cpu_governor": "performance",
+        },
+        "runtime_after": {
+            "memory": "after memory",
+            "cpu_governor": "performance",
+        },
         "parameters": {"benchmark.json": {"iterations": 3}},
         "parameter_signature": "same-parameters",
         "metrics": {
@@ -32,6 +60,33 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
     }
 
 
+def record_requested_build(context: RunContext) -> dict:
+    context.work_dir.mkdir(parents=True, exist_ok=True)
+    actual_version_path(context).write_text(f"{context.version}\n", encoding="utf-8")
+    record_build_info(context)
+    return load_build_info(context)
+
+
+def test_environment_collector_includes_gcc_and_glibc_versions(monkeypatch) -> None:
+    responses = {
+        ("gcc", "-dumpfullversion", "-dumpversion"): "13.2.1",
+        ("getconf", "GNU_LIBC_VERSION"): "glibc 2.38",
+    }
+    monkeypatch.setattr(
+        collect_environment,
+        "_command",
+        lambda args: responses.get(tuple(args), ""),
+    )
+    system_info = collect_environment.collect_system_info()
+    runtime_state = collect_environment.collect_runtime_state()
+    assert system_info["gcc_version"] == "13.2.1"
+    assert system_info["glibc_version"] == "glibc 2.38"
+    assert "cpu_count" in system_info
+    assert "memory" not in system_info
+    assert "gcc_version" not in runtime_state
+    assert set(runtime_state) == {"collected_at", "memory", "cpu_governor"}
+
+
 def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) -> None:
     output = tmp_path / "output"
     output.mkdir()
@@ -39,6 +94,9 @@ def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) ->
         output / "results.json",
         {"parameters": {"iterations": 3}, "summary": {"qps": 42.5}},
     )
+    atomic_write_json(output / "system_info.json", {"cpu_count": 64})
+    atomic_write_json(output / "runtime_before.json", {"cpu_governor": "performance"})
+    atomic_write_json(output / "runtime_after.json", {"cpu_governor": "performance"})
     case = {
         "execution": {
             "environment": {"ITERATIONS": 1},
@@ -74,7 +132,14 @@ def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) ->
         output_dir=output,
         work_dir=tmp_path / "work",
     )
+    build_info = record_requested_build(context)
     result = normalize(context, "passed")
+    assert result["build_info"] == build_info
+    assert result["system_info"] == {"cpu_count": 64}
+    assert result["runtime_before"] == {"cpu_governor": "performance"}
+    assert result["runtime_after"] == {"cpu_governor": "performance"}
+    assert "environment_before" not in result
+    assert "environment_after" not in result
     assert result["metrics"]["qps"]["value"] == 42.5
     assert result["metrics"]["qps"]["direction"] == "higher_is_better"
     assert result["parameters"] == {"result": {"iterations": 3}}
@@ -120,6 +185,7 @@ def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path
         output_dir=output,
         work_dir=tmp_path / "work",
     )
+    record_requested_build(context)
 
     (output / "results.json").write_text("", encoding="utf-8")
     with pytest.raises(ResultValidationError, match="empty"):
@@ -186,9 +252,61 @@ def test_metric_can_override_the_default_logical_output_source(tmp_path: Path) -
         output_dir=output,
         work_dir=tmp_path / "work",
     )
+    record_requested_build(context)
     result = normalize(context, "passed")
     assert result["metrics"]["qps"]["value"] == 42
     assert result["metrics"]["latency"]["value"] == 1.5
+
+
+def test_framework_owns_and_strictly_validates_build_info(tmp_path: Path) -> None:
+    import pytest
+
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={},
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="aarch64",
+        run_id="unit-run",
+        output_dir=tmp_path / "output",
+        work_dir=tmp_path / "work",
+    )
+    context.output_dir.mkdir()
+    context.work_dir.mkdir()
+
+    with pytest.raises(BuildInfoError, match="did not report"):
+        record_build_info(context)
+
+    actual_version_path(context).write_text("2.0\n", encoding="utf-8")
+    with pytest.raises(BuildInfoError, match="requested version 1.0, built version 2.0"):
+        record_build_info(context)
+
+    actual_version_path(context).write_text("1.0\n", encoding="utf-8")
+    path = record_build_info(context)
+    payload = load_build_info(context)
+    assert path.name == "build_info.json"
+    assert payload["software"] == "sample"
+    assert payload["requested_version"] == "1.0"
+    assert payload["actual_version"] == "1.0"
+    assert payload["architecture"] == "aarch64"
+    assert "cpu_model" not in payload
+
+    payload["cpu_model"] = "software-owned-value"
+    atomic_write_json(path, payload)
+    with pytest.raises(BuildInfoError, match="fields must be exactly"):
+        load_build_info(context)
+
+    del payload["cpu_model"]
+    payload["actual_version"] = "2.0"
+    atomic_write_json(path, payload)
+    with pytest.raises(BuildInfoError, match="field actual_version"):
+        load_build_info(context)
+
+    reset_build_info(context)
+    assert not path.exists()
+    assert not actual_version_path(context).exists()
 
 
 def test_stage_output_validation_checks_only_the_completed_stage(tmp_path: Path) -> None:
@@ -240,6 +358,24 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     markdown = render_comparison(comparison)
     assert "越大越好" in markdown
     assert "越小越好" in markdown
+    assert "## 测试环境" in markdown
+    assert "### aarch64" in markdown
+    assert "### x86_64" in markdown
+    assert "Example CPU" in markdown
+    assert "13.2.1" in markdown
+    assert "glibc 2.38" in markdown
+
+
+def test_single_report_includes_build_system_and_runtime_environment() -> None:
+    markdown = render_single(normalized_result("aarch64", 120, 10))
+    assert "## 测试环境" in markdown
+    assert "实际软件版本" in markdown
+    assert "Example CPU" in markdown
+    assert "GCC 版本" in markdown
+    assert "13.2.1" in markdown
+    assert "glibc 2.38" in markdown
+    assert "测试前" in markdown and "测试后" in markdown
+    assert "before memory" in markdown and "after memory" in markdown
 
 
 def test_comparison_rejects_incompatible_metric_contracts() -> None:
@@ -285,6 +421,14 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
     assert "越大越好" in combined
     assert "越小越好" in combined
+    assert "## 测试环境" in combined
+    assert "### sample 1.0 aarch64" in combined
+    assert "### sample 1.0 x86_64" in combined
+    assert "Example CPU" in combined
+    assert "13.2.1" in combined
+    assert "glibc 2.38" in combined
+    assert "before memory" in combined
+    assert "after memory" in combined
     assert combined.index("### aarch64") < combined.index("### x86_64")
     arm_metrics = combined.split("### aarch64", 1)[1].split("### x86_64", 1)[0]
     x86_metrics = combined.split("### x86_64", 1)[1].split("## 跨架构指标", 1)[0]

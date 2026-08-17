@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TextIO
 
+from build_info import actual_version_path
 from context import RunContext
 
 SHELL_FUNCTION_RUNNER = r"""
@@ -104,6 +105,8 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
     override = context.case.get("version_overrides", {}).get(context.version, {})
     for key, value in override.get("environment", {}).items():
         environment[str(key)] = _stringify(value)
+    # Framework-reserved paths are assigned last so case data cannot redirect them.
+    environment["PERF_ACTUAL_VERSION_FILE"] = str(actual_version_path(context))
     return environment
 
 

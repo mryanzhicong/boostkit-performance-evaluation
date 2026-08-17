@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,7 +37,6 @@ def main() -> int:
     output = Path(sys.argv[2])
     primary = load(results_dir / "benchmark_redis.json")
     micro = load(results_dir / "micro_benchmark.json")
-    version_info = load(results_dir / "version_info.json")
 
     qps_values = metric_values(primary, "qps")
     latency_values = metric_values(primary, "avg_latency_ms")
@@ -59,8 +59,7 @@ def main() -> int:
     payload = {
         "test_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "software": "redis",
-        "version": version_info["software_version"],
-        "environment": version_info,
+        "version": os.environ["SOFTWARE_VERSION"],
         "benchmarks": {"primary": primary, "micro": micro},
         "summary": summary,
     }

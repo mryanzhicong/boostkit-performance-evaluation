@@ -41,12 +41,6 @@ def test_registered_cases_are_valid() -> None:
         "stop": {"script": "redis_test.sh", "function": "stop_redis_service"},
     }
     assert case["outputs"] == {
-        "version_info": {
-            "path": "version_info.json",
-            "stage": "build",
-            "format": "json",
-            "required": True,
-        },
         "primary_benchmark": {
             "path": "benchmark_redis.json",
             "stage": "test",
@@ -278,6 +272,12 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
     assert any("source must be a required output" in error for error in errors)
 
     payload["outputs"]["result"]["required"] = True
+    payload["outputs"]["result"]["path"] = "./build_info.json"
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("Framework-reserved: build_info.json" in error for error in errors)
+
+    payload["outputs"]["result"]["path"] = "results.json"
     payload["metrics"]["definitions"]["throughput"]["target"] = 1000
     case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     _case, errors = validate_case(case_path, tmp_path)
@@ -370,6 +370,7 @@ def test_workflow_uses_default_pypi_on_ubuntu_and_aliyun_on_runners() -> None:
 
 def test_framework_uses_consolidated_catalog_results_and_report_modules() -> None:
     for path in (
+        "framework/build_info.py",
         "framework/catalog.py",
         "framework/normalize_results.py",
         "framework/reporting.py",
@@ -499,6 +500,73 @@ def test_redis_does_not_duplicate_framework_logs_or_reports() -> None:
     assert not (
         ROOT / "software" / "Database" / "redis" / "scripts" / "generate_summary.py"
     ).exists()
+    assert "PERF_ACTUAL_VERSION_FILE" in entrypoint
+    assert not (
+        ROOT / "software" / "Database" / "redis" / "scripts" / "write_version_info.py"
+    ).exists()
+
+
+def test_redis_aggregate_uses_framework_version_context(tmp_path) -> None:
+    (tmp_path / "benchmark_redis.json").write_text(
+        json.dumps({
+            "results_summary": {
+                "SET": {
+                    "concurrency_50": {
+                        "qps": 100,
+                        "avg_latency_ms": 1,
+                        "p99_latency_ms": 2,
+                    }
+                },
+                "GET": {
+                    "concurrency_50": {
+                        "qps": 120,
+                        "avg_latency_ms": 0.8,
+                        "p99_latency_ms": 1.5,
+                    }
+                },
+            }
+        }),
+        encoding="utf-8",
+    )
+    (tmp_path / "micro_benchmark.json").write_text(
+        json.dumps({
+            "runtime_context": {"max_clients": 4},
+            "results": {
+                "client_scaling": {
+                    "clients_1": {"qps": 10},
+                    "clients_4": {"qps": 20},
+                }
+            },
+        }),
+        encoding="utf-8",
+    )
+    output = tmp_path / "results.json"
+    environment = dict(os.environ)
+    environment["SOFTWARE_VERSION"] = "8.0.6"
+    completed = subprocess.run(
+        [
+            "python3",
+            str(
+                ROOT
+                / "software"
+                / "Database"
+                / "redis"
+                / "scripts"
+                / "aggregate_results.py"
+            ),
+            str(tmp_path),
+            str(output),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["version"] == "8.0.6"
+    assert "environment" not in payload
+    assert not (tmp_path / "version_info.json").exists()
 
 
 def test_lz4_script_exposes_source_safe_four_stage_contract(tmp_path) -> None:
@@ -552,6 +620,10 @@ def test_lz4_uses_the_approved_official_fullbench_contract() -> None:
     assert "/opt/perf-datasets" not in entrypoint
     assert 'make -C tests fullbench' in entrypoint
     assert 'FULLBENCH_BIN="${SOURCE_DIR}/tests/fullbench"' in entrypoint
+    assert "PERF_ACTUAL_VERSION_FILE" in entrypoint
+    assert not (
+        ROOT / "software" / "HPC" / "lz4" / "scripts" / "write_version_info.py"
+    ).exists()
     assert "ITERATION_LOOPS = 3" in runner
     assert '"block_option": "B4"' in runner
     assert '"block_option": "B7"' in runner

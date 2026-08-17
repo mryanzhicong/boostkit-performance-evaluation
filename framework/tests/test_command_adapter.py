@@ -4,6 +4,7 @@ import os
 import time
 from pathlib import Path
 
+from build_info import load_build_info, record_build_info
 from command_adapter import build_environment, run_command
 from context import RunContext
 
@@ -19,6 +20,7 @@ def context_for(tmp_path: Path) -> RunContext:
         "  printf 'function=build\\n'\n"
         "  printf '{\"summary\":{\"qps\":42}}\\n' > \"${RESULTS_DIR}/results.json\"\n"
         "  command -v pip3 > \"${RESULTS_DIR}/pip_path.txt\"\n"
+        "  printf '1.0\\n' > \"${PERF_ACTUAL_VERSION_FILE}\"\n"
         "  printf 'build\\n' > \"${RESULTS_DIR}/stage.txt\"\n"
         "}\n"
         "start() { printf 'function=start\\n'; }\n"
@@ -75,9 +77,23 @@ def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) ->
     assert environment["EXPECTED_ARCH"] == "x86_64"
     assert "TARGET_ARCH" not in environment
     assert environment["RESULTS_DIR"] == str(context.output_dir)
+    assert environment["PERF_ACTUAL_VERSION_FILE"] == str(
+        context.work_dir / "actual-version.txt"
+    )
     assert environment["PERF_PROCESS_TOKEN"] == "boostkit-perf:unit-run:AI:sample:1.0:x86_64"
     assert environment["ITERATIONS"] == "1"
     assert environment["BUILD_METHOD"] == "pip"
+
+
+def test_framework_actual_version_path_cannot_be_overridden(tmp_path: Path) -> None:
+    context = context_for(tmp_path)
+    context.case["execution"]["environment"]["PERF_ACTUAL_VERSION_FILE"] = "/tmp/wrong"
+    context.case["version_overrides"]["1.0"]["environment"][
+        "PERF_ACTUAL_VERSION_FILE"
+    ] = "/tmp/still-wrong"
+    assert build_environment(context)["PERF_ACTUAL_VERSION_FILE"] == str(
+        context.work_dir / "actual-version.txt"
+    )
 
 
 def test_declared_build_function_streams_and_writes_outputs(tmp_path: Path, capsys) -> None:
@@ -90,6 +106,8 @@ def test_declared_build_function_streams_and_writes_outputs(tmp_path: Path, caps
     assert (context.output_dir / "stage.txt").read_text(encoding="utf-8").strip() == "build"
     pip_path = (context.output_dir / "pip_path.txt").read_text(encoding="utf-8").strip()
     assert pip_path.startswith(str(context.work_dir / "venv" / "bin"))
+    record_build_info(context)
+    assert load_build_info(context)["actual_version"] == "1.0"
 
 
 def test_each_stage_calls_only_its_declared_function(tmp_path: Path, capsys) -> None:

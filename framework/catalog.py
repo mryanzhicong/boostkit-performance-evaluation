@@ -12,6 +12,8 @@ from typing import Any
 
 import yaml
 
+from build_info import BUILD_INFO_FILENAME
+
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 SOFTWARE_STAGES = ("build", "start", "test", "stop")
@@ -250,6 +252,11 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                 if path_value.is_absolute() or ".." in path_value.parts:
                     errors.append(
                         f"output {output_name}.path must remain inside the result directory"
+                    )
+                elif path_value == Path(BUILD_INFO_FILENAME):
+                    errors.append(
+                        f"output {output_name}.path is Framework-reserved: "
+                        f"{BUILD_INFO_FILENAME}"
                     )
                 elif output_path in output_paths:
                     errors.append(

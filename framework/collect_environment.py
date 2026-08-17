@@ -1,4 +1,4 @@
-"""Collect real runner environment data before and after a benchmark."""
+"""Collect immutable system identity once and mutable runtime state twice."""
 
 from __future__ import annotations
 
@@ -29,17 +29,46 @@ def _cpu_model() -> str:
     return platform.processor() or "unknown"
 
 
-def collect() -> dict:
+def _gcc_version() -> str:
+    value = _command(["gcc", "-dumpfullversion", "-dumpversion"])
+    return value.splitlines()[0] if value else "unknown"
+
+
+def _glibc_version() -> str:
+    value = _command(["getconf", "GNU_LIBC_VERSION"])
+    if value:
+        return value.splitlines()[0]
+    implementation, version = platform.libc_ver()
+    if implementation and version:
+        return f"{implementation} {version}"
+    return "unknown"
+
+
+def _collected_at() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def collect_system_info() -> dict:
+    """Collect values expected to remain stable for the entire performance task."""
     return {
-        "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "collected_at": _collected_at(),
         "architecture": platform.machine(),
         "platform": platform.platform(),
         "kernel": platform.release(),
         "cpu_model": _cpu_model(),
         "cpu_count": os.cpu_count() or 0,
         "python_version": platform.python_version(),
-        "memory": _command(["free", "-b"]),
+        "gcc_version": _gcc_version(),
+        "glibc_version": _glibc_version(),
         "numa": _command(["numactl", "--hardware"]),
+    }
+
+
+def collect_runtime_state() -> dict:
+    """Collect values that can change while a performance test is running."""
+    return {
+        "collected_at": _collected_at(),
+        "memory": _command(["free", "-b"]),
         "cpu_governor": _command([
             "sh",
             "-c",

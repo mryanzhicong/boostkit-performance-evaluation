@@ -8,8 +8,9 @@ import platform
 import sys
 from pathlib import Path
 
+from build_info import BuildInfoError, record_build_info, reset_build_info
 from catalog import ROOT, validate_case
-from collect_environment import collect
+from collect_environment import collect_runtime_state, collect_system_info
 from command_adapter import run_command
 from context import RunContext
 from json_helper import atomic_write_json, load_json
@@ -134,7 +135,8 @@ def main() -> int:
             mark_failed(context, "prepare", 20, error=f"runner architecture is {actual_arch}")
             print(f"ERROR: expected {args.architecture}, runner is {actual_arch}", file=sys.stderr)
             return 20
-        atomic_write_json(context.output_dir / "environment_before.json", collect())
+        atomic_write_json(context.output_dir / "system_info.json", collect_system_info())
+        atomic_write_json(context.output_dir / "runtime_before.json", collect_runtime_state())
         update_status(context, status="running", stage="prepare")
         print("[stage] prepare completed successfully", flush=True)
         print(context.output_dir)
@@ -148,7 +150,7 @@ def main() -> int:
     update_status(context, stage=args.stage)
 
     if args.stage == "finalize":
-        atomic_write_json(context.output_dir / "environment_after.json", collect())
+        atomic_write_json(context.output_dir / "runtime_after.json", collect_runtime_state())
         command_status = "failed" if previous.get("status") == "failed" else "passed"
         try:
             normalized_path = write_normalized(context, command_status)
@@ -168,6 +170,8 @@ def main() -> int:
         return 0
 
     try:
+        if args.stage == "build":
+            reset_build_info(context)
         result = run_command(context, args.stage)
     except Exception as exc:
         exit_code = STAGE_EXIT_CODES[args.stage]
@@ -182,8 +186,10 @@ def main() -> int:
         return result.returncode or STAGE_EXIT_CODES[args.stage]
 
     try:
+        if args.stage == "build":
+            record_build_info(context)
         validate_stage_outputs(context, args.stage)
-    except (ResultValidationError, OSError, ValueError) as exc:
+    except (BuildInfoError, ResultValidationError, OSError, ValueError) as exc:
         exit_code = STAGE_EXIT_CODES[args.stage]
         mark_failed(context, args.stage, exit_code, error=str(exc))
         print(f"ERROR: stage output validation failed: {exc}", file=sys.stderr)

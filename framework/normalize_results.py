@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from build_info import load_build_info
 from context import RunContext
 from json_helper import atomic_write_json, get_path, load_json
 
@@ -129,10 +130,12 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "run_id": context.run_id,
         "status": command_status,
         "cleanup_status": "pending",
+        "build_info": load_build_info(context),
         "parameters": parameters,
         "parameter_signature": parameter_signature(context, parameters),
-        "environment_before": load_json(context.output_dir / "environment_before.json", {}),
-        "environment_after": load_json(context.output_dir / "environment_after.json", {}),
+        "system_info": load_json(context.output_dir / "system_info.json", {}),
+        "runtime_before": load_json(context.output_dir / "runtime_before.json", {}),
+        "runtime_after": load_json(context.output_dir / "runtime_after.json", {}),
         "sources": sources,
         "metrics": _extract_metrics(context, sources),
     }

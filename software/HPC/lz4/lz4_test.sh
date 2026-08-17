@@ -60,7 +60,7 @@ read_header_version() {
 }
 
 build_lz4() {
-    local tag actual_version actual_arch
+    local tag actual_version
     initialize_runtime
     check_architecture
     require_commands
@@ -84,13 +84,8 @@ build_lz4() {
         log "ERROR: cannot read the built LZ4 version"
         return 40
     }
-    [[ "${actual_version}" == "${SOFTWARE_VERSION#v}" ]] || {
-        log "ERROR: requested LZ4 ${SOFTWARE_VERSION}, built ${actual_version}"
-        return 40
-    }
-    actual_arch="$(normalize_arch "$(uname -m)")"
-    python3 "${SCRIPT_DIR}/scripts/write_version_info.py" \
-        "${RESULTS_DIR}/version_info.json" "${SOFTWARE_VERSION#v}" "${actual_version}" "${actual_arch}"
+    : "${PERF_ACTUAL_VERSION_FILE:?Framework did not provide PERF_ACTUAL_VERSION_FILE}"
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
 }
 
 start_lz4_runtime() {

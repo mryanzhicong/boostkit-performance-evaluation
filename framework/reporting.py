@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 DIRECTION_LABELS = {
@@ -10,11 +11,105 @@ DIRECTION_LABELS = {
     "neutral": "仅展示",
 }
 ARCHITECTURE_ORDER = ("aarch64", "x86_64")
+FIELD_LABELS = {
+    "recorded_at": "构建信息记录时间",
+    "requested_version": "请求软件版本",
+    "actual_version": "实际软件版本",
+    "collected_at": "采集时间",
+    "architecture": "系统架构",
+    "platform": "操作系统",
+    "kernel": "内核",
+    "cpu_model": "CPU 型号",
+    "cpu_count": "CPU 核数",
+    "python_version": "Python 版本",
+    "gcc_version": "GCC 版本",
+    "glibc_version": "glibc 版本",
+    "numa": "NUMA",
+    "memory": "内存状态",
+    "cpu_governor": "CPU governor",
+}
+BUILD_FIELD_ORDER = ("requested_version", "actual_version", "recorded_at")
+SYSTEM_FIELD_ORDER = (
+    "collected_at",
+    "architecture",
+    "cpu_model",
+    "cpu_count",
+    "platform",
+    "kernel",
+    "python_version",
+    "gcc_version",
+    "glibc_version",
+    "numa",
+)
+RUNTIME_FIELD_ORDER = ("collected_at", "memory", "cpu_governor")
 
 
 def direction_label(direction: object) -> str:
     value = str(direction)
     return DIRECTION_LABELS.get(value, value)
+
+
+def _cell(value: object) -> str:
+    if value is None or value == "":
+        return "N/A"
+    if isinstance(value, (dict, list)):
+        rendered = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    else:
+        rendered = str(value)
+    return rendered.replace("|", "\\|").replace("\r\n", "<br>").replace("\n", "<br>")
+
+
+def _ordered_fields(data: dict, preferred: tuple[str, ...]) -> list[str]:
+    ordered = [field for field in preferred if field in data]
+    ordered.extend(sorted(field for field in data if field not in ordered))
+    return ordered
+
+
+def _environment_lines(data: dict, heading_level: int) -> list[str]:
+    build_info = data.get("build_info", {})
+    system_info = data.get("system_info", {})
+    runtime_before = data.get("runtime_before", {})
+    runtime_after = data.get("runtime_after", {})
+    lines: list[str] = []
+    if isinstance(build_info, dict) and build_info:
+        lines.extend([
+            f"{'#' * heading_level} 构建信息",
+            "",
+            "| 项目 | 值 |",
+            "|---|---|",
+        ])
+        for field in _ordered_fields(build_info, BUILD_FIELD_ORDER):
+            if field in {"category", "software", "architecture", "run_id"}:
+                continue
+            lines.append(f"| {FIELD_LABELS.get(field, field)} | {_cell(build_info[field])} |")
+        lines.append("")
+    if isinstance(system_info, dict) and system_info:
+        lines.extend([
+            f"{'#' * heading_level} 系统信息",
+            "",
+            "| 项目 | 值 |",
+            "|---|---|",
+        ])
+        for field in _ordered_fields(system_info, SYSTEM_FIELD_ORDER):
+            lines.append(f"| {FIELD_LABELS.get(field, field)} | {_cell(system_info[field])} |")
+        lines.append("")
+    before = runtime_before if isinstance(runtime_before, dict) else {}
+    after = runtime_after if isinstance(runtime_after, dict) else {}
+    if before or after:
+        fields = _ordered_fields({**before, **after}, RUNTIME_FIELD_ORDER)
+        lines.extend([
+            f"{'#' * heading_level} 运行状态",
+            "",
+            "| 项目 | 测试前 | 测试后 |",
+            "|---|---|---|",
+        ])
+        for field in fields:
+            lines.append(
+                f"| {FIELD_LABELS.get(field, field)} | {_cell(before.get(field))} | "
+                f"{_cell(after.get(field))} |"
+            )
+        lines.append("")
+    return lines
 
 
 def render_single(data: dict) -> str:
@@ -25,9 +120,16 @@ def render_single(data: dict) -> str:
         f"- 状态：`{data.get('status')}`",
         f"- Run ID：`{data.get('run_id')}`",
         "",
+        "## 测试环境",
+        "",
+    ]
+    lines.extend(_environment_lines(data, 3))
+    lines.extend([
+        "## 性能指标",
+        "",
         "| 指标 | 数值 | 单位 | 优化方向 |",
         "|---|---:|---|---|",
-    ]
+    ])
     for name, metric in data.get("metrics", {}).items():
         value = metric.get("value")
         lines.append(
@@ -59,6 +161,15 @@ def render_comparison(comparison: dict) -> str:
         "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
         "",
     ])
+    environments = comparison.get("environments", {})
+    if isinstance(environments, dict) and environments:
+        lines.extend(["## 测试环境", ""])
+        for architecture in ARCHITECTURE_ORDER:
+            environment = environments.get(architecture, {})
+            if not isinstance(environment, dict) or not environment:
+                continue
+            lines.extend([f"### {architecture}", ""])
+            lines.extend(_environment_lines(environment, 4))
     return "\n".join(lines)
 
 
@@ -99,6 +210,22 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
             f"{item.get('cleanup_status')} |"
         )
     lines.append("")
+    environment_items = [
+        item
+        for item in summary.get("items", [])
+        if any(item.get(field) for field in (
+            "build_info", "system_info", "runtime_before", "runtime_after"
+        ))
+    ]
+    if environment_items:
+        lines.extend(["## 测试环境", ""])
+        for item in sorted(environment_items, key=lambda value: (*_result_key(value), str(value.get("architecture", "")))):
+            lines.extend([
+                f"### {item.get('software')} {item.get('version')} "
+                f"{item.get('architecture')}",
+                "",
+            ])
+            lines.extend(_environment_lines(item, 4))
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
     if metric_items:
         comparison_orders = {

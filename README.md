@@ -76,7 +76,7 @@ prepare → build → start → test → stop → finalize → cleanup
 | 阶段 | 所属层 | 职责 |
 |---|---|---|
 | `prepare` | Framework | 校验实际架构、创建运行上下文、采集测试前环境。 |
-| `build` | 软件 | 裸机编译、构建校验、实际版本和二进制校验。 |
+| `build` | 软件 + Framework | 软件裸机编译并报告实际版本；Framework 校验版本并生成统一构建信息。 |
 | `start` | 软件 | 启动被测服务并等待就绪；无服务软件校验测试运行时已准备完成。 |
 | `test` | 软件 | 执行性能基准，聚合并写出清单声明的结果文件。 |
 | `stop` | 软件 | 幂等停止服务并确认退出；无服务软件执行幂等收口；失败路径也执行。 |
@@ -245,6 +245,10 @@ metrics:
 
 `outputs` 是软件交付结果的结构化契约。输出路径必须位于 `RESULTS_DIR` 内且不能重复，`stage` 只能是 build、start、test、stop，`format` 支持 `json`、`text`、`binary`，`required` 必须明确为布尔值。阶段函数成功退出后，Framework 立即验收属于该阶段的输出；JSON 还会检查语法和根节点类型。可选输出不存在时不会失败，但指标来源必须是必要的 JSON 输出。
 
+`build_info.json` 是 Framework 固定生成的公共文件，不在软件 `outputs` 中重复声明。软件 build 阶段只需从已构建程序中提取实际版本，并向 `PERF_ACTUAL_VERSION_FILE` 写入一行版本号；Framework 会拒绝缺失、空值、多行值以及与请求版本不一致的结果，然后统一补充分类、软件名、请求版本、架构、Run ID 和记录时间。
+
+不会在测试前后重复采集不会变化的信息。架构、CPU 型号与核数、OS、内核、Python、GCC、glibc 和 NUMA 只在 prepare 阶段采集一次并写入 `system_info.json`；内存状态和 CPU governor 可能受测试影响，分别写入 `runtime_before.json` 与 `runtime_after.json`。软件目录不得重复采集这些公共信息。
+
 `metrics.source` 引用 `outputs` 的逻辑名称，而不是文件路径，并作为所有指标的默认来源。个别指标需要读取其他结果时，可在对应 definition 内单独声明 `source` 覆盖默认值。Framework 规范化后的 `sources` 同样使用逻辑名称保存，从而允许输出文件改名而不影响指标契约。
 
 固定性能用例的工作负载参数由软件脚本唯一维护，不在 `case.yaml` 重复声明。软件产生的 JSON 应在顶级 `parameters` 字段记录可跨架构比较的工作负载定义；CPU 数量等机器相关解析值放入 `runtime_context`，不能混入参数签名。Framework 会收集工作负载定义，写入 `normalized_result.json` 并计算参数签名。双架构结果的参数内容或签名不一致时禁止生成对比。
@@ -288,11 +292,12 @@ workflow --stage build
 - `PERF_RUN_ID`：运行编号；
 - `PERF_PROCESS_TOKEN`：进程隔离标识；
 - `PERF_WORK_DIR`：本次软件工作目录；
+- `PERF_ACTUAL_VERSION_FILE`：build 阶段报告单行实际版本的 Framework 保留路径；
 - `TMPDIR`、`PIP_CACHE_DIR`、`XDG_CACHE_HOME`、`CARGO_HOME`、`CCACHE_DIR`：任务私有临时和缓存目录。
 
 软件脚本必须遵守：
 
-- build 包含构建、安装或源码树二进制准备，以及版本、架构和基本功能校验；
+- build 包含构建、安装或源码树二进制准备、架构和基本功能校验，并把从实际产物读取的版本写入 `PERF_ACTUAL_VERSION_FILE`；
 - start 必须等待服务真正可用后再正常退出；没有后台服务的软件应校验测试运行时已准备完成；
 - test 只使用本次 start 启动的服务，并生成全部预期输出；
 - stop 必须幂等，即使服务没有启动或已经退出也能安全执行；
@@ -389,6 +394,8 @@ start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下�
 
 单架构报告按 aarch64 和 x86_64 两个小标题分组；单架构指标顺序与跨架构指标顺序保持一致。
 
+单架构 `report.md` 和整次运行的 `combined-report.md` 都包含测试环境。报告展示 Framework 统一生成的软件请求/实际版本、静态系统信息，以及内存和 CPU governor 的测试前后状态；因此 Workflow Summary、Artifact 和永久结果报告使用同一套环境信息。
+
 ## 输出目录和保存策略
 
 单个矩阵任务的仓库工作区输出：
@@ -400,8 +407,10 @@ start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下�
 主要包含：
 
 ```text
-environment_before.json
-environment_after.json
+system_info.json
+runtime_before.json
+runtime_after.json
+build_info.json
 status.json
 normalized_result.json
 report.md
@@ -512,10 +521,11 @@ python3 -m pytest framework/tests
 |---|---|
 | `framework/catalog.py` | 读取软件注册表，对登记项与实际清单做双向校验，并按手动输入生成执行矩阵。 |
 | `framework/context.py` | 定义单个软件、版本、架构任务的不可变运行上下文。 |
+| `framework/build_info.py` | 清除旧构建身份、校验软件报告的实际版本，并生成和复验 Framework 统一的 `build_info.json`。 |
 | `framework/command_adapter.py` | 解析清单中的阶段入口、注入运行环境、加载脚本并调用声明函数、实时保存日志、等待退出，并在超时或中断时终止进程组。 |
 | `framework/run_case.py` | 单任务阶段控制器；编排 prepare/finalize 和软件四阶段，维护任务状态。 |
-| `framework/collect_environment.py` | 采集测试前后的 OS、CPU、内存、内核、NUMA 和 CPU governor 信息。 |
-| `framework/normalize_results.py` | 严格检查预期文件和指标，并转换成统一指标模型。 |
+| `framework/collect_environment.py` | prepare 时采集一次静态系统信息，并在测试前后分别采集内存和 CPU governor 等动态状态。 |
+| `framework/normalize_results.py` | 复验统一构建信息，严格检查软件预期文件和指标，并转换成统一指标模型。 |
 | `framework/reporting.py` | 生成单架构、跨架构、整次运行 Markdown 和 JUnit XML。 |
 | `framework/generate_comparison.py` | 配对双架构结果，校验参数和指标契约，生成汇总与跨架构报告。 |
 | `framework/json_helper.py` | JSON 读取、点路径取值、禁止 NaN/Infinity 的原子写入。 |
@@ -550,7 +560,6 @@ python3 -m pytest framework/tests
 |---|---|
 | `software/Database/redis/case.yaml` | Redis 版本、阶段入口、结构化输出和指标定义。 |
 | `software/Database/redis/redis_test.sh` | Redis 四阶段函数实现，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
-| `software/Database/redis/scripts/write_version_info.py` | 记录实际 Redis 版本、架构和运行环境。 |
 | `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
 | `software/Database/redis/scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
 | `software/Database/redis/scripts/aggregate_results.py` | 聚合原始结果并计算 QPS、延迟和客户端扩展指标。 |
@@ -562,7 +571,6 @@ python3 -m pytest framework/tests
 | `software/HPC/lz4/case.yaml` | LZ4 版本、四阶段入口、fullbench 结构化输出和四项速度指标定义。 |
 | `software/HPC/lz4/lz4_test.sh` | LZ4 四阶段函数实现，负责官方 fullbench 构建、GitHub 语料下载、基准执行和无服务收口。 |
 | `software/HPC/lz4/scripts/prepare_silesia.py` | 校验 GitHub 镜像中的 12 个官方语料文件，并用固定元数据生成可复现的 `silesia.tar`。 |
-| `software/HPC/lz4/scripts/write_version_info.py` | 记录实际 LZ4 版本、架构和运行环境。 |
 | `software/HPC/lz4/scripts/run_fullbench.py` | 同步执行四条已批准的 fullbench 命令，严格解析原始输出，并记录语料 SHA-256、命令和速度指标。 |
 
 ## 新软件接入检查表
@@ -570,10 +578,11 @@ python3 -m pytest framework/tests
 1. 在 `config/categories.yaml` 的目标分类下登记软件名。
 2. 创建对应的软件目录并人工编写 `case.yaml`，不得写入架构或 Runner 标签。
 3. 在 `case.yaml` 显式声明四阶段的脚本和函数，并在脚本中实现 build、start、test、stop。
-4. 确保所有临时资源进入 `PERF_WORK_DIR` 或公共工作根目录。
-5. 为每个输出声明路径、生成阶段、格式和必要性，并确保对应阶段生成全部必要输出。
-6. 确保 stop 可重复执行，并能处理部分启动或失败状态。
-7. 运行 Catalog 校验、矩阵检查和 Framework 单元测试。
-8. 先手动运行单版本、单架构任务，稳定后再运行默认双架构矩阵。
+4. build 必须从实际构建产物读取版本，并向 `PERF_ACTUAL_VERSION_FILE` 写入一个非空单行值。
+5. 确保所有临时资源进入 `PERF_WORK_DIR` 或公共工作根目录。
+6. 为每个软件输出声明路径、生成阶段、格式和必要性，并确保对应阶段生成全部必要输出；不要声明 Framework 的 `build_info.json`。
+7. 确保 stop 可重复执行，并能处理部分启动或失败状态。
+8. 运行 Catalog 校验、矩阵检查和 Framework 单元测试。
+9. 先手动运行单版本、单架构任务，稳定后再运行默认双架构矩阵。
 
 测试用例生成、自动触发、趋势页面和新的结果门禁不属于当前实现范围，增加前必须单独评审。

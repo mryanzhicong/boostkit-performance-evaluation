@@ -72,6 +72,18 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         "software": arm["software"],
         "version": arm["version"],
         "parameter_signature": arm.get("parameter_signature"),
+        "environments": {
+            architecture: {
+                field: result.get(field, {})
+                for field in (
+                    "build_info",
+                    "system_info",
+                    "runtime_before",
+                    "runtime_after",
+                )
+            }
+            for architecture, result in (("x86_64", x86), ("aarch64", arm))
+        },
         "metrics": metrics,
     }
 
@@ -127,6 +139,10 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         "architecture": result.get("architecture"),
         "status": result.get("status"),
         "cleanup_status": result.get("cleanup_status", "unknown"),
+        "build_info": result.get("build_info", {}),
+        "system_info": result.get("system_info", {}),
+        "runtime_before": result.get("runtime_before", {}),
+        "runtime_after": result.get("runtime_after", {}),
         "metrics": result.get("metrics", {}),
     } for result in results]
     summary = {

@@ -50,7 +50,7 @@ check_architecture() {
 }
 
 build_redis() {
-    local binary actual_version actual_arch
+    local binary actual_version
     initialize_runtime
     check_architecture
     require_commands
@@ -66,13 +66,8 @@ build_redis() {
         [[ -x "${binary}" ]] || { log "ERROR: expected executable not found: ${binary}"; return 40; }
     done
     actual_version="$("${REDIS_SERVER_BIN}" --version | sed -n 's/.*v=\([^ ]*\).*/\1/p' | head -n 1)"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log "ERROR: requested Redis ${SOFTWARE_VERSION}, installed ${actual_version:-unknown}"
-        return 40
-    }
-    actual_arch="$(normalize_arch "$(uname -m)")"
-    python3 "${SCRIPT_DIR}/scripts/write_version_info.py" \
-        "${RESULTS_DIR}/version_info.json" "${SOFTWARE_VERSION}" "${actual_version}" "${actual_arch}"
+    : "${PERF_ACTUAL_VERSION_FILE:?Framework did not provide PERF_ACTUAL_VERSION_FILE}"
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
 }
 
 start_redis_service() {
