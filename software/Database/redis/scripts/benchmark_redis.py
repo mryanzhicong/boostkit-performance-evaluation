@@ -6,24 +6,18 @@ from __future__ import annotations
 import csv
 import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 
-def csv_list(name: str, default: str) -> list[str]:
-    return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
-
-
-COMMANDS = csv_list("BENCH_COMMANDS", "SET,GET,INCR,LPUSH,LRANGE_100,SADD,HSET,ZADD")
-CONCURRENCY_LEVELS = [int(value) for value in csv_list("CONCURRENCY_LEVELS", "1,10,50,100,200")]
-NUM_REQUESTS = int(os.environ.get("NUM_REQUESTS", "100000"))
-ITERATIONS = int(os.environ.get("ITERATIONS", "3"))
-REDIS_CLI = os.environ.get("REDIS_CLI_BIN", "redis-cli")
+COMMANDS = ["SET", "GET", "INCR", "LPUSH", "LRANGE_100", "SADD", "HSET", "ZADD"]
+CONCURRENCY_LEVELS = [1, 10, 50, 100, 200]
+NUM_REQUESTS = 100000
+ITERATIONS = 3
+REDIS_CLI = os.environ["REDIS_CLI_BIN"]
 
 
 def start_redis_server(redis_server: str, port: int, data_dir: Path, extra_args: list[str] | None = None) -> None:
@@ -131,26 +125,16 @@ def main() -> int:
         if not os.path.isfile(binary) or not os.access(binary, os.X_OK):
             raise RuntimeError(f"Redis executable is unavailable: {binary}")
 
-    external_port = os.environ.get("REDIS_SERVICE_PORT")
-    port = int(external_port) if external_port else 16390 + os.getpid() % 1000
-    data_dir: Path | None = None
+    port = int(os.environ["REDIS_SERVICE_PORT"])
     results: dict[str, dict[str, dict[str, float]]] = {}
-    try:
-        if external_port is None:
-            data_dir = Path(tempfile.mkdtemp(prefix="redis-primary-", dir=os.environ.get("TMPDIR")))
-            start_redis_server(redis_server, port, data_dir)
-        for command in COMMANDS:
-            results[command] = {}
-            for concurrency in CONCURRENCY_LEVELS:
-                label = f"concurrency_{concurrency}"
-                print(f"[primary] {command} {label}", flush=True)
-                results[command][label] = run_redis_benchmark(
-                    redis_benchmark, port, command, concurrency
-                )
-    finally:
-        if data_dir is not None:
-            stop_redis_server(port, data_dir)
-            shutil.rmtree(data_dir, ignore_errors=True)
+    for command in COMMANDS:
+        results[command] = {}
+        for concurrency in CONCURRENCY_LEVELS:
+            label = f"concurrency_{concurrency}"
+            print(f"[primary] {command} {label}", flush=True)
+            results[command][label] = run_redis_benchmark(
+                redis_benchmark, port, command, concurrency
+            )
 
     payload = {
         "benchmark": "redis_ops",

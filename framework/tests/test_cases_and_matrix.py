@@ -23,8 +23,9 @@ def test_redis_is_the_only_valid_case() -> None:
     assert errors == []
     assert case is not None
     assert case["versions"] == ["7.4.10", "8.0.0", "8.0.6"]
-    assert case["execution"]["timeout_minutes"] == 180
+    assert case["execution"]["timeout_minutes"] == 600
     assert case["execution"]["type"] == "shell-functions"
+    assert "environment" not in case["execution"]
     assert case["execution"]["stages"] == {
         "build": {"script": "redis_test.sh", "function": "build_redis"},
         "start": {"script": "redis_test.sh", "function": "start_redis_service"},
@@ -393,6 +394,43 @@ def test_redis_build_preserves_the_original_script_command() -> None:
         'make -C "${SOURCE_DIR}/deps"',
     ):
         assert structural_regression not in entrypoint
+
+
+def test_redis_workload_parameters_have_one_script_source() -> None:
+    case = yaml.safe_load(
+        (ROOT / "software" / "Database" / "redis" / "case.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "environment" not in case["execution"]
+
+    benchmark = (
+        ROOT / "software" / "Database" / "redis" / "scripts" / "benchmark_redis.py"
+    ).read_text(encoding="utf-8")
+    micro = (
+        ROOT / "software" / "Database" / "redis" / "scripts" / "micro_benchmark.py"
+    ).read_text(encoding="utf-8")
+    entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
+        encoding="utf-8"
+    )
+    assert 'COMMANDS = ["SET", "GET", "INCR", "LPUSH"' in benchmark
+    assert "CONCURRENCY_LEVELS = [1, 10, 50, 100, 200]" in benchmark
+    assert "NUM_REQUESTS = 100000" in benchmark
+    assert "ITERATIONS = 3" in benchmark
+    assert "DATA_SIZES = [64, 256, 1024, 4096]" in micro
+    assert 'PERSISTENCE_MODES = ["none", "aof", "rdb"]' in micro
+    assert 'readonly REDIS_SERVICE_PORT="16379"' in entrypoint
+    for variable in (
+        "ITERATIONS",
+        "BENCH_COMMANDS",
+        "CONCURRENCY_LEVELS",
+        "NUM_REQUESTS",
+        "DATA_SIZES",
+        "CLIENT_COUNTS",
+        "PERSISTENCE_MODES",
+    ):
+        assert f'os.environ.get("{variable}"' not in benchmark
+        assert f'os.environ.get("{variable}"' not in micro
 
 
 def test_redis_does_not_duplicate_framework_logs_or_reports() -> None:

@@ -19,11 +19,20 @@ class ResultValidationError(ValueError):
 MISSING = object()
 
 
-def parameter_signature(context: RunContext) -> str:
+def resolved_parameters(sources: dict[str, Any]) -> dict[str, Any]:
+    """Collect the workload parameters recorded by declared JSON outputs."""
+    return {
+        source_name: source["parameters"]
+        for source_name, source in sources.items()
+        if isinstance(source, dict) and isinstance(source.get("parameters"), dict)
+    }
+
+
+def parameter_signature(context: RunContext, parameters: dict[str, Any]) -> str:
     payload = {
         "software": context.software,
         "version": context.version,
-        "environment": context.execution.get("environment", {}),
+        "parameters": parameters,
     }
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(raw).hexdigest()
@@ -111,6 +120,7 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
 
 def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
     sources = _load_sources(context)
+    parameters = resolved_parameters(sources)
     primary = sources.get("results.json", {})
     return {
         "software": context.software,
@@ -120,7 +130,8 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "run_id": context.run_id,
         "status": command_status,
         "cleanup_status": "pending",
-        "parameter_signature": parameter_signature(context),
+        "parameters": parameters,
+        "parameter_signature": parameter_signature(context, parameters),
         "environment_before": load_json(context.output_dir / "environment_before.json", {}),
         "environment_after": load_json(context.output_dir / "environment_after.json", {}),
         "sources": sources,

@@ -52,7 +52,7 @@ def main() -> int:
 
     client_results = micro["results"]["client_scaling"]
     one_client = float(client_results["clients_1"]["qps"])
-    max_clients = int(micro["parameters"]["max_clients"])
+    max_clients = int(micro["runtime_context"]["max_clients"])
     all_clients = float(client_results[f"clients_{max_clients}"]["qps"])
     summary["client_scaling_ratio"] = round(all_clients / one_client, 4)
 

@@ -24,6 +24,8 @@ def compare_pair(x86: dict, arm: dict) -> dict:
     for field in ("category", "software", "version"):
         if x86.get(field) != arm.get(field):
             raise ValueError(f"result identity differs for {field}")
+    if x86.get("parameters", {}) != arm.get("parameters", {}):
+        raise ValueError("resolved workload parameters differ")
     if x86.get("parameter_signature") != arm.get("parameter_signature"):
         raise ValueError("parameter signatures differ")
     x_metrics = x86.get("metrics", {})

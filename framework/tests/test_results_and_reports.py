@@ -23,6 +23,7 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
         "architecture": architecture,
         "status": "passed",
         "cleanup_status": "passed",
+        "parameters": {"benchmark.json": {"iterations": 3}},
         "parameter_signature": "same-parameters",
         "metrics": {
             "throughput": {"value": higher, "unit": "ops/s", "direction": "higher_is_better"},
@@ -34,7 +35,10 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
 def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     output = tmp_path / "output"
     output.mkdir()
-    atomic_write_json(output / "results.json", {"summary": {"qps": 42.5}})
+    atomic_write_json(
+        output / "results.json",
+        {"parameters": {"iterations": 3}, "summary": {"qps": 42.5}},
+    )
     case = {
         "execution": {
             "environment": {"ITERATIONS": 1},
@@ -71,6 +75,8 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     result = normalize(context, "passed")
     assert result["metrics"]["qps"]["value"] == 42.5
     assert result["metrics"]["qps"]["direction"] == "higher_is_better"
+    assert result["parameters"] == {"results.json": {"iterations": 3}}
+    assert len(result["parameter_signature"]) == 64
 
 
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
@@ -189,6 +195,16 @@ def test_comparison_rejects_incompatible_metric_contracts() -> None:
     arm = normalized_result("aarch64", higher=120, lower=10)
     del arm["metrics"]["latency"]
     with pytest.raises(ValueError, match="metric sets differ"):
+        compare_pair(x86, arm)
+
+
+def test_comparison_rejects_different_resolved_workload_parameters() -> None:
+    import pytest
+
+    x86 = normalized_result("x86_64", higher=100, lower=20)
+    arm = normalized_result("aarch64", higher=120, lower=10)
+    arm["parameters"]["benchmark.json"]["iterations"] = 5
+    with pytest.raises(ValueError, match="resolved workload parameters differ"):
         compare_pair(x86, arm)
 
 

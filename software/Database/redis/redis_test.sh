@@ -11,7 +11,7 @@ SOURCE_DIR="${PERF_WORK_DIR}/redis-source"
 REDIS_SERVER_BIN="${SOURCE_DIR}/src/redis-server"
 REDIS_BENCHMARK_BIN="${SOURCE_DIR}/src/redis-benchmark"
 REDIS_CLI_BIN="${SOURCE_DIR}/src/redis-cli"
-REDIS_SERVICE_PORT="${REDIS_SERVICE_PORT:-16379}"
+readonly REDIS_SERVICE_PORT="16379"
 SERVICE_DIR="${PERF_WORK_DIR}/service"
 
 log() { printf '[redis] %s\n' "$*"; }

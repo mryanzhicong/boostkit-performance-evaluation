@@ -209,7 +209,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         timeout = execution.get("timeout_minutes")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
             errors.append("execution.timeout_minutes must be a positive integer")
-        if not isinstance(execution.get("environment"), dict):
+        if "environment" in execution and not isinstance(execution["environment"], dict):
             errors.append("execution.environment must be a mapping")
 
     output_by_path: dict[str, dict[str, Any]] = {}

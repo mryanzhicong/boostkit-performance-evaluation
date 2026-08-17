@@ -14,13 +14,9 @@ from pathlib import Path
 from benchmark_redis import run_redis_benchmark, start_redis_server, stop_redis_server
 
 
-def csv_list(name: str, default: str) -> list[str]:
-    return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
-
-
-DATA_SIZES = [int(value) for value in csv_list("DATA_SIZES", "64,256,1024,4096")]
-CLIENT_VALUES = csv_list("CLIENT_COUNTS", "1,10,50,100,all")
-PERSISTENCE_MODES = csv_list("PERSISTENCE_MODES", "none,aof,rdb")
+DATA_SIZES = [64, 256, 1024, 4096]
+CLIENT_VALUES: list[int | str] = [1, 10, 50, 100, "all"]
+PERSISTENCE_MODES = ["none", "aof", "rdb"]
 
 
 def temporary_dir(prefix: str) -> Path:
@@ -34,29 +30,19 @@ def main() -> int:
     redis_server, redis_benchmark, output = sys.argv[1:]
     max_clients = os.cpu_count() or 1
     client_counts = [max_clients if value == "all" else int(value) for value in CLIENT_VALUES]
-    external_port = os.environ.get("REDIS_SERVICE_PORT")
-    base_port = int(external_port) if external_port else 17390 + os.getpid() % 500
-    data_dir: Path | None = None
-    try:
-        if external_port is None:
-            data_dir = temporary_dir("redis-micro-")
-            start_redis_server(redis_server, base_port, data_dir)
-        data_size_results = {
-            f"data_size_{size}": run_redis_benchmark(
-                redis_benchmark, base_port, "SET", 50, data_size=size
-            )
-            for size in DATA_SIZES
-        }
-        client_results = {
-            f"clients_{clients}": run_redis_benchmark(
-                redis_benchmark, base_port, "GET", clients
-            )
-            for clients in client_counts
-        }
-    finally:
-        if data_dir is not None:
-            stop_redis_server(base_port, data_dir)
-            shutil.rmtree(data_dir, ignore_errors=True)
+    base_port = int(os.environ["REDIS_SERVICE_PORT"])
+    data_size_results = {
+        f"data_size_{size}": run_redis_benchmark(
+            redis_benchmark, base_port, "SET", 50, data_size=size
+        )
+        for size in DATA_SIZES
+    }
+    client_results = {
+        f"clients_{clients}": run_redis_benchmark(
+            redis_benchmark, base_port, "GET", clients
+        )
+        for clients in client_counts
+    }
 
     persistence_results: dict[str, dict[str, float]] = {}
     for index, mode in enumerate(PERSISTENCE_MODES):
@@ -86,9 +72,12 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "data_sizes": DATA_SIZES,
-            "client_counts": client_counts,
-            "max_clients": max_clients,
+            "client_counts": CLIENT_VALUES,
             "persistence_modes": PERSISTENCE_MODES,
+        },
+        "runtime_context": {
+            "resolved_client_counts": client_counts,
+            "max_clients": max_clients,
         },
         "results": {
             "data_size_sweep": data_size_results,

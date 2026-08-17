@@ -201,7 +201,7 @@ software/<category>/<software>/
 - `execution.type: shell-functions`；
 - `execution.stages` 中完整且仅有 build、start、test、stop 四个阶段；
 - 每个阶段的 Shell 脚本路径和函数名；
-- 超时时间和运行参数；
+- 阶段超时时间；
 - 每个输出的逻辑名称、相对路径、生成阶段、格式和必要性；
 - 每个指标的来源 JSON、点路径、单位、优化方向和可选目标值。
 
@@ -224,7 +224,6 @@ execution:
       script: redis_test.sh
       function: stop_redis_service
   timeout_minutes: 180
-  environment: {}
 outputs:
   aggregate_result:
     path: results.json
@@ -236,6 +235,8 @@ outputs:
 阶段可以映射到同一个脚本，也可以映射到软件目录内的不同 `.sh` 文件。脚本路径必须是软件目录内的相对路径，函数名必须是合法的 Shell 标识符。Catalog 负责静态校验声明，Framework 在运行时加载脚本后使用 `declare -F` 确认函数真实存在；缺失函数会立即失败，不能回退到其他阶段或空操作。
 
 `outputs` 是软件交付结果的结构化契约。输出路径必须位于 `RESULTS_DIR` 内且不能重复，`stage` 只能是 build、start、test、stop，`format` 支持 `json`、`text`、`binary`，`required` 必须明确为布尔值。阶段函数成功退出后，Framework 立即验收属于该阶段的输出；JSON 还会检查语法和根节点类型。可选输出不存在时不会失败，但指标来源必须是必要的 JSON 输出。
+
+固定性能用例的工作负载参数由软件脚本唯一维护，不在 `case.yaml` 重复声明。软件产生的 JSON 应在顶级 `parameters` 字段记录可跨架构比较的工作负载定义；CPU 数量等机器相关解析值放入 `runtime_context`，不能混入参数签名。Framework 会收集工作负载定义，写入 `normalized_result.json` 并计算参数签名。双架构结果的参数内容或签名不一致时禁止生成对比。
 
 软件清单禁止声明：
 
@@ -298,6 +299,8 @@ make -j$(nproc) BUILD_TLS=no
 
 构建后直接使用源码树中的 `src/redis-server`、`src/redis-benchmark` 和 `src/redis-cli`，不执行 `make install`，也不额外改写 Redis Make 参数。
 
+Redis 的命令集合、并发级别、请求数、重复次数、数据大小、客户端数量、持久化模式和服务端口只在 Redis 测试脚本中定义。`benchmark_redis.json` 与 `micro_benchmark.json` 会记录工作负载参数；`all` 解析出的实际 CPU 客户端数单独记录在 `runtime_context`。Framework 以工作负载定义校验 x86_64 和 aarch64 的测试方案一致性。
+
 当前提取指标：
 
 | 指标 | 单位 | 优化方向 |
@@ -341,7 +344,7 @@ make -j$(nproc) BUILD_TLS=no
 | `target_is_better` | 越接近目标越好 |
 | `neutral` | 仅展示 |
 
-跨架构对比要求两个结果的软件、版本、参数签名、指标集合、单位和优化方向全部一致。越小越好的指标会反向换算相对性能，使“相对性能大于 1”始终表示 aarch64 更优。
+跨架构对比要求两个结果的软件、版本、工作负载定义、参数签名、指标集合、单位和优化方向全部一致。越小越好的指标会反向换算相对性能，使“相对性能大于 1”始终表示 aarch64 更优。
 
 单架构报告按 aarch64 和 x86_64 两个小标题分组；单架构指标顺序与跨架构指标顺序保持一致。
 
@@ -496,7 +499,7 @@ python3 -m pytest framework/tests
 |---|---|
 | `software/README.md` | 说明分类目录和新软件的必要文件结构。 |
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
-| `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、正式参数、结构化输出和指标提取契约。 |
+| `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、结构化输出和指标提取契约。 |
 | `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，为 build、start、test、stop 分别暴露语义清晰的函数，不自行分发执行。 |
 | `software/<category>/<software>/scripts/` | 可选的软件私有基准、聚合和辅助程序。 |
 
@@ -504,7 +507,7 @@ python3 -m pytest framework/tests
 
 | 文件 | 用途 |
 |---|---|
-| `software/Database/redis/case.yaml` | Redis 版本、正式参数、预期输出和指标定义。 |
+| `software/Database/redis/case.yaml` | Redis 版本、阶段入口、结构化输出和指标定义。 |
 | `software/Database/redis/redis_test.sh` | Redis 四阶段函数实现，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
 | `software/Database/redis/scripts/write_version_info.py` | 记录实际 Redis 版本、架构和运行环境。 |
 | `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
