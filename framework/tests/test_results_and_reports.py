@@ -87,6 +87,56 @@ def test_environment_collector_includes_gcc_and_glibc_versions(monkeypatch) -> N
     assert set(runtime_state) == {"collected_at", "memory", "cpu_governor"}
 
 
+def test_cpu_model_keeps_complete_lscpu_model_name(monkeypatch) -> None:
+    model_name = "Kunpeng 920 7270Z To be filled by O.E.M. CPU @ 2.9GHz"
+    monkeypatch.setattr(
+        collect_environment,
+        "_command",
+        lambda args: f"Architecture: aarch64\nModel name: {model_name}\n"
+        if args == ["lscpu"]
+        else "",
+    )
+    assert collect_environment._cpu_model() == model_name
+
+
+def test_cpu_model_never_uses_logical_processor_index(monkeypatch) -> None:
+    monkeypatch.setattr(collect_environment, "_command", lambda _args: "")
+    monkeypatch.setattr(
+        collect_environment.Path,
+        "read_text",
+        lambda *_args, **_kwargs: "processor : 0\nmodel name : Example CPU @ 3.0GHz\n",
+    )
+    assert collect_environment._cpu_model() == "Example CPU @ 3.0GHz"
+
+
+def test_operating_system_uses_os_release_pretty_name(monkeypatch) -> None:
+    monkeypatch.setattr(
+        collect_environment.Path,
+        "read_text",
+        lambda *_args, **_kwargs: (
+            'NAME="openEuler"\nPRETTY_NAME="openEuler 24.03 (LTS-SP4)"\n'
+        ),
+    )
+    assert collect_environment._os_pretty_name() == "openEuler 24.03 (LTS-SP4)"
+
+
+def test_operating_system_requires_os_release_pretty_name(monkeypatch) -> None:
+    monkeypatch.setattr(
+        collect_environment.Path,
+        "read_text",
+        lambda *_args, **_kwargs: 'NAME="openEuler"\n',
+    )
+    assert collect_environment._os_pretty_name() == "ERROR"
+
+
+def test_operating_system_read_failure_returns_error(monkeypatch) -> None:
+    def fail_read(*_args, **_kwargs):
+        raise OSError("unavailable")
+
+    monkeypatch.setattr(collect_environment.Path, "read_text", fail_read)
+    assert collect_environment._os_pretty_name() == "ERROR"
+
+
 def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) -> None:
     output = tmp_path / "output"
     output.mkdir()

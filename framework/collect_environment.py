@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import shlex
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,15 +19,49 @@ def _command(args: list[str]) -> str:
 
 
 def _cpu_model() -> str:
+    lscpu = _command(["lscpu"])
+    for line in lscpu.splitlines():
+        field, separator, value = line.partition(":")
+        if separator and field.strip().casefold() == "model name":
+            model_name = value.strip()
+            if model_name:
+                return model_name
+
     try:
-        for line in Path("/proc/cpuinfo").read_text(encoding="utf-8", errors="replace").splitlines():
-            if line.lower().startswith(("model name", "hardware", "processor")) and ":" in line:
-                value = line.split(":", 1)[1].strip()
-                if value:
-                    return value
+        cpuinfo = Path("/proc/cpuinfo").read_text(
+            encoding="utf-8", errors="replace"
+        )
+        fields: dict[str, str] = {}
+        for line in cpuinfo.splitlines():
+            field, separator, value = line.partition(":")
+            if separator and value.strip():
+                fields.setdefault(field.strip().casefold(), value.strip())
+        for field in ("model name", "hardware"):
+            if field in fields:
+                return fields[field]
     except OSError:
         pass
     return platform.processor() or "unknown"
+
+
+def _os_pretty_name() -> str:
+    try:
+        os_release = Path("/etc/os-release").read_text(
+            encoding="utf-8", errors="replace"
+        )
+    except OSError:
+        return "ERROR"
+    for line in os_release.splitlines():
+        field, separator, value = line.partition("=")
+        if separator and field.strip() == "PRETTY_NAME":
+            try:
+                parsed = shlex.split(value, posix=True)
+            except ValueError:
+                return "ERROR"
+            if parsed:
+                return " ".join(parsed)
+            return "ERROR"
+    return "ERROR"
 
 
 def _gcc_version() -> str:
@@ -53,7 +88,7 @@ def collect_system_info() -> dict:
     return {
         "collected_at": _collected_at(),
         "architecture": platform.machine(),
-        "platform": platform.platform(),
+        "platform": _os_pretty_name(),
         "kernel": platform.release(),
         "cpu_model": _cpu_model(),
         "cpu_count": os.cpu_count() or 0,
