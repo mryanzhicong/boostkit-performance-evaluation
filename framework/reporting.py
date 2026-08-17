@@ -11,6 +11,7 @@ DIRECTION_LABELS = {
     "neutral": "仅展示",
 }
 ARCHITECTURE_ORDER = ("aarch64", "x86_64")
+ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86"), ("aarch64", "aarch64"))
 FIELD_LABELS = {
     "recorded_at": "构建信息记录时间",
     "requested_version": "请求软件版本",
@@ -41,7 +42,6 @@ SYSTEM_FIELD_ORDER = (
     "glibc_version",
     "numa",
 )
-RUNTIME_FIELD_ORDER = ("collected_at", "memory", "cpu_governor")
 
 
 def direction_label(direction: object) -> str:
@@ -65,61 +65,60 @@ def _ordered_fields(data: dict, preferred: tuple[str, ...]) -> list[str]:
     return ordered
 
 
-def _environment_rows(data: dict) -> list[tuple[str, str, object, object, object]]:
-    build_info = data.get("build_info", {})
-    system_info = data.get("system_info", {})
-    runtime_before = data.get("runtime_before", {})
-    runtime_after = data.get("runtime_after", {})
-    rows: list[tuple[str, str, object, object, object]] = []
-    if isinstance(build_info, dict) and build_info:
-        for field in _ordered_fields(build_info, BUILD_FIELD_ORDER):
-            if field in {"category", "software", "architecture", "run_id"}:
-                continue
-            rows.append(
-                ("构建信息", FIELD_LABELS.get(field, field), build_info[field], None, None)
-            )
-    if isinstance(system_info, dict) and system_info:
-        for field in _ordered_fields(system_info, SYSTEM_FIELD_ORDER):
-            rows.append(
-                ("系统信息", FIELD_LABELS.get(field, field), system_info[field], None, None)
-            )
-    before = runtime_before if isinstance(runtime_before, dict) else {}
-    after = runtime_after if isinstance(runtime_after, dict) else {}
-    if before or after:
-        fields = _ordered_fields({**before, **after}, RUNTIME_FIELD_ORDER)
-        for field in fields:
-            rows.append(
-                (
-                    "运行状态",
-                    FIELD_LABELS.get(field, field),
-                    None,
-                    before.get(field),
-                    after.get(field),
-                )
-            )
-    return rows
-
-
-def _environment_table(
-    entries: list[tuple[tuple[object, ...], dict]],
-    identity_headers: tuple[str, ...] = (),
+def _environment_section(
+    environments: dict[str, dict],
+    title: str,
+    source: str,
+    preferred_fields: tuple[str, ...],
+    heading_level: int,
 ) -> list[str]:
-    rows = [
-        (*identity, *environment_row)
-        for identity, data in entries
-        for environment_row in _environment_rows(data)
+    values_by_architecture: dict[str, dict] = {}
+    all_fields: dict[str, object] = {}
+    for architecture, _label in ENVIRONMENT_ARCHITECTURES:
+        environment = environments.get(architecture, {})
+        values = environment.get(source, {}) if isinstance(environment, dict) else {}
+        if not isinstance(values, dict):
+            values = {}
+        values_by_architecture[architecture] = values
+        all_fields.update(values)
+    fields = [
+        field
+        for field in _ordered_fields(all_fields, preferred_fields)
+        if field not in {"category", "software", "run_id"}
     ]
-    if not rows:
+    if not fields:
         return []
-    headers = (*identity_headers, "类型", "项目", "固定值", "测试前", "测试后")
+    headers = ("项目", *(label for _architecture, label in ENVIRONMENT_ARCHITECTURES))
     lines = [
+        f"{'#' * heading_level} {title}",
+        "",
         "| " + " | ".join(headers) + " |",
         "|" + "|".join("---" for _ in headers) + "|",
     ]
-    lines.extend(
-        "| " + " | ".join(_cell(value) for value in row) + " |" for row in rows
-    )
+    for field in fields:
+        row = [
+            FIELD_LABELS.get(field, field),
+            *(values_by_architecture[architecture].get(field) for architecture, _ in ENVIRONMENT_ARCHITECTURES),
+        ]
+        lines.append("| " + " | ".join(_cell(value) for value in row) + " |")
     lines.append("")
+    return lines
+
+
+def _environment_tables(
+    environments: dict[str, dict], heading_level: int = 3
+) -> list[str]:
+    lines: list[str] = []
+    lines.extend(
+        _environment_section(
+            environments, "构建信息", "build_info", BUILD_FIELD_ORDER, heading_level
+        )
+    )
+    lines.extend(
+        _environment_section(
+            environments, "系统信息", "system_info", SYSTEM_FIELD_ORDER, heading_level
+        )
+    )
     return lines
 
 
@@ -134,7 +133,8 @@ def render_single(data: dict) -> str:
         "## 测试环境",
         "",
     ]
-    lines.extend(_environment_table([((), data)]))
+    architecture = str(data.get("architecture", ""))
+    lines.extend(_environment_tables({architecture: data}))
     lines.extend([
         "## 性能指标",
         "",
@@ -175,13 +175,7 @@ def render_comparison(comparison: dict) -> str:
     environments = comparison.get("environments", {})
     if isinstance(environments, dict) and environments:
         lines.extend(["## 测试环境", ""])
-        entries = [
-            ((architecture,), environments[architecture])
-            for architecture in ARCHITECTURE_ORDER
-            if isinstance(environments.get(architecture), dict)
-            and environments[architecture]
-        ]
-        lines.extend(_environment_table(entries, ("架构",)))
+        lines.extend(_environment_tables(environments))
     return "\n".join(lines)
 
 
@@ -231,15 +225,14 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
     ]
     if environment_items:
         lines.extend(["## 测试环境", ""])
-        sorted_items = sorted(
-            environment_items,
-            key=lambda value: (*_result_key(value), str(value.get("architecture", ""))),
-        )
-        entries = [
-            ((item.get("software"), item.get("version"), item.get("architecture")), item)
-            for item in sorted_items
-        ]
-        lines.extend(_environment_table(entries, ("软件", "版本", "架构")))
+        grouped_environments: dict[tuple[str, str, str], dict[str, dict]] = {}
+        for item in sorted(environment_items, key=_result_key):
+            key = _result_key(item)
+            architecture = str(item.get("architecture", ""))
+            grouped_environments.setdefault(key, {})[architecture] = item
+        for (_category, software, version), environments in grouped_environments.items():
+            lines.extend([f"### {software} {version}", ""])
+            lines.extend(_environment_tables(environments, heading_level=4))
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
     if metric_items:
         comparison_orders = {

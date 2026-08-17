@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from json_helper import atomic_write_json, load_json
-from reporting import render_comparison, render_junit, render_summary
+from reporting import render_junit, render_summary
 
 
 def _number(value: Any) -> float | None:
@@ -130,7 +130,6 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         comparisons.append(comparison)
         stem = f"{comparison['category']}-{comparison['software']}-{comparison['version']}"
         atomic_write_json(output_dir / f"{stem}.json", comparison)
-        (output_dir / f"{stem}.md").write_text(render_comparison(comparison), encoding="utf-8")
 
     items = [{
         "category": result.get("category"),

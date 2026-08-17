@@ -394,7 +394,7 @@ start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下�
 
 单架构报告按 aarch64 和 x86_64 两个小标题分组；单架构指标顺序与跨架构指标顺序保持一致。
 
-单架构 `report.md` 和整次运行的 `combined-report.md` 都包含测试环境。报告展示 Framework 统一生成的软件请求/实际版本、静态系统信息，以及内存和 CPU governor 的测试前后状态；跨架构和汇总报告将全部架构环境汇聚到一个表格，通过“软件、版本、架构”列区分，不再按 aarch64、x86_64 拆分环境小标题。因此 Workflow Summary、Artifact 和永久结果报告使用同一套环境信息。
+单架构 `report.md` 和整次运行的 `combined-report.md` 都包含测试环境。报告将构建信息和静态系统信息分别成表，同一项目的 x86 与 aarch64 值按列横向对照；汇总报告再按软件和版本分组。测试前后的运行状态仍保留在结果 JSON 中，当前不在 Markdown 报告展示。因此 Workflow Summary、Artifact 和永久结果报告使用同一套环境信息。
 
 ## 输出目录和保存策略
 
@@ -447,8 +447,7 @@ command-stop.log
     │   ├── normalized_result.json
     │   ├── report.md
     │   └── 软件声明的 JSON 输出
-    ├── comparison.json
-    └── comparison.md
+    └── comparison.json
 ```
 
 每个 `<run_id>-<attempt>` 目录不可覆盖。构建日志、大型原始文件、源码和二进制只保存在限期 Artifact 中，不进入 Git 历史。

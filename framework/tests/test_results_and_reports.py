@@ -362,25 +362,30 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     environment = markdown.split("## 测试环境", 1)[1]
     assert "### aarch64" not in environment
     assert "### x86_64" not in environment
-    assert "| 架构 | 类型 | 项目 | 固定值 | 测试前 | 测试后 |" in environment
-    assert "| aarch64 |" in environment
-    assert "| x86_64 |" in environment
+    assert "### 构建信息" in environment
+    assert "### 系统信息" in environment
+    assert environment.count("| 项目 | x86 | aarch64 |") == 2
+    assert "运行状态" not in environment
+    assert "before memory" not in environment
+    assert "after memory" not in environment
     assert "Example CPU" in markdown
     assert "13.2.1" in markdown
     assert "glibc 2.38" in markdown
 
 
-def test_single_report_includes_build_system_and_runtime_environment() -> None:
+def test_single_report_includes_build_and_system_environment() -> None:
     markdown = render_single(normalized_result("aarch64", 120, 10))
     assert "## 测试环境" in markdown
-    assert markdown.count("| 类型 | 项目 | 固定值 | 测试前 | 测试后 |") == 1
+    assert "### 构建信息" in markdown
+    assert "### 系统信息" in markdown
+    assert markdown.count("| 项目 | x86 | aarch64 |") == 2
     assert "实际软件版本" in markdown
     assert "Example CPU" in markdown
     assert "GCC 版本" in markdown
     assert "13.2.1" in markdown
     assert "glibc 2.38" in markdown
-    assert "测试前" in markdown and "测试后" in markdown
-    assert "before memory" in markdown and "after memory" in markdown
+    assert "运行状态" not in markdown
+    assert "before memory" not in markdown and "after memory" not in markdown
 
 
 def test_comparison_rejects_incompatible_metric_contracts() -> None:
@@ -427,19 +432,18 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "越大越好" in combined
     assert "越小越好" in combined
     assert "## 测试环境" in combined
+    assert not (tmp_path / "report" / "AI-sample-1.0.md").exists()
     environment = combined.split("## 测试环境", 1)[1].split("## 单架构指标", 1)[0]
-    assert "###" not in environment
-    assert (
-        "| 软件 | 版本 | 架构 | 类型 | 项目 | 固定值 | 测试前 | 测试后 |"
-        in environment
-    )
-    assert "| sample | 1.0 | aarch64 |" in environment
-    assert "| sample | 1.0 | x86_64 |" in environment
+    assert "### sample 1.0" in environment
+    assert "#### 构建信息" in environment
+    assert "#### 系统信息" in environment
+    assert environment.count("| 项目 | x86 | aarch64 |") == 2
+    assert "运行状态" not in environment
     assert "Example CPU" in combined
     assert "13.2.1" in combined
     assert "glibc 2.38" in combined
-    assert "before memory" in combined
-    assert "after memory" in combined
+    assert "before memory" not in combined
+    assert "after memory" not in combined
     assert combined.index("### aarch64") < combined.index("### x86_64")
     arm_metrics = combined.split("### aarch64", 1)[1].split("### x86_64", 1)[0]
     x86_metrics = combined.split("### x86_64", 1)[1].split("## 跨架构指标", 1)[0]
@@ -502,6 +506,10 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()
     assert (run_root / "combined-report.md").is_file()
+    assert not (run_root / "comparison.md").exists()
+    permanent_report = (run_root / "combined-report.md").read_text(encoding="utf-8")
+    assert "跨架构对比" in permanent_report
+    assert "相对性能" in permanent_report
     baseline = output_root / "AI" / "sample" / "1.0" / "baseline.json"
     assert baseline.is_file()
     assert '"run_id": "12345-1"' in baseline.read_text(encoding="utf-8")

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from json_helper import atomic_write_json, load_json
+from reporting import render_comparison
 
 
 PERMANENT_TEXT_FILES = {"report.md"}
@@ -40,7 +41,7 @@ def _combined_report(
     version: str,
     run_id: str,
     architecture_dirs: dict[str, Path],
-    comparison_path: Path | None,
+    comparison: dict | None,
 ) -> str:
     lines = [
         f"# {software} {version} 性能结果",
@@ -57,9 +58,9 @@ def _combined_report(
         else:
             lines.append("单架构报告缺失。")
         lines.append("")
-    if comparison_path is not None and comparison_path.is_file():
+    if comparison:
         lines.extend(["## 跨架构对比", ""])
-        lines.extend(comparison_path.read_text(encoding="utf-8").strip().splitlines())
+        lines.extend(render_comparison(comparison).strip().splitlines())
         lines.append("")
     return "\n".join(lines)
 
@@ -121,12 +122,9 @@ def prepare(
 
         stem = f"{category}-{software}-{version}"
         comparison_json = report_dir / f"{stem}.json"
-        comparison_markdown = report_dir / f"{stem}.md"
+        comparison = load_json(comparison_json, {}) if comparison_json.is_file() else None
         if comparison_json.is_file():
             shutil.copy2(comparison_json, run_root / "comparison.json")
-        if comparison_markdown.is_file():
-            shutil.copy2(comparison_markdown, run_root / "comparison.md")
-        comparison_for_report = comparison_markdown if comparison_markdown.is_file() else None
         (run_root / "combined-report.md").write_text(
             _combined_report(
                 category=category,
@@ -134,7 +132,7 @@ def prepare(
                 version=version,
                 run_id=run_id,
                 architecture_dirs=architecture_dirs,
-                comparison_path=comparison_for_report,
+                comparison=comparison,
             ),
             encoding="utf-8",
         )
