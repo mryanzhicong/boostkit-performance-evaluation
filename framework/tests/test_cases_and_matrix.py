@@ -1,7 +1,12 @@
 """Validate the manually maintained case catalog and matrix defaults."""
 
+import hashlib
+import importlib.util
+import json
 import os
 import subprocess
+import tarfile
+import zipfile
 
 import pytest
 import yaml
@@ -16,9 +21,12 @@ from catalog import (
 )
 
 
-def test_redis_is_the_only_valid_case() -> None:
+def test_registered_cases_are_valid() -> None:
     cases = discover_cases(ROOT)
-    assert cases == [ROOT / "software" / "Database" / "redis" / "case.yaml"]
+    assert cases == [
+        ROOT / "software" / "Database" / "redis" / "case.yaml",
+        ROOT / "software" / "HPC" / "lz4" / "case.yaml",
+    ]
     case, errors = validate_case(cases[0], ROOT)
     assert errors == []
     assert case is not None
@@ -71,14 +79,32 @@ def test_redis_is_the_only_valid_case() -> None:
         for definition in case["metrics"]["definitions"].values()
     )
 
+    lz4_case, errors = validate_case(cases[1], ROOT)
+    assert errors == []
+    assert lz4_case is not None
+    assert lz4_case["versions"] == ["1.9.4", "1.10.0"]
+    assert lz4_case["execution"]["stages"] == {
+        "build": {"script": "lz4_test.sh", "function": "build_lz4"},
+        "start": {"script": "lz4_test.sh", "function": "start_lz4_runtime"},
+        "test": {"script": "lz4_test.sh", "function": "run_lz4_benchmarks"},
+        "stop": {"script": "lz4_test.sh", "function": "stop_lz4_runtime"},
+    }
+    assert list(lz4_case["metrics"]["definitions"]) == [
+        "compress_speed_64k",
+        "decompress_speed_64k",
+        "compress_speed_4m",
+        "decompress_speed_4m",
+    ]
+
 
 def test_software_registry_normalizes_empty_categories() -> None:
     registry = configured_software(ROOT)
     assert registry["Database"] == ["redis"]
+    assert registry["HPC"] == ["lz4"]
     assert all(
         software == []
         for category, software in registry.items()
-        if category != "Database"
+        if category not in {"Database", "HPC"}
     )
 
 
@@ -264,19 +290,22 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
     assert any("has invalid direction" in error for error in errors)
 
 
-def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
+def test_default_matrix_runs_every_version_on_both_architectures() -> None:
     matrix = build_matrix("all", "all", "all")["include"]
-    assert len(matrix) == 6
+    assert len(matrix) == 10
     assert {item["arch"] for item in matrix} == {"x86_64", "aarch64"}
-    assert {item["version"] for item in matrix} == {"7.4.10", "8.0.0", "8.0.6"}
-    assert [(item["version"], item["arch"]) for item in matrix] == [
-        ("7.4.10", "x86_64"),
-        ("7.4.10", "aarch64"),
-        ("8.0.0", "x86_64"),
-        ("8.0.0", "aarch64"),
-        ("8.0.6", "x86_64"),
-        ("8.0.6", "aarch64"),
-    ]
+    assert {
+        (item["software"], item["version"], item["arch"])
+        for item in matrix
+    } == {
+        (software, version, architecture)
+        for software, versions in {
+            "redis": ("7.4.10", "8.0.0", "8.0.6"),
+            "lz4": ("1.9.4", "1.10.0"),
+        }.items()
+        for version in versions
+        for architecture in ("x86_64", "aarch64")
+    }
 
 
 def test_manual_filters_limit_redis_to_one_architecture_and_version() -> None:
@@ -470,3 +499,165 @@ def test_redis_does_not_duplicate_framework_logs_or_reports() -> None:
     assert not (
         ROOT / "software" / "Database" / "redis" / "scripts" / "generate_summary.py"
     ).exists()
+
+
+def test_lz4_script_exposes_source_safe_four_stage_contract(tmp_path) -> None:
+    script = ROOT / "software" / "HPC" / "lz4" / "lz4_test.sh"
+    work_dir = tmp_path / "work"
+    results_dir = tmp_path / "results"
+    environment = dict(os.environ)
+    environment.update({
+        "PERF_WORK_DIR": str(work_dir),
+        "RESULTS_DIR": str(results_dir),
+        "TMPDIR": str(work_dir / "tmp"),
+    })
+    completed = subprocess.run(
+        [
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            (
+                'source "$1"; declare -F build_lz4 start_lz4_runtime '
+                'run_lz4_benchmarks stop_lz4_runtime >/dev/null'
+            ),
+            "source-contract",
+            str(script),
+        ],
+        check=False,
+        env=environment,
+    )
+    assert completed.returncode == 0
+    assert not work_dir.exists()
+    assert not results_dir.exists()
+
+
+def test_lz4_uses_the_approved_official_fullbench_contract() -> None:
+    entrypoint = (ROOT / "software" / "HPC" / "lz4" / "lz4_test.sh").read_text(
+        encoding="utf-8"
+    )
+    runner = (
+        ROOT / "software" / "HPC" / "lz4" / "scripts" / "run_fullbench.py"
+    ).read_text(encoding="utf-8")
+    assert (
+        'readonly SILESIA_REPOSITORY_URL="https://github.com/'
+        'MiloszKrajewski/SilesiaCorpus.git"' in entrypoint
+    )
+    assert (
+        'readonly SILESIA_REPOSITORY_COMMIT="'
+        '3f3fa2cdbbb3795c903b74e774acb309e1360337"' in entrypoint
+    )
+    assert 'fetch --quiet --depth 1 --no-tags' in entrypoint
+    assert 'scripts/prepare_silesia.py' in entrypoint
+    assert "/opt/perf-datasets" not in entrypoint
+    assert 'make -C tests fullbench' in entrypoint
+    assert 'FULLBENCH_BIN="${SOURCE_DIR}/tests/fullbench"' in entrypoint
+    assert "ITERATION_LOOPS = 3" in runner
+    assert '"block_option": "B4"' in runner
+    assert '"block_option": "B7"' in runner
+    assert '"operation_option": "c1"' in runner
+    assert '"operation_option": "d4"' in runner
+    assert '"function": "LZ4_compress_default"' in runner
+    assert '"function": "LZ4_decompress_safe"' in runner
+    for duplicate_or_unsafe_behavior in (
+        "results.log",
+        "results.txt",
+        "shunit2",
+        "sudo apt-get",
+        "sudo dnf",
+        "/usr/local/lib",
+        "cmake",
+        "lz4_benchmark.cc",
+    ):
+        assert duplicate_or_unsafe_behavior not in entrypoint
+
+
+def test_lz4_silesia_packaging_is_reproducible(tmp_path) -> None:
+    script = ROOT / "software" / "HPC" / "lz4" / "scripts" / "prepare_silesia.py"
+    spec = importlib.util.spec_from_file_location("prepare_silesia", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    members = []
+    for name, content in (("first", b"alpha"), ("second", b"beta")):
+        with zipfile.ZipFile(source_dir / f"{name}.zip", "w") as archive:
+            archive.writestr(name, content)
+        members.append(
+            module.CorpusMember(name, len(content), hashlib.md5(content).hexdigest())
+        )
+
+    first_tar = tmp_path / "first.tar"
+    second_tar = tmp_path / "second.tar"
+    first_digest = module.build_corpus(source_dir, first_tar, members)
+    second_digest = module.build_corpus(source_dir, second_tar, members)
+
+    assert first_digest == second_digest
+    assert first_tar.read_bytes() == second_tar.read_bytes()
+    with tarfile.open(first_tar) as corpus:
+        assert corpus.getnames() == ["first", "second"]
+        assert [entry.mtime for entry in corpus.getmembers()] == [0, 0]
+
+
+def test_lz4_fullbench_runner_executes_and_parses_all_four_cases(tmp_path) -> None:
+    fullbench = tmp_path / "fullbench"
+    fullbench.write_text(
+        """#!/usr/bin/env bash
+set -euo pipefail
+case "$*" in
+  *"-B4 -c1"*) printf ' 1-LZ4_compress_default : 211938580 -> 100000000 (47.18%%), 700.5 MB/s\n' >&2 ;;
+  *"-B4 -d4"*) printf ' 4-LZ4_decompress_safe : 211938580 -> 4100.5 MB/s\n' >&2 ;;
+  *"-B7 -c1"*) printf ' 1-LZ4_compress_default : 211938580 -> 100000000 (47.18%%), 750.5 MB/s\n' >&2 ;;
+  *"-B7 -d4"*) printf ' 4-LZ4_decompress_safe : 211938580 -> 4300.5 MB/s\n' >&2 ;;
+  *) exit 2 ;;
+esac
+""",
+        encoding="utf-8",
+    )
+    fullbench.chmod(0o755)
+    corpus = tmp_path / "silesia.tar"
+    corpus.write_bytes(b"fixed-silesia-corpus")
+    output = tmp_path / "benchmark_fullbench.json"
+    environment = dict(os.environ)
+    environment.update({
+        "SOFTWARE_VERSION": "1.10.0",
+        "EXPECTED_ARCH": "aarch64",
+        "SILESIA_REPOSITORY_URL": (
+            "https://github.com/MiloszKrajewski/SilesiaCorpus.git"
+        ),
+        "SILESIA_REPOSITORY_COMMIT": (
+            "3f3fa2cdbbb3795c903b74e774acb309e1360337"
+        ),
+    })
+    completed = subprocess.run(
+        [
+            "python3",
+            str(ROOT / "software" / "HPC" / "lz4" / "scripts" / "run_fullbench.py"),
+            str(fullbench),
+            str(corpus),
+            str(output),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["parameters"]["iteration_loops"] == 3
+    assert payload["parameters"]["corpus_repository"].startswith("https://github.com/")
+    assert payload["parameters"]["corpus_commit"] == (
+        "3f3fa2cdbbb3795c903b74e774acb309e1360337"
+    )
+    assert payload["parameters"]["corpus_size_bytes"] == len(b"fixed-silesia-corpus")
+    assert len(payload["parameters"]["corpus_sha256"]) == 64
+    assert {
+        name: result["speed_mbs"] for name, result in payload["results"].items()
+    } == {
+        "block_64k_compression": 700.5,
+        "block_64k_decompression": 4100.5,
+        "block_4m_compression": 750.5,
+        "block_4m_decompression": 4300.5,
+    }

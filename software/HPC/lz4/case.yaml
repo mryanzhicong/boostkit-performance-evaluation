@@ -1,0 +1,52 @@
+name: lz4
+category: HPC
+enabled: true
+versions:
+  - "1.9.4"
+  - "1.10.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: lz4_test.sh
+      function: build_lz4
+    start:
+      script: lz4_test.sh
+      function: start_lz4_runtime
+    test:
+      script: lz4_test.sh
+      function: run_lz4_benchmarks
+    stop:
+      script: lz4_test.sh
+      function: stop_lz4_runtime
+  timeout_minutes: 180
+outputs:
+  version_info:
+    path: version_info.json
+    stage: build
+    format: json
+    required: true
+  primary_benchmark:
+    path: benchmark_fullbench.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: primary_benchmark
+  definitions:
+    compress_speed_64k:
+      path: results.block_64k_compression.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    decompress_speed_64k:
+      path: results.block_64k_decompression.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    compress_speed_4m:
+      path: results.block_4m_compression.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    decompress_speed_4m:
+      path: results.block_4m_decompression.speed_mbs
+      unit: MB/s
+      direction: higher_is_better

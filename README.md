@@ -2,7 +2,7 @@
 
 本项目通过一个仅支持手动触发的 GitHub Actions Workflow，在专用裸机 Runner 上对开源软件执行 x86_64 与 aarch64 性能测试。软件清单和测试代码由人工维护，公共 Framework 负责矩阵生成、阶段编排、进程隔离、环境清理、指标校验、跨架构报告和结果持久化。
 
-当前只接入 Redis，支持 `7.4.10`、`8.0.0` 和 `8.0.6`。默认手动运行会把三个版本分别展开到 x86_64 与 aarch64，共生成 6 个性能任务。
+当前接入 Redis 和 LZ4：Redis 支持 `7.4.10`、`8.0.0`、`8.0.6`，LZ4 支持 `1.9.4`、`1.10.0`。默认手动运行会把五个软件版本分别展开到 x86_64 与 aarch64，共生成 10 个性能任务。
 
 ## 设计边界
 
@@ -77,9 +77,9 @@ prepare → build → start → test → stop → finalize → cleanup
 |---|---|---|
 | `prepare` | Framework | 校验实际架构、创建运行上下文、采集测试前环境。 |
 | `build` | 软件 | 裸机编译、构建校验、实际版本和二进制校验。 |
-| `start` | 软件 | 启动被测服务并等待就绪。 |
+| `start` | 软件 | 启动被测服务并等待就绪；无服务软件校验测试运行时已准备完成。 |
 | `test` | 软件 | 执行性能基准，聚合并写出清单声明的结果文件。 |
-| `stop` | 软件 | 幂等停止服务并确认退出；失败路径也执行。 |
+| `stop` | 软件 | 幂等停止服务并确认退出；无服务软件执行幂等收口；失败路径也执行。 |
 | `finalize` | Framework | 采集测试后环境、严格校验输出、提取指标、生成单架构报告。 |
 | `cleanup` | Framework | 全局清理 Runner，并把清理结果回写到状态和规范化结果。 |
 
@@ -115,6 +115,7 @@ Workflow 中不硬编码具体标签，也不需要 GitHub Actions Variables。�
 - 专用裸机，不与普通 CI 或其他业务共享；
 - 实际 CPU 架构与 Runner 标签一致；
 - 预装 Python 3.11+、pip、Git、编译器和软件清单要求的系统编译依赖；
+- 能够访问 GitHub；软件源码和测试数据均在任务隔离目录中按固定版本下载；
 - 允许测试用户管理 `/tmp/boostkit-perf` 下的全部内容和测试进程；
 - 不允许测试期间通过 apt、dnf 或系统级 pip 改写宿主机；
 - 所有源码、构建、缓存、数据、临时文件和安装前缀必须进入 `/tmp/boostkit-perf`。
@@ -177,6 +178,7 @@ categories:
     - redis
   Media:
   HPC:
+    - lz4
   Middleware:
   Toolchain:
   Others:
@@ -291,7 +293,7 @@ workflow --stage build
 软件脚本必须遵守：
 
 - build 包含构建、安装或源码树二进制准备，以及版本、架构和基本功能校验；
-- start 必须等待服务真正可用后再正常退出；
+- start 必须等待服务真正可用后再正常退出；没有后台服务的软件应校验测试运行时已准备完成；
 - test 只使用本次 start 启动的服务，并生成全部预期输出；
 - stop 必须幂等，即使服务没有启动或已经退出也能安全执行；
 - 所有阶段必须等待自身工作完成并返回准确退出码；
@@ -319,6 +321,38 @@ Redis 的命令集合、并发级别、请求数、重复次数、数据大小�
 | `average_latency` | ms | 越小越好 |
 | `maximum_p99_latency` | ms | 越小越好 |
 | `client_scaling_ratio` | ratio | 越大越好 |
+
+### 当前 LZ4 用例
+
+LZ4 用例位于 `software/HPC/lz4`。源码从 LZ4 官方仓库按版本标签拉取，并使用官方构建入口：
+
+```bash
+make -C tests fullbench
+```
+
+start 阶段每次从 GitHub 的 SilesiaCorpus 镜像下载固定 commit。下载完成后，软件私有辅助脚本逐个校验 12 个原始文件的官方大小和 MD5，再按固定顺序、文件名、权限、时间戳和所有者生成可复现的 `silesia.tar`，并强制校验生成文件的固定 SHA-256。语料及 Git checkout 全部位于本次 `PERF_WORK_DIR`，不依赖 Runner 预置数据，也不使用跨任务缓存。
+
+生成文件的大小和 SHA-256 会写入可比较参数；两个架构下载内容或生成结果不一致时，Framework 禁止生成跨架构对比。全局清理会在任务结束后删除下载内容和生成的 tar。
+
+测试阶段严格执行四条已批准的官方 fullbench 命令：
+
+```bash
+./tests/fullbench --no-prompt -i3 -B4 -c1 silesia.tar
+./tests/fullbench --no-prompt -i3 -B4 -d4 silesia.tar
+./tests/fullbench --no-prompt -i3 -B7 -c1 silesia.tar
+./tests/fullbench --no-prompt -i3 -B7 -d4 silesia.tar
+```
+
+其中 `-i3` 表示三轮迭代，`B4/B7` 分别表示 64 KiB 和 4 MiB 块，`c1` 对应 `LZ4_compress_default`，`d4` 对应 `LZ4_decompress_safe`。每条命令必须正常退出且恰好解析出一个正数速度，否则测试失败。LZ4 是进程内压缩库，没有后台服务，因此 stop 阶段为幂等的无服务收口。
+
+当前提取指标：
+
+| 指标 | 单位 | 优化方向 |
+|---|---|---|
+| `compress_speed_64k` | MB/s | 越大越好 |
+| `decompress_speed_64k` | MB/s | 越大越好 |
+| `compress_speed_4m` | MB/s | 越大越好 |
+| `decompress_speed_4m` | MB/s | 越大越好 |
 
 ## 结果和指标契约
 
@@ -451,7 +485,7 @@ python3 framework/catalog.py matrix \
 python3 -m pytest framework/tests
 ```
 
-`framework/tests` 使用临时目录、假软件入口和短生命周期进程验证公共 Framework，不会编译 Redis、运行正式性能测试或连接性能 Runner。
+`framework/tests` 使用临时目录、假软件入口和短生命周期进程验证公共 Framework，不会编译 Redis 或 LZ4、运行正式性能测试或连接性能 Runner。
 
 ## 文件职责
 
@@ -520,6 +554,16 @@ python3 -m pytest framework/tests
 | `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
 | `software/Database/redis/scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
 | `software/Database/redis/scripts/aggregate_results.py` | 聚合原始结果并计算 QPS、延迟和客户端扩展指标。 |
+
+### LZ4 用例
+
+| 文件 | 用途 |
+|---|---|
+| `software/HPC/lz4/case.yaml` | LZ4 版本、四阶段入口、fullbench 结构化输出和四项速度指标定义。 |
+| `software/HPC/lz4/lz4_test.sh` | LZ4 四阶段函数实现，负责官方 fullbench 构建、GitHub 语料下载、基准执行和无服务收口。 |
+| `software/HPC/lz4/scripts/prepare_silesia.py` | 校验 GitHub 镜像中的 12 个官方语料文件，并用固定元数据生成可复现的 `silesia.tar`。 |
+| `software/HPC/lz4/scripts/write_version_info.py` | 记录实际 LZ4 版本、架构和运行环境。 |
+| `software/HPC/lz4/scripts/run_fullbench.py` | 同步执行四条已批准的 fullbench 命令，严格解析原始输出，并记录语料 SHA-256、命令和速度指标。 |
 
 ## 新软件接入检查表
 

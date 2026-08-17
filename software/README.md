@@ -1,6 +1,6 @@
 # 软件分类目录
 
-`software/` 当前包含 `Database/redis` 一个软件测试用例，其余分类保留为空目录。
+`software/` 当前包含 `Database/redis` 和 `HPC/lz4` 两个软件测试用例，其余分类保留为空目录。
 
 分类和各分类的软件注册列表由 `config/categories.yaml` 统一定义。空分类在 YAML 中直接留空；有软件时在分类下列出软件名。空分类目录中的 `.gitkeep` 只用于让目录能够被 Git 保存。
 
