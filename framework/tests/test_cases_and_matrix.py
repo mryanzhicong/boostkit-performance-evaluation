@@ -26,8 +26,10 @@ def test_redis_is_the_only_valid_case() -> None:
     assert case["execution"]["timeout_minutes"] == 180
     assert case["execution"]["type"] == "shell-functions"
     assert case["execution"]["stages"] == {
-        stage: {"script": "redis_test.sh", "function": stage}
-        for stage in ("build", "start", "test", "stop")
+        "build": {"script": "redis_test.sh", "function": "build_redis"},
+        "start": {"script": "redis_test.sh", "function": "start_redis_service"},
+        "test": {"script": "redis_test.sh", "function": "run_redis_benchmarks"},
+        "stop": {"script": "redis_test.sh", "function": "stop_redis_service"},
     }
 
 
@@ -231,8 +233,15 @@ def test_redis_script_exposes_every_declared_stage_function() -> None:
     entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
         encoding="utf-8"
     )
-    for function in ("build", "start", "test", "stop"):
+    for function in (
+        "build_redis",
+        "start_redis_service",
+        "run_redis_benchmarks",
+        "stop_redis_service",
+    ):
         assert f"{function}()" in entrypoint
+    for ambiguous_function in ("build", "start", "test", "stop"):
+        assert f"\n{ambiguous_function}()" not in entrypoint
     assert "phase_build()" not in entrypoint
     assert "run_all()" not in entrypoint
     assert 'case "${1:-all}"' not in entrypoint
@@ -254,7 +263,10 @@ def test_redis_script_is_safe_to_source_without_running_a_stage(tmp_path) -> Non
             "--noprofile",
             "--norc",
             "-c",
-            'source "$1"; declare -F build start test stop >/dev/null',
+            (
+                'source "$1"; declare -F build_redis start_redis_service '
+                'run_redis_benchmarks stop_redis_service >/dev/null'
+            ),
             "source-contract",
             str(script),
         ],

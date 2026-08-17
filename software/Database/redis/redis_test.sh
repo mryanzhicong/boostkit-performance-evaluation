@@ -52,7 +52,7 @@ check_architecture() {
     }
 }
 
-build() {
+build_redis() {
     local binary actual_version actual_arch
     initialize_runtime
     check_architecture
@@ -78,7 +78,7 @@ build() {
         "${RESULTS_DIR}/version_info.json" "${SOFTWARE_VERSION}" "${actual_version}" "${actual_arch}"
 }
 
-start() {
+start_redis_service() {
     initialize_runtime
     [[ -x "${REDIS_SERVER_BIN}" && -x "${REDIS_CLI_BIN}" ]] || {
         log "ERROR: Redis is not installed"
@@ -111,7 +111,7 @@ start() {
     return 20
 }
 
-test() {
+run_redis_benchmarks() {
     initialize_runtime
     "${REDIS_CLI_BIN}" -h 127.0.0.1 -p "${REDIS_SERVICE_PORT}" PING | grep -qx PONG || {
         log "ERROR: Redis service is not running on port ${REDIS_SERVICE_PORT}"
@@ -128,7 +128,7 @@ test() {
         "${RESULTS_DIR}/results.json" "${RESULTS_DIR}/results.txt"
 }
 
-stop() {
+stop_redis_service() {
     local pid=""
     initialize_runtime
     if [[ -f "${SERVICE_DIR}/redis.pid" ]]; then

@@ -212,16 +212,16 @@ execution:
   stages:
     build:
       script: redis_test.sh
-      function: build
+      function: build_redis
     start:
       script: redis_test.sh
-      function: start
+      function: start_redis_service
     test:
       script: redis_test.sh
-      function: test
+      function: run_redis_benchmarks
     stop:
       script: redis_test.sh
-      function: stop
+      function: stop_redis_service
   timeout_minutes: 180
   environment: {}
   expected_outputs:
@@ -242,13 +242,13 @@ runner_label
 
 ### 四阶段函数契约
 
-软件脚本只暴露以下四个公共阶段函数：
+软件脚本必须为四个阶段各暴露一个职责明确的函数。阶段键固定，函数名不固定，推荐包含软件或服务语义，例如：
 
 ```bash
-build() { ...; }
-start() { ...; }
-test() { ...; }
-stop() { ...; }
+build_redis() { ...; }
+start_redis_service() { ...; }
+run_redis_benchmarks() { ...; }
+stop_redis_service() { ...; }
 ```
 
 脚本不得在文件末尾根据 `$1` 分发阶段，也不得提供隐式 `all` 或 `run_all` 入口。脚本被 `source` 时只应完成变量初始化和函数定义，不应自动构建、启动服务或执行测试。Framework 的统一调用链如下：
@@ -258,7 +258,7 @@ workflow --stage build
   → case.yaml execution.stages.build
   → source 声明的 script
   → 校验声明的 function 存在
-  → 调用 function 并原样返回退出码
+  → 调用 build_redis 并原样返回退出码
 ```
 
 公共 Framework 通过环境变量传入：
@@ -490,7 +490,7 @@ python3 -m pytest framework/tests
 | `software/README.md` | 说明分类目录和新软件的必要文件结构。 |
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
 | `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、正式参数、预期输出和指标提取契约。 |
-| `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，只暴露 build、start、test、stop，不自行分发执行。 |
+| `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，为 build、start、test、stop 分别暴露语义清晰的函数，不自行分发执行。 |
 | `software/<category>/<software>/scripts/` | 可选的软件私有基准、聚合和辅助程序。 |
 
 ### Redis 用例
