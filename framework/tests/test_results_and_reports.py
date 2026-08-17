@@ -359,8 +359,12 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "越大越好" in markdown
     assert "越小越好" in markdown
     assert "## 测试环境" in markdown
-    assert "### aarch64" in markdown
-    assert "### x86_64" in markdown
+    environment = markdown.split("## 测试环境", 1)[1]
+    assert "### aarch64" not in environment
+    assert "### x86_64" not in environment
+    assert "| 架构 | 类型 | 项目 | 固定值 | 测试前 | 测试后 |" in environment
+    assert "| aarch64 |" in environment
+    assert "| x86_64 |" in environment
     assert "Example CPU" in markdown
     assert "13.2.1" in markdown
     assert "glibc 2.38" in markdown
@@ -369,6 +373,7 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
 def test_single_report_includes_build_system_and_runtime_environment() -> None:
     markdown = render_single(normalized_result("aarch64", 120, 10))
     assert "## 测试环境" in markdown
+    assert markdown.count("| 类型 | 项目 | 固定值 | 测试前 | 测试后 |") == 1
     assert "实际软件版本" in markdown
     assert "Example CPU" in markdown
     assert "GCC 版本" in markdown
@@ -422,8 +427,14 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "越大越好" in combined
     assert "越小越好" in combined
     assert "## 测试环境" in combined
-    assert "### sample 1.0 aarch64" in combined
-    assert "### sample 1.0 x86_64" in combined
+    environment = combined.split("## 测试环境", 1)[1].split("## 单架构指标", 1)[0]
+    assert "###" not in environment
+    assert (
+        "| 软件 | 版本 | 架构 | 类型 | 项目 | 固定值 | 测试前 | 测试后 |"
+        in environment
+    )
+    assert "| sample | 1.0 | aarch64 |" in environment
+    assert "| sample | 1.0 | x86_64 |" in environment
     assert "Example CPU" in combined
     assert "13.2.1" in combined
     assert "glibc 2.38" in combined
