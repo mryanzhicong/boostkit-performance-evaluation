@@ -31,6 +31,32 @@ def test_redis_is_the_only_valid_case() -> None:
         "test": {"script": "redis_test.sh", "function": "run_redis_benchmarks"},
         "stop": {"script": "redis_test.sh", "function": "stop_redis_service"},
     }
+    assert case["outputs"] == {
+        "version_info": {
+            "path": "version_info.json",
+            "stage": "build",
+            "format": "json",
+            "required": True,
+        },
+        "primary_benchmark": {
+            "path": "benchmark_redis.json",
+            "stage": "test",
+            "format": "json",
+            "required": True,
+        },
+        "micro_benchmark": {
+            "path": "micro_benchmark.json",
+            "stage": "test",
+            "format": "json",
+            "required": True,
+        },
+        "aggregate_result": {
+            "path": "results.json",
+            "stage": "test",
+            "format": "json",
+            "required": True,
+        },
+    }
 
 
 def test_software_registry_normalizes_empty_categories() -> None:
@@ -88,7 +114,14 @@ def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> Non
             },
             "timeout_minutes": 10,
             "environment": {},
-            "expected_outputs": ["results.json"],
+        },
+        "outputs": {
+            "result": {
+                "path": "results.json",
+                "stage": "test",
+                "format": "json",
+                "required": True,
+            }
         },
         "metrics": {
             "throughput": {
@@ -134,6 +167,72 @@ def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> Non
     case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     _case, errors = validate_case(case_path, tmp_path)
     assert any("contains unsupported fields: arguments" in error for error in errors)
+
+
+def test_catalog_validates_structured_outputs(tmp_path) -> None:
+    config = tmp_path / "config"
+    config.mkdir()
+    (config / "categories.yaml").write_text(
+        "categories:\n  AI:\n    - sample\n", encoding="utf-8"
+    )
+    case_dir = tmp_path / "software" / "AI" / "sample"
+    case_dir.mkdir(parents=True)
+    (case_dir / "sample_test.sh").write_text(
+        "build() { :; }\nstart() { :; }\ntest() { :; }\nstop() { :; }\n",
+        encoding="utf-8",
+    )
+    payload = {
+        "name": "sample",
+        "category": "AI",
+        "enabled": True,
+        "versions": ["1.0"],
+        "execution": {
+            "type": "shell-functions",
+            "stages": {
+                stage: {"script": "sample_test.sh", "function": stage}
+                for stage in ("build", "start", "test", "stop")
+            },
+            "timeout_minutes": 10,
+            "environment": {},
+        },
+        "outputs": {
+            "result": {
+                "path": "results.json",
+                "stage": "test",
+                "format": "json",
+                "required": True,
+            }
+        },
+        "metrics": {
+            "throughput": {
+                "source": "results.json",
+                "path": "summary.throughput",
+                "unit": "ops/s",
+                "direction": "higher_is_better",
+            }
+        },
+    }
+    case_path = case_dir / "case.yaml"
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert errors == []
+
+    payload["outputs"]["result"]["stage"] = "finalize"
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("output result.stage must be one of" in error for error in errors)
+
+    payload["outputs"]["result"]["stage"] = "test"
+    payload["outputs"]["result"]["format"] = "text"
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("source must be a JSON output" in error for error in errors)
+
+    payload["outputs"]["result"]["format"] = "json"
+    payload["outputs"]["result"]["required"] = False
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("source must be a required output" in error for error in errors)
 
 
 def test_default_matrix_runs_every_redis_version_on_both_architectures() -> None:
@@ -294,3 +393,14 @@ def test_redis_build_preserves_the_original_script_command() -> None:
         'make -C "${SOURCE_DIR}/deps"',
     ):
         assert structural_regression not in entrypoint
+
+
+def test_redis_does_not_duplicate_framework_logs_or_reports() -> None:
+    entrypoint = (ROOT / "software" / "Database" / "redis" / "redis_test.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "results.log" not in entrypoint
+    assert "results.txt" not in entrypoint
+    assert not (
+        ROOT / "software" / "Database" / "redis" / "scripts" / "generate_summary.py"
+    ).exists()

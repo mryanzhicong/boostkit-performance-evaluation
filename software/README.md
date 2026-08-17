@@ -15,10 +15,10 @@ software/<category>/<software>/
 └── scripts/                 # 仅在用例需要辅助程序时创建
 ```
 
-- `case.yaml`：使用 `execution.stages` 显式声明 build、start、test、stop 各自的 Shell 脚本和函数入口，同时声明软件版本、正式参数、预期输出及指标提取路径；不得声明架构或 Runner 标签。
+- `case.yaml`：使用 `execution.stages` 显式声明 build、start、test、stop 各自的 Shell 脚本和函数入口，并使用顶级 `outputs` 声明每个结果的路径、生成阶段、格式和必要性，同时声明软件版本、正式参数及指标提取路径；不得声明架构或 Runner 标签。
 - `<software>_test.sh`：已有测试用例的阶段函数实现，通过环境变量接收版本、架构和输出目录。四个阶段键固定为 build、start、test、stop，但对应函数应使用 `build_<software>`、`start_<software>_service`、`run_<software>_benchmarks`、`stop_<software>_service` 一类易读名称，并在 `case.yaml` 中显式映射。脚本被加载时不得自动执行阶段，也不再接收阶段名进行分发。
 - `scripts/`：软件私有的基准、结果转换或辅助程序；没有需要时不创建。
 
-`test` 结束前必须生成非空 `results.json`。指标名称、来源 JSON、点路径、单位和优化方向在 `case.yaml` 声明，由 Framework 统一提取和严格校验；软件脚本不生成通用 Markdown、跨架构报告或永久历史。
+阶段函数结束前必须生成归属于该阶段的必要输出。Framework 会立即校验文件存在、非空以及声明的 JSON 格式；指标来源必须是必要的 JSON 输出。软件脚本不生成通用日志、Markdown、文本摘要、跨架构报告或永久历史，这些由 Framework 统一负责。
 
 当前阶段不自动生成测试用例。加入新软件前，应先人工编写并审核上述必要文件。

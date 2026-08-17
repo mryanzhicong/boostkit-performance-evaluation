@@ -29,24 +29,51 @@ def parameter_signature(context: RunContext) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _load_output(
+    context: RunContext,
+    output_name: str,
+    definition: dict[str, Any],
+) -> tuple[str, Any] | None:
+    filename = definition["path"]
+    path = context.output_dir / filename
+    if not path.is_file():
+        if definition["required"]:
+            raise ResultValidationError(
+                f"required output {output_name} is missing: {filename}"
+            )
+        return None
+    if path.stat().st_size == 0:
+        raise ResultValidationError(f"output {output_name} is empty: {filename}")
+    if definition["format"] == "json":
+        try:
+            value = load_json(path)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ResultValidationError(
+                f"output {output_name} contains invalid JSON ({filename}): {exc}"
+            ) from exc
+        if not isinstance(value, dict):
+            raise ResultValidationError(
+                f"output {output_name} JSON root must be an object: {filename}"
+            )
+        return filename, value
+    return filename, {"path": str(path), "size": path.stat().st_size}
+
+
+def validate_stage_outputs(context: RunContext, stage: str) -> None:
+    """Validate every output assigned to a completed software stage."""
+    for output_name, definition in context.case.get("outputs", {}).items():
+        if definition["stage"] == stage:
+            _load_output(context, output_name, definition)
+
+
 def _load_sources(context: RunContext) -> dict[str, Any]:
     sources: dict[str, Any] = {}
-    for filename in context.execution.get("expected_outputs", []):
-        path = context.output_dir / filename
-        if not path.is_file():
-            raise ResultValidationError(f"required result file is missing: {filename}")
-        if path.stat().st_size == 0:
-            raise ResultValidationError(f"required result file is empty: {filename}")
-        if path.suffix == ".json":
-            try:
-                value = load_json(path)
-            except (OSError, json.JSONDecodeError) as exc:
-                raise ResultValidationError(f"invalid JSON result file {filename}: {exc}") from exc
-            if not isinstance(value, dict):
-                raise ResultValidationError(f"JSON result root must be an object: {filename}")
-            sources[filename] = value
-        else:
-            sources[filename] = {"path": str(path), "size": path.stat().st_size}
+    for output_name, definition in context.case.get("outputs", {}).items():
+        loaded = _load_output(context, output_name, definition)
+        if loaded is None:
+            continue
+        filename, value = loaded
+        sources[filename] = value
     return sources
 
 

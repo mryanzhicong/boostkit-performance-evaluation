@@ -13,7 +13,7 @@ from pathlib import Path
 from json_helper import atomic_write_json, load_json
 
 
-PERMANENT_TEXT_FILES = {"report.md", "results.txt"}
+PERMANENT_TEXT_FILES = {"report.md"}
 REQUIRED_IDENTITY_FIELDS = ("category", "software", "version", "architecture", "run_id")
 
 

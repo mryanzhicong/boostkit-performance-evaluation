@@ -13,14 +13,11 @@ REDIS_BENCHMARK_BIN="${SOURCE_DIR}/src/redis-benchmark"
 REDIS_CLI_BIN="${SOURCE_DIR}/src/redis-cli"
 REDIS_SERVICE_PORT="${REDIS_SERVICE_PORT:-16379}"
 SERVICE_DIR="${PERF_WORK_DIR}/service"
-LOG_FILE="${RESULTS_DIR}/results.log"
 
 log() { printf '[redis] %s\n' "$*"; }
 
 initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
-    touch "${LOG_FILE}"
-    exec > >(tee -a "${LOG_FILE}") 2>&1
 }
 
 normalize_arch() {
@@ -124,8 +121,6 @@ run_redis_benchmarks() {
         "${REDIS_SERVER_BIN}" "${REDIS_BENCHMARK_BIN}" "${RESULTS_DIR}/micro_benchmark.json"
     python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
         "${RESULTS_DIR}" "${RESULTS_DIR}/results.json"
-    python3 "${SCRIPT_DIR}/scripts/generate_summary.py" \
-        "${RESULTS_DIR}/results.json" "${RESULTS_DIR}/results.txt"
 }
 
 stop_redis_service() {

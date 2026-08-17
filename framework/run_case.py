@@ -13,7 +13,7 @@ from collect_environment import collect
 from command_adapter import run_command
 from context import RunContext
 from json_helper import atomic_write_json, load_json
-from normalize_results import ResultValidationError, write_normalized
+from normalize_results import ResultValidationError, validate_stage_outputs, write_normalized
 from reporting import render_single
 
 STAGES = ("prepare", "build", "start", "test", "stop", "finalize")
@@ -168,7 +168,7 @@ def main() -> int:
         return 0
 
     try:
-        result = run_command(context, args.stage, check_outputs=False)
+        result = run_command(context, args.stage)
     except Exception as exc:
         exit_code = STAGE_EXIT_CODES[args.stage]
         mark_failed(context, args.stage, exit_code, error=str(exc))
@@ -177,17 +177,23 @@ def main() -> int:
 
     print(f"[stage] {args.stage} function exited with code {result.returncode}", flush=True)
 
+    if result.returncode != 0:
+        mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
+        return result.returncode or STAGE_EXIT_CODES[args.stage]
+
+    try:
+        validate_stage_outputs(context, args.stage)
+    except (ResultValidationError, OSError, ValueError) as exc:
+        exit_code = STAGE_EXIT_CODES[args.stage]
+        mark_failed(context, args.stage, exit_code, error=str(exc))
+        print(f"ERROR: stage output validation failed: {exc}", file=sys.stderr)
+        return exit_code
+
     if args.stage == "stop":
-        if result.returncode != 0:
-            mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
-            return result.returncode or STAGE_EXIT_CODES[args.stage]
         update_status(context, stage=args.stage, service_stop_status="passed")
         print("[stage] stop completed successfully", flush=True)
         return 0
 
-    if result.returncode != 0:
-        mark_failed(context, args.stage, result.returncode or STAGE_EXIT_CODES[args.stage])
-        return result.returncode or STAGE_EXIT_CODES[args.stage]
     update_status(context, status="running", stage=args.stage)
     print(f"[stage] {args.stage} completed successfully", flush=True)
     return 0

@@ -201,7 +201,8 @@ software/<category>/<software>/
 - `execution.type: shell-functions`；
 - `execution.stages` 中完整且仅有 build、start、test、stop 四个阶段；
 - 每个阶段的 Shell 脚本路径和函数名；
-- 超时时间、运行参数和预期输出；
+- 超时时间和运行参数；
+- 每个输出的逻辑名称、相对路径、生成阶段、格式和必要性；
 - 每个指标的来源 JSON、点路径、单位、优化方向和可选目标值。
 
 入口声明示例：
@@ -224,11 +225,17 @@ execution:
       function: stop_redis_service
   timeout_minutes: 180
   environment: {}
-  expected_outputs:
-    - results.json
+outputs:
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
 ```
 
 阶段可以映射到同一个脚本，也可以映射到软件目录内的不同 `.sh` 文件。脚本路径必须是软件目录内的相对路径，函数名必须是合法的 Shell 标识符。Catalog 负责静态校验声明，Framework 在运行时加载脚本后使用 `declare -F` 确认函数真实存在；缺失函数会立即失败，不能回退到其他阶段或空操作。
+
+`outputs` 是软件交付结果的结构化契约。输出路径必须位于 `RESULTS_DIR` 内且不能重复，`stage` 只能是 build、start、test、stop，`format` 支持 `json`、`text`、`binary`，`required` 必须明确为布尔值。阶段函数成功退出后，Framework 立即验收属于该阶段的输出；JSON 还会检查语法和根节点类型。可选输出不存在时不会失败，但指标来源必须是必要的 JSON 输出。
 
 软件清单禁止声明：
 
@@ -303,7 +310,7 @@ make -j$(nproc) BUILD_TLS=no
 
 ## 结果和指标契约
 
-软件 test 阶段必须生成 `case.yaml` 中声明的全部文件。Framework finalize 会拒绝：
+每个软件阶段必须生成 `case.yaml` 中归属于该阶段的必要输出。Framework 会在阶段结束时立即检查，并在 finalize 再次验收全部结果。以下情况会被拒绝：
 
 - 文件缺失或空文件；
 - 非法 JSON；
@@ -382,11 +389,11 @@ command-stop.log
     ├── x86_64/
     │   ├── normalized_result.json
     │   ├── report.md
-    │   └── results.txt
+    │   └── 软件声明的 JSON 输出
     ├── aarch64/
     │   ├── normalized_result.json
     │   ├── report.md
-    │   └── results.txt
+    │   └── 软件声明的 JSON 输出
     ├── comparison.json
     └── comparison.md
 ```
@@ -489,7 +496,7 @@ python3 -m pytest framework/tests
 |---|---|
 | `software/README.md` | 说明分类目录和新软件的必要文件结构。 |
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
-| `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、正式参数、预期输出和指标提取契约。 |
+| `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、正式参数、结构化输出和指标提取契约。 |
 | `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，为 build、start、test、stop 分别暴露语义清晰的函数，不自行分发执行。 |
 | `software/<category>/<software>/scripts/` | 可选的软件私有基准、聚合和辅助程序。 |
 
@@ -503,7 +510,6 @@ python3 -m pytest framework/tests
 | `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
 | `software/Database/redis/scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
 | `software/Database/redis/scripts/aggregate_results.py` | 聚合原始结果并计算 QPS、延迟和客户端扩展指标。 |
-| `software/Database/redis/scripts/generate_summary.py` | 生成 Redis 文本结果摘要。 |
 
 ## 新软件接入检查表
 
@@ -511,7 +517,7 @@ python3 -m pytest framework/tests
 2. 创建对应的软件目录并人工编写 `case.yaml`，不得写入架构或 Runner 标签。
 3. 在 `case.yaml` 显式声明四阶段的脚本和函数，并在脚本中实现 build、start、test、stop。
 4. 确保所有临时资源进入 `PERF_WORK_DIR` 或公共工作根目录。
-5. 确保 test 生成全部非空预期文件和有限数值指标。
+5. 为每个输出声明路径、生成阶段、格式和必要性，并确保对应阶段生成全部必要输出。
 6. 确保 stop 可重复执行，并能处理部分启动或失败状态。
 7. 运行 Catalog 校验、矩阵检查和 Framework 单元测试。
 8. 先手动运行单版本、单架构任务，稳定后再运行默认双架构矩阵。

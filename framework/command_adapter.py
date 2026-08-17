@@ -32,7 +32,6 @@ fi
 class CommandResult:
     returncode: int
     log_path: Path
-    missing_outputs: tuple[str, ...]
 
 
 class StageTerminated(RuntimeError):
@@ -111,8 +110,6 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
 def run_command(
     context: RunContext,
     stage: str,
-    *,
-    check_outputs: bool = True,
 ) -> CommandResult:
     stage_definition = context.execution["stages"][stage]
     script = (context.case_dir / stage_definition["script"]).resolve()
@@ -184,10 +181,4 @@ def run_command(
             if output_thread is not None:
                 output_thread.join()
             signal.signal(signal.SIGTERM, previous_sigterm)
-    missing = ()
-    if check_outputs:
-        missing = tuple(
-            output for output in context.execution.get("expected_outputs", [])
-            if not (context.output_dir / output).is_file()
-        )
-    return CommandResult(returncode=returncode, log_path=log_path, missing_outputs=missing)
+    return CommandResult(returncode=returncode, log_path=log_path)

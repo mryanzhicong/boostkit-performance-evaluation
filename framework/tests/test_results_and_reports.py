@@ -9,7 +9,7 @@ from context import RunContext
 from generate_comparison import compare_pair, generate
 from json_helper import atomic_write_json
 from mark_cleanup import mark
-from normalize_results import ResultValidationError, normalize
+from normalize_results import ResultValidationError, normalize, validate_stage_outputs
 from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
 from reporting import render_comparison
@@ -37,8 +37,15 @@ def test_normalizer_extracts_declared_legacy_metric(tmp_path: Path) -> None:
     atomic_write_json(output / "results.json", {"summary": {"qps": 42.5}})
     case = {
         "execution": {
-            "expected_outputs": ["results.json"],
             "environment": {"ITERATIONS": 1},
+        },
+        "outputs": {
+            "result": {
+                "path": "results.json",
+                "stage": "test",
+                "format": "json",
+                "required": True,
+            }
         },
         "metrics": {
             "qps": {
@@ -72,7 +79,15 @@ def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path
     output = tmp_path / "output"
     output.mkdir()
     case = {
-        "execution": {"expected_outputs": ["results.json"]},
+        "execution": {},
+        "outputs": {
+            "result": {
+                "path": "results.json",
+                "stage": "test",
+                "format": "json",
+                "required": True,
+            }
+        },
         "metrics": {
             "qps": {
                 "source": "results.json",
@@ -109,6 +124,45 @@ def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path
     )
     with pytest.raises(ResultValidationError, match="must be finite"):
         normalize(context, "passed")
+
+
+def test_stage_output_validation_checks_only_the_completed_stage(tmp_path: Path) -> None:
+    import pytest
+
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "version": {
+                    "path": "version.json",
+                    "stage": "build",
+                    "format": "json",
+                    "required": True,
+                },
+                "result": {
+                    "path": "results.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                },
+            },
+            "metrics": {},
+        },
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=tmp_path / "output",
+        work_dir=tmp_path / "work",
+    )
+    context.output_dir.mkdir()
+    atomic_write_json(context.output_dir / "version.json", {"version": "1.0"})
+    validate_stage_outputs(context, "build")
+    with pytest.raises(ResultValidationError, match="required output result is missing"):
+        validate_stage_outputs(context, "test")
 
 
 def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
@@ -197,6 +251,7 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
         (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
         (result_dir / "results.log").write_text("large log\n", encoding="utf-8")
+        (result_dir / "results.txt").write_text("duplicate summary\n", encoding="utf-8")
 
     generate(input_root, report_dir)
     prepared = prepare(
@@ -214,6 +269,7 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert (run_root / "x86_64" / "benchmark.json").is_file()
     assert (run_root / "aarch64" / "normalized_result.json").is_file()
     assert not (run_root / "aarch64" / "results.log").exists()
+    assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()
     assert (run_root / "combined-report.md").is_file()
     baseline = output_root / "AI" / "sample" / "1.0" / "baseline.json"

@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 SOFTWARE_STAGES = ("build", "start", "test", "stop")
 VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "target_is_better", "neutral"}
+VALID_OUTPUT_FORMATS = {"json", "text", "binary"}
 SHELL_FUNCTION_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+OUTPUT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -96,7 +98,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     except Exception as exc:
         return None, [f"cannot load YAML: {exc}"]
 
-    required = ("name", "category", "enabled", "versions", "execution", "metrics")
+    required = ("name", "category", "enabled", "versions", "execution", "outputs", "metrics")
     for field in required:
         if field not in case:
             errors.append(f"missing required field: {field}")
@@ -133,7 +135,6 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     elif len(versions) != len(set(versions)):
         errors.append("versions must not contain duplicates")
 
-    outputs: Any = None
     execution = case.get("execution")
     if not isinstance(execution, dict):
         errors.append("execution must be a mapping")
@@ -203,27 +204,76 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         f"execution.stages.{stage}.function must be a valid Shell function name"
                     )
-        outputs = execution.get("expected_outputs")
-        if not isinstance(outputs, list) or not outputs or not all(
-            isinstance(value, str) and value for value in outputs
-        ):
-            errors.append("execution.expected_outputs must be a non-empty string list")
-        elif len(outputs) != len(set(outputs)):
-            errors.append("execution.expected_outputs must not contain duplicates")
-        else:
-            for output in outputs:
-                output_path = Path(output)
-                if output_path.is_absolute() or ".." in output_path.parts:
-                    errors.append(
-                        f"expected output must remain inside the result directory: {output}"
-                    )
-            if "results.json" not in outputs:
-                errors.append("execution.expected_outputs must include results.json")
+        if "expected_outputs" in execution:
+            errors.append("execution.expected_outputs is not allowed; declare top-level outputs")
         timeout = execution.get("timeout_minutes")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
             errors.append("execution.timeout_minutes must be a positive integer")
         if not isinstance(execution.get("environment"), dict):
             errors.append("execution.environment must be a mapping")
+
+    output_by_path: dict[str, dict[str, Any]] = {}
+    outputs = case.get("outputs")
+    if not isinstance(outputs, dict) or not outputs:
+        errors.append("outputs must be a non-empty mapping")
+    else:
+        for output_name, definition in outputs.items():
+            if not isinstance(output_name, str) or not OUTPUT_NAME_PATTERN.fullmatch(output_name):
+                errors.append(
+                    "output names must use lowercase letters, numbers, and underscores"
+                )
+                continue
+            if not isinstance(definition, dict):
+                errors.append(f"output {output_name} must be a mapping")
+                continue
+            unknown_fields = set(definition) - {"path", "stage", "format", "required"}
+            if unknown_fields:
+                errors.append(
+                    f"output {output_name} contains unsupported fields: "
+                    f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                )
+            missing_fields = {
+                field for field in ("path", "stage", "format", "required")
+                if field not in definition
+            }
+            if missing_fields:
+                errors.append(
+                    f"output {output_name} is missing fields: "
+                    f"{', '.join(sorted(missing_fields))}"
+                )
+            output_path = definition.get("path")
+            if not isinstance(output_path, str) or not output_path:
+                errors.append(f"output {output_name}.path must be a non-empty string")
+            else:
+                path_value = Path(output_path)
+                if path_value.is_absolute() or ".." in path_value.parts:
+                    errors.append(
+                        f"output {output_name}.path must remain inside the result directory"
+                    )
+                elif output_path in output_by_path:
+                    errors.append(
+                        f"output path {output_path} is declared by more than one output"
+                    )
+                else:
+                    output_by_path[output_path] = definition
+            if definition.get("stage") not in SOFTWARE_STAGES:
+                errors.append(
+                    f"output {output_name}.stage must be one of {list(SOFTWARE_STAGES)}"
+                )
+            output_format = definition.get("format")
+            if output_format not in VALID_OUTPUT_FORMATS:
+                errors.append(
+                    f"output {output_name}.format must be one of "
+                    f"{sorted(VALID_OUTPUT_FORMATS)}"
+                )
+            elif (
+                output_format == "json"
+                and isinstance(output_path, str)
+                and not output_path.endswith(".json")
+            ):
+                errors.append(f"output {output_name} with json format must use a .json path")
+            if not isinstance(definition.get("required"), bool):
+                errors.append(f"output {output_name}.required must be boolean")
 
     metrics = case.get("metrics")
     if not isinstance(metrics, dict) or not metrics:
@@ -243,10 +293,12 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
             source = metric.get("source")
             if not isinstance(source, str) or not source:
                 errors.append(f"metric {metric_name} must define source")
-            elif source not in (outputs if isinstance(outputs, list) else []):
-                errors.append(f"metric {metric_name} source is not an expected output")
-            elif not source.endswith(".json"):
-                errors.append(f"metric {metric_name} source must be a JSON file")
+            elif source not in output_by_path:
+                errors.append(f"metric {metric_name} source is not a declared output path")
+            elif output_by_path[source].get("format") != "json":
+                errors.append(f"metric {metric_name} source must be a JSON output")
+            elif output_by_path[source].get("required") is not True:
+                errors.append(f"metric {metric_name} source must be a required output")
             if not isinstance(metric.get("path"), str) or not metric.get("path"):
                 errors.append(f"metric {metric_name} must define path")
             target = metric.get("target")
