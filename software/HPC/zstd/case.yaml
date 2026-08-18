@@ -1,0 +1,47 @@
+name: zstd
+category: HPC
+enabled: true
+versions:
+  - "1.5.6"
+  - "1.5.7"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: zstd_test.sh
+      function: build_zstd
+    start:
+      script: zstd_test.sh
+      function: start_zstd_runtime
+    test:
+      script: zstd_test.sh
+      function: run_zstd_benchmarks
+    stop:
+      script: zstd_test.sh
+      function: stop_zstd_runtime
+  timeout_minutes: 180
+outputs:
+  primary_benchmark:
+    path: benchmark_fullbench.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: primary_benchmark
+  definitions:
+    compress_speed:
+      path: results.compress.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    decompress_speed:
+      path: results.decompress.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    compress_stream_speed:
+      path: results.compress_stream.speed_mbs
+      unit: MB/s
+      direction: higher_is_better
+    decompress_stream_speed:
+      path: results.decompress_stream.speed_mbs
+      unit: MB/s
+      direction: higher_is_better

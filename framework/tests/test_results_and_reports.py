@@ -660,7 +660,7 @@ def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) 
         ["git", "remote", "add", "origin", str(remote)], cwd=repository, check=True
     )
 
-    result_path = source / "Database" / "redis" / "8.0.0" / "12345-1"
+    result_path = source / "Database" / "sample" / "1.0.0" / "12345-1"
     result_path.mkdir(parents=True)
     (source / "README.md").write_text("# Results\n", encoding="utf-8")
     (result_path / "manifest.json").write_text("{}\n", encoding="utf-8")
@@ -686,7 +686,7 @@ def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) 
         capture_output=True,
         text=True,
     ).stdout.splitlines()
-    assert "Database/redis/8.0.0/12345-1/manifest.json" in tree
+    assert "Database/sample/1.0.0/12345-1/manifest.json" in tree
     assert "README.md" in tree
     assert "main-only.txt" not in tree
     duplicate = subprocess.run(

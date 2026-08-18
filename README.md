@@ -2,7 +2,7 @@
 
 本项目通过一个仅支持手动触发的 GitHub Actions Workflow，在专用裸机 Runner 上对开源软件执行 x86_64 与 aarch64 性能测试。软件清单和测试代码由人工维护，公共 Framework 负责矩阵生成、阶段编排、进程隔离、环境清理、指标校验、跨架构报告和结果持久化。
 
-当前接入 Redis 和 LZ4：Redis 支持 `7.4.10`、`8.0.0`、`8.0.6`，LZ4 支持 `1.9.4`、`1.10.0`。默认手动运行会把五个软件版本分别展开到 x86_64 与 aarch64，共生成 10 个性能任务。
+当前软件列表以 `config/categories.yaml` 为唯一入口，各软件支持版本以对应 `case.yaml` 为准；默认手动运行会把全部启用的软件版本展开到 x86_64 与 aarch64。
 
 ## 核心设计
 
@@ -19,7 +19,7 @@
 
 在 GitHub 仓库的 Actions 页面选择 `Manual performance evaluation`，通过 `Run workflow` 启动。
 
-每次运行标题按手动输入动态生成，例如 `Performance evaluation - lz4 1.10.0 (all)`，用于直接区分软件、版本和架构范围。
+每次运行标题按手动输入动态生成，格式为 `Performance evaluation - <software> <version> (<architecture>)`，用于直接区分软件、版本和架构范围。
 
 | 输入 | 默认值 | 用途 |
 |---|---|---|
@@ -380,7 +380,7 @@ python3 -m pytest framework/tests
 | 文件 | 用途 |
 |---|---|
 | `framework/tests/conftest.py` | 将脚本式 Framework 模块加入测试导入路径。 |
-| `framework/tests/test_cases_and_matrix.py` | 验证软件清单、双架构矩阵、Runner 标签单一来源、Workflow 阶段和精简后的目录结构。 |
+| `framework/tests/test_cases_and_matrix.py` | 使用通用样例验证清单协议、双架构矩阵、Runner 标签单一来源、Workflow 阶段和 Framework 目录结构。 |
 | `framework/tests/test_command_adapter.py` | 使用假入口验证显式阶段函数映射、环境变量、退出码、日志、串行等待、超时和进程组终止。 |
 | `framework/tests/test_results_and_reports.py` | 验证严格指标提取、跨架构语义、报告排序、清理状态、永久历史和 Baseline 约束。 |
 
@@ -392,23 +392,3 @@ python3 -m pytest framework/tests
 | `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、结构化输出和指标提取契约。 |
 | `software/<category>/<software>/<software>_test.sh` | 自包含执行入口；直接运行时完成单机全流程，被 Framework 加载时暴露 build、start、test、stop 四阶段函数。 |
 | `software/<category>/<software>/scripts/` | 软件私有基准、独立环境采集、结果校验、报告和其他辅助程序。 |
-
-### Redis 用例
-
-| 文件 | 用途 |
-|---|---|
-| `software/Database/redis/case.yaml` | Redis 版本、阶段入口、结构化输出和指标定义。 |
-| `software/Database/redis/redis_test.sh` | Redis 四阶段函数实现，负责构建校验、服务生命周期、测试和软件级结果聚合。 |
-| `software/Database/redis/scripts/benchmark_redis.py` | 执行 Redis 命令与多并发组合的主性能基准。 |
-| `software/Database/redis/scripts/micro_benchmark.py` | 执行数据大小、客户端并发和持久化模式微基准。 |
-| `software/Database/redis/scripts/aggregate_results.py` | 聚合原始结果并计算 QPS、延迟和客户端扩展指标。 |
-
-### LZ4 用例
-
-| 文件 | 用途 |
-|---|---|
-| `software/HPC/lz4/case.yaml` | LZ4 版本、四阶段入口、fullbench 结构化输出和四项速度指标定义。 |
-| `software/HPC/lz4/lz4_test.sh` | LZ4 自包含入口和四阶段实现；可独立完成环境采集、官方 fullbench 测试、报告生成与私有工作目录清理。 |
-| `software/HPC/lz4/scripts/prepare_silesia.py` | 校验 GitHub 镜像中的 12 个官方语料文件，并用固定元数据生成可复现的 `silesia.tar`。 |
-| `software/HPC/lz4/scripts/run_fullbench.py` | 同步执行四条已批准的 fullbench 命令，严格解析原始输出，并记录语料 SHA-256、命令和速度指标。 |
-| `software/HPC/lz4/scripts/standalone_runtime.py` | 使用 Python 标准库完成独立模式的环境采集、构建信息、严格指标校验、结果汇总和单机报告。 |
