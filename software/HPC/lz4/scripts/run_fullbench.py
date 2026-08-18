@@ -17,36 +17,36 @@ from typing import Any
 ITERATION_LOOPS = 3
 CASES: tuple[dict[str, Any], ...] = (
     {
-        "name": "block_64k_compression",
         "block_option": "B4",
         "block_size_bytes": 64 * 1024,
         "operation_option": "c1",
         "operation": "compression",
         "function": "LZ4_compress_default",
+        "result_name": "1-LZ4_compress_default",
     },
     {
-        "name": "block_64k_decompression",
         "block_option": "B4",
         "block_size_bytes": 64 * 1024,
         "operation_option": "d4",
         "operation": "decompression",
         "function": "LZ4_decompress_safe",
+        "result_name": "4-LZ4_decompress_safe",
     },
     {
-        "name": "block_4m_compression",
         "block_option": "B7",
         "block_size_bytes": 4 * 1024 * 1024,
         "operation_option": "c1",
         "operation": "compression",
         "function": "LZ4_compress_default",
+        "result_name": "1-LZ4_compress_default",
     },
     {
-        "name": "block_4m_decompression",
         "block_option": "B7",
         "block_size_bytes": 4 * 1024 * 1024,
         "operation_option": "d4",
         "operation": "decompression",
         "function": "LZ4_decompress_safe",
+        "result_name": "4-LZ4_decompress_safe",
     },
 )
 
@@ -116,11 +116,15 @@ def run_case(fullbench: Path, corpus: Path, case: dict[str, Any]) -> dict[str, A
     print(completed.stdout, end="", flush=True)
     if completed.returncode:
         raise RuntimeError(
-            f"fullbench case {case['name']} exited with code {completed.returncode}"
+            f"fullbench result {case['result_name']} with "
+            f"-{case['block_option']} exited with code {completed.returncode}"
         )
     parsed = parse_result(completed.stdout, case)
     if parsed["speed_mbs"] <= 0:
-        raise RuntimeError(f"fullbench case {case['name']} returned a non-positive speed")
+        raise RuntimeError(
+            f"fullbench result {case['result_name']} with "
+            f"-{case['block_option']} returned a non-positive speed"
+        )
     return {
         "command": command,
         "function": case["function"],
@@ -141,7 +145,10 @@ def main() -> int:
     if not corpus.is_file() or corpus.stat().st_size == 0:
         raise RuntimeError(f"Silesia corpus is unavailable: {corpus}")
 
-    results = {case["name"]: run_case(fullbench, corpus, case) for case in CASES}
+    results: dict[str, dict[str, Any]] = {}
+    for case in CASES:
+        block_results = results.setdefault(case["block_option"], {})
+        block_results[case["result_name"]] = run_case(fullbench, corpus, case)
     payload = {
         "benchmark": "lz4_fullbench",
         "software": "lz4",

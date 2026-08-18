@@ -16,23 +16,27 @@ from typing import Any
 
 
 METRICS = {
-    "compress_speed_64k": (
-        "block_64k_compression",
+    "B4/1-LZ4_compress_default": (
+        "B4",
+        "1-LZ4_compress_default",
         "MB/s",
         "higher_is_better",
     ),
-    "decompress_speed_64k": (
-        "block_64k_decompression",
+    "B4/4-LZ4_decompress_safe": (
+        "B4",
+        "4-LZ4_decompress_safe",
         "MB/s",
         "higher_is_better",
     ),
-    "compress_speed_4m": (
-        "block_4m_compression",
+    "B7/1-LZ4_compress_default": (
+        "B7",
+        "1-LZ4_compress_default",
         "MB/s",
         "higher_is_better",
     ),
-    "decompress_speed_4m": (
-        "block_4m_decompression",
+    "B7/4-LZ4_decompress_safe": (
+        "B7",
+        "4-LZ4_decompress_safe",
         "MB/s",
         "higher_is_better",
     ),
@@ -180,8 +184,13 @@ def extract_metrics(benchmark: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(results, dict):
         raise RuntimeError("benchmark_fullbench.json is missing results")
     metrics: dict[str, Any] = {}
-    for metric_name, (result_name, unit, direction) in METRICS.items():
-        result = results.get(result_name)
+    for metric_name, (block_name, result_name, unit, direction) in METRICS.items():
+        block_results = results.get(block_name)
+        result = (
+            block_results.get(result_name)
+            if isinstance(block_results, dict)
+            else None
+        )
         value = result.get("speed_mbs") if isinstance(result, dict) else None
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is missing or is not numeric")

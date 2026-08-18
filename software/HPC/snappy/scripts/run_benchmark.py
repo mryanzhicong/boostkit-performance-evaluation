@@ -31,12 +31,12 @@ UNIT_TO_MIB_PER_SECOND = {
     "Gi": 1024.0,
     "Ti": 1024.0 * 1024.0,
 }
-CORE_BENCHMARKS = {
-    "compression_throughput_level_1": "BM_ZFlatAll/1",
-    "compression_throughput_level_2": "BM_ZFlatAll/2",
-    "decompression_throughput": "BM_UFlatMedley",
-    "validation_throughput": "BM_UValidateMedley",
-}
+CORE_BENCHMARKS = (
+    "BM_ZFlatAll/1",
+    "BM_ZFlatAll/2",
+    "BM_UFlatMedley",
+    "BM_UValidateMedley",
+)
 
 
 def normalize_results(output: str) -> dict[str, dict[str, Any]]:
@@ -68,7 +68,7 @@ def normalize_results(output: str) -> dict[str, dict[str, Any]]:
 
     missing_benchmarks = [
         run_name
-        for run_name in CORE_BENCHMARKS.values()
+        for run_name in CORE_BENCHMARKS
         if run_name not in official_results
     ]
     if missing_benchmarks:
@@ -76,8 +76,8 @@ def normalize_results(output: str) -> dict[str, dict[str, Any]]:
         raise RuntimeError(f"official benchmark omitted core scenarios: {missing}")
 
     return {
-        metric_name: official_results[run_name]
-        for metric_name, run_name in CORE_BENCHMARKS.items()
+        run_name: official_results[run_name]
+        for run_name in CORE_BENCHMARKS
     }
 
 
