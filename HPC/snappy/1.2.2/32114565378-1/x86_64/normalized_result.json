@@ -1,0 +1,139 @@
+{
+  "software": "snappy",
+  "category": "HPC",
+  "version": "1.2.2",
+  "architecture": "x86_64",
+  "run_id": "32114565378-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-18T08:06:05Z",
+    "category": "HPC",
+    "software": "snappy",
+    "requested_version": "1.2.2",
+    "actual_version": "1.2.2",
+    "architecture": "x86_64",
+    "run_id": "32114565378-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "./build/snappy_benchmark"
+      ],
+      "build_type": "Release",
+      "official_defaults": true,
+      "official_testdata": true
+    }
+  },
+  "parameter_signature": "c2bbb4762174f5bf017998110d9cd9d1718918173b893d9f068b5d3be3928957",
+  "system_info": {
+    "collected_at": "2026-08-18T08:05:17Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 1 nodes (0)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nnode 0 size: 30886 MB\nnode 0 free: 18281 MB\nnode distances:\nnode   0 \n  0:  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-18T08:05:17Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1163259904 19169517568    73752576 12594814976 31223459840\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-18T08:08:05Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1197088768 19134738432   136781824 12658810880 31189630976\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/snappy/1.2.2/x86_64/32114565378-1/benchmark_google.txt",
+      "size": 14913
+    },
+    "benchmark_result": {
+      "benchmark": "snappy_official_benchmark",
+      "software": "snappy",
+      "version": "1.2.2",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-18T08:08:05Z",
+      "parameters": {
+        "command": [
+          "./build/snappy_benchmark"
+        ],
+        "build_type": "Release",
+        "official_defaults": true,
+        "official_testdata": true
+      },
+      "metric_contract": {
+        "scope": "selected aggregate official benchmark scenarios",
+        "source_field": "bytes_per_second",
+        "normalized_unit": "MiB/s",
+        "direction": "higher_is_better",
+        "benchmarks": {
+          "compression_throughput_level_1": "BM_ZFlatAll/1",
+          "compression_throughput_level_2": "BM_ZFlatAll/2",
+          "decompression_throughput": "BM_UFlatMedley",
+          "validation_throughput": "BM_UValidateMedley"
+        }
+      },
+      "runtime_context": {
+        "selected_metric_count": 4
+      },
+      "results": {
+        "compression_throughput_level_1": {
+          "scenario": "BM_ZFlatAll/1 [12 kTestDataFiles]",
+          "run_name": "BM_ZFlatAll/1",
+          "label": "12 kTestDataFiles",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 558.242798
+        },
+        "compression_throughput_level_2": {
+          "scenario": "BM_ZFlatAll/2 [12 kTestDataFiles]",
+          "run_name": "BM_ZFlatAll/2",
+          "label": "12 kTestDataFiles",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 380.26619
+        },
+        "decompression_throughput": {
+          "scenario": "BM_UFlatMedley",
+          "run_name": "BM_UFlatMedley",
+          "label": "",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 1062.097549
+        },
+        "validation_throughput": {
+          "scenario": "BM_UValidateMedley",
+          "run_name": "BM_UValidateMedley",
+          "label": "",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 1789.255142
+        }
+      }
+    }
+  },
+  "metrics": {
+    "compression_throughput_level_1": {
+      "value": 558.242798,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "compression_throughput_level_2": {
+      "value": 380.26619,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "decompression_throughput": {
+      "value": 1062.097549,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "validation_throughput": {
+      "value": 1789.255142,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
