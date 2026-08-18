@@ -4,9 +4,12 @@ import hashlib
 import importlib.util
 import json
 import os
+import platform
+import shutil
 import subprocess
 import tarfile
 import zipfile
+from pathlib import Path
 
 import pytest
 import yaml
@@ -328,6 +331,10 @@ def test_global_runner_mapping_still_defines_both_architectures() -> None:
 
 def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(encoding="utf-8")
+    assert (
+        'run-name: "Performance evaluation - ${{ inputs.software }} '
+        '${{ inputs.version }} (${{ inputs.architecture }})"'
+    ) in workflow
     assert "matrix.runner_label" in workflow
     assert all(label not in workflow for label in configured_runner_labels().values())
     assert "vars.PERF_RUNNER" not in workflow
@@ -621,6 +628,8 @@ def test_lz4_uses_the_approved_official_fullbench_contract() -> None:
     assert 'make -C tests fullbench' in entrypoint
     assert 'FULLBENCH_BIN="${SOURCE_DIR}/tests/fullbench"' in entrypoint
     assert "PERF_ACTUAL_VERSION_FILE" in entrypoint
+    assert 'if [[ "${BASH_SOURCE[0]}" == "$0" ]]' in entrypoint
+    assert 'scripts/standalone_runtime.py' in entrypoint
     assert not (
         ROOT / "software" / "HPC" / "lz4" / "scripts" / "write_version_info.py"
     ).exists()
@@ -632,7 +641,6 @@ def test_lz4_uses_the_approved_official_fullbench_contract() -> None:
     assert '"function": "LZ4_compress_default"' in runner
     assert '"function": "LZ4_decompress_safe"' in runner
     for duplicate_or_unsafe_behavior in (
-        "results.log",
         "results.txt",
         "shunit2",
         "sudo apt-get",
@@ -642,6 +650,190 @@ def test_lz4_uses_the_approved_official_fullbench_contract() -> None:
         "lz4_benchmark.cc",
     ):
         assert duplicate_or_unsafe_behavior not in entrypoint
+
+    runtime_path = (
+        ROOT / "software" / "HPC" / "lz4" / "scripts" / "standalone_runtime.py"
+    )
+    spec = importlib.util.spec_from_file_location("lz4_standalone_runtime", runtime_path)
+    assert spec is not None and spec.loader is not None
+    runtime = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runtime)
+    case = yaml.safe_load(
+        (ROOT / "software" / "HPC" / "lz4" / "case.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    definitions = case["metrics"]["definitions"]
+    assert list(runtime.METRICS) == list(definitions)
+    for metric_name, (result_name, unit, direction) in runtime.METRICS.items():
+        assert definitions[metric_name] == {
+            "path": f"results.{result_name}.speed_mbs",
+            "unit": unit,
+            "direction": direction,
+        }
+
+
+def test_lz4_directory_is_a_self_contained_standalone_test_unit(tmp_path) -> None:
+    source = ROOT / "software" / "HPC" / "lz4"
+    portable = tmp_path / "lz4"
+    shutil.copytree(source, portable)
+    benchmark_fixture = tmp_path / "benchmark.json"
+    benchmark_fixture.write_text(
+        json.dumps({
+            "benchmark": "lz4_fullbench",
+            "software": "lz4",
+            "version": "1.10.0",
+            "architecture": "x86_64",
+            "parameters": {"iteration_loops": 3, "corpus": "Silesia Corpus"},
+            "results": {
+                "block_64k_compression": {"speed_mbs": 700.5},
+                "block_64k_decompression": {"speed_mbs": 4100.5},
+                "block_4m_compression": {"speed_mbs": 750.5},
+                "block_4m_decompression": {"speed_mbs": 4300.5},
+            },
+        }),
+        encoding="utf-8",
+    )
+    results_dir = tmp_path / "results"
+    run_id = f"portable-{os.getpid()}-{tmp_path.parent.name}-{tmp_path.name}"
+    expected_work_dir = Path(f"/tmp/lz4-perf/local-{run_id}")
+    assert not expected_work_dir.exists()
+    environment = dict(os.environ)
+    for name in (
+        "RESULTS_DIR",
+        "PERF_WORK_DIR",
+        "PERF_ACTUAL_VERSION_FILE",
+        "TMPDIR",
+    ):
+        environment.pop(name, None)
+    environment.update({
+        "EXPECTED_ARCH": platform.machine(),
+        "PERF_RUN_ID": run_id,
+    })
+    completed = subprocess.run(
+        [
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            r'''
+source "$1"
+BENCHMARK_FIXTURE="$2"
+build_lz4() {
+    initialize_runtime
+    printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}"
+}
+start_lz4_runtime() { initialize_runtime; }
+run_lz4_benchmarks() {
+    initialize_runtime
+    cp "${BENCHMARK_FIXTURE}" "${RESULTS_DIR}/benchmark_fullbench.json"
+}
+stop_lz4_runtime() { log "fake LZ4 runtime stopped"; }
+main --version 1.10.0 --results-dir "$3"
+''',
+            "portable-lz4",
+            str(portable / "lz4_test.sh"),
+            str(benchmark_fixture),
+            str(results_dir),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert not expected_work_dir.exists()
+    expected_files = {
+        "actual-version.txt",
+        "benchmark_fullbench.json",
+        "build_info.json",
+        "report.md",
+        "results.json",
+        "results.log",
+        "runtime_after.json",
+        "runtime_before.json",
+        "status.json",
+        "system_info.json",
+    }
+    assert {path.name for path in results_dir.iterdir()} == expected_files
+    result = json.loads((results_dir / "results.json").read_text(encoding="utf-8"))
+    assert result["status"] == "passed"
+    assert result["cleanup_status"] == "passed"
+    assert result["metrics"] == {
+        "compress_speed_64k": {
+            "value": 700.5,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+        },
+        "decompress_speed_64k": {
+            "value": 4100.5,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+        },
+        "compress_speed_4m": {
+            "value": 750.5,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+        },
+        "decompress_speed_4m": {
+            "value": 4300.5,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+        },
+    }
+    assert "独立性能测试报告" in (results_dir / "report.md").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_lz4_standalone_failure_still_reports_and_cleans(tmp_path) -> None:
+    script = ROOT / "software" / "HPC" / "lz4" / "lz4_test.sh"
+    results_dir = tmp_path / "results"
+    run_id = f"failure-{os.getpid()}-{tmp_path.parent.name}-{tmp_path.name}"
+    expected_work_dir = Path(f"/tmp/lz4-perf/local-{run_id}")
+    assert not expected_work_dir.exists()
+    environment = dict(os.environ)
+    for name in (
+        "RESULTS_DIR",
+        "PERF_WORK_DIR",
+        "PERF_ACTUAL_VERSION_FILE",
+        "TMPDIR",
+    ):
+        environment.pop(name, None)
+    environment.update({
+        "EXPECTED_ARCH": platform.machine(),
+        "PERF_RUN_ID": run_id,
+    })
+    completed = subprocess.run(
+        [
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            r'''
+source "$1"
+build_lz4() { initialize_runtime; return 33; }
+stop_lz4_runtime() { log "fake failed runtime stopped"; }
+main --results-dir "$2"
+''',
+            "failed-portable-lz4",
+            str(script),
+            str(results_dir),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert completed.returncode == 33, completed.stdout + completed.stderr
+    assert not expected_work_dir.exists()
+    status = json.loads((results_dir / "status.json").read_text(encoding="utf-8"))
+    assert status["status"] == "failed"
+    assert status["failed_stage"] == "build"
+    assert status["cleanup_status"] == "passed"
+    assert (results_dir / "runtime_before.json").is_file()
+    assert (results_dir / "runtime_after.json").is_file()
+    assert (results_dir / "report.md").is_file()
 
 
 def test_lz4_silesia_packaging_is_reproducible(tmp_path) -> None:

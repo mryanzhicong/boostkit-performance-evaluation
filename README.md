@@ -19,6 +19,8 @@
 
 在 GitHub 仓库的 Actions 页面选择 `Manual performance evaluation`，通过 `Run workflow` 启动。
 
+每次运行标题按手动输入动态生成，例如 `Performance evaluation - lz4 1.10.0 (all)`，用于直接区分软件、版本和架构范围。
+
 | 输入 | 默认值 | 用途 |
 |---|---|---|
 | `software` | `all` | 软件名、逗号分隔的软件名，或全部软件。 |
@@ -372,8 +374,8 @@ python3 -m pytest framework/tests
 |---|---|
 | `software/<空分类>/.gitkeep` | 保存尚未接入软件的分类目录。 |
 | `software/<category>/<software>/case.yaml` | 声明版本、四阶段脚本与函数映射、结构化输出和指标提取契约。 |
-| `software/<category>/<software>/<software>_test.sh` | 软件阶段函数实现，为 build、start、test、stop 分别暴露语义清晰的函数，不自行分发执行。 |
-| `software/<category>/<software>/scripts/` | 可选的软件私有基准、聚合和辅助程序。 |
+| `software/<category>/<software>/<software>_test.sh` | 自包含执行入口；直接运行时完成单机全流程，被 Framework 加载时暴露 build、start、test、stop 四阶段函数。 |
+| `software/<category>/<software>/scripts/` | 软件私有基准、独立环境采集、结果校验、报告和其他辅助程序。 |
 
 ### Redis 用例
 
@@ -390,8 +392,9 @@ python3 -m pytest framework/tests
 | 文件 | 用途 |
 |---|---|
 | `software/HPC/lz4/case.yaml` | LZ4 版本、四阶段入口、fullbench 结构化输出和四项速度指标定义。 |
-| `software/HPC/lz4/lz4_test.sh` | LZ4 四阶段函数实现，负责官方 fullbench 构建、GitHub 语料下载、基准执行和无服务收口。 |
+| `software/HPC/lz4/lz4_test.sh` | LZ4 自包含入口和四阶段实现；可独立完成环境采集、官方 fullbench 测试、报告生成与私有工作目录清理。 |
 | `software/HPC/lz4/scripts/prepare_silesia.py` | 校验 GitHub 镜像中的 12 个官方语料文件，并用固定元数据生成可复现的 `silesia.tar`。 |
 | `software/HPC/lz4/scripts/run_fullbench.py` | 同步执行四条已批准的 fullbench 命令，严格解析原始输出，并记录语料 SHA-256、命令和速度指标。 |
+| `software/HPC/lz4/scripts/standalone_runtime.py` | 使用 Python 标准库完成独立模式的环境采集、构建信息、严格指标校验、结果汇总和单机报告。 |
 
 测试用例生成、自动触发、趋势页面和新的结果门禁不属于当前实现范围，增加前必须单独评审。

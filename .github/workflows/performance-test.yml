@@ -1,4 +1,5 @@
 name: Manual performance evaluation
+run-name: "Performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})"
 
 on:
   workflow_dispatch:
@@ -6,12 +7,12 @@ on:
       software:
         description: "Software name, comma-separated names, or all"
         required: true
-        default: all
+        default: lz4
         type: string
       version:
         description: "Version, comma-separated versions, or all"
         required: true
-        default: all
+        default: 1.10.0
         type: string
       architecture:
         description: "Target architecture; all runs both architectures"
