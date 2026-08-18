@@ -1,6 +1,7 @@
 """Verify normalization and cross-architecture direction semantics."""
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -642,7 +643,13 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         workflow_url="https://github.example/actions/runs/12345",
         update_baseline=True,
     )
-    run_root = output_root / "AI" / "sample" / "1.0" / run_id
+    run_roots = list((output_root / "AI" / "sample" / "1.0").glob(f"*_{run_id}"))
+    assert len(run_roots) == 1
+    run_root = run_roots[0]
+    assert re.fullmatch(
+        rf"\d{{4}}-\d{{2}}-\d{{2}}-\d{{2}}-\d{{2}}-\d{{2}}_{re.escape(run_id)}",
+        run_root.name,
+    )
     assert prepared == [run_root]
     assert (run_root / "x86_64" / "benchmark.json").is_file()
     assert (run_root / "aarch64" / "normalized_result.json").is_file()
@@ -668,6 +675,9 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     baseline = output_root / "AI" / "sample" / "1.0" / "baseline.json"
     assert baseline.is_file()
     assert '"run_id": "12345-1"' in baseline.read_text(encoding="utf-8")
+    assert f'"result_path": "AI/sample/1.0/{run_root.name}"' in baseline.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_baseline_update_rejects_a_single_architecture(tmp_path: Path) -> None:

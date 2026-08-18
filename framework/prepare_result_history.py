@@ -7,7 +7,7 @@ import argparse
 import json
 import shutil
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from generate_comparison import build_summary
@@ -16,6 +16,7 @@ from reporting import render_summary
 
 PERMANENT_TEXT_FILES = {"raw-output.log", "report.md"}
 REQUIRED_IDENTITY_FIELDS = ("category", "software", "version", "architecture", "run_id")
+RESULT_TIMEZONE = timezone(timedelta(hours=8))
 
 
 def _copy_permanent_files(source: Path, destination: Path) -> None:
@@ -32,6 +33,11 @@ def _identity(result: dict) -> tuple[str, str, str, str, str]:
     if missing:
         raise ValueError(f"normalized result is missing identity fields: {', '.join(missing)}")
     return tuple(str(result[field]) for field in REQUIRED_IDENTITY_FIELDS)  # type: ignore[return-value]
+
+
+def _result_directory_name(run_id: str, created_at: datetime) -> str:
+    timestamp = created_at.astimezone(RESULT_TIMEZONE).strftime("%Y-%m-%d-%H-%M-%S")
+    return f"{timestamp}_{run_id}"
 
 
 def prepare(
@@ -53,12 +59,15 @@ def prepare(
     (output_root / "README.md").write_text(
         "# Performance result history\n\n"
         "This branch is maintained by the manually triggered performance workflow.\n"
+        "Result directories use UTC+8 time: YYYY-MM-DD-HH-MM-SS_RUN_ID-ATTEMPT.\n"
         "Each architecture keeps its normalized data, report, declared JSON outputs, "
         "and original test-stage stdout/stderr in raw-output.log. Other stage logs "
         "remain in GitHub Actions artifacts.\n",
         encoding="utf-8",
     )
-    created_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    created_at = datetime.now(RESULT_TIMEZONE)
+    created_at_text = created_at.isoformat(timespec="seconds")
+    result_directory = _result_directory_name(run_id, created_at)
     grouped: dict[tuple[str, str, str], list[tuple[dict, Path]]] = defaultdict(list)
     for normalized_path in normalized_paths:
         result = load_json(normalized_path, {})
@@ -74,7 +83,7 @@ def prepare(
 
     prepared: list[Path] = []
     for (category, software, version), entries in sorted(grouped.items()):
-        run_root = output_root / category / software / version / run_id
+        run_root = output_root / category / software / version / result_directory
         architecture_dirs: dict[str, Path] = {}
         parameter_signatures: set[str] = set()
         result_summaries: list[dict] = []
@@ -109,7 +118,7 @@ def prepare(
             "software": software,
             "version": version,
             "run_id": run_id,
-            "created_at": created_at,
+            "created_at": created_at_text,
             "repository": repository,
             "source_commit": source_commit,
             "workflow_url": workflow_url,
@@ -133,8 +142,10 @@ def prepare(
                 output_root / category / software / version / "baseline.json",
                 {
                     "run_id": run_id,
-                    "result_path": f"{category}/{software}/{version}/{run_id}",
-                    "updated_at": created_at,
+                    "result_path": (
+                        f"{category}/{software}/{version}/{result_directory}"
+                    ),
+                    "updated_at": created_at_text,
                     "source_commit": source_commit,
                     "workflow_url": workflow_url,
                     "parameter_signature": comparison.get("parameter_signature"),

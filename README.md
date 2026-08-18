@@ -270,7 +270,7 @@ command-stop.log
 ```text
 <category>/<software>/<version>/
 ├── baseline.json
-└── <run_id>-<attempt>/
+└── <UTC+8时间>_<run_id>-<attempt>/
     ├── manifest.json
     ├── combined-report.md
     ├── x86_64/
@@ -286,7 +286,7 @@ command-stop.log
     └── comparison.json
 ```
 
-每个 `<run_id>-<attempt>` 对应一个不可变历史目录。`raw-output.log` 是 Framework 在 test 阶段同步捕获的软件原始 stdout/stderr，不经过指标解析或报告转换，并永久保存在对应架构目录。构建、启动、停止日志、大型原始文件、源码和二进制仍保存在限期 Artifact 中。
+每个 `YYYY-MM-DD-HH-MM-SS_<run_id>-<attempt>` 对应一个不可变历史目录，例如 `2026-08-18-17-05-31_32012458198-1`。目录时间固定使用 UTC+8，原始 Run ID 同时保留在结果数据和 Manifest 中。`raw-output.log` 是 Framework 在 test 阶段同步捕获的软件原始 stdout/stderr，不经过指标解析或报告转换，并永久保存在对应架构目录。构建、启动、停止日志、大型原始文件、源码和二进制仍保存在限期 Artifact 中。
 
 `baseline.json` 用于记录人工确认的双架构参考运行，保存来源 Run、提交 SHA、Workflow URL、参数签名和指标，并通过手动运行的 `update_baseline` 输入更新。
 
