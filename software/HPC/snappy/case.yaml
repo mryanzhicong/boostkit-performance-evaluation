@@ -1,0 +1,42 @@
+name: snappy
+category: HPC
+enabled: true
+versions:
+  - "1.2.1"
+  - "1.2.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: snappy_test.sh
+      function: build_snappy
+    start:
+      script: snappy_test.sh
+      function: start_snappy_runtime
+    test:
+      script: snappy_test.sh
+      function: run_snappy_benchmarks
+    stop:
+      script: snappy_test.sh
+      function: stop_snappy_runtime
+  timeout_minutes: 10
+outputs:
+  official_benchmark:
+    path: benchmark_google.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_snappy.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  # Compare bytes_per_second for every scenario emitted by snappy_benchmark.
+  collection:
+    path: results
+    name_path: scenario
+    value_path: throughput_mib_per_second
+    unit: MiB/s
+    direction: higher_is_better
