@@ -19,7 +19,13 @@ def _command(args: list[str]) -> str:
 
 
 def _cpu_model() -> str:
-    lscpu = _command(["env", "LC_ALL=C", "lscpu"])
+    lscpu = _command([
+        "/usr/bin/sudo",
+        "-n",
+        "/usr/bin/env",
+        "LC_ALL=C",
+        "/usr/bin/lscpu",
+    ])
     for line in lscpu.splitlines():
         field, separator, value = line.partition(":")
         if separator and field.strip().casefold() == "model name":

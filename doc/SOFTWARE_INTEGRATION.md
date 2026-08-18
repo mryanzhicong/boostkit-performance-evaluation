@@ -328,7 +328,7 @@ stop_example_service() {
 
 源码、构建、安装、服务数据、测试数据、PID、socket、下载和软件缓存全部迁移到 `PERF_WORK_DIR`；交付结果写入 `RESULTS_DIR`。不得通过 apt、dnf、系统级 pip 或系统目录下的 `make install` 永久修改 Runner。
 
-Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和 CPU governor 由 Framework 统一采集，四阶段函数不得重复生成这些公共文件。独立模式必须在软件目录内提供等价的本地采集能力，但该能力只能由受保护的 `main()` 调用，不能依赖项目根目录中的 Framework 模块。
+Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和 CPU governor 由 Framework 统一采集，四阶段函数不得重复生成这些公共文件。CPU 型号的唯一采集入口是 `/usr/bin/sudo -n /usr/bin/env LC_ALL=C /usr/bin/lscpu`；性能 Runner 必须按根 README 配置该命令的最小 sudoers 权限。独立模式必须在软件目录内提供等价的本地采集能力，目标机器也必须满足同一权限前置条件；该能力只能由受保护的 `main()` 调用，不能依赖项目根目录中的 Framework 模块。
 
 ## 第六步：适配已有结果
 

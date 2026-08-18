@@ -93,7 +93,13 @@ def test_cpu_model_keeps_complete_lscpu_model_name(monkeypatch) -> None:
         collect_environment,
         "_command",
         lambda args: f"Architecture: aarch64\nModel name: {model_name}\n"
-        if args == ["env", "LC_ALL=C", "lscpu"]
+        if args == [
+            "/usr/bin/sudo",
+            "-n",
+            "/usr/bin/env",
+            "LC_ALL=C",
+            "/usr/bin/lscpu",
+        ]
         else "",
     )
     assert collect_environment._cpu_model() == model_name

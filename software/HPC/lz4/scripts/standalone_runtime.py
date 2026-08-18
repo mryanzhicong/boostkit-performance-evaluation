@@ -96,7 +96,14 @@ def os_pretty_name() -> str:
 
 
 def cpu_model() -> str:
-    for line in command(["env", "LC_ALL=C", "lscpu"]).splitlines():
+    lscpu_command = [
+        "/usr/bin/sudo",
+        "-n",
+        "/usr/bin/env",
+        "LC_ALL=C",
+        "/usr/bin/lscpu",
+    ]
+    for line in command(lscpu_command).splitlines():
         field, separator, value = line.partition(":")
         if separator and field.strip().casefold() == "model name":
             if value.strip():
