@@ -1,0 +1,114 @@
+name: faiss
+category: AI
+enabled: true
+versions:
+  - "1.14.2"
+  - "1.14.3"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: faiss_test.sh
+      function: build_faiss
+    start:
+      script: faiss_test.sh
+      function: start_faiss_runtime
+    test:
+      script: faiss_test.sh
+      function: run_faiss_benchmarks
+    stop:
+      script: faiss_test.sh
+      function: stop_faiss_runtime
+  timeout_minutes: 60
+outputs:
+  ann_benchmark:
+    path: benchmark_ann.json
+    stage: test
+    format: json
+    required: true
+  micro_benchmark:
+    path: benchmark_micro.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: ann_benchmark
+  definitions:
+    "IndexFlatL2/qps":
+      path: results.IndexFlatL2.qps
+      unit: queries/s
+      direction: higher_is_better
+    "IndexFlatL2/latency_per_query_us":
+      path: results.IndexFlatL2.latency_per_query_us
+      unit: us
+      direction: lower_is_better
+    "IndexFlatL2/recall_at_k":
+      path: results.IndexFlatL2.recall_at_k
+      unit: ratio
+      direction: higher_is_better
+    "IndexFlatL2/build_time_s":
+      path: results.IndexFlatL2.build_time_s
+      unit: s
+      direction: lower_is_better
+    "IndexIVFFlat/qps":
+      path: results.IndexIVFFlat.qps
+      unit: queries/s
+      direction: higher_is_better
+    "IndexIVFFlat/latency_per_query_us":
+      path: results.IndexIVFFlat.latency_per_query_us
+      unit: us
+      direction: lower_is_better
+    "IndexIVFFlat/recall_at_k":
+      path: results.IndexIVFFlat.recall_at_k
+      unit: ratio
+      direction: higher_is_better
+    "IndexIVFFlat/build_time_s":
+      path: results.IndexIVFFlat.build_time_s
+      unit: s
+      direction: lower_is_better
+    "IndexHNSWFlat/qps":
+      path: results.IndexHNSWFlat.qps
+      unit: queries/s
+      direction: higher_is_better
+    "IndexHNSWFlat/latency_per_query_us":
+      path: results.IndexHNSWFlat.latency_per_query_us
+      unit: us
+      direction: lower_is_better
+    "IndexHNSWFlat/recall_at_k":
+      path: results.IndexHNSWFlat.recall_at_k
+      unit: ratio
+      direction: higher_is_better
+    "IndexHNSWFlat/build_time_s":
+      path: results.IndexHNSWFlat.build_time_s
+      unit: s
+      direction: lower_is_better
+    "Kmeans/train/elapsed_s":
+      source: micro_benchmark
+      path: results.Kmeans.train.elapsed_s
+      unit: s
+      direction: lower_is_better
+    "IndexFlatL2/add/vectors_per_second":
+      source: micro_benchmark
+      path: results.IndexFlatL2.add.vectors_per_second
+      unit: vectors/s
+      direction: higher_is_better
+    "IndexFlatL2/search/single/latency_us":
+      source: micro_benchmark
+      path: results.IndexFlatL2.search.single.latency_us
+      unit: us
+      direction: lower_is_better
+    "IndexFlatL2/search/batch/queries_per_second":
+      source: micro_benchmark
+      path: results.IndexFlatL2.search.batch.queries_per_second
+      unit: queries/s
+      direction: higher_is_better
+    "IndexFlatL2/range_search/queries_per_second":
+      source: micro_benchmark
+      path: results.IndexFlatL2.range_search.queries_per_second
+      unit: queries/s
+      direction: higher_is_better
+    "IndexPQ/add/vectors_per_second":
+      source: micro_benchmark
+      path: results.IndexPQ.add.vectors_per_second
+      unit: vectors/s
+      direction: higher_is_better
