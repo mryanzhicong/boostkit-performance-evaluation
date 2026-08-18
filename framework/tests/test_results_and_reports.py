@@ -93,20 +93,15 @@ def test_cpu_model_keeps_complete_lscpu_model_name(monkeypatch) -> None:
         collect_environment,
         "_command",
         lambda args: f"Architecture: aarch64\nModel name: {model_name}\n"
-        if args == ["lscpu"]
+        if args == ["env", "LC_ALL=C", "lscpu"]
         else "",
     )
     assert collect_environment._cpu_model() == model_name
 
 
-def test_cpu_model_never_uses_logical_processor_index(monkeypatch) -> None:
+def test_cpu_model_does_not_fall_back_when_lscpu_has_no_model_name(monkeypatch) -> None:
     monkeypatch.setattr(collect_environment, "_command", lambda _args: "")
-    monkeypatch.setattr(
-        collect_environment.Path,
-        "read_text",
-        lambda *_args, **_kwargs: "processor : 0\nmodel name : Example CPU @ 3.0GHz\n",
-    )
-    assert collect_environment._cpu_model() == "Example CPU @ 3.0GHz"
+    assert collect_environment._cpu_model() == "unknown"
 
 
 def test_operating_system_uses_os_release_pretty_name(monkeypatch) -> None:

@@ -96,26 +96,12 @@ def os_pretty_name() -> str:
 
 
 def cpu_model() -> str:
-    for line in command(["lscpu"]).splitlines():
+    for line in command(["env", "LC_ALL=C", "lscpu"]).splitlines():
         field, separator, value = line.partition(":")
         if separator and field.strip().casefold() == "model name":
             if value.strip():
                 return value.strip()
-    try:
-        lines = Path("/proc/cpuinfo").read_text(
-            encoding="utf-8", errors="replace"
-        ).splitlines()
-    except OSError:
-        lines = []
-    fields: dict[str, str] = {}
-    for line in lines:
-        field, separator, value = line.partition(":")
-        if separator and value.strip():
-            fields.setdefault(field.strip().casefold(), value.strip())
-    for field in ("model name", "hardware"):
-        if field in fields:
-            return fields[field]
-    return platform.processor() or "unknown"
+    return "unknown"
 
 
 def gcc_version() -> str:

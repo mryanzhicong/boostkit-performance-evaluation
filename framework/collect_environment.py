@@ -19,29 +19,14 @@ def _command(args: list[str]) -> str:
 
 
 def _cpu_model() -> str:
-    lscpu = _command(["lscpu"])
+    lscpu = _command(["env", "LC_ALL=C", "lscpu"])
     for line in lscpu.splitlines():
         field, separator, value = line.partition(":")
         if separator and field.strip().casefold() == "model name":
             model_name = value.strip()
             if model_name:
                 return model_name
-
-    try:
-        cpuinfo = Path("/proc/cpuinfo").read_text(
-            encoding="utf-8", errors="replace"
-        )
-        fields: dict[str, str] = {}
-        for line in cpuinfo.splitlines():
-            field, separator, value = line.partition(":")
-            if separator and value.strip():
-                fields.setdefault(field.strip().casefold(), value.strip())
-        for field in ("model name", "hardware"):
-            if field in fields:
-                return fields[field]
-    except OSError:
-        pass
-    return platform.processor() or "unknown"
+    return "unknown"
 
 
 def _os_pretty_name() -> str:
