@@ -23,6 +23,7 @@
 4. 整个软件目录复制到其他机器后仍应能够完成单机测试，不得反向依赖项目根目录下的 Framework 文件。
 5. Framework 只按 `case.yaml` 的通用契约编排，不在 Workflow 或 Framework 中增加按软件名称判断的分支。
 6. 所有版本默认在 x86_64 和 aarch64 上执行，软件清单不维护架构或 Runner 标签。
+7. 报告指标必须逐字继承正式测试来源中的名称；适配层只负责提取和必要的格式转换，不负责发明、重命名或解释指标。
 
 现有参考：
 
@@ -117,15 +118,13 @@ outputs:
 metrics:
   source: benchmark_result
   definitions:
-    throughput:
-      path: benchmark.throughput
-      unit: ops/s
-      direction: higher_is_better
-    latency:
-      path: benchmark.latency_ms
-      unit: ms
-      direction: lower_is_better
+    "<原始输出中的完整指标名>":
+      path: "<真实 JSON 数值路径>"
+      unit: "<原始单位或审核通过的统一单位>"
+      direction: "<higher_is_better、lower_is_better 或 neutral>"
 ```
+
+模板中的尖括号是必须用真实证据替换的占位符，不能直接照抄，也不能由适配人员自行命名。指标证据和命名规则见下文“指标名称与来源约束”。
 
 ### 身份和版本
 
@@ -176,11 +175,41 @@ metrics:
 
 `metrics.source` 引用输出逻辑名称，不是文件路径。指标使用 `definitions` 或 `collection` 两种声明方式，二者只能选择一种。
 
+#### 指标名称与来源约束
+
+对外展示和跨架构对比使用的指标名称必须可从测试来源逐字追溯。这里的“测试来源”只包括：
+
+1. 正式性能命令的原始 stdout/stderr；
+2. 正式性能工具生成的原始结果文件；
+3. 软件官方文档明确给出的 benchmark、scenario、API、operation 或 metric 名称；
+4. 已有脚本真实输出且经过评审确认需要保留的名称。
+
+必须遵守以下规则：
+
+- `definitions` 的每个键必须使用来源中的完整原名，保留大小写、数字、下划线、斜杠和参数后缀；不得翻译、缩写、美化或换成自认为更易读的名称；
+- `collection.name_path` 指向的值必须是解析器从来源原样复制的名称；不得根据循环序号、代码变量或主观语义拼接新名称；
+- 官方输出为 `BM_ZFlatAll/1` 时，对外指标名必须是 `BM_ZFlatAll/1`，不能写成 `snappy_compress_throughput`、`compress_speed` 或其他自造别名；
+- 来源没有给某个数值命名时，该数值不能直接成为对外指标。应先确认官方语义或由测试方案评审明确名称，不允许适配过程中临时起名；
+- 不得把多个原始指标自行合并成“综合性能”“平均性能”等新指标，也不得自行计算比例、评分或推导指标；只有用户明确要求且公式、输入指标、单位和优化方向全部经过评审后才能增加派生指标；
+- 指标筛选必须以真实输出为依据并在接入评审时明确。稳定且数量固定的指标逐项写入 `definitions`；官方场景集合由程序决定时才使用 `collection`；
+- 同一指标在两个架构上必须使用相同的来源名称、提取规则、单位换算和优化方向，不能为不同架构建立别名。
+
+适配层可以为机器解析创建 `results`、`parameters`、`runtime_context` 等 JSON 容器，也可以使用 `value`、`unit`、`source_name`、`source_field` 等技术字段，但必须满足：
+
+- `source_name` 保存来源中的完整原名，并作为最终对外指标名；
+- 技术字段只能承载原值、单位换算值或来源信息，不能创造来源中不存在的性能概念；
+- 单位换算不得改变指标名称和语义，必须保留原始字段、原始单位以及确定性的换算关系；
+- `case.yaml` 的指标键或 `collection.name_path` 决定最终报告名称，不能使用适配层自造的描述字段替代 `source_name`。
+
+接入前必须从真实原始输出整理指标清单，至少逐项确认：原始名称、原始示例行或 JSON 路径、数值字段、原始单位、是否换算、最终单位、优化方向和是否纳入报告。任何一项无法确认都应停止指标接入，不能靠猜测补齐。
+
 固定指标使用 `definitions`，每个指标必须声明：
 
 - `path`：指标在 JSON 中的点路径；字段可以位于任意层级，不要求名为 `summary`；
 - `unit`：非空单位；
 - `direction`：`higher_is_better`、`lower_is_better` 或 `neutral`。
+
+`definitions` 的键是最终报告名称，因此还必须满足上面的来源约束；`path` 只是结构化结果中的取值位置，不能用它为自造名称提供依据。
 
 单个指标可以用自己的 `source` 覆盖默认来源。指标来源必须是 `required: true` 的 JSON 输出。指标值必须是有限数值；字符串、布尔值、`null`、NaN 和 Infinity 都会失败。
 
@@ -191,8 +220,8 @@ metrics:
   source: benchmark_result
   collection:
     path: results
-    name_path: scenario
-    value_path: speed_mbs
+    name_path: source_name
+    value_path: value
     unit: MB/s
     direction: higher_is_better
 ```
@@ -202,7 +231,7 @@ metrics:
 - `value_path` 指向成员内部的数值；
 - `unit` 和 `direction` 应适用于集合中的全部成员。
 
-Framework 会保持集合原有顺序，拒绝空集合、重复名称、缺失路径和非有限数值，并要求同一版本的两个架构产生完全一致的指标集合后才生成跨架构对比。
+Framework 会保持集合原有顺序，拒绝空集合、重复名称、缺失路径和非有限数值，并要求同一版本的两个架构产生完全一致的指标集合后才生成跨架构对比。Framework 只能校验结构和双架构一致性，不能判断名称是否确实来自官方输出；来源真实性必须通过原始输出、解析测试和人工评审共同保证。
 
 ## 第四步：把已有脚本暴露为四个函数
 
@@ -355,14 +384,15 @@ Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和
 
 ## 第六步：适配已有结果
 
-如果原脚本已经生成合法 JSON，可以直接声明为 output，并用点路径提取指标。JSON 中指标字段名没有统一要求，例如 `summary.qps`、`benchmark.throughput` 和 `results.latency.p99` 都可以。
+如果原脚本已经生成合法 JSON，可以直接声明为 output，并用点路径提取指标。必须先核对 JSON 中的名称是否来自正式性能工具或已评审脚本；不能因为 JSON 已经存在就默认其中的自造名称有效。
 
 如果正式测试实现只生成文本：
 
 1. 保留正式性能命令和原始文本；
-2. 在 test 阶段末尾调用薄转换层，把原始结果严格转换为 JSON；
+2. 在 test 阶段末尾调用薄转换层，把原始结果严格转换为 JSON，并逐字保留原始指标名称；
 3. 转换失败、匹配数量异常或数值非法时直接失败，不能填 0 或复用旧结果；
-4. 将转换后的必要 JSON 作为指标来源，原始文本可作为普通 Artifact 输出。
+4. 单位不需要换算时保留原始数值和单位；确需统一单位时，同时记录原始数值、原始单位、换算值和换算规则；
+5. 将转换后的必要 JSON 作为指标来源，原始终端输出由 Framework 保存为 `raw-output.log`；测试程序另行生成的原始结果文件应声明为 output。
 
 推荐结果结构：
 
@@ -375,9 +405,15 @@ Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和
   "runtime_context": {
     "resolved_worker_count": 64
   },
-  "benchmark": {
-    "throughput": 12345.6,
-    "latency_ms": 0.82
+  "results": {
+    "<原始输出中的完整指标名>": {
+      "source_name": "<原始输出中的完整指标名>",
+      "source_field": "<原始数值字段名>",
+      "raw_value": 12345.6,
+      "raw_unit": "MB/s",
+      "value": 12345.6,
+      "unit": "MB/s"
+    }
   }
 }
 ```
@@ -386,7 +422,9 @@ Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和
 - CPU 核数推导值等机器相关信息放入 `runtime_context`；
 - 固定测试参数仍由原脚本维护，不在 `case.yaml` 再复制一份；
 - 两个架构的 `parameters` 不一致时，Framework 拒绝生成跨架构对比；
-- `parameters`、`runtime_context` 之外的结果字段名由软件决定，指标位置以 `case.yaml` 为准。
+- `results` 的成员键和 `source_name` 必须与原始指标名称完全一致；
+- `raw_value` 和 `raw_unit` 保存来源值，`value` 和 `unit` 保存 Framework 提取值；未换算时两组值相同；
+- 不要求已有合法 JSON 改造成这一推荐结构，但无论采用什么结构，最终指标名称都必须遵守来源约束。
 
 ## 第七步：验证适配结果
 
@@ -406,7 +444,12 @@ python3 framework/catalog.py matrix \
 python3 -m pytest framework/tests
 ```
 
-矩阵中每个声明版本都应出现 x86_64 和 aarch64 两条记录。辅助 Python 转换程序还应执行语法检查和已有结果样例测试。
+矩阵中每个声明版本都应出现 x86_64 和 aarch64 两条记录。辅助 Python 转换程序还应执行语法检查和基于真实原始输出的解析测试。解析测试必须断言：
+
+- 每个最终指标名称都能在原始输出或官方结果文件中找到完全相同的来源名称；
+- 解析前后的指标数量符合评审清单，不接受意外新增、遗漏或重复；
+- 原始数值和单位被正确保留；存在单位换算时，换算值和规则准确；
+- 未识别输出、格式变化、重复名称、空结果和非法数值都会失败，不会生成猜测名称或默认值。
 
 还必须验证软件目录自包含：把整个 `software/<category>/<software>` 复制到项目之外的临时位置，从复制后的目录直接执行入口，确认没有导入或调用项目根目录中的 `framework/`、`config/`、Workflow 或其他软件文件。成功和失败路径都要验证结果留存以及私有工作目录清理。
 
@@ -430,6 +473,9 @@ Actions 手动验证顺序：
 | 请求版本与实际版本不同 | 标签、解析格式或版本前缀不一致。 | 修正版本选择或规范化解析，不要直接回写请求值。 |
 | 必要输出缺失或为空 | 原脚本仍写旧目录，或聚合尚未结束函数就退出。 | 把交付文件迁移到 `RESULTS_DIR` 并等待完成。 |
 | 指标路径不存在 | `case.yaml` 与实际 JSON 层级不一致。 | 以真实结果 JSON 为准修正点路径。 |
+| 报告中的指标名无法在原始输出中找到 | 适配时根据主观含义创建了别名或新字段。 | 删除自造名称，使用原始完整名称；来源本身未命名时先停止接入并完成评审。 |
+| 原始输出名称被缩写、翻译或美化 | 把报告可读性当成了重新命名的理由。 | 完整保留官方名称；解释性文字应放在文档或报告说明中，不能替换指标名。 |
+| 解析器产生来源中不存在的综合指标 | 适配层自行聚合、计算比例或评分。 | 默认删除派生指标；确有需求时先明确公式、输入、单位、方向并经过评审。 |
 | 指标不是有限数值 | 文本转换宽松，产生字符串、空值、NaN 或 Infinity。 | 严格解析并在异常时失败。 |
 | 双架构参数不一致 | 把 CPU 数量等机器值写入 `parameters`。 | 机器相关解析值迁移到 `runtime_context`。 |
 | start 成功但 test 连接失败 | 原脚本启动后立即返回，没有就绪检查。 | 保留启动命令并增加有界就绪轮询。 |
@@ -453,6 +499,10 @@ Actions 手动验证顺序：
 - [ ] 所有运行资源迁移到 `PERF_WORK_DIR`，交付结果迁移到 `RESULTS_DIR`；
 - [ ] 原始结果已直接声明或通过薄转换层生成严格 JSON；
 - [ ] 测试命令的原始 stdout/stderr 会输出到终端，可由 Framework 完整保存为 `raw-output.log`；
+- [ ] 已基于真实原始输出形成指标清单，并确认原始名称、来源位置、数值、单位、换算和优化方向；
+- [ ] `definitions` 的键或 `collection.name_path` 结果与来源名称逐字一致，没有翻译、缩写、美化或自造别名；
+- [ ] 适配层没有自行增加综合指标、比例、评分或其他来源中不存在的性能概念；
+- [ ] 解析测试使用真实输出样例，并校验指标集合、原始名称、数值、单位及异常失败路径；
 - [ ] 固定输入写入 `parameters`，机器相关值写入 `runtime_context`；
 - [ ] 指标路径、单位、优化方向和数值类型与实际结果一致；
 - [ ] Shell、Catalog、矩阵、Framework 测试和分阶段 Actions 验证全部通过。
