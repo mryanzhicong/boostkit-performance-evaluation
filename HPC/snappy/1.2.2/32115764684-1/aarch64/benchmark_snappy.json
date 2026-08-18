@@ -1,0 +1,60 @@
+{
+  "benchmark": "snappy_official_benchmark",
+  "software": "snappy",
+  "version": "1.2.2",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-18T08:22:22Z",
+  "parameters": {
+    "command": [
+      "./build/snappy_benchmark"
+    ],
+    "build_type": "Release",
+    "official_defaults": true,
+    "official_testdata": true
+  },
+  "metric_contract": {
+    "scope": "selected aggregate official benchmark scenarios",
+    "source_field": "bytes_per_second",
+    "normalized_unit": "MiB/s",
+    "direction": "higher_is_better",
+    "benchmarks": [
+      "BM_ZFlatAll/1",
+      "BM_ZFlatAll/2",
+      "BM_UFlatMedley",
+      "BM_UValidateMedley"
+    ]
+  },
+  "runtime_context": {
+    "selected_metric_count": 4
+  },
+  "results": {
+    "BM_ZFlatAll/1": {
+      "scenario": "BM_ZFlatAll/1 [12 kTestDataFiles]",
+      "run_name": "BM_ZFlatAll/1",
+      "label": "12 kTestDataFiles",
+      "source_metric": "bytes_per_second",
+      "throughput_mib_per_second": 430.238724
+    },
+    "BM_ZFlatAll/2": {
+      "scenario": "BM_ZFlatAll/2 [12 kTestDataFiles]",
+      "run_name": "BM_ZFlatAll/2",
+      "label": "12 kTestDataFiles",
+      "source_metric": "bytes_per_second",
+      "throughput_mib_per_second": 328.607559
+    },
+    "BM_UFlatMedley": {
+      "scenario": "BM_UFlatMedley",
+      "run_name": "BM_UFlatMedley",
+      "label": "",
+      "source_metric": "bytes_per_second",
+      "throughput_mib_per_second": 1160.421371
+    },
+    "BM_UValidateMedley": {
+      "scenario": "BM_UValidateMedley",
+      "run_name": "BM_UValidateMedley",
+      "label": "",
+      "source_metric": "bytes_per_second",
+      "throughput_mib_per_second": 1740.169525
+    }
+  }
+}
