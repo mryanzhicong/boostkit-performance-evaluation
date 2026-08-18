@@ -33,10 +33,20 @@ outputs:
     required: true
 metrics:
   source: benchmark_result
-  # Compare bytes_per_second for every scenario emitted by snappy_benchmark.
-  collection:
-    path: results
-    name_path: scenario
-    value_path: throughput_mib_per_second
-    unit: MiB/s
-    direction: higher_is_better
+  definitions:
+    compression_throughput_level_1:
+      path: results.compression_throughput_level_1.throughput_mib_per_second
+      unit: MiB/s
+      direction: higher_is_better
+    compression_throughput_level_2:
+      path: results.compression_throughput_level_2.throughput_mib_per_second
+      unit: MiB/s
+      direction: higher_is_better
+    decompression_throughput:
+      path: results.decompression_throughput.throughput_mib_per_second
+      unit: MiB/s
+      direction: higher_is_better
+    validation_throughput:
+      path: results.validation_throughput.throughput_mib_per_second
+      unit: MiB/s
+      direction: higher_is_better

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Snappy's documented benchmark command and normalize every throughput."""
+"""Run Snappy's documented benchmark command and normalize core throughputs."""
 
 from __future__ import annotations
 
@@ -31,16 +31,22 @@ UNIT_TO_MIB_PER_SECOND = {
     "Gi": 1024.0,
     "Ti": 1024.0 * 1024.0,
 }
+CORE_BENCHMARKS = {
+    "compression_throughput_level_1": "BM_ZFlatAll/1",
+    "compression_throughput_level_2": "BM_ZFlatAll/2",
+    "decompression_throughput": "BM_UFlatMedley",
+    "validation_throughput": "BM_UValidateMedley",
+}
 
 
 def normalize_results(output: str) -> dict[str, dict[str, Any]]:
-    results: dict[str, dict[str, Any]] = {}
+    official_results: dict[str, dict[str, Any]] = {}
     for line in output.splitlines():
         match = RESULT_PATTERN.match(line)
         if not match:
             continue
         run_name, raw_value, unit_prefix, raw_label = match.groups()
-        if any(result["run_name"] == run_name for result in results.values()):
+        if run_name in official_results:
             raise RuntimeError(f"official benchmark produced duplicate result: {run_name}")
         value = float(raw_value) * UNIT_TO_MIB_PER_SECOND[unit_prefix]
         if not math.isfinite(value) or value <= 0:
@@ -49,8 +55,7 @@ def normalize_results(output: str) -> dict[str, dict[str, Any]]:
         scenario = run_name
         if label:
             scenario = f"{run_name} [{label}]"
-        result_key = f"scenario_{len(results):03d}"
-        results[result_key] = {
+        official_results[run_name] = {
             "scenario": scenario,
             "run_name": run_name,
             "label": label,
@@ -58,9 +63,22 @@ def normalize_results(output: str) -> dict[str, dict[str, Any]]:
             "throughput_mib_per_second": round(value, 6),
         }
 
-    if not results:
+    if not official_results:
         raise RuntimeError("official benchmark output contains no throughput results")
-    return results
+
+    missing_benchmarks = [
+        run_name
+        for run_name in CORE_BENCHMARKS.values()
+        if run_name not in official_results
+    ]
+    if missing_benchmarks:
+        missing = ", ".join(missing_benchmarks)
+        raise RuntimeError(f"official benchmark omitted core scenarios: {missing}")
+
+    return {
+        metric_name: official_results[run_name]
+        for metric_name, run_name in CORE_BENCHMARKS.items()
+    }
 
 
 def run_benchmark(source_dir: Path, raw_output: Path) -> str:
@@ -119,13 +137,14 @@ def main() -> int:
             "official_testdata": True,
         },
         "metric_contract": {
-            "scope": "every official benchmark scenario",
+            "scope": "selected aggregate official benchmark scenarios",
             "source_field": "bytes_per_second",
             "normalized_unit": "MiB/s",
             "direction": "higher_is_better",
+            "benchmarks": CORE_BENCHMARKS,
         },
         "runtime_context": {
-            "scenario_count": len(results),
+            "selected_metric_count": len(results),
         },
         "results": results,
     }
@@ -134,7 +153,7 @@ def main() -> int:
         json.dumps(normalized, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"[snappy-benchmark] normalized {len(results)} official scenarios")
+    print(f"[snappy-benchmark] normalized {len(results)} core metrics")
     return 0
 
 

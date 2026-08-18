@@ -163,9 +163,7 @@ def extract_metrics(
     for result_key, result in results.items():
         if not isinstance(result, dict):
             raise RuntimeError(f"Snappy result {result_key} must be an object")
-        metric_name = result.get("scenario")
-        if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"Snappy result {result_key} has an invalid scenario name")
+        metric_name = result_key
         if metric_name in metrics:
             raise RuntimeError(f"duplicate Snappy scenario: {metric_name}")
         if result.get("source_metric") != "bytes_per_second":
