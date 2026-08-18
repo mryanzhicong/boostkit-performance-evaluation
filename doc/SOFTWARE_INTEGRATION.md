@@ -321,6 +321,7 @@ stop_example_service() {
 - 使用评审通过的测试命令、迭代次数、并发、数据规模和固定输入；原脚本中未通过评审的自定义基准或阈值不得因“最小改动”继续保留；
 - 等待原测试和聚合过程全部结束后再返回；
 - 在函数返回前生成 `case.yaml` 声明的必要输出；
+- 测试命令的 stdout/stderr 保持正常输出到终端；Framework 会原样捕获为对应架构目录下的 `raw-output.log`，并随成功结果永久保存，软件脚本不再重复实现通用日志归档；
 - 不在软件脚本中生成通用 Markdown、跨架构对比或永久历史。
 
 ### stop 适配要求
@@ -451,6 +452,7 @@ Actions 手动验证顺序：
 - [ ] start 等待就绪，stop 对异常和重复调用保持幂等；
 - [ ] 所有运行资源迁移到 `PERF_WORK_DIR`，交付结果迁移到 `RESULTS_DIR`；
 - [ ] 原始结果已直接声明或通过薄转换层生成严格 JSON；
+- [ ] 测试命令的原始 stdout/stderr 会输出到终端，可由 Framework 完整保存为 `raw-output.log`；
 - [ ] 固定输入写入 `parameters`，机器相关值写入 `runtime_context`；
 - [ ] 指标路径、单位、优化方向和数值类型与实际结果一致；
 - [ ] Shell、Catalog、矩阵、Framework 测试和分阶段 Actions 验证全部通过。

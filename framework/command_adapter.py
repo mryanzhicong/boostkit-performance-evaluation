@@ -118,7 +118,8 @@ def run_command(
     script = (context.case_dir / stage_definition["script"]).resolve()
     function = stage_definition["function"]
     timeout_minutes = float(context.execution.get("timeout_minutes", 180))
-    log_path = context.output_dir / f"command-{stage}.log"
+    log_name = "raw-output.log" if stage == "test" else f"command-{stage}.log"
+    log_path = context.output_dir / log_name
     context.output_dir.mkdir(parents=True, exist_ok=True)
     context.work_dir.mkdir(parents=True, exist_ok=True)
     (context.work_dir / "tmp").mkdir(parents=True, exist_ok=True)

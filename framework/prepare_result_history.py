@@ -14,8 +14,7 @@ from generate_comparison import build_summary
 from json_helper import atomic_write_json, load_json
 from reporting import render_summary
 
-
-PERMANENT_TEXT_FILES = {"report.md"}
+PERMANENT_TEXT_FILES = {"raw-output.log", "report.md"}
 REQUIRED_IDENTITY_FIELDS = ("category", "software", "version", "architecture", "run_id")
 
 
@@ -54,7 +53,9 @@ def prepare(
     (output_root / "README.md").write_text(
         "# Performance result history\n\n"
         "This branch is maintained by the manually triggered performance workflow.\n"
-        "Command logs remain in GitHub Actions artifacts; this branch stores compact final data.\n",
+        "Each architecture keeps its normalized data, report, declared JSON outputs, "
+        "and original test-stage stdout/stderr in raw-output.log. Other stage logs "
+        "remain in GitHub Actions artifacts.\n",
         encoding="utf-8",
     )
     created_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

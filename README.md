@@ -250,7 +250,7 @@ normalized_result.json
 report.md
 command-build.log
 command-start.log
-command-test.log
+raw-output.log
 command-stop.log
 软件声明的原始结果文件
 ```
@@ -263,7 +263,7 @@ command-stop.log
 |---|---|---|
 | Workflow Summary | 矩阵、任务状态、单架构指标和跨架构对比 | 随 Actions Run 保存 |
 | GitHub Actions Artifact | 原始结果、阶段日志、规范化结果和汇总报告 | 架构结果 30 天，汇总报告 90 天 |
-| `performance-results` 分支 | 精简最终结果、报告、运行元数据和 Baseline | 永久保存 |
+| `performance-results` 分支 | 最终结果、报告、原始测试输出、运行元数据和 Baseline | 永久保存 |
 
 `performance-results` 分支结构：
 
@@ -276,15 +276,17 @@ command-stop.log
     ├── x86_64/
     │   ├── normalized_result.json
     │   ├── report.md
+    │   ├── raw-output.log
     │   └── 软件声明的 JSON 输出
     ├── aarch64/
     │   ├── normalized_result.json
     │   ├── report.md
+    │   ├── raw-output.log
     │   └── 软件声明的 JSON 输出
     └── comparison.json
 ```
 
-每个 `<run_id>-<attempt>` 对应一个不可变历史目录。构建日志、大型原始文件、源码和二进制保存在限期 Artifact 中；Git 历史保存精简结果。
+每个 `<run_id>-<attempt>` 对应一个不可变历史目录。`raw-output.log` 是 Framework 在 test 阶段同步捕获的软件原始 stdout/stderr，不经过指标解析或报告转换，并永久保存在对应架构目录。构建、启动、停止日志、大型原始文件、源码和二进制仍保存在限期 Artifact 中。
 
 `baseline.json` 用于记录人工确认的双架构参考运行，保存来源 Run、提交 SHA、Workflow URL、参数签名和指标，并通过手动运行的 `update_baseline` 输入更新。
 

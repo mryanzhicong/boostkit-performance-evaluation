@@ -625,6 +625,9 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         atomic_write_json(result_dir / "normalized_result.json", result)
         atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
         (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
+        (result_dir / "raw-output.log").write_text(
+            f"raw benchmark output for {architecture}\n", encoding="utf-8"
+        )
         (result_dir / "results.log").write_text("large log\n", encoding="utf-8")
         (result_dir / "results.txt").write_text("duplicate summary\n", encoding="utf-8")
 
@@ -643,6 +646,12 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert prepared == [run_root]
     assert (run_root / "x86_64" / "benchmark.json").is_file()
     assert (run_root / "aarch64" / "normalized_result.json").is_file()
+    assert (run_root / "x86_64" / "raw-output.log").read_text(
+        encoding="utf-8"
+    ) == "raw benchmark output for x86_64\n"
+    assert (run_root / "aarch64" / "raw-output.log").read_text(
+        encoding="utf-8"
+    ) == "raw benchmark output for aarch64\n"
     assert not (run_root / "aarch64" / "results.log").exists()
     assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()

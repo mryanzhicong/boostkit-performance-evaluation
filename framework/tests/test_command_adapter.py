@@ -110,6 +110,14 @@ def test_declared_build_function_streams_and_writes_outputs(tmp_path: Path, caps
     assert load_build_info(context)["actual_version"] == "1.0"
 
 
+def test_test_stage_uses_raw_output_log_name(tmp_path: Path) -> None:
+    context = context_for(tmp_path)
+    result = run_command(context, "test")
+    assert result.returncode == 0
+    assert result.log_path == context.output_dir / "raw-output.log"
+    assert result.log_path.read_text(encoding="utf-8") == "function=test\n"
+
+
 def test_each_stage_calls_only_its_declared_function(tmp_path: Path, capsys) -> None:
     context = context_for(tmp_path)
     result = run_command(context, "start")
