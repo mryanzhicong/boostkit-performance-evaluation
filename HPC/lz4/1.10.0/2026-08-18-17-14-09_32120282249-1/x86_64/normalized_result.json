@@ -1,0 +1,216 @@
+{
+  "software": "lz4",
+  "category": "HPC",
+  "version": "1.10.0",
+  "architecture": "x86_64",
+  "run_id": "32120282249-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-18T09:12:11Z",
+    "category": "HPC",
+    "software": "lz4",
+    "requested_version": "1.10.0",
+    "actual_version": "1.10.0",
+    "architecture": "x86_64",
+    "run_id": "32120282249-1"
+  },
+  "parameters": {
+    "primary_benchmark": {
+      "corpus": "Silesia Corpus",
+      "corpus_repository": "https://github.com/MiloszKrajewski/SilesiaCorpus.git",
+      "corpus_commit": "3f3fa2cdbbb3795c903b74e774acb309e1360337",
+      "corpus_size_bytes": 211957760,
+      "corpus_sha256": "0b5ec70c8048321525f820bc1d76429840bd22ee2c7a116175253a0fec2c724d",
+      "iteration_loops": 3,
+      "cases": [
+        {
+          "block_option": "B4",
+          "block_size_bytes": 65536,
+          "operation_option": "c1",
+          "function": "LZ4_compress_default"
+        },
+        {
+          "block_option": "B4",
+          "block_size_bytes": 65536,
+          "operation_option": "d4",
+          "function": "LZ4_decompress_safe"
+        },
+        {
+          "block_option": "B7",
+          "block_size_bytes": 4194304,
+          "operation_option": "c1",
+          "function": "LZ4_compress_default"
+        },
+        {
+          "block_option": "B7",
+          "block_size_bytes": 4194304,
+          "operation_option": "d4",
+          "function": "LZ4_decompress_safe"
+        }
+      ]
+    }
+  },
+  "parameter_signature": "7c669ed59d7ca478cb0c22798048653de3d9d5ca723c2187cbe404b11c80d81e",
+  "system_info": {
+    "collected_at": "2026-08-18T09:12:00Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 1 nodes (0)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nnode 0 size: 30886 MB\nnode 0 free: 18231 MB\nnode distances:\nnode   0 \n  0:  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-18T09:12:00Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1213566976 19117277184    72716288 12595712000 31173152768\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-18T09:13:30Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1530159104 18799452160   449744896 12973977600 30856560640\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "primary_benchmark": {
+      "benchmark": "lz4_fullbench",
+      "software": "lz4",
+      "version": "1.10.0",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-18T09:13:30Z",
+      "parameters": {
+        "corpus": "Silesia Corpus",
+        "corpus_repository": "https://github.com/MiloszKrajewski/SilesiaCorpus.git",
+        "corpus_commit": "3f3fa2cdbbb3795c903b74e774acb309e1360337",
+        "corpus_size_bytes": 211957760,
+        "corpus_sha256": "0b5ec70c8048321525f820bc1d76429840bd22ee2c7a116175253a0fec2c724d",
+        "iteration_loops": 3,
+        "cases": [
+          {
+            "block_option": "B4",
+            "block_size_bytes": 65536,
+            "operation_option": "c1",
+            "function": "LZ4_compress_default"
+          },
+          {
+            "block_option": "B4",
+            "block_size_bytes": 65536,
+            "operation_option": "d4",
+            "function": "LZ4_decompress_safe"
+          },
+          {
+            "block_option": "B7",
+            "block_size_bytes": 4194304,
+            "operation_option": "c1",
+            "function": "LZ4_compress_default"
+          },
+          {
+            "block_option": "B7",
+            "block_size_bytes": 4194304,
+            "operation_option": "d4",
+            "function": "LZ4_decompress_safe"
+          }
+        ]
+      },
+      "results": {
+        "B4": {
+          "1-LZ4_compress_default": {
+            "command": [
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/lz4-source/tests/fullbench",
+              "--no-prompt",
+              "-i3",
+              "-B4",
+              "-c1",
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar"
+            ],
+            "function": "LZ4_compress_default",
+            "operation": "compression",
+            "block_size_bytes": 65536,
+            "source_size_bytes": 211957760,
+            "compressed_size_bytes": 102449093,
+            "compressed_percent": 48.33,
+            "speed_mbs": 650.4,
+            "raw_output": "*** LZ4 speed analyzer v1.10.0 64-bits, by Yann Collet ***\n- 3 iterations -\n-Using Block Size of 64 KB-\nLoading /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar...       \n\n                                                                               \n /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar : \n 1-LZ4_compress_default               : 211957760 ->102449093 (48.33%),  650.4 MB/s\n"
+          },
+          "4-LZ4_decompress_safe": {
+            "command": [
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/lz4-source/tests/fullbench",
+              "--no-prompt",
+              "-i3",
+              "-B4",
+              "-d4",
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar"
+            ],
+            "function": "LZ4_decompress_safe",
+            "operation": "decompression",
+            "block_size_bytes": 65536,
+            "source_size_bytes": 211957760,
+            "speed_mbs": 3476.0,
+            "raw_output": "*** LZ4 speed analyzer v1.10.0 64-bits, by Yann Collet ***\n- 3 iterations -\n-Using Block Size of 64 KB-\nLoading /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar...       \n\n                                                                               \n /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar : \n 4-LZ4_decompress_safe                : 211957760 ->  3476.0 MB/s\n"
+          }
+        },
+        "B7": {
+          "1-LZ4_compress_default": {
+            "command": [
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/lz4-source/tests/fullbench",
+              "--no-prompt",
+              "-i3",
+              "-B7",
+              "-c1",
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar"
+            ],
+            "function": "LZ4_compress_default",
+            "operation": "compression",
+            "block_size_bytes": 4194304,
+            "source_size_bytes": 211957760,
+            "compressed_size_bytes": 100935877,
+            "compressed_percent": 47.62,
+            "speed_mbs": 679.3,
+            "raw_output": "*** LZ4 speed analyzer v1.10.0 64-bits, by Yann Collet ***\n- 3 iterations -\n-Using Block Size of 4096 KB-\nLoading /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar...       \n\n                                                                               \n /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar : \n 1-LZ4_compress_default               : 211957760 ->100935877 (47.62%),  679.3 MB/s\n"
+          },
+          "4-LZ4_decompress_safe": {
+            "command": [
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/lz4-source/tests/fullbench",
+              "--no-prompt",
+              "-i3",
+              "-B7",
+              "-d4",
+              "/tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar"
+            ],
+            "function": "LZ4_decompress_safe",
+            "operation": "decompression",
+            "block_size_bytes": 4194304,
+            "source_size_bytes": 211957760,
+            "speed_mbs": 4366.6,
+            "raw_output": "*** LZ4 speed analyzer v1.10.0 64-bits, by Yann Collet ***\n- 3 iterations -\n-Using Block Size of 4096 KB-\nLoading /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar...       \n\n                                                                               \n /tmp/boostkit-perf/32120282249-1/HPC/lz4/1.10.0/x86_64/dataset/silesia.tar : \n 4-LZ4_decompress_safe                : 211957760 ->  4366.6 MB/s\n"
+          }
+        }
+      }
+    }
+  },
+  "metrics": {
+    "B4/1-LZ4_compress_default": {
+      "value": 650.4,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "B4/4-LZ4_decompress_safe": {
+      "value": 3476.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "B7/1-LZ4_compress_default": {
+      "value": 679.3,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "B7/4-LZ4_decompress_safe": {
+      "value": 4366.6,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
