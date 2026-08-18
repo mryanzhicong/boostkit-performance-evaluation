@@ -174,13 +174,35 @@ metrics:
 
 ### 指标声明
 
-`metrics.source` 引用输出逻辑名称，不是文件路径。每个指标 definition 必须声明：
+`metrics.source` 引用输出逻辑名称，不是文件路径。指标使用 `definitions` 或 `collection` 两种声明方式，二者只能选择一种。
+
+固定指标使用 `definitions`，每个指标必须声明：
 
 - `path`：指标在 JSON 中的点路径；字段可以位于任意层级，不要求名为 `summary`；
 - `unit`：非空单位；
 - `direction`：`higher_is_better`、`lower_is_better` 或 `neutral`。
 
 单个指标可以用自己的 `source` 覆盖默认来源。指标来源必须是 `required: true` 的 JSON 输出。指标值必须是有限数值；字符串、布尔值、`null`、NaN 和 Infinity 都会失败。
+
+同类指标数量由测试程序决定时使用 `collection`：
+
+```yaml
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: scenario
+    value_path: speed_mbs
+    unit: MB/s
+    direction: higher_is_better
+```
+
+- `path` 指向一个非空 JSON 对象，对象中的每个成员都会生成一个指标；
+- `name_path` 指向成员内部的指标名称；省略时使用成员键名；
+- `value_path` 指向成员内部的数值；
+- `unit` 和 `direction` 应适用于集合中的全部成员。
+
+Framework 会保持集合原有顺序，拒绝空集合、重复名称、缺失路径和非有限数值，并要求同一版本的两个架构产生完全一致的指标集合后才生成跨架构对比。
 
 ## 第四步：把已有脚本暴露为四个函数
 

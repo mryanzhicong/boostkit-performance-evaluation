@@ -35,7 +35,7 @@ def compare_pair(x86: dict, arm: dict) -> dict:
     if set(x_metrics) != set(a_metrics):
         raise ValueError("metric sets differ between architectures")
     metrics: dict[str, Any] = {}
-    for name in sorted(x_metrics):
+    for name in x_metrics:
         x_metric = x_metrics[name]
         a_metric = a_metrics[name]
         if x_metric.get("unit") != a_metric.get("unit"):

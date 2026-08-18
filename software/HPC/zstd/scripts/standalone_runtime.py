@@ -15,16 +15,6 @@ from pathlib import Path
 from typing import Any
 
 
-METRICS = {
-    "compress_speed": ("compress", "MB/s", "higher_is_better"),
-    "decompress_speed": ("decompress", "MB/s", "higher_is_better"),
-    "compress_stream_speed": ("compress_stream", "MB/s", "higher_is_better"),
-    "decompress_stream_speed": (
-        "decompress_stream", "MB/s", "higher_is_better"
-    ),
-}
-
-
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -170,10 +160,14 @@ def extract_metrics(
     if not isinstance(results, dict):
         raise RuntimeError("benchmark_fullbench.json is missing results")
     metrics: dict[str, Any] = {}
-    for metric_name, (result_name, unit, direction) in METRICS.items():
-        result = results.get(result_name)
+    for result_key, result in results.items():
         if not isinstance(result, dict):
-            raise RuntimeError(f"metric {metric_name} result is missing")
+            raise RuntimeError(f"fullbench result {result_key} must be an object")
+        metric_name = result.get("scenario")
+        if not isinstance(metric_name, str) or not metric_name:
+            raise RuntimeError(f"fullbench result {result_key} has an invalid scenario name")
+        if metric_name in metrics:
+            raise RuntimeError(f"duplicate fullbench scenario: {metric_name}")
         value = result.get("speed_mbs")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is missing or is not numeric")
@@ -181,9 +175,11 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": unit,
-            "direction": direction,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
         }
+    if not metrics:
+        raise RuntimeError("benchmark_fullbench.json contains no metrics")
     return metrics
 
 

@@ -14,12 +14,6 @@ from pathlib import Path
 from typing import Any
 
 
-CORE_SCENARIOS = {
-    "compress": "compress",
-    "decompress": "decompress",
-    "compressStream": "compress_stream",
-    "decompressStream": "decompress_stream",
-}
 RESULT_PATTERN = re.compile(
     r"(?:^|[\r\n])\s*(\d+)#([^:\r\n]+?)\s*:\s*"
     r"([0-9]+(?:\.[0-9]+)?)\s+MB/s\s+\(\s*(\d+)\s*\)"
@@ -46,14 +40,9 @@ def parse_output(output: str) -> tuple[str, int, dict[str, dict[str, Any]]]:
     if not latest:
         raise RuntimeError("fullbench output contains no performance results")
 
-    by_name = {name: values for (_scenario_id, name), values in latest.items()}
-    missing = sorted(set(CORE_SCENARIOS) - set(by_name))
-    if missing:
-        raise RuntimeError(f"fullbench output is missing core scenarios: {', '.join(missing)}")
-
     results: dict[str, dict[str, Any]] = {}
     for (scenario_id, name), (speed, return_value) in sorted(latest.items()):
-        result_name = CORE_SCENARIOS.get(name, f"scenario_{scenario_id}")
+        result_name = f"scenario_{scenario_id:02d}"
         if result_name in results:
             raise RuntimeError(f"fullbench produced duplicate result key: {result_name}")
         results[result_name] = {
@@ -106,7 +95,7 @@ def main() -> int:
         "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "command": [str(fullbench)],
+            "command": ["./fullbench"],
             "sample_size_bytes": sample_size,
             "fullbench_defaults": True,
         },

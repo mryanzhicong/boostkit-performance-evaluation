@@ -198,6 +198,75 @@ def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) ->
     assert len(result["parameter_signature"]) == 64
 
 
+def test_normalizer_extracts_every_metric_from_a_declared_collection(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    atomic_write_json(
+        output / "results.json",
+        {
+            "results": {
+                "scenario_00": {"name": "compress", "speed": 304.9},
+                "scenario_01": {"name": "decompress", "speed": 1137.6},
+                "scenario_02": {"name": "compress_freshCCtx", "speed": 308.0},
+            }
+        },
+    )
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "result": {
+                    "path": "results.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                }
+            },
+            "metrics": {
+                "source": "result",
+                "collection": {
+                    "path": "results",
+                    "name_path": "name",
+                    "value_path": "speed",
+                    "unit": "MB/s",
+                    "direction": "higher_is_better",
+                },
+            },
+        },
+        category="HPC",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=output,
+        work_dir=tmp_path / "work",
+    )
+    record_requested_build(context)
+    result = normalize(context, "passed")
+    assert list(result["metrics"]) == [
+        "compress",
+        "decompress",
+        "compress_freshCCtx",
+    ]
+    assert result["metrics"]["compress"] == {
+        "value": 304.9,
+        "unit": "MB/s",
+        "direction": "higher_is_better",
+    }
+    atomic_write_json(
+        output / "results.json",
+        {"results": {"scenario_00": {"name": "compress", "speed": "fast"}}},
+    )
+    import pytest
+
+    with pytest.raises(ResultValidationError, match="must be numeric"):
+        normalize(context, "passed")
+
+
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
     import pytest
 
@@ -521,7 +590,7 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     x86_metrics = combined.split("### x86_64", 1)[1].split("## 跨架构指标", 1)[0]
     cross_architecture_metrics = combined.split("## 跨架构指标", 1)[1]
     for section in (arm_metrics, x86_metrics, cross_architecture_metrics):
-        assert section.index("latency") < section.index("throughput")
+        assert section.index("throughput") < section.index("latency")
 
 
 def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Path) -> None:

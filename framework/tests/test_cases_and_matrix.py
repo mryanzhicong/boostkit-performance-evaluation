@@ -228,6 +228,31 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
     _case, errors = validate_case(case_path, tmp_path)
     assert any("has invalid direction" in error for error in errors)
 
+    payload["metrics"] = {
+        "source": "result",
+        "collection": {
+            "path": "results",
+            "name_path": "name",
+            "value_path": "speed",
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+        },
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert errors == []
+
+    payload["metrics"]["definitions"] = {
+        "throughput": {
+            "path": "summary.throughput",
+            "unit": "ops/s",
+            "direction": "higher_is_better",
+        }
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("exactly one of definitions or collection" in error for error in errors)
+
 
 def test_default_matrix_runs_every_version_on_both_architectures() -> None:
     matrix = build_matrix("all", "all", "all")["include"]

@@ -28,20 +28,9 @@ outputs:
     required: true
 metrics:
   source: primary_benchmark
-  definitions:
-    compress_speed:
-      path: results.compress.speed_mbs
-      unit: MB/s
-      direction: higher_is_better
-    decompress_speed:
-      path: results.decompress.speed_mbs
-      unit: MB/s
-      direction: higher_is_better
-    compress_stream_speed:
-      path: results.compress_stream.speed_mbs
-      unit: MB/s
-      direction: higher_is_better
-    decompress_stream_speed:
-      path: results.decompress_stream.speed_mbs
-      unit: MB/s
-      direction: higher_is_better
+  collection:
+    path: results
+    name_path: scenario
+    value_path: speed_mbs
+    unit: MB/s
+    direction: higher_is_better

@@ -90,6 +90,25 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
     metrics: dict[str, Any] = {}
     metric_config = context.case.get("metrics", {})
     default_source = metric_config.get("source")
+
+    def add_metric(name: str, value: Any, unit: str, direction: str) -> None:
+        if not name:
+            raise ResultValidationError("metric name must not be empty")
+        if name in metrics:
+            raise ResultValidationError(f"duplicate metric name: {name}")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ResultValidationError(
+                f"metric {name} must be numeric, got {type(value).__name__}"
+            )
+        numeric_value = float(value)
+        if not math.isfinite(numeric_value):
+            raise ResultValidationError(f"metric {name} must be finite")
+        metrics[name] = {
+            "value": value,
+            "unit": unit,
+            "direction": direction,
+        }
+
     for metric_name, definition in metric_config.get("definitions", {}).items():
         source_name = definition.get("source", default_source)
         if source_name not in sources:
@@ -102,18 +121,52 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                 f"metric {metric_name} path does not exist: "
                 f"{source_name}:{definition['path']}"
             )
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        add_metric(metric_name, value, definition["unit"], definition["direction"])
+
+    collection = metric_config.get("collection")
+    if isinstance(collection, dict):
+        if default_source not in sources:
             raise ResultValidationError(
-                f"metric {metric_name} must be numeric, got {type(value).__name__}"
+                f"metric collection references unavailable source {default_source}"
             )
-        numeric_value = float(value)
-        if not math.isfinite(numeric_value):
-            raise ResultValidationError(f"metric {metric_name} must be finite")
-        metrics[metric_name] = {
-            "value": value,
-            "unit": definition["unit"],
-            "direction": definition["direction"],
-        }
+        items = get_path(sources[default_source], collection["path"], MISSING)
+        if items is MISSING:
+            raise ResultValidationError(
+                "metric collection path does not exist: "
+                f"{default_source}:{collection['path']}"
+            )
+        if not isinstance(items, dict) or not items:
+            raise ResultValidationError("metric collection must be a non-empty object")
+        for item_key, item in items.items():
+            if not isinstance(item, dict):
+                raise ResultValidationError(
+                    f"metric collection item {item_key} must be an object"
+                )
+            name_path = collection.get("name_path")
+            metric_name = (
+                get_path(item, name_path, MISSING) if name_path else item_key
+            )
+            if metric_name is MISSING:
+                raise ResultValidationError(
+                    f"metric collection item {item_key} is missing name path {name_path}"
+                )
+            if not isinstance(metric_name, str) or not metric_name:
+                raise ResultValidationError(
+                    f"metric collection item {item_key} has an invalid name"
+                )
+            value = get_path(item, collection["value_path"], MISSING)
+            if value is MISSING:
+                raise ResultValidationError(
+                    f"metric {metric_name} path does not exist: "
+                    f"{default_source}:{collection['path']}.{item_key}."
+                    f"{collection['value_path']}"
+                )
+            add_metric(
+                metric_name,
+                value,
+                collection["unit"],
+                collection["direction"],
+            )
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics
