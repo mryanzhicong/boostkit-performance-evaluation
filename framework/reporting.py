@@ -11,7 +11,7 @@ DIRECTION_LABELS = {
     "lower_is_better": "越小越好",
     "neutral": "仅展示",
 }
-ARCHITECTURE_ORDER = ("aarch64", "x86_64")
+ARCHITECTURE_ORDER = ("x86_64", "aarch64")
 ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86"), ("aarch64", "aarch64"))
 FIELD_LABELS = {
     "recorded_at": "构建信息记录时间",

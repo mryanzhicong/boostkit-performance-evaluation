@@ -585,9 +585,9 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "glibc 2.38" in combined
     assert "before memory" not in combined
     assert "after memory" not in combined
-    assert combined.index("### aarch64") < combined.index("### x86_64")
-    arm_metrics = combined.split("### aarch64", 1)[1].split("### x86_64", 1)[0]
-    x86_metrics = combined.split("### x86_64", 1)[1].split("## 跨架构指标", 1)[0]
+    assert combined.index("### x86_64") < combined.index("### aarch64")
+    x86_metrics = combined.split("### x86_64", 1)[1].split("### aarch64", 1)[0]
+    arm_metrics = combined.split("### aarch64", 1)[1].split("## 跨架构指标", 1)[0]
     cross_architecture_metrics = combined.split("## 跨架构指标", 1)[1]
     for section in (arm_metrics, x86_metrics, cross_architecture_metrics):
         assert section.index("throughput") < section.index("latency")
