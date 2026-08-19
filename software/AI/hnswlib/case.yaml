@@ -1,0 +1,62 @@
+name: hnswlib
+category: AI
+enabled: true
+versions:
+  - "0.7.0"
+  - "0.8.0"
+  - "0.9.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: hnswlib_test.sh
+      function: build_hnswlib
+    start:
+      script: hnswlib_test.sh
+      function: start_hnswlib_runtime
+    test:
+      script: hnswlib_test.sh
+      function: run_hnswlib_benchmarks
+    stop:
+      script: hnswlib_test.sh
+      function: stop_hnswlib_runtime
+  timeout_minutes: 60
+outputs:
+  benchmark_speedtest:
+    path: benchmark_speedtest.json
+    stage: test
+    format: json
+    required: true
+  speedtest_raw:
+    path: speedtest_stdout.log
+    stage: test
+    format: text
+    required: true
+  speedtest_log:
+    path: log2_128_t1.txt
+    stage: test
+    format: text
+    required: true
+metrics:
+  source: benchmark_speedtest
+  definitions:
+    "np.mean(times)":
+      path: results.mean.value
+      unit: seconds
+      direction: lower_is_better
+    "np.median(times)":
+      path: results.median.value
+      unit: seconds
+      direction: lower_is_better
+    "np.std(times)":
+      path: results.std.value
+      unit: seconds
+      direction: lower_is_better
+    construction_time:
+      path: results.construction_time.value
+      unit: seconds
+      direction: lower_is_better
+    recall:
+      path: results.recall.value
+      unit: ratio
+      direction: higher_is_better
