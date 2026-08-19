@@ -147,6 +147,7 @@ install_python_build_dependencies() {
     log_message "installing private Python build dependencies"
     if ! python3 -m pip install "${pip_options[@]}" \
         "numpy==${NUMPY_VERSION}" \
+        "packaging" \
         "setuptools==${SETUPTOOLS_VERSION}"; then
         log_message "ERROR: failed to install private Python build dependencies"
         return 30
