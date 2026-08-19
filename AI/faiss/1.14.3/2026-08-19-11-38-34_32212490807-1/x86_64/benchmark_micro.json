@@ -1,0 +1,51 @@
+{
+  "benchmark": "micro_operations",
+  "software": "faiss",
+  "version": "1.14.3",
+  "architecture": "x86_64",
+  "timestamp": "2026-08-19T03:35:48Z",
+  "parameters": {
+    "dataset": "numpy_random_float32_seed_42",
+    "data_scale": "100K",
+    "num_vectors": 100000,
+    "dimension": 128,
+    "iterations": 1,
+    "k": 10,
+    "single_query_repetitions": 1000,
+    "batch_query_count": 1000,
+    "range_query_count": 100,
+    "range_radius": 5.0,
+    "Kmeans/k": 100,
+    "Kmeans/niter": 20,
+    "IndexPQ/M": 8,
+    "IndexPQ/nbits": 8
+  },
+  "results": {
+    "Kmeans": {
+      "train": {
+        "elapsed_s": 0.139971
+      }
+    },
+    "IndexFlatL2": {
+      "add": {
+        "vectors_per_second": 10660263.781363
+      },
+      "search": {
+        "single": {
+          "latency_us": 1150.150535
+        },
+        "batch": {
+          "queries_per_second": 11657.297731
+        }
+      },
+      "range_search": {
+        "queries_per_second": 4254.763124
+      }
+    },
+    "IndexPQ": {
+      "add": {
+        "vectors_per_second": 694103.384354
+      }
+    }
+  }
+}

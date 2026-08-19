@@ -1,0 +1,38 @@
+{
+  "benchmark": "ann_search",
+  "software": "faiss",
+  "version": "1.14.3",
+  "architecture": "x86_64",
+  "timestamp": "2026-08-19T03:35:42Z",
+  "parameters": {
+    "dataset": "numpy_random_float32_seed_42",
+    "data_scale": "100K",
+    "num_vectors": 100000,
+    "dimension": 128,
+    "num_queries": 1000,
+    "k": 10,
+    "iterations": 1,
+    "IndexIVFFlat/nlist": 100,
+    "IndexHNSWFlat/M": 32
+  },
+  "results": {
+    "IndexFlatL2": {
+      "build_time_s": 0.009045,
+      "qps": 10909.72319,
+      "latency_per_query_us": 91.661354,
+      "recall_at_k": 1.0
+    },
+    "IndexIVFFlat": {
+      "build_time_s": 0.111963,
+      "qps": 158006.840405,
+      "latency_per_query_us": 6.32884,
+      "recall_at_k": 0.0576
+    },
+    "IndexHNSWFlat": {
+      "build_time_s": 1.96876,
+      "qps": 91357.063485,
+      "latency_per_query_us": 10.946061,
+      "recall_at_k": 0.2004
+    }
+  }
+}

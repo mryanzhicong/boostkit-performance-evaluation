@@ -1,0 +1,253 @@
+{
+  "software": "faiss",
+  "category": "AI",
+  "version": "1.14.3",
+  "architecture": "x86_64",
+  "run_id": "32212490807-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-19T03:35:39Z",
+    "category": "AI",
+    "software": "faiss",
+    "requested_version": "1.14.3",
+    "actual_version": "1.14.3",
+    "architecture": "x86_64",
+    "run_id": "32212490807-1"
+  },
+  "parameters": {
+    "ann_benchmark": {
+      "dataset": "numpy_random_float32_seed_42",
+      "data_scale": "100K",
+      "num_vectors": 100000,
+      "dimension": 128,
+      "num_queries": 1000,
+      "k": 10,
+      "iterations": 1,
+      "IndexIVFFlat/nlist": 100,
+      "IndexHNSWFlat/M": 32
+    },
+    "micro_benchmark": {
+      "dataset": "numpy_random_float32_seed_42",
+      "data_scale": "100K",
+      "num_vectors": 100000,
+      "dimension": 128,
+      "iterations": 1,
+      "k": 10,
+      "single_query_repetitions": 1000,
+      "batch_query_count": 1000,
+      "range_query_count": 100,
+      "range_radius": 5.0,
+      "Kmeans/k": 100,
+      "Kmeans/niter": 20,
+      "IndexPQ/M": 8,
+      "IndexPQ/nbits": 8
+    }
+  },
+  "parameter_signature": "9b5e534339e61e1daad4328e4e889dd1f6c7348ba9e53bffd56f77f4a32d9949",
+  "system_info": {
+    "collected_at": "2026-08-19T03:32:28Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 1 nodes (0)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nnode 0 size: 30886 MB\nnode 0 free: 17049 MB\nnode distances:\nnode   0 \n  0:  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-19T03:32:28Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1176195072 17877762048    72441856 13872324608 31210524672\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-19T03:35:48Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1461100544 17590829056   333418496 14135328768 30925619200\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "ann_benchmark": {
+      "benchmark": "ann_search",
+      "software": "faiss",
+      "version": "1.14.3",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-19T03:35:42Z",
+      "parameters": {
+        "dataset": "numpy_random_float32_seed_42",
+        "data_scale": "100K",
+        "num_vectors": 100000,
+        "dimension": 128,
+        "num_queries": 1000,
+        "k": 10,
+        "iterations": 1,
+        "IndexIVFFlat/nlist": 100,
+        "IndexHNSWFlat/M": 32
+      },
+      "results": {
+        "IndexFlatL2": {
+          "build_time_s": 0.009045,
+          "qps": 10909.72319,
+          "latency_per_query_us": 91.661354,
+          "recall_at_k": 1.0
+        },
+        "IndexIVFFlat": {
+          "build_time_s": 0.111963,
+          "qps": 158006.840405,
+          "latency_per_query_us": 6.32884,
+          "recall_at_k": 0.0576
+        },
+        "IndexHNSWFlat": {
+          "build_time_s": 1.96876,
+          "qps": 91357.063485,
+          "latency_per_query_us": 10.946061,
+          "recall_at_k": 0.2004
+        }
+      }
+    },
+    "micro_benchmark": {
+      "benchmark": "micro_operations",
+      "software": "faiss",
+      "version": "1.14.3",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-19T03:35:48Z",
+      "parameters": {
+        "dataset": "numpy_random_float32_seed_42",
+        "data_scale": "100K",
+        "num_vectors": 100000,
+        "dimension": 128,
+        "iterations": 1,
+        "k": 10,
+        "single_query_repetitions": 1000,
+        "batch_query_count": 1000,
+        "range_query_count": 100,
+        "range_radius": 5.0,
+        "Kmeans/k": 100,
+        "Kmeans/niter": 20,
+        "IndexPQ/M": 8,
+        "IndexPQ/nbits": 8
+      },
+      "results": {
+        "Kmeans": {
+          "train": {
+            "elapsed_s": 0.139971
+          }
+        },
+        "IndexFlatL2": {
+          "add": {
+            "vectors_per_second": 10660263.781363
+          },
+          "search": {
+            "single": {
+              "latency_us": 1150.150535
+            },
+            "batch": {
+              "queries_per_second": 11657.297731
+            }
+          },
+          "range_search": {
+            "queries_per_second": 4254.763124
+          }
+        },
+        "IndexPQ": {
+          "add": {
+            "vectors_per_second": 694103.384354
+          }
+        }
+      }
+    }
+  },
+  "metrics": {
+    "IndexFlatL2/qps": {
+      "value": 10909.72319,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "IndexFlatL2/latency_per_query_us": {
+      "value": 91.661354,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "IndexFlatL2/recall_at_k": {
+      "value": 1.0,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "IndexFlatL2/build_time_s": {
+      "value": 0.009045,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "IndexIVFFlat/qps": {
+      "value": 158006.840405,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "IndexIVFFlat/latency_per_query_us": {
+      "value": 6.32884,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "IndexIVFFlat/recall_at_k": {
+      "value": 0.0576,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "IndexIVFFlat/build_time_s": {
+      "value": 0.111963,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "IndexHNSWFlat/qps": {
+      "value": 91357.063485,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "IndexHNSWFlat/latency_per_query_us": {
+      "value": 10.946061,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "IndexHNSWFlat/recall_at_k": {
+      "value": 0.2004,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "IndexHNSWFlat/build_time_s": {
+      "value": 1.96876,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "Kmeans/train/elapsed_s": {
+      "value": 0.139971,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "IndexFlatL2/add/vectors_per_second": {
+      "value": 10660263.781363,
+      "unit": "vectors/s",
+      "direction": "higher_is_better"
+    },
+    "IndexFlatL2/search/single/latency_us": {
+      "value": 1150.150535,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "IndexFlatL2/search/batch/queries_per_second": {
+      "value": 11657.297731,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "IndexFlatL2/range_search/queries_per_second": {
+      "value": 4254.763124,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "IndexPQ/add/vectors_per_second": {
+      "value": 694103.384354,
+      "unit": "vectors/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
