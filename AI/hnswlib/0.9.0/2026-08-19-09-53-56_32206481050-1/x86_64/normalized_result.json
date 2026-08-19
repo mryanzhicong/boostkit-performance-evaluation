@@ -1,0 +1,173 @@
+{
+  "software": "hnswlib",
+  "category": "AI",
+  "version": "0.9.0",
+  "architecture": "x86_64",
+  "run_id": "32206481050-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-19T01:52:36Z",
+    "category": "AI",
+    "software": "hnswlib",
+    "requested_version": "0.9.0",
+    "actual_version": "0.9.0",
+    "architecture": "x86_64",
+    "run_id": "32206481050-1"
+  },
+  "parameters": {
+    "benchmark_speedtest": {
+      "dimension": 128,
+      "name": "hnswlib",
+      "search_threads": 1,
+      "construction_threads": 64,
+      "num_elements": 400000,
+      "ef_construction": 60,
+      "M": 16,
+      "search_ef": 15,
+      "query_count": 5000,
+      "query_repetitions": 3,
+      "numpy_seed": 1,
+      "official_script_sha256": "18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b"
+    }
+  },
+  "parameter_signature": "ddd3bb4141679d8aa8d3f0e3cca8cb8cb3442a09ed18e77c693fb35e3b01da7c",
+  "system_info": {
+    "collected_at": "2026-08-19T01:52:17Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 1 nodes (0)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nnode 0 size: 30886 MB\nnode 0 free: 18076 MB\nnode distances:\nnode   0 \n  0:  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-19T01:52:17Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1189515264 18954547200    74137600 12783915008 31197204480\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-19T01:52:57Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1278574592 18864128000   209309696 12920451072 31108145152\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "benchmark_speedtest": {
+      "software": "hnswlib",
+      "category": "AI",
+      "version": "0.9.0",
+      "architecture": "x86_64",
+      "benchmark": "tests/python/speedtest.py",
+      "reference": "official hnswlib tests/python/speedtest.py",
+      "official_script_sha256": "18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b",
+      "parameters": {
+        "dimension": 128,
+        "name": "hnswlib",
+        "search_threads": 1,
+        "construction_threads": 64,
+        "num_elements": 400000,
+        "ef_construction": 60,
+        "M": 16,
+        "search_ef": 15,
+        "query_count": 5000,
+        "query_repetitions": 3,
+        "numpy_seed": 1,
+        "official_script_sha256": "18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b"
+      },
+      "raw_query_runs": [
+        {
+          "tt": 0.24846982955932617,
+          "recall": 0.2196
+        },
+        {
+          "tt": 0.2483806610107422,
+          "recall": 0.2196
+        },
+        {
+          "tt": 0.24717950820922852,
+          "recall": 0.2196
+        }
+      ],
+      "results": {
+        "mean": {
+          "source_name": "np.mean(times)",
+          "source_field": "np.mean(times)",
+          "raw_value": 0.24800999959309897,
+          "raw_unit": "seconds",
+          "value": 0.24800999959309897,
+          "unit": "seconds"
+        },
+        "median": {
+          "source_name": "np.median(times)",
+          "source_field": "np.median(times)",
+          "raw_value": 0.2483806610107422,
+          "raw_unit": "seconds",
+          "value": 0.2483806610107422,
+          "unit": "seconds"
+        },
+        "std": {
+          "source_name": "np.std(times)",
+          "source_field": "np.std(times)",
+          "raw_value": 0.0005883733007348458,
+          "raw_unit": "seconds",
+          "value": 0.0005883733007348458,
+          "unit": "seconds"
+        },
+        "construction_time": {
+          "source_name": "construction_time",
+          "source_field": "construction_time",
+          "raw_value": 17.476238012313843,
+          "raw_unit": "seconds",
+          "value": 17.476238012313843,
+          "unit": "seconds"
+        },
+        "recall": {
+          "source_name": "recall",
+          "source_field": "recall",
+          "raw_value": 0.2196,
+          "raw_unit": "ratio",
+          "value": 0.2196,
+          "unit": "ratio"
+        }
+      }
+    },
+    "speedtest_raw": {
+      "path": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/hnswlib/0.9.0/x86_64/32206481050-1/speedtest_stdout.log",
+      "size": 231
+    },
+    "speedtest_log": {
+      "path": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/hnswlib/0.9.0/x86_64/32206481050-1/log2_128_t1.txt",
+      "size": 100
+    }
+  },
+  "metrics": {
+    "np.mean(times)": {
+      "value": 0.24800999959309897,
+      "unit": "seconds",
+      "direction": "lower_is_better"
+    },
+    "np.median(times)": {
+      "value": 0.2483806610107422,
+      "unit": "seconds",
+      "direction": "lower_is_better"
+    },
+    "np.std(times)": {
+      "value": 0.0005883733007348458,
+      "unit": "seconds",
+      "direction": "lower_is_better"
+    },
+    "construction_time": {
+      "value": 17.476238012313843,
+      "unit": "seconds",
+      "direction": "lower_is_better"
+    },
+    "recall": {
+      "value": 0.2196,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    }
+  }
+}

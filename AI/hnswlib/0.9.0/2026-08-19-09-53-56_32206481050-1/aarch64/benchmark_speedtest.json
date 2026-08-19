@@ -1,0 +1,79 @@
+{
+  "software": "hnswlib",
+  "category": "AI",
+  "version": "0.9.0",
+  "architecture": "aarch64",
+  "benchmark": "tests/python/speedtest.py",
+  "reference": "official hnswlib tests/python/speedtest.py",
+  "official_script_sha256": "18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b",
+  "parameters": {
+    "dimension": 128,
+    "name": "hnswlib",
+    "search_threads": 1,
+    "construction_threads": 64,
+    "num_elements": 400000,
+    "ef_construction": 60,
+    "M": 16,
+    "search_ef": 15,
+    "query_count": 5000,
+    "query_repetitions": 3,
+    "numpy_seed": 1,
+    "official_script_sha256": "18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b"
+  },
+  "raw_query_runs": [
+    {
+      "tt": 0.6469619274139404,
+      "recall": 0.2232
+    },
+    {
+      "tt": 0.6499044895172119,
+      "recall": 0.2232
+    },
+    {
+      "tt": 0.6577661037445068,
+      "recall": 0.2232
+    }
+  ],
+  "results": {
+    "mean": {
+      "source_name": "np.mean(times)",
+      "source_field": "np.mean(times)",
+      "raw_value": 0.6515441735585531,
+      "raw_unit": "seconds",
+      "value": 0.6515441735585531,
+      "unit": "seconds"
+    },
+    "median": {
+      "source_name": "np.median(times)",
+      "source_field": "np.median(times)",
+      "raw_value": 0.6499044895172119,
+      "raw_unit": "seconds",
+      "value": 0.6499044895172119,
+      "unit": "seconds"
+    },
+    "std": {
+      "source_name": "np.std(times)",
+      "source_field": "np.std(times)",
+      "raw_value": 0.004560627103229297,
+      "raw_unit": "seconds",
+      "value": 0.004560627103229297,
+      "unit": "seconds"
+    },
+    "construction_time": {
+      "source_name": "construction_time",
+      "source_field": "construction_time",
+      "raw_value": 6.122639179229736,
+      "raw_unit": "seconds",
+      "value": 6.122639179229736,
+      "unit": "seconds"
+    },
+    "recall": {
+      "source_name": "recall",
+      "source_field": "recall",
+      "raw_value": 0.2232,
+      "raw_unit": "ratio",
+      "value": 0.2232,
+      "unit": "ratio"
+    }
+  }
+}
