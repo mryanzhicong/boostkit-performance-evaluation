@@ -1,0 +1,71 @@
+name: brpc
+category: Middleware
+enabled: true
+versions:
+  - "1.17.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: brpc_test.sh
+      function: build_brpc
+    start:
+      script: brpc_test.sh
+      function: start_brpc_service
+    test:
+      script: brpc_test.sh
+      function: run_brpc_benchmark_http
+    stop:
+      script: brpc_test.sh
+      function: stop_brpc_service
+  timeout_minutes: 240
+outputs:
+  bvar_dump:
+    path: bvar_vars.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_brpc.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  definitions:
+    "client_qps":
+      path: results.client_qps.value
+      unit: requests/s
+      direction: higher_is_better
+    "client_count":
+      path: results.client_count.value
+      unit: requests
+      direction: higher_is_better
+    "client_latency":
+      path: results.client_latency.value
+      unit: us
+      direction: lower_is_better
+    "client_max_latency":
+      path: results.client_max_latency.value
+      unit: us
+      direction: lower_is_better
+    "client_latency_80":
+      path: results.client_latency_80.value
+      unit: us
+      direction: lower_is_better
+    "client_latency_90":
+      path: results.client_latency_90.value
+      unit: us
+      direction: lower_is_better
+    "client_latency_99":
+      path: results.client_latency_99.value
+      unit: us
+      direction: lower_is_better
+    "client_latency_999":
+      path: results.client_latency_999.value
+      unit: us
+      direction: lower_is_better
+    "client_latency_9999":
+      path: results.client_latency_9999.value
+      unit: us
+      direction: lower_is_better
