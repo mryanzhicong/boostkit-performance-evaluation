@@ -23,6 +23,7 @@ BUILD_VENV_DIR=""
 SCANN_SOURCE_DIR=""
 SCANN_WHEEL_FILE=""
 CLANG_BINARY=""
+LLD_BINARY=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -283,6 +284,27 @@ locate_clang() {
 }
 
 
+locate_lld() {
+    local clang_path
+    local clang_directory
+
+    clang_path="$(command -v "${CLANG_BINARY}" 2>/dev/null || true)"
+    if [[ -z "${clang_path}" ]]; then
+        clang_path="${CLANG_BINARY}"
+    fi
+    clang_directory="$(dirname "$(readlink -f "${clang_path}")")"
+    if [[ -x "${clang_directory}/ld.lld" ]]; then
+        printf '%s\n' "${clang_directory}/ld.lld"
+        return 0
+    fi
+    if command -v ld.lld >/dev/null 2>&1; then
+        command -v ld.lld
+        return 0
+    fi
+    return 1
+}
+
+
 llvm_clang_download_url() {
     local clang_version="$1"
     local arch="$2"
@@ -302,30 +324,35 @@ prepare_clang() {
     if CLANG_BINARY="$(locate_clang "${clang_version}")"; then
         log_message "using system clang: ${CLANG_BINARY}"
         "${CLANG_BINARY}" --version
-        return 0
-    fi
-    arch="$(normalize_architecture "${EXPECTED_ARCH}")"
-    download_url="$(llvm_clang_download_url "${clang_version}" "${arch}")" || return $?
-    archive_name="${download_url##*/}"
-    clang_dir="${BUILD_TOOLCHAIN_DIR}/clang-${clang_version}"
-    if [[ ! -x "${clang_dir}/bin/clang" ]]; then
-        log_message "downloading clang ${clang_version} for ${arch} into the work area"
-        mkdir -p "${BUILD_TOOLCHAIN_DIR}"
-        if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" \
-            "$(github_download_url "${download_url}")"; then
-            log_message "ERROR: failed to download clang ${clang_version} for ${arch}"
-            return 30
+    else
+        arch="$(normalize_architecture "${EXPECTED_ARCH}")"
+        download_url="$(llvm_clang_download_url "${clang_version}" "${arch}")" || return $?
+        archive_name="${download_url##*/}"
+        clang_dir="${BUILD_TOOLCHAIN_DIR}/clang-${clang_version}"
+        if [[ ! -x "${clang_dir}/bin/clang" ]]; then
+            log_message "downloading clang ${clang_version} for ${arch} into the work area"
+            mkdir -p "${BUILD_TOOLCHAIN_DIR}"
+            if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" \
+                "$(github_download_url "${download_url}")"; then
+                log_message "ERROR: failed to download clang ${clang_version} for ${arch}"
+                return 30
+            fi
+            if ! mkdir -p "${clang_dir}" \
+                || ! tar -xJf "${BUILD_TOOLCHAIN_DIR}/${archive_name}" -C "${clang_dir}" --strip-components=1; then
+                log_message "ERROR: failed to extract clang ${clang_version}"
+                return 30
+            fi
+            rm -f "${BUILD_TOOLCHAIN_DIR}/${archive_name}"
         fi
-        if ! mkdir -p "${clang_dir}" \
-            || ! tar -xJf "${BUILD_TOOLCHAIN_DIR}/${archive_name}" -C "${clang_dir}" --strip-components=1; then
-            log_message "ERROR: failed to extract clang ${clang_version}"
-            return 30
-        fi
-        rm -f "${BUILD_TOOLCHAIN_DIR}/${archive_name}"
+        CLANG_BINARY="${clang_dir}/bin/clang"
+        log_message "using clang: ${CLANG_BINARY}"
+        "${CLANG_BINARY}" --version
     fi
-    CLANG_BINARY="${clang_dir}/bin/clang"
-    log_message "using clang: ${CLANG_BINARY}"
-    "${CLANG_BINARY}" --version
+    if ! LLD_BINARY="$(locate_lld)"; then
+        log_message "ERROR: ld.lld is required for ScaNN ThinLTO but was not found with clang"
+        return 30
+    fi
+    log_message "using lld: ${LLD_BINARY}"
 }
 
 
@@ -357,9 +384,13 @@ build_scann_wheel_from_source() {
     local bazel_bin="${BUILD_TOOLCHAIN_DIR}/bazel"
     local build_python="${BUILD_VENV_DIR}/bin/python"
     local scann_root="${SCANN_SOURCE_DIR}/scann"
+    local lld_directory
+    local bazel_path
     local bazel_startup_flags
     local bazel_flags
     arch="$(normalize_architecture "${EXPECTED_ARCH}")"
+    lld_directory="$(dirname "${LLD_BINARY}")"
+    bazel_path="${BUILD_VENV_DIR}/bin:${lld_directory}:${PATH}"
 
     log_message "configuring ScaNN build (${arch})"
     if ! (cd "${scann_root}" \
@@ -379,6 +410,7 @@ build_scann_wheel_from_source() {
     bazel_flags=(
         build
         "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache"
+        "--repo_env=PATH=${bazel_path}"
         -c
         opt
         --features=thin_lto
@@ -402,7 +434,7 @@ build_scann_wheel_from_source() {
 
     log_message "compiling ScaNN ${SOFTWARE_VERSION} with bazel (${arch})"
     if ! (cd "${scann_root}" \
-        && PATH="${BUILD_VENV_DIR}/bin:${PATH}" \
+        && PATH="${bazel_path}" \
            CC="${CLANG_BINARY}" \
            exec "${bazel_bin}" "${bazel_startup_flags[@]}" "${bazel_flags[@]}"); then
         log_message "ERROR: ScaNN bazel build failed"
