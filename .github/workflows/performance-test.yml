@@ -94,14 +94,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
-      - name: Install framework runtime dependencies from Aliyun mirror
+      - name: Install framework runtime dependencies from Huawei mirror
         shell: bash
         run: |
           framework_deps="${PERF_WORK_ROOT}/framework-deps"
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
-            --index-url https://mirrors.aliyun.com/pypi/simple/ \
+            --trusted-host mirrors.huaweicloud.com \
+            -i https://mirrors.huaweicloud.com/repository/pypi/simple \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"

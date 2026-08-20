@@ -327,14 +327,14 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
         assert f"--stage {removed_stage}" not in workflow
 
 
-def test_workflow_uses_default_pypi_on_ubuntu_and_aliyun_on_runners() -> None:
+def test_workflow_uses_default_pypi_on_ubuntu_and_huawei_on_runners() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(
         encoding="utf-8"
     )
     prepare_job, performance_and_report = workflow.split("  performance:", 1)
     assert "--index-url" not in prepare_job
-    assert workflow.count("https://mirrors.aliyun.com/pypi/simple/") == 1
-    assert "https://mirrors.aliyun.com/pypi/simple/" in performance_and_report
+    assert workflow.count("https://mirrors.huaweicloud.com/repository/pypi/simple") == 1
+    assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in performance_and_report
     assert workflow.count('"PyYAML==6.0.2"') == 2
     assert workflow.count("--target") == 2
     assert "Verify preinstalled framework runtime" not in workflow
