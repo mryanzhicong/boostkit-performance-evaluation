@@ -1,0 +1,526 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-2026.08.17.00}"
+EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
+PERF_RUN_ID="${PERF_RUN_ID:-}"
+RESULTS_DIR="${RESULTS_DIR:-}"
+PERF_WORK_DIR="${PERF_WORK_DIR:-}"
+PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
+FOLLY_SOURCE_URL="${FOLLY_SOURCE_URL:-https://github.com/facebook/folly.git}"
+# fast_float is a REQUIRED folly dependency that most distributions do not
+# package; when it is missing, the official fast_float release below is
+# fetched into the private work directory (never installed system-wide).
+FAST_FLOAT_SOURCE_URL="${FAST_FLOAT_SOURCE_URL:-https://github.com/fastfloat/fast_float.git}"
+FAST_FLOAT_VERSION="v8.2.10"
+
+SOURCE_DIR=""
+BUILD_DIR=""
+BENCH_JSON_DIR=""
+FAST_FLOAT_DIR=""
+MANIFEST_FILE=""
+COMPILER_BINARY=""
+COMPILER_VERSION_STRING=""
+STANDALONE_OWNS_WORK_DIR=0
+STANDALONE_KEEP_WORK_DIR=0
+STANDALONE_STOP_DONE=0
+STANDALONE_CLEANUP_DONE=0
+
+log_message() { printf '[folly] %s\n' "$*"; }
+
+normalize_architecture() {
+    case "${1,,}" in
+        x86_64|amd64) printf 'x86_64\n' ;;
+        aarch64|arm64) printf 'aarch64\n' ;;
+        *) printf '%s\n' "${1,,}" ;;
+    esac
+}
+
+configure_runtime_paths() {
+    if [[ -z "${PERF_RUN_ID}" ]]; then
+        PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+    fi
+    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
+        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+        return 10
+    }
+    if [[ -z "${RESULTS_DIR}" ]]; then
+        RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
+    fi
+    if [[ -z "${PERF_WORK_DIR}" ]]; then
+        PERF_WORK_DIR="/tmp/folly-perf/local-${PERF_RUN_ID}"
+        STANDALONE_OWNS_WORK_DIR=1
+        TMPDIR="${PERF_WORK_DIR}/tmp"
+    fi
+    if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
+        PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    SOURCE_DIR="${PERF_WORK_DIR}/folly-source"
+    BUILD_DIR="${PERF_WORK_DIR}/folly-build"
+    BENCH_JSON_DIR="${RESULTS_DIR}/folly_benchmarks"
+    FAST_FLOAT_DIR="${PERF_WORK_DIR}/fast_float"
+    MANIFEST_FILE="${PERF_WORK_DIR}/benchmark_manifest.json"
+    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
+}
+
+initialize_runtime() {
+    configure_runtime_paths
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+}
+
+require_commands() {
+    local required missing=0
+    for required in git cmake make g++ python3 curl tar sed tee nproc; do
+        if ! command -v "${required}" >/dev/null 2>&1; then
+            log_message "ERROR: required command is missing: ${required}"
+            missing=1
+        fi
+    done
+    [[ "${missing}" -eq 0 ]]
+}
+
+check_system_dependencies() {
+    # Required development packages per CMake/folly-deps.cmake and the
+    # BUILD_BENCHMARKS code path of the official CMakeLists.txt.
+    local missing=0
+    # Boost >= 1.69.0 is REQUIRED.
+    if ! printf '%s\n' \
+        '#include <boost/version.hpp>' \
+        '#if BOOST_VERSION < 106900' \
+        '#error boost too old' \
+        '#endif' \
+        'int main(){return 0;}' \
+        | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+        log_message "ERROR: Boost >= 1.69 development headers are missing"
+        missing=1
+    fi
+    local check library header
+    local checks=(
+        "libevent/event2/event.h"
+        "openssl/openssl/ssl.h"
+        "fmt/fmt/format.h"
+        "glog/glog/logging.h"
+        "gtest/gtest/gtest/gtest.h"
+        "gmock/gmock/gmock/gmock.h"
+    )
+    for check in "${checks[@]}"; do
+        library="${check%%/*}"
+        header="${check#*/}"
+        if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
+            | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+            log_message "ERROR: development headers for ${library} are missing"
+            missing=1
+        fi
+    done
+    [[ "${missing}" -eq 0 ]] || {
+        log_message "ERROR: install the missing development packages before retrying"
+        return 30
+    }
+}
+
+check_architecture() {
+    local actual expected
+    actual="$(normalize_architecture "$(uname -m)")"
+    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
+    [[ "${actual}" == "${expected}" ]] || {
+        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
+        return 20
+    }
+}
+
+prepare_compiler() {
+    # The official CMake build uses the default g++ toolchain; record the
+    # compiler actually used by the build.
+    COMPILER_BINARY="g++"
+    COMPILER_VERSION_STRING="$("${COMPILER_BINARY}" --version | head -n 1)"
+    log_message "using compiler: ${COMPILER_BINARY} (${COMPILER_VERSION_STRING})"
+}
+
+prepare_folly_source() {
+    [[ ! -e "${SOURCE_DIR}" ]] || {
+        log_message "ERROR: source directory already exists: ${SOURCE_DIR}"
+        return 30
+    }
+    export GIT_TERMINAL_PROMPT=0
+    log_message "cloning folly v${SOFTWARE_VERSION} from ${FOLLY_SOURCE_URL}"
+    git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
+        "${FOLLY_SOURCE_URL}" "${SOURCE_DIR}" || {
+        log_message "ERROR: failed to clone folly v${SOFTWARE_VERSION}"
+        return 30
+    }
+}
+
+prepare_fast_float() {
+    # fast_float is REQUIRED (CMake/FindFastFloat.cmake) but rarely packaged.
+    if printf '#include <fast_float/fast_float.h>\nint main(){return 0;}\n' \
+        | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+        log_message "using system fast_float"
+        return 0
+    fi
+    log_message "system fast_float missing; fetching official fast_float ${FAST_FLOAT_VERSION} into the work area"
+    git clone --branch "${FAST_FLOAT_VERSION}" --depth 1 \
+        "${FAST_FLOAT_SOURCE_URL}" "${FAST_FLOAT_DIR}" || {
+        log_message "ERROR: failed to fetch fast_float ${FAST_FLOAT_VERSION}"
+        return 30
+    }
+    [[ -f "${FAST_FLOAT_DIR}/include/fast_float/fast_float.h" ]] || {
+        log_message "ERROR: fast_float headers were not fetched"
+        return 30
+    }
+}
+
+generate_benchmark_manifest() {
+    # Extract the official BENCHMARK target list (directory + CMake target
+    # name) from the official CMakeLists.txt; these targets are the official
+    # benchmark entry points and decide the metric set.
+    python3 - "${SOURCE_DIR}" "${MANIFEST_FILE}" <<'PYEOF'
+import json
+import re
+import sys
+from pathlib import Path
+
+source_dir, manifest_path = Path(sys.argv[1]), Path(sys.argv[2])
+targets = []
+current_dir = ""
+for line in (source_dir / "CMakeLists.txt").read_text(encoding="utf-8").splitlines():
+    stripped = line.split("#", 1)[0].strip()
+    directory_match = re.match(r"DIRECTORY\s+(\S+)", stripped)
+    if directory_match:
+        current_dir = directory_match.group(1).rstrip("/")
+        continue
+    benchmark_match = re.match(r"BENCHMARK\s+([A-Za-z0-9_]+)", stripped)
+    if benchmark_match:
+        targets.append({"dir": current_dir, "target": benchmark_match.group(1)})
+if not targets:
+    raise SystemExit("no official BENCHMARK targets found in CMakeLists.txt")
+manifest_path.write_text(
+    json.dumps(targets, indent=2) + "\n", encoding="utf-8"
+)
+print(f"recorded {len(targets)} official BENCHMARK targets")
+PYEOF
+}
+
+report_actual_version() {
+    # folly has no --version binary; the cloned source tag is the
+    # authoritative version evidence.
+    local actual_version
+    actual_version="$(git -C "${SOURCE_DIR}" describe --tags --exact-match 2>/dev/null || true)"
+    [[ "${actual_version}" == "v${SOFTWARE_VERSION}" ]] || {
+        log_message "ERROR: cloned source tag '${actual_version}' does not match v${SOFTWARE_VERSION}"
+        return 40
+    }
+    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
+    printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+}
+
+benchmark_target_list() {
+    python3 - "${MANIFEST_FILE}" <<'PYEOF'
+import json
+import sys
+
+for entry in json.load(open(sys.argv[1], encoding="utf-8")):
+    print(entry["target"])
+PYEOF
+}
+
+build_folly() {
+    initialize_runtime || return $?
+    check_architecture || return $?
+    require_commands || return $?
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" && ! -e "${FAST_FLOAT_DIR}" ]] || {
+        log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
+        return 20
+    }
+    check_system_dependencies || return $?
+    prepare_compiler || return $?
+    prepare_folly_source || return $?
+    prepare_fast_float || return $?
+    report_actual_version || return $?
+    generate_benchmark_manifest || return $?
+
+    local cmake_fast_float_args=()
+    if [[ -d "${FAST_FLOAT_DIR}/include" ]]; then
+        cmake_fast_float_args=(-DFASTFLOAT_INCLUDE_DIR="${FAST_FLOAT_DIR}/include")
+    fi
+
+    log_message "configuring official folly build with BUILD_BENCHMARKS=ON (Release)"
+    cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_BENCHMARKS=ON \
+        "${cmake_fast_float_args[@]}" || {
+        log_message "ERROR: cmake configure of folly failed"
+        return 40
+    }
+
+    local target target_count build_args=()
+    target_count="$(benchmark_target_list | wc -l)"
+    while IFS= read -r target; do
+        build_args+=(--target "${target}")
+    done < <(benchmark_target_list)
+    log_message "building ${target_count} official benchmark targets"
+    cmake --build "${BUILD_DIR}" -j "$(nproc)" "${build_args[@]}" || {
+        log_message "ERROR: cmake build of the official benchmark targets failed"
+        return 40
+    }
+    local missing=0 binary
+    while IFS= read -r target; do
+        binary="${BUILD_DIR}/${target}"
+        if [[ ! -x "${binary}" ]]; then
+            log_message "ERROR: official benchmark binary was not produced: ${binary}"
+            missing=1
+        fi
+    done < <(benchmark_target_list)
+    [[ "${missing}" -eq 0 ]] || return 40
+    log_message "folly ${SOFTWARE_VERSION} official benchmark artifacts are ready"
+}
+
+start_folly_runtime() {
+    initialize_runtime || return $?
+    [[ -f "${MANIFEST_FILE}" ]] || {
+        log_message "ERROR: benchmark manifest is unavailable: ${MANIFEST_FILE}"
+        return 40
+    }
+    local target binary
+    while IFS= read -r target; do
+        binary="${BUILD_DIR}/${target}"
+        [[ -x "${binary}" ]] || {
+            log_message "ERROR: official benchmark binary is unavailable: ${binary}"
+            return 40
+        }
+    done < <(benchmark_target_list)
+    log_message "folly official benchmark runtime is ready"
+}
+
+run_folly_benchmarks() {
+    initialize_runtime || return $?
+    [[ -f "${MANIFEST_FILE}" ]] || {
+        log_message "ERROR: benchmark manifest is unavailable: ${MANIFEST_FILE}"
+        return 40
+    }
+    mkdir -p "${BENCH_JSON_DIR}"
+    local target binary output_file
+    while IFS= read -r target; do
+        binary="${BUILD_DIR}/${target}"
+        output_file="${BENCH_JSON_DIR}/${target}.json"
+        [[ -x "${binary}" ]] || {
+            log_message "ERROR: official benchmark binary is unavailable: ${binary}"
+            return 40
+        }
+        log_message "running official benchmark target: ${target}"
+        (
+            # The official add_test entries run from the repository root.
+            cd "${SOURCE_DIR}"
+            "${binary}" "--bm_json_verbose=${output_file}" >/dev/null
+        ) || {
+            log_message "ERROR: official benchmark target failed: ${target}"
+            return 50
+        }
+        [[ -s "${output_file}" ]] || {
+            log_message "ERROR: official benchmark target produced no JSON: ${target}"
+            return 50
+        }
+    done < <(benchmark_target_list)
+
+    export SOFTWARE_VERSION EXPECTED_ARCH
+    python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
+        "${MANIFEST_FILE}" \
+        "${BENCH_JSON_DIR}" \
+        "${RESULTS_DIR}/benchmark_folly.json" || {
+        log_message "ERROR: failed to normalize official folly benchmark results"
+        return 50
+    }
+    log_message "folly benchmark results written to benchmark_folly.json"
+}
+
+stop_folly_runtime() {
+    log_message "folly benchmark has no background service to stop"
+}
+
+standalone_runtime() {
+    python3 "${SCRIPT_DIR}/scripts/standalone_runtime.py" "$@"
+}
+
+cleanup_standalone_workdir() {
+    if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
+        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
+        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    [[ "${PERF_WORK_DIR}" == /tmp/folly-perf/local-* && \
+       "${PERF_WORK_DIR}" != "/tmp/folly-perf" ]] || {
+        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+        return 70
+    }
+    if [[ -d "${PERF_WORK_DIR}" ]]; then
+        rm -rf -- "${PERF_WORK_DIR}" || return 70
+    fi
+    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
+}
+
+emergency_standalone_cleanup() {
+    set +e
+    if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
+        stop_folly_runtime
+    fi
+    if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
+        cleanup_standalone_workdir
+    fi
+}
+
+run_folly_standalone() {
+    local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
+    local command_status="passed"
+
+    configure_runtime_paths || return $?
+    STANDALONE_STOP_DONE=0
+    STANDALONE_CLEANUP_DONE=0
+    trap emergency_standalone_cleanup EXIT
+    initialize_runtime || return $?
+
+    if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
+        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
+        :
+    else
+        stage_status=$?
+        failed_stage="prepare"
+    fi
+
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if build_folly; then
+            if standalone_runtime build-info \
+                "${RESULTS_DIR}/build_info.json" \
+                "${SOFTWARE_VERSION}" \
+                "${PERF_ACTUAL_VERSION_FILE}" \
+                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${PERF_RUN_ID}" \
+                "${COMPILER_BINARY}" \
+                "${COMPILER_VERSION_STRING}"; then
+                :
+            else
+                stage_status=$?
+                failed_stage="build"
+            fi
+        else
+            stage_status=$?
+            failed_stage="build"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if start_folly_runtime; then
+            :
+        else
+            stage_status=$?
+            failed_stage="start"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if run_folly_benchmarks; then
+            :
+        else
+            stage_status=$?
+            failed_stage="test"
+        fi
+    fi
+
+    if ! stop_folly_runtime; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_STOP_DONE=1
+    if ! standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json"; then
+        cleanup_status="failed"
+    fi
+    if ! cleanup_standalone_workdir; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_CLEANUP_DONE=1
+
+    if [[ "${stage_status}" -ne 0 ]]; then
+        command_status="failed"
+    fi
+    if standalone_runtime finalize \
+        "${RESULTS_DIR}" \
+        "${SOFTWARE_VERSION}" \
+        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${PERF_RUN_ID}" \
+        "${command_status}" \
+        "${cleanup_status}" \
+        "${failed_stage}"; then
+        finalize_status=0
+    else
+        finalize_status=$?
+    fi
+    trap - EXIT
+    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
+    [[ "${cleanup_status}" == "passed" ]] || return 70
+    return "${finalize_status}"
+}
+
+usage() {
+    cat <<USAGE
+Usage: $(basename "$0") [OPTIONS]
+
+Build and run folly's official CMake BENCHMARK targets (folly's own benchmark
+framework with --bm_json_verbose) as a standalone performance evaluation.
+Results default to results/<version>/<run-id>/ inside this directory.
+
+Options:
+  --version VERSION       folly version (default: ${SOFTWARE_VERSION})
+  --results-dir DIR       Persistent result directory
+  --keep-workdir          Keep the isolated work directory for debugging
+  -h, --help              Show this help
+
+Environment overrides:
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
+  FOLLY_SOURCE_URL, FAST_FLOAT_SOURCE_URL
+USAGE
+}
+
+main() {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --version)
+                [[ "$#" -ge 2 ]] || { log_message "ERROR: --version requires a value"; return 10; }
+                SOFTWARE_VERSION="$2"
+                shift 2
+                ;;
+            --results-dir)
+                [[ "$#" -ge 2 ]] || { log_message "ERROR: --results-dir requires a value"; return 10; }
+                RESULTS_DIR="$2"
+                shift 2
+                ;;
+            --keep-workdir)
+                STANDALONE_KEEP_WORK_DIR=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                return 0
+                ;;
+            *)
+                log_message "ERROR: unsupported option: $1"
+                usage
+                return 10
+                ;;
+        esac
+    done
+
+    configure_runtime_paths || return $?
+    mkdir -p "${RESULTS_DIR}" || return $?
+    : > "${RESULTS_DIR}/results.log"
+    local pipeline_status=0
+    set +e
+    run_folly_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
+    pipeline_status="${PIPESTATUS[0]}"
+    set -e
+    log_message "standalone results: ${RESULTS_DIR}"
+    return "${pipeline_status}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi
