@@ -91,6 +91,7 @@ jobs:
       PERF_WORK_ROOT: /tmp/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
+      PERF_GITHUB_DOWNLOAD_PROXY: https://gh-proxy.test.osinfra.cn
     steps:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test

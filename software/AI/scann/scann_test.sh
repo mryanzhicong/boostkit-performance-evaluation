@@ -50,6 +50,16 @@ normalize_architecture() {
     esac
 }
 
+github_download_url() {
+    local source_url="$1"
+
+    if [[ -n "${PERF_GITHUB_DOWNLOAD_PROXY:-}" && "${source_url}" == https://github.com/* ]]; then
+        printf '%s/%s\n' "${PERF_GITHUB_DOWNLOAD_PROXY%/}" "${source_url}"
+        return
+    fi
+    printf '%s\n' "${source_url}"
+}
+
 
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
@@ -146,7 +156,10 @@ install_python_dependencies() {
     )
     os_id="$(operating_system_id)"
     if [[ "${os_id}" != "ubuntu" ]]; then
-        pip_options+=(--index-url https://mirrors.aliyun.com/pypi/simple/)
+        pip_options+=(
+            --trusted-host mirrors.huaweicloud.com
+            --index-url https://mirrors.huaweicloud.com/repository/pypi/simple
+        )
     fi
     log_message "installing private Python dependencies numpy==${NUMPY_VERSION} protobuf==${PROTOBUF_VERSION}"
     if ! python3 -m pip install "${pip_options[@]}" \
@@ -199,7 +212,9 @@ python_pip_index_options() {
     local os_id
     os_id="$(operating_system_id)"
     if [[ "${os_id}" != "ubuntu" ]]; then
-        printf '%s\n' '--index-url' 'https://mirrors.aliyun.com/pypi/simple/'
+        printf '%s\n' \
+            '--trusted-host' 'mirrors.huaweicloud.com' \
+            '--index-url' 'https://mirrors.huaweicloud.com/repository/pypi/simple'
     fi
 }
 
@@ -242,7 +257,7 @@ prepare_bazel() {
     fi
     log_message "downloading bazel ${BAZEL_VERSION} for ${arch}"
     if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
-        "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}"; then
+        "$(github_download_url "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}")"; then
         log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
         return 30
     fi
@@ -296,7 +311,8 @@ prepare_clang() {
     if [[ ! -x "${clang_dir}/bin/clang" ]]; then
         log_message "downloading clang ${clang_version} for ${arch} into the work area"
         mkdir -p "${BUILD_TOOLCHAIN_DIR}"
-        if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" "${download_url}"; then
+        if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" \
+            "$(github_download_url "${download_url}")"; then
             log_message "ERROR: failed to download clang ${clang_version} for ${arch}"
             return 30
         fi
@@ -341,6 +357,7 @@ build_scann_wheel_from_source() {
     local bazel_bin="${BUILD_TOOLCHAIN_DIR}/bazel"
     local build_python="${BUILD_VENV_DIR}/bin/python"
     local scann_root="${SCANN_SOURCE_DIR}/scann"
+    local bazel_startup_flags
     local bazel_flags
     arch="$(normalize_architecture "${EXPECTED_ARCH}")"
 
@@ -356,16 +373,18 @@ build_scann_wheel_from_source() {
         return 30
     fi
 
+    bazel_startup_flags=(
+        "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache"
+    )
     bazel_flags=(
         build
+        "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache"
         -c
         opt
         --features=thin_lto
         --cxxopt="-std=c++17"
         --copt=-fsized-deallocation
         --copt=-w
-        --output_user_root="${BUILD_TOOLCHAIN_DIR}/bazel-cache"
-        --repository_cache="${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache"
     )
     case "${arch}" in
         x86_64)
@@ -385,7 +404,7 @@ build_scann_wheel_from_source() {
     if ! (cd "${scann_root}" \
         && PATH="${BUILD_VENV_DIR}/bin:${PATH}" \
            CC="${CLANG_BINARY}" \
-           exec "${bazel_bin}" "${bazel_flags[@]}"); then
+           exec "${bazel_bin}" "${bazel_startup_flags[@]}" "${bazel_flags[@]}"); then
         log_message "ERROR: ScaNN bazel build failed"
         return 30
     fi

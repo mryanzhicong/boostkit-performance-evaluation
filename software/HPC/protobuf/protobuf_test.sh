@@ -37,6 +37,16 @@ normalize_architecture() {
     esac
 }
 
+github_download_url() {
+    local source_url="$1"
+
+    if [[ -n "${PERF_GITHUB_DOWNLOAD_PROXY:-}" && "${source_url}" == https://github.com/* ]]; then
+        printf '%s/%s\n' "${PERF_GITHUB_DOWNLOAD_PROXY%/}" "${source_url}"
+        return
+    fi
+    printf '%s\n' "${source_url}"
+}
+
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
@@ -108,7 +118,7 @@ prepare_bazel() {
     fi
     log_message "downloading bazel ${BAZEL_VERSION} (official .bazeliskrc pin) for ${arch}"
     curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
-        "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}" || {
+        "$(github_download_url "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}")" || {
         log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
         return 30
     }
@@ -150,7 +160,8 @@ prepare_clang() {
     clang_dir="${BUILD_TOOLCHAIN_DIR}/clang-${CLANG_VERSION}"
     if [[ ! -x "${clang_dir}/bin/clang" ]]; then
         log_message "downloading clang ${CLANG_VERSION} for ${arch} into the work area"
-        curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" "${download_url}" || {
+        curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" \
+            "$(github_download_url "${download_url}")" || {
             log_message "ERROR: failed to download clang ${CLANG_VERSION} for ${arch}"
             return 30
         }
@@ -218,8 +229,8 @@ build_protobuf() {
         cd "${SOURCE_DIR}"
         CC="${CLANG_BINARY}" "${BUILD_TOOLCHAIN_DIR}/bazel" \
             "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache" \
-            "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
-            build -c opt --copt=-march=native benchmarks:benchmark //:protoc
+            build --repository_cache="${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
+            -c opt --copt=-march=native benchmarks:benchmark //:protoc
     ) || {
         log_message "ERROR: official bazel build of benchmarks:benchmark failed"
         return 40

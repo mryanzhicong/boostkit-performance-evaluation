@@ -38,6 +38,16 @@ normalize_architecture() {
     esac
 }
 
+github_download_url() {
+    local source_url="$1"
+
+    if [[ -n "${PERF_GITHUB_DOWNLOAD_PROXY:-}" && "${source_url}" == https://github.com/* ]]; then
+        printf '%s/%s\n' "${PERF_GITHUB_DOWNLOAD_PROXY%/}" "${source_url}"
+        return
+    fi
+    printf '%s\n' "${source_url}"
+}
+
 sonic_arch_flag() {
     # Maps the runner architecture onto the official :sonic_arch build flag.
     local arch
@@ -119,7 +129,7 @@ prepare_bazel() {
     fi
     log_message "downloading bazel ${BAZEL_VERSION} (official .bazelversion pin) for ${arch}"
     curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
-        "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}" || {
+        "$(github_download_url "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}")" || {
         log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
         return 30
     }
@@ -247,8 +257,8 @@ build_sonic() {
         cd "${SOURCE_DIR}"
         "${BUILD_TOOLCHAIN_DIR}/bazel" \
             "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache" \
-            "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
-            build --compilation_mode=opt \
+            build "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
+            --compilation_mode=opt \
             "--//:sonic_arch=${sonic_arch}" \
             "--//:sonic_dispatch=static" \
             //:benchmark

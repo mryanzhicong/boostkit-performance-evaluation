@@ -142,7 +142,10 @@ install_python_build_dependencies() {
     )
     os_id="$(operating_system_id)"
     if [[ "${os_id}" != "ubuntu" ]]; then
-        pip_options+=(--index-url https://mirrors.aliyun.com/pypi/simple/)
+        pip_options+=(
+            --trusted-host mirrors.huaweicloud.com
+            --index-url https://mirrors.huaweicloud.com/repository/pypi/simple
+        )
     fi
     log_message "installing private Python build dependencies"
     if ! python3 -m pip install "${pip_options[@]}" \
