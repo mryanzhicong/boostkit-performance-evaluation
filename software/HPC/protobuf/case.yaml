@@ -1,0 +1,40 @@
+name: protobuf
+category: HPC
+enabled: true
+versions:
+  - "35.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: protobuf_test.sh
+      function: build_protobuf
+    start:
+      script: protobuf_test.sh
+      function: start_protobuf_runtime
+    test:
+      script: protobuf_test.sh
+      function: run_protobuf_benchmarks
+    stop:
+      script: protobuf_test.sh
+      function: stop_protobuf_runtime
+  timeout_minutes: 120
+outputs:
+  official_benchmark:
+    path: benchmark.json
+    stage: test
+    format: json
+    required: true
+  benchmark_result:
+    path: benchmark_protobuf.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: ns
+    direction: lower_is_better
