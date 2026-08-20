@@ -54,6 +54,7 @@ jobs:
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
+            --no-cache-dir \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
@@ -101,6 +102,7 @@ jobs:
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
+            --no-cache-dir \
             --trusted-host mirrors.huaweicloud.com \
             -i https://mirrors.huaweicloud.com/repository/pypi/simple \
             --target "${framework_deps}" \

@@ -337,6 +337,7 @@ def test_workflow_uses_default_pypi_on_ubuntu_and_huawei_on_runners() -> None:
     assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in performance_and_report
     assert workflow.count('"PyYAML==6.0.2"') == 2
     assert workflow.count("--target") == 2
+    assert workflow.count("--no-cache-dir") == 2
     assert "Verify preinstalled framework runtime" not in workflow
     assert not (ROOT / "pyproject.toml").exists()
 
