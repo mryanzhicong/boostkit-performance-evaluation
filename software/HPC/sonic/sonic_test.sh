@@ -1,0 +1,495 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.0.2}"
+EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
+PERF_RUN_ID="${PERF_RUN_ID:-}"
+RESULTS_DIR="${RESULTS_DIR:-}"
+PERF_WORK_DIR="${PERF_WORK_DIR:-}"
+PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
+SONIC_SOURCE_URL="${SONIC_SOURCE_URL:-https://github.com/bytedance/sonic-cpp.git}"
+# Bazel version pinned by the official repository's .bazelversion (master).
+BAZEL_VERSION="8.5.1"
+# Repetitions used by the official CI benchmark workflow (repetitions=5).
+BENCHMARK_REPETITIONS="5"
+# The official WORKSPACE.bzlmod/MODULE.bazel pull third-party dependencies from
+# branch = "master"/"main", which is not reproducible. lock_dependency_snapshots
+# replaces those pins with commit snapshots recorded on 2026-08-20 (see the
+# Python lock table below for the exact SHAs).
+
+SOURCE_DIR=""
+BUILD_TOOLCHAIN_DIR=""
+BENCHMARK_BIN=""
+COMPILER_BINARY=""
+COMPILER_VERSION_STRING=""
+STANDALONE_OWNS_WORK_DIR=0
+STANDALONE_KEEP_WORK_DIR=0
+STANDALONE_STOP_DONE=0
+STANDALONE_CLEANUP_DONE=0
+
+log_message() { printf '[sonic] %s\n' "$*"; }
+
+normalize_architecture() {
+    case "${1,,}" in
+        x86_64|amd64) printf 'x86_64\n' ;;
+        aarch64|arm64) printf 'aarch64\n' ;;
+        *) printf '%s\n' "${1,,}" ;;
+    esac
+}
+
+sonic_arch_flag() {
+    # Maps the runner architecture onto the official :sonic_arch build flag.
+    local arch
+    arch="$(normalize_architecture "$1")"
+    case "${arch}" in
+        x86_64) printf 'haswell\n' ;;
+        aarch64) printf 'arm\n' ;;
+        *) return 1 ;;
+    esac
+}
+
+configure_runtime_paths() {
+    if [[ -z "${PERF_RUN_ID}" ]]; then
+        PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+    fi
+    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
+        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+        return 10
+    }
+    if [[ -z "${RESULTS_DIR}" ]]; then
+        RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
+    fi
+    if [[ -z "${PERF_WORK_DIR}" ]]; then
+        PERF_WORK_DIR="/tmp/sonic-perf/local-${PERF_RUN_ID}"
+        STANDALONE_OWNS_WORK_DIR=1
+        TMPDIR="${PERF_WORK_DIR}/tmp"
+    fi
+    if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
+        PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    SOURCE_DIR="${PERF_WORK_DIR}/sonic-source"
+    BUILD_TOOLCHAIN_DIR="${PERF_WORK_DIR}/build-toolchain"
+    BENCHMARK_BIN="${SOURCE_DIR}/bazel-bin/benchmark"
+    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
+}
+
+initialize_runtime() {
+    configure_runtime_paths
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+}
+
+require_commands() {
+    local required missing=0
+    for required in git python3 curl tar sed tee nproc; do
+        if ! command -v "${required}" >/dev/null 2>&1; then
+            log_message "ERROR: required command is missing: ${required}"
+            missing=1
+        fi
+    done
+    [[ "${missing}" -eq 0 ]]
+}
+
+check_architecture() {
+    local actual expected
+    actual="$(normalize_architecture "$(uname -m)")"
+    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
+    [[ "${actual}" == "${expected}" ]] || {
+        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
+        return 20
+    }
+}
+
+prepare_bazel() {
+    local arch bazel_file
+    arch="$(normalize_architecture "${EXPECTED_ARCH}")"
+    case "${arch}" in
+        x86_64) bazel_file="bazel-${BAZEL_VERSION}-linux-x86_64" ;;
+        aarch64) bazel_file="bazel-${BAZEL_VERSION}-linux-arm64" ;;
+        *)
+            log_message "ERROR: unsupported build architecture: ${arch}"
+            return 30
+            ;;
+    esac
+    mkdir -p "${BUILD_TOOLCHAIN_DIR}"
+    if [[ -x "${BUILD_TOOLCHAIN_DIR}/bazel" ]]; then
+        "${BUILD_TOOLCHAIN_DIR}/bazel" --version
+        return 0
+    fi
+    log_message "downloading bazel ${BAZEL_VERSION} (official .bazelversion pin) for ${arch}"
+    curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
+        "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}" || {
+        log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
+        return 30
+    }
+    chmod +x "${BUILD_TOOLCHAIN_DIR}/bazel"
+    "${BUILD_TOOLCHAIN_DIR}/bazel" --version
+}
+
+prepare_compiler() {
+    # sonic's official CI invokes bazel with the default system toolchain
+    # (no CC override), so record the default compiler actually used by bazel.
+    local compiler=""
+    if [[ -n "${CC:-}" ]] && command -v "${CC}" >/dev/null 2>&1; then
+        compiler="${CC}"
+    elif command -v gcc >/dev/null 2>&1; then
+        compiler="gcc"
+    elif command -v cc >/dev/null 2>&1; then
+        compiler="cc"
+    fi
+    [[ -n "${compiler}" ]] || {
+        log_message "ERROR: no C/C++ compiler is available for bazel"
+        return 30
+    }
+    COMPILER_BINARY="${compiler}"
+    COMPILER_VERSION_STRING="$("${COMPILER_BINARY}" --version | head -n 1)"
+    log_message "using default bazel compiler: ${COMPILER_BINARY} (${COMPILER_VERSION_STRING})"
+}
+
+prepare_sonic_source() {
+    [[ ! -e "${SOURCE_DIR}" ]] || {
+        log_message "ERROR: source directory already exists: ${SOURCE_DIR}"
+        return 30
+    }
+    export GIT_TERMINAL_PROMPT=0
+    log_message "cloning sonic-cpp v${SOFTWARE_VERSION} from ${SONIC_SOURCE_URL}"
+    git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
+        "${SONIC_SOURCE_URL}" "${SOURCE_DIR}" || {
+        log_message "ERROR: failed to clone sonic-cpp v${SOFTWARE_VERSION}"
+        return 30
+    }
+}
+
+report_actual_version() {
+    # sonic-cpp is header-only and has no --version binary; the cloned source
+    # tag is the authoritative version evidence.
+    local actual_version
+    actual_version="$(git -C "${SOURCE_DIR}" describe --tags --exact-match 2>/dev/null || true)"
+    [[ "${actual_version}" == "v${SOFTWARE_VERSION}" ]] || {
+        log_message "ERROR: cloned source tag '${actual_version}' does not match v${SOFTWARE_VERSION}"
+        return 40
+    }
+    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
+    printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+}
+
+lock_dependency_snapshots() {
+    # Replace the unpinned branch = "master"/"main" git pins in the official
+    # WORKSPACE.bzlmod and MODULE.bazel with the recorded commit snapshots so
+    # every build resolves identical third-party dependencies.
+    log_message "locking third-party dependencies to recorded commit snapshots"
+    python3 - "${SOURCE_DIR}" <<'PYEOF'
+import re
+import sys
+from pathlib import Path
+
+source_dir = Path(sys.argv[1])
+lock = {
+    "rapidjson": "24b5e7a8b27f42fa16b96fc70aade9106cf7102f",
+    "cJSON": "fb16e5cf358798aabb049655975cde8427101056",
+    "simdjson": "edd9760b14b0ae5a0eb1038caa9c4ed8ce200a38",
+    "yyjson": "db37a64d63d38a8ddea35aa811b1163831028490",
+    "jsoncpp": "60de77f915ab08499032d6e5a63e05e974f85d01",
+    "google_benchmark": "267a11154f14269384879dc7f6b8d25acb3684db",
+    "gtest": "0daf775f8c9324e7d42582a09de1240805f25a54",
+    "gflags": "bdda022e7c34ab865c96fc933604b4b3e617d74d",
+}
+pinned = 0
+for manifest in ("WORKSPACE.bzlmod", "MODULE.bazel"):
+    path = source_dir / manifest
+    if not path.exists():
+        continue
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    current_repo = None
+    for index, line in enumerate(lines):
+        name_match = re.search(r'name\s*=\s*"([^"]+)"', line)
+        if name_match:
+            current_repo = name_match.group(1)
+        if current_repo in lock and re.search(r'branch\s*=\s*"(master|main)"', line):
+            lines[index] = re.sub(
+                r'branch\s*=\s*"(master|main)"',
+                f'commit = "{lock[current_repo]}"',
+                line,
+            )
+            pinned += 1
+            current_repo = None
+    path.write_text("".join(lines), encoding="utf-8")
+if pinned < len(lock):
+    raise SystemExit(
+        f"expected to pin at least {len(lock)} dependency blocks, pinned {pinned}"
+    )
+print(f"pinned {pinned} branch-based dependency pins to commit snapshots")
+PYEOF
+}
+
+build_sonic() {
+    initialize_runtime || return $?
+    check_architecture || return $?
+    require_commands || return $?
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_TOOLCHAIN_DIR}" ]] || {
+        log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
+        return 20
+    }
+    prepare_bazel || return $?
+    prepare_compiler || return $?
+    prepare_sonic_source || return $?
+    lock_dependency_snapshots || return $?
+    report_actual_version || return $?
+
+    local sonic_arch
+    sonic_arch="$(sonic_arch_flag "${EXPECTED_ARCH}")" || {
+        log_message "ERROR: unsupported architecture for sonic: ${EXPECTED_ARCH}"
+        return 30
+    }
+    log_message "building official //:benchmark with bazel ${BAZEL_VERSION} (:sonic_arch=${sonic_arch})"
+    (
+        cd "${SOURCE_DIR}"
+        "${BUILD_TOOLCHAIN_DIR}/bazel" \
+            "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache" \
+            "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
+            build --compilation_mode=opt \
+            "--//:sonic_arch=${sonic_arch}" \
+            "--//:sonic_dispatch=static" \
+            //:benchmark
+    ) || {
+        log_message "ERROR: official bazel build of //:benchmark failed"
+        return 40
+    }
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log_message "ERROR: official benchmark binary was not produced: ${BENCHMARK_BIN}"
+        return 40
+    }
+    log_message "sonic ${SOFTWARE_VERSION} official benchmark artifact is ready"
+}
+
+start_sonic_runtime() {
+    initialize_runtime || return $?
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log_message "ERROR: official sonic benchmark binary is unavailable: ${BENCHMARK_BIN}"
+        return 40
+    }
+    log_message "sonic official benchmark runtime is ready"
+}
+
+run_sonic_benchmarks() {
+    initialize_runtime || return $?
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log_message "ERROR: official sonic benchmark binary is unavailable: ${BENCHMARK_BIN}"
+        return 40
+    }
+    log_message "running official benchmark/main.cpp with the official CI parameters"
+    # Mirrors the official CI benchmark workflow (repetitions=5,
+    # report_aggregates_only=true) but omits its --benchmark_filter=Sonic so the
+    # full official scenario matrix (all libraries / all testdata files) is kept.
+    (
+        # The binary loads testdata/ relative to the working directory.
+        cd "${SOURCE_DIR}"
+        "${BENCHMARK_BIN}" \
+            "--benchmark_out_format=json" \
+            "--benchmark_out=${RESULTS_DIR}/benchmark.json" \
+            "--benchmark_repetitions=${BENCHMARK_REPETITIONS}" \
+            "--benchmark_report_aggregates_only=true"
+    ) || {
+        log_message "ERROR: official sonic benchmark failed"
+        return 50
+    }
+    export SOFTWARE_VERSION EXPECTED_ARCH BENCHMARK_REPETITIONS
+    python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
+        "${RESULTS_DIR}/benchmark.json" \
+        "${RESULTS_DIR}/benchmark_sonic.json" || {
+        log_message "ERROR: failed to normalize official sonic benchmark results"
+        return 50
+    }
+    log_message "sonic benchmark results written to benchmark.json and benchmark_sonic.json"
+}
+
+stop_sonic_runtime() {
+    log_message "sonic benchmark has no background service to stop"
+}
+
+standalone_runtime() {
+    python3 "${SCRIPT_DIR}/scripts/standalone_runtime.py" "$@"
+}
+
+cleanup_standalone_workdir() {
+    if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
+        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
+        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    [[ "${PERF_WORK_DIR}" == /tmp/sonic-perf/local-* && \
+       "${PERF_WORK_DIR}" != "/tmp/sonic-perf" ]] || {
+        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+        return 70
+    }
+    if [[ -d "${PERF_WORK_DIR}" ]]; then
+        rm -rf -- "${PERF_WORK_DIR}" || return 70
+    fi
+    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
+}
+
+emergency_standalone_cleanup() {
+    set +e
+    if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
+        stop_sonic_runtime
+    fi
+    if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
+        cleanup_standalone_workdir
+    fi
+}
+
+run_sonic_standalone() {
+    local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
+    local command_status="passed"
+
+    configure_runtime_paths || return $?
+    STANDALONE_STOP_DONE=0
+    STANDALONE_CLEANUP_DONE=0
+    trap emergency_standalone_cleanup EXIT
+    initialize_runtime || return $?
+
+    if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
+        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
+        :
+    else
+        stage_status=$?
+        failed_stage="prepare"
+    fi
+
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if build_sonic; then
+            if standalone_runtime build-info \
+                "${RESULTS_DIR}/build_info.json" \
+                "${SOFTWARE_VERSION}" \
+                "${PERF_ACTUAL_VERSION_FILE}" \
+                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${PERF_RUN_ID}" \
+                "${COMPILER_BINARY}" \
+                "${COMPILER_VERSION_STRING}"; then
+                :
+            else
+                stage_status=$?
+                failed_stage="build"
+            fi
+        else
+            stage_status=$?
+            failed_stage="build"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if start_sonic_runtime; then
+            :
+        else
+            stage_status=$?
+            failed_stage="start"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if run_sonic_benchmarks; then
+            :
+        else
+            stage_status=$?
+            failed_stage="test"
+        fi
+    fi
+
+    if ! stop_sonic_runtime; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_STOP_DONE=1
+    if ! standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json"; then
+        cleanup_status="failed"
+    fi
+    if ! cleanup_standalone_workdir; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_CLEANUP_DONE=1
+
+    if [[ "${stage_status}" -ne 0 ]]; then
+        command_status="failed"
+    fi
+    if standalone_runtime finalize \
+        "${RESULTS_DIR}" \
+        "${SOFTWARE_VERSION}" \
+        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${PERF_RUN_ID}" \
+        "${command_status}" \
+        "${cleanup_status}" \
+        "${failed_stage}"; then
+        finalize_status=0
+    else
+        finalize_status=$?
+    fi
+    trap - EXIT
+    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
+    [[ "${cleanup_status}" == "passed" ]] || return 70
+    return "${finalize_status}"
+}
+
+usage() {
+    cat <<USAGE
+Usage: $(basename "$0") [OPTIONS]
+
+Build and run sonic-cpp's official Bazel benchmark (benchmark/main.cpp) as a
+standalone performance evaluation. Results default to
+results/<version>/<run-id>/ inside this directory.
+
+Options:
+  --version VERSION       sonic-cpp version (default: ${SOFTWARE_VERSION})
+  --results-dir DIR       Persistent result directory
+  --keep-workdir          Keep the isolated work directory for debugging
+  -h, --help              Show this help
+
+Environment overrides:
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, SONIC_SOURCE_URL
+USAGE
+}
+
+main() {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --version)
+                [[ "$#" -ge 2 ]] || { log_message "ERROR: --version requires a value"; return 10; }
+                SOFTWARE_VERSION="$2"
+                shift 2
+                ;;
+            --results-dir)
+                [[ "$#" -ge 2 ]] || { log_message "ERROR: --results-dir requires a value"; return 10; }
+                RESULTS_DIR="$2"
+                shift 2
+                ;;
+            --keep-workdir)
+                STANDALONE_KEEP_WORK_DIR=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                return 0
+                ;;
+            *)
+                log_message "ERROR: unsupported option: $1"
+                usage
+                return 10
+                ;;
+        esac
+    done
+
+    configure_runtime_paths || return $?
+    mkdir -p "${RESULTS_DIR}" || return $?
+    : > "${RESULTS_DIR}/results.log"
+    local pipeline_status=0
+    set +e
+    run_sonic_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
+    pipeline_status="${PIPESTATUS[0]}"
+    set -e
+    log_message "standalone results: ${RESULTS_DIR}"
+    return "${pipeline_status}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

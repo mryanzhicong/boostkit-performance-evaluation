@@ -1,0 +1,40 @@
+name: sonic
+category: HPC
+enabled: true
+versions:
+  - "1.0.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: sonic_test.sh
+      function: build_sonic
+    start:
+      script: sonic_test.sh
+      function: start_sonic_runtime
+    test:
+      script: sonic_test.sh
+      function: run_sonic_benchmarks
+    stop:
+      script: sonic_test.sh
+      function: stop_sonic_runtime
+  timeout_minutes: 180
+outputs:
+  official_benchmark:
+    path: benchmark.json
+    stage: test
+    format: json
+    required: true
+  benchmark_result:
+    path: benchmark_sonic.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: ns
+    direction: lower_is_better
