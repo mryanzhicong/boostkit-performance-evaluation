@@ -268,6 +268,76 @@ def test_normalizer_extracts_every_metric_from_a_declared_collection(
         normalize(context, "passed")
 
 
+def test_normalizer_collection_reads_unit_and_direction_from_each_item(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    atomic_write_json(
+        output / "results.json",
+        {
+            "results": {
+                "throughput": {
+                    "source_name": "serialize_qps",
+                    "value": 304.9,
+                    "unit": "messages/s",
+                    "direction": "higher_is_better",
+                },
+                "latency": {
+                    "source_name": "serialize_latency_us",
+                    "value": 2.5,
+                    "unit": "us",
+                    "direction": "lower_is_better",
+                },
+            }
+        },
+    )
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "result": {
+                    "path": "results.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                }
+            },
+            "metrics": {
+                "source": "result",
+                "collection": {
+                    "path": "results",
+                    "name_path": "source_name",
+                    "value_path": "value",
+                    "unit_path": "unit",
+                    "direction_path": "direction",
+                },
+            },
+        },
+        category="HPC",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=output,
+        work_dir=tmp_path / "work",
+    )
+    record_requested_build(context)
+    result = normalize(context, "passed")
+    assert result["metrics"] == {
+        "serialize_qps": {
+            "value": 304.9,
+            "unit": "messages/s",
+            "direction": "higher_is_better",
+        },
+        "serialize_latency_us": {
+            "value": 2.5,
+            "unit": "us",
+            "direction": "lower_is_better",
+        },
+    }
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
     import pytest
 

@@ -10,8 +10,10 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 PROTOBUF_SOURCE_URL="${PROTOBUF_SOURCE_URL:-https://github.com/protocolbuffers/protobuf.git}"
 PROTOBUF_PYTHON_VERSION="${PROTOBUF_PYTHON_VERSION:-7.35.1}"
-NUM_MESSAGES="${NUM_MESSAGES:-10000}"
-ITERATIONS="${ITERATIONS:-1}"
+NUM_MESSAGES="${NUM_MESSAGES:-200000}"
+ITERATIONS="${ITERATIONS:-5}"
+MESSAGE_SIZE="${MESSAGE_SIZE:-100}"
+THREAD_COUNTS="${THREAD_COUNTS:-1,2,4,8}"
 
 SOURCE_DIR=""
 BUILD_DIR=""
@@ -107,7 +109,7 @@ install_private_python_runtime() {
     done < <(pip_index_options)
     log_message "installing Python runtime into the task-private virtual environment"
     if ! python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-        "${pip_options[@]}" numpy "protobuf==${PROTOBUF_PYTHON_VERSION}"; then
+        "${pip_options[@]}" "protobuf==${PROTOBUF_PYTHON_VERSION}"; then
         log_message "ERROR: failed to install the Python dependency required by the upstream benchmarks"
         return 30
     fi
@@ -206,17 +208,20 @@ run_protobuf_benchmarks() {
         return 40
     fi
     export PATH="${INSTALL_DIR}/bin:${PATH}"
+    export PROTOC_BIN
     log_message "running the upstream serialization benchmark"
     if ! python3 "${SCRIPT_DIR}/scripts/benchmark_ann.py" \
         --output "${RESULTS_DIR}/benchmark_ann.json" \
-        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}"; then
+        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}" \
+        --message-size "${MESSAGE_SIZE}"; then
         log_message "ERROR: upstream serialization benchmark failed"
         return 50
     fi
     log_message "running the upstream micro benchmark"
     if ! python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
         --output "${RESULTS_DIR}/micro_benchmark.json" \
-        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}"; then
+        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}" \
+        --thread-counts "${THREAD_COUNTS}"; then
         log_message "ERROR: upstream micro benchmark failed"
         return 50
     fi

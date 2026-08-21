@@ -249,14 +249,14 @@ metrics:
     path: results
     name_path: source_name
     value_path: value
-    unit: MB/s
-    direction: higher_is_better
+    unit_path: unit
+    direction_path: direction
 ```
 
 - `path` 指向一个非空 JSON 对象，对象中的每个成员都会生成一个指标；
 - `name_path` 指向成员内部的指标名称；省略时使用成员键名；
 - `value_path` 指向成员内部的数值；
-- `unit` 和 `direction` 应适用于集合中的全部成员。
+- `unit` 和 `direction` 应适用于集合中的全部成员；也可分别使用 `unit_path`、`direction_path` 从每个成员读取。每一项二选一，不能同时声明。
 
 Framework 会保持集合原有顺序，拒绝空集合、重复名称、缺失路径和非有限数值，并要求同一版本的两个架构产生完全一致的指标集合后才生成跨架构对比。Framework 只能校验结构和双架构一致性，不能判断名称是否确实来自官方输出；来源真实性必须通过永久保存的真实原始输出、严格运行时解析和人工评审共同保证。
 

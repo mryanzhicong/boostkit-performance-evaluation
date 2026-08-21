@@ -242,6 +242,17 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
     _case, errors = validate_case(case_path, tmp_path)
     assert errors == []
 
+    payload["metrics"]["collection"] = {
+        "path": "results",
+        "name_path": "name",
+        "value_path": "speed",
+        "unit_path": "unit",
+        "direction_path": "direction",
+    }
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert errors == []
+
     payload["metrics"]["definitions"] = {
         "throughput": {
             "path": "summary.throughput",

@@ -161,12 +161,31 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                     f"{default_source}:{collection['path']}.{item_key}."
                     f"{collection['value_path']}"
                 )
-            add_metric(
-                metric_name,
-                value,
-                collection["unit"],
-                collection["direction"],
-            )
+            unit = collection.get("unit")
+            if unit is None:
+                unit_path = collection["unit_path"]
+                unit = get_path(item, unit_path, MISSING)
+                if unit is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing unit path {unit_path}"
+                    )
+            if not isinstance(unit, str) or not unit:
+                raise ResultValidationError(
+                    f"metric {metric_name} must have a non-empty unit"
+                )
+            direction = collection.get("direction")
+            if direction is None:
+                direction_path = collection["direction_path"]
+                direction = get_path(item, direction_path, MISSING)
+                if direction is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing direction path {direction_path}"
+                    )
+            if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
+                raise ResultValidationError(
+                    f"metric {metric_name} has invalid direction: {direction}"
+                )
+            add_metric(metric_name, value, unit, direction)
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics

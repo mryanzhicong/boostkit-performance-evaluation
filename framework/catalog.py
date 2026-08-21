@@ -347,14 +347,20 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                 errors.append("metrics.collection must be a mapping")
             else:
                 unknown_fields = set(collection) - {
-                    "path", "name_path", "value_path", "unit", "direction"
+                    "path",
+                    "name_path",
+                    "value_path",
+                    "unit",
+                    "unit_path",
+                    "direction",
+                    "direction_path",
                 }
                 if unknown_fields:
                     errors.append(
                         "metrics.collection contains unsupported fields: "
                         f"{', '.join(sorted(str(field) for field in unknown_fields))}"
                     )
-                for field in ("path", "value_path", "unit"):
+                for field in ("path", "value_path"):
                     if not isinstance(collection.get(field), str) or not collection.get(field):
                         errors.append(
                             f"metrics.collection.{field} must be a non-empty string"
@@ -366,8 +372,34 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         "metrics.collection.name_path must be a non-empty string"
                     )
-                if collection.get("direction") not in VALID_DIRECTIONS:
+                unit = collection.get("unit")
+                unit_path = collection.get("unit_path")
+                if (unit is None) == (unit_path is None):
+                    errors.append(
+                        "metrics.collection must define exactly one of unit or unit_path"
+                    )
+                elif unit is not None and (not isinstance(unit, str) or not unit):
+                    errors.append("metrics.collection.unit must be a non-empty string")
+                elif unit_path is not None and (
+                    not isinstance(unit_path, str) or not unit_path
+                ):
+                    errors.append(
+                        "metrics.collection.unit_path must be a non-empty string"
+                    )
+                direction = collection.get("direction")
+                direction_path = collection.get("direction_path")
+                if (direction is None) == (direction_path is None):
+                    errors.append(
+                        "metrics.collection must define exactly one of direction or direction_path"
+                    )
+                elif direction is not None and direction not in VALID_DIRECTIONS:
                     errors.append("metrics.collection has invalid direction")
+                elif direction_path is not None and (
+                    not isinstance(direction_path, str) or not direction_path
+                ):
+                    errors.append(
+                        "metrics.collection.direction_path must be a non-empty string"
+                    )
                 if not isinstance(default_source, str) or not default_source:
                     errors.append("metrics.collection requires metrics.source")
 
