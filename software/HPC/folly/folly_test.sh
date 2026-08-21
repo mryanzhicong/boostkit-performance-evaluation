@@ -96,21 +96,22 @@ check_system_dependencies() {
         log_message "ERROR: Boost >= 1.69 development headers are missing"
         missing=1
     fi
-    local check library header
+    local check library header compiler_output
     local checks=(
-        "libevent/event2/event.h"
-        "openssl/openssl/ssl.h"
-        "fmt/fmt/format.h"
-        "glog/glog/logging.h"
-        "gtest/gtest/gtest/gtest.h"
-        "gmock/gmock/gmock/gmock.h"
+        "libevent:event2/event.h"
+        "openssl:openssl/ssl.h"
+        "fmt:fmt/format.h"
+        "glog:glog/logging.h"
+        "gtest:gtest/gtest.h"
+        "gmock:gmock/gmock.h"
     )
     for check in "${checks[@]}"; do
-        library="${check%%/*}"
-        header="${check#*/}"
-        if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
-            | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+        library="${check%%:*}"
+        header="${check#*:}"
+        if ! compiler_output="$(printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
+            | g++ -x c++ -fsyntax-only - 2>&1)"; then
             log_message "ERROR: development headers for ${library} are missing"
+            printf '%s\n' "${compiler_output}" >&2
             missing=1
         fi
     done
