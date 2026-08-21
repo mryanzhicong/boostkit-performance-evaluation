@@ -198,10 +198,21 @@ for line in (source_dir / "CMakeLists.txt").read_text(encoding="utf-8").splitlin
         targets.append({"dir": current_dir, "target": benchmark_match.group(1)})
 if not targets:
     raise SystemExit("no official BENCHMARK targets found in CMakeLists.txt")
+# Temporarily exclude the two multi-minute benchmarks during adapter
+# iteration. Remove these entries when the complete Folly benchmark suite is
+# ready to run again.
+excluded_targets = {
+    "container_fbvector_benchmark",
+    "container_hash_maps_bench",
+}
+skipped = [entry["target"] for entry in targets if entry["target"] in excluded_targets]
+targets = [entry for entry in targets if entry["target"] not in excluded_targets]
 manifest_path.write_text(
     json.dumps(targets, indent=2) + "\n", encoding="utf-8"
 )
 print(f"recorded {len(targets)} official BENCHMARK targets")
+if skipped:
+    print("temporarily skipped slow benchmark targets: " + ", ".join(skipped))
 PYEOF
 }
 
@@ -410,7 +421,16 @@ run_folly_benchmarks() {
         (
             # The official add_test entries run from the repository root.
             cd "${SOURCE_DIR}"
-            "${binary}" "--bm_json_verbose=${output_file}" > "${stdout_file}" 2>&1
+            case "${target}" in
+                concurrency_concurrent_hash_map_bench|io_async_request_context_benchmark)
+                    # These official benchmarks print their own tables and do
+                    # not define Folly's --bm_json_verbose gflag.
+                    "${binary}" > "${stdout_file}" 2>&1
+                    ;;
+                *)
+                    "${binary}" "--bm_json_verbose=${output_file}" > "${stdout_file}" 2>&1
+                    ;;
+            esac
         ) || {
             log_message "ERROR: official benchmark target failed: ${target}"
             return 50
