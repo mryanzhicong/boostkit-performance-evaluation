@@ -1,0 +1,214 @@
+{
+  "software": "scann",
+  "category": "AI",
+  "version": "1.4.0",
+  "architecture": "x86_64",
+  "run_id": "32436763301-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-21T01:34:17Z",
+    "category": "AI",
+    "software": "scann",
+    "requested_version": "1.4.0",
+    "actual_version": "1.4.0",
+    "architecture": "x86_64",
+    "run_id": "32436763301-1"
+  },
+  "parameters": {
+    "benchmark": {
+      "dataset": "numpy_random_float32",
+      "seed": 42,
+      "data_scale": "100K",
+      "num_vectors": 100000,
+      "dimension": 128,
+      "num_queries": 1000,
+      "k": 10,
+      "iterations": 3,
+      "aggregation": "median",
+      "distance_measures": [
+        "dot_product",
+        "squared_l2"
+      ],
+      "num_leaves": 200,
+      "dims_per_block": 2,
+      "anisotropic_quantization_threshold": 0.2,
+      "reorder": 100,
+      "leaves_to_search": 200
+    }
+  },
+  "parameter_signature": "186b8eb01edd0b41cc62d7c5d39e52bca8f8283ebf969a8ad75115bb9731bc79",
+  "system_info": {
+    "collected_at": "2026-08-21T01:34:10Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 1 nodes (0)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nnode 0 size: 30886 MB\nnode 0 free: 17029 MB\nnode distances:\nnode   0 \n  0:  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-21T01:34:10Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1145462784 17856258048    71835648 13923954688 31241256960\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-21T01:34:31Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32386719744  1480241152 17520500736   221794304 14074904576 30906478592\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "benchmark": {
+      "benchmark": "ann_search",
+      "software": "scann",
+      "version": "1.4.0",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-21T01:34:31.099317+00:00",
+      "parameters": {
+        "dataset": "numpy_random_float32",
+        "seed": 42,
+        "data_scale": "100K",
+        "num_vectors": 100000,
+        "dimension": 128,
+        "num_queries": 1000,
+        "k": 10,
+        "iterations": 3,
+        "aggregation": "median",
+        "distance_measures": [
+          "dot_product",
+          "squared_l2"
+        ],
+        "num_leaves": 200,
+        "dims_per_block": 2,
+        "anisotropic_quantization_threshold": 0.2,
+        "reorder": 100,
+        "leaves_to_search": 200
+      },
+      "results": {
+        "dot_product": {
+          "distance_measure": "dot_product",
+          "aggregation": "median",
+          "num_leaves": 200,
+          "dims_per_block": 2,
+          "anisotropic_quantization_threshold": 0.2,
+          "reorder": 100,
+          "leaves_to_search": 200,
+          "samples": [
+            {
+              "search_time_s": 0.24173273099586368,
+              "qps": 4136.800158920602,
+              "latency_per_query_us": 241.73273099586368,
+              "recall_at_k": 0.9599,
+              "iteration": 1,
+              "build_time_s": 1.3811704359250143
+            },
+            {
+              "search_time_s": 0.24003233201801777,
+              "qps": 4166.105422518397,
+              "latency_per_query_us": 240.03233201801777,
+              "recall_at_k": 0.9599,
+              "iteration": 2,
+              "build_time_s": 1.3809052259894088
+            },
+            {
+              "search_time_s": 0.2415489610284567,
+              "qps": 4139.9474282242545,
+              "latency_per_query_us": 241.5489610284567,
+              "recall_at_k": 0.9589,
+              "iteration": 3,
+              "build_time_s": 1.3631935250014067
+            }
+          ],
+          "build_time_s": 1.3809052259894088,
+          "qps": 4139.9474282242545,
+          "latency_per_query_us": 241.5489610284567,
+          "recall_at_k": 0.9599
+        },
+        "squared_l2": {
+          "distance_measure": "squared_l2",
+          "aggregation": "median",
+          "num_leaves": 200,
+          "dims_per_block": 2,
+          "anisotropic_quantization_threshold": 0.2,
+          "reorder": 100,
+          "leaves_to_search": 200,
+          "samples": [
+            {
+              "search_time_s": 0.2846747830044478,
+              "qps": 3512.780406631155,
+              "latency_per_query_us": 284.6747830044478,
+              "recall_at_k": 0.9697,
+              "iteration": 1,
+              "build_time_s": 1.7441707430407405
+            },
+            {
+              "search_time_s": 0.28516729292459786,
+              "qps": 3506.7135145278166,
+              "latency_per_query_us": 285.16729292459786,
+              "recall_at_k": 0.9697,
+              "iteration": 2,
+              "build_time_s": 1.7659756049979478
+            },
+            {
+              "search_time_s": 0.2858150239335373,
+              "qps": 3498.766391764407,
+              "latency_per_query_us": 285.8150239335373,
+              "recall_at_k": 0.9697,
+              "iteration": 3,
+              "build_time_s": 1.752715184004046
+            }
+          ],
+          "build_time_s": 1.752715184004046,
+          "qps": 3506.7135145278166,
+          "latency_per_query_us": 285.16729292459786,
+          "recall_at_k": 0.9697
+        }
+      }
+    }
+  },
+  "metrics": {
+    "dot_product/build_time_s": {
+      "value": 1.3809052259894088,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "dot_product/qps": {
+      "value": 4139.9474282242545,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "dot_product/latency_per_query_us": {
+      "value": 241.5489610284567,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "dot_product/recall_at_k": {
+      "value": 0.9599,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "squared_l2/build_time_s": {
+      "value": 1.752715184004046,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "squared_l2/qps": {
+      "value": 3506.7135145278166,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "squared_l2/latency_per_query_us": {
+      "value": 285.16729292459786,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "squared_l2/recall_at_k": {
+      "value": 0.9697,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    }
+  }
+}

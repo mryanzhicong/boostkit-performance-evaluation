@@ -1,0 +1,107 @@
+{
+  "benchmark": "ann_search",
+  "software": "scann",
+  "version": "1.4.0",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-21T01:34:16.321380+00:00",
+  "parameters": {
+    "dataset": "numpy_random_float32",
+    "seed": 42,
+    "data_scale": "100K",
+    "num_vectors": 100000,
+    "dimension": 128,
+    "num_queries": 1000,
+    "k": 10,
+    "iterations": 3,
+    "aggregation": "median",
+    "distance_measures": [
+      "dot_product",
+      "squared_l2"
+    ],
+    "num_leaves": 200,
+    "dims_per_block": 2,
+    "anisotropic_quantization_threshold": 0.2,
+    "reorder": 100,
+    "leaves_to_search": 200
+  },
+  "results": {
+    "dot_product": {
+      "distance_measure": "dot_product",
+      "aggregation": "median",
+      "num_leaves": 200,
+      "dims_per_block": 2,
+      "anisotropic_quantization_threshold": 0.2,
+      "reorder": 100,
+      "leaves_to_search": 200,
+      "samples": [
+        {
+          "search_time_s": 0.35385484993457794,
+          "qps": 2826.0175045923033,
+          "latency_per_query_us": 353.85484993457794,
+          "recall_at_k": 0.9595,
+          "iteration": 1,
+          "build_time_s": 1.5252154599875212
+        },
+        {
+          "search_time_s": 0.35875471006147563,
+          "qps": 2787.4198497035527,
+          "latency_per_query_us": 358.75471006147563,
+          "recall_at_k": 0.9596,
+          "iteration": 2,
+          "build_time_s": 1.6632720599882305
+        },
+        {
+          "search_time_s": 0.3618341799592599,
+          "qps": 2763.696895944416,
+          "latency_per_query_us": 361.8341799592599,
+          "recall_at_k": 0.9561,
+          "iteration": 3,
+          "build_time_s": 1.9483348600333557
+        }
+      ],
+      "build_time_s": 1.6632720599882305,
+      "qps": 2787.4198497035527,
+      "latency_per_query_us": 358.75471006147563,
+      "recall_at_k": 0.9595
+    },
+    "squared_l2": {
+      "distance_measure": "squared_l2",
+      "aggregation": "median",
+      "num_leaves": 200,
+      "dims_per_block": 2,
+      "anisotropic_quantization_threshold": 0.2,
+      "reorder": 100,
+      "leaves_to_search": 200,
+      "samples": [
+        {
+          "search_time_s": 0.3986175099853426,
+          "qps": 2508.6705298941097,
+          "latency_per_query_us": 398.6175099853426,
+          "recall_at_k": 0.9699,
+          "iteration": 1,
+          "build_time_s": 2.2863938700174913
+        },
+        {
+          "search_time_s": 0.4124309599865228,
+          "qps": 2424.648236962321,
+          "latency_per_query_us": 412.4309599865228,
+          "recall_at_k": 0.9699,
+          "iteration": 2,
+          "build_time_s": 2.3768677900079638
+        },
+        {
+          "search_time_s": 0.39543143997434527,
+          "qps": 2528.883388900179,
+          "latency_per_query_us": 395.43143997434527,
+          "recall_at_k": 0.9699,
+          "iteration": 3,
+          "build_time_s": 2.4220069700386375
+        }
+      ],
+      "build_time_s": 2.3768677900079638,
+      "qps": 2508.6705298941097,
+      "latency_per_query_us": 398.6175099853426,
+      "recall_at_k": 0.9699
+    }
+  }
+}
