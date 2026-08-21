@@ -198,21 +198,32 @@ for line in (source_dir / "CMakeLists.txt").read_text(encoding="utf-8").splitlin
         targets.append({"dir": current_dir, "target": benchmark_match.group(1)})
 if not targets:
     raise SystemExit("no official BENCHMARK targets found in CMakeLists.txt")
-# Temporarily exclude the two multi-minute benchmarks during adapter
-# iteration. Remove these entries when the complete Folly benchmark suite is
-# ready to run again.
-excluded_targets = {
-    "container_fbvector_benchmark",
-    "container_hash_maps_bench",
+# Keep a small, representative official subset during adapter iteration.
+# Restore the full target list here when the complete Folly suite is ready to
+# run again. These targets cover containers, concurrency, futures, hashing,
+# I/O, and strings without the multi-minute or currently crashing benchmarks.
+representative_targets = {
+    "container_bit_iterator_bench",
+    "concurrency_concurrent_hash_map_bench",
+    "futures_benchmark",
+    "hash_checksum_benchmark",
+    "io_iobuf_benchmark",
+    "string_benchmark",
 }
-skipped = [entry["target"] for entry in targets if entry["target"] in excluded_targets]
-targets = [entry for entry in targets if entry["target"] not in excluded_targets]
+skipped = [
+    entry["target"]
+    for entry in targets
+    if entry["target"] not in representative_targets
+]
+targets = [
+    entry for entry in targets if entry["target"] in representative_targets
+]
 manifest_path.write_text(
     json.dumps(targets, indent=2) + "\n", encoding="utf-8"
 )
-print(f"recorded {len(targets)} official BENCHMARK targets")
+print(f"recorded {len(targets)} representative official BENCHMARK targets")
 if skipped:
-    print("temporarily skipped slow benchmark targets: " + ", ".join(skipped))
+    print("skipped non-representative benchmark targets: " + ", ".join(skipped))
 PYEOF
 }
 
