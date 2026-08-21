@@ -216,6 +216,30 @@ report_actual_version() {
     printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
+remove_incomplete_upstream_test_target() {
+    # This Folly tag declares functional_partial_test, but omits its sole
+    # source file (folly/functional/test/PartialTest.cpp). BUILD_BENCHMARKS
+    # makes Folly register test targets too, so remove only that incomplete,
+    # non-benchmark declaration from this task-private checkout.
+    local missing_source="${SOURCE_DIR}/folly/functional/test/PartialTest.cpp"
+    local cmake_file="${SOURCE_DIR}/CMakeLists.txt"
+    if [[ -f "${missing_source}" ]]; then
+        return 0
+    fi
+    log_message "upstream tag omits PartialTest.cpp; excluding its incomplete test target"
+    python3 - "${cmake_file}" <<'PYEOF'
+import sys
+from pathlib import Path
+
+cmake_file = Path(sys.argv[1])
+entry = "      TEST functional_partial_test SOURCES PartialTest.cpp\n"
+contents = cmake_file.read_text(encoding="utf-8")
+if contents.count(entry) != 1:
+    raise SystemExit("cannot locate the unique incomplete functional_partial_test declaration")
+cmake_file.write_text(contents.replace(entry, ""), encoding="utf-8")
+PYEOF
+}
+
 benchmark_target_list() {
     python3 - "${MANIFEST_FILE}" <<'PYEOF'
 import json
@@ -239,6 +263,7 @@ build_folly() {
     prepare_folly_source || return $?
     prepare_fast_float || return $?
     report_actual_version || return $?
+    remove_incomplete_upstream_test_target || return $?
     generate_benchmark_manifest || return $?
 
     local cmake_fast_float_args=()
