@@ -1,0 +1,65 @@
+[protobuf] running the upstream serialization benchmark
+[ANN] Compiling proto definitions in /tmp/boostkit-perf/32439734023-1/HPC/protobuf/35.1/x86_64/tmp/protobuf_bench_isq4nbif...
+[ANN] Benchmarking SimpleMessage: Simple message with 4 scalar fields (int32, string, float, bool)
+[ANN] SimpleMessage size=100 iteration 1/1
+[ANN] Benchmarking RepeatedInt32: Message with repeated int32 field
+[ANN] RepeatedInt32 size=100 iteration 1/1
+[ANN] Benchmarking RepeatedString: Message with repeated string field
+[ANN] RepeatedString size=100 iteration 1/1
+[ANN] Benchmarking NestedMessage: Message with nested sub-message and repeated nested fields
+[ANN] NestedMessage size=100 iteration 1/1
+[ANN] Benchmarking LargeMessage: Large message with mixed scalar, repeated, and nested fields
+[ANN] LargeMessage size=100 iteration 1/1
+[ANN] Results saved to: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/protobuf/35.1/x86_64/32439734023-1/benchmark_ann.json
+[ANN] SimpleMessage: SerQPS=0.002792s, Size=28B
+[ANN]   size=10: SerQPS=4464875.45, DeserQPS=2720570.8, Fidelity=1.0
+[ANN]   size=50: SerQPS=4489247.57, DeserQPS=2818563.27, Fidelity=1.0
+[ANN]   size=100: SerQPS=4444531.1, DeserQPS=2843595.93, Fidelity=1.0
+[ANN]   size=500: SerQPS=4468681.01, DeserQPS=2821597.04, Fidelity=1.0
+[ANN]   size=1000: SerQPS=4471539.45, DeserQPS=2836288.88, Fidelity=1.0
+[ANN] RepeatedInt32: SerQPS=0.003561s, Size=102B
+[ANN]   size=10: SerQPS=6741086.47, DeserQPS=4163494.14, Fidelity=1.0
+[ANN]   size=50: SerQPS=5944308.39, DeserQPS=2573034.78, Fidelity=1.0
+[ANN]   size=100: SerQPS=5151441.91, DeserQPS=1855230.01, Fidelity=1.0
+[ANN]   size=500: SerQPS=380867.56, DeserQPS=409712.03, Fidelity=1.0
+[ANN]   size=1000: SerQPS=168997.73, DeserQPS=224627.07, Fidelity=1.0
+[ANN] RepeatedString: SerQPS=0.010712s, Size=890B
+[ANN]   size=10: SerQPS=5917471.78, DeserQPS=2839745.43, Fidelity=1.0
+[ANN]   size=50: SerQPS=2854238.86, DeserQPS=1093405.63, Fidelity=1.0
+[ANN]   size=100: SerQPS=1678124.35, DeserQPS=629955.09, Fidelity=1.0
+[ANN]   size=500: SerQPS=395386.92, DeserQPS=177000.24, Fidelity=1.0
+[ANN]   size=1000: SerQPS=209144.24, DeserQPS=94121.62, Fidelity=1.0
+[ANN] NestedMessage: SerQPS=0.029423s, Size=2204B
+[ANN]   size=10: SerQPS=2942751.7, DeserQPS=1875135.91, Fidelity=1.0
+[ANN]   size=50: SerQPS=790289.6, DeserQPS=592817.73, Fidelity=1.0
+[ANN]   size=100: SerQPS=437750.25, DeserQPS=330984.68, Fidelity=1.0
+[ANN]   size=500: SerQPS=88094.53, DeserQPS=70255.17, Fidelity=1.0
+[ANN]   size=1000: SerQPS=44326.76, DeserQPS=35611.52, Fidelity=1.0
+[ANN] LargeMessage: SerQPS=0.005499s, Size=304B
+[ANN]   size=10: SerQPS=2774928.22, DeserQPS=1601307.22, Fidelity=1.0
+[ANN]   size=50: SerQPS=2454388.2, DeserQPS=1240808.21, Fidelity=1.0
+[ANN]   size=100: SerQPS=2170515.42, DeserQPS=1020710.6, Fidelity=1.0
+[ANN]   size=500: SerQPS=339740.8, DeserQPS=355509.75, Fidelity=1.0
+[ANN]   size=1000: SerQPS=159723.38, DeserQPS=196675.61, Fidelity=1.0
+[ANN] Benchmark complete
+[protobuf] running the upstream micro benchmark
+[MICRO] Compiling proto definitions in /tmp/boostkit-perf/32439734023-1/HPC/protobuf/35.1/x86_64/tmp/protobuf_micro_cz7giheu...
+[MICRO] Using protobuf module (fallback=False), num_messages=10000
+[MICRO] Running single_serialize...
+[MICRO] Running single_deserialize...
+[MICRO] Running multithread_serialize...
+[MICRO] Running multithread_deserialize...
+[MICRO] Running json_serialization...
+[MICRO] Running large_message...
+[MICRO] Running size_parameter_sweep...
+[MICRO] Results saved to: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/protobuf/35.1/x86_64/32439734023-1/micro_benchmark.json
+[MICRO] single_serialize: {'avg_time_s': 0.002345, 'serialize_qps': 4264671.07, 'avg_latency_us': 0.2345}
+[MICRO] single_deserialize: {'avg_time_s': 0.003655, 'deserialize_qps': 2736010.44, 'avg_latency_us': 0.3655}
+[MICRO] multithread_serialize: {'threads_1': {'avg_time_s': 0.003302, 'avg_qps': 3028597.01}, 'threads_2': {'avg_time_s': 0.003168, 'avg_qps': 3156222.44}, 'threads_4': {'avg_time_s': 0.003372, 'avg_qps': 2965220.22}, 'threads_8': {'avg_time_s': 0.005169, 'avg_qps': 1934731.31}, 'threads_all': {'avg_time_s': 0.004372, 'avg_qps': 2287469.46}}
+[MICRO] multithread_deserialize: {'threads_1': {'avg_time_s': 0.009274, 'avg_qps': 1078282.69}, 'threads_2': {'avg_time_s': 0.008956, 'avg_qps': 1116575.44}, 'threads_4': {'avg_time_s': 0.006294, 'avg_qps': 1588751.52}, 'threads_8': {'avg_time_s': 0.005579, 'avg_qps': 1792361.01}, 'threads_all': {'avg_time_s': 0.005884, 'avg_qps': 1699612.61}}
+[MICRO] json_serialization: {'binary_serialize': {'avg_time_s': 0.001437, 'avg_qps': 6958035.83}, 'json_serialize': {'avg_time_s': 0.112448, 'avg_qps': 88929.82}, 'binary_size_bytes': 23, 'json_size_bytes': 73, 'size_ratio': 3.17}
+[MICRO] large_message: {'avg_serialize_time_s': 5e-06, 'avg_deserialize_time_s': 7e-06, 'serialize_qps': 454598.11, 'avg_message_size_bytes': 1799}
+[MICRO] size_parameter_sweep: {'size_10': {'avg_serialize_qps': 7304604.67, 'avg_deserialize_qps': 3996097.56}, 'size_50': {'avg_serialize_qps': 6204591.72, 'avg_deserialize_qps': 2493492.66}, 'size_100': {'avg_serialize_qps': 5470593.45, 'avg_deserialize_qps': 1807889.66}, 'size_500': {'avg_serialize_qps': 376147.15, 'avg_deserialize_qps': 406700.67}, 'size_1000': {'avg_serialize_qps': 168352.64, 'avg_deserialize_qps': 212515.09}}
+[MICRO] Benchmark complete
+[AGGREGATE] Results saved to /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/protobuf/35.1/x86_64/32439734023-1/aggregate_results.json
+[protobuf] upstream protobuf benchmark outputs are ready
