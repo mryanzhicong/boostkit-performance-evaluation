@@ -246,10 +246,14 @@ build_folly() {
         cmake_fast_float_args=(-DFASTFLOAT_INCLUDE_DIR="${FAST_FLOAT_DIR}/include")
     fi
 
-    log_message "configuring official folly build with BUILD_BENCHMARKS=ON (Release)"
+    # Folly enables CMake's GoogleTest source discovery when benchmarks are
+    # enabled. This release references a test source absent from its tag;
+    # discovery is not required to build or run the official benchmarks.
+    log_message "configuring official folly benchmarks without GoogleTest source discovery"
     cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_BENCHMARKS=ON \
+        -DUSE_CMAKE_GOOGLE_TEST_INTEGRATION=OFF \
         "${cmake_fast_float_args[@]}" || {
         log_message "ERROR: cmake configure of folly failed"
         return 40
