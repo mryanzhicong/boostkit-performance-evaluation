@@ -9,6 +9,7 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 CPYTHON_SOURCE_URL="${CPYTHON_SOURCE_URL:-https://github.com/python/cpython.git}"
+PYPI_INDEX_URL="https://mirrors.huaweicloud.com/repository/pypi/simple"
 # pyperformance version pinned so both architectures run the same official suite.
 PYPERFORMANCE_VERSION="1.14.0"
 # Original openEuler test selection: official benchmarks, all pure stdlib.
@@ -131,7 +132,7 @@ verify_cpython_build() {
     # pip needs ssl/zlib to download pyperformance; psutil needs ctypes.
     "${PYTHON_BIN}" -c "import ssl, zlib, ctypes" || {
         log_message "ERROR: built CPython is missing ssl/zlib/ctypes modules"
-        log_message "the build host needs openssl-devel, zlib-devel and libffi-devel headers"
+        log_message "the Runner is missing zlib-devel or libffi-devel"
         return 40
     }
     "${PYTHON_BIN}" -m pip --version >/dev/null 2>&1 || {
@@ -210,6 +211,8 @@ run_python_benchmarks() {
         export PIP_NO_CACHE_DIR=1
         export PIP_DISABLE_PIP_VERSION_CHECK=1
         "${PYTHON_BIN}" -m pip install --no-cache-dir \
+            --index-url "${PYPI_INDEX_URL}" \
+            --trusted-host mirrors.huaweicloud.com \
             "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
         "${PYTHON_BIN}" -m pyperformance run \
             -b "${PYPERFORMANCE_BENCHMARKS}" \
