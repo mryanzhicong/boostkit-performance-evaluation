@@ -173,9 +173,10 @@ prepare_fast_float() {
 }
 
 generate_benchmark_manifest() {
-    # Extract the official BENCHMARK target list (directory + CMake target
-    # name) from the official CMakeLists.txt; these targets are the official
-    # benchmark entry points and decide the metric set.
+    # Extract the declared official BENCHMARK target list (directory + CMake
+    # target name) from CMakeLists.txt. Optional dependencies can cause CMake
+    # to omit individual targets; filter_configured_benchmark_targets narrows
+    # this list to the targets actually generated for the runner.
     python3 - "${SOURCE_DIR}" "${MANIFEST_FILE}" <<'PYEOF'
 import json
 import re
@@ -203,6 +204,35 @@ print(f"recorded {len(targets)} official BENCHMARK targets")
 PYEOF
 }
 
+filter_configured_benchmark_targets() {
+    local target_help_file="${PERF_WORK_DIR}/cmake-target-help.txt"
+    cmake --build "${BUILD_DIR}" --target help > "${target_help_file}" || {
+        log_message "ERROR: unable to list generated CMake targets"
+        return 40
+    }
+    python3 - "${MANIFEST_FILE}" "${target_help_file}" <<'PYEOF'
+import json
+import re
+import sys
+from pathlib import Path
+
+manifest_path, target_help_path = map(Path, sys.argv[1:])
+available = {
+    match.group(1)
+    for match in re.finditer(r"^\.\.\. ([^ ]+)$", target_help_path.read_text(encoding="utf-8"), re.MULTILINE)
+}
+declared = json.loads(manifest_path.read_text(encoding="utf-8"))
+configured = [entry for entry in declared if entry["target"] in available]
+skipped = [entry["target"] for entry in declared if entry["target"] not in available]
+if not configured:
+    raise SystemExit("CMake generated no official Folly benchmark targets")
+manifest_path.write_text(json.dumps(configured, indent=2) + "\n", encoding="utf-8")
+print(f"selected {len(configured)} generated official BENCHMARK targets")
+if skipped:
+    print("skipped unavailable optional benchmark targets: " + ", ".join(skipped))
+PYEOF
+}
+
 report_actual_version() {
     # folly has no --version binary; the cloned source tag is the
     # authoritative version evidence.
@@ -216,28 +246,48 @@ report_actual_version() {
     printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
-remove_incomplete_upstream_test_target() {
+repair_incomplete_upstream_cmake() {
     # This Folly tag declares functional_partial_test, but omits its sole
     # source file (folly/functional/test/PartialTest.cpp). BUILD_BENCHMARKS
-    # makes Folly register test targets too, so remove only that incomplete,
+    # makes Folly register test targets too, so remove that incomplete,
     # non-benchmark declaration from this task-private checkout.
+    #
+    # Its generated CMake file also omits memcpy_select_aarch64.cpp from
+    # memcpy-impl, despite the official Buck definition including it on Linux
+    # aarch64. The selector defines __folly_memcpy used by memcpy_benchmark.
     local missing_source="${SOURCE_DIR}/folly/functional/test/PartialTest.cpp"
     local cmake_file="${SOURCE_DIR}/CMakeLists.txt"
-    if [[ -f "${missing_source}" ]]; then
-        return 0
-    fi
-    log_message "upstream tag omits PartialTest.cpp; excluding its incomplete test target"
-    python3 - "${cmake_file}" <<'PYEOF'
+    local folly_cmake_file="${SOURCE_DIR}/folly/CMakeLists.txt"
+    python3 - "${cmake_file}" "${folly_cmake_file}" <<'PYEOF'
 import sys
 from pathlib import Path
 
 cmake_file = Path(sys.argv[1])
-entry = "      TEST functional_partial_test SOURCES PartialTest.cpp\n"
+folly_cmake_file = Path(sys.argv[2])
 contents = cmake_file.read_text(encoding="utf-8")
-if contents.count(entry) != 1:
+test_entry = "      TEST functional_partial_test SOURCES PartialTest.cpp\n"
+if contents.count(test_entry) != 1:
     raise SystemExit("cannot locate the unique incomplete functional_partial_test declaration")
-cmake_file.write_text(contents.replace(entry, ""), encoding="utf-8")
+folly_contents = folly_cmake_file.read_text(encoding="utf-8")
+memcpy_entry = "  SRCS\n    FollyMemcpy.cpp\n)\n\nfolly_add_library(\n  NAME memcpy-use"
+if folly_contents.count(memcpy_entry) != 1:
+    raise SystemExit("cannot locate the unique memcpy-impl declaration")
+memcpy_replacement = (
+    "  SRCS\n"
+    "    FollyMemcpy.cpp\n"
+    "    $<$<BOOL:${IS_AARCH64_ARCH}>:memcpy_select_aarch64.cpp>\n"
+    ")\n\nfolly_add_library(\n"
+    "  NAME memcpy-use"
+)
+contents = contents.replace(test_entry, "")
+folly_contents = folly_contents.replace(memcpy_entry, memcpy_replacement)
+cmake_file.write_text(contents, encoding="utf-8")
+folly_cmake_file.write_text(folly_contents, encoding="utf-8")
 PYEOF
+    if [[ ! -f "${missing_source}" ]]; then
+        log_message "upstream tag omits PartialTest.cpp; excluded its incomplete test target"
+    fi
+    log_message "restored the official aarch64 memcpy selector in the private CMake build"
 }
 
 benchmark_target_list() {
@@ -263,7 +313,7 @@ build_folly() {
     prepare_folly_source || return $?
     prepare_fast_float || return $?
     report_actual_version || return $?
-    remove_incomplete_upstream_test_target || return $?
+    repair_incomplete_upstream_cmake || return $?
     generate_benchmark_manifest || return $?
 
     local cmake_fast_float_args=()
@@ -283,6 +333,7 @@ build_folly() {
         log_message "ERROR: cmake configure of folly failed"
         return 40
     }
+    filter_configured_benchmark_targets || return $?
 
     local target target_count build_args=()
     target_count="$(benchmark_target_list | wc -l)"
