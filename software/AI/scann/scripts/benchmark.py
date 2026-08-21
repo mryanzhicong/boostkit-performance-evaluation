@@ -8,14 +8,16 @@ supported distance measures over the same dataset:
   equivalent to cosine similarity.
 * ``squared_l2`` --- squared Euclidean distance search.
 
-For every registered run it records the index build time, queries per second,
-per-query latency, and recall@K against an exact brute-force ground truth.
+For every distance measure it records independent build-and-search samples, then
+reports their medians for index build time, queries per second, per-query
+latency, and recall@K against an exact brute-force ground truth.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import statistics
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -132,30 +134,24 @@ def build_searcher(
     return builder.build()
 
 
-def run_search_benchmark(
+def measure_search(
     searcher: Any,
     queries: np.ndarray,
-    distance: str,
     ground_truth: np.ndarray,
     k: int,
-    iterations: int,
     num_leaves: int,
-    dims_per_block: int,
-    anisotropic_quantization_threshold: float,
     reorder: int,
 ) -> dict[str, Any]:
-    leaves_to_search = num_leaves
-    neighbors_all = []
+    neighbors_all: list[np.ndarray] = []
     search_start = time.perf_counter()
-    for iteration in range(iterations):
-        for query in queries:
-            neighbors, _ = searcher.search(
-                query,
-                final_num_neighbors=k,
-                pre_reorder_num_neighbors=reorder,
-                leaves_to_search=leaves_to_search,
-            )
-            neighbors_all.append(neighbors)
+    for query in queries:
+        neighbors, _ = searcher.search(
+            query,
+            final_num_neighbors=k,
+            pre_reorder_num_neighbors=reorder,
+            leaves_to_search=num_leaves,
+        )
+        neighbors_all.append(neighbors)
     search_seconds = time.perf_counter() - search_start
 
     neighbors = np.asarray(neighbors_all, dtype=np.int32)
@@ -167,13 +163,7 @@ def run_search_benchmark(
     recall = recall_at_k(neighbors, ground_truth, k)
 
     return {
-        "distance_measure": distance,
-        "num_leaves": num_leaves,
-        "dims_per_block": dims_per_block,
-        "anisotropic_quantization_threshold": anisotropic_quantization_threshold,
-        "reorder": reorder,
-        "leaves_to_search": leaves_to_search,
-        "build_time_s": None,
+        "search_time_s": float(search_seconds),
         "qps": float(qps),
         "latency_per_query_us": float(latency_us),
         "recall_at_k": float(recall),
@@ -184,7 +174,7 @@ def main() -> None:
     data_scale = environment_choice("DATA_SCALE", "100K", tuple(SCALE_TO_VECTOR_COUNT))
     num_vectors = SCALE_TO_VECTOR_COUNT[data_scale]
     dimension = environment_integer("DATA_DIM", 128, 2)
-    iterations = environment_integer("ITERATIONS", 1, 1)
+    iterations = environment_integer("ITERATIONS", 3, 1)
     k = environment_integer("K", 10, 1)
     seed = environment_integer("SCANN_BENCHMARK_SEED", 42, 0)
     num_queries = min(1000, num_vectors // 10)
@@ -210,32 +200,49 @@ def main() -> None:
 
         ground_truth = exact_neighbors(database, queries, k, distance)
 
-        build_start = time.perf_counter()
-        searcher = build_searcher(
-            database,
-            distance,
-            k,
-            num_leaves,
-            dims_per_block,
-            anisotropic_quantization_threshold,
-            reorder,
-        )
-        build_seconds = time.perf_counter() - build_start
+        samples: list[dict[str, Any]] = []
+        for iteration in range(iterations):
+            build_start = time.perf_counter()
+            searcher = build_searcher(
+                database,
+                distance,
+                k,
+                num_leaves,
+                dims_per_block,
+                anisotropic_quantization_threshold,
+                reorder,
+            )
+            build_seconds = time.perf_counter() - build_start
+            sample = measure_search(
+                searcher,
+                queries,
+                ground_truth,
+                k,
+                num_leaves,
+                reorder,
+            )
+            sample["iteration"] = iteration + 1
+            sample["build_time_s"] = float(build_seconds)
+            samples.append(sample)
 
-        metrics = run_search_benchmark(
-            searcher,
-            queries,
-            distance,
-            ground_truth,
-            k,
-            iterations,
-            num_leaves,
-            dims_per_block,
-            anisotropic_quantization_threshold,
-            reorder,
-        )
-        metrics["build_time_s"] = float(build_seconds)
-        results[distance] = metrics
+        results[distance] = {
+            "distance_measure": distance,
+            "aggregation": "median",
+            "num_leaves": num_leaves,
+            "dims_per_block": dims_per_block,
+            "anisotropic_quantization_threshold": anisotropic_quantization_threshold,
+            "reorder": reorder,
+            "leaves_to_search": num_leaves,
+            "samples": samples,
+            "build_time_s": float(statistics.median(sample["build_time_s"] for sample in samples)),
+            "qps": float(statistics.median(sample["qps"] for sample in samples)),
+            "latency_per_query_us": float(
+                statistics.median(sample["latency_per_query_us"] for sample in samples)
+            ),
+            "recall_at_k": float(
+                statistics.median(sample["recall_at_k"] for sample in samples)
+            ),
+        }
 
     payload = {
         "benchmark": "ann_search",
@@ -252,6 +259,13 @@ def main() -> None:
             "num_queries": num_queries,
             "k": k,
             "iterations": iterations,
+            "aggregation": "median",
+            "distance_measures": list(_DISTANCE_MEASURES),
+            "num_leaves": num_leaves,
+            "dims_per_block": dims_per_block,
+            "anisotropic_quantization_threshold": anisotropic_quantization_threshold,
+            "reorder": reorder,
+            "leaves_to_search": num_leaves,
         },
         "results": results,
     }
