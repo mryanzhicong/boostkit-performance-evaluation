@@ -8,22 +8,12 @@ PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-readonly NUMPY_VERSION="2.4.6"
-readonly PROTOBUF_VERSION="5.29.5"
-readonly BAZEL_VERSION="7.4.1"
 DATA_SCALE="${DATA_SCALE:-100K}"
 DATA_DIM="${DATA_DIM:-128}"
 ITERATIONS="${ITERATIONS:-1}"
 K="${K:-10}"
 
 SCANN_INSTALL_DIR=""
-PYTHON_DEPENDENCY_DIR=""
-BUILD_TOOLCHAIN_DIR=""
-BUILD_VENV_DIR=""
-SCANN_SOURCE_DIR=""
-SCANN_WHEEL_FILE=""
-CLANG_BINARY=""
-LLD_BINARY=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -51,17 +41,6 @@ normalize_architecture() {
     esac
 }
 
-github_download_url() {
-    local source_url="$1"
-
-    if [[ -n "${PERF_GITHUB_DOWNLOAD_PROXY:-}" && "${source_url}" == https://github.com/* ]]; then
-        printf '%s/%s\n' "${PERF_GITHUB_DOWNLOAD_PROXY%/}" "${source_url}"
-        return
-    fi
-    printf '%s\n' "${source_url}"
-}
-
-
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
@@ -83,10 +62,6 @@ configure_runtime_paths() {
     fi
 
     SCANN_INSTALL_DIR="${PERF_WORK_DIR}/scann-install"
-    PYTHON_DEPENDENCY_DIR="${PERF_WORK_DIR}/python-dependencies"
-    BUILD_TOOLCHAIN_DIR="${PERF_WORK_DIR}/build-toolchain"
-    BUILD_VENV_DIR="${PERF_WORK_DIR}/build-venv"
-    SCANN_SOURCE_DIR="${PERF_WORK_DIR}/scann-src"
 
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR DATA_SCALE DATA_DIM ITERATIONS K
@@ -105,14 +80,11 @@ initialize_runtime() {
 
 
 require_build_commands() {
-    local required_command
     local missing_command=0
-    for required_command in python3 nproc sed tee curl git rsync g++; do
-        if ! command -v "${required_command}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required_command}"
-            missing_command=1
-        fi
-    done
+    if ! command -v python3 >/dev/null 2>&1; then
+        log_message "ERROR: required command is missing: python3"
+        missing_command=1
+    fi
     if ! python3 -m pip --version >/dev/null 2>&1; then
         log_message "ERROR: python3 pip module is unavailable"
         missing_command=1
@@ -144,71 +116,6 @@ operating_system_id() {
 }
 
 
-install_python_dependencies() {
-    local os_id
-    local pip_options
-    pip_options=(
-        --disable-pip-version-check
-        --no-input
-        --no-cache-dir
-        --upgrade
-        --only-binary=:all:
-        --target "${PYTHON_DEPENDENCY_DIR}"
-    )
-    os_id="$(operating_system_id)"
-    if [[ "${os_id}" != "ubuntu" ]]; then
-        pip_options+=(
-            --trusted-host mirrors.huaweicloud.com
-            --index-url https://mirrors.huaweicloud.com/repository/pypi/simple
-        )
-    fi
-    log_message "installing private Python dependencies numpy==${NUMPY_VERSION} protobuf==${PROTOBUF_VERSION}"
-    if ! python3 -m pip install "${pip_options[@]}" \
-        "numpy==${NUMPY_VERSION}" "protobuf==${PROTOBUF_VERSION}"; then
-        log_message "ERROR: failed to install private Python dependencies"
-        return 30
-    fi
-    PYTHONPATH="${PYTHON_DEPENDENCY_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
-    export PYTHONPATH
-}
-
-
-scann_source_commit() {
-    case "${SOFTWARE_VERSION}" in
-        1.3.5) printf 'e220e62ef332d80219a8a141c751dfdedbfccc6c\n' ;;
-        1.4.2) printf '634a79fb5b4b23237a81eac028d27b5d34a5dba4\n' ;;
-        *)
-            log_message "ERROR: no source revision mapped for ScaNN ${SOFTWARE_VERSION}"
-            return 30
-            ;;
-    esac
-}
-
-
-scann_tensorflow_version() {
-    case "${SOFTWARE_VERSION}" in
-        1.3.5) printf '2.18.0\n' ;;
-        1.4.2) printf '2.20.0\n' ;;
-        *)
-            log_message "ERROR: no TensorFlow version mapped for ScaNN ${SOFTWARE_VERSION}"
-            return 30
-            ;;
-    esac
-}
-
-
-scann_clang_version() {
-    case "${SOFTWARE_VERSION}" in
-        1.3.5) printf '17\n' ;;
-        1.4.2) printf '19\n' ;;
-        *)
-            log_message "ERROR: no Clang version mapped for ScaNN ${SOFTWARE_VERSION}"
-            return 30
-            ;;
-    esac
-}
-
-
 python_pip_index_options() {
     local os_id
     os_id="$(operating_system_id)"
@@ -220,269 +127,29 @@ python_pip_index_options() {
 }
 
 
-prepare_build_venv() {
-    local tf_version
+install_scann_package() {
     local pip_index_options
-    tf_version="$(scann_tensorflow_version)" || return $?
-    mapfile -t pip_index_options < <(python_pip_index_options)
-    log_message "creating build virtualenv with TensorFlow ${tf_version}"
-    if ! python3 -m venv "${BUILD_VENV_DIR}"; then
-        log_message "ERROR: failed to create build virtualenv"
-        return 30
-    fi
-    if ! "${BUILD_VENV_DIR}/bin/python" -m pip install \
-        --disable-pip-version-check --no-input --no-cache-dir \
-        "${pip_index_options[@]}" \
-        "tensorflow==${tf_version}" numpy protobuf build wheel setuptools; then
-        log_message "ERROR: failed to install build-time Python dependencies"
-        return 30
-    fi
-}
-
-
-prepare_bazel() {
-    local arch
-    local bazel_file
-    arch="$(normalize_architecture "${EXPECTED_ARCH}")"
-    case "${arch}" in
-        x86_64) bazel_file="bazel-${BAZEL_VERSION}-linux-x86_64" ;;
-        aarch64) bazel_file="bazel-${BAZEL_VERSION}-linux-arm64" ;;
-        *)
-            log_message "ERROR: unsupported build architecture: ${arch}"
-            return 30
-            ;;
-    esac
-    mkdir -p "${BUILD_TOOLCHAIN_DIR}"
-    if [[ -x "${BUILD_TOOLCHAIN_DIR}/bazel" ]]; then
-        return 0
-    fi
-    log_message "downloading bazel ${BAZEL_VERSION} for ${arch}"
-    if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
-        "$(github_download_url "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}")"; then
-        log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
-        return 30
-    fi
-    chmod +x "${BUILD_TOOLCHAIN_DIR}/bazel"
-    "${BUILD_TOOLCHAIN_DIR}/bazel" --version
-}
-
-
-locate_clang() {
-    local clang_version="$1"
-    local candidate
-    for candidate in \
-        "clang-${clang_version}" \
-        "/usr/bin/clang-${clang_version}" \
-        "/usr/lib/llvm-${clang_version}/bin/clang" \
-        "/opt/rh/llvm-toolset-${clang_version}/root/usr/bin/clang"; do
-        if command -v "${candidate}" >/dev/null 2>&1 || [[ -x "${candidate}" ]]; then
-            printf '%s\n' "${candidate}"
-            return 0
-        fi
-    done
-    return 1
-}
-
-
-locate_lld() {
-    local clang_path
-    local clang_directory
-
-    clang_path="$(command -v "${CLANG_BINARY}" 2>/dev/null || true)"
-    if [[ -z "${clang_path}" ]]; then
-        clang_path="${CLANG_BINARY}"
-    fi
-    clang_directory="$(dirname "$(readlink -f "${clang_path}")")"
-    if [[ -x "${clang_directory}/ld.lld" ]]; then
-        printf '%s\n' "${clang_directory}/ld.lld"
-        return 0
-    fi
-    if command -v ld.lld >/dev/null 2>&1; then
-        command -v ld.lld
-        return 0
-    fi
-    return 1
-}
-
-
-llvm_clang_download_url() {
-    local clang_version="$1"
-    local arch="$2"
-    case "${clang_version}:${arch}" in
-        17:x86_64) printf 'https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz\n' ;;
-        17:aarch64) printf 'https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-aarch64-linux-gnu.tar.xz\n' ;;
-        19:x86_64) printf 'https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/LLVM-19.1.7-Linux-X64.tar.xz\n' ;;
-        19:aarch64) printf 'https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz\n' ;;
-        *) return 30 ;;
-    esac
-}
-
-
-prepare_clang() {
-    local clang_version arch download_url archive_name clang_dir
-    clang_version="$(scann_clang_version)" || return $?
-    if CLANG_BINARY="$(locate_clang "${clang_version}")"; then
-        log_message "using system clang: ${CLANG_BINARY}"
-        "${CLANG_BINARY}" --version
-    else
-        arch="$(normalize_architecture "${EXPECTED_ARCH}")"
-        download_url="$(llvm_clang_download_url "${clang_version}" "${arch}")" || return $?
-        archive_name="${download_url##*/}"
-        clang_dir="${BUILD_TOOLCHAIN_DIR}/clang-${clang_version}"
-        if [[ ! -x "${clang_dir}/bin/clang" ]]; then
-            log_message "downloading clang ${clang_version} for ${arch} into the work area"
-            mkdir -p "${BUILD_TOOLCHAIN_DIR}"
-            if ! curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/${archive_name}" \
-                "$(github_download_url "${download_url}")"; then
-                log_message "ERROR: failed to download clang ${clang_version} for ${arch}"
-                return 30
-            fi
-            if ! mkdir -p "${clang_dir}" \
-                || ! tar -xJf "${BUILD_TOOLCHAIN_DIR}/${archive_name}" -C "${clang_dir}" --strip-components=1; then
-                log_message "ERROR: failed to extract clang ${clang_version}"
-                return 30
-            fi
-            rm -f "${BUILD_TOOLCHAIN_DIR}/${archive_name}"
-        fi
-        CLANG_BINARY="${clang_dir}/bin/clang"
-        log_message "using clang: ${CLANG_BINARY}"
-        "${CLANG_BINARY}" --version
-    fi
-    if ! LLD_BINARY="$(locate_lld)"; then
-        log_message "ERROR: ld.lld is required for ScaNN ThinLTO but was not found with clang"
-        return 30
-    fi
-    log_message "using lld: ${LLD_BINARY}"
-}
-
-
-prepare_scann_source() {
-    local source_commit
-    source_commit="$(scann_source_commit)" || return $?
-    if [[ -e "${SCANN_SOURCE_DIR}" ]]; then
-        log_message "ERROR: source directory already exists: ${SCANN_SOURCE_DIR}"
-        return 30
-    fi
-    log_message "fetching ScaNN ${SOFTWARE_VERSION} source (${source_commit})"
-    if ! git clone --filter=blob:none --no-checkout \
-        https://github.com/google-research/google-research.git \
-        "${SCANN_SOURCE_DIR}"; then
-        log_message "ERROR: failed to clone ScaNN source repository"
-        return 30
-    fi
-    if ! (cd "${SCANN_SOURCE_DIR}" \
-        && git sparse-checkout set scann \
-        && git checkout "${source_commit}"); then
-        log_message "ERROR: failed to check out ScaNN ${SOFTWARE_VERSION} source"
-        return 30
-    fi
-}
-
-
-build_scann_wheel_from_source() {
-    local arch
-    local bazel_bin="${BUILD_TOOLCHAIN_DIR}/bazel"
-    local build_python="${BUILD_VENV_DIR}/bin/python"
-    local scann_root="${SCANN_SOURCE_DIR}/scann"
-    local lld_directory
-    local bazel_path
-    local bazel_startup_flags
-    local bazel_flags
-    arch="$(normalize_architecture "${EXPECTED_ARCH}")"
-    lld_directory="$(dirname "${LLD_BINARY}")"
-    bazel_path="${BUILD_VENV_DIR}/bin:${lld_directory}:${PATH}"
-
-    log_message "configuring ScaNN build (${arch})"
-    if ! (cd "${scann_root}" \
-        && PATH="${BUILD_VENV_DIR}/bin:${PATH}" \
-           exec "${build_python}" configure.py); then
-        log_message "ERROR: ScaNN configure.py failed"
-        return 30
-    fi
-    if ! grep -q 'TF_HEADER_DIR' "${scann_root}/.bazelrc"; then
-        log_message "ERROR: configure.py did not produce a valid TensorFlow configuration"
-        return 30
-    fi
-
-    bazel_startup_flags=(
-        "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache"
-    )
-    bazel_flags=(
-        build
-        "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache"
-        "--repo_env=PATH=${bazel_path}"
-        -c
-        opt
-        --features=thin_lto
-        --cxxopt="-std=c++17"
-        --copt=-fsized-deallocation
-        --copt=-w
-    )
-    case "${arch}" in
-        x86_64)
-            bazel_flags+=(--copt=-mavx --copt=-mfma)
-            ;;
-        aarch64)
-            bazel_flags+=(--copt=-march=armv8-a+simd)
-            ;;
-        *)
-            log_message "ERROR: unsupported build architecture: ${arch}"
-            return 30
-            ;;
-    esac
-    bazel_flags+=(:build_pip_pkg)
-
-    log_message "compiling ScaNN ${SOFTWARE_VERSION} with bazel (${arch})"
-    if ! (cd "${scann_root}" \
-        && PATH="${bazel_path}" \
-           CC="${CLANG_BINARY}" \
-           exec "${bazel_bin}" "${bazel_startup_flags[@]}" "${bazel_flags[@]}"); then
-        log_message "ERROR: ScaNN bazel build failed"
-        return 30
-    fi
-
-    log_message "packaging ScaNN wheel"
-    if ! (cd "${scann_root}" \
-        && PATH="${BUILD_VENV_DIR}/bin:${PATH}" \
-           PYTHON="${build_python}" \
-           CC="${CLANG_BINARY}" \
-           exec "${scann_root}/bazel-bin/build_pip_pkg"); then
-        log_message "ERROR: ScaNN wheel packaging failed"
-        return 30
-    fi
-
-    SCANN_WHEEL_FILE="$(cd "${scann_root}" && ls -1 ./*.whl 2>/dev/null | head -n 1)"
-    if [[ -z "${SCANN_WHEEL_FILE}" ]]; then
-        log_message "ERROR: ScaNN wheel was not produced"
-        return 30
-    fi
-    log_message "ScaNN wheel built: ${SCANN_WHEEL_FILE}"
-}
-
-
-install_scann_wheel() {
     local pip_options
-    if [[ -z "${SCANN_WHEEL_FILE}" ]]; then
-        log_message "ERROR: no ScaNN wheel available to install"
-        return 30
-    fi
     pip_options=(
         --disable-pip-version-check
         --no-input
         --no-cache-dir
-        --no-deps
+        --only-binary=:all:
         --target "${SCANN_INSTALL_DIR}"
     )
-    log_message "installing built ScaNN ${SOFTWARE_VERSION} wheel into the private work area"
-    if ! python3 -m pip install "${pip_options[@]}" "${SCANN_WHEEL_FILE}"; then
-        log_message "ERROR: failed to install built ScaNN ${SOFTWARE_VERSION} wheel"
+    mapfile -t pip_index_options < <(python_pip_index_options)
+    log_message "installing official prebuilt scann==${SOFTWARE_VERSION} into the private work area"
+    if ! python3 -m pip install "${pip_options[@]}" \
+        "${pip_index_options[@]}" \
+        "scann==${SOFTWARE_VERSION}"; then
+        log_message "ERROR: failed to install scann==${SOFTWARE_VERSION}"
         return 30
     fi
 }
 
 
 activate_scann_runtime() {
-    PYTHONPATH="${SCANN_INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}"
+    PYTHONPATH="${SCANN_INSTALL_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
     export PYTHONPATH
     if ! python3 -c 'import scann, numpy'; then
         log_message "ERROR: installed ScaNN Python module cannot be imported"
@@ -492,7 +159,7 @@ activate_scann_runtime() {
 
 
 installed_scann_version() {
-    PYTHONPATH="${SCANN_INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 -c '
+    PYTHONPATH="${SCANN_INSTALL_DIR}${PYTHONPATH:+:${PYTHONPATH}}" python3 -c '
 import importlib.metadata
 print(importlib.metadata.version("scann"))
 '
@@ -517,43 +184,12 @@ build_scann() {
     else
         return $?
     fi
-    if [[ -e "${SCANN_INSTALL_DIR}" || -e "${PYTHON_DEPENDENCY_DIR}" \
-        || -e "${BUILD_TOOLCHAIN_DIR}" || -e "${BUILD_VENV_DIR}" || -e "${SCANN_SOURCE_DIR}" ]]; then
+    if [[ -e "${SCANN_INSTALL_DIR}" ]]; then
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     fi
 
-    if install_python_dependencies; then
-        :
-    else
-        return $?
-    fi
-    if prepare_build_venv; then
-        :
-    else
-        return $?
-    fi
-    if prepare_bazel; then
-        :
-    else
-        return $?
-    fi
-    if prepare_clang; then
-        :
-    else
-        return $?
-    fi
-    if prepare_scann_source; then
-        :
-    else
-        return $?
-    fi
-    if build_scann_wheel_from_source; then
-        :
-    else
-        return $?
-    fi
-    if install_scann_wheel; then
+    if install_scann_package; then
         :
     else
         return $?
@@ -577,7 +213,7 @@ build_scann() {
         log_message "ERROR: failed to record installed ScaNN version"
         return 40
     fi
-    log_message "ScaNN ${actual_version} is ready (built from source for ${EXPECTED_ARCH})"
+    log_message "ScaNN ${actual_version} is ready (installed from the official PyPI wheel for ${EXPECTED_ARCH})"
 }
 
 
