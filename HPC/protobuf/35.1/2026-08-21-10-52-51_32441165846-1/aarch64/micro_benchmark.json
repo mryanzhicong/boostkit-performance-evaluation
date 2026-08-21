@@ -1,0 +1,622 @@
+{
+  "benchmark": "micro_operations",
+  "reference": "https://github.com/protocolbuffers/protobuf",
+  "timestamp": "2026-08-21T02:51:15Z",
+  "parameters": {
+    "num_messages": 200000,
+    "iterations": 5,
+    "thread_counts": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "size_values": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "aggregation": "median"
+  },
+  "results": {
+    "single_serialize": {
+      "aggregation": "median",
+      "samples": [
+        {
+          "serialize_qps": 4076260.308197569,
+          "serialize_latency_us": 0.24532290000934154
+        },
+        {
+          "serialize_qps": 4310160.893309373,
+          "serialize_latency_us": 0.2320099005009979
+        },
+        {
+          "serialize_qps": 4326663.066727983,
+          "serialize_latency_us": 0.23112499970011413
+        },
+        {
+          "serialize_qps": 4306581.208838825,
+          "serialize_latency_us": 0.23220275004860014
+        },
+        {
+          "serialize_qps": 4320738.817960998,
+          "serialize_latency_us": 0.23144189966842532
+        }
+      ],
+      "serialize_qps": 4310160.893309373,
+      "serialize_latency_us": 0.2320099005009979
+    },
+    "single_deserialize": {
+      "aggregation": "median",
+      "samples": [
+        {
+          "deserialize_qps": 2536324.2875386835,
+          "deserialize_latency_us": 0.3942713496508077
+        },
+        {
+          "deserialize_qps": 2685653.157228181,
+          "deserialize_latency_us": 0.3723489004187286
+        },
+        {
+          "deserialize_qps": 2688726.0504559404,
+          "deserialize_latency_us": 0.3719233500305563
+        },
+        {
+          "deserialize_qps": 2683804.728086668,
+          "deserialize_latency_us": 0.3726053499849513
+        },
+        {
+          "deserialize_qps": 2683134.672821002,
+          "deserialize_latency_us": 0.372698400169611
+        }
+      ],
+      "deserialize_qps": 2683804.728086668,
+      "deserialize_latency_us": 0.3726053499849513
+    },
+    "json_serialization": {
+      "aggregation": "median",
+      "samples": [
+        {
+          "binary_serialize_qps": 4335317.756619903,
+          "json_serialize_qps": 66567.30785895413
+        },
+        {
+          "binary_serialize_qps": 4235302.388890458,
+          "json_serialize_qps": 66606.43380058487
+        },
+        {
+          "binary_serialize_qps": 4259178.6846188065,
+          "json_serialize_qps": 66491.12234494832
+        },
+        {
+          "binary_serialize_qps": 4279958.9671878135,
+          "json_serialize_qps": 66446.81122415529
+        },
+        {
+          "binary_serialize_qps": 4308396.7733915085,
+          "json_serialize_qps": 66559.14192774918
+        }
+      ],
+      "binary_serialize_qps": 4279958.9671878135,
+      "json_serialize_qps": 66559.14192774918
+    },
+    "large_message": {
+      "serialized_size_bytes": 1799,
+      "serialize": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "serialize_qps": 390897.3379175504,
+            "serialize_latency_us": 2.5582164496881887
+          },
+          {
+            "serialize_qps": 390508.7397368143,
+            "serialize_latency_us": 2.560762150096707
+          },
+          {
+            "serialize_qps": 390636.0553012649,
+            "serialize_latency_us": 2.5599275500280783
+          },
+          {
+            "serialize_qps": 390672.9413257445,
+            "serialize_latency_us": 2.559685850283131
+          },
+          {
+            "serialize_qps": 390590.724126243,
+            "serialize_latency_us": 2.560224650078453
+          }
+        ],
+        "serialize_qps": 390636.0553012649,
+        "serialize_latency_us": 2.5599275500280783
+      },
+      "deserialize": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "deserialize_qps": 233429.7008994545,
+            "deserialize_latency_us": 4.283944999915548
+          },
+          {
+            "deserialize_qps": 234096.70199745355,
+            "deserialize_latency_us": 4.271738950046711
+          },
+          {
+            "deserialize_qps": 233961.01602594284,
+            "deserialize_latency_us": 4.27421635016799
+          },
+          {
+            "deserialize_qps": 234300.59767332635,
+            "deserialize_latency_us": 4.268021549796686
+          },
+          {
+            "deserialize_qps": 234182.02578034953,
+            "deserialize_latency_us": 4.270182549953461
+          }
+        ],
+        "deserialize_qps": 234096.70199745355,
+        "deserialize_latency_us": 4.271738950046711
+      }
+    },
+    "multithread_serialize": {
+      "threads_1": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 4341101.154718958
+          },
+          {
+            "qps": 4282218.777416581
+          },
+          {
+            "qps": 4460118.295699288
+          },
+          {
+            "qps": 4294560.461551076
+          },
+          {
+            "qps": 4477941.434924721
+          }
+        ],
+        "qps": 4341101.154718958
+      },
+      "threads_2": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 4380576.608980383
+          },
+          {
+            "qps": 4280678.988830343
+          },
+          {
+            "qps": 4301975.450617706
+          },
+          {
+            "qps": 4331121.145691007
+          },
+          {
+            "qps": 4251500.034053092
+          }
+        ],
+        "qps": 4301975.450617706
+      },
+      "threads_4": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 4322281.402230517
+          },
+          {
+            "qps": 4436626.1170327505
+          },
+          {
+            "qps": 4434989.047391046
+          },
+          {
+            "qps": 4336512.506015474
+          },
+          {
+            "qps": 4325469.991322407
+          }
+        ],
+        "qps": 4336512.506015474
+      },
+      "threads_8": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 4362360.3319906425
+          },
+          {
+            "qps": 4398792.79410189
+          },
+          {
+            "qps": 4391662.515027083
+          },
+          {
+            "qps": 4351504.0601995
+          },
+          {
+            "qps": 4321502.4989530025
+          }
+        ],
+        "qps": 4362360.3319906425
+      }
+    },
+    "multithread_deserialize": {
+      "threads_1": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 2450105.4381953245
+          },
+          {
+            "qps": 2454997.1389276925
+          },
+          {
+            "qps": 2451060.290102115
+          },
+          {
+            "qps": 2467351.390710653
+          },
+          {
+            "qps": 2585544.0161105
+          }
+        ],
+        "qps": 2454997.1389276925
+      },
+      "threads_2": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 2510031.6573651778
+          },
+          {
+            "qps": 2464151.8270108756
+          },
+          {
+            "qps": 2557743.9447545256
+          },
+          {
+            "qps": 2481231.9635232207
+          },
+          {
+            "qps": 2443277.7806286854
+          }
+        ],
+        "qps": 2481231.9635232207
+      },
+      "threads_4": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 2519964.4174207803
+          },
+          {
+            "qps": 2433784.9251398183
+          },
+          {
+            "qps": 2419337.7681343383
+          },
+          {
+            "qps": 2557035.640243064
+          },
+          {
+            "qps": 2460356.581048771
+          }
+        ],
+        "qps": 2460356.581048771
+      },
+      "threads_8": {
+        "aggregation": "median",
+        "samples": [
+          {
+            "qps": 2508214.4039866934
+          },
+          {
+            "qps": 2444906.777527876
+          },
+          {
+            "qps": 2560527.017347214
+          },
+          {
+            "qps": 2532555.685010561
+          },
+          {
+            "qps": 2516667.575925956
+          }
+        ],
+        "qps": 2516667.575925956
+      }
+    },
+    "size_parameter_sweep": {
+      "size_10": {
+        "serialized_size_bytes": 12,
+        "serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 4467622.475744825,
+              "serialize_latency_us": 0.22383269970305264
+            },
+            {
+              "serialize_qps": 4668604.909004787,
+              "serialize_latency_us": 0.21419675031211227
+            },
+            {
+              "serialize_qps": 4666743.1942318985,
+              "serialize_latency_us": 0.21428220032248646
+            },
+            {
+              "serialize_qps": 4658784.786326856,
+              "serialize_latency_us": 0.21464824967551976
+            },
+            {
+              "serialize_qps": 4672634.078509277,
+              "serialize_latency_us": 0.21401205041911453
+            }
+          ],
+          "serialize_qps": 4666743.1942318985,
+          "serialize_latency_us": 0.21428220032248646
+        },
+        "deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 2340668.9103098176,
+              "deserialize_latency_us": 0.42722830025013536
+            },
+            {
+              "deserialize_qps": 2476966.381443642,
+              "deserialize_latency_us": 0.4037196497665718
+            },
+            {
+              "deserialize_qps": 2481692.8628990315,
+              "deserialize_latency_us": 0.4029507498489693
+            },
+            {
+              "deserialize_qps": 2476888.4627698394,
+              "deserialize_latency_us": 0.40373235009610653
+            },
+            {
+              "deserialize_qps": 2479623.0744470656,
+              "deserialize_latency_us": 0.4032871004892513
+            }
+          ],
+          "deserialize_qps": 2476966.381443642,
+          "deserialize_latency_us": 0.4037196497665718
+        }
+      },
+      "size_50": {
+        "serialized_size_bytes": 52,
+        "serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 3835332.3084241278,
+              "serialize_latency_us": 0.2607336000073701
+            },
+            {
+              "serialize_qps": 4006887.0338996025,
+              "serialize_latency_us": 0.24957030022051185
+            },
+            {
+              "serialize_qps": 4020269.394125555,
+              "serialize_latency_us": 0.24873955000657588
+            },
+            {
+              "serialize_qps": 4028090.282954911,
+              "serialize_latency_us": 0.24825660046190023
+            },
+            {
+              "serialize_qps": 4029034.027515229,
+              "serialize_latency_us": 0.24819844984449446
+            }
+          ],
+          "serialize_qps": 4020269.394125555,
+          "serialize_latency_us": 0.24873955000657588
+        },
+        "deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 1533364.1643031207,
+              "deserialize_latency_us": 0.6521607999457046
+            },
+            {
+              "deserialize_qps": 1586546.8432353449,
+              "deserialize_latency_us": 0.6302997004240751
+            },
+            {
+              "deserialize_qps": 1587929.3234154864,
+              "deserialize_latency_us": 0.6297509500291198
+            },
+            {
+              "deserialize_qps": 1587594.4110218673,
+              "deserialize_latency_us": 0.6298837997019291
+            },
+            {
+              "deserialize_qps": 1586540.6778533547,
+              "deserialize_latency_us": 0.6303021498024464
+            }
+          ],
+          "deserialize_qps": 1586546.8432353449,
+          "deserialize_latency_us": 0.6302997004240751
+        }
+      },
+      "size_100": {
+        "serialized_size_bytes": 102,
+        "serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 3336550.329146302,
+              "serialize_latency_us": 0.2997107495320961
+            },
+            {
+              "serialize_qps": 3448020.828500406,
+              "serialize_latency_us": 0.2900214499095455
+            },
+            {
+              "serialize_qps": 3458070.547962141,
+              "serialize_latency_us": 0.2891786000691354
+            },
+            {
+              "serialize_qps": 3461296.8995172763,
+              "serialize_latency_us": 0.2889090502867475
+            },
+            {
+              "serialize_qps": 3458571.6737505384,
+              "serialize_latency_us": 0.2891366998665035
+            }
+          ],
+          "serialize_qps": 3458070.547962141,
+          "serialize_latency_us": 0.2891786000691354
+        },
+        "deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 1220963.1308961308,
+              "deserialize_latency_us": 0.8190255501540378
+            },
+            {
+              "deserialize_qps": 1259460.4368237343,
+              "deserialize_latency_us": 0.7939908001571894
+            },
+            {
+              "deserialize_qps": 1257533.7271997507,
+              "deserialize_latency_us": 0.7952073001069948
+            },
+            {
+              "deserialize_qps": 1256319.049311595,
+              "deserialize_latency_us": 0.795976149966009
+            },
+            {
+              "deserialize_qps": 1259343.7001869148,
+              "deserialize_latency_us": 0.7940644002519548
+            }
+          ],
+          "deserialize_qps": 1257533.7271997507,
+          "deserialize_latency_us": 0.7952073001069948
+        }
+      },
+      "size_500": {
+        "serialized_size_bytes": 875,
+        "serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 708492.773732315,
+              "serialize_latency_us": 1.4114469999913126
+            },
+            {
+              "serialize_qps": 708846.1053151852,
+              "serialize_latency_us": 1.4107434498146176
+            },
+            {
+              "serialize_qps": 708135.5066817234,
+              "serialize_latency_us": 1.4121591002913192
+            },
+            {
+              "serialize_qps": 708510.3429721288,
+              "serialize_latency_us": 1.4114119997248054
+            },
+            {
+              "serialize_qps": 708048.9661296696,
+              "serialize_latency_us": 1.4123316999757662
+            }
+          ],
+          "serialize_qps": 708492.773732315,
+          "serialize_latency_us": 1.4114469999913126
+        },
+        "deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 393928.312022215,
+              "deserialize_latency_us": 2.5385329499840736
+            },
+            {
+              "deserialize_qps": 396091.8723750656,
+              "deserialize_latency_us": 2.5246668001636863
+            },
+            {
+              "deserialize_qps": 398342.3698652695,
+              "deserialize_latency_us": 2.510403300402686
+            },
+            {
+              "deserialize_qps": 397775.258914559,
+              "deserialize_latency_us": 2.5139823998324573
+            },
+            {
+              "deserialize_qps": 396598.64311767265,
+              "deserialize_latency_us": 2.5214408000465482
+            }
+          ],
+          "deserialize_qps": 396598.64311767265,
+          "deserialize_latency_us": 2.5214408000465482
+        }
+      },
+      "size_1000": {
+        "serialized_size_bytes": 1875,
+        "serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 362017.7952732107,
+              "serialize_latency_us": 2.762295149732381
+            },
+            {
+              "serialize_qps": 362363.5845928795,
+              "serialize_latency_us": 2.7596592000918463
+            },
+            {
+              "serialize_qps": 361389.70895176975,
+              "serialize_latency_us": 2.7670959499664605
+            },
+            {
+              "serialize_qps": 361472.6867754735,
+              "serialize_latency_us": 2.7664607495535165
+            },
+            {
+              "serialize_qps": 361608.30649449414,
+              "serialize_latency_us": 2.765423199743964
+            }
+          ],
+          "serialize_qps": 361608.30649449414,
+          "serialize_latency_us": 2.765423199743964
+        },
+        "deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 221014.66684180047,
+              "deserialize_latency_us": 4.524586600018665
+            },
+            {
+              "deserialize_qps": 220880.32760939884,
+              "deserialize_latency_us": 4.527338449843228
+            },
+            {
+              "deserialize_qps": 220857.81418630198,
+              "deserialize_latency_us": 4.527799949864857
+            },
+            {
+              "deserialize_qps": 220996.36275216375,
+              "deserialize_latency_us": 4.524961350252852
+            },
+            {
+              "deserialize_qps": 220985.40618810226,
+              "deserialize_latency_us": 4.525185700040311
+            }
+          ],
+          "deserialize_qps": 220985.40618810226,
+          "deserialize_latency_us": 4.525185700040311
+        }
+      }
+    }
+  }
+}

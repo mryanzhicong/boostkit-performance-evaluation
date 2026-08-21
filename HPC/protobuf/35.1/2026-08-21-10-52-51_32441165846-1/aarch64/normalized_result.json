@@ -1,0 +1,1699 @@
+{
+  "software": "protobuf",
+  "category": "HPC",
+  "version": "35.1",
+  "architecture": "aarch64",
+  "run_id": "32441165846-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-21T02:50:23Z",
+    "category": "HPC",
+    "software": "protobuf",
+    "requested_version": "35.1",
+    "actual_version": "35.1",
+    "architecture": "aarch64",
+    "run_id": "32441165846-1"
+  },
+  "parameters": {
+    "serialization_benchmark": {
+      "num_messages": 200000,
+      "iterations": 5,
+      "message_size": 100,
+      "message_configs": [
+        "SimpleMessage",
+        "RepeatedInt32",
+        "RepeatedString",
+        "NestedMessage",
+        "LargeMessage"
+      ],
+      "aggregation": "median"
+    },
+    "micro_benchmark": {
+      "num_messages": 200000,
+      "iterations": 5,
+      "thread_counts": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "size_values": [
+        10,
+        50,
+        100,
+        500,
+        1000
+      ],
+      "aggregation": "median"
+    },
+    "aggregate_result": {
+      "serialization_benchmark": {
+        "num_messages": 200000,
+        "iterations": 5,
+        "message_size": 100,
+        "message_configs": [
+          "SimpleMessage",
+          "RepeatedInt32",
+          "RepeatedString",
+          "NestedMessage",
+          "LargeMessage"
+        ],
+        "aggregation": "median"
+      },
+      "micro_benchmark": {
+        "num_messages": 200000,
+        "iterations": 5,
+        "thread_counts": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "size_values": [
+          10,
+          50,
+          100,
+          500,
+          1000
+        ],
+        "aggregation": "median"
+      }
+    }
+  },
+  "parameter_signature": "77746895ea12dd0daac6d176711ad5004b6f8cab4f950d65b2a4a332abde0aa3",
+  "system_info": {
+    "collected_at": "2026-08-21T02:48:58Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.3.154.oe2403sp4.aarch64",
+    "cpu_model": "Kunpeng 920 7270Z To be filled by O.E.M. CPU @ 2.9GHz",
+    "cpu_count": 256,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63\nnode 0 size: 128886 MB\nnode 0 free: 128025 MB\nnode 1 cpus: 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127\nnode 1 size: 128457 MB\nnode 1 free: 124680 MB\nnode 2 cpus: 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 2 size: 127923 MB\nnode 2 free: 127294 MB\nnode 3 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255\nnode 3 size: 129014 MB\nnode 3 free: 128459 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  12  35  37 \n  1:  12  10  37  40 \n  2:  35  37  10  12 \n  3:  37  40  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-21T02:48:58Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     539263840256  5516308480 533158797312    80510976  3180036096 533747531776\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-21T02:51:15Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     539263840256  6091833344 532579553280   438206464  3543855104 533172006912\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "serialization_benchmark": {
+      "benchmark": "serialization_search",
+      "reference": "https://github.com/protocolbuffers/protobuf",
+      "timestamp": "2026-08-21T02:50:36Z",
+      "parameters": {
+        "num_messages": 200000,
+        "iterations": 5,
+        "message_size": 100,
+        "message_configs": [
+          "SimpleMessage",
+          "RepeatedInt32",
+          "RepeatedString",
+          "NestedMessage",
+          "LargeMessage"
+        ],
+        "aggregation": "median"
+      },
+      "results_summary": {
+        "SimpleMessage": {
+          "description": "Simple message with scalar fields",
+          "serialized_size_bytes": 28,
+          "fidelity": "passed",
+          "aggregation": "median",
+          "serialize_qps": 3974163.958616489,
+          "deserialize_qps": 2545391.65103907,
+          "serialize_latency_us": 0.2516252500936389,
+          "deserialize_latency_us": 0.3928668500157073,
+          "samples": [
+            {
+              "serialize_qps": 3920102.0493847174,
+              "deserialize_qps": 2544959.897044656,
+              "serialize_latency_us": 0.255095399916172,
+              "deserialize_latency_us": 0.39293350011575967
+            },
+            {
+              "serialize_qps": 3963105.866441125,
+              "deserialize_qps": 2532494.437229688,
+              "serialize_latency_us": 0.2523273497354239,
+              "deserialize_latency_us": 0.3948675998253748
+            },
+            {
+              "serialize_qps": 3976227.722600846,
+              "deserialize_qps": 2554601.412692253,
+              "serialize_latency_us": 0.25149465014692396,
+              "deserialize_latency_us": 0.3914504998829216
+            },
+            {
+              "serialize_qps": 3976470.4259402575,
+              "deserialize_qps": 2545391.65103907,
+              "serialize_latency_us": 0.25147930020466447,
+              "deserialize_latency_us": 0.3928668500157073
+            },
+            {
+              "serialize_qps": 3974163.958616489,
+              "deserialize_qps": 2550986.566821183,
+              "serialize_latency_us": 0.2516252500936389,
+              "deserialize_latency_us": 0.39200520026497543
+            }
+          ]
+        },
+        "RepeatedInt32": {
+          "description": "Message with a repeated int32 field",
+          "serialized_size_bytes": 102,
+          "fidelity": "passed",
+          "aggregation": "median",
+          "serialize_qps": 3165822.7876955485,
+          "deserialize_qps": 1232163.4331071523,
+          "serialize_latency_us": 0.31587365025188774,
+          "deserialize_latency_us": 0.8115806500427425,
+          "samples": [
+            {
+              "serialize_qps": 3177239.7764494824,
+              "deserialize_qps": 1229658.9057974273,
+              "serialize_latency_us": 0.3147386002819985,
+              "deserialize_latency_us": 0.8132336498238146
+            },
+            {
+              "serialize_qps": 3135634.699265694,
+              "deserialize_qps": 1228766.908606014,
+              "serialize_latency_us": 0.3189147001830861,
+              "deserialize_latency_us": 0.8138239994877949
+            },
+            {
+              "serialize_qps": 3165822.7876955485,
+              "deserialize_qps": 1234267.790799201,
+              "serialize_latency_us": 0.31587365025188774,
+              "deserialize_latency_us": 0.810196950333193
+            },
+            {
+              "serialize_qps": 3157615.209018322,
+              "deserialize_qps": 1241332.936173134,
+              "serialize_latency_us": 0.31669469957705587,
+              "deserialize_latency_us": 0.8055856497958302
+            },
+            {
+              "serialize_qps": 3166802.286406633,
+              "deserialize_qps": 1232163.4331071523,
+              "serialize_latency_us": 0.3157759498571977,
+              "deserialize_latency_us": 0.8115806500427425
+            }
+          ]
+        },
+        "RepeatedString": {
+          "description": "Message with a repeated string field",
+          "serialized_size_bytes": 890,
+          "fidelity": "passed",
+          "aggregation": "median",
+          "serialize_qps": 1356606.735333511,
+          "deserialize_qps": 491526.899628101,
+          "serialize_latency_us": 0.7371333002811298,
+          "deserialize_latency_us": 2.034476649714634,
+          "samples": [
+            {
+              "serialize_qps": 1358512.0866420122,
+              "deserialize_qps": 494385.36436161096,
+              "serialize_latency_us": 0.7360994501505047,
+              "deserialize_latency_us": 2.0227135997265577
+            },
+            {
+              "serialize_qps": 1356606.735333511,
+              "deserialize_qps": 489936.32802022836,
+              "serialize_latency_us": 0.7371333002811298,
+              "deserialize_latency_us": 2.041081550414674
+            },
+            {
+              "serialize_qps": 1352786.402733867,
+              "deserialize_qps": 491526.899628101,
+              "serialize_latency_us": 0.7392149994848296,
+              "deserialize_latency_us": 2.034476649714634
+            },
+            {
+              "serialize_qps": 1356024.8725144188,
+              "deserialize_qps": 489445.9904461774,
+              "serialize_latency_us": 0.737449600128457,
+              "deserialize_latency_us": 2.043126350035891
+            },
+            {
+              "serialize_qps": 1357170.4948676054,
+              "deserialize_qps": 491922.0012362661,
+              "serialize_latency_us": 0.7368271000450477,
+              "deserialize_latency_us": 2.0328426000196487
+            }
+          ]
+        },
+        "NestedMessage": {
+          "description": "Message with nested and repeated nested fields",
+          "serialized_size_bytes": 2204,
+          "fidelity": "passed",
+          "aggregation": "median",
+          "serialize_qps": 381967.78231078567,
+          "deserialize_qps": 241145.92062043448,
+          "serialize_latency_us": 2.618021849775687,
+          "deserialize_latency_us": 4.146866749506444,
+          "samples": [
+            {
+              "serialize_qps": 374523.580311152,
+              "deserialize_qps": 240986.6765527467,
+              "serialize_latency_us": 2.6700588496169075,
+              "deserialize_latency_us": 4.149607000290416
+            },
+            {
+              "serialize_qps": 382449.8578695312,
+              "deserialize_qps": 241145.92062043448,
+              "serialize_latency_us": 2.6147218502592295,
+              "deserialize_latency_us": 4.146866749506444
+            },
+            {
+              "serialize_qps": 381160.174927282,
+              "deserialize_qps": 240573.5147552146,
+              "serialize_latency_us": 2.6235689502209425,
+              "deserialize_latency_us": 4.15673354989849
+            },
+            {
+              "serialize_qps": 381967.78231078567,
+              "deserialize_qps": 241403.20926815254,
+              "serialize_latency_us": 2.618021849775687,
+              "deserialize_latency_us": 4.142446999903768
+            },
+            {
+              "serialize_qps": 382085.61784695764,
+              "deserialize_qps": 241627.01386686275,
+              "serialize_latency_us": 2.6172144495649263,
+              "deserialize_latency_us": 4.1386100999079645
+            }
+          ]
+        },
+        "LargeMessage": {
+          "description": "Message with mixed scalar, repeated, and nested fields",
+          "serialized_size_bytes": 304,
+          "fidelity": "passed",
+          "aggregation": "median",
+          "serialize_qps": 1658892.4049382212,
+          "deserialize_qps": 749595.4900832964,
+          "serialize_latency_us": 0.6028118502581492,
+          "deserialize_latency_us": 1.3340528501430526,
+          "samples": [
+            {
+              "serialize_qps": 1658892.4049382212,
+              "deserialize_qps": 749595.4900832964,
+              "serialize_latency_us": 0.6028118502581492,
+              "deserialize_latency_us": 1.3340528501430526
+            },
+            {
+              "serialize_qps": 1659440.357475848,
+              "deserialize_qps": 750486.0803429862,
+              "serialize_latency_us": 0.6026127998484299,
+              "deserialize_latency_us": 1.3324697501957417
+            },
+            {
+              "serialize_qps": 1657918.3833916585,
+              "deserialize_qps": 749204.139152909,
+              "serialize_latency_us": 0.603166000219062,
+              "deserialize_latency_us": 1.3347497000358999
+            },
+            {
+              "serialize_qps": 1660986.5088563035,
+              "deserialize_qps": 749566.862849733,
+              "serialize_latency_us": 0.6020518497098237,
+              "deserialize_latency_us": 1.3341037998907268
+            },
+            {
+              "serialize_qps": 1657248.5230439021,
+              "deserialize_qps": 751455.7199733508,
+              "serialize_latency_us": 0.603409800096415,
+              "deserialize_latency_us": 1.3307504000840709
+            }
+          ]
+        }
+      }
+    },
+    "micro_benchmark": {
+      "benchmark": "micro_operations",
+      "reference": "https://github.com/protocolbuffers/protobuf",
+      "timestamp": "2026-08-21T02:51:15Z",
+      "parameters": {
+        "num_messages": 200000,
+        "iterations": 5,
+        "thread_counts": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "size_values": [
+          10,
+          50,
+          100,
+          500,
+          1000
+        ],
+        "aggregation": "median"
+      },
+      "results": {
+        "single_serialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "serialize_qps": 4076260.308197569,
+              "serialize_latency_us": 0.24532290000934154
+            },
+            {
+              "serialize_qps": 4310160.893309373,
+              "serialize_latency_us": 0.2320099005009979
+            },
+            {
+              "serialize_qps": 4326663.066727983,
+              "serialize_latency_us": 0.23112499970011413
+            },
+            {
+              "serialize_qps": 4306581.208838825,
+              "serialize_latency_us": 0.23220275004860014
+            },
+            {
+              "serialize_qps": 4320738.817960998,
+              "serialize_latency_us": 0.23144189966842532
+            }
+          ],
+          "serialize_qps": 4310160.893309373,
+          "serialize_latency_us": 0.2320099005009979
+        },
+        "single_deserialize": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "deserialize_qps": 2536324.2875386835,
+              "deserialize_latency_us": 0.3942713496508077
+            },
+            {
+              "deserialize_qps": 2685653.157228181,
+              "deserialize_latency_us": 0.3723489004187286
+            },
+            {
+              "deserialize_qps": 2688726.0504559404,
+              "deserialize_latency_us": 0.3719233500305563
+            },
+            {
+              "deserialize_qps": 2683804.728086668,
+              "deserialize_latency_us": 0.3726053499849513
+            },
+            {
+              "deserialize_qps": 2683134.672821002,
+              "deserialize_latency_us": 0.372698400169611
+            }
+          ],
+          "deserialize_qps": 2683804.728086668,
+          "deserialize_latency_us": 0.3726053499849513
+        },
+        "json_serialization": {
+          "aggregation": "median",
+          "samples": [
+            {
+              "binary_serialize_qps": 4335317.756619903,
+              "json_serialize_qps": 66567.30785895413
+            },
+            {
+              "binary_serialize_qps": 4235302.388890458,
+              "json_serialize_qps": 66606.43380058487
+            },
+            {
+              "binary_serialize_qps": 4259178.6846188065,
+              "json_serialize_qps": 66491.12234494832
+            },
+            {
+              "binary_serialize_qps": 4279958.9671878135,
+              "json_serialize_qps": 66446.81122415529
+            },
+            {
+              "binary_serialize_qps": 4308396.7733915085,
+              "json_serialize_qps": 66559.14192774918
+            }
+          ],
+          "binary_serialize_qps": 4279958.9671878135,
+          "json_serialize_qps": 66559.14192774918
+        },
+        "large_message": {
+          "serialized_size_bytes": 1799,
+          "serialize": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "serialize_qps": 390897.3379175504,
+                "serialize_latency_us": 2.5582164496881887
+              },
+              {
+                "serialize_qps": 390508.7397368143,
+                "serialize_latency_us": 2.560762150096707
+              },
+              {
+                "serialize_qps": 390636.0553012649,
+                "serialize_latency_us": 2.5599275500280783
+              },
+              {
+                "serialize_qps": 390672.9413257445,
+                "serialize_latency_us": 2.559685850283131
+              },
+              {
+                "serialize_qps": 390590.724126243,
+                "serialize_latency_us": 2.560224650078453
+              }
+            ],
+            "serialize_qps": 390636.0553012649,
+            "serialize_latency_us": 2.5599275500280783
+          },
+          "deserialize": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "deserialize_qps": 233429.7008994545,
+                "deserialize_latency_us": 4.283944999915548
+              },
+              {
+                "deserialize_qps": 234096.70199745355,
+                "deserialize_latency_us": 4.271738950046711
+              },
+              {
+                "deserialize_qps": 233961.01602594284,
+                "deserialize_latency_us": 4.27421635016799
+              },
+              {
+                "deserialize_qps": 234300.59767332635,
+                "deserialize_latency_us": 4.268021549796686
+              },
+              {
+                "deserialize_qps": 234182.02578034953,
+                "deserialize_latency_us": 4.270182549953461
+              }
+            ],
+            "deserialize_qps": 234096.70199745355,
+            "deserialize_latency_us": 4.271738950046711
+          }
+        },
+        "multithread_serialize": {
+          "threads_1": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 4341101.154718958
+              },
+              {
+                "qps": 4282218.777416581
+              },
+              {
+                "qps": 4460118.295699288
+              },
+              {
+                "qps": 4294560.461551076
+              },
+              {
+                "qps": 4477941.434924721
+              }
+            ],
+            "qps": 4341101.154718958
+          },
+          "threads_2": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 4380576.608980383
+              },
+              {
+                "qps": 4280678.988830343
+              },
+              {
+                "qps": 4301975.450617706
+              },
+              {
+                "qps": 4331121.145691007
+              },
+              {
+                "qps": 4251500.034053092
+              }
+            ],
+            "qps": 4301975.450617706
+          },
+          "threads_4": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 4322281.402230517
+              },
+              {
+                "qps": 4436626.1170327505
+              },
+              {
+                "qps": 4434989.047391046
+              },
+              {
+                "qps": 4336512.506015474
+              },
+              {
+                "qps": 4325469.991322407
+              }
+            ],
+            "qps": 4336512.506015474
+          },
+          "threads_8": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 4362360.3319906425
+              },
+              {
+                "qps": 4398792.79410189
+              },
+              {
+                "qps": 4391662.515027083
+              },
+              {
+                "qps": 4351504.0601995
+              },
+              {
+                "qps": 4321502.4989530025
+              }
+            ],
+            "qps": 4362360.3319906425
+          }
+        },
+        "multithread_deserialize": {
+          "threads_1": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 2450105.4381953245
+              },
+              {
+                "qps": 2454997.1389276925
+              },
+              {
+                "qps": 2451060.290102115
+              },
+              {
+                "qps": 2467351.390710653
+              },
+              {
+                "qps": 2585544.0161105
+              }
+            ],
+            "qps": 2454997.1389276925
+          },
+          "threads_2": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 2510031.6573651778
+              },
+              {
+                "qps": 2464151.8270108756
+              },
+              {
+                "qps": 2557743.9447545256
+              },
+              {
+                "qps": 2481231.9635232207
+              },
+              {
+                "qps": 2443277.7806286854
+              }
+            ],
+            "qps": 2481231.9635232207
+          },
+          "threads_4": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 2519964.4174207803
+              },
+              {
+                "qps": 2433784.9251398183
+              },
+              {
+                "qps": 2419337.7681343383
+              },
+              {
+                "qps": 2557035.640243064
+              },
+              {
+                "qps": 2460356.581048771
+              }
+            ],
+            "qps": 2460356.581048771
+          },
+          "threads_8": {
+            "aggregation": "median",
+            "samples": [
+              {
+                "qps": 2508214.4039866934
+              },
+              {
+                "qps": 2444906.777527876
+              },
+              {
+                "qps": 2560527.017347214
+              },
+              {
+                "qps": 2532555.685010561
+              },
+              {
+                "qps": 2516667.575925956
+              }
+            ],
+            "qps": 2516667.575925956
+          }
+        },
+        "size_parameter_sweep": {
+          "size_10": {
+            "serialized_size_bytes": 12,
+            "serialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "serialize_qps": 4467622.475744825,
+                  "serialize_latency_us": 0.22383269970305264
+                },
+                {
+                  "serialize_qps": 4668604.909004787,
+                  "serialize_latency_us": 0.21419675031211227
+                },
+                {
+                  "serialize_qps": 4666743.1942318985,
+                  "serialize_latency_us": 0.21428220032248646
+                },
+                {
+                  "serialize_qps": 4658784.786326856,
+                  "serialize_latency_us": 0.21464824967551976
+                },
+                {
+                  "serialize_qps": 4672634.078509277,
+                  "serialize_latency_us": 0.21401205041911453
+                }
+              ],
+              "serialize_qps": 4666743.1942318985,
+              "serialize_latency_us": 0.21428220032248646
+            },
+            "deserialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "deserialize_qps": 2340668.9103098176,
+                  "deserialize_latency_us": 0.42722830025013536
+                },
+                {
+                  "deserialize_qps": 2476966.381443642,
+                  "deserialize_latency_us": 0.4037196497665718
+                },
+                {
+                  "deserialize_qps": 2481692.8628990315,
+                  "deserialize_latency_us": 0.4029507498489693
+                },
+                {
+                  "deserialize_qps": 2476888.4627698394,
+                  "deserialize_latency_us": 0.40373235009610653
+                },
+                {
+                  "deserialize_qps": 2479623.0744470656,
+                  "deserialize_latency_us": 0.4032871004892513
+                }
+              ],
+              "deserialize_qps": 2476966.381443642,
+              "deserialize_latency_us": 0.4037196497665718
+            }
+          },
+          "size_50": {
+            "serialized_size_bytes": 52,
+            "serialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "serialize_qps": 3835332.3084241278,
+                  "serialize_latency_us": 0.2607336000073701
+                },
+                {
+                  "serialize_qps": 4006887.0338996025,
+                  "serialize_latency_us": 0.24957030022051185
+                },
+                {
+                  "serialize_qps": 4020269.394125555,
+                  "serialize_latency_us": 0.24873955000657588
+                },
+                {
+                  "serialize_qps": 4028090.282954911,
+                  "serialize_latency_us": 0.24825660046190023
+                },
+                {
+                  "serialize_qps": 4029034.027515229,
+                  "serialize_latency_us": 0.24819844984449446
+                }
+              ],
+              "serialize_qps": 4020269.394125555,
+              "serialize_latency_us": 0.24873955000657588
+            },
+            "deserialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "deserialize_qps": 1533364.1643031207,
+                  "deserialize_latency_us": 0.6521607999457046
+                },
+                {
+                  "deserialize_qps": 1586546.8432353449,
+                  "deserialize_latency_us": 0.6302997004240751
+                },
+                {
+                  "deserialize_qps": 1587929.3234154864,
+                  "deserialize_latency_us": 0.6297509500291198
+                },
+                {
+                  "deserialize_qps": 1587594.4110218673,
+                  "deserialize_latency_us": 0.6298837997019291
+                },
+                {
+                  "deserialize_qps": 1586540.6778533547,
+                  "deserialize_latency_us": 0.6303021498024464
+                }
+              ],
+              "deserialize_qps": 1586546.8432353449,
+              "deserialize_latency_us": 0.6302997004240751
+            }
+          },
+          "size_100": {
+            "serialized_size_bytes": 102,
+            "serialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "serialize_qps": 3336550.329146302,
+                  "serialize_latency_us": 0.2997107495320961
+                },
+                {
+                  "serialize_qps": 3448020.828500406,
+                  "serialize_latency_us": 0.2900214499095455
+                },
+                {
+                  "serialize_qps": 3458070.547962141,
+                  "serialize_latency_us": 0.2891786000691354
+                },
+                {
+                  "serialize_qps": 3461296.8995172763,
+                  "serialize_latency_us": 0.2889090502867475
+                },
+                {
+                  "serialize_qps": 3458571.6737505384,
+                  "serialize_latency_us": 0.2891366998665035
+                }
+              ],
+              "serialize_qps": 3458070.547962141,
+              "serialize_latency_us": 0.2891786000691354
+            },
+            "deserialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "deserialize_qps": 1220963.1308961308,
+                  "deserialize_latency_us": 0.8190255501540378
+                },
+                {
+                  "deserialize_qps": 1259460.4368237343,
+                  "deserialize_latency_us": 0.7939908001571894
+                },
+                {
+                  "deserialize_qps": 1257533.7271997507,
+                  "deserialize_latency_us": 0.7952073001069948
+                },
+                {
+                  "deserialize_qps": 1256319.049311595,
+                  "deserialize_latency_us": 0.795976149966009
+                },
+                {
+                  "deserialize_qps": 1259343.7001869148,
+                  "deserialize_latency_us": 0.7940644002519548
+                }
+              ],
+              "deserialize_qps": 1257533.7271997507,
+              "deserialize_latency_us": 0.7952073001069948
+            }
+          },
+          "size_500": {
+            "serialized_size_bytes": 875,
+            "serialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "serialize_qps": 708492.773732315,
+                  "serialize_latency_us": 1.4114469999913126
+                },
+                {
+                  "serialize_qps": 708846.1053151852,
+                  "serialize_latency_us": 1.4107434498146176
+                },
+                {
+                  "serialize_qps": 708135.5066817234,
+                  "serialize_latency_us": 1.4121591002913192
+                },
+                {
+                  "serialize_qps": 708510.3429721288,
+                  "serialize_latency_us": 1.4114119997248054
+                },
+                {
+                  "serialize_qps": 708048.9661296696,
+                  "serialize_latency_us": 1.4123316999757662
+                }
+              ],
+              "serialize_qps": 708492.773732315,
+              "serialize_latency_us": 1.4114469999913126
+            },
+            "deserialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "deserialize_qps": 393928.312022215,
+                  "deserialize_latency_us": 2.5385329499840736
+                },
+                {
+                  "deserialize_qps": 396091.8723750656,
+                  "deserialize_latency_us": 2.5246668001636863
+                },
+                {
+                  "deserialize_qps": 398342.3698652695,
+                  "deserialize_latency_us": 2.510403300402686
+                },
+                {
+                  "deserialize_qps": 397775.258914559,
+                  "deserialize_latency_us": 2.5139823998324573
+                },
+                {
+                  "deserialize_qps": 396598.64311767265,
+                  "deserialize_latency_us": 2.5214408000465482
+                }
+              ],
+              "deserialize_qps": 396598.64311767265,
+              "deserialize_latency_us": 2.5214408000465482
+            }
+          },
+          "size_1000": {
+            "serialized_size_bytes": 1875,
+            "serialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "serialize_qps": 362017.7952732107,
+                  "serialize_latency_us": 2.762295149732381
+                },
+                {
+                  "serialize_qps": 362363.5845928795,
+                  "serialize_latency_us": 2.7596592000918463
+                },
+                {
+                  "serialize_qps": 361389.70895176975,
+                  "serialize_latency_us": 2.7670959499664605
+                },
+                {
+                  "serialize_qps": 361472.6867754735,
+                  "serialize_latency_us": 2.7664607495535165
+                },
+                {
+                  "serialize_qps": 361608.30649449414,
+                  "serialize_latency_us": 2.765423199743964
+                }
+              ],
+              "serialize_qps": 361608.30649449414,
+              "serialize_latency_us": 2.765423199743964
+            },
+            "deserialize": {
+              "aggregation": "median",
+              "samples": [
+                {
+                  "deserialize_qps": 221014.66684180047,
+                  "deserialize_latency_us": 4.524586600018665
+                },
+                {
+                  "deserialize_qps": 220880.32760939884,
+                  "deserialize_latency_us": 4.527338449843228
+                },
+                {
+                  "deserialize_qps": 220857.81418630198,
+                  "deserialize_latency_us": 4.527799949864857
+                },
+                {
+                  "deserialize_qps": 220996.36275216375,
+                  "deserialize_latency_us": 4.524961350252852
+                },
+                {
+                  "deserialize_qps": 220985.40618810226,
+                  "deserialize_latency_us": 4.525185700040311
+                }
+              ],
+              "deserialize_qps": 220985.40618810226,
+              "deserialize_latency_us": 4.525185700040311
+            }
+          }
+        }
+      }
+    },
+    "aggregate_result": {
+      "software": "protobuf",
+      "version": "35.1",
+      "test_time": "2026-08-21T02:51:15Z",
+      "parameters": {
+        "serialization_benchmark": {
+          "num_messages": 200000,
+          "iterations": 5,
+          "message_size": 100,
+          "message_configs": [
+            "SimpleMessage",
+            "RepeatedInt32",
+            "RepeatedString",
+            "NestedMessage",
+            "LargeMessage"
+          ],
+          "aggregation": "median"
+        },
+        "micro_benchmark": {
+          "num_messages": 200000,
+          "iterations": 5,
+          "thread_counts": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "size_values": [
+            10,
+            50,
+            100,
+            500,
+            1000
+          ],
+          "aggregation": "median"
+        }
+      },
+      "metrics": {
+        "results_summary.SimpleMessage.serialize_qps": {
+          "source_name": "results_summary.SimpleMessage.serialize_qps",
+          "value": 3974163.958616489,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.SimpleMessage.serialize_qps"
+        },
+        "results_summary.SimpleMessage.deserialize_qps": {
+          "source_name": "results_summary.SimpleMessage.deserialize_qps",
+          "value": 2545391.65103907,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.SimpleMessage.deserialize_qps"
+        },
+        "results_summary.SimpleMessage.serialize_latency_us": {
+          "source_name": "results_summary.SimpleMessage.serialize_latency_us",
+          "value": 0.2516252500936389,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.SimpleMessage.serialize_latency_us"
+        },
+        "results_summary.SimpleMessage.deserialize_latency_us": {
+          "source_name": "results_summary.SimpleMessage.deserialize_latency_us",
+          "value": 0.3928668500157073,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.SimpleMessage.deserialize_latency_us"
+        },
+        "results_summary.RepeatedInt32.serialize_qps": {
+          "source_name": "results_summary.RepeatedInt32.serialize_qps",
+          "value": 3165822.7876955485,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.RepeatedInt32.serialize_qps"
+        },
+        "results_summary.RepeatedInt32.deserialize_qps": {
+          "source_name": "results_summary.RepeatedInt32.deserialize_qps",
+          "value": 1232163.4331071523,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.RepeatedInt32.deserialize_qps"
+        },
+        "results_summary.RepeatedInt32.serialize_latency_us": {
+          "source_name": "results_summary.RepeatedInt32.serialize_latency_us",
+          "value": 0.31587365025188774,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.RepeatedInt32.serialize_latency_us"
+        },
+        "results_summary.RepeatedInt32.deserialize_latency_us": {
+          "source_name": "results_summary.RepeatedInt32.deserialize_latency_us",
+          "value": 0.8115806500427425,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.RepeatedInt32.deserialize_latency_us"
+        },
+        "results_summary.RepeatedString.serialize_qps": {
+          "source_name": "results_summary.RepeatedString.serialize_qps",
+          "value": 1356606.735333511,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.RepeatedString.serialize_qps"
+        },
+        "results_summary.RepeatedString.deserialize_qps": {
+          "source_name": "results_summary.RepeatedString.deserialize_qps",
+          "value": 491526.899628101,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.RepeatedString.deserialize_qps"
+        },
+        "results_summary.RepeatedString.serialize_latency_us": {
+          "source_name": "results_summary.RepeatedString.serialize_latency_us",
+          "value": 0.7371333002811298,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.RepeatedString.serialize_latency_us"
+        },
+        "results_summary.RepeatedString.deserialize_latency_us": {
+          "source_name": "results_summary.RepeatedString.deserialize_latency_us",
+          "value": 2.034476649714634,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.RepeatedString.deserialize_latency_us"
+        },
+        "results_summary.NestedMessage.serialize_qps": {
+          "source_name": "results_summary.NestedMessage.serialize_qps",
+          "value": 381967.78231078567,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.NestedMessage.serialize_qps"
+        },
+        "results_summary.NestedMessage.deserialize_qps": {
+          "source_name": "results_summary.NestedMessage.deserialize_qps",
+          "value": 241145.92062043448,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.NestedMessage.deserialize_qps"
+        },
+        "results_summary.NestedMessage.serialize_latency_us": {
+          "source_name": "results_summary.NestedMessage.serialize_latency_us",
+          "value": 2.618021849775687,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.NestedMessage.serialize_latency_us"
+        },
+        "results_summary.NestedMessage.deserialize_latency_us": {
+          "source_name": "results_summary.NestedMessage.deserialize_latency_us",
+          "value": 4.146866749506444,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.NestedMessage.deserialize_latency_us"
+        },
+        "results_summary.LargeMessage.serialize_qps": {
+          "source_name": "results_summary.LargeMessage.serialize_qps",
+          "value": 1658892.4049382212,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.LargeMessage.serialize_qps"
+        },
+        "results_summary.LargeMessage.deserialize_qps": {
+          "source_name": "results_summary.LargeMessage.deserialize_qps",
+          "value": 749595.4900832964,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results_summary.LargeMessage.deserialize_qps"
+        },
+        "results_summary.LargeMessage.serialize_latency_us": {
+          "source_name": "results_summary.LargeMessage.serialize_latency_us",
+          "value": 0.6028118502581492,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.LargeMessage.serialize_latency_us"
+        },
+        "results_summary.LargeMessage.deserialize_latency_us": {
+          "source_name": "results_summary.LargeMessage.deserialize_latency_us",
+          "value": 1.3340528501430526,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results_summary.LargeMessage.deserialize_latency_us"
+        },
+        "results.single_serialize.serialize_qps": {
+          "source_name": "results.single_serialize.serialize_qps",
+          "value": 4310160.893309373,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.single_serialize.serialize_qps"
+        },
+        "results.single_serialize.serialize_latency_us": {
+          "source_name": "results.single_serialize.serialize_latency_us",
+          "value": 0.2320099005009979,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.single_serialize.serialize_latency_us"
+        },
+        "results.single_deserialize.deserialize_qps": {
+          "source_name": "results.single_deserialize.deserialize_qps",
+          "value": 2683804.728086668,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.single_deserialize.deserialize_qps"
+        },
+        "results.single_deserialize.deserialize_latency_us": {
+          "source_name": "results.single_deserialize.deserialize_latency_us",
+          "value": 0.3726053499849513,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.single_deserialize.deserialize_latency_us"
+        },
+        "results.json_serialization.binary_serialize_qps": {
+          "source_name": "results.json_serialization.binary_serialize_qps",
+          "value": 4279958.9671878135,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.json_serialization.binary_serialize_qps"
+        },
+        "results.json_serialization.json_serialize_qps": {
+          "source_name": "results.json_serialization.json_serialize_qps",
+          "value": 66559.14192774918,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.json_serialization.json_serialize_qps"
+        },
+        "results.large_message.serialize.serialize_qps": {
+          "source_name": "results.large_message.serialize.serialize_qps",
+          "value": 390636.0553012649,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.large_message.serialize.serialize_qps"
+        },
+        "results.large_message.serialize.serialize_latency_us": {
+          "source_name": "results.large_message.serialize.serialize_latency_us",
+          "value": 2.5599275500280783,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.large_message.serialize.serialize_latency_us"
+        },
+        "results.large_message.deserialize.deserialize_qps": {
+          "source_name": "results.large_message.deserialize.deserialize_qps",
+          "value": 234096.70199745355,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.large_message.deserialize.deserialize_qps"
+        },
+        "results.large_message.deserialize.deserialize_latency_us": {
+          "source_name": "results.large_message.deserialize.deserialize_latency_us",
+          "value": 4.271738950046711,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.large_message.deserialize.deserialize_latency_us"
+        },
+        "results.multithread_serialize.threads_1.qps": {
+          "source_name": "results.multithread_serialize.threads_1.qps",
+          "value": 4341101.154718958,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_serialize.threads_1.qps"
+        },
+        "results.multithread_serialize.threads_2.qps": {
+          "source_name": "results.multithread_serialize.threads_2.qps",
+          "value": 4301975.450617706,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_serialize.threads_2.qps"
+        },
+        "results.multithread_serialize.threads_4.qps": {
+          "source_name": "results.multithread_serialize.threads_4.qps",
+          "value": 4336512.506015474,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_serialize.threads_4.qps"
+        },
+        "results.multithread_serialize.threads_8.qps": {
+          "source_name": "results.multithread_serialize.threads_8.qps",
+          "value": 4362360.3319906425,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_serialize.threads_8.qps"
+        },
+        "results.multithread_deserialize.threads_1.qps": {
+          "source_name": "results.multithread_deserialize.threads_1.qps",
+          "value": 2454997.1389276925,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_deserialize.threads_1.qps"
+        },
+        "results.multithread_deserialize.threads_2.qps": {
+          "source_name": "results.multithread_deserialize.threads_2.qps",
+          "value": 2481231.9635232207,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_deserialize.threads_2.qps"
+        },
+        "results.multithread_deserialize.threads_4.qps": {
+          "source_name": "results.multithread_deserialize.threads_4.qps",
+          "value": 2460356.581048771,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_deserialize.threads_4.qps"
+        },
+        "results.multithread_deserialize.threads_8.qps": {
+          "source_name": "results.multithread_deserialize.threads_8.qps",
+          "value": 2516667.575925956,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.multithread_deserialize.threads_8.qps"
+        },
+        "results.size_parameter_sweep.size_10.serialize.serialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_10.serialize.serialize_qps",
+          "value": 4666743.1942318985,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_10.serialize.serialize_qps"
+        },
+        "results.size_parameter_sweep.size_10.serialize.serialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_10.serialize.serialize_latency_us",
+          "value": 0.21428220032248646,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_10.serialize.serialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_10.deserialize.deserialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_10.deserialize.deserialize_qps",
+          "value": 2476966.381443642,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_10.deserialize.deserialize_qps"
+        },
+        "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us",
+          "value": 0.4037196497665718,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_50.serialize.serialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_50.serialize.serialize_qps",
+          "value": 4020269.394125555,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_50.serialize.serialize_qps"
+        },
+        "results.size_parameter_sweep.size_50.serialize.serialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_50.serialize.serialize_latency_us",
+          "value": 0.24873955000657588,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_50.serialize.serialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_50.deserialize.deserialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_50.deserialize.deserialize_qps",
+          "value": 1586546.8432353449,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_50.deserialize.deserialize_qps"
+        },
+        "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us",
+          "value": 0.6302997004240751,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_100.serialize.serialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_100.serialize.serialize_qps",
+          "value": 3458070.547962141,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_100.serialize.serialize_qps"
+        },
+        "results.size_parameter_sweep.size_100.serialize.serialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_100.serialize.serialize_latency_us",
+          "value": 0.2891786000691354,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_100.serialize.serialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_100.deserialize.deserialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_100.deserialize.deserialize_qps",
+          "value": 1257533.7271997507,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_100.deserialize.deserialize_qps"
+        },
+        "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us",
+          "value": 0.7952073001069948,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_500.serialize.serialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_500.serialize.serialize_qps",
+          "value": 708492.773732315,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_500.serialize.serialize_qps"
+        },
+        "results.size_parameter_sweep.size_500.serialize.serialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_500.serialize.serialize_latency_us",
+          "value": 1.4114469999913126,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_500.serialize.serialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_500.deserialize.deserialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_500.deserialize.deserialize_qps",
+          "value": 396598.64311767265,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_500.deserialize.deserialize_qps"
+        },
+        "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us",
+          "value": 2.5214408000465482,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_1000.serialize.serialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_1000.serialize.serialize_qps",
+          "value": 361608.30649449414,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_1000.serialize.serialize_qps"
+        },
+        "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us",
+          "value": 2.765423199743964,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us"
+        },
+        "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps": {
+          "source_name": "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps",
+          "value": 220985.40618810226,
+          "unit": "messages/s",
+          "direction": "higher_is_better",
+          "source_path": "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps"
+        },
+        "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us": {
+          "source_name": "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us",
+          "value": 4.525185700040311,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "source_path": "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "results_summary.SimpleMessage.serialize_qps": {
+      "value": 3974163.958616489,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.SimpleMessage.deserialize_qps": {
+      "value": 2545391.65103907,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.SimpleMessage.serialize_latency_us": {
+      "value": 0.2516252500936389,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.SimpleMessage.deserialize_latency_us": {
+      "value": 0.3928668500157073,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.RepeatedInt32.serialize_qps": {
+      "value": 3165822.7876955485,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.RepeatedInt32.deserialize_qps": {
+      "value": 1232163.4331071523,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.RepeatedInt32.serialize_latency_us": {
+      "value": 0.31587365025188774,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.RepeatedInt32.deserialize_latency_us": {
+      "value": 0.8115806500427425,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.RepeatedString.serialize_qps": {
+      "value": 1356606.735333511,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.RepeatedString.deserialize_qps": {
+      "value": 491526.899628101,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.RepeatedString.serialize_latency_us": {
+      "value": 0.7371333002811298,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.RepeatedString.deserialize_latency_us": {
+      "value": 2.034476649714634,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.NestedMessage.serialize_qps": {
+      "value": 381967.78231078567,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.NestedMessage.deserialize_qps": {
+      "value": 241145.92062043448,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.NestedMessage.serialize_latency_us": {
+      "value": 2.618021849775687,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.NestedMessage.deserialize_latency_us": {
+      "value": 4.146866749506444,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.LargeMessage.serialize_qps": {
+      "value": 1658892.4049382212,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.LargeMessage.deserialize_qps": {
+      "value": 749595.4900832964,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results_summary.LargeMessage.serialize_latency_us": {
+      "value": 0.6028118502581492,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results_summary.LargeMessage.deserialize_latency_us": {
+      "value": 1.3340528501430526,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.single_serialize.serialize_qps": {
+      "value": 4310160.893309373,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.single_serialize.serialize_latency_us": {
+      "value": 0.2320099005009979,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.single_deserialize.deserialize_qps": {
+      "value": 2683804.728086668,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.single_deserialize.deserialize_latency_us": {
+      "value": 0.3726053499849513,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.json_serialization.binary_serialize_qps": {
+      "value": 4279958.9671878135,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.json_serialization.json_serialize_qps": {
+      "value": 66559.14192774918,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.large_message.serialize.serialize_qps": {
+      "value": 390636.0553012649,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.large_message.serialize.serialize_latency_us": {
+      "value": 2.5599275500280783,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.large_message.deserialize.deserialize_qps": {
+      "value": 234096.70199745355,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.large_message.deserialize.deserialize_latency_us": {
+      "value": 4.271738950046711,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.multithread_serialize.threads_1.qps": {
+      "value": 4341101.154718958,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_serialize.threads_2.qps": {
+      "value": 4301975.450617706,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_serialize.threads_4.qps": {
+      "value": 4336512.506015474,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_serialize.threads_8.qps": {
+      "value": 4362360.3319906425,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_deserialize.threads_1.qps": {
+      "value": 2454997.1389276925,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_deserialize.threads_2.qps": {
+      "value": 2481231.9635232207,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_deserialize.threads_4.qps": {
+      "value": 2460356.581048771,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.multithread_deserialize.threads_8.qps": {
+      "value": 2516667.575925956,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_10.serialize.serialize_qps": {
+      "value": 4666743.1942318985,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_10.serialize.serialize_latency_us": {
+      "value": 0.21428220032248646,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_10.deserialize.deserialize_qps": {
+      "value": 2476966.381443642,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us": {
+      "value": 0.4037196497665718,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_50.serialize.serialize_qps": {
+      "value": 4020269.394125555,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_50.serialize.serialize_latency_us": {
+      "value": 0.24873955000657588,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_50.deserialize.deserialize_qps": {
+      "value": 1586546.8432353449,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us": {
+      "value": 0.6302997004240751,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_100.serialize.serialize_qps": {
+      "value": 3458070.547962141,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_100.serialize.serialize_latency_us": {
+      "value": 0.2891786000691354,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_100.deserialize.deserialize_qps": {
+      "value": 1257533.7271997507,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us": {
+      "value": 0.7952073001069948,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_500.serialize.serialize_qps": {
+      "value": 708492.773732315,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_500.serialize.serialize_latency_us": {
+      "value": 1.4114469999913126,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_500.deserialize.deserialize_qps": {
+      "value": 396598.64311767265,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us": {
+      "value": 2.5214408000465482,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_1000.serialize.serialize_qps": {
+      "value": 361608.30649449414,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us": {
+      "value": 2.765423199743964,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps": {
+      "value": 220985.40618810226,
+      "unit": "messages/s",
+      "direction": "higher_is_better"
+    },
+    "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us": {
+      "value": 4.525185700040311,
+      "unit": "us",
+      "direction": "lower_is_better"
+    }
+  }
+}

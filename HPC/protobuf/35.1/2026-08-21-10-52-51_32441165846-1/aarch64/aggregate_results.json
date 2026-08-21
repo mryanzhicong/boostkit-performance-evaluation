@@ -1,0 +1,446 @@
+{
+  "software": "protobuf",
+  "version": "35.1",
+  "test_time": "2026-08-21T02:51:15Z",
+  "parameters": {
+    "serialization_benchmark": {
+      "num_messages": 200000,
+      "iterations": 5,
+      "message_size": 100,
+      "message_configs": [
+        "SimpleMessage",
+        "RepeatedInt32",
+        "RepeatedString",
+        "NestedMessage",
+        "LargeMessage"
+      ],
+      "aggregation": "median"
+    },
+    "micro_benchmark": {
+      "num_messages": 200000,
+      "iterations": 5,
+      "thread_counts": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "size_values": [
+        10,
+        50,
+        100,
+        500,
+        1000
+      ],
+      "aggregation": "median"
+    }
+  },
+  "metrics": {
+    "results_summary.SimpleMessage.serialize_qps": {
+      "source_name": "results_summary.SimpleMessage.serialize_qps",
+      "value": 3974163.958616489,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.SimpleMessage.serialize_qps"
+    },
+    "results_summary.SimpleMessage.deserialize_qps": {
+      "source_name": "results_summary.SimpleMessage.deserialize_qps",
+      "value": 2545391.65103907,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.SimpleMessage.deserialize_qps"
+    },
+    "results_summary.SimpleMessage.serialize_latency_us": {
+      "source_name": "results_summary.SimpleMessage.serialize_latency_us",
+      "value": 0.2516252500936389,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.SimpleMessage.serialize_latency_us"
+    },
+    "results_summary.SimpleMessage.deserialize_latency_us": {
+      "source_name": "results_summary.SimpleMessage.deserialize_latency_us",
+      "value": 0.3928668500157073,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.SimpleMessage.deserialize_latency_us"
+    },
+    "results_summary.RepeatedInt32.serialize_qps": {
+      "source_name": "results_summary.RepeatedInt32.serialize_qps",
+      "value": 3165822.7876955485,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.RepeatedInt32.serialize_qps"
+    },
+    "results_summary.RepeatedInt32.deserialize_qps": {
+      "source_name": "results_summary.RepeatedInt32.deserialize_qps",
+      "value": 1232163.4331071523,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.RepeatedInt32.deserialize_qps"
+    },
+    "results_summary.RepeatedInt32.serialize_latency_us": {
+      "source_name": "results_summary.RepeatedInt32.serialize_latency_us",
+      "value": 0.31587365025188774,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.RepeatedInt32.serialize_latency_us"
+    },
+    "results_summary.RepeatedInt32.deserialize_latency_us": {
+      "source_name": "results_summary.RepeatedInt32.deserialize_latency_us",
+      "value": 0.8115806500427425,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.RepeatedInt32.deserialize_latency_us"
+    },
+    "results_summary.RepeatedString.serialize_qps": {
+      "source_name": "results_summary.RepeatedString.serialize_qps",
+      "value": 1356606.735333511,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.RepeatedString.serialize_qps"
+    },
+    "results_summary.RepeatedString.deserialize_qps": {
+      "source_name": "results_summary.RepeatedString.deserialize_qps",
+      "value": 491526.899628101,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.RepeatedString.deserialize_qps"
+    },
+    "results_summary.RepeatedString.serialize_latency_us": {
+      "source_name": "results_summary.RepeatedString.serialize_latency_us",
+      "value": 0.7371333002811298,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.RepeatedString.serialize_latency_us"
+    },
+    "results_summary.RepeatedString.deserialize_latency_us": {
+      "source_name": "results_summary.RepeatedString.deserialize_latency_us",
+      "value": 2.034476649714634,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.RepeatedString.deserialize_latency_us"
+    },
+    "results_summary.NestedMessage.serialize_qps": {
+      "source_name": "results_summary.NestedMessage.serialize_qps",
+      "value": 381967.78231078567,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.NestedMessage.serialize_qps"
+    },
+    "results_summary.NestedMessage.deserialize_qps": {
+      "source_name": "results_summary.NestedMessage.deserialize_qps",
+      "value": 241145.92062043448,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.NestedMessage.deserialize_qps"
+    },
+    "results_summary.NestedMessage.serialize_latency_us": {
+      "source_name": "results_summary.NestedMessage.serialize_latency_us",
+      "value": 2.618021849775687,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.NestedMessage.serialize_latency_us"
+    },
+    "results_summary.NestedMessage.deserialize_latency_us": {
+      "source_name": "results_summary.NestedMessage.deserialize_latency_us",
+      "value": 4.146866749506444,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.NestedMessage.deserialize_latency_us"
+    },
+    "results_summary.LargeMessage.serialize_qps": {
+      "source_name": "results_summary.LargeMessage.serialize_qps",
+      "value": 1658892.4049382212,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.LargeMessage.serialize_qps"
+    },
+    "results_summary.LargeMessage.deserialize_qps": {
+      "source_name": "results_summary.LargeMessage.deserialize_qps",
+      "value": 749595.4900832964,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results_summary.LargeMessage.deserialize_qps"
+    },
+    "results_summary.LargeMessage.serialize_latency_us": {
+      "source_name": "results_summary.LargeMessage.serialize_latency_us",
+      "value": 0.6028118502581492,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.LargeMessage.serialize_latency_us"
+    },
+    "results_summary.LargeMessage.deserialize_latency_us": {
+      "source_name": "results_summary.LargeMessage.deserialize_latency_us",
+      "value": 1.3340528501430526,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results_summary.LargeMessage.deserialize_latency_us"
+    },
+    "results.single_serialize.serialize_qps": {
+      "source_name": "results.single_serialize.serialize_qps",
+      "value": 4310160.893309373,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.single_serialize.serialize_qps"
+    },
+    "results.single_serialize.serialize_latency_us": {
+      "source_name": "results.single_serialize.serialize_latency_us",
+      "value": 0.2320099005009979,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.single_serialize.serialize_latency_us"
+    },
+    "results.single_deserialize.deserialize_qps": {
+      "source_name": "results.single_deserialize.deserialize_qps",
+      "value": 2683804.728086668,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.single_deserialize.deserialize_qps"
+    },
+    "results.single_deserialize.deserialize_latency_us": {
+      "source_name": "results.single_deserialize.deserialize_latency_us",
+      "value": 0.3726053499849513,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.single_deserialize.deserialize_latency_us"
+    },
+    "results.json_serialization.binary_serialize_qps": {
+      "source_name": "results.json_serialization.binary_serialize_qps",
+      "value": 4279958.9671878135,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.json_serialization.binary_serialize_qps"
+    },
+    "results.json_serialization.json_serialize_qps": {
+      "source_name": "results.json_serialization.json_serialize_qps",
+      "value": 66559.14192774918,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.json_serialization.json_serialize_qps"
+    },
+    "results.large_message.serialize.serialize_qps": {
+      "source_name": "results.large_message.serialize.serialize_qps",
+      "value": 390636.0553012649,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.large_message.serialize.serialize_qps"
+    },
+    "results.large_message.serialize.serialize_latency_us": {
+      "source_name": "results.large_message.serialize.serialize_latency_us",
+      "value": 2.5599275500280783,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.large_message.serialize.serialize_latency_us"
+    },
+    "results.large_message.deserialize.deserialize_qps": {
+      "source_name": "results.large_message.deserialize.deserialize_qps",
+      "value": 234096.70199745355,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.large_message.deserialize.deserialize_qps"
+    },
+    "results.large_message.deserialize.deserialize_latency_us": {
+      "source_name": "results.large_message.deserialize.deserialize_latency_us",
+      "value": 4.271738950046711,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.large_message.deserialize.deserialize_latency_us"
+    },
+    "results.multithread_serialize.threads_1.qps": {
+      "source_name": "results.multithread_serialize.threads_1.qps",
+      "value": 4341101.154718958,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_serialize.threads_1.qps"
+    },
+    "results.multithread_serialize.threads_2.qps": {
+      "source_name": "results.multithread_serialize.threads_2.qps",
+      "value": 4301975.450617706,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_serialize.threads_2.qps"
+    },
+    "results.multithread_serialize.threads_4.qps": {
+      "source_name": "results.multithread_serialize.threads_4.qps",
+      "value": 4336512.506015474,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_serialize.threads_4.qps"
+    },
+    "results.multithread_serialize.threads_8.qps": {
+      "source_name": "results.multithread_serialize.threads_8.qps",
+      "value": 4362360.3319906425,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_serialize.threads_8.qps"
+    },
+    "results.multithread_deserialize.threads_1.qps": {
+      "source_name": "results.multithread_deserialize.threads_1.qps",
+      "value": 2454997.1389276925,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_deserialize.threads_1.qps"
+    },
+    "results.multithread_deserialize.threads_2.qps": {
+      "source_name": "results.multithread_deserialize.threads_2.qps",
+      "value": 2481231.9635232207,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_deserialize.threads_2.qps"
+    },
+    "results.multithread_deserialize.threads_4.qps": {
+      "source_name": "results.multithread_deserialize.threads_4.qps",
+      "value": 2460356.581048771,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_deserialize.threads_4.qps"
+    },
+    "results.multithread_deserialize.threads_8.qps": {
+      "source_name": "results.multithread_deserialize.threads_8.qps",
+      "value": 2516667.575925956,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.multithread_deserialize.threads_8.qps"
+    },
+    "results.size_parameter_sweep.size_10.serialize.serialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_10.serialize.serialize_qps",
+      "value": 4666743.1942318985,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_10.serialize.serialize_qps"
+    },
+    "results.size_parameter_sweep.size_10.serialize.serialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_10.serialize.serialize_latency_us",
+      "value": 0.21428220032248646,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_10.serialize.serialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_10.deserialize.deserialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_10.deserialize.deserialize_qps",
+      "value": 2476966.381443642,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_10.deserialize.deserialize_qps"
+    },
+    "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us",
+      "value": 0.4037196497665718,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_10.deserialize.deserialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_50.serialize.serialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_50.serialize.serialize_qps",
+      "value": 4020269.394125555,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_50.serialize.serialize_qps"
+    },
+    "results.size_parameter_sweep.size_50.serialize.serialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_50.serialize.serialize_latency_us",
+      "value": 0.24873955000657588,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_50.serialize.serialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_50.deserialize.deserialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_50.deserialize.deserialize_qps",
+      "value": 1586546.8432353449,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_50.deserialize.deserialize_qps"
+    },
+    "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us",
+      "value": 0.6302997004240751,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_50.deserialize.deserialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_100.serialize.serialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_100.serialize.serialize_qps",
+      "value": 3458070.547962141,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_100.serialize.serialize_qps"
+    },
+    "results.size_parameter_sweep.size_100.serialize.serialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_100.serialize.serialize_latency_us",
+      "value": 0.2891786000691354,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_100.serialize.serialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_100.deserialize.deserialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_100.deserialize.deserialize_qps",
+      "value": 1257533.7271997507,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_100.deserialize.deserialize_qps"
+    },
+    "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us",
+      "value": 0.7952073001069948,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_100.deserialize.deserialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_500.serialize.serialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_500.serialize.serialize_qps",
+      "value": 708492.773732315,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_500.serialize.serialize_qps"
+    },
+    "results.size_parameter_sweep.size_500.serialize.serialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_500.serialize.serialize_latency_us",
+      "value": 1.4114469999913126,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_500.serialize.serialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_500.deserialize.deserialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_500.deserialize.deserialize_qps",
+      "value": 396598.64311767265,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_500.deserialize.deserialize_qps"
+    },
+    "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us",
+      "value": 2.5214408000465482,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_500.deserialize.deserialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_1000.serialize.serialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_1000.serialize.serialize_qps",
+      "value": 361608.30649449414,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_1000.serialize.serialize_qps"
+    },
+    "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us",
+      "value": 2.765423199743964,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_1000.serialize.serialize_latency_us"
+    },
+    "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps": {
+      "source_name": "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps",
+      "value": 220985.40618810226,
+      "unit": "messages/s",
+      "direction": "higher_is_better",
+      "source_path": "results.size_parameter_sweep.size_1000.deserialize.deserialize_qps"
+    },
+    "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us": {
+      "source_name": "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us",
+      "value": 4.525185700040311,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "source_path": "results.size_parameter_sweep.size_1000.deserialize.deserialize_latency_us"
+    }
+  }
+}
