@@ -1,0 +1,43 @@
+{
+  "benchmark": "ann_search",
+  "software": "scann",
+  "version": "1.4.0",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-21T01:24:11.752494+00:00",
+  "parameters": {
+    "dataset": "numpy_random_float32",
+    "seed": 42,
+    "data_scale": "100K",
+    "num_vectors": 100000,
+    "dimension": 128,
+    "num_queries": 1000,
+    "k": 10,
+    "iterations": 1
+  },
+  "results": {
+    "dot_product": {
+      "distance_measure": "dot_product",
+      "num_leaves": 200,
+      "dims_per_block": 2,
+      "anisotropic_quantization_threshold": 0.2,
+      "reorder": 100,
+      "leaves_to_search": 200,
+      "build_time_s": 1.6629190099192783,
+      "qps": 2735.0366010335997,
+      "latency_per_query_us": 365.6258200062439,
+      "recall_at_k": 0.9596
+    },
+    "squared_l2": {
+      "distance_measure": "squared_l2",
+      "num_leaves": 200,
+      "dims_per_block": 2,
+      "anisotropic_quantization_threshold": 0.2,
+      "reorder": 100,
+      "leaves_to_search": 200,
+      "build_time_s": 2.371517590014264,
+      "qps": 2499.3607885574406,
+      "latency_per_query_us": 400.1022999873385,
+      "recall_at_k": 0.9699
+    }
+  }
+}
