@@ -5,6 +5,9 @@ versions:
   - "35.1"
 execution:
   type: shell-functions
+  environment:
+    NUM_MESSAGES: 10000
+    ITERATIONS: 1
   stages:
     build:
       script: protobuf_test.sh
@@ -20,21 +23,69 @@ execution:
       function: stop_protobuf_runtime
   timeout_minutes: 120
 outputs:
-  official_benchmark:
-    path: benchmark.json
+  serialization_benchmark:
+    path: benchmark_ann.json
     stage: test
     format: json
     required: true
-  benchmark_result:
-    path: benchmark_protobuf.json
+  micro_benchmark:
+    path: micro_benchmark.json
+    stage: test
+    format: json
+    required: true
+  aggregate_result:
+    path: aggregate_results.json
     stage: test
     format: json
     required: true
 metrics:
-  source: benchmark_result
-  collection:
-    path: results
-    name_path: source_name
-    value_path: value
-    unit: ns
-    direction: lower_is_better
+  source: aggregate_result
+  definitions:
+    avg_serialize_qps_size100:
+      path: summary.avg_serialize_qps_size100
+      unit: messages/s
+      direction: higher_is_better
+    max_serialize_qps_size100:
+      path: summary.max_serialize_qps_size100
+      unit: messages/s
+      direction: higher_is_better
+    avg_deserialize_qps_size100:
+      path: summary.avg_deserialize_qps_size100
+      unit: messages/s
+      direction: higher_is_better
+    max_deserialize_qps_size100:
+      path: summary.max_deserialize_qps_size100
+      unit: messages/s
+      direction: higher_is_better
+    avg_fidelity_size100:
+      path: summary.avg_fidelity_size100
+      unit: ratio
+      direction: higher_is_better
+    avg_serialize_latency_us_size100:
+      path: summary.avg_serialize_latency_us_size100
+      unit: us
+      direction: lower_is_better
+    max_serialize_latency_us_size100:
+      path: summary.max_serialize_latency_us_size100
+      unit: us
+      direction: lower_is_better
+    single_serialize_qps:
+      path: summary.single_serialize_qps
+      unit: messages/s
+      direction: higher_is_better
+    single_deserialize_qps:
+      path: summary.single_deserialize_qps
+      unit: messages/s
+      direction: higher_is_better
+    multithread_serialize_scaling_ratio:
+      path: summary.multithread_serialize_scaling_ratio
+      unit: ratio
+      direction: higher_is_better
+    multithread_deserialize_scaling_ratio:
+      path: summary.multithread_deserialize_scaling_ratio
+      unit: ratio
+      direction: higher_is_better
+    binary_vs_json_qps_ratio:
+      path: summary.binary_vs_json_qps_ratio
+      unit: ratio
+      direction: higher_is_better

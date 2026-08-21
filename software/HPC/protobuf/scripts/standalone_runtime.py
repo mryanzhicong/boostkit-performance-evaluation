@@ -137,8 +137,8 @@ def record_build_info(
     actual_version_file: Path,
     architecture: str,
     run_id: str,
-    clang_path: str,
-    clang_version: str,
+    compiler_path: str,
+    compiler_version: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
@@ -153,8 +153,9 @@ def record_build_info(
             "actual_version": actual_version,
             "architecture": architecture,
             "run_id": run_id,
-            "clang_path": clang_path,
-            "clang_version": clang_version,
+            "build_system": "CMake Release",
+            "compiler_path": compiler_path,
+            "compiler_version": compiler_version,
         },
     )
 
@@ -162,43 +163,39 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "protobuf":
-        raise RuntimeError("benchmark_protobuf.json has an invalid software identity")
-    if (
-        benchmark.get("version") != version
-        or benchmark.get("architecture") != architecture
-    ):
-        raise RuntimeError("benchmark_protobuf.json identity differs from this run")
-    results = benchmark.get("results")
-    if not isinstance(results, dict) or not results:
-        raise RuntimeError("benchmark_protobuf.json is missing results")
+    if benchmark.get("software") != "protobuf" or benchmark.get("version") != version:
+        raise RuntimeError("aggregate_results.json identity differs from this run")
+    summary = benchmark.get("summary")
+    if not isinstance(summary, dict) or not summary:
+        raise RuntimeError("aggregate_results.json is missing the upstream summary")
+    metadata = {
+        "avg_serialize_qps_size100": ("messages/s", "higher_is_better"),
+        "max_serialize_qps_size100": ("messages/s", "higher_is_better"),
+        "avg_deserialize_qps_size100": ("messages/s", "higher_is_better"),
+        "max_deserialize_qps_size100": ("messages/s", "higher_is_better"),
+        "avg_fidelity_size100": ("ratio", "higher_is_better"),
+        "avg_serialize_latency_us_size100": ("us", "lower_is_better"),
+        "max_serialize_latency_us_size100": ("us", "lower_is_better"),
+        "single_serialize_qps": ("messages/s", "higher_is_better"),
+        "single_deserialize_qps": ("messages/s", "higher_is_better"),
+        "multithread_serialize_scaling_ratio": ("ratio", "higher_is_better"),
+        "multithread_deserialize_scaling_ratio": ("ratio", "higher_is_better"),
+        "binary_vs_json_qps_ratio": ("ratio", "higher_is_better"),
+    }
     metrics: dict[str, Any] = {}
-    for result_key, result in results.items():
-        if not isinstance(result, dict):
-            raise TypeError(f"protobuf scenario {result_key} must be an object")
-        metric_name = result.get("source_name")
-        if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"protobuf scenario {result_key} has no source_name")
-        if metric_name != result_key:
-            raise RuntimeError(
-                f"protobuf scenario key {result_key} differs from source_name {metric_name}"
-            )
-        if metric_name in metrics:
-            raise RuntimeError(f"duplicate protobuf scenario: {metric_name}")
-        if result.get("source_field") != "cpu_time":
-            raise RuntimeError(f"metric {metric_name} is not sourced from cpu_time")
-        value = result.get("value")
+    for metric_name, (unit, direction) in metadata.items():
+        value = summary.get(metric_name)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "ns",
-            "direction": "lower_is_better",
+            "unit": unit,
+            "direction": direction,
         }
     if not metrics:
-        raise RuntimeError("benchmark_protobuf.json contains no metrics")
+        raise RuntimeError("aggregate_results.json contains no metrics")
     return metrics
 
 
@@ -226,8 +223,9 @@ def render_report(result: dict[str, Any]) -> str:
     for label, field in (
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
-        ("构建编译器 (clang)", "clang_version"),
-        ("构建编译器路径", "clang_path"),
+        ("构建系统", "build_system"),
+        ("构建编译器", "compiler_version"),
+        ("构建编译器路径", "compiler_path"),
         ("记录时间", "recorded_at"),
     ):
         lines.append(f"| {label} | {markdown_cell(build_info.get(field))} |")
@@ -248,7 +246,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（官方场景逐字名称，cpu_time 中位数）",
+            "## 性能指标（上游脚本的聚合字段）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -257,7 +255,8 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越小越好 |"
+            f"{metric['unit']} | "
+            f"{'越大越好' if metric['direction'] == 'higher_is_better' else '越小越好'} |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
@@ -274,13 +273,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "benchmark_protobuf.json")
+    benchmark = load_json(output_dir / "aggregate_results.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_protobuf.json is missing or invalid")
+                raise RuntimeError("aggregate_results.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
@@ -335,8 +334,8 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("actual_version_file", type=Path)
     build.add_argument("architecture")
     build.add_argument("run_id")
-    build.add_argument("clang_path")
-    build.add_argument("clang_version")
+    build.add_argument("compiler_path")
+    build.add_argument("compiler_version")
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
     final.add_argument("version")
@@ -363,8 +362,8 @@ def main() -> int:
             args.actual_version_file,
             args.architecture,
             args.run_id,
-            args.clang_path,
-            args.clang_version,
+            args.compiler_path,
+            args.compiler_version,
         )
         return 0
     return finalize(
