@@ -606,8 +606,10 @@ def test_comparison_rejects_incompatible_metric_contracts() -> None:
 
     arm = normalized_result("aarch64", higher=120, lower=10)
     del arm["metrics"]["latency"]
-    with pytest.raises(ValueError, match="metric sets differ"):
-        compare_pair(x86, arm)
+    comparison = compare_pair(x86, arm)
+    assert comparison["metrics"]["latency"]["x86_64"] == 20
+    assert comparison["metrics"]["latency"]["aarch64"] is None
+    assert comparison["metrics"]["latency"]["relative_performance"] is None
 
 
 def test_comparison_rejects_different_resolved_workload_parameters() -> None:

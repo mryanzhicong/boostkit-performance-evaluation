@@ -32,27 +32,37 @@ def compare_pair(x86: dict, arm: dict) -> dict:
     a_metrics = arm.get("metrics", {})
     if not isinstance(x_metrics, dict) or not isinstance(a_metrics, dict) or not x_metrics:
         raise ValueError("both architectures must contain metrics")
-    if set(x_metrics) != set(a_metrics):
-        raise ValueError("metric sets differ between architectures")
     metrics: dict[str, Any] = {}
-    for name in x_metrics:
-        x_metric = x_metrics[name]
-        a_metric = a_metrics[name]
-        if x_metric.get("unit") != a_metric.get("unit"):
+    metric_names = list(x_metrics)
+    metric_names.extend(name for name in a_metrics if name not in x_metrics)
+    for name in metric_names:
+        x_metric = x_metrics.get(name)
+        a_metric = a_metrics.get(name)
+        for architecture, metric in (("x86_64", x_metric), ("aarch64", a_metric)):
+            if metric is not None and not isinstance(metric, dict):
+                raise ValueError(f"metric {name} for {architecture} must be an object")
+        present_metrics = [metric for metric in (x_metric, a_metric) if metric is not None]
+        if not present_metrics:
+            raise ValueError(f"metric {name} has no architecture value")
+        units = {metric.get("unit") for metric in present_metrics}
+        if len(units) != 1:
             raise ValueError(f"metric {name} units differ between architectures")
-        if x_metric.get("direction") != a_metric.get("direction"):
+        directions = {metric.get("direction") for metric in present_metrics}
+        if len(directions) != 1:
             raise ValueError(f"metric {name} directions differ between architectures")
-        x_value = _number(x_metric.get("value"))
-        a_value = _number(a_metric.get("value"))
+        x_value = _number(x_metric.get("value")) if x_metric is not None else None
+        a_value = _number(a_metric.get("value")) if a_metric is not None else None
         if (
-            x_value is None
-            or a_value is None
-            or not math.isfinite(x_value)
-            or not math.isfinite(a_value)
+            (x_value is not None and not math.isfinite(x_value))
+            or (a_value is not None and not math.isfinite(a_value))
         ):
             raise ValueError(f"metric {name} must contain finite numeric values")
-        direction = a_metric["direction"]
-        raw_ratio = a_value / x_value if x_value not in (None, 0) and a_value is not None else None
+        direction = next(iter(directions))
+        raw_ratio = (
+            a_value / x_value
+            if x_value not in (None, 0) and a_value is not None
+            else None
+        )
         relative = None
         if raw_ratio is not None:
             if direction == "higher_is_better":
@@ -60,9 +70,9 @@ def compare_pair(x86: dict, arm: dict) -> dict:
             elif direction == "lower_is_better" and raw_ratio != 0:
                 relative = 1 / raw_ratio
         metrics[name] = {
-            "x86_64": x_metric.get("value"),
-            "aarch64": a_metric.get("value"),
-            "unit": a_metric.get("unit", x_metric.get("unit", "")),
+            "x86_64": x_metric.get("value") if x_metric is not None else None,
+            "aarch64": a_metric.get("value") if a_metric is not None else None,
+            "unit": next(iter(units)),
             "direction": direction,
             "raw_ratio": round(raw_ratio, 4) if raw_ratio is not None else None,
             "relative_performance": round(relative, 4) if relative is not None else None,
