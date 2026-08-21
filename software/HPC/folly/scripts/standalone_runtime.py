@@ -185,17 +185,24 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate folly scenario: {metric_name}")
-        if result.get("source_field") != "timeInNs":
-            raise RuntimeError(f"metric {metric_name} is not sourced from timeInNs")
+        source_field = result.get("source_field")
+        if not isinstance(source_field, str) or not source_field:
+            raise RuntimeError(f"metric {metric_name} has no source field")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
-        if not math.isfinite(float(value)) or value <= 0:
-            raise RuntimeError(f"metric {metric_name} must be positive and finite")
+        if not math.isfinite(float(value)) or value < 0:
+            raise RuntimeError(f"metric {metric_name} must be non-negative and finite")
+        unit = result.get("unit")
+        direction = result.get("direction")
+        if not isinstance(unit, str) or not unit:
+            raise RuntimeError(f"metric {metric_name} has no unit")
+        if direction != "lower_is_better":
+            raise RuntimeError(f"metric {metric_name} has an invalid direction")
         metrics[metric_name] = {
             "value": value,
-            "unit": "ns",
-            "direction": "lower_is_better",
+            "unit": unit,
+            "direction": direction,
         }
     if not metrics:
         raise RuntimeError("benchmark_folly.json contains no metrics")

@@ -59,6 +59,7 @@ configure_runtime_paths() {
     SOURCE_DIR="${PERF_WORK_DIR}/folly-source"
     BUILD_DIR="${PERF_WORK_DIR}/folly-build"
     BENCH_JSON_DIR="${RESULTS_DIR}/folly_benchmarks"
+    BENCH_STDOUT_DIR="${RESULTS_DIR}/benchmark_stdout"
     FAST_FLOAT_DIR="${PERF_WORK_DIR}/fast_float"
     MANIFEST_FILE="${PERF_WORK_DIR}/benchmark_manifest.json"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
@@ -394,34 +395,35 @@ run_folly_benchmarks() {
         log_message "ERROR: benchmark manifest is unavailable: ${MANIFEST_FILE}"
         return 40
     }
-    mkdir -p "${BENCH_JSON_DIR}"
-    local target binary output_file
+    mkdir -p "${BENCH_JSON_DIR}" "${BENCH_STDOUT_DIR}"
+    local target binary output_file stdout_file started_at elapsed_seconds
     while IFS= read -r target; do
         binary="${BUILD_DIR}/${target}"
         output_file="${BENCH_JSON_DIR}/${target}.json"
+        stdout_file="${BENCH_STDOUT_DIR}/${target}.log"
         [[ -x "${binary}" ]] || {
             log_message "ERROR: official benchmark binary is unavailable: ${binary}"
             return 40
         }
         log_message "running official benchmark target: ${target}"
+        started_at="$(date +%s)"
         (
             # The official add_test entries run from the repository root.
             cd "${SOURCE_DIR}"
-            "${binary}" "--bm_json_verbose=${output_file}" >/dev/null
+            "${binary}" "--bm_json_verbose=${output_file}" > "${stdout_file}" 2>&1
         ) || {
             log_message "ERROR: official benchmark target failed: ${target}"
             return 50
         }
-        [[ -s "${output_file}" ]] || {
-            log_message "ERROR: official benchmark target produced no JSON: ${target}"
-            return 50
-        }
+        elapsed_seconds="$(( $(date +%s) - started_at ))"
+        log_message "completed official benchmark target: ${target} (${elapsed_seconds}s)"
     done < <(benchmark_target_list)
 
     export SOFTWARE_VERSION EXPECTED_ARCH
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${MANIFEST_FILE}" \
         "${BENCH_JSON_DIR}" \
+        "${BENCH_STDOUT_DIR}" \
         "${RESULTS_DIR}/benchmark_folly.json" || {
         log_message "ERROR: failed to normalize official folly benchmark results"
         return 50
@@ -559,8 +561,9 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run folly's official CMake BENCHMARK targets (folly's own benchmark
-framework with --bm_json_verbose) as a standalone performance evaluation.
+Build and run Folly's official CMake BENCHMARK targets as a standalone
+performance evaluation. Standard targets use --bm_json_verbose; targets with
+their own official text tables retain and parse that output instead.
 Results default to results/<version>/<run-id>/ inside this directory.
 
 Options:
