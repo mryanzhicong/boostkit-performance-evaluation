@@ -252,9 +252,10 @@ repair_incomplete_upstream_cmake() {
     # makes Folly register test targets too, so remove that incomplete,
     # non-benchmark declaration from this task-private checkout.
     #
-    # Its generated CMake file also omits memcpy_select_aarch64.cpp from
-    # memcpy-impl, despite the official Buck definition including it on Linux
-    # aarch64. The selector defines __folly_memcpy used by memcpy_benchmark.
+    # Its generated CMake file also omits the aarch64 memcpy and memset
+    # selectors from their implementation libraries, despite the official
+    # Buck definition including them on Linux aarch64. The selectors define
+    # __folly_memcpy and __folly_memset used by their benchmarks.
     local missing_source="${SOURCE_DIR}/folly/functional/test/PartialTest.cpp"
     local cmake_file="${SOURCE_DIR}/CMakeLists.txt"
     local folly_cmake_file="${SOURCE_DIR}/folly/CMakeLists.txt"
@@ -279,15 +280,28 @@ memcpy_replacement = (
     ")\n\nfolly_add_library(\n"
     "  NAME memcpy-use"
 )
+memset_entry = "  SRCS\n    FollyMemset.cpp\n)\n\nfolly_add_library(\n  NAME memset-use"
+if folly_contents.count(memset_entry) != 1:
+    raise SystemExit("cannot locate the unique memset-impl declaration")
+memset_replacement = (
+    "  SRCS\n"
+    "    FollyMemset.cpp\n"
+    "    $<$<BOOL:${IS_AARCH64_ARCH}>:memset_select_aarch64.cpp>\n"
+    ")\n\nfolly_add_library(\n"
+    "  NAME memset-use"
+)
 contents = contents.replace(test_entry, "")
-folly_contents = folly_contents.replace(memcpy_entry, memcpy_replacement)
+folly_contents = (
+    folly_contents.replace(memcpy_entry, memcpy_replacement)
+    .replace(memset_entry, memset_replacement)
+)
 cmake_file.write_text(contents, encoding="utf-8")
 folly_cmake_file.write_text(folly_contents, encoding="utf-8")
 PYEOF
     if [[ ! -f "${missing_source}" ]]; then
         log_message "upstream tag omits PartialTest.cpp; excluded its incomplete test target"
     fi
-    log_message "restored the official aarch64 memcpy selector in the private CMake build"
+    log_message "restored the official aarch64 memcpy and memset selectors in the private CMake build"
 }
 
 benchmark_target_list() {
