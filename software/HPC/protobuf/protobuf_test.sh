@@ -9,6 +9,7 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 PROTOBUF_SOURCE_URL="${PROTOBUF_SOURCE_URL:-https://github.com/protocolbuffers/protobuf.git}"
+PROTOBUF_PYTHON_VERSION="${PROTOBUF_PYTHON_VERSION:-7.35.1}"
 NUM_MESSAGES="${NUM_MESSAGES:-10000}"
 ITERATIONS="${ITERATIONS:-1}"
 
@@ -106,17 +107,12 @@ install_private_python_runtime() {
     done < <(pip_index_options)
     log_message "installing Python runtime into the task-private virtual environment"
     if ! python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-        "${pip_options[@]}" numpy; then
+        "${pip_options[@]}" numpy "protobuf==${PROTOBUF_PYTHON_VERSION}"; then
         log_message "ERROR: failed to install the Python dependency required by the upstream benchmarks"
         return 30
     fi
-    if ! python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-        --no-deps "${SOURCE_DIR}/python"; then
-        log_message "ERROR: failed to install protobuf's Python runtime from the checked-out source"
-        return 40
-    fi
-    if ! python3 -c 'import google.protobuf; print(google.protobuf.__version__)'; then
-        log_message "ERROR: task-private protobuf Python runtime cannot be imported"
+    if ! python3 -c "import google.protobuf; assert google.protobuf.__version__ == '${PROTOBUF_PYTHON_VERSION}', google.protobuf.__version__; print(google.protobuf.__version__)"; then
+        log_message "ERROR: task-private protobuf Python runtime version is not ${PROTOBUF_PYTHON_VERSION}"
         return 40
     fi
 }
