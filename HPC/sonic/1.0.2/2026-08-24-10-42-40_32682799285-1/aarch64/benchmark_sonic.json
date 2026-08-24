@@ -1,0 +1,1371 @@
+{
+  "benchmark": "sonic_official_benchmark",
+  "software": "sonic",
+  "version": "1.0.2",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-24T02:41:10Z",
+  "parameters": {
+    "command": [
+      "build/benchmark/bench",
+      "--benchmark_out_format=json",
+      "--benchmark_repetitions=5",
+      "--benchmark_report_aggregates_only=true"
+    ],
+    "benchmark_repetitions": 5,
+    "report_aggregates_only": true,
+    "benchmark_filter": null,
+    "aggregation": "median",
+    "official_entry": "benchmark/main.cpp"
+  },
+  "metric_contract": {
+    "scope": "median cpu_time of every official benchmark scenario",
+    "source_field": "cpu_time",
+    "normalized_unit": "ns",
+    "direction": "lower_is_better",
+    "aggregation": "median"
+  },
+  "runtime_context": {
+    "num_cpus": 256,
+    "mhz_per_cpu": 2900,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 65536,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 65536,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 1310720,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 58720256,
+        "num_sharing": 64
+      }
+    ],
+    "load_avg": [
+      0.771973,
+      0.260254,
+      0.090332
+    ],
+    "library_version": "v1.9.5-118-g267a1115",
+    "library_build_type": "release"
+  },
+  "results": {
+    "twitter/SonicOnDemand_Normal": {
+      "source_name": "twitter/SonicOnDemand_Normal",
+      "source_field": "cpu_time",
+      "raw_value": 34204.01005564775,
+      "raw_unit": "ns",
+      "value": 34204.01005564775,
+      "unit": "ns"
+    },
+    "twitter/RapidjsonSaxOnDemand_Normal": {
+      "source_name": "twitter/RapidjsonSaxOnDemand_Normal",
+      "source_field": "cpu_time",
+      "raw_value": 850724.9817739982,
+      "raw_unit": "ns",
+      "value": 850724.9817739982,
+      "unit": "ns"
+    },
+    "twitter/SIMDjsonOnDemand_Normal": {
+      "source_name": "twitter/SIMDjsonOnDemand_Normal",
+      "source_field": "cpu_time",
+      "raw_value": 78763.00710339384,
+      "raw_unit": "ns",
+      "value": 78763.00710339384,
+      "unit": "ns"
+    },
+    "citm_catalog/SonicOnDemand_Fronter": {
+      "source_name": "citm_catalog/SonicOnDemand_Fronter",
+      "source_field": "cpu_time",
+      "raw_value": 18026.093013673944,
+      "raw_unit": "ns",
+      "value": 18026.093013673944,
+      "unit": "ns"
+    },
+    "citm_catalog/RapidjsonSaxOnDemand_Fronter": {
+      "source_name": "citm_catalog/RapidjsonSaxOnDemand_Fronter",
+      "source_field": "cpu_time",
+      "raw_value": 164262.98615998172,
+      "raw_unit": "ns",
+      "value": 164262.98615998172,
+      "unit": "ns"
+    },
+    "citm_catalog/SIMDjsonOnDemand_Fronter": {
+      "source_name": "citm_catalog/SIMDjsonOnDemand_Fronter",
+      "source_field": "cpu_time",
+      "raw_value": 342296.5281173593,
+      "raw_unit": "ns",
+      "value": 342296.5281173593,
+      "unit": "ns"
+    },
+    "twitter/SonicOnDemand_NotFound": {
+      "source_name": "twitter/SonicOnDemand_NotFound",
+      "source_field": "cpu_time",
+      "raw_value": 34008.34556857396,
+      "raw_unit": "ns",
+      "value": 34008.34556857396,
+      "unit": "ns"
+    },
+    "twitter/RapidjsonSaxOnDemand_NotFound": {
+      "source_name": "twitter/RapidjsonSaxOnDemand_NotFound",
+      "source_field": "cpu_time",
+      "raw_value": 850913.9659367418,
+      "raw_unit": "ns",
+      "value": 850913.9659367418,
+      "unit": "ns"
+    },
+    "twitter/SIMDjsonOnDemand_NotFound": {
+      "source_name": "twitter/SIMDjsonOnDemand_NotFound",
+      "source_field": "cpu_time",
+      "raw_value": 78807.68822666245,
+      "raw_unit": "ns",
+      "value": 78807.68822666245,
+      "unit": "ns"
+    },
+    "twitterescaped/Decode_SonicDyn": {
+      "source_name": "twitterescaped/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 413650.32505910343,
+      "raw_unit": "ns",
+      "value": 413650.32505910343,
+      "unit": "ns"
+    },
+    "twitterescaped/Decode_Rapidjson": {
+      "source_name": "twitterescaped/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1911144.153005459,
+      "raw_unit": "ns",
+      "value": 1911144.153005459,
+      "unit": "ns"
+    },
+    "twitterescaped/Decode_YYjson": {
+      "source_name": "twitterescaped/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 2146443.6196319023,
+      "raw_unit": "ns",
+      "value": 2146443.6196319023,
+      "unit": "ns"
+    },
+    "twitterescaped/Decode_SIMDjson": {
+      "source_name": "twitterescaped/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 728507.0219435784,
+      "raw_unit": "ns",
+      "value": 728507.0219435784,
+      "unit": "ns"
+    },
+    "twitterescaped/Decode_JsonCpp": {
+      "source_name": "twitterescaped/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 30054944.78260851,
+      "raw_unit": "ns",
+      "value": 30054944.78260851,
+      "unit": "ns"
+    },
+    "twitter/Decode_SonicDyn": {
+      "source_name": "twitter/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 191061.08986615654,
+      "raw_unit": "ns",
+      "value": 191061.08986615654,
+      "unit": "ns"
+    },
+    "twitter/Decode_Rapidjson": {
+      "source_name": "twitter/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 836174.169653526,
+      "raw_unit": "ns",
+      "value": 836174.169653526,
+      "unit": "ns"
+    },
+    "twitter/Decode_YYjson": {
+      "source_name": "twitter/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 800443.531428568,
+      "raw_unit": "ns",
+      "value": 800443.531428568,
+      "unit": "ns"
+    },
+    "twitter/Decode_SIMDjson": {
+      "source_name": "twitter/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 132753.5384615371,
+      "raw_unit": "ns",
+      "value": 132753.5384615371,
+      "unit": "ns"
+    },
+    "twitter/Decode_JsonCpp": {
+      "source_name": "twitter/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 11503573.278688593,
+      "raw_unit": "ns",
+      "value": 11503573.278688593,
+      "unit": "ns"
+    },
+    "poet/Decode_SonicDyn": {
+      "source_name": "poet/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 1524254.8583878085,
+      "raw_unit": "ns",
+      "value": 1524254.8583878085,
+      "unit": "ns"
+    },
+    "poet/Decode_Rapidjson": {
+      "source_name": "poet/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 13958770.40000016,
+      "raw_unit": "ns",
+      "value": 13958770.40000016,
+      "unit": "ns"
+    },
+    "poet/Decode_YYjson": {
+      "source_name": "poet/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 6585659.2452829685,
+      "raw_unit": "ns",
+      "value": 6585659.2452829685,
+      "unit": "ns"
+    },
+    "poet/Decode_SIMDjson": {
+      "source_name": "poet/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 1739431.6120906784,
+      "raw_unit": "ns",
+      "value": 1739431.6120906784,
+      "unit": "ns"
+    },
+    "poet/Decode_JsonCpp": {
+      "source_name": "poet/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 86982900.00000004,
+      "raw_unit": "ns",
+      "value": 86982900.00000004,
+      "unit": "ns"
+    },
+    "otfcc/Decode_SonicDyn": {
+      "source_name": "otfcc/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 169928782.49999776,
+      "raw_unit": "ns",
+      "value": 169928782.49999776,
+      "unit": "ns"
+    },
+    "otfcc/Decode_Rapidjson": {
+      "source_name": "otfcc/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 286950685.0000008,
+      "raw_unit": "ns",
+      "value": 286950685.0000008,
+      "unit": "ns"
+    },
+    "otfcc/Decode_YYjson": {
+      "source_name": "otfcc/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 308543190.0000018,
+      "raw_unit": "ns",
+      "value": 308543190.0000018,
+      "unit": "ns"
+    },
+    "otfcc/Decode_SIMDjson": {
+      "source_name": "otfcc/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 126197840.00000088,
+      "raw_unit": "ns",
+      "value": 126197840.00000088,
+      "unit": "ns"
+    },
+    "otfcc/Decode_JsonCpp": {
+      "source_name": "otfcc/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 14541668620.000025,
+      "raw_unit": "ns",
+      "value": 14541668620.000025,
+      "unit": "ns"
+    },
+    "lottie/Decode_SonicDyn": {
+      "source_name": "lottie/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 688973.3992094558,
+      "raw_unit": "ns",
+      "value": 688973.3992094558,
+      "unit": "ns"
+    },
+    "lottie/Decode_Rapidjson": {
+      "source_name": "lottie/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1207166.7125645694,
+      "raw_unit": "ns",
+      "value": 1207166.7125645694,
+      "unit": "ns"
+    },
+    "lottie/Decode_YYjson": {
+      "source_name": "lottie/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 1844553.7467019346,
+      "raw_unit": "ns",
+      "value": 1844553.7467019346,
+      "unit": "ns"
+    },
+    "lottie/Decode_SIMDjson": {
+      "source_name": "lottie/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 552817.7179080982,
+      "raw_unit": "ns",
+      "value": 552817.7179080982,
+      "unit": "ns"
+    },
+    "lottie/Decode_JsonCpp": {
+      "source_name": "lottie/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 87115502.50000499,
+      "raw_unit": "ns",
+      "value": 87115502.50000499,
+      "unit": "ns"
+    },
+    "gsoc-2018/Decode_SonicDyn": {
+      "source_name": "gsoc-2018/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 1198926.6324786304,
+      "raw_unit": "ns",
+      "value": 1198926.6324786304,
+      "unit": "ns"
+    },
+    "gsoc-2018/Decode_Rapidjson": {
+      "source_name": "gsoc-2018/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 13031964.8148145,
+      "raw_unit": "ns",
+      "value": 13031964.8148145,
+      "unit": "ns"
+    },
+    "gsoc-2018/Decode_YYjson": {
+      "source_name": "gsoc-2018/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 8098033.720930183,
+      "raw_unit": "ns",
+      "value": 8098033.720930183,
+      "unit": "ns"
+    },
+    "gsoc-2018/Decode_SIMDjson": {
+      "source_name": "gsoc-2018/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 1298231.8773234414,
+      "raw_unit": "ns",
+      "value": 1298231.8773234414,
+      "unit": "ns"
+    },
+    "gsoc-2018/Decode_JsonCpp": {
+      "source_name": "gsoc-2018/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 57893922.30769426,
+      "raw_unit": "ns",
+      "value": 57893922.30769426,
+      "unit": "ns"
+    },
+    "github_events/Decode_SonicDyn": {
+      "source_name": "github_events/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 44865.71730905178,
+      "raw_unit": "ns",
+      "value": 44865.71730905178,
+      "unit": "ns"
+    },
+    "github_events/Decode_Rapidjson": {
+      "source_name": "github_events/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 223537.9001280313,
+      "raw_unit": "ns",
+      "value": 223537.9001280313,
+      "unit": "ns"
+    },
+    "github_events/Decode_YYjson": {
+      "source_name": "github_events/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 178302.47706421773,
+      "raw_unit": "ns",
+      "value": 178302.47706421773,
+      "unit": "ns"
+    },
+    "github_events/Decode_SIMDjson": {
+      "source_name": "github_events/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 28866.9002587209,
+      "raw_unit": "ns",
+      "value": 28866.9002587209,
+      "unit": "ns"
+    },
+    "github_events/Decode_JsonCpp": {
+      "source_name": "github_events/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 2573254.835164794,
+      "raw_unit": "ns",
+      "value": 2573254.835164794,
+      "unit": "ns"
+    },
+    "fgo/Decode_SonicDyn": {
+      "source_name": "fgo/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 69555158.74999918,
+      "raw_unit": "ns",
+      "value": 69555158.74999918,
+      "unit": "ns"
+    },
+    "fgo/Decode_Rapidjson": {
+      "source_name": "fgo/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 195917713.33333933,
+      "raw_unit": "ns",
+      "value": 195917713.33333933,
+      "unit": "ns"
+    },
+    "fgo/Decode_YYjson": {
+      "source_name": "fgo/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 201919809.99999258,
+      "raw_unit": "ns",
+      "value": 201919809.99999258,
+      "unit": "ns"
+    },
+    "fgo/Decode_SIMDjson": {
+      "source_name": "fgo/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 61040556.66666852,
+      "raw_unit": "ns",
+      "value": 61040556.66666852,
+      "unit": "ns"
+    },
+    "fgo/Decode_JsonCpp": {
+      "source_name": "fgo/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 6689287329.999956,
+      "raw_unit": "ns",
+      "value": 6689287329.999956,
+      "unit": "ns"
+    },
+    "citm_catalog/Decode_SonicDyn": {
+      "source_name": "citm_catalog/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 1209177.979274654,
+      "raw_unit": "ns",
+      "value": 1209177.979274654,
+      "unit": "ns"
+    },
+    "citm_catalog/Decode_Rapidjson": {
+      "source_name": "citm_catalog/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 2440363.240417966,
+      "raw_unit": "ns",
+      "value": 2440363.240417966,
+      "unit": "ns"
+    },
+    "citm_catalog/Decode_YYjson": {
+      "source_name": "citm_catalog/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 5917354.067796392,
+      "raw_unit": "ns",
+      "value": 5917354.067796392,
+      "unit": "ns"
+    },
+    "citm_catalog/Decode_SIMDjson": {
+      "source_name": "citm_catalog/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 752196.5980498013,
+      "raw_unit": "ns",
+      "value": 752196.5980498013,
+      "unit": "ns"
+    },
+    "citm_catalog/Decode_JsonCpp": {
+      "source_name": "citm_catalog/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 71797844.00000244,
+      "raw_unit": "ns",
+      "value": 71797844.00000244,
+      "unit": "ns"
+    },
+    "canada/Decode_SonicDyn": {
+      "source_name": "canada/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 4045774.4508670913,
+      "raw_unit": "ns",
+      "value": 4045774.4508670913,
+      "unit": "ns"
+    },
+    "canada/Decode_Rapidjson": {
+      "source_name": "canada/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 4146655.7396451114,
+      "raw_unit": "ns",
+      "value": 4146655.7396451114,
+      "unit": "ns"
+    },
+    "canada/Decode_YYjson": {
+      "source_name": "canada/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 13089401.698113186,
+      "raw_unit": "ns",
+      "value": 13089401.698113186,
+      "unit": "ns"
+    },
+    "canada/Decode_SIMDjson": {
+      "source_name": "canada/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 2858815.5918367524,
+      "raw_unit": "ns",
+      "value": 2858815.5918367524,
+      "unit": "ns"
+    },
+    "canada/Decode_JsonCpp": {
+      "source_name": "canada/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 410459205.000052,
+      "raw_unit": "ns",
+      "value": 410459205.000052,
+      "unit": "ns"
+    },
+    "book/Decode_SonicDyn": {
+      "source_name": "book/Decode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 721.1745638267902,
+      "raw_unit": "ns",
+      "value": 721.1745638267902,
+      "unit": "ns"
+    },
+    "book/Decode_Rapidjson": {
+      "source_name": "book/Decode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1341.6198725605823,
+      "raw_unit": "ns",
+      "value": 1341.6198725605823,
+      "unit": "ns"
+    },
+    "book/Decode_YYjson": {
+      "source_name": "book/Decode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 1634.1799044448828,
+      "raw_unit": "ns",
+      "value": 1634.1799044448828,
+      "unit": "ns"
+    },
+    "book/Decode_SIMDjson": {
+      "source_name": "book/Decode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 696.9924148475571,
+      "raw_unit": "ns",
+      "value": 696.9924148475571,
+      "unit": "ns"
+    },
+    "book/Decode_JsonCpp": {
+      "source_name": "book/Decode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 88623.18049397743,
+      "raw_unit": "ns",
+      "value": 88623.18049397743,
+      "unit": "ns"
+    },
+    "twitterescaped/Encode_SonicDyn": {
+      "source_name": "twitterescaped/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 289775.25206612854,
+      "raw_unit": "ns",
+      "value": 289775.25206612854,
+      "unit": "ns"
+    },
+    "twitterescaped/Encode_Rapidjson": {
+      "source_name": "twitterescaped/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1258670.1981982097,
+      "raw_unit": "ns",
+      "value": 1258670.1981982097,
+      "unit": "ns"
+    },
+    "twitterescaped/Encode_YYjson": {
+      "source_name": "twitterescaped/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 1148419.607201245,
+      "raw_unit": "ns",
+      "value": 1148419.607201245,
+      "unit": "ns"
+    },
+    "twitterescaped/Encode_SIMDjson": {
+      "source_name": "twitterescaped/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 568033.7703583247,
+      "raw_unit": "ns",
+      "value": 568033.7703583247,
+      "unit": "ns"
+    },
+    "twitterescaped/Encode_JsonCpp": {
+      "source_name": "twitterescaped/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 18008668.97435928,
+      "raw_unit": "ns",
+      "value": 18008668.97435928,
+      "unit": "ns"
+    },
+    "twitter/Encode_SonicDyn": {
+      "source_name": "twitter/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 108032.72322798586,
+      "raw_unit": "ns",
+      "value": 108032.72322798586,
+      "unit": "ns"
+    },
+    "twitter/Encode_Rapidjson": {
+      "source_name": "twitter/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 564960.1860841321,
+      "raw_unit": "ns",
+      "value": 564960.1860841321,
+      "unit": "ns"
+    },
+    "twitter/Encode_YYjson": {
+      "source_name": "twitter/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 420786.32751353784,
+      "raw_unit": "ns",
+      "value": 420786.32751353784,
+      "unit": "ns"
+    },
+    "twitter/Encode_SIMDjson": {
+      "source_name": "twitter/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 241897.71784233893,
+      "raw_unit": "ns",
+      "value": 241897.71784233893,
+      "unit": "ns"
+    },
+    "twitter/Encode_JsonCpp": {
+      "source_name": "twitter/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 7568214.065933498,
+      "raw_unit": "ns",
+      "value": 7568214.065933498,
+      "unit": "ns"
+    },
+    "poet/Encode_SonicDyn": {
+      "source_name": "poet/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 925225.8068781752,
+      "raw_unit": "ns",
+      "value": 925225.8068781752,
+      "unit": "ns"
+    },
+    "poet/Encode_Rapidjson": {
+      "source_name": "poet/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 8320894.404762601,
+      "raw_unit": "ns",
+      "value": 8320894.404762601,
+      "unit": "ns"
+    },
+    "poet/Encode_YYjson": {
+      "source_name": "poet/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 2581267.1955718943,
+      "raw_unit": "ns",
+      "value": 2581267.1955718943,
+      "unit": "ns"
+    },
+    "poet/Encode_SIMDjson": {
+      "source_name": "poet/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 2262145.1132687647,
+      "raw_unit": "ns",
+      "value": 2262145.1132687647,
+      "unit": "ns"
+    },
+    "poet/Encode_JsonCpp": {
+      "source_name": "poet/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 89687335.00000781,
+      "raw_unit": "ns",
+      "value": 89687335.00000781,
+      "unit": "ns"
+    },
+    "otfcc/Encode_SonicDyn": {
+      "source_name": "otfcc/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 129355200.00000906,
+      "raw_unit": "ns",
+      "value": 129355200.00000906,
+      "unit": "ns"
+    },
+    "otfcc/Encode_Rapidjson": {
+      "source_name": "otfcc/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 210231700.00000846,
+      "raw_unit": "ns",
+      "value": 210231700.00000846,
+      "unit": "ns"
+    },
+    "otfcc/Encode_YYjson": {
+      "source_name": "otfcc/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 410980844.9999832,
+      "raw_unit": "ns",
+      "value": 410980844.9999832,
+      "unit": "ns"
+    },
+    "otfcc/Encode_SIMDjson": {
+      "source_name": "otfcc/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 217108230.00000802,
+      "raw_unit": "ns",
+      "value": 217108230.00000802,
+      "unit": "ns"
+    },
+    "otfcc/Encode_JsonCpp": {
+      "source_name": "otfcc/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 7405751479.999936,
+      "raw_unit": "ns",
+      "value": 7405751479.999936,
+      "unit": "ns"
+    },
+    "lottie/Encode_SonicDyn": {
+      "source_name": "lottie/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 778470.3218645431,
+      "raw_unit": "ns",
+      "value": 778470.3218645431,
+      "unit": "ns"
+    },
+    "lottie/Encode_Rapidjson": {
+      "source_name": "lottie/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1302374.2085660934,
+      "raw_unit": "ns",
+      "value": 1302374.2085660934,
+      "unit": "ns"
+    },
+    "lottie/Encode_YYjson": {
+      "source_name": "lottie/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 3110305.4666669373,
+      "raw_unit": "ns",
+      "value": 3110305.4666669373,
+      "unit": "ns"
+    },
+    "lottie/Encode_SIMDjson": {
+      "source_name": "lottie/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 1101511.1811022907,
+      "raw_unit": "ns",
+      "value": 1101511.1811022907,
+      "unit": "ns"
+    },
+    "lottie/Encode_JsonCpp": {
+      "source_name": "lottie/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 38845357.77777703,
+      "raw_unit": "ns",
+      "value": 38845357.77777703,
+      "unit": "ns"
+    },
+    "gsoc-2018/Encode_SonicDyn": {
+      "source_name": "gsoc-2018/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 642551.4456722026,
+      "raw_unit": "ns",
+      "value": 642551.4456722026,
+      "unit": "ns"
+    },
+    "gsoc-2018/Encode_Rapidjson": {
+      "source_name": "gsoc-2018/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 7534220.7526881145,
+      "raw_unit": "ns",
+      "value": 7534220.7526881145,
+      "unit": "ns"
+    },
+    "gsoc-2018/Encode_YYjson": {
+      "source_name": "gsoc-2018/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 3987523.028571818,
+      "raw_unit": "ns",
+      "value": 3987523.028571818,
+      "unit": "ns"
+    },
+    "gsoc-2018/Encode_SIMDjson": {
+      "source_name": "gsoc-2018/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 4930424.295775032,
+      "raw_unit": "ns",
+      "value": 4930424.295775032,
+      "unit": "ns"
+    },
+    "gsoc-2018/Encode_JsonCpp": {
+      "source_name": "gsoc-2018/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 49839828.571423694,
+      "raw_unit": "ns",
+      "value": 49839828.571423694,
+      "unit": "ns"
+    },
+    "github_events/Encode_SonicDyn": {
+      "source_name": "github_events/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 25742.233690212663,
+      "raw_unit": "ns",
+      "value": 25742.233690212663,
+      "unit": "ns"
+    },
+    "github_events/Encode_Rapidjson": {
+      "source_name": "github_events/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 144366.2017742926,
+      "raw_unit": "ns",
+      "value": 144366.2017742926,
+      "unit": "ns"
+    },
+    "github_events/Encode_YYjson": {
+      "source_name": "github_events/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 84789.54435287963,
+      "raw_unit": "ns",
+      "value": 84789.54435287963,
+      "unit": "ns"
+    },
+    "github_events/Encode_SIMDjson": {
+      "source_name": "github_events/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 61080.024604561295,
+      "raw_unit": "ns",
+      "value": 61080.024604561295,
+      "unit": "ns"
+    },
+    "github_events/Encode_JsonCpp": {
+      "source_name": "github_events/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 1534855.7675439492,
+      "raw_unit": "ns",
+      "value": 1534855.7675439492,
+      "unit": "ns"
+    },
+    "fgo/Encode_SonicDyn": {
+      "source_name": "fgo/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 58066361.666665986,
+      "raw_unit": "ns",
+      "value": 58066361.666665986,
+      "unit": "ns"
+    },
+    "fgo/Encode_Rapidjson": {
+      "source_name": "fgo/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 139815132.00001246,
+      "raw_unit": "ns",
+      "value": 139815132.00001246,
+      "unit": "ns"
+    },
+    "fgo/Encode_YYjson": {
+      "source_name": "fgo/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 206465946.66663986,
+      "raw_unit": "ns",
+      "value": 206465946.66663986,
+      "unit": "ns"
+    },
+    "fgo/Encode_SIMDjson": {
+      "source_name": "fgo/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 108688988.33333182,
+      "raw_unit": "ns",
+      "value": 108688988.33333182,
+      "unit": "ns"
+    },
+    "fgo/Encode_JsonCpp": {
+      "source_name": "fgo/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 3323575669.9999685,
+      "raw_unit": "ns",
+      "value": 3323575669.9999685,
+      "unit": "ns"
+    },
+    "citm_catalog/Encode_SonicDyn": {
+      "source_name": "citm_catalog/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 579018.4987277444,
+      "raw_unit": "ns",
+      "value": 579018.4987277444,
+      "unit": "ns"
+    },
+    "citm_catalog/Encode_Rapidjson": {
+      "source_name": "citm_catalog/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1241749.6447601372,
+      "raw_unit": "ns",
+      "value": 1241749.6447601372,
+      "unit": "ns"
+    },
+    "citm_catalog/Encode_YYjson": {
+      "source_name": "citm_catalog/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 2108464.93975893,
+      "raw_unit": "ns",
+      "value": 2108464.93975893,
+      "unit": "ns"
+    },
+    "citm_catalog/Encode_SIMDjson": {
+      "source_name": "citm_catalog/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 1024541.2463343702,
+      "raw_unit": "ns",
+      "value": 1024541.2463343702,
+      "unit": "ns"
+    },
+    "citm_catalog/Encode_JsonCpp": {
+      "source_name": "citm_catalog/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 34337650.50000375,
+      "raw_unit": "ns",
+      "value": 34337650.50000375,
+      "unit": "ns"
+    },
+    "canada/Encode_SonicDyn": {
+      "source_name": "canada/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 4256248.780487711,
+      "raw_unit": "ns",
+      "value": 4256248.780487711,
+      "unit": "ns"
+    },
+    "canada/Encode_Rapidjson": {
+      "source_name": "canada/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 7992264.090909563,
+      "raw_unit": "ns",
+      "value": 7992264.090909563,
+      "unit": "ns"
+    },
+    "canada/Encode_YYjson": {
+      "source_name": "canada/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 22184745.31250081,
+      "raw_unit": "ns",
+      "value": 22184745.31250081,
+      "unit": "ns"
+    },
+    "canada/Encode_SIMDjson": {
+      "source_name": "canada/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 4641189.668873929,
+      "raw_unit": "ns",
+      "value": 4641189.668873929,
+      "unit": "ns"
+    },
+    "canada/Encode_JsonCpp": {
+      "source_name": "canada/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 162094747.4999923,
+      "raw_unit": "ns",
+      "value": 162094747.4999923,
+      "unit": "ns"
+    },
+    "book/Encode_SonicDyn": {
+      "source_name": "book/Encode_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 593.4214018408036,
+      "raw_unit": "ns",
+      "value": 593.4214018408036,
+      "unit": "ns"
+    },
+    "book/Encode_Rapidjson": {
+      "source_name": "book/Encode_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1192.1038453412114,
+      "raw_unit": "ns",
+      "value": 1192.1038453412114,
+      "unit": "ns"
+    },
+    "book/Encode_YYjson": {
+      "source_name": "book/Encode_YYjson",
+      "source_field": "cpu_time",
+      "raw_value": 2322.690556470292,
+      "raw_unit": "ns",
+      "value": 2322.690556470292,
+      "unit": "ns"
+    },
+    "book/Encode_SIMDjson": {
+      "source_name": "book/Encode_SIMDjson",
+      "source_field": "cpu_time",
+      "raw_value": 989.5754209681909,
+      "raw_unit": "ns",
+      "value": 989.5754209681909,
+      "unit": "ns"
+    },
+    "book/Encode_JsonCpp": {
+      "source_name": "book/Encode_JsonCpp",
+      "source_field": "cpu_time",
+      "raw_value": 49012.84193571157,
+      "raw_unit": "ns",
+      "value": 49012.84193571157,
+      "unit": "ns"
+    },
+    "twitterescaped/Stat_SonicDyn": {
+      "source_name": "twitterescaped/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 62563.003403801355,
+      "raw_unit": "ns",
+      "value": 62563.003403801355,
+      "unit": "ns"
+    },
+    "twitterescaped/Find_SonicDyn": {
+      "source_name": "twitterescaped/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 193501.8639380588,
+      "raw_unit": "ns",
+      "value": 193501.8639380588,
+      "unit": "ns"
+    },
+    "twitterescaped/Stat_Rapidjson": {
+      "source_name": "twitterescaped/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 49984.93005236599,
+      "raw_unit": "ns",
+      "value": 49984.93005236599,
+      "unit": "ns"
+    },
+    "twitterescaped/Find_Rapidjson": {
+      "source_name": "twitterescaped/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 186018.45664282533,
+      "raw_unit": "ns",
+      "value": 186018.45664282533,
+      "unit": "ns"
+    },
+    "twitter/Stat_SonicDyn": {
+      "source_name": "twitter/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 23244.076789305043,
+      "raw_unit": "ns",
+      "value": 23244.076789305043,
+      "unit": "ns"
+    },
+    "twitter/Find_SonicDyn": {
+      "source_name": "twitter/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 73131.68217459705,
+      "raw_unit": "ns",
+      "value": 73131.68217459705,
+      "unit": "ns"
+    },
+    "twitter/Stat_Rapidjson": {
+      "source_name": "twitter/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 19273.515326461686,
+      "raw_unit": "ns",
+      "value": 19273.515326461686,
+      "unit": "ns"
+    },
+    "twitter/Find_Rapidjson": {
+      "source_name": "twitter/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 72447.20364427363,
+      "raw_unit": "ns",
+      "value": 72447.20364427363,
+      "unit": "ns"
+    },
+    "poet/Stat_SonicDyn": {
+      "source_name": "poet/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 144110.03083248096,
+      "raw_unit": "ns",
+      "value": 144110.03083248096,
+      "unit": "ns"
+    },
+    "poet/Find_SonicDyn": {
+      "source_name": "poet/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 298803.70590733906,
+      "raw_unit": "ns",
+      "value": 298803.70590733906,
+      "unit": "ns"
+    },
+    "poet/Stat_Rapidjson": {
+      "source_name": "poet/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 267772.3156681851,
+      "raw_unit": "ns",
+      "value": 267772.3156681851,
+      "unit": "ns"
+    },
+    "poet/Find_Rapidjson": {
+      "source_name": "poet/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 276859.2400155057,
+      "raw_unit": "ns",
+      "value": 276859.2400155057,
+      "unit": "ns"
+    },
+    "otfcc/Stat_SonicDyn": {
+      "source_name": "otfcc/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 53709667.69230388,
+      "raw_unit": "ns",
+      "value": 53709667.69230388,
+      "unit": "ns"
+    },
+    "otfcc/Find_SonicDyn": {
+      "source_name": "otfcc/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 1443872409.999926,
+      "raw_unit": "ns",
+      "value": 1443872409.999926,
+      "unit": "ns"
+    },
+    "otfcc/Stat_Rapidjson": {
+      "source_name": "otfcc/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 45553698.00000335,
+      "raw_unit": "ns",
+      "value": 45553698.00000335,
+      "unit": "ns"
+    },
+    "otfcc/Find_Rapidjson": {
+      "source_name": "otfcc/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 1096783200.0000043,
+      "raw_unit": "ns",
+      "value": 1096783200.0000043,
+      "unit": "ns"
+    },
+    "lottie/Stat_SonicDyn": {
+      "source_name": "lottie/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 207473.21523474238,
+      "raw_unit": "ns",
+      "value": 207473.21523474238,
+      "unit": "ns"
+    },
+    "lottie/Find_SonicDyn": {
+      "source_name": "lottie/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 442888.29022075236,
+      "raw_unit": "ns",
+      "value": 442888.29022075236,
+      "unit": "ns"
+    },
+    "lottie/Stat_Rapidjson": {
+      "source_name": "lottie/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 177831.7947421832,
+      "raw_unit": "ns",
+      "value": 177831.7947421832,
+      "unit": "ns"
+    },
+    "lottie/Find_Rapidjson": {
+      "source_name": "lottie/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 276436.10250296135,
+      "raw_unit": "ns",
+      "value": 276436.10250296135,
+      "unit": "ns"
+    },
+    "gsoc-2018/Stat_SonicDyn": {
+      "source_name": "gsoc-2018/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 80643.88908066109,
+      "raw_unit": "ns",
+      "value": 80643.88908066109,
+      "unit": "ns"
+    },
+    "gsoc-2018/Find_SonicDyn": {
+      "source_name": "gsoc-2018/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 2164680.1851851633,
+      "raw_unit": "ns",
+      "value": 2164680.1851851633,
+      "unit": "ns"
+    },
+    "gsoc-2018/Stat_Rapidjson": {
+      "source_name": "gsoc-2018/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 137338.91590274434,
+      "raw_unit": "ns",
+      "value": 137338.91590274434,
+      "unit": "ns"
+    },
+    "gsoc-2018/Find_Rapidjson": {
+      "source_name": "gsoc-2018/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 2093277.8851962003,
+      "raw_unit": "ns",
+      "value": 2093277.8851962003,
+      "unit": "ns"
+    },
+    "github_events/Stat_SonicDyn": {
+      "source_name": "github_events/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 5547.8865169439005,
+      "raw_unit": "ns",
+      "value": 5547.8865169439005,
+      "unit": "ns"
+    },
+    "github_events/Find_SonicDyn": {
+      "source_name": "github_events/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 14991.360507635123,
+      "raw_unit": "ns",
+      "value": 14991.360507635123,
+      "unit": "ns"
+    },
+    "github_events/Stat_Rapidjson": {
+      "source_name": "github_events/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 4587.087580515684,
+      "raw_unit": "ns",
+      "value": 4587.087580515684,
+      "unit": "ns"
+    },
+    "github_events/Find_Rapidjson": {
+      "source_name": "github_events/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 11262.04813849506,
+      "raw_unit": "ns",
+      "value": 11262.04813849506,
+      "unit": "ns"
+    },
+    "fgo/Stat_SonicDyn": {
+      "source_name": "fgo/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 15614733.863639105,
+      "raw_unit": "ns",
+      "value": 15614733.863639105,
+      "unit": "ns"
+    },
+    "fgo/Find_SonicDyn": {
+      "source_name": "fgo/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 34258723.49999963,
+      "raw_unit": "ns",
+      "value": 34258723.49999963,
+      "unit": "ns"
+    },
+    "fgo/Stat_Rapidjson": {
+      "source_name": "fgo/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 13015029.629627861,
+      "raw_unit": "ns",
+      "value": 13015029.629627861,
+      "unit": "ns"
+    },
+    "fgo/Find_Rapidjson": {
+      "source_name": "fgo/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 24181491.37931072,
+      "raw_unit": "ns",
+      "value": 24181491.37931072,
+      "unit": "ns"
+    },
+    "citm_catalog/Stat_SonicDyn": {
+      "source_name": "citm_catalog/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 174141.99950319788,
+      "raw_unit": "ns",
+      "value": 174141.99950319788,
+      "unit": "ns"
+    },
+    "citm_catalog/Find_SonicDyn": {
+      "source_name": "citm_catalog/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 338811.11813313566,
+      "raw_unit": "ns",
+      "value": 338811.11813313566,
+      "unit": "ns"
+    },
+    "citm_catalog/Stat_Rapidjson": {
+      "source_name": "citm_catalog/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 155391.9603474979,
+      "raw_unit": "ns",
+      "value": 155391.9603474979,
+      "unit": "ns"
+    },
+    "citm_catalog/Find_Rapidjson": {
+      "source_name": "citm_catalog/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 202372.9762245391,
+      "raw_unit": "ns",
+      "value": 202372.9762245391,
+      "unit": "ns"
+    },
+    "canada/Stat_SonicDyn": {
+      "source_name": "canada/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 601220.6952790476,
+      "raw_unit": "ns",
+      "value": 601220.6952790476,
+      "unit": "ns"
+    },
+    "canada/Find_SonicDyn": {
+      "source_name": "canada/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 520333.5267856413,
+      "raw_unit": "ns",
+      "value": 520333.5267856413,
+      "unit": "ns"
+    },
+    "canada/Stat_Rapidjson": {
+      "source_name": "canada/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 485911.6620499161,
+      "raw_unit": "ns",
+      "value": 485911.6620499161,
+      "unit": "ns"
+    },
+    "canada/Find_Rapidjson": {
+      "source_name": "canada/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 297612.0654483389,
+      "raw_unit": "ns",
+      "value": 297612.0654483389,
+      "unit": "ns"
+    },
+    "book/Stat_SonicDyn": {
+      "source_name": "book/Stat_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 139.2232624508445,
+      "raw_unit": "ns",
+      "value": 139.2232624508445,
+      "unit": "ns"
+    },
+    "book/Find_SonicDyn": {
+      "source_name": "book/Find_SonicDyn",
+      "source_field": "cpu_time",
+      "raw_value": 267.67018588448815,
+      "raw_unit": "ns",
+      "value": 267.67018588448815,
+      "unit": "ns"
+    },
+    "book/Stat_Rapidjson": {
+      "source_name": "book/Stat_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 117.13673603101704,
+      "raw_unit": "ns",
+      "value": 117.13673603101704,
+      "unit": "ns"
+    },
+    "book/Find_Rapidjson": {
+      "source_name": "book/Find_Rapidjson",
+      "source_field": "cpu_time",
+      "raw_value": 183.33140608304282,
+      "raw_unit": "ns",
+      "value": 183.33140608304282,
+      "unit": "ns"
+    }
+  }
+}
