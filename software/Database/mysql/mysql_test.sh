@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # MySQL performance case (official prebuilt binary deployment).
 #
-# To benchmark several MySQL release lines (5.7.x / 8.0.x) the software under
-# test is fetched from the official MySQL "Linux - Generic" prebuilt tarball and
-# unpacked into a per-version directory — the distribution package manager only
-# ships one version and cannot switch between 5.7 and 8.0. sysbench, the
-# benchmark *driver* (not the software under test), is installed from the system
-# repositories.
+# The software under test is fetched from the official MySQL 8.0 "Linux -
+# Generic" prebuilt tarball and unpacked into a per-version directory — the
+# distribution package manager only ships one version and cannot switch between
+# 8.0.x releases. sysbench, the benchmark *driver* (not the software under
+# test), is installed from the system repositories.
 #
 # The four framework stages map to: fetch+verify the tarball (build), launch a
 # throwaway instance from it (start), run the official sysbench OLTP + micro
@@ -16,10 +15,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOFTWARE_NAME="mysql"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-8.0.35}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-8.0.46}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
-RESULTS_DIR="${RESULTS_DIR:-${SCRIPT_DIR}/results/${SOFTWARE_VERSION}}"
-PERF_WORK_DIR="${PERF_WORK_DIR:-/tmp/boostkit-perf/local/Database/mysql/${SOFTWARE_VERSION}}"
+PERF_RUN_ID="${PERF_RUN_ID:-}"
+RESULTS_DIR="${RESULTS_DIR:-}"
+PERF_WORK_DIR="${PERF_WORK_DIR:-}"
+PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
+STANDALONE_OWNS_WORK_DIR=0
+STANDALONE_KEEP_WORK_DIR=0
+STANDALONE_STOP_DONE=0
+STANDALONE_CLEANUP_DONE=0
 
 # Connection settings for the throwaway server and for the benchmark client.
 MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
@@ -39,21 +44,53 @@ ITERATIONS="${ITERATIONS:-1}"
 # out-of-date mirror never blocks a build for the exact requested version.
 MYSQL_SOURCE_BASE="${MYSQL_SOURCE_BASE:-}"
 
-# Lifecycle paths.
-MYSQL_BASE_DIR="${PERF_WORK_DIR}/mysql"
-MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
-MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
-MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
-SERVICE_DIR="${PERF_WORK_DIR}/mysql-service"
-DATADIR="${SERVICE_DIR}/data"
-SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
-PID_FILE="${SERVICE_DIR}/mysql.pid"
-ERR_LOG="${SERVICE_DIR}/mysql.err"
+# Lifecycle paths (assigned in configure_runtime_paths).
+MYSQL_BASE_DIR=""
+MYSQLD_BIN=""
+MYSQL_BIN=""
+MYSQLADMIN_BIN=""
+SERVICE_DIR=""
+DATADIR=""
+SOCKET_PATH=""
+PID_FILE=""
+ERR_LOG=""
 MYSQL_EXTERNAL=0
 
 log() { printf '[mysql] %s\n' "$*"; }
 
+configure_runtime_paths() {
+    if [[ -z "${PERF_RUN_ID}" ]]; then
+        PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+    fi
+    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
+        log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+        return 10
+    }
+    if [[ -z "${RESULTS_DIR}" ]]; then
+        RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
+    fi
+    if [[ -z "${PERF_WORK_DIR}" ]]; then
+        PERF_WORK_DIR="/tmp/mysql-perf/local-${PERF_RUN_ID}"
+        STANDALONE_OWNS_WORK_DIR=1
+    fi
+    if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
+        PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    MYSQL_BASE_DIR="${PERF_WORK_DIR}/mysql"
+    MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
+    MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
+    MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
+    SERVICE_DIR="${PERF_WORK_DIR}/mysql-service"
+    DATADIR="${SERVICE_DIR}/data"
+    SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
+    PID_FILE="${SERVICE_DIR}/mysql.pid"
+    ERR_LOG="${SERVICE_DIR}/mysql.err"
+    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
+    export PERF_ACTUAL_VERSION_FILE
+}
+
 initialize_runtime() {
+    configure_runtime_paths || return $?
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
@@ -90,7 +127,6 @@ has_root() { [[ "$(id -u)" -eq 0 ]]; }
 # The subdirectory that holds a release line inside the mirror/CDN.
 source_subdir() {
     case "${SOFTWARE_VERSION}" in
-        5.7.*) printf 'MySQL-5.7\n' ;;
         8.0.*) printf 'MySQL-8.0\n' ;;
         *) log "ERROR: unsupported MySQL version ${SOFTWARE_VERSION}"; return 1 ;;
     esac
@@ -101,7 +137,6 @@ tarball_name() {
     local arch
     arch="$(normalize_arch "${EXPECTED_ARCH}")"
     case "${SOFTWARE_VERSION}" in
-        5.7.*) printf 'mysql-%s-linux-glibc2.12-%s.tar.gz\n' "${SOFTWARE_VERSION}" "${arch}" ;;
         8.0.*) printf 'mysql-%s-linux-glibc2.28-%s.tar.xz\n' "${SOFTWARE_VERSION}" "${arch}" ;;
         *) log "ERROR: unsupported MySQL version ${SOFTWARE_VERSION}"; return 1 ;;
     esac
@@ -116,10 +151,7 @@ candidate_urls() {
     fi
     # Official first (after any mirror): exact-version artifacts always live here
     # regardless of how recently a mirror was synced.
-    case "${SOFTWARE_VERSION}" in
-        5.7.*) printf 'https://downloads.mysql.com/archives/get/p/23/file/%s\n' "${name}" ;;
-        *) printf 'https://cdn.mysql.com/Downloads/%s/%s\n' "${subdir}" "${name}" ;;
-    esac
+    printf 'https://cdn.mysql.com/Downloads/%s/%s\n' "${subdir}" "${name}"
     printf 'https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/%s/%s\n' "${subdir}" "${name}"
 }
 
@@ -233,7 +265,7 @@ build_mysql() {
         log "ERROR: installed mysqld is ${actual_version}, expected ${SOFTWARE_VERSION}"
         return 40
     }
-    : "${PERF_ACTUAL_VERSION_FILE:?Framework did not provide PERF_ACTUAL_VERSION_FILE}"
+    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
     log "mysqld ${actual_version} deployed from the official prebuilt tarball"
 }
@@ -361,3 +393,187 @@ stop_mysql_service() {
     fi
     log "MySQL service stopped"
 }
+
+standalone_runtime() {
+    python3 "${SCRIPT_DIR}/scripts/standalone_runtime.py" "$@"
+}
+
+cleanup_standalone_workdir() {
+    if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
+        log "keeping standalone work directory: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
+        log "external work directory was not removed: ${PERF_WORK_DIR}"
+        return 0
+    fi
+    [[ "${PERF_WORK_DIR}" == /tmp/mysql-perf/local-* && \
+       "${PERF_WORK_DIR}" != "/tmp/mysql-perf" ]] || {
+        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+        return 70
+    }
+    if [[ -d "${PERF_WORK_DIR}" ]]; then
+        rm -rf -- "${PERF_WORK_DIR}" || return 70
+    fi
+    log "cleaned standalone work directory: ${PERF_WORK_DIR}"
+}
+
+emergency_standalone_cleanup() {
+    set +e
+    if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
+        stop_mysql_service
+    fi
+    if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
+        cleanup_standalone_workdir
+    fi
+}
+
+run_mysql_standalone() {
+    local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
+    local command_status="passed"
+
+    configure_runtime_paths || return $?
+    STANDALONE_STOP_DONE=0
+    STANDALONE_CLEANUP_DONE=0
+    trap emergency_standalone_cleanup EXIT
+    initialize_runtime || return $?
+
+    if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
+        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
+        :
+    else
+        stage_status=$?
+        failed_stage="prepare"
+    fi
+
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if build_mysql; then
+            if standalone_runtime build-info \
+                "${RESULTS_DIR}/build_info.json" \
+                "${SOFTWARE_VERSION}" \
+                "${PERF_ACTUAL_VERSION_FILE}" \
+                "$(normalize_arch "${EXPECTED_ARCH}")" \
+                "${PERF_RUN_ID}"; then
+                :
+            else
+                stage_status=$?
+                failed_stage="build"
+            fi
+        else
+            stage_status=$?
+            failed_stage="build"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if start_mysql_service; then
+            :
+        else
+            stage_status=$?
+            failed_stage="start"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if run_mysql_benchmarks; then
+            :
+        else
+            stage_status=$?
+            failed_stage="test"
+        fi
+    fi
+
+    if ! stop_mysql_service; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_STOP_DONE=1
+    if ! standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json"; then
+        cleanup_status="failed"
+    fi
+    if ! cleanup_standalone_workdir; then
+        cleanup_status="failed"
+    fi
+    STANDALONE_CLEANUP_DONE=1
+
+    if [[ "${stage_status}" -ne 0 ]]; then
+        command_status="failed"
+    fi
+    if standalone_runtime finalize \
+        "${RESULTS_DIR}" \
+        "${SOFTWARE_VERSION}" \
+        "$(normalize_arch "${EXPECTED_ARCH}")" \
+        "${PERF_RUN_ID}" \
+        "${command_status}" \
+        "${cleanup_status}" \
+        "${failed_stage}"; then
+        finalize_status=0
+    else
+        finalize_status=$?
+    fi
+    trap - EXIT
+    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
+    [[ "${cleanup_status}" == "passed" ]] || return 70
+    return "${finalize_status}"
+}
+
+usage() {
+    cat <<USAGE
+Usage: $(basename "$0") [OPTIONS]
+
+Deploy MySQL 8.0.x from the official prebuilt tarball and run sysbench OLTP and
+micro benchmarks as a standalone performance evaluation.
+Results default to results/<version>/<run-id>/ inside this directory.
+
+Options:
+  --version VERSION       MySQL version (default: ${SOFTWARE_VERSION})
+  --results-dir DIR       Persistent result directory
+  --keep-workdir          Keep the isolated work directory for debugging
+  -h, --help              Show this help
+
+Environment overrides:
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, MYSQL_SOURCE_BASE
+USAGE
+}
+
+main() {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --version)
+                [[ "$#" -ge 2 ]] || { log "ERROR: --version requires a value"; return 10; }
+                SOFTWARE_VERSION="$2"
+                shift 2
+                ;;
+            --results-dir)
+                [[ "$#" -ge 2 ]] || { log "ERROR: --results-dir requires a value"; return 10; }
+                RESULTS_DIR="$2"
+                shift 2
+                ;;
+            --keep-workdir)
+                STANDALONE_KEEP_WORK_DIR=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                return 0
+                ;;
+            *)
+                log "ERROR: unsupported option: $1"
+                usage
+                return 10
+                ;;
+        esac
+    done
+
+    configure_runtime_paths || return $?
+    mkdir -p "${RESULTS_DIR}" || return $?
+    : > "${RESULTS_DIR}/results.log"
+    local pipeline_status=0
+    set +e
+    run_mysql_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
+    pipeline_status="${PIPESTATUS[0]}"
+    set -e
+    log "standalone results: ${RESULTS_DIR}"
+    return "${pipeline_status}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi
