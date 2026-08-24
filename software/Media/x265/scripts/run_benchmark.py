@@ -13,7 +13,7 @@ test wrapper:
   the official ``--preset`` values (ultrafast/fast/medium/slow/veryslow) and
   record the reported frames-per-second;
 * **micro scaling** — encode at three resolutions (resolution scaling) and at
-  several ``--pools`` thread counts (thread scaling) at the ``medium`` preset.
+  four explicit ``--pools`` sizes (thread scaling) at the ``medium`` preset.
 
 Every metric name is built verbatim from the official ``--preset`` value,
 ``--input-res`` resolution or ``--pools`` thread count plus the official ``fps``
@@ -37,9 +37,12 @@ from gen_yuv import generate_yuv
 
 PRESETS = ["ultrafast", "fast", "medium", "slow", "veryslow"]
 RESOLUTIONS = [(320, 240), (1280, 720), (1920, 1080)]
-# "auto" omits --pools so x265 selects its default thread layout; the remaining
-# values pass an explicit worker-pool count.
-THREAD_COUNTS = ["1", "2", "4", "8", "auto"]
+# x265 --pools takes a thread count per NUMA node. Do not let it infer that
+# layout automatically: some high-core-count arm systems expand it into tens
+# of thousands of threads. Preset and resolution comparisons use an explicit
+# eight-thread pool; the scaling set records each explicit thread count.
+FIXED_POOL_THREADS = "8"
+THREAD_COUNTS = ["1", "2", "4", "8"]
 
 STATS_RE = re.compile(
     r"encoded\s+(\d+)\s+frames\s+in\s+([\d.]+)s\s+\(([\d.]+)\s+fps\)"
@@ -58,7 +61,7 @@ def build_command(
     height: int,
     frames: int,
     preset: str,
-    threads: str | None = None,
+    pool_threads: str | None = None,
     psnr: bool = False,
 ) -> list[str]:
     command = [
@@ -71,8 +74,8 @@ def build_command(
     if psnr:
         command.append("--psnr")
     command.extend(["-o", os.devnull])
-    if threads is not None and threads != "auto":
-        command.extend(["--pools", threads])
+    if pool_threads is not None:
+        command.extend(["--pools", pool_threads])
     command.append(yuv_file)
     return command
 
@@ -84,10 +87,12 @@ def run_once(
     height: int,
     frames: int,
     preset: str,
-    threads: str | None = None,
+    pool_threads: str | None = None,
     psnr: bool = False,
 ) -> str:
-    command = build_command(cli_bin, yuv_file, width, height, frames, preset, threads, psnr)
+    command = build_command(
+        cli_bin, yuv_file, width, height, frames, preset, pool_threads, psnr
+    )
     completed = subprocess.run(
         command,
         stdout=subprocess.PIPE,
@@ -142,7 +147,16 @@ def encode_preset_sweep(
         fps_values: list[float] = []
         stats: dict[str, float | int] = {}
         for _ in range(iterations):
-            text = run_once(cli_bin, yuv_file, width, height, frames, preset, psnr=True)
+            text = run_once(
+                cli_bin,
+                yuv_file,
+                width,
+                height,
+                frames,
+                preset,
+                pool_threads=FIXED_POOL_THREADS,
+                psnr=True,
+            )
             raw_lines.append(text.rstrip())
             stats = parse_stats(text)
             fps_values.append(float(stats["fps"]))
@@ -180,7 +194,15 @@ def micro_resolution_scaling(
             raw_lines.append(f"### resolution {width}x{height} (medium, 10 frames)")
             fps_values: list[float] = []
             for _ in range(iterations):
-                text = run_once(cli_bin, yuv, width, height, 10, "medium")
+                text = run_once(
+                    cli_bin,
+                    yuv,
+                    width,
+                    height,
+                    10,
+                    "medium",
+                    pool_threads=FIXED_POOL_THREADS,
+                )
                 raw_lines.append(text.rstrip())
                 fps_values.append(float(parse_stats(text)["fps"]))
             fps = average_fps(fps_values)
@@ -221,7 +243,15 @@ def micro_thread_scaling(
             raw_lines.append(f"### pools {threads} (1280x720, medium, 30 frames)")
             fps_values: list[float] = []
             for _ in range(iterations):
-                text = run_once(cli_bin, yuv, width, height, frames, "medium", threads=threads)
+                text = run_once(
+                    cli_bin,
+                    yuv,
+                    width,
+                    height,
+                    frames,
+                    "medium",
+                    pool_threads=threads,
+                )
                 raw_lines.append(text.rstrip())
                 fps_values.append(float(parse_stats(text)["fps"]))
             fps = average_fps(fps_values)
@@ -304,13 +334,15 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "command": ["x265", "--preset", "<preset>", "--fps", "25",
-                        "--frames", "<frames>", "-o", os.devnull, "<yuv>"],
+                        "--frames", "<frames>", "--pools", "<threads>",
+                        "-o", os.devnull, "<yuv>"],
             "resolution": f"{width}x{height}",
             "frames": frames,
             "iterations": iterations,
             "presets": PRESETS,
             "resolutions": [f"{w}x{h}" for w, h in RESOLUTIONS],
             "thread_counts": THREAD_COUNTS,
+            "fixed_pool_threads": FIXED_POOL_THREADS,
             "metric_source": "x265 CLI 'encoded N frames in Xs (Y fps)' summary",
         },
         "metric_contract": {
