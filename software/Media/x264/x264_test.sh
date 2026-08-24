@@ -2,16 +2,17 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-stable}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-0.165.x}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-# x264 publishes no release tags; the official repo exposes a maintained
-# "stable" branch, which is the reproducible version used for evaluation.
+# x264 publishes no release tags. The maintained "stable" branch currently
+# identifies itself as 0.165.x, which is the evaluated software version.
 X264_SOURCE_URL="${X264_SOURCE_URL:-https://code.videolan.org/videolan/x264.git}"
 X264_MIRROR_URL="${X264_MIRROR_URL:-https://github.com/mirror/x264.git}"
+X264_SOURCE_REF="${X264_SOURCE_REF:-stable}"
 YUV_WIDTH="${YUV_WIDTH:-1280}"
 YUV_HEIGHT="${YUV_HEIGHT:-720}"
 YUV_FRAMES="${YUV_FRAMES:-50}"
@@ -92,8 +93,10 @@ check_architecture() {
 }
 
 read_x264_version() {
+    local version_line
     if [[ -x "${BENCHMARK_BIN}" ]]; then
-        "${BENCHMARK_BIN}" --version 2>&1 | head -n 1
+        version_line="$("${BENCHMARK_BIN}" --version 2>&1 | head -n 1)"
+        printf '%s\n' "${version_line#x264 }"
     else
         printf ''
     fi
@@ -110,13 +113,13 @@ build_x264() {
     }
 
     export GIT_TERMINAL_PROMPT=0
-    log "cloning x264 ${SOFTWARE_VERSION} from ${X264_SOURCE_URL}"
-    if ! git clone --branch "${SOFTWARE_VERSION}" --depth 1 \
+    log "cloning x264 ${SOFTWARE_VERSION} from ${X264_SOURCE_REF} of ${X264_SOURCE_URL}"
+    if ! git clone --branch "${X264_SOURCE_REF}" --depth 1 \
         "${X264_SOURCE_URL}" "${SOURCE_DIR}"; then
         log "WARN: primary source failed, trying mirror ${X264_MIRROR_URL}"
-        git clone --branch "${SOFTWARE_VERSION}" --depth 1 \
+        git clone --branch "${X264_SOURCE_REF}" --depth 1 \
             "${X264_MIRROR_URL}" "${SOURCE_DIR}" || {
-            log "ERROR: failed to clone x264 ${SOFTWARE_VERSION}"
+            log "ERROR: failed to clone x264 source ref ${X264_SOURCE_REF}"
             return 30
         }
     fi
@@ -142,6 +145,10 @@ build_x264() {
     actual_version="$(read_x264_version)"
     [[ -n "${actual_version}" ]] || {
         log "ERROR: cannot read the built x264 version"
+        return 40
+    }
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+        log "ERROR: requested x264 ${SOFTWARE_VERSION}, but ${X264_SOURCE_REF} built ${actual_version}"
         return 40
     }
     X264_VERSION_STRING="${actual_version}"
@@ -325,14 +332,15 @@ Build and run x264's official H.264 encode benchmark as a standalone performance
 evaluation. Results default to results/<version>/<run-id>/ inside this directory.
 
 Options:
-  --version VERSION       x264 branch/version (default: ${SOFTWARE_VERSION})
+  --version VERSION       x264 version (default: ${SOFTWARE_VERSION})
   --results-dir DIR       Persistent result directory
   --keep-workdir          Keep the isolated work directory for debugging
   -h, --help              Show this help
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, X264_SOURCE_URL,
-  X264_MIRROR_URL, YUV_WIDTH, YUV_HEIGHT, YUV_FRAMES, ITERATIONS
+  X264_MIRROR_URL, X264_SOURCE_REF, YUV_WIDTH, YUV_HEIGHT, YUV_FRAMES,
+  ITERATIONS
 USAGE
 }
 
