@@ -1,0 +1,69 @@
+name: mysql
+category: Database
+enabled: true
+versions:
+  - "5.7.44"
+  - "8.0.35"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: mysql_test.sh
+      function: build_mysql
+    start:
+      script: mysql_test.sh
+      function: start_mysql_service
+    test:
+      script: mysql_test.sh
+      function: run_mysql_benchmarks
+    stop:
+      script: mysql_test.sh
+      function: stop_mysql_service
+  timeout_minutes: 600
+outputs:
+  primary_benchmark:
+    path: benchmark_mysql.json
+    stage: test
+    format: json
+    required: true
+  micro_benchmark:
+    path: micro_benchmark.json
+    stage: test
+    format: json
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  definitions:
+    avg_tps:
+      path: summary.avg_tps
+      unit: trans/s
+      direction: higher_is_better
+    max_tps:
+      path: summary.max_tps
+      unit: trans/s
+      direction: higher_is_better
+    avg_qps:
+      path: summary.avg_qps
+      unit: queries/s
+      direction: higher_is_better
+    max_qps:
+      path: summary.max_qps
+      unit: queries/s
+      direction: higher_is_better
+    read_write_tps_t16:
+      path: summary.read_write_tps_t16
+      unit: trans/s
+      direction: higher_is_better
+    point_select_qps_t16:
+      path: summary.point_select_qps_t16
+      unit: queries/s
+      direction: higher_is_better
+    thread_scaling_ratio:
+      path: summary.thread_scaling_ratio
+      unit: ratio
+      direction: higher_is_better
