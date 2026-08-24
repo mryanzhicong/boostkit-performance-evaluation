@@ -95,11 +95,17 @@ check_architecture() {
 }
 
 read_x265_version() {
-    if [[ -x "${BENCHMARK_BIN}" ]]; then
-        "${BENCHMARK_BIN}" --version 2>&1 | head -n 1
-    else
+    local version_output
+    if [[ ! -x "${BENCHMARK_BIN}" ]]; then
         printf ''
+        return 0
     fi
+
+    if ! version_output="$("${BENCHMARK_BIN}" --version 2>&1)"; then
+        printf ''
+        return 0
+    fi
+    sed -n 's/^x265 \[info\]: HEVC encoder version \([^[:space:]]*\).*$/\1/p' <<<"${version_output}"
 }
 
 build_x265() {
@@ -134,7 +140,6 @@ build_x265() {
         cmake -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_CLI=ON \
             -DENABLE_SHARED=OFF \
-            -DENABLE_HDR=OFF \
             "${SOURCE_DIR}/source" || {
             log "ERROR: x265 cmake configure failed"
             exit 40
@@ -155,7 +160,7 @@ build_x265() {
         log "ERROR: cannot read the built x265 version"
         return 40
     }
-    [[ "${actual_version}" == *"${SOFTWARE_VERSION}"* ]] || {
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
         log "ERROR: built x265 version does not match ${SOFTWARE_VERSION}: ${actual_version}"
         return 40
     }
