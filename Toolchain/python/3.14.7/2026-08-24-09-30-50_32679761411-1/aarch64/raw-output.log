@@ -1,0 +1,293 @@
+[python] installing pyperformance 1.14.0 into the private CPython
+[python] running official pyperformance benchmarks: json_dumps,json_loads,nbody,telco,fannkuch,regex_v8,meteor_contest
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Collecting pyperformance==1.14.0
+  Downloading pyperformance-1.14.0-py3-none-any.whl (9.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.1/9.1 MB 42.9 MB/s  0:00:00
+Collecting packaging (from pyperformance==1.14.0)
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pyperf (from pyperformance==1.14.0)
+  Downloading pyperf-2.10.0-py3-none-any.whl (144 kB)
+Collecting psutil>=5.9.0 (from pyperf->pyperformance==1.14.0)
+  Downloading psutil-7.2.2-cp36-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (156 kB)
+Installing collected packages: psutil, packaging, pyperf, pyperformance
+
+Successfully installed packaging-26.3 psutil-7.2.2 pyperf-2.10.0 pyperformance-1.14.0
+Python benchmark suite 1.14.0
+
+Creating the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/bin/python3 -m venv --without-pip /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m ensurepip -v -U
+Using pip 26.2.1 from /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpryztq0dd/pip-26.2.1-py3-none-any.whl/pip (python 3.14)
+Looking in links: /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpryztq0dd
+Processing /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpryztq0dd/pip-26.2.1-py3-none-any.whl
+Installing collected packages: pip
+  changing mode of /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/pip3 to 755
+  changing mode of /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/pip3.14 to 755
+Successfully installed pip-26.2.1
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install -U 'setuptools>=18.5' wheel
+Collecting setuptools>=18.5
+  Using cached setuptools-84.0.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting wheel
+  Using cached wheel-0.48.0-py3-none-any.whl.metadata (2.3 kB)
+Collecting packaging>=24.0 (from wheel)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Using cached setuptools-84.0.0-py3-none-any.whl (818 kB)
+Using cached wheel-0.48.0-py3-none-any.whl (33 kB)
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Installing collected packages: setuptools, packaging, wheel
+
+Successfully installed packaging-26.3 setuptools-84.0.0 wheel-0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip --version
+pip 26.2.1 from /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages/pip (python 3.14)
+
+==================================================
+( 1/7) creating venv for benchmark (fannkuch)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Collecting pyperf==2.10.0
+  Using cached pyperf-2.10.0-py3-none-any.whl.metadata (6.2 kB)
+Collecting psutil>=5.9.0 (from pyperf==2.10.0)
+  Using cached psutil-7.2.2-cp36-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (22 kB)
+Using cached pyperf-2.10.0-py3-none-any.whl (144 kB)
+Using cached psutil-7.2.2-cp36-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (156 kB)
+Installing collected packages: psutil, pyperf
+
+Successfully installed psutil-7.2.2 pyperf-2.10.0
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 2/7) creating venv for benchmark (json_dumps)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 3/7) creating venv for benchmark (json_loads)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 4/7) creating venv for benchmark (meteor_contest)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 5/7) creating venv for benchmark (nbody)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 6/7) creating venv for benchmark (regex_v8)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 7/7) creating venv for benchmark (telco)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install pyperf==2.10.0
+Requirement already satisfied: pyperf==2.10.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (2.10.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (from pyperf==2.10.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip install psutil
+Requirement already satisfied: psutil in ./venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.10.0
+setuptools==84.0.0
+wheel==0.48.0
+
+[1/7] fannkuch...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_fannkuch/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmp35kw_9x1 --inherit-environ PYPERFORMANCE_RUNID
+.....................
+fannkuch: Mean +- std dev: 474 ms +- 3 ms
+[2/7] json_dumps...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_json_dumps/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpxk6nxx2a --inherit-environ PYPERFORMANCE_RUNID
+.....................
+WARNING: the benchmark result may be unstable
+* Not enough samples to get a stable result (95% certainly of less than 1% variation)
+
+Try to rerun the benchmark with more runs, values and/or loops.
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Use pyperf stats, pyperf dump and pyperf hist to analyze results.
+Use --quiet option to hide these warnings.
+
+json_dumps: Mean +- std dev: 13.4 ms +- 0.2 ms
+[3/7] json_loads...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_json_loads/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpkxddu7h6 --inherit-environ PYPERFORMANCE_RUNID
+.....................
+json_loads: Mean +- std dev: 32.9 us +- 0.3 us
+[4/7] meteor_contest...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_meteor_contest/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpzpi207ww --inherit-environ PYPERFORMANCE_RUNID
+.....................
+meteor_contest: Mean +- std dev: 108 ms +- 0 ms
+[5/7] nbody...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_nbody/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmp4m8vziir --inherit-environ PYPERFORMANCE_RUNID
+.....................
+WARNING: the benchmark result may be unstable
+* Not enough samples to get a stable result (95% certainly of less than 1% variation)
+
+Try to rerun the benchmark with more runs, values and/or loops.
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Use pyperf stats, pyperf dump and pyperf hist to analyze results.
+Use --quiet option to hide these warnings.
+
+nbody: Mean +- std dev: 109 ms +- 7 ms
+[6/7] regex_v8...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_regex_v8/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmptf21j_d1 --inherit-environ PYPERFORMANCE_RUNID
+.....................
+regex_v8: Mean +- std dev: 25.4 ms +- 0.1 ms
+[7/7] telco...
+# /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/pyperformance-work/venv/cpython3.14-529ddd7edd74-compat-31b33d68c68a/bin/python -u /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_telco/run_benchmark.py --output /tmp/boostkit-perf/32679761411-1/Toolchain/python/3.14.7/aarch64/tmp/tmpfdwhblfi --inherit-environ PYPERFORMANCE_RUNID
+.....................
+telco: Mean +- std dev: 11.5 ms +- 0.1 ms
+
+Performance version: 1.14.0
+Python version: 3.14.7 (64-bit) revision 823f032
+Report on Linux-6.6.0-159.4.3.154.oe2403sp4.aarch64-aarch64-with-glibc2.38
+Number of logical CPUs: 256
+Start date: 2026-08-24 09:27:11.846641
+End date: 2026-08-24 09:29:24.467655
+
+### fannkuch ###
+Mean +- std dev: 474 ms +- 3 ms
+
+### json_dumps ###
+Mean +- std dev: 13.4 ms +- 0.2 ms
+
+### json_loads ###
+Mean +- std dev: 32.9 us +- 0.3 us
+
+### meteor_contest ###
+Mean +- std dev: 108 ms +- 0 ms
+
+### nbody ###
+Mean +- std dev: 109 ms +- 7 ms
+
+### regex_v8 ###
+Mean +- std dev: 25.4 ms +- 0.1 ms
+
+### telco ###
+Mean +- std dev: 11.5 ms +- 0.1 ms
+
+[python-parse] normalized 7 official benchmarks
+[python] pyperformance results written to benchmark.json and benchmark_python.json
