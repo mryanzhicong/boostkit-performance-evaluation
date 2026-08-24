@@ -88,7 +88,7 @@ initialize_runtime() {
 
 require_commands() {
     local required missing=0
-    for required in git cmake make gcc g++ protoc python3 curl tar sed tee nproc; do
+    for required in git cmake make gcc g++ protoc python3 curl tar sed grep tee nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is missing: ${required}"
             missing=1
@@ -168,6 +168,27 @@ report_actual_version() {
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
+enable_modern_cxx_for_http_example() {
+    # BRPC 1.17 enables C++17 for Protobuf newer than 4.21 in its main CMake
+    # project.  The independently configured http_c++ example still pins
+    # C++11, which cannot compile against current Protobuf/Abseil headers.
+    local example_cmake_file="${EXAMPLE_DIR}/CMakeLists.txt"
+    [[ -f "${example_cmake_file}" ]] || {
+        log_message "ERROR: official HTTP example CMake file is missing: ${example_cmake_file}"
+        return 40
+    }
+    sed -i 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 17)/' \
+        "${example_cmake_file}" || {
+        log_message "ERROR: could not enable C++17 for the official HTTP example"
+        return 40
+    }
+    grep -Fq 'set(CMAKE_CXX_STANDARD 17)' "${example_cmake_file}" || {
+        log_message "ERROR: the official HTTP example C++11 setting was not found"
+        return 40
+    }
+    log_message "enabled C++17 for the official HTTP example to match the installed Protobuf"
+}
+
 build_brpc() {
     initialize_runtime || return $?
     check_architecture || return $?
@@ -180,6 +201,7 @@ build_brpc() {
     prepare_compiler || return $?
     prepare_brpc_source || return $?
     report_actual_version || return $?
+    enable_modern_cxx_for_http_example || return $?
 
     log_message "building the official brpc library with cmake (Release)"
     mkdir -p "${BUILD_DIR}"
