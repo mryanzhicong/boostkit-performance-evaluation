@@ -88,7 +88,7 @@ initialize_runtime() {
 
 require_commands() {
     local required missing=0
-    for required in git cmake make gcc g++ protoc python3 curl tar sed tee nproc; do
+    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is missing: ${required}"
             missing=1
@@ -168,6 +168,45 @@ report_actual_version() {
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
+configure_http_example_for_modern_protobuf() {
+    # BRPC 1.17 enables C++17 for Protobuf newer than 4.21 in its main CMake
+    # project.  The independently configured http_c++ example still pins
+    # C++11, which cannot compile against current Protobuf/Abseil headers.
+    local example_cmake_file="${EXAMPLE_DIR}/CMakeLists.txt"
+    local absl_cmake_file="${EXAMPLE_DIR}/brpc_http_example_absl.cmake"
+    [[ -f "${example_cmake_file}" ]] || {
+        log_message "ERROR: official HTTP example CMake file is missing: ${example_cmake_file}"
+        return 40
+    }
+    sed -i 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 17)/' \
+        "${example_cmake_file}" || {
+        log_message "ERROR: could not enable C++17 for the official HTTP example"
+        return 40
+    }
+    grep -Fq 'set(CMAKE_CXX_STANDARD 17)' "${example_cmake_file}" || {
+        log_message "ERROR: the official HTTP example C++11 setting was not found"
+        return 40
+    }
+
+    install -m 0644 "${SCRIPT_DIR}/http_example_absl.cmake" "${absl_cmake_file}" || {
+        log_message "ERROR: could not provide the Abseil dependencies for the official HTTP example"
+        return 40
+    }
+    sed -i \
+        -e '/^[[:space:]]*include_directories(${OPENSSL_INCLUDE_DIR})[[:space:]]*$/a\include(${CMAKE_CURRENT_LIST_DIR}/brpc_http_example_absl.cmake)' \
+        -e '/^[[:space:]]*${PROTOBUF_LIBRARIES}[[:space:]]*$/a\    ${BRPC_HTTP_EXAMPLE_ABSL_TARGETS}' \
+        "${example_cmake_file}" || {
+        log_message "ERROR: could not link Abseil for the official HTTP example"
+        return 40
+    }
+    grep -Fq 'include(${CMAKE_CURRENT_LIST_DIR}/brpc_http_example_absl.cmake)' "${example_cmake_file}" \
+        && grep -Fq '${BRPC_HTTP_EXAMPLE_ABSL_TARGETS}' "${example_cmake_file}" || {
+        log_message "ERROR: the official HTTP example did not include the Abseil dependencies"
+        return 40
+    }
+    log_message "configured the official HTTP example for current Protobuf and Abseil"
+}
+
 build_brpc() {
     initialize_runtime || return $?
     check_architecture || return $?
@@ -180,6 +219,7 @@ build_brpc() {
     prepare_compiler || return $?
     prepare_brpc_source || return $?
     report_actual_version || return $?
+    configure_http_example_for_modern_protobuf || return $?
 
     log_message "building the official brpc library with cmake (Release)"
     mkdir -p "${BUILD_DIR}"
@@ -372,7 +412,7 @@ run_brpc_benchmark_http() {
     terminate_process_gracefully "${client_pid}" "official benchmark_http" || return $?
     rm -f "${CLIENT_PID_FILE}"
 
-    grep -Eq 'client_qps +[0-9]+' "${RESULTS_DIR}/bvar_vars.txt" || {
+    grep -Eq '^client_qps[[:space:]]+:[[:space:]]+[0-9]+' "${RESULTS_DIR}/bvar_vars.txt" || {
         log_message "ERROR: bvar dump is missing client_qps"
         return 50
     }
