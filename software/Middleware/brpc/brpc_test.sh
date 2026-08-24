@@ -412,7 +412,7 @@ run_brpc_benchmark_http() {
     terminate_process_gracefully "${client_pid}" "official benchmark_http" || return $?
     rm -f "${CLIENT_PID_FILE}"
 
-    grep -Eq 'client_qps +[0-9]+' "${RESULTS_DIR}/bvar_vars.txt" || {
+    grep -Eq '^client_qps[[:space:]]+:[[:space:]]+[0-9]+' "${RESULTS_DIR}/bvar_vars.txt" || {
         log_message "ERROR: bvar dump is missing client_qps"
         return 50
     }

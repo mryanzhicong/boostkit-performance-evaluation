@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,10 +43,10 @@ def parse_bvar_dump(path: Path) -> dict[str, float]:
     except OSError as exc:
         raise RuntimeError(f"cannot read bvar dump: {exc}") from exc
     for line in lines:
-        fields = line.split(None, 1)
-        if len(fields) != 2:
+        match = re.fullmatch(r"(\S+)\s+:\s+(.+)", line)
+        if match is None:
             continue
-        name, raw_value = fields[0], fields[1].strip()
+        name, raw_value = match.groups()
         if not name.startswith("client_"):
             continue
         try:
