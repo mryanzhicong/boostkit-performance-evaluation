@@ -86,6 +86,8 @@ categories:
     - example
 ```
 
+该文件已配置 Git 内置 `union` 合并驱动。不同分支向同一分类追加不同软件时，合并会保留两项；仍须避免登记同名软件，并在合并后运行 `python3 framework/catalog.py validate`。
+
 目录结构：
 
 ```text
