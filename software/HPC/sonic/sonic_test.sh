@@ -63,7 +63,7 @@ initialize_runtime() {
 
 require_commands() {
     local required missing=0
-    for required in git python3 cmake tee; do
+    for required in git python3 cmake sed tee; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is missing: ${required}"
             missing=1
@@ -109,6 +109,24 @@ report_actual_version() {
     printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
+repair_gflags_source_reference() {
+    local external_cmake_file="${SOURCE_DIR}/cmake/external.cmake"
+
+    [[ -f "${external_cmake_file}" ]] || {
+        log_message "ERROR: Sonic CMake dependency file is missing: ${external_cmake_file}"
+        return 40
+    }
+    # Sonic v1.0.2 requests gflags' retired master branch.  Keep the upstream
+    # CMake build path intact while selecting the repository's current branch.
+    if ! sed -i \
+        '\|GIT_REPOSITORY https://github.com/gflags/gflags.git|,\|GIT_SHALLOW TRUE| s/GIT_TAG  master/GIT_TAG  main/' \
+        "${external_cmake_file}"; then
+        log_message "ERROR: failed to update Sonic's stale gflags branch reference"
+        return 40
+    fi
+    log_message "using gflags main because the v1.0.2 master reference is retired"
+}
+
 build_sonic() {
     initialize_runtime || return $?
     check_architecture || return $?
@@ -119,6 +137,7 @@ build_sonic() {
     }
     prepare_sonic_source || return $?
     report_actual_version || return $?
+    repair_gflags_source_reference || return $?
 
     log_message "building official CMake benchmark target: bench"
     (
