@@ -2,17 +2,17 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-0.165.x}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-0.164.x}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-# x264 publishes no release tags. The maintained "stable" branch currently
-# identifies itself as 0.165.x, which is the evaluated software version.
-X264_SOURCE_URL="${X264_SOURCE_URL:-https://code.videolan.org/videolan/x264.git}"
-X264_MIRROR_URL="${X264_MIRROR_URL:-https://github.com/mirror/x264.git}"
-X264_SOURCE_REF="${X264_SOURCE_REF:-stable}"
+# Use one immutable GitHub source for both architectures. The stable branch
+# commit below identifies itself as x264 0.164.x.
+X264_SOURCE_URL="https://github.com/mirror/x264.git"
+X264_SOURCE_REF="stable"
+X264_SOURCE_COMMIT="31e19f92f00c7003fa115047ce50978bc98c3a0d"
 YUV_WIDTH="${YUV_WIDTH:-1280}"
 YUV_HEIGHT="${YUV_HEIGHT:-720}"
 YUV_FRAMES="${YUV_FRAMES:-50}"
@@ -103,7 +103,7 @@ read_x264_version() {
 }
 
 build_x264() {
-    local actual_version
+    local actual_version source_commit
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
@@ -113,16 +113,17 @@ build_x264() {
     }
 
     export GIT_TERMINAL_PROMPT=0
-    log "cloning x264 ${SOFTWARE_VERSION} from ${X264_SOURCE_REF} of ${X264_SOURCE_URL}"
-    if ! git clone --branch "${X264_SOURCE_REF}" --depth 1 \
-        "${X264_SOURCE_URL}" "${SOURCE_DIR}"; then
-        log "WARN: primary source failed, trying mirror ${X264_MIRROR_URL}"
-        git clone --branch "${X264_SOURCE_REF}" --depth 1 \
-            "${X264_MIRROR_URL}" "${SOURCE_DIR}" || {
-            log "ERROR: failed to clone x264 source ref ${X264_SOURCE_REF}"
-            return 30
-        }
-    fi
+    log "cloning x264 ${SOFTWARE_VERSION} from GitHub ${X264_SOURCE_REF}"
+    git clone --branch "${X264_SOURCE_REF}" --depth 1 \
+        "${X264_SOURCE_URL}" "${SOURCE_DIR}" || {
+        log "ERROR: failed to clone x264 source ref ${X264_SOURCE_REF} from GitHub"
+        return 30
+    }
+    source_commit="$(git -C "${SOURCE_DIR}" rev-parse HEAD)"
+    [[ "${source_commit}" == "${X264_SOURCE_COMMIT}" ]] || {
+        log "ERROR: GitHub ${X264_SOURCE_REF} resolved to ${source_commit}, expected ${X264_SOURCE_COMMIT}"
+        return 30
+    }
 
     log "building x264 with official configure + make"
     (
@@ -338,9 +339,8 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, X264_SOURCE_URL,
-  X264_MIRROR_URL, X264_SOURCE_REF, YUV_WIDTH, YUV_HEIGHT, YUV_FRAMES,
-  ITERATIONS
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, YUV_WIDTH,
+  YUV_HEIGHT, YUV_FRAMES, ITERATIONS
 USAGE
 }
 
