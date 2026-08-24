@@ -18,17 +18,27 @@ execution:
     stop:
       script: mysql_test.sh
       function: stop_mysql_service
-  timeout_minutes: 600
+  timeout_minutes: 60
 outputs:
   primary_benchmark:
     path: benchmark_mysql.json
     stage: test
     format: json
     required: true
+  primary_raw_output:
+    path: benchmark_mysql_raw.log
+    stage: test
+    format: text
+    required: true
   micro_benchmark:
     path: micro_benchmark.json
     stage: test
     format: json
+    required: true
+  micro_raw_output:
+    path: micro_benchmark_raw.log
+    stage: test
+    format: text
     required: true
   aggregate_result:
     path: results.json
@@ -37,32 +47,9 @@ outputs:
     required: true
 metrics:
   source: aggregate_result
-  definitions:
-    avg_tps:
-      path: summary.avg_tps
-      unit: trans/s
-      direction: higher_is_better
-    max_tps:
-      path: summary.max_tps
-      unit: trans/s
-      direction: higher_is_better
-    avg_qps:
-      path: summary.avg_qps
-      unit: queries/s
-      direction: higher_is_better
-    max_qps:
-      path: summary.max_qps
-      unit: queries/s
-      direction: higher_is_better
-    read_write_tps_t16:
-      path: summary.read_write_tps_t16
-      unit: trans/s
-      direction: higher_is_better
-    point_select_qps_t16:
-      path: summary.point_select_qps_t16
-      unit: queries/s
-      direction: higher_is_better
-    thread_scaling_ratio:
-      path: summary.thread_scaling_ratio
-      unit: ratio
-      direction: higher_is_better
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction

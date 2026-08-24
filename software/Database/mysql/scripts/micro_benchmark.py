@@ -1,108 +1,100 @@
 #!/usr/bin/env python3
-"""MySQL micro benchmark: thread scaling + table count sweep via sysbench."""
+"""Run non-duplicated sysbench scaling commands and preserve raw output."""
 
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from benchmark_mysql import check_mysql, create_database, sysbench_prepare, sysbench_run
+from benchmark_mysql import (  # noqa: E402
+    add_metrics,
+    check_mysql,
+    create_database,
+    sysbench_prepare,
+    sysbench_run,
+    write_raw_output,
+)
 
-THREAD_SCALE_LEVELS = [1, 4, 8, 16, 32, 64]
+THREAD_SCALE_LEVELS = [8, 64]
 TABLE_COUNTS = [1, 4, 10]
 
 
-def bench_thread_scaling(host, port, user, password, db_name, tables, table_size, time_sec, iterations):
-    results = {}
-    if not sysbench_prepare(host, port, user, password, db_name, tables, table_size):
-        return {"error": "prepare failed"}
-    for tc in THREAD_SCALE_LEVELS:
-        label = f"threads_{tc}"
-        runs = []
-        for _ in range(iterations):
-            runs.append(sysbench_run(host, port, user, password, db_name, "oltp_point_select", tc, tables, table_size, time_sec))
-        avg_qps = round(sum(r["qps"] for r in runs) / len(runs), 2)
-        avg_p95 = round(sum(r["p95_latency_ms"] for r in runs) / len(runs), 2)
-        results[label] = {"qps": avg_qps, "p95_latency_ms": avg_p95}
-        print(f"[MICRO] {label}: QPS={avg_qps}, p95={avg_p95}ms")
-    return results
+def main() -> int:
+    if len(sys.argv) != 11:
+        print(
+            "usage: micro_benchmark.py OUTPUT RAW_OUTPUT HOST PORT USER PASSWORD "
+            "TABLES TABLE_SIZE ITERATIONS TIME_SECONDS",
+            file=sys.stderr,
+        )
+        return 1
+    output_path, raw_output_path = Path(sys.argv[1]), Path(sys.argv[2])
+    host, port, user, password = sys.argv[3:7]
+    tables, table_size, iterations, time_sec = map(int, sys.argv[7:11])
+    raw_lines: list[str] = ["# sysbench raw output: MySQL scaling commands"]
+    try:
+        if iterations != 1:
+            raise RuntimeError("ITERATIONS must be 1; derived averages are not accepted metrics")
+        if not check_mysql(host, port, user, password):
+            raise RuntimeError(f"cannot connect to MySQL at {host}:{port}")
+        results: dict[str, dict[str, Any]] = {}
 
+        scaling_database = "sbtest_thread_scaling"
+        if not create_database(host, port, user, password, scaling_database):
+            raise RuntimeError(f"cannot create database {scaling_database}")
+        sysbench_prepare(
+            host, port, user, password, scaling_database, tables, table_size, raw_lines
+        )
+        for threads in THREAD_SCALE_LEVELS:
+            values = sysbench_run(
+                host, port, user, password, scaling_database, "oltp_point_select",
+                threads, tables, table_size, time_sec, raw_lines,
+            )
+            add_metrics(results, "oltp_point_select", threads, tables, values)
 
-def bench_table_count_sweep(host, port, user, password, table_size, time_sec, iterations):
-    results = {}
-    for tc in TABLE_COUNTS:
-        label = f"tables_{tc}"
-        db = f"sbtest_tc{tc}"
-        if not create_database(host, port, user, password, db):
-            results[label] = {"error": "create db failed"}
-            continue
-        if not sysbench_prepare(host, port, user, password, db, tc, table_size):
-            results[label] = {"error": "prepare failed"}
-            continue
-        runs = []
-        for _ in range(iterations):
-            runs.append(sysbench_run(host, port, user, password, db, "oltp_point_select", 16, tc, table_size, time_sec))
-        avg_qps = round(sum(r["qps"] for r in runs) / len(runs), 2)
-        avg_p95 = round(sum(r["p95_latency_ms"] for r in runs) / len(runs), 2)
-        results[label] = {"qps": avg_qps, "p95_latency_ms": avg_p95}
-        print(f"[MICRO] {label}: QPS={avg_qps}, p95={avg_p95}ms")
-    return results
+        for table_count in TABLE_COUNTS:
+            if table_count == tables:
+                continue
+            database = f"sbtest_tables_{table_count}"
+            if not create_database(host, port, user, password, database):
+                raise RuntimeError(f"cannot create database {database}")
+            sysbench_prepare(
+                host, port, user, password, database, table_count, table_size, raw_lines
+            )
+            values = sysbench_run(
+                host, port, user, password, database, "oltp_point_select", 16,
+                table_count, table_size, time_sec, raw_lines,
+            )
+            add_metrics(results, "oltp_point_select", 16, table_count, values)
 
-
-def main():
-    if len(sys.argv) < 8:
-        print("Usage: micro_benchmark.py <output_file> <host> <port> <user> <password> <tables> <table_size> [iterations] [time_sec]")
-        sys.exit(1)
-    output_file = sys.argv[1]
-    host, port, user, password = sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
-    tables, table_size = int(sys.argv[6]), int(sys.argv[7])
-    iterations = int(sys.argv[8]) if len(sys.argv) >= 9 else 1
-    time_sec = int(sys.argv[9]) if len(sys.argv) >= 10 else 30
-    version_str = os.environ.get("SOFTWARE_VERSION", "8.0")
-
-    if not check_mysql(host, port, user, password):
-        print(f"[MICRO] Cannot connect to MySQL at {host}:{port}")
-        sys.exit(1)
-
-    db_ts = "sbtest_ts"
-    if not create_database(host, port, user, password, db_ts):
-        print("[MICRO] Failed to create database")
-        sys.exit(1)
-
-    print("[MICRO] Running thread_scaling...")
-    ts_results = bench_thread_scaling(host, port, user, password, db_ts, tables, table_size, time_sec, iterations)
-
-    print("[MICRO] Running table_count_sweep...")
-    tc_results = bench_table_count_sweep(host, port, user, password, table_size, time_sec, iterations)
-
-    out = {
-        "benchmark": "micro_operations",
-        "description": "MySQL micro: thread scaling + table count sweep",
-        "reference": "https://github.com/mysql/mysql-server",
-        "software": "mysql",
-        "version": version_str,
-        "architecture": os.environ.get("EXPECTED_ARCH", ""),
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "performance_metrics": {
-            "qps": {"unit": "queries/s", "description": "Queries per second"},
-            "p95_latency_ms": {"unit": "ms", "description": "95th percentile latency"},
-        },
-        "parameters": {
-            "thread_scale_levels": THREAD_SCALE_LEVELS,
-            "table_counts": TABLE_COUNTS,
-            "table_size": table_size,
-            "time_per_test": time_sec,
-            "iterations": iterations,
-        },
-        "results": {"thread_scaling": ts_results, "table_count_sweep": tc_results},
-    }
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(out, f, indent=2)
-    print(f"[MICRO] Output written to {output_file}")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps({
+            "software": "mysql",
+            "version": os.environ["SOFTWARE_VERSION"],
+            "architecture": os.environ["EXPECTED_ARCH"],
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "parameters": {
+                "thread_scale_levels": THREAD_SCALE_LEVELS,
+                "table_counts": [count for count in TABLE_COUNTS if count != tables],
+                "table_size": table_size,
+                "time_per_test": time_sec,
+                "iterations": iterations,
+            },
+            "results": results,
+        }, indent=2) + "\n", encoding="utf-8")
+        print(f"[mysql] recorded {len(results)} sysbench scaling metrics")
+        return 0
+    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as exc:
+        print(f"[mysql] ERROR: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        write_raw_output(raw_output_path, raw_lines)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -14,21 +14,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# Metric definitions must stay in lock-step with case.yaml `metrics.definitions`.
-METRIC_DEFINITIONS = {
-    "avg_tps": {"unit": "trans/s"},
-    "max_tps": {"unit": "trans/s"},
-    "avg_qps": {"unit": "queries/s"},
-    "max_qps": {"unit": "queries/s"},
-    "read_write_tps_t16": {"unit": "trans/s"},
-    "point_select_qps_t16": {"unit": "queries/s"},
-    "thread_scaling_ratio": {"unit": "ratio"},
-}
-
-
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+
+def direction_label(direction: str) -> str:
+    return {
+        "higher_is_better": "越大越好",
+        "lower_is_better": "越小越好",
+        "neutral": "仅展示",
+    }[direction]
 
 def command(args: list[str]) -> str:
     try:
@@ -167,22 +162,31 @@ def extract_metrics(
         raise RuntimeError("results.json has an invalid software identity")
     if aggregate.get("version") != version or aggregate.get("architecture") != architecture:
         raise RuntimeError("results.json identity differs from this run")
-    summary = aggregate.get("summary")
-    if not isinstance(summary, dict):
-        raise RuntimeError("results.json is missing summary")
+    results = aggregate.get("results")
+    if not isinstance(results, dict) or not results:
+        raise RuntimeError("results.json is missing source metrics")
     metrics: dict[str, Any] = {}
-    for metric_name, definition in METRIC_DEFINITIONS.items():
-        if metric_name not in summary:
-            raise RuntimeError(f"summary is missing metric {metric_name}")
-        value = summary[metric_name]
+    for metric_name, metric in results.items():
+        if not isinstance(metric_name, str) or not isinstance(metric, dict):
+            raise RuntimeError("results.json has an invalid metric entry")
+        source_name = metric.get("source_name")
+        if source_name != metric_name:
+            raise RuntimeError(f"metric source name differs from its result key: {metric_name}")
+        value = metric.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
+        unit = metric.get("unit")
+        direction = metric.get("direction")
+        if not isinstance(unit, str) or not unit:
+            raise RuntimeError(f"metric {metric_name} has no unit")
+        if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
+            raise RuntimeError(f"metric {metric_name} has an invalid direction")
         metrics[metric_name] = {
             "value": value,
-            "unit": definition["unit"],
-            "direction": "higher_is_better",
+            "unit": unit,
+            "direction": direction,
         }
     if not metrics:
         raise RuntimeError("results.json contains no metrics")
@@ -240,7 +244,7 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越大越好 |"
+            f"{metric['unit']} | {direction_label(metric['direction'])} |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])

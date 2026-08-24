@@ -5,10 +5,10 @@
 # Generic" prebuilt tarball and unpacked into a per-version directory — the
 # distribution package manager only ships one version and cannot switch between
 # 8.0.x releases. sysbench, the benchmark *driver* (not the software under
-# test), is installed from the system repositories.
+# test), must be pre-provisioned on the dedicated runner.
 #
 # The four framework stages map to: fetch+verify the tarball (build), launch a
-# throwaway instance from it (start), run the official sysbench OLTP + micro
+# throwaway instance from it (start), run the configured sysbench OLTP + micro
 # benchmarks (test), and tear that instance down (stop).
 
 set -euo pipefail
@@ -28,7 +28,7 @@ STANDALONE_CLEANUP_DONE=0
 
 # Connection settings for the throwaway server and for the benchmark client.
 MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
-MYSQL_PORT="${MYSQL_PORT:-3306}"
+MYSQL_PORT="${MYSQL_PORT:-}"
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 MYSQL_DB="${MYSQL_DB:-sbtest}"
@@ -54,18 +54,29 @@ DATADIR=""
 SOCKET_PATH=""
 PID_FILE=""
 ERR_LOG=""
-MYSQL_EXTERNAL=0
-
-log() { printf '[mysql] %s\n' "$*"; }
+log() {
+    printf '[mysql] %s\n' "$*"
+}
 
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
-    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
+    if [[ ! "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
         log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
-    }
+    fi
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64)
+            EXPECTED_ARCH="x86_64"
+            ;;
+        aarch64|arm64)
+            EXPECTED_ARCH="aarch64"
+            ;;
+        *)
+            EXPECTED_ARCH="${EXPECTED_ARCH,,}"
+            ;;
+    esac
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
@@ -91,200 +102,205 @@ configure_runtime_paths() {
 
 initialize_runtime() {
     configure_runtime_paths || return $?
+    if [[ -z "${MYSQL_PORT}" ]]; then
+        local checksum
+        checksum="$(printf '%s' "${PERF_RUN_ID}" | cksum)"
+        MYSQL_PORT="$((20000 + ${checksum%% *} % 20000))"
+    fi
+    if [[ ! "${MYSQL_PORT}" =~ ^[0-9]+$ ]] || \
+       (( MYSQL_PORT < 1024 || MYSQL_PORT > 65535 )); then
+        log "ERROR: MYSQL_PORT must be an unprivileged TCP port: ${MYSQL_PORT}"
+        return 10
+    fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
-normalize_arch() {
-    case "${1,,}" in
-        x86_64|amd64) printf 'x86_64\n' ;;
-        aarch64|arm64) printf 'aarch64\n' ;;
-        *) printf '%s\n' "${1,,}" ;;
+fetch_mysql_archive() {
+    local archive_path
+    local actual_md5
+    local archive_md5
+    local archive_name
+    local download_url
+    local release_directory
+    local -a download_urls=()
+
+    # Every supported artifact is declared with its official archive name and
+    # checksum.  Adding a version means adding its two architecture entries
+    # here; the download, extraction, and lifecycle logic remains unchanged.
+    case "${SOFTWARE_VERSION}:${EXPECTED_ARCH}" in
+        8.0.46:x86_64)
+            release_directory="MySQL-8.0"
+            archive_name="mysql-8.0.46-linux-glibc2.28-x86_64.tar.xz"
+            archive_md5="367c6adbd976c0e4bcbe39bda4ea6ecf"
+            ;;
+        8.0.46:aarch64)
+            release_directory="MySQL-8.0"
+            archive_name="mysql-8.0.46-linux-glibc2.28-aarch64.tar.xz"
+            archive_md5="62376634565907ec31b74da3bc645b2b"
+            ;;
+        *)
+            log "ERROR: no verified MySQL release is declared for ${SOFTWARE_VERSION} on ${EXPECTED_ARCH}"
+            return 10
+            ;;
     esac
-}
 
-check_architecture() {
-    local actual expected
-    actual="$(normalize_arch "$(uname -m)")"
-    expected="$(normalize_arch "${EXPECTED_ARCH}")"
-    [[ "${actual}" == "${expected}" ]] || {
-        log "ERROR: expected architecture ${expected}, runner is ${actual}"
-        return 20
-    }
-}
-
-detect_os_id() {
-    if [[ -r /etc/os-release ]]; then
-        # shellcheck disable=SC1091
-        . /etc/os-release
-        printf '%s\n' "${ID}"
+    archive_path="${PERF_WORK_DIR}/${archive_name}"
+    if [[ -s "${archive_path}" ]]; then
+        log "using cached MySQL archive ${archive_path}"
     else
-        printf 'unknown\n'
-    fi
-}
-
-has_root() { [[ "$(id -u)" -eq 0 ]]; }
-
-# The subdirectory that holds a release line inside the mirror/CDN.
-source_subdir() {
-    case "${SOFTWARE_VERSION}" in
-        8.0.*) printf 'MySQL-8.0\n' ;;
-        *) log "ERROR: unsupported MySQL version ${SOFTWARE_VERSION}"; return 1 ;;
-    esac
-}
-
-# The canonical official tarball filename for this version + architecture.
-tarball_name() {
-    local arch
-    arch="$(normalize_arch "${EXPECTED_ARCH}")"
-    case "${SOFTWARE_VERSION}" in
-        8.0.*) printf 'mysql-%s-linux-glibc2.28-%s.tar.xz\n' "${SOFTWARE_VERSION}" "${arch}" ;;
-        *) log "ERROR: unsupported MySQL version ${SOFTWARE_VERSION}"; return 1 ;;
-    esac
-}
-
-candidate_urls() {
-    local name subdir
-    name="$(tarball_name)" || return 1
-    subdir="$(source_subdir)" || return 1
-    if [[ -n "${MYSQL_SOURCE_BASE}" ]]; then
-        printf '%s/%s/%s\n' "${MYSQL_SOURCE_BASE%/}" "${subdir}" "${name}"
-    fi
-    # Official first (after any mirror): exact-version artifacts always live here
-    # regardless of how recently a mirror was synced.
-    printf 'https://cdn.mysql.com/Downloads/%s/%s\n' "${subdir}" "${name}"
-    printf 'https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/%s/%s\n' "${subdir}" "${name}"
-}
-
-fetch_tarball() {
-    local url dest name
-    name="$(tarball_name)" || return 1
-    dest="${PERF_WORK_DIR}/${name}"
-    [[ -s "${dest}" ]] && { log "using cached tarball ${dest}"; printf '%s\n' "${dest}"; return 0; }
-    while IFS= read -r url; do
-        [[ -n "${url}" ]] || continue
-        log "downloading ${url}"
-        if command -v curl >/dev/null 2>&1; then
-            curl -fSL --retry 3 --connect-timeout 30 -o "${dest}" "${url}" && break
-        else
-            wget -q -O "${dest}" "${url}" && break
+        if [[ -n "${MYSQL_SOURCE_BASE}" ]]; then
+            download_urls+=(
+                "${MYSQL_SOURCE_BASE%/}/${release_directory}/${archive_name}"
+            )
         fi
-        log "WARN: download failed from ${url}"
-        rm -f "${dest}"
-    done < <(candidate_urls)
-    [[ -s "${dest}" ]] || {
-        log "ERROR: failed to download ${name}"
+        download_urls+=(
+            "https://cdn.mysql.com/Downloads/${release_directory}/${archive_name}"
+            "https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/${release_directory}/${archive_name}"
+        )
+
+        for download_url in "${download_urls[@]}"; do
+            log "downloading ${download_url}"
+            if command -v curl >/dev/null 2>&1; then
+                if curl -fSL --retry 3 --connect-timeout 30 -o "${archive_path}" "${download_url}"; then
+                    break
+                fi
+            elif wget -q -O "${archive_path}" "${download_url}"; then
+                break
+            fi
+            log "WARN: download failed from ${download_url}"
+            rm -f "${archive_path}"
+        done
+
+        if [[ ! -s "${archive_path}" ]]; then
+            log "ERROR: failed to download ${archive_name}"
+            return 30
+        fi
+    fi
+
+    actual_md5="$(md5sum "${archive_path}")"
+    actual_md5="${actual_md5%% *}"
+    if [[ "${actual_md5}" != "${archive_md5}" ]]; then
+        log "ERROR: MySQL archive checksum mismatch: expected ${archive_md5}, got ${actual_md5}"
         return 30
-    }
-    printf '%s\n' "${dest}"
+    fi
+    printf '%s\n' "${archive_path}"
 }
 
-extract_tarball() {
-    local tarball
-    tarball="$1"
+extract_mysql_archive() {
+    local archive="$1"
+    local unpacked_directory
+
     rm -rf "${MYSQL_BASE_DIR}"
-    mkdir -p "${MYSQL_BASE_DIR}"
-    log "extracting ${tarball}"
-    if [[ "${tarball}" == *.tar.xz ]]; then
-        tar -xJf "${tarball}" -C "${PERF_WORK_DIR}"
+    log "extracting ${archive}"
+    if [[ "${archive}" == *.tar.xz ]]; then
+        tar -xJf "${archive}" -C "${PERF_WORK_DIR}"
     else
-        tar -xzf "${tarball}" -C "${PERF_WORK_DIR}"
+        tar -xzf "${archive}" -C "${PERF_WORK_DIR}"
     fi
-    # The tarball unpacks into mysql-<version>-linux-glibc*-<arch>; relocate it.
-    local unpacked
-    unpacked="$(find "${PERF_WORK_DIR}" -maxdepth 1 -type d -name "mysql-${SOFTWARE_VERSION}-*" | head -n 1)"
-    [[ -n "${unpacked}" ]] || {
+    unpacked_directory="$(find "${PERF_WORK_DIR}" -maxdepth 1 -type d -name "mysql-${SOFTWARE_VERSION}-*" | head -n 1)"
+    if [[ -z "${unpacked_directory}" ]]; then
         log "ERROR: cannot locate the unpacked mysql directory"
         return 40
-    }
-    mv "${unpacked}" "${MYSQL_BASE_DIR}"
+    fi
+    mv "${unpacked_directory}" "${MYSQL_BASE_DIR}"
 }
 
-ensure_tools() {
-    local os_id missing=0
-    command -v python3 >/dev/null 2>&1 || { log "ERROR: python3 is missing"; missing=1; }
+require_mysql_tools() {
+    local missing=0
+    local command_name
+
+    for command_name in python3 sysbench md5sum tar ldd sed; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            log "ERROR: required command is missing: ${command_name}"
+            missing=1
+        fi
+    done
     if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
         log "ERROR: curl or wget is required to fetch the tarball"
         missing=1
     fi
-    if ! command -v sysbench >/dev/null 2>&1; then
-        os_id="$(detect_os_id)"
-        log "installing sysbench (benchmark driver) and libaio"
-        case "${os_id}" in
-            ubuntu|debian)
-                apt-get update -qq
-                apt-get install -y -qq sysbench libaio1 2>/dev/null || apt-get install -y -qq sysbench libaio1t64 2>/dev/null || true
-                ;;
-            openeuler|centos|rhel|fedora|rocky|almalinux|anolis)
-                dnf install -y sysbench libaio 2>/dev/null || yum install -y sysbench libaio 2>/dev/null || true
-                ;;
-            *)
-                log "WARN: unsupported OS \"${os_id}\"; install sysbench manually"
-                ;;
-        esac
-    fi
-    command -v sysbench >/dev/null 2>&1 || { log "ERROR: sysbench is still missing"; missing=1; }
-    [[ "${missing}" -eq 0 ]]
-}
-
-read_mysqld_version() {
-    "${MYSQLD_BIN}" --version 2>/dev/null | sed -nE 's/.*Ver ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
-}
-
-resolve_mysqld_user() {
-    if has_root; then
-        printf 'root\n'
-    else
-        printf '%s\n' "$(id -un)"
+    if [[ "${missing}" -ne 0 ]]; then
+        log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
+        return 30
     fi
 }
 
-server_reachable() {
-    "${MYSQL_BIN}" -h"${MYSQL_HOST}" -P"${MYSQL_PORT}" -u"${MYSQL_DB_USER}" \
-        ${MYSQL_PASSWORD:+-p"${MYSQL_PASSWORD}"} -N -e "SELECT 1" >/dev/null 2>&1
+configure_benchmark_account() {
+    if [[ "${MYSQL_DB_USER}" == "root" ]]; then
+        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<'SQL'
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+SQL
+        return $?
+    fi
+
+    "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<SQL
+CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_DB_USER}'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+SQL
 }
 
 build_mysql() {
-    local tarball actual_version
+    local archive_path
+    local actual_version
+    local runner_architecture
+
     initialize_runtime || return $?
-    check_architecture || return $?
-    ensure_tools || return 30
-    [[ ! -e "${MYSQL_BASE_DIR}/bin/mysqld" ]] || {
+    runner_architecture="$(uname -m)"
+    if [[ "${runner_architecture}" != "${EXPECTED_ARCH}" ]]; then
+        log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
+        return 20
+    fi
+    require_mysql_tools || return $?
+    if [[ -e "${MYSQL_BASE_DIR}/bin/mysqld" ]]; then
         log "ERROR: build output is not clean under ${PERF_WORK_DIR}"
         return 20
-    }
+    fi
 
-    tarball="$(fetch_tarball)" || return 30
-    extract_tarball "${tarball}" || return 40
+    archive_path="$(fetch_mysql_archive)" || return $?
+    extract_mysql_archive "${archive_path}" || return $?
 
-    [[ -x "${MYSQLD_BIN}" && -x "${MYSQL_BIN}" ]] || {
+    if [[ ! -x "${MYSQLD_BIN}" || ! -x "${MYSQL_BIN}" ]]; then
         log "ERROR: mysqld/mysql binaries not found after extraction"
         return 40
-    }
-    actual_version="$(read_mysqld_version)"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+    fi
+    if ldd "${MYSQLD_BIN}" 2>&1 | grep -Eq 'libaio[^[:space:]]*[[:space:]]+=>[[:space:]]+not found'; then
+        log "ERROR: libaio runtime is missing; provision it on the dedicated runner before this workflow"
+        return 40
+    fi
+    actual_version="$("${MYSQLD_BIN}" --version 2>/dev/null | sed -nE 's/.*Ver ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
         log "ERROR: installed mysqld is ${actual_version}, expected ${SOFTWARE_VERSION}"
         return 40
-    }
+    fi
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
     log "mysqld ${actual_version} deployed from the official prebuilt tarball"
 }
 
 start_mysql_service() {
-    local mysqld_user attempt
+    local attempt
+    local mysqld_user
     initialize_runtime || return $?
-    [[ -x "${MYSQLD_BIN}" && -x "${MYSQL_BIN}" ]] || {
+    if [[ ! -x "${MYSQLD_BIN}" || ! -x "${MYSQL_BIN}" ]]; then
         log "ERROR: MySQL is not deployed (run build first)"
         return 40
-    }
-
-    if server_reachable; then
-        log "using the already running MySQL at ${MYSQL_HOST}:${MYSQL_PORT}"
-        MYSQL_EXTERNAL=1
-        return 0
     fi
 
-    mysqld_user="$(resolve_mysqld_user)"
+    if MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
+        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e "SELECT 1" \
+        >/dev/null 2>&1; then
+        log "ERROR: MySQL is already reachable on the task port ${MYSQL_HOST}:${MYSQL_PORT}"
+        log "ERROR: refusing to benchmark a pre-existing service"
+        return 20
+    fi
+
+    mysqld_user="$(id -un)"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        mysqld_user="root"
+    fi
     log "initializing a throwaway MySQL ${SOFTWARE_VERSION} instance under ${SERVICE_DIR}"
 
     rm -rf "${DATADIR}"
@@ -319,48 +335,41 @@ start_mysql_service() {
         fi
         sleep 1
     done
-    "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1 || {
+    if ! "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1; then
         log "ERROR: mysqld did not become ready (see ${ERR_LOG})"
         return 40
-    }
-
-    # Allow the benchmark client to connect over TCP with the configured account.
-    if [[ "${MYSQL_DB_USER}" == "root" ]]; then
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<'SQL' || return 40
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-SQL
-    else
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<SQL || return 40
-CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_DB_USER}'@'%' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-SQL
     fi
-
-    server_reachable || {
-        log "ERROR: benchmark account is not reachable over TCP"
+    configure_benchmark_account || {
+        log "ERROR: failed to configure benchmark account"
         return 40
     }
+
+    if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
+        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e "SELECT 1" \
+        >/dev/null 2>&1; then
+        log "ERROR: benchmark account is not reachable over TCP"
+        return 40
+    fi
     log "MySQL service is ready for benchmarking"
 }
 
 run_mysql_benchmarks() {
     initialize_runtime || return $?
-    server_reachable || {
+    if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
+        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e "SELECT 1" \
+        >/dev/null 2>&1; then
         log "ERROR: MySQL is not reachable on ${MYSQL_HOST}:${MYSQL_PORT}"
         return 50
-    }
-    export SOFTWARE_VERSION EXPECTED_ARCH
+    fi
+    export SOFTWARE_VERSION EXPECTED_ARCH MYSQL_CLIENT_BIN="${MYSQL_BIN}"
     log "running OLTP benchmark (sysbench)"
     python3 "${SCRIPT_DIR}/scripts/benchmark_mysql.py" \
-        "${RESULTS_DIR}/benchmark_mysql.json" \
+        "${RESULTS_DIR}/benchmark_mysql.json" "${RESULTS_DIR}/benchmark_mysql_raw.log" \
         "${MYSQL_HOST}" "${MYSQL_PORT}" "${MYSQL_DB_USER}" "${MYSQL_PASSWORD}" "${MYSQL_DB}" \
         "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" || return 50
     log "running micro benchmark (sysbench)"
     python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
-        "${RESULTS_DIR}/micro_benchmark.json" \
+        "${RESULTS_DIR}/micro_benchmark.json" "${RESULTS_DIR}/micro_benchmark_raw.log" \
         "${MYSQL_HOST}" "${MYSQL_PORT}" "${MYSQL_DB_USER}" "${MYSQL_PASSWORD}" \
         "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" || return 50
     python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
@@ -369,16 +378,13 @@ run_mysql_benchmarks() {
 
 stop_mysql_service() {
     local attempt
-    [[ "${MYSQL_EXTERNAL}" -eq 1 ]] && {
-        log "MySQL was pre-existing; leaving it running"
-        return 0
-    }
-    [[ -f "${SOCKET_PATH}" ]] || {
+    if [[ ! -f "${SOCKET_PATH}" ]]; then
         log "no managed MySQL socket; nothing to stop"
         return 0
-    }
-    "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1 || \
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -e "SHUTDOWN" >/dev/null 2>&1 || true
+    fi
+    if ! "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1; then
+        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SHUTDOWN" >/dev/null 2>&1 || true
+    fi
 
     for attempt in {1..20}; do
         if [[ -f "${PID_FILE}" ]] && ! kill -0 "$(cat "${PID_FILE}" 2>/dev/null)" 2>/dev/null; then
@@ -407,11 +413,11 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/mysql-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/mysql-perf" ]] || {
+    if [[ "${PERF_WORK_DIR}" != /tmp/mysql-perf/local-* || \
+          "${PERF_WORK_DIR}" == "/tmp/mysql-perf" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
-    }
+    fi
     if [[ -d "${PERF_WORK_DIR}" ]]; then
         rm -rf -- "${PERF_WORK_DIR}" || return 70
     fi
@@ -452,7 +458,7 @@ run_mysql_standalone() {
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_arch "${EXPECTED_ARCH}")" \
+                "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}"; then
                 :
             else
@@ -499,7 +505,7 @@ run_mysql_standalone() {
     if standalone_runtime finalize \
         "${RESULTS_DIR}" \
         "${SOFTWARE_VERSION}" \
-        "$(normalize_arch "${EXPECTED_ARCH}")" \
+        "${EXPECTED_ARCH}" \
         "${PERF_RUN_ID}" \
         "${command_status}" \
         "${cleanup_status}" \
@@ -509,8 +515,12 @@ run_mysql_standalone() {
         finalize_status=$?
     fi
     trap - EXIT
-    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
-    [[ "${cleanup_status}" == "passed" ]] || return 70
+    if [[ "${stage_status}" -ne 0 ]]; then
+        return "${stage_status}"
+    fi
+    if [[ "${cleanup_status}" != "passed" ]]; then
+        return 70
+    fi
     return "${finalize_status}"
 }
 
@@ -537,12 +547,18 @@ main() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             --version)
-                [[ "$#" -ge 2 ]] || { log "ERROR: --version requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --version requires a value"
+                    return 10
+                fi
                 SOFTWARE_VERSION="$2"
                 shift 2
                 ;;
             --results-dir)
-                [[ "$#" -ge 2 ]] || { log "ERROR: --results-dir requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --results-dir requires a value"
+                    return 10
+                fi
                 RESULTS_DIR="$2"
                 shift 2
                 ;;
