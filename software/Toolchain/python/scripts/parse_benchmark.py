@@ -84,6 +84,13 @@ def collect_values(entry: dict[str, Any], name: str) -> list[float]:
         if not isinstance(run, dict):
             raise TypeError(f"benchmark {name} has a malformed run entry")
         run_values = run.get("values")
+        # pyperformance writes an initial calibration record containing only
+        # warmups. It is not a measured run and must not contribute to the
+        # reported median.
+        if run_values is None and "values" not in run:
+            warmups = run.get("warmups")
+            if isinstance(warmups, list) and warmups:
+                continue
         if not isinstance(run_values, list) or not run_values:
             raise RuntimeError(f"benchmark {name} has a run without values")
         for value in run_values:
@@ -95,6 +102,8 @@ def collect_values(entry: dict[str, Any], name: str) -> list[float]:
             ):
                 raise RuntimeError(f"benchmark {name} has an invalid run value")
             values.append(float(value))
+    if not values:
+        raise RuntimeError(f"benchmark {name} has no measured values")
     return values
 
 
