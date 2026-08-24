@@ -12,7 +12,7 @@ DIRECTION_LABELS = {
     "neutral": "仅展示",
 }
 ARCHITECTURE_ORDER = ("x86_64", "aarch64")
-ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86"), ("aarch64", "aarch64"))
+ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86_64"), ("aarch64", "aarch64"))
 FIELD_LABELS = {
     "recorded_at": "构建信息记录时间",
     "requested_version": "请求软件版本",

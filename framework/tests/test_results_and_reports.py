@@ -557,7 +557,7 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "### 系统信息" in environment
     assert environment.count('<table width="1380">') == 2
     assert environment.count('<th width="180">项目</th>') == 2
-    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">x86_64</th>') == 2
     assert environment.count('<th width="600">aarch64</th>') == 2
     assert '<td width="180">CPU 型号</td>' in environment
     assert '<td width="600">Example CPU</td>' in environment
@@ -579,7 +579,7 @@ def test_single_report_includes_build_and_system_environment() -> None:
     assert markdown.count('<table width="1380">') == 3
     assert markdown.count('<th width="180">项目</th>') == 2
     assert markdown.count('<th width="1200">aarch64</th>') == 2
-    assert '<th width="1200">x86</th>' not in markdown
+    assert '<th width="1200">x86_64</th>' not in markdown
     assert "|---" not in markdown
     assert "实际软件版本" in markdown
     assert "Example CPU" in markdown
@@ -591,7 +591,7 @@ def test_single_report_includes_build_and_system_environment() -> None:
 
     x86_markdown = render_single(normalized_result("x86_64", 100, 20))
     assert x86_markdown.count('<table width="1380">') == 3
-    assert x86_markdown.count('<th width="1200">x86</th>') == 2
+    assert x86_markdown.count('<th width="1200">x86_64</th>') == 2
     assert '<th width="1200">aarch64</th>' not in x86_markdown
 
 
@@ -648,7 +648,7 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "#### 系统信息" in environment
     assert environment.count('<table width="1380">') == 2
     assert environment.count('<th width="180">项目</th>') == 2
-    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">x86_64</th>') == 2
     assert environment.count('<th width="600">aarch64</th>') == 2
     assert combined.count('<table width="1380">') == 6
     assert "|---" not in combined
