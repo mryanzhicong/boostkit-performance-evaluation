@@ -121,6 +121,7 @@ fetch_mysql_archive() {
     local archive_md5
     local archive_name
     local download_url
+    local local_archive_path
     local release_directory
 
     # Every supported artifact is declared with its official archive name and
@@ -143,10 +144,15 @@ fetch_mysql_archive() {
             ;;
     esac
 
-    archive_path="${PERF_WORK_DIR}/${archive_name}"
-    if [[ -s "${archive_path}" ]]; then
+    local_archive_path="/home/runner/software/mysql/${archive_name}"
+    if [[ -f "${local_archive_path}" ]]; then
+        archive_path="${local_archive_path}"
+        log "using local MySQL archive ${archive_path}" >&2
+    elif [[ -s "${PERF_WORK_DIR}/${archive_name}" ]]; then
+        archive_path="${PERF_WORK_DIR}/${archive_name}"
         log "using cached MySQL archive ${archive_path}" >&2
     else
+        archive_path="${PERF_WORK_DIR}/${archive_name}"
         download_url="https://dev.mysql.com/get/Downloads/${release_directory}/${archive_name}"
         log "downloading ${download_url}" >&2
         if command -v curl >/dev/null 2>&1; then
