@@ -105,6 +105,13 @@ initialize_runtime() {
         checksum="$(printf '%s' "${PERF_RUN_ID}" | cksum)"
         MYSQL_PORT="$((20000 + ${checksum%% *} % 20000))"
     fi
+    if [[ -z "${MYSQL_PASSWORD}" ]]; then
+        MYSQL_PASSWORD="boostkit-perf-${PERF_RUN_ID}"
+    fi
+    if [[ ! "${MYSQL_PASSWORD}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        log "ERROR: MYSQL_PASSWORD must use only letters, numbers, dots, underscores, or hyphens"
+        return 10
+    fi
     if [[ ! "${MYSQL_PORT}" =~ ^[0-9]+$ ]] || \
        (( MYSQL_PORT < 1024 || MYSQL_PORT > 65535 )); then
         log "ERROR: MYSQL_PORT must be an unprivileged TCP port: ${MYSQL_PORT}"
@@ -222,9 +229,12 @@ require_mysql_tools() {
 
 configure_benchmark_account() {
     if [[ "${MYSQL_DB_USER}" == "root" ]]; then
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<'SQL'
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<SQL
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+ALTER USER 'root'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+CREATE DATABASE IF NOT EXISTS sysbench;
 FLUSH PRIVILEGES;
 SQL
         return $?
@@ -233,6 +243,7 @@ SQL
     "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<SQL
 CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_DB_USER}'@'%' WITH GRANT OPTION;
+CREATE DATABASE IF NOT EXISTS sysbench;
 FLUSH PRIVILEGES;
 SQL
 }
@@ -393,12 +404,17 @@ run_mysql_benchmarks() {
         log "ERROR: database_blue only accepts a hostname or IP address: ${MYSQL_HOST}"
         return 50
     fi
+    if [[ "${MYSQL_DB_USER}" != "root" ]]; then
+        log "ERROR: database_blue Sysbench scripts require MYSQL_DB_USER=root"
+        return 50
+    fi
     mkdir -p "${report_directory}"
     suite_start_time="$(date +%s)"
     log "running the original database_blue Sysbench 1.0 suite"
     (
         cd "${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
         sed -i "s/^host=.*/host='${MYSQL_HOST}'/" runall.sh
+        sed -i "s/^password=.*/password='${MYSQL_PASSWORD}'/" runall.sh
         sed -i "s/-P 3306/-P ${MYSQL_PORT}/g" runall.sh
         sed -i \
             's/--mysql-host=${HOST}/--mysql-host=${HOST} --mysql-port=${PORT}/' \
@@ -423,18 +439,18 @@ stop_mysql_service() {
     if [[ ! -f "${SOCKET_PATH}" ]]; then
         log "no managed MySQL socket; nothing to stop"
     else
-        if ! "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1; then
-            "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SHUTDOWN" >/dev/null 2>&1 || true
+        if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1; then
+            MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SHUTDOWN" >/dev/null 2>&1 || true
         fi
 
         for attempt in {1..20}; do
             if [[ -f "${PID_FILE}" ]] && ! kill -0 "$(cat "${PID_FILE}" 2>/dev/null)" 2>/dev/null; then
                 break
             fi
-            "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1 || break
+            MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1 || break
             sleep 0.5
         done
-        if "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1; then
+        if MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1; then
             log "ERROR: MySQL is still reachable on socket ${SOCKET_PATH}"
             return 50
         fi
