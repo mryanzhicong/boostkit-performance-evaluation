@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from html import escape
 from xml.etree.ElementTree import Element, SubElement, tostring
 
@@ -51,6 +52,17 @@ CROSS_METRIC_COLUMN_WIDTHS = (160, 140, 340, 180, 160, 160, 240)
 COMPARISON_METRIC_COLUMN_WIDTHS = (380, 200, 180, 180, 220, 220)
 REPORT_METRIC_COLUMN_WIDTHS = (500, 280, 200, 400)
 TEST_TOOL_COLUMN_WIDTHS = (500, 880)
+SYSBENCH_METRIC_PATTERN = re.compile(
+    r"^sysbench (?P<scenario>.+) --threads=(?P<threads>\d+): (?P<field>TPS|QPS|transactions)$"
+)
+SYSBENCH_FIELDS = ("TPS", "QPS", "transactions")
+SYSBENCH_FIELD_UNITS = {
+    "TPS": "transactions/s",
+    "QPS": "queries/s",
+    "transactions": "transactions",
+}
+SYSBENCH_SINGLE_COLUMN_WIDTHS = (180, 400, 400, 400)
+SYSBENCH_COMPARISON_COLUMN_WIDTHS = (150, 300, 190, 190, 190, 360)
 
 
 def direction_label(direction: object) -> str:
@@ -206,6 +218,84 @@ def _test_tools_section(test_tools: object, heading_level: int) -> list[str]:
     return lines
 
 
+def _sysbench_metric_groups(
+    metrics: dict,
+    metric_names: list[str],
+) -> tuple[dict[str, dict[int, dict[str, dict]]], list[str]]:
+    """Separate database_blue Sysbench metrics by workload and thread count."""
+    groups: dict[str, dict[int, dict[str, dict]]] = {}
+    other_names: list[str] = []
+    for name in metric_names:
+        metric = metrics.get(name)
+        if not isinstance(metric, dict):
+            other_names.append(name)
+            continue
+        match = SYSBENCH_METRIC_PATTERN.fullmatch(name)
+        if match is None:
+            other_names.append(name)
+            continue
+        scenario = match.group("scenario")
+        threads = int(match.group("threads"))
+        field = match.group("field")
+        groups.setdefault(scenario, {}).setdefault(threads, {})[field] = metric
+    return groups, other_names
+
+
+def _sysbench_single_tables(
+    groups: dict[str, dict[int, dict[str, dict]]],
+    heading_level: int,
+) -> list[str]:
+    lines: list[str] = []
+    headers = (
+        "线程数",
+        *(f"{field}（{SYSBENCH_FIELD_UNITS[field]}）" for field in SYSBENCH_FIELDS),
+    )
+    for scenario, by_threads in groups.items():
+        lines.extend([f"{'#' * heading_level} {scenario}", ""])
+        rows = []
+        for threads in sorted(by_threads):
+            rows.append([
+                threads,
+                *(
+                    by_threads[threads].get(field, {}).get("value")
+                    for field in SYSBENCH_FIELDS
+                ),
+            ])
+        lines.extend(_fixed_width_table(headers, rows, SYSBENCH_SINGLE_COLUMN_WIDTHS))
+        lines.extend(["> TPS、QPS 和 transactions 均为越大越好。", ""])
+    return lines
+
+
+def _sysbench_comparison_tables(
+    groups: dict[str, dict[int, dict[str, dict]]],
+    heading_level: int,
+) -> list[str]:
+    lines: list[str] = []
+    for scenario, by_threads in groups.items():
+        lines.extend([f"{'#' * heading_level} {scenario}", ""])
+        rows = []
+        for threads in sorted(by_threads):
+            for field in SYSBENCH_FIELDS:
+                metric = by_threads[threads].get(field, {})
+                relative = metric.get("relative_performance")
+                rows.append([
+                    threads,
+                    f"{field}（{SYSBENCH_FIELD_UNITS[field]}）",
+                    direction_label(metric.get("direction")),
+                    metric.get("x86_64"),
+                    metric.get("aarch64"),
+                    relative if relative is not None else "N/A",
+                ])
+        lines.extend(
+            _fixed_width_table(
+                ("线程数", "指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
+                rows,
+                SYSBENCH_COMPARISON_COLUMN_WIDTHS,
+            )
+        )
+    return lines
+
+
 def render_single(data: dict) -> str:
     lines = [
         f"# {data.get('software')} {data.get('version')} 性能报告",
@@ -230,8 +320,15 @@ def render_single(data: dict) -> str:
     )
     lines.extend(_test_tools_section(data.get("test_tools"), heading_level=3))
     lines.extend(["## 性能指标", ""])
+    metrics = data.get("metrics", {})
+    sysbench_groups, other_names = _sysbench_metric_groups(metrics, list(metrics))
+    if sysbench_groups:
+        lines.extend(_sysbench_single_tables(sysbench_groups, heading_level=3))
+    if not other_names:
+        return "\n".join(lines)
     metric_rows: list[list[object]] = []
-    for name, metric in data.get("metrics", {}).items():
+    for name in other_names:
+        metric = metrics[name]
         value = metric.get("value")
         metric_rows.append([
             name,
@@ -251,8 +348,13 @@ def render_single(data: dict) -> str:
 
 def render_comparison(comparison: dict) -> str:
     lines = [f"# {comparison['software']} {comparison['version']} 跨架构对比", ""]
+    metrics = comparison.get("metrics", {})
+    sysbench_groups, other_names = _sysbench_metric_groups(metrics, list(metrics))
+    if sysbench_groups:
+        lines.extend(_sysbench_comparison_tables(sysbench_groups, heading_level=2))
     metric_rows: list[list[object]] = []
-    for name, metric in comparison.get("metrics", {}).items():
+    for name in other_names:
+        metric = metrics[name]
         raw = metric.get("raw_ratio")
         relative = metric.get("relative_performance")
         metric_rows.append([
@@ -263,17 +365,19 @@ def render_comparison(comparison: dict) -> str:
             raw if raw is not None else "N/A",
             relative if relative is not None else "N/A",
         ])
-    lines.extend(
-        _fixed_width_table(
-            ("指标", "优化方向", "x86_64", "aarch64", "ARM/x86 原始比值", "相对性能"),
-            metric_rows,
-            COMPARISON_METRIC_COLUMN_WIDTHS,
+    if metric_rows:
+        lines.extend(
+            _fixed_width_table(
+                ("指标", "优化方向", "x86_64", "aarch64", "ARM/x86 原始比值", "相对性能"),
+                metric_rows,
+                COMPARISON_METRIC_COLUMN_WIDTHS,
+            )
         )
-    )
-    lines.extend([
-        "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
-        "",
-    ])
+    if sysbench_groups or metric_rows:
+        lines.extend([
+            "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
+            "",
+        ])
     environments = comparison.get("environments", {})
     if isinstance(environments, dict) and environments:
         lines.extend(["## 测试环境", ""])
@@ -371,7 +475,14 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
                 key=_result_key,
             )
             for item in architecture_items:
-                for name in _metric_names(item, comparison_orders):
+                metric_names = _metric_names(item, comparison_orders)
+                sysbench_groups, other_names = _sysbench_metric_groups(
+                    item["metrics"], metric_names
+                )
+                if sysbench_groups:
+                    lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
+                    lines.extend(_sysbench_single_tables(sysbench_groups, heading_level=5))
+                for name in other_names:
                     metric = item["metrics"][name]
                     metric_rows.append([
                         item.get("software"),
@@ -381,18 +492,25 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
                         metric.get("unit", ""),
                         direction_label(metric.get("direction")),
                     ])
-            lines.extend(
-                _fixed_width_table(
-                    ("软件", "版本", "指标", "数值", "单位", "优化方向"),
-                    metric_rows,
-                    SINGLE_METRIC_COLUMN_WIDTHS,
+            if metric_rows:
+                lines.extend(
+                    _fixed_width_table(
+                        ("软件", "版本", "指标", "数值", "单位", "优化方向"),
+                        metric_rows,
+                        SINGLE_METRIC_COLUMN_WIDTHS,
+                    )
                 )
-            )
     if comparisons:
         lines.extend(["## 跨架构指标", ""])
         comparison_rows: list[list[object]] = []
         for comparison in comparisons:
-            for name, metric in comparison.get("metrics", {}).items():
+            metrics = comparison.get("metrics", {})
+            sysbench_groups, other_names = _sysbench_metric_groups(metrics, list(metrics))
+            if sysbench_groups:
+                lines.extend([f"### {comparison.get('software')} {comparison.get('version')}", ""])
+                lines.extend(_sysbench_comparison_tables(sysbench_groups, heading_level=4))
+            for name in other_names:
+                metric = metrics[name]
                 relative = metric.get("relative_performance")
                 comparison_rows.append([
                     comparison.get("software"),
@@ -403,17 +521,22 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
                     metric.get("aarch64"),
                     relative if relative is not None else "N/A",
                 ])
-        lines.extend(
-            _fixed_width_table(
-                ("软件", "版本", "指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
-                comparison_rows,
-                CROSS_METRIC_COLUMN_WIDTHS,
+        if comparison_rows:
+            lines.extend(
+                _fixed_width_table(
+                    ("软件", "版本", "指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
+                    comparison_rows,
+                    CROSS_METRIC_COLUMN_WIDTHS,
+                )
             )
-        )
-        lines.extend([
-            "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已经反向换算。",
-            "",
-        ])
+        if comparison_rows or any(
+            _sysbench_metric_groups(comparison.get("metrics", {}), list(comparison.get("metrics", {})))[0]
+            for comparison in comparisons
+        ):
+            lines.extend([
+                "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已经反向换算。",
+                "",
+            ])
     return "\n".join(lines)
 
 

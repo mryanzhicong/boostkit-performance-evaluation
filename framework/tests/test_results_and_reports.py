@@ -61,6 +61,27 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
     }
 
 
+def sysbench_result(architecture: str, factor: float) -> dict:
+    result = normalized_result(architecture, 100 * factor, 20 * factor)
+    result.update({"category": "Database", "software": "mysql", "version": "8.0.46"})
+    metrics = {}
+    for scenario, base in (("sum", 1000), ("delete", 2000)):
+        for threads in (128, 256):
+            for field, unit, multiplier in (
+                ("TPS", "transactions/s", 1),
+                ("QPS", "queries/s", 2),
+                ("transactions", "transactions", 60),
+            ):
+                name = f"sysbench {scenario} --threads={threads}: {field}"
+                metrics[name] = {
+                    "value": base * threads * multiplier * factor,
+                    "unit": unit,
+                    "direction": "higher_is_better",
+                }
+    result["metrics"] = metrics
+    return result
+
+
 def record_requested_build(context: RunContext) -> dict:
     context.work_dir.mkdir(parents=True, exist_ok=True)
     actual_version_path(context).write_text(f"{context.version}\n", encoding="utf-8")
@@ -698,6 +719,33 @@ def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Pa
     assert "### x86_64" not in combined
     assert "120" in combined
     assert "越大越好" in combined
+
+
+def test_sysbench_reports_group_metrics_by_workload_then_threads(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    atomic_write_json(
+        input_root / "x86" / "normalized_result.json",
+        sysbench_result("x86_64", 1),
+    )
+    atomic_write_json(
+        input_root / "arm" / "normalized_result.json",
+        sysbench_result("aarch64", 1.1),
+    )
+    generate(input_root, tmp_path / "report")
+
+    combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
+    x86_metrics = combined.split("### x86_64", 1)[1].split("### aarch64", 1)[0]
+    sum_section = x86_metrics.split("##### sum", 1)[1].split("##### delete", 1)[0]
+    assert '<td width="180">128</td>' in sum_section
+    assert '<td width="180">256</td>' in sum_section
+    assert sum_section.index('<td width="180">128</td>') < sum_section.index(
+        '<td width="180">256</td>'
+    )
+    assert "sysbench sum --threads=128: TPS" not in sum_section
+
+    cross_architecture = combined.split("## 跨架构指标", 1)[1]
+    assert cross_architecture.index("#### sum") < cross_architecture.index("#### delete")
+    assert "线程数" in cross_architecture
 
 
 def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
