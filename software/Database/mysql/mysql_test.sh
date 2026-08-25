@@ -31,6 +31,7 @@ MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 MYSQL_PORT="${MYSQL_PORT:-}"
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
+MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-/home/runner/software/mysql/data}"
 
 # Fixed source for the original database_blue client test scripts.
 DATABASE_BLUE_REPOSITORY="${DATABASE_BLUE_REPOSITORY:-https://gitcode.com/mwx5319395/database_blue.git}"
@@ -46,6 +47,7 @@ DATADIR=""
 SOCKET_PATH=""
 PID_FILE=""
 ERR_LOG=""
+MYSQL_TMP_DIR=""
 
 log() {
     printf '[mysql] %s\n' "$*"
@@ -84,11 +86,12 @@ configure_runtime_paths() {
     MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
     MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
     MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
-    SERVICE_DIR="${PERF_WORK_DIR}/mysql-service"
+    SERVICE_DIR="${MYSQL_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
     DATADIR="${SERVICE_DIR}/data"
     SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
     PID_FILE="${SERVICE_DIR}/mysql.pid"
     ERR_LOG="${SERVICE_DIR}/mysql.err"
+    MYSQL_TMP_DIR="${SERVICE_DIR}/tmp"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE
 }
@@ -112,7 +115,7 @@ initialize_runtime() {
         log "ERROR: MYSQL_PORT must be an unprivileged TCP port: ${MYSQL_PORT}"
         return 10
     fi
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${MYSQL_TMP_DIR}"
 }
 
 fetch_mysql_archive() {
@@ -295,10 +298,10 @@ start_mysql_service() {
     fi
     log "initializing a throwaway MySQL ${SOFTWARE_VERSION} instance under ${SERVICE_DIR}"
 
-    rm -rf "${DATADIR}"
-    mkdir -p "${DATADIR}"
+    rm -rf "${DATADIR}" "${MYSQL_TMP_DIR}"
+    mkdir -p "${DATADIR}" "${MYSQL_TMP_DIR}"
 
-    "${MYSQLD_BIN}" --initialize-insecure \
+    "${MYSQLD_BIN}" --no-defaults --initialize-insecure \
         --basedir="${MYSQL_BASE_DIR}" \
         --datadir="${DATADIR}" \
         --user="${mysqld_user}" \
@@ -307,9 +310,10 @@ start_mysql_service() {
         return 40
     }
 
-    "${MYSQLD_BIN}" --daemonize \
+    "${MYSQLD_BIN}" --no-defaults --daemonize \
         --basedir="${MYSQL_BASE_DIR}" \
         --datadir="${DATADIR}" \
+        --tmpdir="${MYSQL_TMP_DIR}" \
         --user="${mysqld_user}" \
         --socket="${SOCKET_PATH}" \
         --pid-file="${PID_FILE}" \
@@ -450,6 +454,8 @@ stop_mysql_service() {
         log "ERROR: failed to remove database_blue tool links"
         return 50
     fi
+    rm -rf "${SERVICE_DIR}"
+    log "MySQL runtime data removed from ${SERVICE_DIR}"
 }
 
 standalone_runtime() {
@@ -591,7 +597,7 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, MYSQL_DATA_ROOT
 USAGE
 }
 
