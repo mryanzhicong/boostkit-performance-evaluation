@@ -1,0 +1,41 @@
+name: glibc
+category: Toolchain
+enabled: true
+versions:
+  - "2.43"
+  - "2.44"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: glibc_test.sh
+      function: build_glibc
+    start:
+      script: glibc_test.sh
+      function: start_glibc_runtime
+    test:
+      script: glibc_test.sh
+      function: run_glibc_benchmarks
+    stop:
+      script: glibc_test.sh
+      function: stop_glibc_runtime
+  timeout_minutes: 180
+outputs:
+  official_benchmark:
+    path: benchmark_bench.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_glibc.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: ns
+    direction: lower_is_better
