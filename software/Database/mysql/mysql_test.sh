@@ -213,7 +213,7 @@ extract_mysql_archive() {
 require_mysql_tools() {
     local command_name
 
-    for command_name in md5sum tar ldd sed; do
+    for command_name in md5sum tar ldd sed tee; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required command is missing: ${command_name}"
             log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
@@ -411,7 +411,7 @@ run_mysql_benchmarks() {
     mkdir -p "${report_directory}"
     suite_start_time="$(date +%s)"
     log "running the original database_blue Sysbench 1.0 suite"
-    (
+    if ! (
         cd "${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
         sed -i "s/^host=.*/host='${MYSQL_HOST}'/" runall.sh
         sed -i "s/^password=.*/password='${MYSQL_PASSWORD}'/" runall.sh
@@ -424,10 +424,10 @@ run_mysql_benchmarks() {
             -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" \
             -u "${MYSQL_DB_USER}" -p "${MYSQL_PASSWORD}"
         bash runall.sh
-    ) >"${raw_output}" 2>&1 || {
+    ) 2>&1 | tee "${raw_output}"; then
         log "ERROR: database_blue Sysbench suite failed (see ${raw_output})"
         return 50
-    }
+    fi
     python3 "${SCRIPT_DIR}/scripts/collect_database_blue_sysbench.py" \
         "${report_directory}" "${suite_start_time}" "${RESULTS_DIR}/results.json" || return 50
     log "database_blue Sysbench suite completed"
