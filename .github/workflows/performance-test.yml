@@ -94,6 +94,10 @@ jobs:
       # x86_64 runner is overseas and accesses GitHub directly; the domestic
       # aarch64 runner uses the internal GitHub download proxy.
       PERF_GITHUB_DOWNLOAD_PROXY: ${{ matrix.arch == 'aarch64' && 'https://gh-proxy.test.osinfra.cn' || '' }}
+      # Do not inherit a runner-level url.*.insteadOf rule that rewrites
+      # github.com to a download proxy. actions/checkout authenticates against
+      # github.com with its token, which a URL-rewritten proxy cannot use.
+      GIT_CONFIG_GLOBAL: ${{ runner.temp }}/boostkit-performance-${{ github.run_id }}-${{ github.run_attempt }}.gitconfig
     steps:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
