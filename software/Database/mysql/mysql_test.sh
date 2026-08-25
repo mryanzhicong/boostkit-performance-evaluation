@@ -410,7 +410,9 @@ run_mysql_benchmarks() {
         bash prepare.sh \
             -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" \
             -u "${MYSQL_DB_USER}" -p "${MYSQL_PASSWORD}"
-        bash runall.sh
+        if ! bash runall.sh; then
+            log "WARN: database_blue runall.sh could not archive its optional normal_data.log"
+        fi
     ) 2>&1 | tee "${raw_output}"; then
         log "ERROR: database_blue Sysbench suite failed (see ${raw_output})"
         return 50
