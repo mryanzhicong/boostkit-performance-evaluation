@@ -4,12 +4,12 @@
 # The software under test is fetched from the official MySQL 8.0 "Linux -
 # Generic" prebuilt tarball and unpacked into a per-version directory — the
 # distribution package manager only ships one version and cannot switch between
-# 8.0.x releases. sysbench, the benchmark *driver* (not the software under
-# test), must be pre-provisioned on the dedicated runner.
+# 8.0.x releases.  The database_blue Sysbench driver is built in this case's
+# isolated work directory during the test stage.
 #
 # The four framework stages map to: fetch+verify the tarball (build), launch a
-# throwaway instance from it (start), run the configured sysbench OLTP + micro
-# benchmarks (test), and tear that instance down (stop).
+# throwaway instance from it (start), run the original database_blue Sysbench
+# suite (test), and tear that instance down (stop).
 
 set -euo pipefail
 
@@ -31,13 +31,10 @@ MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 MYSQL_PORT="${MYSQL_PORT:-}"
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
-MYSQL_DB="${MYSQL_DB:-sbtest}"
 
-# Benchmark parameters.
-TABLES="${TABLES:-4}"
-TABLE_SIZE="${TABLE_SIZE:-10000}"
-TIME_PER_TEST="${TIME_PER_TEST:-60}"
-ITERATIONS="${ITERATIONS:-1}"
+# Fixed source for the original database_blue client test scripts.
+DATABASE_BLUE_REPOSITORY="${DATABASE_BLUE_REPOSITORY:-https://gitcode.com/mwx5319395/database_blue.git}"
+DATABASE_BLUE_COMMIT="${DATABASE_BLUE_COMMIT:-af4759227538961f0b0bed5ffc25434d65e7456b}"
 
 # Prebuilt tarball source. Set MYSQL_SOURCE_BASE to a (faster) mirror to try it
 # first; the official MySQL CDN/archives is always consulted as a fallback, so an
@@ -54,6 +51,7 @@ DATADIR=""
 SOCKET_PATH=""
 PID_FILE=""
 ERR_LOG=""
+
 log() {
     printf '[mysql] %s\n' "$*"
 }
@@ -206,20 +204,17 @@ extract_mysql_archive() {
 }
 
 require_mysql_tools() {
-    local missing=0
     local command_name
 
-    for command_name in python3 sysbench md5sum tar ldd sed; do
+    for command_name in md5sum tar ldd sed; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required command is missing: ${command_name}"
-            missing=1
+            log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
+            return 30
         fi
     done
     if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
         log "ERROR: curl or wget is required to fetch the tarball"
-        missing=1
-    fi
-    if [[ "${missing}" -ne 0 ]]; then
         log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
         return 30
     fi
@@ -354,6 +349,11 @@ start_mysql_service() {
 }
 
 run_mysql_benchmarks() {
+    local database_blue_dir
+    local raw_output
+    local report_directory
+    local suite_start_time
+
     initialize_runtime || return $?
     if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
         "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e "SELECT 1" \
@@ -361,43 +361,86 @@ run_mysql_benchmarks() {
         log "ERROR: MySQL is not reachable on ${MYSQL_HOST}:${MYSQL_PORT}"
         return 50
     fi
-    export SOFTWARE_VERSION EXPECTED_ARCH MYSQL_CLIENT_BIN="${MYSQL_BIN}"
-    log "running OLTP benchmark (sysbench)"
-    python3 "${SCRIPT_DIR}/scripts/benchmark_mysql.py" \
-        "${RESULTS_DIR}/benchmark_mysql.json" "${RESULTS_DIR}/benchmark_mysql_raw.log" \
-        "${MYSQL_HOST}" "${MYSQL_PORT}" "${MYSQL_DB_USER}" "${MYSQL_PASSWORD}" "${MYSQL_DB}" \
-        "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" || return 50
-    log "running micro benchmark (sysbench)"
-    python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
-        "${RESULTS_DIR}/micro_benchmark.json" "${RESULTS_DIR}/micro_benchmark_raw.log" \
-        "${MYSQL_HOST}" "${MYSQL_PORT}" "${MYSQL_DB_USER}" "${MYSQL_PASSWORD}" \
-        "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" || return 50
-    python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
-        "${RESULTS_DIR}" "${RESULTS_DIR}/results.json" || return 50
+    if ! command -v git >/dev/null 2>&1; then
+        log "ERROR: git is required to retrieve database_blue"
+        return 50
+    fi
+    if ! command -v python3 >/dev/null 2>&1; then
+        log "ERROR: python3 is required to collect database_blue results"
+        return 50
+    fi
+    database_blue_dir="${PERF_WORK_DIR}/database_blue"
+    raw_output="${RESULTS_DIR}/database_blue_sysbench_raw.log"
+    report_directory="/home/automation/client/report/sysbench"
+    rm -rf "${database_blue_dir}"
+    log "cloning database_blue at ${DATABASE_BLUE_COMMIT}"
+    if ! git clone --quiet "${DATABASE_BLUE_REPOSITORY}" "${database_blue_dir}"; then
+        log "ERROR: failed to clone database_blue from ${DATABASE_BLUE_REPOSITORY}"
+        return 50
+    fi
+    if ! git -C "${database_blue_dir}" checkout --quiet --detach "${DATABASE_BLUE_COMMIT}"; then
+        log "ERROR: database_blue commit is unavailable: ${DATABASE_BLUE_COMMIT}"
+        return 50
+    fi
+    if ! bash "${SCRIPT_DIR}/scripts/prepare_database_blue_tools.sh" \
+        "${PERF_WORK_DIR}/database-blue-tools" \
+        "${MYSQL_BASE_DIR}/bin/mysql_config"; then
+        log "ERROR: failed to prepare database_blue Sysbench tools"
+        return 50
+    fi
+
+    if [[ ! "${MYSQL_HOST}" =~ ^[A-Za-z0-9._:-]+$ ]]; then
+        log "ERROR: database_blue only accepts a hostname or IP address: ${MYSQL_HOST}"
+        return 50
+    fi
+    mkdir -p "${report_directory}"
+    suite_start_time="$(date +%s)"
+    log "running the original database_blue Sysbench 1.0 suite"
+    (
+        cd "${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
+        sed -i "s/^host=.*/host='${MYSQL_HOST}'/" runall.sh
+        sed -i "s/-P 3306/-P ${MYSQL_PORT}/g" runall.sh
+        bash prepare.sh \
+            -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" \
+            -u "${MYSQL_DB_USER}" -p "${MYSQL_PASSWORD}"
+        bash runall.sh
+    ) >"${raw_output}" 2>&1 || {
+        log "ERROR: database_blue Sysbench suite failed (see ${raw_output})"
+        return 50
+    }
+    python3 "${SCRIPT_DIR}/scripts/collect_database_blue_sysbench.py" \
+        "${report_directory}" "${suite_start_time}" "${RESULTS_DIR}/results.json" || return 50
+    log "database_blue Sysbench suite completed"
 }
 
 stop_mysql_service() {
     local attempt
+    initialize_runtime || return $?
     if [[ ! -f "${SOCKET_PATH}" ]]; then
         log "no managed MySQL socket; nothing to stop"
-        return 0
-    fi
-    if ! "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1; then
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SHUTDOWN" >/dev/null 2>&1 || true
-    fi
-
-    for attempt in {1..20}; do
-        if [[ -f "${PID_FILE}" ]] && ! kill -0 "$(cat "${PID_FILE}" 2>/dev/null)" 2>/dev/null; then
-            break
+    else
+        if ! "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root shutdown >/dev/null 2>&1; then
+            "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SHUTDOWN" >/dev/null 2>&1 || true
         fi
-        "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1 || break
-        sleep 0.5
-    done
-    if "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1; then
-        log "ERROR: MySQL is still reachable on socket ${SOCKET_PATH}"
+
+        for attempt in {1..20}; do
+            if [[ -f "${PID_FILE}" ]] && ! kill -0 "$(cat "${PID_FILE}" 2>/dev/null)" 2>/dev/null; then
+                break
+            fi
+            "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1 || break
+            sleep 0.5
+        done
+        if "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N -e "SELECT 1" >/dev/null 2>&1; then
+            log "ERROR: MySQL is still reachable on socket ${SOCKET_PATH}"
+            return 50
+        fi
+        log "MySQL service stopped"
+    fi
+    if ! bash "${SCRIPT_DIR}/scripts/prepare_database_blue_tools.sh" \
+        --cleanup "${PERF_WORK_DIR}/database-blue-tools"; then
+        log "ERROR: failed to remove database_blue tool links"
         return 50
     fi
-    log "MySQL service stopped"
 }
 
 standalone_runtime() {

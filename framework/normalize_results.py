@@ -205,6 +205,7 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "build_info": load_build_info(context),
         "parameters": parameters,
         "parameter_signature": parameter_signature(context, parameters),
+        "test_tools": context.case.get("test_tools", {}),
         "system_info": load_json(context.output_dir / "system_info.json", {}),
         "runtime_before": load_json(context.output_dir / "runtime_before.json", {}),
         "runtime_after": load_json(context.output_dir / "runtime_after.json", {}),

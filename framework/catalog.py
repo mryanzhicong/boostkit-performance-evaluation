@@ -136,6 +136,36 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     elif len(versions) != len(set(versions)):
         errors.append("versions must not contain duplicates")
 
+    test_tools = case.get("test_tools")
+    if test_tools is not None:
+        if not isinstance(test_tools, dict) or not test_tools:
+            errors.append("test_tools must be a non-empty mapping when declared")
+        else:
+            for tool_name, definition in test_tools.items():
+                if not isinstance(tool_name, str) or not tool_name:
+                    errors.append("test_tools names must be non-empty strings")
+                    continue
+                if not isinstance(definition, dict):
+                    errors.append(f"test_tools.{tool_name} must be a mapping")
+                    continue
+                unknown_fields = set(definition) - {"version", "revision"}
+                if unknown_fields:
+                    errors.append(
+                        f"test_tools.{tool_name} contains unsupported fields: "
+                        f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                    )
+                if not isinstance(definition.get("version"), str) or not definition["version"]:
+                    errors.append(
+                        f"test_tools.{tool_name}.version must be a non-empty string"
+                    )
+                revision = definition.get("revision")
+                if revision is not None and (
+                    not isinstance(revision, str) or not revision
+                ):
+                    errors.append(
+                        f"test_tools.{tool_name}.revision must be a non-empty string"
+                    )
+
     execution = case.get("execution")
     if not isinstance(execution, dict):
         errors.append("execution must be a mapping")

@@ -28,6 +28,8 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         raise ValueError("resolved workload parameters differ")
     if x86.get("parameter_signature") != arm.get("parameter_signature"):
         raise ValueError("parameter signatures differ")
+    if x86.get("test_tools", {}) != arm.get("test_tools", {}):
+        raise ValueError("test tools differ between architectures")
     x_metrics = x86.get("metrics", {})
     a_metrics = arm.get("metrics", {})
     if not isinstance(x_metrics, dict) or not isinstance(a_metrics, dict) or not x_metrics:
@@ -82,6 +84,7 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         "software": arm["software"],
         "version": arm["version"],
         "parameter_signature": arm.get("parameter_signature"),
+        "test_tools": arm.get("test_tools", {}),
         "environments": {
             architecture: {
                 field: result.get(field, {})
@@ -112,6 +115,7 @@ def build_summary(results: list[dict], comparisons: list[dict]) -> dict:
             "system_info": result.get("system_info", {}),
             "runtime_before": result.get("runtime_before", {}),
             "runtime_after": result.get("runtime_after", {}),
+            "test_tools": result.get("test_tools", {}),
             "metrics": result.get("metrics", {}),
         }
         for result in results

@@ -50,6 +50,7 @@ SINGLE_METRIC_COLUMN_WIDTHS = (180, 160, 420, 200, 160, 260)
 CROSS_METRIC_COLUMN_WIDTHS = (160, 140, 340, 180, 160, 160, 240)
 COMPARISON_METRIC_COLUMN_WIDTHS = (380, 200, 180, 180, 220, 220)
 REPORT_METRIC_COLUMN_WIDTHS = (500, 280, 200, 400)
+TEST_TOOL_COLUMN_WIDTHS = (500, 880)
 
 
 def direction_label(direction: object) -> str:
@@ -180,6 +181,31 @@ def _environment_tables(
     return lines
 
 
+def _test_tools_section(test_tools: object, heading_level: int) -> list[str]:
+    if not isinstance(test_tools, dict) or not test_tools:
+        return []
+    rows: list[list[object]] = []
+    for name, definition in test_tools.items():
+        if not isinstance(definition, dict):
+            continue
+        version = definition.get("version")
+        revision = definition.get("revision")
+        if isinstance(revision, str) and revision:
+            version = f"{version} ({revision})"
+        rows.append([name, version])
+    if not rows:
+        return []
+    lines = [f"{'#' * heading_level} 测试工具", ""]
+    lines.extend(
+        _fixed_width_table(
+            ("工具", "版本"),
+            rows,
+            TEST_TOOL_COLUMN_WIDTHS,
+        )
+    )
+    return lines
+
+
 def render_single(data: dict) -> str:
     lines = [
         f"# {data.get('software')} {data.get('version')} 性能报告",
@@ -202,6 +228,7 @@ def render_single(data: dict) -> str:
             ),),
         )
     )
+    lines.extend(_test_tools_section(data.get("test_tools"), heading_level=3))
     lines.extend(["## 性能指标", ""])
     metric_rows: list[list[object]] = []
     for name, metric in data.get("metrics", {}).items():
@@ -251,6 +278,7 @@ def render_comparison(comparison: dict) -> str:
     if isinstance(environments, dict) and environments:
         lines.extend(["## 测试环境", ""])
         lines.extend(_environment_tables(environments))
+    lines.extend(_test_tools_section(comparison.get("test_tools"), heading_level=3))
     return "\n".join(lines)
 
 
@@ -316,6 +344,11 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
         for (_category, software, version), environments in grouped_environments.items():
             lines.extend([f"### {software} {version}", ""])
             lines.extend(_environment_tables(environments, heading_level=4))
+            for environment in environments.values():
+                test_tools = environment.get("test_tools")
+                if isinstance(test_tools, dict) and test_tools:
+                    lines.extend(_test_tools_section(test_tools, heading_level=4))
+                    break
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
     if metric_items:
         comparison_orders = {

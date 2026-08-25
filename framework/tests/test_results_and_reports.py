@@ -595,6 +595,25 @@ def test_single_report_includes_build_and_system_environment() -> None:
     assert '<th width="1200">aarch64</th>' not in x86_markdown
 
 
+def test_report_lists_shared_test_tools_once() -> None:
+    x86 = normalized_result("x86_64", 100, 20)
+    arm = normalized_result("aarch64", 120, 10)
+    tools = {
+        "database_blue": {"version": "af475922"},
+        "sysbench": {"version": "1.0.17", "revision": "d634bce"},
+    }
+    x86["test_tools"] = tools
+    arm["test_tools"] = tools
+
+    comparison = compare_pair(x86, arm)
+    markdown = render_comparison(comparison)
+    environment = markdown.split("## 测试环境", 1)[1]
+    assert "### 测试工具" in environment
+    assert "database_blue" in environment
+    assert "1.0.17 (d634bce)" in environment
+    assert environment.count('<table width="1380">') == 3
+
+
 def test_comparison_rejects_incompatible_metric_contracts() -> None:
     import pytest
 
