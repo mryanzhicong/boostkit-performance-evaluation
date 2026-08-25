@@ -7,12 +7,12 @@ on:
       software:
         description: "Software name, comma-separated names, or all"
         required: true
-        default: protobuf
+        default: mysql
         type: string
       version:
         description: "Version, comma-separated versions, or all"
         required: true
-        default: 35.1
+        default: 8.0.46
         type: string
       architecture:
         description: "Target architecture; all runs both architectures"
@@ -91,11 +91,24 @@ jobs:
       PERF_WORK_ROOT: /tmp/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
-      PERF_GITHUB_DOWNLOAD_PROXY: https://gh-proxy.test.osinfra.cn
+      # x86_64 runner is overseas and accesses GitHub directly; the domestic
+      # aarch64 runner uses the internal GitHub download proxy.
+      PERF_GITHUB_DOWNLOAD_PROXY: ${{ matrix.arch == 'aarch64' && 'https://gh-proxy.test.osinfra.cn' || '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
+      - name: Install MySQL Sysbench build dependencies
+        if: matrix.software == 'mysql'
+        shell: bash
+        run: |
+          sudo dnf install -y \
+            autoconf \
+            automake \
+            libtool \
+            pkgconf-pkg-config \
+            libaio-devel \
+            openssl-devel
       - name: Install framework runtime dependencies from Huawei mirror
         shell: bash
         run: |

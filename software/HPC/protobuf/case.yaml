@@ -6,8 +6,10 @@ versions:
 execution:
   type: shell-functions
   environment:
-    NUM_MESSAGES: 10000
-    ITERATIONS: 1
+    NUM_MESSAGES: 200000
+    ITERATIONS: 5
+    MESSAGE_SIZE: 100
+    THREAD_COUNTS: 1,2,4,8
     PROTOBUF_PYTHON_VERSION: 7.35.1
   stages:
     build:
@@ -41,52 +43,9 @@ outputs:
     required: true
 metrics:
   source: aggregate_result
-  definitions:
-    avg_serialize_qps_size100:
-      path: summary.avg_serialize_qps_size100
-      unit: messages/s
-      direction: higher_is_better
-    max_serialize_qps_size100:
-      path: summary.max_serialize_qps_size100
-      unit: messages/s
-      direction: higher_is_better
-    avg_deserialize_qps_size100:
-      path: summary.avg_deserialize_qps_size100
-      unit: messages/s
-      direction: higher_is_better
-    max_deserialize_qps_size100:
-      path: summary.max_deserialize_qps_size100
-      unit: messages/s
-      direction: higher_is_better
-    avg_fidelity_size100:
-      path: summary.avg_fidelity_size100
-      unit: ratio
-      direction: higher_is_better
-    avg_serialize_latency_us_size100:
-      path: summary.avg_serialize_latency_us_size100
-      unit: us
-      direction: lower_is_better
-    max_serialize_latency_us_size100:
-      path: summary.max_serialize_latency_us_size100
-      unit: us
-      direction: lower_is_better
-    single_serialize_qps:
-      path: summary.single_serialize_qps
-      unit: messages/s
-      direction: higher_is_better
-    single_deserialize_qps:
-      path: summary.single_deserialize_qps
-      unit: messages/s
-      direction: higher_is_better
-    multithread_serialize_scaling_ratio:
-      path: summary.multithread_serialize_scaling_ratio
-      unit: ratio
-      direction: higher_is_better
-    multithread_deserialize_scaling_ratio:
-      path: summary.multithread_deserialize_scaling_ratio
-      unit: ratio
-      direction: higher_is_better
-    binary_vs_json_qps_ratio:
-      path: summary.binary_vs_json_qps_ratio
-      unit: ratio
-      direction: higher_is_better
+  collection:
+    path: metrics
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction

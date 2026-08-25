@@ -2,25 +2,32 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.0.2}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-3.14.7}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-SONIC_SOURCE_URL="${SONIC_SOURCE_URL:-https://github.com/bytedance/sonic-cpp.git}"
-# Repetitions used by the official CI benchmark workflow (repetitions=5).
-BENCHMARK_REPETITIONS="5"
+CPYTHON_SOURCE_URL="${CPYTHON_SOURCE_URL:-https://github.com/python/cpython.git}"
+PYPI_INDEX_URL="https://mirrors.huaweicloud.com/repository/pypi/simple"
+# pyperformance version pinned so both architectures run the same official suite.
+PYPERFORMANCE_VERSION="1.14.0"
+# Original openEuler test selection: official benchmarks, all pure stdlib.
+PYPERFORMANCE_BENCHMARKS="json_dumps,json_loads,nbody,telco,fannkuch,regex_v8,meteor_contest"
+# Original test build configuration: PGO/LTO disabled.
+CONFIGURE_OPTIONS="--enable-optimizations=no"
 
 SOURCE_DIR=""
-BUILD_DIR=""
-BENCHMARK_BIN=""
+INSTALL_DIR=""
+BENCH_WORK_DIR=""
+PYTHON_BIN=""
+GCC_VERSION_STRING=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
-log_message() { printf '[sonic] %s\n' "$*"; }
+log_message() { printf '[python] %s\n' "$*"; }
 
 normalize_architecture() {
     case "${1,,}" in
@@ -42,16 +49,19 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/sonic-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/tmp/python-perf/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
         TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    SOURCE_DIR="${PERF_WORK_DIR}/sonic-source"
-    BUILD_DIR="${PERF_WORK_DIR}/build"
-    BENCHMARK_BIN="${BUILD_DIR}/benchmark/bench"
+    SOURCE_DIR="${PERF_WORK_DIR}/cpython-source"
+    INSTALL_DIR="${PERF_WORK_DIR}/cpython-install"
+    # pyperformance creates its benchmark venvs under ./venv relative to the
+    # working directory, so run it from here to keep them inside the work area.
+    BENCH_WORK_DIR="${PERF_WORK_DIR}/pyperformance-work"
+    PYTHON_BIN="${INSTALL_DIR}/bin/python3"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -63,7 +73,7 @@ initialize_runtime() {
 
 require_commands() {
     local required missing=0
-    for required in git python3 cmake sed tee; do
+    for required in git gcc make python3 nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is missing: ${required}"
             missing=1
@@ -82,121 +92,151 @@ check_architecture() {
     }
 }
 
-prepare_sonic_source() {
+prepare_cpython_source() {
     [[ ! -e "${SOURCE_DIR}" ]] || {
         log_message "ERROR: source directory already exists: ${SOURCE_DIR}"
         return 30
     }
     export GIT_TERMINAL_PROMPT=0
-    log_message "cloning sonic-cpp v${SOFTWARE_VERSION} from ${SONIC_SOURCE_URL}"
+    log_message "cloning CPython v${SOFTWARE_VERSION} from ${CPYTHON_SOURCE_URL}"
     git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
-        "${SONIC_SOURCE_URL}" "${SOURCE_DIR}" || {
-        log_message "ERROR: failed to clone sonic-cpp v${SOFTWARE_VERSION}"
+        "${CPYTHON_SOURCE_URL}" "${SOURCE_DIR}" || {
+        log_message "ERROR: failed to clone CPython v${SOFTWARE_VERSION}"
         return 30
     }
 }
 
-report_actual_version() {
-    # sonic-cpp is header-only and has no --version binary; the cloned source
-    # tag is the authoritative version evidence.
-    local actual_version
-    actual_version="$(git -C "${SOURCE_DIR}" describe --tags --exact-match 2>/dev/null || true)"
-    [[ "${actual_version}" == "v${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: cloned source tag '${actual_version}' does not match v${SOFTWARE_VERSION}"
+verify_cpython_build() {
+    local version_output actual_version
+    [[ -x "${PYTHON_BIN}" ]] || {
+        log_message "ERROR: CPython interpreter was not installed: ${PYTHON_BIN}"
+        return 40
+    }
+    version_output="$("${PYTHON_BIN}" --version 2>&1)" || {
+        log_message "ERROR: built CPython cannot report its version"
+        return 40
+    }
+    actual_version="${version_output#Python }"
+    actual_version="${actual_version%%[[:space:]]*}"
+    [[ -n "${actual_version}" && "${actual_version}" != "${version_output}" ]] || {
+        log_message "ERROR: unexpected CPython version output: ${version_output}"
+        return 40
+    }
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+        log_message "ERROR: built CPython reports ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
     }
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-}
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 
-repair_gflags_source_reference() {
-    local external_cmake_file="${SOURCE_DIR}/cmake/external.cmake"
-
-    [[ -f "${external_cmake_file}" ]] || {
-        log_message "ERROR: Sonic CMake dependency file is missing: ${external_cmake_file}"
+    # pip needs ssl/zlib to download pyperformance; psutil needs ctypes.
+    "${PYTHON_BIN}" -c "import ssl, zlib, ctypes" || {
+        log_message "ERROR: built CPython is missing ssl/zlib/ctypes modules"
+        log_message "the Runner is missing zlib-devel or libffi-devel"
         return 40
     }
-    # Sonic v1.0.2 requests gflags' retired master branch.  Keep the upstream
-    # CMake build path intact while selecting the repository's current branch.
-    if ! sed -i \
-        '\|GIT_REPOSITORY https://github.com/gflags/gflags.git|,\|GIT_SHALLOW TRUE| s/GIT_TAG  master/GIT_TAG  main/' \
-        "${external_cmake_file}"; then
-        log_message "ERROR: failed to update Sonic's stale gflags branch reference"
+    "${PYTHON_BIN}" -m pip --version >/dev/null 2>&1 || {
+        log_message "ERROR: built CPython has no usable pip"
         return 40
-    fi
-    log_message "using gflags main because the v1.0.2 master reference is retired"
+    }
 }
 
-build_sonic() {
+build_python() {
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" ]] || {
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" && ! -e "${BENCH_WORK_DIR}" ]] || {
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
-    prepare_sonic_source || return $?
-    report_actual_version || return $?
-    repair_gflags_source_reference || return $?
+    prepare_cpython_source || return $?
+    GCC_VERSION_STRING="$(gcc --version | head -n 1)"
 
-    log_message "building official CMake benchmark target: bench"
+    log_message "configuring CPython v${SOFTWARE_VERSION} with ${CONFIGURE_OPTIONS} into a private prefix"
     (
-        cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" -DBUILD_BENCH=ON
-        cmake --build "${BUILD_DIR}" --target bench -j
-    ) || {
-        log_message "ERROR: official CMake build of benchmark target failed"
-        return 40
-    }
-    [[ -x "${BENCHMARK_BIN}" ]] || {
-        log_message "ERROR: official benchmark binary was not produced: ${BENCHMARK_BIN}"
-        return 40
-    }
-    log_message "sonic ${SOFTWARE_VERSION} official benchmark artifact is ready"
-}
-
-start_sonic_runtime() {
-    initialize_runtime || return $?
-    [[ -x "${BENCHMARK_BIN}" ]] || {
-        log_message "ERROR: official sonic benchmark binary is unavailable: ${BENCHMARK_BIN}"
-        return 40
-    }
-    log_message "sonic official benchmark runtime is ready"
-}
-
-run_sonic_benchmarks() {
-    initialize_runtime || return $?
-    [[ -x "${BENCHMARK_BIN}" ]] || {
-        log_message "ERROR: official sonic benchmark binary is unavailable: ${BENCHMARK_BIN}"
-        return 40
-    }
-    log_message "running official CMake benchmark (benchmark/main.cpp)"
-    # Uses Google Benchmark repetitions=5,
-    # report_aggregates_only=true) but omits its --benchmark_filter=Sonic so the
-    # full official scenario matrix (all libraries / all testdata files) is kept.
-    (
-        # The binary loads testdata/ relative to the working directory.
         cd "${SOURCE_DIR}"
-        "${BENCHMARK_BIN}" \
-            "--benchmark_out_format=json" \
-            "--benchmark_out=${RESULTS_DIR}/benchmark.json" \
-            "--benchmark_repetitions=${BENCHMARK_REPETITIONS}" \
-            "--benchmark_report_aggregates_only=true"
+        ./configure --prefix="${INSTALL_DIR}" "${CONFIGURE_OPTIONS}"
     ) || {
-        log_message "ERROR: official sonic benchmark failed"
+        log_message "ERROR: CPython configure failed"
+        return 40
+    }
+    log_message "building CPython v${SOFTWARE_VERSION} with make -j$(nproc)"
+    (
+        cd "${SOURCE_DIR}"
+        make -j"$(nproc)"
+    ) || {
+        log_message "ERROR: CPython make failed"
+        return 40
+    }
+    (
+        cd "${SOURCE_DIR}"
+        make install
+    ) || {
+        log_message "ERROR: CPython make install failed"
+        return 40
+    }
+    verify_cpython_build || return $?
+    log_message "CPython ${SOFTWARE_VERSION} interpreter is ready at ${PYTHON_BIN}"
+}
+
+start_python_runtime() {
+    initialize_runtime || return $?
+    [[ -x "${PYTHON_BIN}" ]] || {
+        log_message "ERROR: CPython interpreter is unavailable: ${PYTHON_BIN}"
+        return 40
+    }
+    "${PYTHON_BIN}" --version
+    "${PYTHON_BIN}" -c "import ssl, zlib, ctypes" || {
+        log_message "ERROR: CPython interpreter is missing ssl/zlib/ctypes modules"
+        return 40
+    }
+    "${PYTHON_BIN}" -m pip --version || {
+        log_message "ERROR: CPython interpreter has no usable pip"
+        return 40
+    }
+    log_message "CPython official benchmark runtime is ready"
+}
+
+run_python_benchmarks() {
+    initialize_runtime || return $?
+    [[ -x "${PYTHON_BIN}" ]] || {
+        log_message "ERROR: CPython interpreter is unavailable: ${PYTHON_BIN}"
+        return 40
+    }
+    mkdir -p "${BENCH_WORK_DIR}" "${RESULTS_DIR}"
+    log_message "installing pyperformance ${PYPERFORMANCE_VERSION} into the private CPython"
+    log_message "running official pyperformance benchmarks: ${PYPERFORMANCE_BENCHMARKS}"
+    (
+        cd "${BENCH_WORK_DIR}"
+        export PIP_NO_CACHE_DIR=1
+        export PIP_DISABLE_PIP_VERSION_CHECK=1
+        "${PYTHON_BIN}" -m pip install --no-cache-dir \
+            --index-url "${PYPI_INDEX_URL}" \
+            --trusted-host mirrors.huaweicloud.com \
+            "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
+        "${PYTHON_BIN}" -m pyperformance run \
+            -b "${PYPERFORMANCE_BENCHMARKS}" \
+            -o "${RESULTS_DIR}/benchmark.json" || exit 50
+    ) || {
+        log_message "ERROR: official pyperformance run failed"
         return 50
     }
-    export SOFTWARE_VERSION EXPECTED_ARCH BENCHMARK_REPETITIONS
+    [[ -s "${RESULTS_DIR}/benchmark.json" ]] || {
+        log_message "ERROR: official pyperformance output is empty: ${RESULTS_DIR}/benchmark.json"
+        return 50
+    }
+    export SOFTWARE_VERSION EXPECTED_ARCH PYPERFORMANCE_BENCHMARKS PYPERFORMANCE_VERSION
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark.json" \
-        "${RESULTS_DIR}/benchmark_sonic.json" || {
-        log_message "ERROR: failed to normalize official sonic benchmark results"
+        "${RESULTS_DIR}/benchmark_python.json" || {
+        log_message "ERROR: failed to normalize official pyperformance results"
         return 50
     }
-    log_message "sonic benchmark results written to benchmark.json and benchmark_sonic.json"
+    log_message "pyperformance results written to benchmark.json and benchmark_python.json"
 }
 
-stop_sonic_runtime() {
-    log_message "sonic benchmark has no background service to stop"
+stop_python_runtime() {
+    log_message "python benchmark has no background service to stop"
 }
 
 standalone_runtime() {
@@ -212,8 +252,8 @@ cleanup_standalone_workdir() {
         log_message "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/sonic-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/sonic-perf" ]] || {
+    [[ "${PERF_WORK_DIR}" == /tmp/python-perf/local-* && \
+       "${PERF_WORK_DIR}" != "/tmp/python-perf" ]] || {
         log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     }
@@ -226,14 +266,14 @@ cleanup_standalone_workdir() {
 emergency_standalone_cleanup() {
     set +e
     if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
-        stop_sonic_runtime
+        stop_python_runtime
     fi
     if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
         cleanup_standalone_workdir
     fi
 }
 
-run_sonic_standalone() {
+run_python_standalone() {
     local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
     local command_status="passed"
 
@@ -252,15 +292,15 @@ run_sonic_standalone() {
     fi
 
     if [[ "${stage_status}" -eq 0 ]]; then
-        if build_sonic; then
+        if build_python; then
             if standalone_runtime build-info \
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
                 "$(normalize_architecture "${EXPECTED_ARCH}")" \
                 "${PERF_RUN_ID}" \
-                "${COMPILER_BINARY}" \
-                "${COMPILER_VERSION_STRING}"; then
+                "${GCC_VERSION_STRING}" \
+                --configure-options="${CONFIGURE_OPTIONS}"; then
                 :
             else
                 stage_status=$?
@@ -272,7 +312,7 @@ run_sonic_standalone() {
         fi
     fi
     if [[ "${stage_status}" -eq 0 ]]; then
-        if start_sonic_runtime; then
+        if start_python_runtime; then
             :
         else
             stage_status=$?
@@ -280,7 +320,7 @@ run_sonic_standalone() {
         fi
     fi
     if [[ "${stage_status}" -eq 0 ]]; then
-        if run_sonic_benchmarks; then
+        if run_python_benchmarks; then
             :
         else
             stage_status=$?
@@ -288,7 +328,7 @@ run_sonic_standalone() {
         fi
     fi
 
-    if ! stop_sonic_runtime; then
+    if ! stop_python_runtime; then
         cleanup_status="failed"
     fi
     STANDALONE_STOP_DONE=1
@@ -325,18 +365,18 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run sonic-cpp's official CMake benchmark (benchmark/main.cpp) as a
+Build CPython from source and run the official pyperformance benchmarks as a
 standalone performance evaluation. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
-  --version VERSION       sonic-cpp version (default: ${SOFTWARE_VERSION})
+  --version VERSION       CPython version (default: ${SOFTWARE_VERSION})
   --results-dir DIR       Persistent result directory
   --keep-workdir          Keep the isolated work directory for debugging
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, SONIC_SOURCE_URL
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, CPYTHON_SOURCE_URL
 USAGE
 }
 
@@ -374,7 +414,7 @@ main() {
     : > "${RESULTS_DIR}/results.log"
     local pipeline_status=0
     set +e
-    run_sonic_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
+    run_python_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
     pipeline_status="${PIPESTATUS[0]}"
     set -e
     log_message "standalone results: ${RESULTS_DIR}"

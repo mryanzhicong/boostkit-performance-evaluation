@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provide self-contained environment collection and reporting for protobuf."""
+"""Provide self-contained environment collection and reporting for python."""
 
 from __future__ import annotations
 
@@ -137,25 +137,24 @@ def record_build_info(
     actual_version_file: Path,
     architecture: str,
     run_id: str,
-    compiler_path: str,
-    compiler_version: str,
+    gcc_version: str,
+    configure_options: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
-        raise RuntimeError("actual protobuf version is empty")
+        raise RuntimeError("actual python version is empty")
     atomic_write_json(
         output,
         {
             "recorded_at": timestamp(),
-            "category": "HPC",
-            "software": "protobuf",
+            "category": "Toolchain",
+            "software": "python",
             "requested_version": requested_version,
             "actual_version": actual_version,
             "architecture": architecture,
             "run_id": run_id,
-            "build_system": "CMake Release",
-            "compiler_path": compiler_path,
-            "compiler_version": compiler_version,
+            "gcc_version": gcc_version,
+            "configure_options": configure_options,
         },
     )
 
@@ -163,37 +162,43 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "protobuf" or benchmark.get("version") != version:
-        raise RuntimeError("aggregate_results.json identity differs from this run")
-    raw_metrics = benchmark.get("metrics")
-    if not isinstance(raw_metrics, dict) or not raw_metrics:
-        raise RuntimeError("aggregate_results.json is missing validated metrics")
+    if benchmark.get("software") != "python":
+        raise RuntimeError("benchmark_python.json has an invalid software identity")
+    if (
+        benchmark.get("version") != version
+        or benchmark.get("architecture") != architecture
+    ):
+        raise RuntimeError("benchmark_python.json identity differs from this run")
+    results = benchmark.get("results")
+    if not isinstance(results, dict) or not results:
+        raise RuntimeError("benchmark_python.json is missing results")
     metrics: dict[str, Any] = {}
-    for metric_name, metric in raw_metrics.items():
+    for result_key, result in results.items():
+        if not isinstance(result, dict):
+            raise TypeError(f"python benchmark {result_key} must be an object")
+        metric_name = result.get("source_name")
         if not isinstance(metric_name, str) or not metric_name:
-            raise TypeError("aggregate_results.json has an invalid metric name")
-        if not isinstance(metric, dict):
-            raise TypeError(f"metric {metric_name} must be an object")
-        if metric.get("source_name") != metric_name:
-            raise RuntimeError(f"metric {metric_name} source name does not match its key")
-        value = metric.get("value")
+            raise RuntimeError(f"python benchmark {result_key} has no source_name")
+        if metric_name != result_key:
+            raise RuntimeError(
+                f"python benchmark key {result_key} differs from source_name {metric_name}"
+            )
+        if metric_name in metrics:
+            raise RuntimeError(f"duplicate python benchmark: {metric_name}")
+        if result.get("source_field") != "median":
+            raise RuntimeError(f"metric {metric_name} is not sourced from median")
+        value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
-        unit = metric.get("unit")
-        direction = metric.get("direction")
-        if not isinstance(unit, str) or not unit:
-            raise TypeError(f"metric {metric_name} has no unit")
-        if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
-            raise RuntimeError(f"metric {metric_name} has an invalid direction")
         metrics[metric_name] = {
             "value": value,
-            "unit": unit,
-            "direction": direction,
+            "unit": "s",
+            "direction": "lower_is_better",
         }
     if not metrics:
-        raise RuntimeError("aggregate_results.json contains no metrics")
+        raise RuntimeError("benchmark_python.json contains no metrics")
     return metrics
 
 
@@ -205,7 +210,7 @@ def markdown_cell(value: Any) -> str:
 
 def render_report(result: dict[str, Any]) -> str:
     lines = [
-        f"# protobuf {result['version']} 独立性能测试报告",
+        f"# python {result['version']} 独立性能测试报告",
         "",
         f"- Run ID：`{result['run_id']}`",
         f"- 架构：`{result['architecture']}`",
@@ -221,9 +226,8 @@ def render_report(result: dict[str, Any]) -> str:
     for label, field in (
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
-        ("构建系统", "build_system"),
-        ("构建编译器", "compiler_version"),
-        ("构建编译器路径", "compiler_path"),
+        ("构建编译器 (gcc)", "gcc_version"),
+        ("configure 选项", "configure_options"),
         ("记录时间", "recorded_at"),
     ):
         lines.append(f"| {label} | {markdown_cell(build_info.get(field))} |")
@@ -244,7 +248,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（固定场景的原始字段）",
+            "## 性能指标（官方 pyperformance benchmark 逐字名称，median）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -253,8 +257,7 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | "
-            f"{'越大越好' if metric['direction'] == 'higher_is_better' else '越小越好'} |"
+            f"{metric['unit']} | 越小越好 |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
@@ -271,13 +274,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "aggregate_results.json")
+    benchmark = load_json(output_dir / "benchmark_python.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("aggregate_results.json is missing or invalid")
+                raise RuntimeError("benchmark_python.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
@@ -285,8 +288,8 @@ def finalize(
             error = str(exc)
     status = "passed" if command_status == cleanup_status == "passed" else "failed"
     result = {
-        "software": "protobuf",
-        "category": "HPC",
+        "software": "python",
+        "category": "Toolchain",
         "version": version,
         "architecture": architecture,
         "run_id": run_id,
@@ -305,8 +308,8 @@ def finalize(
     atomic_write_json(
         output_dir / "status.json",
         {
-            "software": "protobuf",
-            "category": "HPC",
+            "software": "python",
+            "category": "Toolchain",
             "version": version,
             "architecture": architecture,
             "run_id": run_id,
@@ -332,8 +335,12 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("actual_version_file", type=Path)
     build.add_argument("architecture")
     build.add_argument("run_id")
-    build.add_argument("compiler_path")
-    build.add_argument("compiler_version")
+    build.add_argument("gcc_version")
+    build.add_argument(
+        "--configure-options",
+        required=True,
+        help="configure options of the CPython build",
+    )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
     final.add_argument("version")
@@ -360,8 +367,8 @@ def main() -> int:
             args.actual_version_file,
             args.architecture,
             args.run_id,
-            args.compiler_path,
-            args.compiler_version,
+            args.gcc_version,
+            args.configure_options,
         )
         return 0
     return finalize(

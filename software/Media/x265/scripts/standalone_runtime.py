@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provide self-contained environment collection and reporting for protobuf."""
+"""Provide self-contained environment collection and reporting for x265."""
 
 from __future__ import annotations
 
@@ -55,11 +55,9 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def os_pretty_name() -> str:
     try:
-        lines = (
-            Path("/etc/os-release")
-            .read_text(encoding="utf-8", errors="replace")
-            .splitlines()
-        )
+        lines = Path("/etc/os-release").read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines()
     except OSError:
         return "ERROR"
     for line in lines:
@@ -83,8 +81,9 @@ def cpu_model() -> str:
     ]
     for line in command(lscpu_command).splitlines():
         field, separator, value = line.partition(":")
-        if separator and field.strip().casefold() == "model name" and value.strip():
-            return value.strip()
+        if separator and field.strip().casefold() == "model name":
+            if value.strip():
+                return value.strip()
     return "unknown"
 
 
@@ -117,13 +116,11 @@ def collect_system_info() -> dict[str, Any]:
 
 
 def collect_runtime_state() -> dict[str, Any]:
-    governor = command(
-        [
-            "sh",
-            "-c",
-            "cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null",
-        ]
-    )
+    governor = command([
+        "sh",
+        "-c",
+        "cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null",
+    ])
     return {
         "collected_at": timestamp(),
         "memory": command(["free", "-b"]),
@@ -137,63 +134,51 @@ def record_build_info(
     actual_version_file: Path,
     architecture: str,
     run_id: str,
-    compiler_path: str,
-    compiler_version: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
-        raise RuntimeError("actual protobuf version is empty")
-    atomic_write_json(
-        output,
-        {
-            "recorded_at": timestamp(),
-            "category": "HPC",
-            "software": "protobuf",
-            "requested_version": requested_version,
-            "actual_version": actual_version,
-            "architecture": architecture,
-            "run_id": run_id,
-            "build_system": "CMake Release",
-            "compiler_path": compiler_path,
-            "compiler_version": compiler_version,
-        },
-    )
+        raise RuntimeError("实际 x265 版本为空")
+    atomic_write_json(output, {
+        "recorded_at": timestamp(),
+        "category": "Media",
+        "software": "x265",
+        "requested_version": requested_version,
+        "actual_version": actual_version,
+        "architecture": architecture,
+        "run_id": run_id,
+    })
 
 
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "protobuf" or benchmark.get("version") != version:
-        raise RuntimeError("aggregate_results.json identity differs from this run")
-    raw_metrics = benchmark.get("metrics")
-    if not isinstance(raw_metrics, dict) or not raw_metrics:
-        raise RuntimeError("aggregate_results.json is missing validated metrics")
+    if benchmark.get("software") != "x265":
+        raise RuntimeError("benchmark_x265.json 的 software 标识无效")
+    if benchmark.get("version") != version or benchmark.get("architecture") != architecture:
+        raise RuntimeError("benchmark_x265.json 的标识与本次运行不一致")
+    results = benchmark.get("results")
+    if not isinstance(results, dict):
+        raise RuntimeError("benchmark_x265.json 缺少 results")
     metrics: dict[str, Any] = {}
-    for metric_name, metric in raw_metrics.items():
-        if not isinstance(metric_name, str) or not metric_name:
-            raise TypeError("aggregate_results.json has an invalid metric name")
-        if not isinstance(metric, dict):
-            raise TypeError(f"metric {metric_name} must be an object")
-        if metric.get("source_name") != metric_name:
-            raise RuntimeError(f"metric {metric_name} source name does not match its key")
-        value = metric.get("value")
+    for result_key, result in results.items():
+        if not isinstance(result, dict):
+            raise RuntimeError(f"x265 结果 {result_key} 必须是对象")
+        if result_key in metrics:
+            raise RuntimeError(f"重复的 x265 指标：{result_key}")
+        if result.get("source_field") != "fps":
+            raise RuntimeError(f"指标 {result_key} 并非来自官方 fps 字段")
+        value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise TypeError(f"metric {metric_name} is missing or is not numeric")
+            raise RuntimeError(f"指标 {result_key} 缺失或不是数值")
         if not math.isfinite(float(value)) or value <= 0:
-            raise RuntimeError(f"metric {metric_name} must be positive and finite")
-        unit = metric.get("unit")
-        direction = metric.get("direction")
-        if not isinstance(unit, str) or not unit:
-            raise TypeError(f"metric {metric_name} has no unit")
-        if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
-            raise RuntimeError(f"metric {metric_name} has an invalid direction")
-        metrics[metric_name] = {
+            raise RuntimeError(f"指标 {result_key} 必须为正且有限")
+        metrics[result_key] = {
             "value": value,
-            "unit": unit,
-            "direction": direction,
+            "unit": "fps",
+            "direction": "higher_is_better",
         }
     if not metrics:
-        raise RuntimeError("aggregate_results.json contains no metrics")
+        raise RuntimeError("benchmark_x265.json 不包含任何指标")
     return metrics
 
 
@@ -205,7 +190,7 @@ def markdown_cell(value: Any) -> str:
 
 def render_report(result: dict[str, Any]) -> str:
     lines = [
-        f"# protobuf {result['version']} 独立性能测试报告",
+        f"# x265 {result['version']} 独立性能测试报告",
         "",
         f"- Run ID：`{result['run_id']}`",
         f"- 架构：`{result['architecture']}`",
@@ -221,9 +206,6 @@ def render_report(result: dict[str, Any]) -> str:
     for label, field in (
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
-        ("构建系统", "build_system"),
-        ("构建编译器", "compiler_version"),
-        ("构建编译器路径", "compiler_path"),
         ("记录时间", "recorded_at"),
     ):
         lines.append(f"| {label} | {markdown_cell(build_info.get(field))} |")
@@ -241,20 +223,17 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标（固定场景的原始字段）",
-            "",
-            "| 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---:|---|---|",
-        ]
-    )
+    lines.extend([
+        "",
+        "## 性能指标",
+        "",
+        "| 指标 | 数值 | 单位 | 优化方向 |",
+        "|---|---:|---|---|",
+    ])
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | "
-            f"{'越大越好' if metric['direction'] == 'higher_is_better' else '越小越好'} |"
+            f"{metric['unit']} | 越大越好 |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
@@ -271,22 +250,22 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "aggregate_results.json")
+    benchmark = load_json(output_dir / "benchmark_x265.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("aggregate_results.json is missing or invalid")
+                raise RuntimeError("benchmark_x265.json 缺失或无效")
             metrics = extract_metrics(benchmark, version, architecture)
-        except (RuntimeError, TypeError) as exc:
+        except RuntimeError as exc:
             command_status = "failed"
             failed_stage = failed_stage or "test"
             error = str(exc)
     status = "passed" if command_status == cleanup_status == "passed" else "failed"
     result = {
-        "software": "protobuf",
-        "category": "HPC",
+        "software": "x265",
+        "category": "Media",
         "version": version,
         "architecture": architecture,
         "run_id": run_id,
@@ -302,20 +281,17 @@ def finalize(
         "error": error or None,
     }
     atomic_write_json(output_dir / "results.json", result)
-    atomic_write_json(
-        output_dir / "status.json",
-        {
-            "software": "protobuf",
-            "category": "HPC",
-            "version": version,
-            "architecture": architecture,
-            "run_id": run_id,
-            "status": status,
-            "failed_stage": failed_stage,
-            "cleanup_status": cleanup_status,
-            "error": error or None,
-        },
-    )
+    atomic_write_json(output_dir / "status.json", {
+        "software": "x265",
+        "category": "Media",
+        "version": version,
+        "architecture": architecture,
+        "run_id": run_id,
+        "status": status,
+        "failed_stage": failed_stage,
+        "cleanup_status": cleanup_status,
+        "error": error or None,
+    })
     (output_dir / "report.md").write_text(render_report(result), encoding="utf-8")
     return 60 if error else 0
 
@@ -332,8 +308,6 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("actual_version_file", type=Path)
     build.add_argument("architecture")
     build.add_argument("run_id")
-    build.add_argument("compiler_path")
-    build.add_argument("compiler_version")
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
     final.add_argument("version")
@@ -360,8 +334,6 @@ def main() -> int:
             args.actual_version_file,
             args.architecture,
             args.run_id,
-            args.compiler_path,
-            args.compiler_version,
         )
         return 0
     return finalize(
