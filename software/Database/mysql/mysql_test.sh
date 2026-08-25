@@ -144,7 +144,7 @@ fetch_mysql_archive() {
 
     archive_path="${PERF_WORK_DIR}/${archive_name}"
     if [[ -s "${archive_path}" ]]; then
-        log "using cached MySQL archive ${archive_path}"
+        log "using cached MySQL archive ${archive_path}" >&2
     else
         if [[ -n "${MYSQL_SOURCE_BASE}" ]]; then
             download_urls+=(
@@ -157,7 +157,7 @@ fetch_mysql_archive() {
         )
 
         for download_url in "${download_urls[@]}"; do
-            log "downloading ${download_url}"
+            log "downloading ${download_url}" >&2
             if command -v curl >/dev/null 2>&1; then
                 if curl -fSL --retry 3 --connect-timeout 30 -o "${archive_path}" "${download_url}"; then
                     break
@@ -165,12 +165,12 @@ fetch_mysql_archive() {
             elif wget -q -O "${archive_path}" "${download_url}"; then
                 break
             fi
-            log "WARN: download failed from ${download_url}"
+            log "WARN: download failed from ${download_url}" >&2
             rm -f "${archive_path}"
         done
 
         if [[ ! -s "${archive_path}" ]]; then
-            log "ERROR: failed to download ${archive_name}"
+            log "ERROR: failed to download ${archive_name}" >&2
             return 30
         fi
     fi
@@ -178,7 +178,7 @@ fetch_mysql_archive() {
     actual_md5="$(md5sum "${archive_path}")"
     actual_md5="${actual_md5%% *}"
     if [[ "${actual_md5}" != "${archive_md5}" ]]; then
-        log "ERROR: MySQL archive checksum mismatch: expected ${archive_md5}, got ${actual_md5}"
+        log "ERROR: MySQL archive checksum mismatch: expected ${archive_md5}, got ${actual_md5}" >&2
         return 30
     fi
     printf '%s\n' "${archive_path}"
