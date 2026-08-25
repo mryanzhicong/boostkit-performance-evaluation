@@ -36,11 +36,6 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 DATABASE_BLUE_REPOSITORY="${DATABASE_BLUE_REPOSITORY:-https://gitcode.com/mwx5319395/database_blue.git}"
 DATABASE_BLUE_COMMIT="${DATABASE_BLUE_COMMIT:-af4759227538961f0b0bed5ffc25434d65e7456b}"
 
-# Prebuilt tarball source. Set MYSQL_SOURCE_BASE to a (faster) mirror to try it
-# first; the official MySQL CDN/archives is always consulted as a fallback, so an
-# out-of-date mirror never blocks a build for the exact requested version.
-MYSQL_SOURCE_BASE="${MYSQL_SOURCE_BASE:-}"
-
 # Lifecycle paths (assigned in configure_runtime_paths).
 MYSQL_BASE_DIR=""
 MYSQLD_BIN=""
@@ -127,7 +122,6 @@ fetch_mysql_archive() {
     local archive_name
     local download_url
     local release_directory
-    local -a download_urls=()
 
     # Every supported artifact is declared with its official archive name and
     # checksum.  Adding a version means adding its two architecture entries
@@ -153,30 +147,16 @@ fetch_mysql_archive() {
     if [[ -s "${archive_path}" ]]; then
         log "using cached MySQL archive ${archive_path}" >&2
     else
-        if [[ -n "${MYSQL_SOURCE_BASE}" ]]; then
-            download_urls+=(
-                "${MYSQL_SOURCE_BASE%/}/${release_directory}/${archive_name}"
-            )
-        fi
-        download_urls+=(
-            "https://cdn.mysql.com/Downloads/${release_directory}/${archive_name}"
-            "https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/${release_directory}/${archive_name}"
-        )
-
-        for download_url in "${download_urls[@]}"; do
-            log "downloading ${download_url}" >&2
-            if command -v curl >/dev/null 2>&1; then
-                if curl -fSL --retry 3 --connect-timeout 30 -o "${archive_path}" "${download_url}"; then
-                    break
-                fi
-            elif wget -q -O "${archive_path}" "${download_url}"; then
-                break
+        download_url="https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/${release_directory}/${archive_name}"
+        log "downloading ${download_url}" >&2
+        if command -v curl >/dev/null 2>&1; then
+            if ! curl -fSL --retry 3 --connect-timeout 30 -o "${archive_path}" "${download_url}"; then
+                rm -f "${archive_path}"
+                log "ERROR: failed to download ${archive_name} from Tsinghua mirror" >&2
+                return 30
             fi
-            log "WARN: download failed from ${download_url}" >&2
+        elif ! wget -q -O "${archive_path}" "${download_url}"; then
             rm -f "${archive_path}"
-        done
-
-        if [[ ! -s "${archive_path}" ]]; then
             log "ERROR: failed to download ${archive_name}" >&2
             return 30
         fi
@@ -602,7 +582,7 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, MYSQL_SOURCE_BASE
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR
 USAGE
 }
 
