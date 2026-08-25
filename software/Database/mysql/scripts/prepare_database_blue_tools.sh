@@ -68,6 +68,8 @@ for command_name in git make gcc autoreconf libtoolize pkg-config sudo; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then
         printf '[mysql] ERROR: database_blue Sysbench prerequisite is missing: %s\n' \
             "${command_name}" >&2
+        printf '%s\n' \
+            '[mysql] ERROR: the workflow must install the MySQL Sysbench build dependencies first' >&2
         exit 30
     fi
 done
