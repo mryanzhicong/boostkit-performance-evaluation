@@ -31,7 +31,7 @@ MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 MYSQL_PORT="${MYSQL_PORT:-}"
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
-MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-/home/runner/software/mysql/data}"
+MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-/home/runner/mysql-data}"
 
 # Fixed source for the original database_blue client test scripts.
 DATABASE_BLUE_REPOSITORY="${DATABASE_BLUE_REPOSITORY:-https://gitcode.com/mwx5319395/database_blue.git}"
