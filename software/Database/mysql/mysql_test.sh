@@ -400,6 +400,10 @@ run_mysql_benchmarks() {
         cd "${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
         sed -i "s/^host=.*/host='${MYSQL_HOST}'/" runall.sh
         sed -i "s/-P 3306/-P ${MYSQL_PORT}/g" runall.sh
+        sed -i \
+            's/--mysql-host=${HOST}/--mysql-host=${HOST} --mysql-port=${PORT}/' \
+            prepare.sh
+        chmod +x data_filter.sh test_oltp_*.sh
         bash prepare.sh \
             -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" \
             -u "${MYSQL_DB_USER}" -p "${MYSQL_PASSWORD}"
