@@ -1,0 +1,949 @@
+{
+  "category": "Database",
+  "software": "mysql",
+  "version": "8.0.46",
+  "parameter_signature": "44e16030df5ff3eb807f17cbd65b0eea7bd9ead32e5a154d487b86c5e57bbd0d",
+  "test_tools": {
+    "database_blue": {
+      "version": "af4759227538961f0b0bed5ffc25434d65e7456b"
+    },
+    "sysbench": {
+      "version": "1.0.17",
+      "revision": "d634bce"
+    }
+  },
+  "environments": {
+    "x86_64": {
+      "build_info": {
+        "recorded_at": "2026-08-25T12:52:20Z",
+        "category": "Database",
+        "software": "mysql",
+        "requested_version": "8.0.46",
+        "actual_version": "8.0.46",
+        "architecture": "x86_64",
+        "run_id": "32849943030-1"
+      },
+      "system_info": {
+        "collected_at": "2026-08-25T12:51:54Z",
+        "architecture": "x86_64",
+        "platform": "openEuler 24.03 (LTS-SP4)",
+        "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+        "cpu_model": "General Purpose Processor",
+        "cpu_count": 16,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": ""
+      },
+      "runtime_before": {
+        "collected_at": "2026-08-25T12:51:54Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192   990154752 29934534656    63774720  1670438912 31133757440\nSwap:              0           0           0",
+        "cpu_governor": ""
+      },
+      "runtime_after": {
+        "collected_at": "2026-08-25T13:50:10Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  4554797056  3293089792  2254491648 26958319616 27569115136\nSwap:              0           0           0",
+        "cpu_governor": ""
+      }
+    },
+    "aarch64": {
+      "build_info": {
+        "recorded_at": "2026-08-25T12:51:23Z",
+        "category": "Database",
+        "software": "mysql",
+        "requested_version": "8.0.46",
+        "actual_version": "8.0.46",
+        "architecture": "aarch64",
+        "run_id": "32849943030-1"
+      },
+      "system_info": {
+        "collected_at": "2026-08-25T12:50:53Z",
+        "architecture": "aarch64",
+        "platform": "openEuler 24.03 (LTS-SP4)",
+        "kernel": "6.6.0-159.4.3.154.oe2403sp4.aarch64",
+        "cpu_model": "Kunpeng 920 7270Z To be filled by O.E.M. CPU @ 2.9GHz",
+        "cpu_count": 256,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63\nnode 0 size: 128886 MB\nnode 0 free: 127984 MB\nnode 1 cpus: 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127\nnode 1 size: 128457 MB\nnode 1 free: 123668 MB\nnode 2 cpus: 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 2 size: 127923 MB\nnode 2 free: 127331 MB\nnode 3 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255\nnode 3 size: 129014 MB\nnode 3 free: 127457 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  12  35  37 \n  1:  12  10  37  40 \n  2:  35  37  10  12 \n  3:  37  40  12  10"
+      },
+      "runtime_before": {
+        "collected_at": "2026-08-25T12:50:53Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     539263840256  5504593920 531043749888    81477632  5352534016 533759246336\nSwap:     4294963200           0  4294963200",
+        "cpu_governor": "performance"
+      },
+      "runtime_after": {
+        "collected_at": "2026-08-25T14:11:04Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     539263840256  9766080512 499551465472  2278854656 34805211136 529497759744\nSwap:     4294963200           0  4294963200",
+        "cpu_governor": "performance"
+      }
+    }
+  },
+  "metrics": {
+    "sysbench delete --threads=128: TPS": {
+      "x86_64": 1385.85,
+      "aarch64": 392.14,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.283,
+      "relative_performance": 0.283
+    },
+    "sysbench delete --threads=128: QPS": {
+      "x86_64": 5543.41,
+      "aarch64": 1568.57,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.283,
+      "relative_performance": 0.283
+    },
+    "sysbench delete --threads=128: transactions": {
+      "x86_64": 83225.0,
+      "aarch64": 23628.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2839,
+      "relative_performance": 0.2839
+    },
+    "sysbench delete --threads=256: TPS": {
+      "x86_64": 1726.1,
+      "aarch64": 464.75,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2692,
+      "relative_performance": 0.2692
+    },
+    "sysbench delete --threads=256: QPS": {
+      "x86_64": 6904.38,
+      "aarch64": 1858.99,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2692,
+      "relative_performance": 0.2692
+    },
+    "sysbench delete --threads=256: transactions": {
+      "x86_64": 103751.0,
+      "aarch64": 28149.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2713,
+      "relative_performance": 0.2713
+    },
+    "sysbench delete --threads=512: TPS": {
+      "x86_64": 2303.28,
+      "aarch64": 475.84,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2066,
+      "relative_performance": 0.2066
+    },
+    "sysbench delete --threads=512: QPS": {
+      "x86_64": 9213.14,
+      "aarch64": 1903.35,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2066,
+      "relative_performance": 0.2066
+    },
+    "sysbench delete --threads=512: transactions": {
+      "x86_64": 139319.0,
+      "aarch64": 28960.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2079,
+      "relative_performance": 0.2079
+    },
+    "sysbench delete --threads=1024: TPS": {
+      "x86_64": 2182.72,
+      "aarch64": 486.8,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.223,
+      "relative_performance": 0.223
+    },
+    "sysbench delete --threads=1024: QPS": {
+      "x86_64": 8730.87,
+      "aarch64": 1950.86,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2234,
+      "relative_performance": 0.2234
+    },
+    "sysbench delete --threads=1024: transactions": {
+      "x86_64": 132787.0,
+      "aarch64": 29702.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2237,
+      "relative_performance": 0.2237
+    },
+    "sysbench distinct --threads=128: TPS": {
+      "x86_64": 32907.6,
+      "aarch64": 13807.01,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4196,
+      "relative_performance": 0.4196
+    },
+    "sysbench distinct --threads=128: QPS": {
+      "x86_64": 98722.81,
+      "aarch64": 41421.03,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4196,
+      "relative_performance": 0.4196
+    },
+    "sysbench distinct --threads=128: transactions": {
+      "x86_64": 1974853.0,
+      "aarch64": 828710.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4196,
+      "relative_performance": 0.4196
+    },
+    "sysbench distinct --threads=256: TPS": {
+      "x86_64": 30345.17,
+      "aarch64": 8738.83,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.288,
+      "relative_performance": 0.288
+    },
+    "sysbench distinct --threads=256: QPS": {
+      "x86_64": 91035.51,
+      "aarch64": 26216.48,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.288,
+      "relative_performance": 0.288
+    },
+    "sysbench distinct --threads=256: transactions": {
+      "x86_64": 1821493.0,
+      "aarch64": 524674.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.288,
+      "relative_performance": 0.288
+    },
+    "sysbench distinct --threads=512: TPS": {
+      "x86_64": 29107.94,
+      "aarch64": 6318.34,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2171,
+      "relative_performance": 0.2171
+    },
+    "sysbench distinct --threads=512: QPS": {
+      "x86_64": 87323.81,
+      "aarch64": 18955.02,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2171,
+      "relative_performance": 0.2171
+    },
+    "sysbench distinct --threads=512: transactions": {
+      "x86_64": 1748013.0,
+      "aarch64": 379587.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2172,
+      "relative_performance": 0.2172
+    },
+    "sysbench distinct --threads=1024: TPS": {
+      "x86_64": 28437.17,
+      "aarch64": 3389.39,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1192,
+      "relative_performance": 0.1192
+    },
+    "sysbench distinct --threads=1024: QPS": {
+      "x86_64": 85311.5,
+      "aarch64": 10168.17,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1192,
+      "relative_performance": 0.1192
+    },
+    "sysbench distinct --threads=1024: transactions": {
+      "x86_64": 1709195.0,
+      "aarch64": 204151.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1194,
+      "relative_performance": 0.1194
+    },
+    "sysbench index --threads=128: TPS": {
+      "x86_64": 560.34,
+      "aarch64": 178.21,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.318,
+      "relative_performance": 0.318
+    },
+    "sysbench index --threads=128: QPS": {
+      "x86_64": 1681.01,
+      "aarch64": 534.63,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.318,
+      "relative_performance": 0.318
+    },
+    "sysbench index --threads=128: transactions": {
+      "x86_64": 33749.0,
+      "aarch64": 10805.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.3202,
+      "relative_performance": 0.3202
+    },
+    "sysbench index --threads=256: TPS": {
+      "x86_64": 798.82,
+      "aarch64": 182.86,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2289,
+      "relative_performance": 0.2289
+    },
+    "sysbench index --threads=256: QPS": {
+      "x86_64": 2396.46,
+      "aarch64": 548.59,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2289,
+      "relative_performance": 0.2289
+    },
+    "sysbench index --threads=256: transactions": {
+      "x86_64": 48076.0,
+      "aarch64": 11088.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2306,
+      "relative_performance": 0.2306
+    },
+    "sysbench index --threads=512: TPS": {
+      "x86_64": 1332.87,
+      "aarch64": 191.98,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.144,
+      "relative_performance": 0.144
+    },
+    "sysbench index --threads=512: QPS": {
+      "x86_64": 3998.61,
+      "aarch64": 580.84,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1453,
+      "relative_performance": 0.1453
+    },
+    "sysbench index --threads=512: transactions": {
+      "x86_64": 80610.0,
+      "aarch64": 11712.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1453,
+      "relative_performance": 0.1453
+    },
+    "sysbench index --threads=1024: TPS": {
+      "x86_64": 1730.83,
+      "aarch64": 177.03,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1023,
+      "relative_performance": 0.1023
+    },
+    "sysbench index --threads=1024: QPS": {
+      "x86_64": 5192.5,
+      "aarch64": 546.0,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1052,
+      "relative_performance": 0.1052
+    },
+    "sysbench index --threads=1024: transactions": {
+      "x86_64": 104365.0,
+      "aarch64": 10801.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1035,
+      "relative_performance": 0.1035
+    },
+    "sysbench mix --threads=128: TPS": {
+      "x86_64": 693.79,
+      "aarch64": 138.22,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1992,
+      "relative_performance": 0.1992
+    },
+    "sysbench mix --threads=128: QPS": {
+      "x86_64": 13875.79,
+      "aarch64": 2764.44,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1992,
+      "relative_performance": 0.1992
+    },
+    "sysbench mix --threads=128: transactions": {
+      "x86_64": 41668.0,
+      "aarch64": 8364.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2007,
+      "relative_performance": 0.2007
+    },
+    "sysbench mix --threads=256: TPS": {
+      "x86_64": 716.83,
+      "aarch64": 164.36,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2293,
+      "relative_performance": 0.2293
+    },
+    "sysbench mix --threads=256: QPS": {
+      "x86_64": 14336.68,
+      "aarch64": 3287.28,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2293,
+      "relative_performance": 0.2293
+    },
+    "sysbench mix --threads=256: transactions": {
+      "x86_64": 43237.0,
+      "aarch64": 9949.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2301,
+      "relative_performance": 0.2301
+    },
+    "sysbench mix --threads=512: TPS": {
+      "x86_64": 701.5,
+      "aarch64": 136.45,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1945,
+      "relative_performance": 0.1945
+    },
+    "sysbench mix --threads=512: QPS": {
+      "x86_64": 14030.09,
+      "aarch64": 2858.41,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2037,
+      "relative_performance": 0.2037
+    },
+    "sysbench mix --threads=512: transactions": {
+      "x86_64": 42616.0,
+      "aarch64": 8324.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1953,
+      "relative_performance": 0.1953
+    },
+    "sysbench mix --threads=1024: TPS": {
+      "x86_64": 641.68,
+      "aarch64": 127.9,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1993,
+      "relative_performance": 0.1993
+    },
+    "sysbench mix --threads=1024: QPS": {
+      "x86_64": 12833.7,
+      "aarch64": 2669.73,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.208,
+      "relative_performance": 0.208
+    },
+    "sysbench mix --threads=1024: transactions": {
+      "x86_64": 39002.0,
+      "aarch64": 7803.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2001,
+      "relative_performance": 0.2001
+    },
+    "sysbench nonindex --threads=128: TPS": {
+      "x86_64": 3617.74,
+      "aarch64": 867.5,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2398,
+      "relative_performance": 0.2398
+    },
+    "sysbench nonindex --threads=128: QPS": {
+      "x86_64": 10853.22,
+      "aarch64": 2602.51,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2398,
+      "relative_performance": 0.2398
+    },
+    "sysbench nonindex --threads=128: transactions": {
+      "x86_64": 218333.0,
+      "aarch64": 52175.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.239,
+      "relative_performance": 0.239
+    },
+    "sysbench nonindex --threads=256: TPS": {
+      "x86_64": 3846.44,
+      "aarch64": 877.76,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2282,
+      "relative_performance": 0.2282
+    },
+    "sysbench nonindex --threads=256: QPS": {
+      "x86_64": 11539.33,
+      "aarch64": 2633.27,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2282,
+      "relative_performance": 0.2282
+    },
+    "sysbench nonindex --threads=256: transactions": {
+      "x86_64": 230896.0,
+      "aarch64": 52823.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2288,
+      "relative_performance": 0.2288
+    },
+    "sysbench nonindex --threads=512: TPS": {
+      "x86_64": 3955.13,
+      "aarch64": 846.46,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.214,
+      "relative_performance": 0.214
+    },
+    "sysbench nonindex --threads=512: QPS": {
+      "x86_64": 11865.4,
+      "aarch64": 2539.38,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.214,
+      "relative_performance": 0.214
+    },
+    "sysbench nonindex --threads=512: transactions": {
+      "x86_64": 237582.0,
+      "aarch64": 50991.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2146,
+      "relative_performance": 0.2146
+    },
+    "sysbench nonindex --threads=1024: TPS": {
+      "x86_64": 4102.7,
+      "aarch64": 854.92,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2084,
+      "relative_performance": 0.2084
+    },
+    "sysbench nonindex --threads=1024: QPS": {
+      "x86_64": 12308.1,
+      "aarch64": 2564.76,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2084,
+      "relative_performance": 0.2084
+    },
+    "sysbench nonindex --threads=1024: transactions": {
+      "x86_64": 246674.0,
+      "aarch64": 52004.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2108,
+      "relative_performance": 0.2108
+    },
+    "sysbench order --threads=128: TPS": {
+      "x86_64": 31955.22,
+      "aarch64": 14454.39,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4523,
+      "relative_performance": 0.4523
+    },
+    "sysbench order --threads=128: QPS": {
+      "x86_64": 95865.66,
+      "aarch64": 43363.18,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4523,
+      "relative_performance": 0.4523
+    },
+    "sysbench order --threads=128: transactions": {
+      "x86_64": 1917804.0,
+      "aarch64": 867562.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4524,
+      "relative_performance": 0.4524
+    },
+    "sysbench order --threads=256: TPS": {
+      "x86_64": 33351.5,
+      "aarch64": 9106.93,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2731,
+      "relative_performance": 0.2731
+    },
+    "sysbench order --threads=256: QPS": {
+      "x86_64": 100054.51,
+      "aarch64": 27320.79,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2731,
+      "relative_performance": 0.2731
+    },
+    "sysbench order --threads=256: transactions": {
+      "x86_64": 2002027.0,
+      "aarch64": 546783.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2731,
+      "relative_performance": 0.2731
+    },
+    "sysbench order --threads=512: TPS": {
+      "x86_64": 32761.87,
+      "aarch64": 5318.17,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1623,
+      "relative_performance": 0.1623
+    },
+    "sysbench order --threads=512: QPS": {
+      "x86_64": 98285.6,
+      "aarch64": 15954.52,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1623,
+      "relative_performance": 0.1623
+    },
+    "sysbench order --threads=512: transactions": {
+      "x86_64": 1967657.0,
+      "aarch64": 319485.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1624,
+      "relative_performance": 0.1624
+    },
+    "sysbench order --threads=1024: TPS": {
+      "x86_64": 31960.18,
+      "aarch64": 2582.24,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0808,
+      "relative_performance": 0.0808
+    },
+    "sysbench order --threads=1024: QPS": {
+      "x86_64": 95880.54,
+      "aarch64": 7746.71,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0808,
+      "relative_performance": 0.0808
+    },
+    "sysbench order --threads=1024: transactions": {
+      "x86_64": 1921175.0,
+      "aarch64": 155619.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.081,
+      "relative_performance": 0.081
+    },
+    "sysbench point --threads=128: TPS": {
+      "x86_64": 50841.98,
+      "aarch64": 35878.05,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.7057,
+      "relative_performance": 0.7057
+    },
+    "sysbench point --threads=128: QPS": {
+      "x86_64": 152525.94,
+      "aarch64": 107634.15,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.7057,
+      "relative_performance": 0.7057
+    },
+    "sysbench point --threads=128: transactions": {
+      "x86_64": 3051162.0,
+      "aarch64": 2153430.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.7058,
+      "relative_performance": 0.7058
+    },
+    "sysbench point --threads=256: TPS": {
+      "x86_64": 57829.98,
+      "aarch64": 19819.31,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.3427,
+      "relative_performance": 0.3427
+    },
+    "sysbench point --threads=256: QPS": {
+      "x86_64": 173489.93,
+      "aarch64": 59457.92,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.3427,
+      "relative_performance": 0.3427
+    },
+    "sysbench point --threads=256: transactions": {
+      "x86_64": 3471258.0,
+      "aarch64": 1189956.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.3428,
+      "relative_performance": 0.3428
+    },
+    "sysbench point --threads=512: TPS": {
+      "x86_64": 55144.1,
+      "aarch64": 12606.88,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2286,
+      "relative_performance": 0.2286
+    },
+    "sysbench point --threads=512: QPS": {
+      "x86_64": 165432.29,
+      "aarch64": 37820.64,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2286,
+      "relative_performance": 0.2286
+    },
+    "sysbench point --threads=512: transactions": {
+      "x86_64": 3311970.0,
+      "aarch64": 757329.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2287,
+      "relative_performance": 0.2287
+    },
+    "sysbench point --threads=1024: TPS": {
+      "x86_64": 52024.56,
+      "aarch64": 6468.21,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1243,
+      "relative_performance": 0.1243
+    },
+    "sysbench point --threads=1024: QPS": {
+      "x86_64": 156073.68,
+      "aarch64": 19404.63,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1243,
+      "relative_performance": 0.1243
+    },
+    "sysbench point --threads=1024: transactions": {
+      "x86_64": 3126981.0,
+      "aarch64": 389314.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1245,
+      "relative_performance": 0.1245
+    },
+    "sysbench simple --threads=128: TPS": {
+      "x86_64": 37216.69,
+      "aarch64": 15556.85,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.418,
+      "relative_performance": 0.418
+    },
+    "sysbench simple --threads=128: QPS": {
+      "x86_64": 111650.07,
+      "aarch64": 46670.56,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.418,
+      "relative_performance": 0.418
+    },
+    "sysbench simple --threads=128: transactions": {
+      "x86_64": 2233462.0,
+      "aarch64": 933743.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4181,
+      "relative_performance": 0.4181
+    },
+    "sysbench simple --threads=256: TPS": {
+      "x86_64": 39630.29,
+      "aarch64": 9259.88,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2337,
+      "relative_performance": 0.2337
+    },
+    "sysbench simple --threads=256: QPS": {
+      "x86_64": 118890.88,
+      "aarch64": 27779.63,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2337,
+      "relative_performance": 0.2337
+    },
+    "sysbench simple --threads=256: transactions": {
+      "x86_64": 2379053.0,
+      "aarch64": 555972.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2337,
+      "relative_performance": 0.2337
+    },
+    "sysbench simple --threads=512: TPS": {
+      "x86_64": 38896.54,
+      "aarch64": 5476.67,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1408,
+      "relative_performance": 0.1408
+    },
+    "sysbench simple --threads=512: QPS": {
+      "x86_64": 116689.62,
+      "aarch64": 16430.01,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1408,
+      "relative_performance": 0.1408
+    },
+    "sysbench simple --threads=512: transactions": {
+      "x86_64": 2336065.0,
+      "aarch64": 329000.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1408,
+      "relative_performance": 0.1408
+    },
+    "sysbench simple --threads=1024: TPS": {
+      "x86_64": 37527.52,
+      "aarch64": 3120.22,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0831,
+      "relative_performance": 0.0831
+    },
+    "sysbench simple --threads=1024: QPS": {
+      "x86_64": 112582.56,
+      "aarch64": 9360.66,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0831,
+      "relative_performance": 0.0831
+    },
+    "sysbench simple --threads=1024: transactions": {
+      "x86_64": 2255936.0,
+      "aarch64": 187996.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0833,
+      "relative_performance": 0.0833
+    },
+    "sysbench sum --threads=128: TPS": {
+      "x86_64": 41156.6,
+      "aarch64": 16793.49,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.408,
+      "relative_performance": 0.408
+    },
+    "sysbench sum --threads=128: QPS": {
+      "x86_64": 123469.79,
+      "aarch64": 50380.46,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.408,
+      "relative_performance": 0.408
+    },
+    "sysbench sum --threads=128: transactions": {
+      "x86_64": 2469881.0,
+      "aarch64": 1007961.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.4081,
+      "relative_performance": 0.4081
+    },
+    "sysbench sum --threads=256: TPS": {
+      "x86_64": 44269.99,
+      "aarch64": 9610.82,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2171,
+      "relative_performance": 0.2171
+    },
+    "sysbench sum --threads=256: QPS": {
+      "x86_64": 132809.98,
+      "aarch64": 28832.46,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2171,
+      "relative_performance": 0.2171
+    },
+    "sysbench sum --threads=256: transactions": {
+      "x86_64": 2657453.0,
+      "aarch64": 577056.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.2171,
+      "relative_performance": 0.2171
+    },
+    "sysbench sum --threads=512: TPS": {
+      "x86_64": 42436.69,
+      "aarch64": 5714.42,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1347,
+      "relative_performance": 0.1347
+    },
+    "sysbench sum --threads=512: QPS": {
+      "x86_64": 127310.08,
+      "aarch64": 17143.26,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1347,
+      "relative_performance": 0.1347
+    },
+    "sysbench sum --threads=512: transactions": {
+      "x86_64": 2548523.0,
+      "aarch64": 343327.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.1347,
+      "relative_performance": 0.1347
+    },
+    "sysbench sum --threads=1024: TPS": {
+      "x86_64": 40930.12,
+      "aarch64": 2866.56,
+      "unit": "transactions/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.07,
+      "relative_performance": 0.07
+    },
+    "sysbench sum --threads=1024: QPS": {
+      "x86_64": 122790.36,
+      "aarch64": 8599.69,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.07,
+      "relative_performance": 0.07
+    },
+    "sysbench sum --threads=1024: transactions": {
+      "x86_64": 2460592.0,
+      "aarch64": 172700.0,
+      "unit": "transactions",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.0702,
+      "relative_performance": 0.0702
+    }
+  }
+}
