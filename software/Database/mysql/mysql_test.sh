@@ -315,6 +315,7 @@ start_mysql_service() {
         --pid-file="${PID_FILE}" \
         --port="${MYSQL_PORT}" \
         --bind-address="${MYSQL_HOST}" \
+        --max-connections=2048 \
         --log-error="${ERR_LOG}" || {
         log "ERROR: failed to launch mysqld (see ${ERR_LOG})"
         return 40
