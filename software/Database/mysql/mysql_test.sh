@@ -147,12 +147,12 @@ fetch_mysql_archive() {
     if [[ -s "${archive_path}" ]]; then
         log "using cached MySQL archive ${archive_path}" >&2
     else
-        download_url="https://cdn.mysql.com/Downloads/${release_directory}/${archive_name}"
+        download_url="https://dev.mysql.com/get/Downloads/${release_directory}/${archive_name}"
         log "downloading ${download_url}" >&2
         if command -v curl >/dev/null 2>&1; then
             if ! curl -fSL --retry 3 --connect-timeout 30 -o "${archive_path}" "${download_url}"; then
                 rm -f "${archive_path}"
-                log "ERROR: failed to download ${archive_name} from MySQL CDN" >&2
+                log "ERROR: failed to download ${archive_name} from the official MySQL download endpoint" >&2
                 return 30
             fi
         elif ! wget -q -O "${archive_path}" "${download_url}"; then
