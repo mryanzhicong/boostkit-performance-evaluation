@@ -1,0 +1,140 @@
+{
+  "software": "snappy",
+  "category": "HPC",
+  "version": "1.2.2",
+  "architecture": "x86_64",
+  "run_id": "32936945030-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-26T06:11:16Z",
+    "category": "HPC",
+    "software": "snappy",
+    "requested_version": "1.2.2",
+    "actual_version": "1.2.2",
+    "architecture": "x86_64",
+    "run_id": "32936945030-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "./build/snappy_benchmark"
+      ],
+      "build_type": "Release",
+      "official_defaults": true,
+      "official_testdata": true
+    }
+  },
+  "parameter_signature": "c2bbb4762174f5bf017998110d9cd9d1718918173b893d9f068b5d3be3928957",
+  "test_tools": {},
+  "system_info": {
+    "collected_at": "2026-08-26T06:10:30Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-26T06:10:31Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1026846720 29941706752    64249856  1629941760 31097065472\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-26T06:13:17Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1058443264 29768347648   127455232  1838157824 31065468928\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "benchmark_google.txt",
+      "size": 14911
+    },
+    "benchmark_result": {
+      "benchmark": "snappy_official_benchmark",
+      "software": "snappy",
+      "version": "1.2.2",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-26T06:13:17Z",
+      "parameters": {
+        "command": [
+          "./build/snappy_benchmark"
+        ],
+        "build_type": "Release",
+        "official_defaults": true,
+        "official_testdata": true
+      },
+      "metric_contract": {
+        "scope": "selected aggregate official benchmark scenarios",
+        "source_field": "bytes_per_second",
+        "normalized_unit": "MiB/s",
+        "direction": "higher_is_better",
+        "benchmarks": [
+          "BM_ZFlatAll/1",
+          "BM_ZFlatAll/2",
+          "BM_UFlatMedley",
+          "BM_UValidateMedley"
+        ]
+      },
+      "runtime_context": {
+        "selected_metric_count": 4
+      },
+      "results": {
+        "BM_ZFlatAll/1": {
+          "scenario": "BM_ZFlatAll/1 [12 kTestDataFiles]",
+          "run_name": "BM_ZFlatAll/1",
+          "label": "12 kTestDataFiles",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 557.500839
+        },
+        "BM_ZFlatAll/2": {
+          "scenario": "BM_ZFlatAll/2 [12 kTestDataFiles]",
+          "run_name": "BM_ZFlatAll/2",
+          "label": "12 kTestDataFiles",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 379.833221
+        },
+        "BM_UFlatMedley": {
+          "scenario": "BM_UFlatMedley",
+          "run_name": "BM_UFlatMedley",
+          "label": "",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 1060.705185
+        },
+        "BM_UValidateMedley": {
+          "scenario": "BM_UValidateMedley",
+          "run_name": "BM_UValidateMedley",
+          "label": "",
+          "source_metric": "bytes_per_second",
+          "throughput_mib_per_second": 1789.045334
+        }
+      }
+    }
+  },
+  "metrics": {
+    "BM_ZFlatAll/1": {
+      "value": 557.500839,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "BM_ZFlatAll/2": {
+      "value": 379.833221,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "BM_UFlatMedley": {
+      "value": 1060.705185,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "BM_UValidateMedley": {
+      "value": 1789.045334,
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
