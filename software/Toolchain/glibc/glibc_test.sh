@@ -157,7 +157,7 @@ require_commands() {
 }
 
 prepare_glibc_source() {
-    local tarball expected_sha256 actual_sha256 source_root
+    local tarball local_tarball expected_sha256 actual_sha256 source_root
     if [[ -e "${SRC_DIR}" ]]; then
         log "ERROR: source directory already exists: ${SRC_DIR}"
         return 30
@@ -177,12 +177,19 @@ prepare_glibc_source() {
             ;;
     esac
     tarball="${PERF_WORK_DIR}/glibc-${SOFTWARE_VERSION}.tar.xz"
-    log "downloading official glibc ${SOFTWARE_VERSION} release tarball from ${GLIBC_SOURCE_URL}"
-    if ! curl -fsSL --retry 3 --connect-timeout 30 \
-        -o "${tarball}" \
-        "${GLIBC_SOURCE_URL}/glibc-${SOFTWARE_VERSION}.tar.xz"; then
-        log "ERROR: failed to download glibc-${SOFTWARE_VERSION}.tar.xz"
-        return 30
+    local_tarball="/home/runner/software/glibc/glibc-${SOFTWARE_VERSION}.tar.xz"
+    if [[ -f "${local_tarball}" ]]; then
+        tarball="${local_tarball}"
+        log "using local glibc source archive ${tarball}"
+    else
+        log "downloading official glibc ${SOFTWARE_VERSION} release tarball from ${GLIBC_SOURCE_URL}"
+        if ! curl -fsSL --retry 3 --connect-timeout 30 \
+            -o "${tarball}" \
+            "${GLIBC_SOURCE_URL}/glibc-${SOFTWARE_VERSION}.tar.xz"; then
+            rm -f "${tarball}"
+            log "ERROR: failed to download glibc-${SOFTWARE_VERSION}.tar.xz"
+            return 30
+        fi
     fi
     actual_sha256="$(sha256sum "${tarball}" | awk '{print $1}')"
     if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
@@ -204,7 +211,9 @@ prepare_glibc_source() {
         log "ERROR: failed to move the unpacked source into ${SRC_DIR}"
         return 30
     fi
-    rm -f "${tarball}"
+    if [[ "${tarball}" == "${PERF_WORK_DIR}/"* ]]; then
+        rm -f "${tarball}"
+    fi
 }
 
 build_glibc() {
@@ -239,8 +248,25 @@ build_glibc() {
         log "ERROR: glibc make build failed"
         return 40
     }
+    # Benchtest executables embed the dynamic-loader path below --prefix.
+    # Install into this run's isolated prefix so that path exists without
+    # touching the runner's system glibc. cross-compiling=yes suppresses
+    # glibc's install-time ldconfig update of the system cache.
+    log "installing glibc ${SOFTWARE_VERSION} into the isolated prefix ${INSTALL_DIR}"
+    (
+        cd "${BUILD_DIR}"
+        make install cross-compiling=yes
+    ) || {
+        log "ERROR: glibc installation into ${INSTALL_DIR} failed"
+        return 40
+    }
     if [[ ! -x "${LDCONFIG_BIN}" ]]; then
         log "ERROR: built ldconfig is missing: ${LDCONFIG_BIN}"
+        return 40
+    fi
+    if ! find "${INSTALL_DIR}/lib" -maxdepth 1 \
+        \( -type f -o -type l \) -name 'ld-linux-*.so.*' -print -quit | grep -q .; then
+        log "ERROR: installed glibc dynamic loader is missing under ${INSTALL_DIR}/lib"
         return 40
     fi
     if ! version_output="$("${LDCONFIG_BIN}" --version 2>/dev/null | head -n 1)"; then
