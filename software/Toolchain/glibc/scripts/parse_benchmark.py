@@ -257,19 +257,25 @@ def extract_named_string_timing(
         row_values = pairs_to_mapping(row, source_file)
         if all(row_values.get(name) == expected for name, expected in scenario.items()):
             matched_rows.append(row_values)
-    if len(matched_rows) != 1:
+    if not matched_rows:
         selectors = ",".join(f"{name}={value}" for name, value in scenario.items())
         raise RuntimeError(
-            f"{source_file} {function} must contain exactly one scenario: {selectors}"
+            f"{source_file} {function} has no scenario: {selectors}"
         )
-    timings = matched_rows[0].get("timings")
     implementation_index = ifuncs.index(implementation)
-    if not isinstance(timings, list) or implementation_index >= len(timings):
-        raise RuntimeError(
-            f"{source_file} {function} has no {implementation} timing value"
-        )
+    samples: list[float] = []
+    for row in matched_rows:
+        timings = row.get("timings")
+        if not isinstance(timings, list) or implementation_index >= len(timings):
+            raise RuntimeError(
+                f"{source_file} {function} has no {implementation} timing value"
+            )
+        samples.append(require_positive(timings[implementation_index], function))
     selectors = ",".join(f"{name}={value}" for name, value in scenario.items())
-    metric_name = f"{function}.results[{selectors}].timings[ifuncs='{implementation}']"
+    metric_name = (
+        f"{function}.results[{selectors}].timings[ifuncs='{implementation}']."
+        "arithmetic_mean"
+    )
     source_field = (
         f"functions.{function}.results[{selectors}].timings[{implementation_index}]"
     )
@@ -277,9 +283,11 @@ def extract_named_string_timing(
         results,
         metric_name,
         source_field,
-        timings[implementation_index],
+        sum(samples) / len(samples),
         source_file,
     )
+    results[metric_name]["aggregation"] = "arithmetic_mean"
+    results[metric_name]["sample_count"] = len(samples)
 
 
 def extract_string_api_metrics(benchtests_dir: Path, results: dict[str, Any]) -> None:
@@ -444,7 +452,7 @@ def main() -> int:
                 "mean",
                 "duration",
                 "results[0]",
-                "timings[ifuncs='<named generic implementation>']",
+                "timings[ifuncs='<named generic implementation>'] (arithmetic mean of duplicate scenarios)",
                 "time_per_iteration",
                 "main_arena_st_allocs_0100_time",
             ],
