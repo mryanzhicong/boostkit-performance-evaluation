@@ -34,14 +34,8 @@ STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
-log_message() { printf '[brpc] %s\n' "$*"; }
-
-normalize_architecture() {
-    case "${1,,}" in
-        x86_64|amd64) printf 'x86_64\n' ;;
-        aarch64|arm64) printf 'aarch64\n' ;;
-        *) printf '%s\n' "${1,,}" ;;
-    esac
+log_message() {
+    printf '[brpc] %s\n' "$*"
 }
 
 configure_runtime_paths() {
@@ -52,6 +46,11 @@ configure_runtime_paths() {
         log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
     }
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64) EXPECTED_ARCH="x86_64" ;;
+        aarch64|arm64) EXPECTED_ARCH="aarch64" ;;
+        *) EXPECTED_ARCH="${EXPECTED_ARCH,,}" ;;
+    esac
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
@@ -82,90 +81,96 @@ configure_runtime_paths() {
 }
 
 initialize_runtime() {
+    local runner_architecture
+
     configure_runtime_paths
+    runner_architecture="$(uname -m)"
+    [[ "${runner_architecture}" == "${EXPECTED_ARCH}" ]] || {
+        log_message "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
+        return 20
+    }
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
-require_commands() {
-    local required missing=0
-    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
-            missing=1
-        fi
-    done
-    [[ "${missing}" -eq 0 ]]
-}
+require_brpc_dependencies() {
+    local required package library header
+    local packages=()
 
-check_system_dependencies() {
-    # brpc links against system-installed openssl, gflags, leveldb and
-    # protobuf; their development packages are required before building.
-    local check missing=0
-    local checks=(
-        "openssl/openssl/ssl.h"
-        "gflags/gflags/gflags.h"
-        "leveldb/leveldb/db.h"
-        "protobuf/google/protobuf/message.h"
-    )
-    for check in "${checks[@]}"; do
-        local library="${check%%/*}" header="${check#*/}"
+    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
+        if command -v "${required}" >/dev/null 2>&1; then
+            continue
+        fi
+        case "${required}" in
+            git) package="git" ;;
+            cmake) package="cmake" ;;
+            make) package="make" ;;
+            gcc) package="gcc" ;;
+            g++) package="gcc-c++" ;;
+            protoc) package="protobuf-compiler" ;;
+            python3) package="python3" ;;
+            curl) package="curl" ;;
+            tar) package="tar" ;;
+            sed) package="sed" ;;
+            grep) package="grep" ;;
+            install|tee|nproc) package="coreutils" ;;
+        esac
+        log_message "missing required BRPC build command: ${required}"
+        packages+=("${package}")
+    done
+
+    # BRPC links against these system libraries.  Test the headers instead of
+    # assuming that a package name proves the compiler can use the library.
+    for library in openssl gflags leveldb protobuf; do
+        case "${library}" in
+            openssl) header="openssl/ssl.h"; package="openssl-devel" ;;
+            gflags) header="gflags/gflags.h"; package="gflags-devel" ;;
+            leveldb) header="leveldb/db.h"; package="leveldb-devel" ;;
+            protobuf) header="google/protobuf/message.h"; package="protobuf-devel" ;;
+        esac
         if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>/dev/null; then
-            log_message "ERROR: development headers for ${library} are missing"
-            missing=1
+            log_message "missing required BRPC development headers: ${library}"
+            packages+=("${package}")
         fi
     done
-    [[ "${missing}" -eq 0 ]] || {
-        log_message "ERROR: install the missing development packages before retrying"
+
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log_message "ERROR: dnf is required to install BRPC build prerequisites"
         return 30
-    }
-}
-
-check_architecture() {
-    local actual expected
-    actual="$(normalize_architecture "$(uname -m)")"
-    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
-    [[ "${actual}" == "${expected}" ]] || {
-        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
-        return 20
-    }
-}
-
-prepare_compiler() {
-    # The official getting_started.md builds brpc with the default g++
-    # toolchain; record the compiler actually used by the build.
-    COMPILER_BINARY="g++"
-    COMPILER_VERSION_STRING="$("${COMPILER_BINARY}" --version | head -n 1)"
-    log_message "using compiler: ${COMPILER_BINARY} (${COMPILER_VERSION_STRING})"
-}
-
-prepare_brpc_source() {
-    [[ ! -e "${SOURCE_DIR}" ]] || {
-        log_message "ERROR: source directory already exists: ${SOURCE_DIR}"
+    fi
+    log_message "installing missing BRPC build packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log_message "ERROR: sudo is required to install BRPC build prerequisites"
         return 30
-    }
-    export GIT_TERMINAL_PROMPT=0
-    log_message "cloning brpc ${SOFTWARE_VERSION} from ${BRPC_SOURCE_URL}"
-    git clone --branch "${SOFTWARE_VERSION}" --depth 1 \
-        "${BRPC_SOURCE_URL}" "${SOURCE_DIR}" || {
-        log_message "ERROR: failed to clone brpc ${SOFTWARE_VERSION}"
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log_message "ERROR: failed to install BRPC build prerequisites"
         return 30
-    }
-}
+    fi
 
-report_actual_version() {
-    # The brpc server binary does not carry a --version flag; the
-    # RELEASE_VERSION file shipped with the release tag is the authoritative
-    # version evidence.
-    local actual_version
-    actual_version="$(<"${SOURCE_DIR}/RELEASE_VERSION")"
-    actual_version="${actual_version//[[:space:]]/}"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: source RELEASE_VERSION '${actual_version}' does not match ${SOFTWARE_VERSION}"
-        return 40
-    }
-    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
+        if ! command -v "${required}" >/dev/null 2>&1; then
+            log_message "ERROR: required BRPC build command remains unavailable: ${required}"
+            return 30
+        fi
+    done
+    for library in openssl gflags leveldb protobuf; do
+        case "${library}" in
+            openssl) header="openssl/ssl.h" ;;
+            gflags) header="gflags/gflags.h" ;;
+            leveldb) header="leveldb/db.h" ;;
+            protobuf) header="google/protobuf/message.h" ;;
+        esac
+        if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
+            | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+            log_message "ERROR: required BRPC development headers remain unavailable: ${library}"
+            return 30
+        fi
+    done
 }
 
 configure_http_example_for_modern_protobuf() {
@@ -208,17 +213,40 @@ configure_http_example_for_modern_protobuf() {
 }
 
 build_brpc() {
+    local actual_version
+
     initialize_runtime || return $?
-    check_architecture || return $?
-    require_commands || return $?
+    require_brpc_dependencies || return $?
     [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" && ! -e "${SERVICE_DIR}" ]] || {
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
-    check_system_dependencies || return $?
-    prepare_compiler || return $?
-    prepare_brpc_source || return $?
-    report_actual_version || return $?
+
+    # The official getting_started.md builds BRPC with the default g++
+    # toolchain.  Record the compiler actually used by this build.
+    COMPILER_BINARY="g++"
+    COMPILER_VERSION_STRING="$("${COMPILER_BINARY}" --version | head -n 1)"
+    log_message "using compiler: ${COMPILER_BINARY} (${COMPILER_VERSION_STRING})"
+
+    export GIT_TERMINAL_PROMPT=0
+    log_message "cloning brpc ${SOFTWARE_VERSION} from ${BRPC_SOURCE_URL}"
+    git clone --branch "${SOFTWARE_VERSION}" --depth 1 \
+        "${BRPC_SOURCE_URL}" "${SOURCE_DIR}" || {
+        log_message "ERROR: failed to clone brpc ${SOFTWARE_VERSION}"
+        return 30
+    }
+
+    # The server binary has no --version switch.  RELEASE_VERSION from the
+    # checked-out release is the authoritative version evidence.
+    actual_version="$(<"${SOURCE_DIR}/RELEASE_VERSION")"
+    actual_version="${actual_version//[[:space:]]/}"
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+        log_message "ERROR: source RELEASE_VERSION '${actual_version}' does not match ${SOFTWARE_VERSION}"
+        return 40
+    }
+    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+
     configure_http_example_for_modern_protobuf || return $?
 
     log_message "building the official brpc library with cmake (Release)"
@@ -279,18 +307,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 PYEOF
 }
 
-wait_for_http_endpoint() {
-    local url="$1" attempts=60
-    while ((attempts > 0)); do
-        if curl -fsS -o /dev/null "${url}" 2>/dev/null; then
-            return 0
-        fi
-        sleep 1
-        attempts=$((attempts - 1))
-    done
-    return 1
-}
-
 process_is_alive() {
     [[ -n "$1" && "$1" =~ ^[0-9]+$ ]] && kill -0 "$1" 2>/dev/null
 }
@@ -324,6 +340,8 @@ terminate_process_gracefully() {
 }
 
 start_brpc_service() {
+    local server_pid attempt
+
     initialize_runtime || return $?
     [[ -x "${HTTP_SERVER_BIN}" ]] || {
         log_message "ERROR: official http_server binary is unavailable: ${HTTP_SERVER_BIN}"
@@ -347,9 +365,15 @@ start_brpc_service() {
         -certificate "${EXAMPLE_DIR}/cert.pem" \
         -private_key "${EXAMPLE_DIR}/key.pem" \
         >"${SERVER_LOG_FILE}" 2>&1 &
-    local server_pid=$!
+    server_pid=$!
     printf '%s\n' "${server_pid}" > "${SERVER_PID_FILE}"
-    if ! wait_for_http_endpoint "http://127.0.0.1:${HTTP_SERVER_PORT}/status"; then
+    for ((attempt = 0; attempt < 60; attempt += 1)); do
+        if curl -fsS -o /dev/null "http://127.0.0.1:${HTTP_SERVER_PORT}/status" 2>/dev/null; then
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -fsS -o /dev/null "http://127.0.0.1:${HTTP_SERVER_PORT}/status"; then
         terminate_process_gracefully "${server_pid}" "official http_server" || true
         log_message "ERROR: official http_server did not become ready on port ${HTTP_SERVER_PORT}"
         return 40
@@ -357,8 +381,14 @@ start_brpc_service() {
     log_message "official http_server is ready (pid ${server_pid})"
 }
 
-verify_brpc_service_ready() {
-    local server_pid
+run_brpc_benchmark_http() {
+    local warmup_pid client_pid server_pid
+
+    initialize_runtime || return $?
+    [[ -x "${BENCHMARK_HTTP_BIN}" ]] || {
+        log_message "ERROR: official benchmark_http binary is unavailable: ${BENCHMARK_HTTP_BIN}"
+        return 40
+    }
     server_pid="$(read_pid_file "${SERVER_PID_FILE}")"
     process_is_alive "${server_pid}" || {
         log_message "ERROR: official http_server (pid ${server_pid:-unknown}) is not running"
@@ -368,33 +398,41 @@ verify_brpc_service_ready() {
         log_message "ERROR: official http_server is not responding on port ${HTTP_SERVER_PORT}"
         return 40
     }
-}
-
-run_brpc_benchmark_http() {
-    initialize_runtime || return $?
-    [[ -x "${BENCHMARK_HTTP_BIN}" ]] || {
-        log_message "ERROR: official benchmark_http binary is unavailable: ${BENCHMARK_HTTP_BIN}"
-        return 40
-    }
-    verify_brpc_service_ready || return $?
     port_is_free "${BENCHMARK_DUMMY_PORT}" || {
         log_message "ERROR: dummy port ${BENCHMARK_DUMMY_PORT} is already in use"
         return 20
     }
-    log_message "running official benchmark_http: ${BENCHMARK_HTTP_THREAD_NUM} threads for ${BENCHMARK_HTTP_DURATION_S}s"
+    log_message "warming up official benchmark_http for ${BENCHMARK_HTTP_WARMUP_S}s; warmup metrics will be discarded"
     nohup "${BENCHMARK_HTTP_BIN}" \
         -thread_num "${BENCHMARK_HTTP_THREAD_NUM}" \
         -url "127.0.0.1:${HTTP_SERVER_PORT}/HttpService/Echo" \
         -dummy_port "${BENCHMARK_DUMMY_PORT}" \
         >"${CLIENT_LOG_FILE}" 2>&1 &
-    local client_pid=$!
-    printf '%s\n' "${client_pid}" > "${CLIENT_PID_FILE}"
+    warmup_pid=$!
+    printf '%s\n' "${warmup_pid}" > "${CLIENT_PID_FILE}"
 
     sleep "${BENCHMARK_HTTP_WARMUP_S}"
-    process_is_alive "${client_pid}" || {
+    process_is_alive "${warmup_pid}" || {
         log_message "ERROR: official benchmark_http exited during warmup"
         return 50
     }
+
+    terminate_process_gracefully "${warmup_pid}" "warmup benchmark_http" || return $?
+    rm -f "${CLIENT_PID_FILE}"
+    port_is_free "${BENCHMARK_DUMMY_PORT}" || {
+        log_message "ERROR: warmup benchmark_http did not release dummy port ${BENCHMARK_DUMMY_PORT}"
+        return 50
+    }
+
+    log_message "running measured official benchmark_http: ${BENCHMARK_HTTP_THREAD_NUM} threads for ${BENCHMARK_HTTP_DURATION_S}s"
+    nohup "${BENCHMARK_HTTP_BIN}" \
+        -thread_num "${BENCHMARK_HTTP_THREAD_NUM}" \
+        -url "127.0.0.1:${HTTP_SERVER_PORT}/HttpService/Echo" \
+        -dummy_port "${BENCHMARK_DUMMY_PORT}" \
+        >"${CLIENT_LOG_FILE}" 2>&1 &
+    client_pid=$!
+    printf '%s\n' "${client_pid}" > "${CLIENT_PID_FILE}"
+
     sleep "${BENCHMARK_HTTP_DURATION_S}"
     process_is_alive "${client_pid}" || {
         log_message "ERROR: official benchmark_http exited before the duration elapsed"
@@ -509,7 +547,7 @@ run_brpc_standalone() {
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}" \
                 "${COMPILER_BINARY}" \
                 "${COMPILER_VERSION_STRING}"; then
@@ -558,7 +596,7 @@ run_brpc_standalone() {
     if standalone_runtime finalize \
         "${RESULTS_DIR}" \
         "${SOFTWARE_VERSION}" \
-        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${EXPECTED_ARCH}" \
         "${PERF_RUN_ID}" \
         "${command_status}" \
         "${cleanup_status}" \
