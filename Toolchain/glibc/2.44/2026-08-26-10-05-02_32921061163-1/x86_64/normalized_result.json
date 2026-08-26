@@ -1,0 +1,786 @@
+{
+  "software": "glibc",
+  "category": "Toolchain",
+  "version": "2.44",
+  "architecture": "x86_64",
+  "run_id": "32921061163-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-26T02:01:58Z",
+    "category": "Toolchain",
+    "software": "glibc",
+    "requested_version": "2.44",
+    "actual_version": "2.44",
+    "architecture": "x86_64",
+    "run_id": "32921061163-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "make",
+        "bench",
+        "BENCHSET=math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset",
+        "USE_CLOCK_GETTIME=1"
+      ],
+      "benchset": [
+        "math-benchset",
+        "stdio-benchset",
+        "stdio-common-benchset",
+        "stdlib-benchset",
+        "string-benchset"
+      ],
+      "use_clock_gettime": 1,
+      "timing_backend": "clock_gettime (CLOCK_MONOTONIC, ns)",
+      "bench_duration_seconds": 1,
+      "official_suite": "glibc benchtests (make bench, benchtests/Makefile)"
+    }
+  },
+  "parameter_signature": "e66af7931025e4d0857b6091c7788691b60088917551ab1c338510171751fed0",
+  "test_tools": {},
+  "system_info": {
+    "collected_at": "2026-08-26T02:00:20Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-26T02:00:20Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1012555776 29965606912    64393216  1619722240 31111356416\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-26T02:04:43Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  2165706752 28780941312  1196642304  2790772736 29958205440\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "benchmark_bench.txt",
+      "size": 21974
+    },
+    "benchmark_result": {
+      "benchmark": "glibc_official_benchtests",
+      "software": "glibc",
+      "version": "2.44",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-26T02:04:43Z",
+      "parameters": {
+        "command": [
+          "make",
+          "bench",
+          "BENCHSET=math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset",
+          "USE_CLOCK_GETTIME=1"
+        ],
+        "benchset": [
+          "math-benchset",
+          "stdio-benchset",
+          "stdio-common-benchset",
+          "stdlib-benchset",
+          "string-benchset"
+        ],
+        "use_clock_gettime": 1,
+        "timing_backend": "clock_gettime (CLOCK_MONOTONIC, ns)",
+        "bench_duration_seconds": 1,
+        "official_suite": "glibc benchtests (make bench, benchtests/Makefile)"
+      },
+      "metric_contract": {
+        "scope": "verbatim named JSON paths from official glibc benchtest outputs",
+        "source_fields": [
+          "mean",
+          "duration",
+          "results[0]"
+        ],
+        "normalized_unit": "ns",
+        "direction": "lower_is_better"
+      },
+      "runtime_context": {
+        "bench_timing_type": "hp_timing"
+      },
+      "results": {
+        "math-inlines.__isnan.inf/nan.mean": {
+          "source_name": "math-inlines.__isnan.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 4483.0,
+          "raw_unit": "ns",
+          "value": 4483.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnan_inl.inf/nan.mean": {
+          "source_name": "math-inlines.__isnan_inl.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2243.0,
+          "raw_unit": "ns",
+          "value": 2243.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnan_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__isnan_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1958.0,
+          "raw_unit": "ns",
+          "value": 1958.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isnan.inf/nan.mean": {
+          "source_name": "math-inlines.isnan.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1953.0,
+          "raw_unit": "ns",
+          "value": 1953.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf.inf/nan.mean": {
+          "source_name": "math-inlines.__isinf.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 4760.0,
+          "raw_unit": "ns",
+          "value": 4760.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_ns2.inf/nan.mean": {
+          "source_name": "math-inlines.__isinf_ns2.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1954.0,
+          "raw_unit": "ns",
+          "value": 1954.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_ns_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__isinf_ns_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2235.0,
+          "raw_unit": "ns",
+          "value": 2235.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__isinf_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2238.0,
+          "raw_unit": "ns",
+          "value": 2238.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isinf.inf/nan.mean": {
+          "source_name": "math-inlines.isinf.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2234.0,
+          "raw_unit": "ns",
+          "value": 2234.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__finite.inf/nan.mean": {
+          "source_name": "math-inlines.__finite.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 4216.0,
+          "raw_unit": "ns",
+          "value": 4216.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__finite_inl.inf/nan.mean": {
+          "source_name": "math-inlines.__finite_inl.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1968.0,
+          "raw_unit": "ns",
+          "value": 1968.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isfinite_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__isfinite_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1406.0,
+          "raw_unit": "ns",
+          "value": 1406.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isfinite.inf/nan.mean": {
+          "source_name": "math-inlines.isfinite.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1408.0,
+          "raw_unit": "ns",
+          "value": 1408.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnormal_inl.inf/nan.mean": {
+          "source_name": "math-inlines.__isnormal_inl.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 4496.0,
+          "raw_unit": "ns",
+          "value": 4496.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnormal_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__isnormal_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1407.0,
+          "raw_unit": "ns",
+          "value": 1407.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isnormal.inf/nan.mean": {
+          "source_name": "math-inlines.isnormal.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1406.0,
+          "raw_unit": "ns",
+          "value": 1406.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__fpclassify.inf/nan.mean": {
+          "source_name": "math-inlines.__fpclassify.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 1967.0,
+          "raw_unit": "ns",
+          "value": 1967.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__fpclassify_builtin.inf/nan.mean": {
+          "source_name": "math-inlines.__fpclassify_builtin.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2331.0,
+          "raw_unit": "ns",
+          "value": 2331.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.fpclassify.inf/nan.mean": {
+          "source_name": "math-inlines.fpclassify.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 2605.0,
+          "raw_unit": "ns",
+          "value": 2605.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.remainder_test1.inf/nan.mean": {
+          "source_name": "math-inlines.remainder_test1.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 5870.0,
+          "raw_unit": "ns",
+          "value": 5870.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.remainder_test2.inf/nan.mean": {
+          "source_name": "math-inlines.remainder_test2.inf/nan.mean",
+          "source_field": "mean",
+          "raw_value": 5757.0,
+          "raw_unit": "ns",
+          "value": 5757.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnan.normal.mean": {
+          "source_name": "math-inlines.__isnan.normal.mean",
+          "source_field": "mean",
+          "raw_value": 4233.0,
+          "raw_unit": "ns",
+          "value": 4233.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnan_inl.normal.mean": {
+          "source_name": "math-inlines.__isnan_inl.normal.mean",
+          "source_field": "mean",
+          "raw_value": 2002.0,
+          "raw_unit": "ns",
+          "value": 2002.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnan_builtin.normal.mean": {
+          "source_name": "math-inlines.__isnan_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1434.0,
+          "raw_unit": "ns",
+          "value": 1434.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isnan.normal.mean": {
+          "source_name": "math-inlines.isnan.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1434.0,
+          "raw_unit": "ns",
+          "value": 1434.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf.normal.mean": {
+          "source_name": "math-inlines.__isinf.normal.mean",
+          "source_field": "mean",
+          "raw_value": 3389.0,
+          "raw_unit": "ns",
+          "value": 3389.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_ns2.normal.mean": {
+          "source_name": "math-inlines.__isinf_ns2.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1708.0,
+          "raw_unit": "ns",
+          "value": 1708.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_ns_builtin.normal.mean": {
+          "source_name": "math-inlines.__isinf_ns_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1987.0,
+          "raw_unit": "ns",
+          "value": 1987.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isinf_builtin.normal.mean": {
+          "source_name": "math-inlines.__isinf_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1989.0,
+          "raw_unit": "ns",
+          "value": 1989.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isinf.normal.mean": {
+          "source_name": "math-inlines.isinf.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1987.0,
+          "raw_unit": "ns",
+          "value": 1987.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__finite.normal.mean": {
+          "source_name": "math-inlines.__finite.normal.mean",
+          "source_field": "mean",
+          "raw_value": 3959.0,
+          "raw_unit": "ns",
+          "value": 3959.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__finite_inl.normal.mean": {
+          "source_name": "math-inlines.__finite_inl.normal.mean",
+          "source_field": "mean",
+          "raw_value": 2000.0,
+          "raw_unit": "ns",
+          "value": 2000.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isfinite_builtin.normal.mean": {
+          "source_name": "math-inlines.__isfinite_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1438.0,
+          "raw_unit": "ns",
+          "value": 1438.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isfinite.normal.mean": {
+          "source_name": "math-inlines.isfinite.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1434.0,
+          "raw_unit": "ns",
+          "value": 1434.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnormal_inl.normal.mean": {
+          "source_name": "math-inlines.__isnormal_inl.normal.mean",
+          "source_field": "mean",
+          "raw_value": 3213.0,
+          "raw_unit": "ns",
+          "value": 3213.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__isnormal_builtin.normal.mean": {
+          "source_name": "math-inlines.__isnormal_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1805.0,
+          "raw_unit": "ns",
+          "value": 1805.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isnormal.normal.mean": {
+          "source_name": "math-inlines.isnormal.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1788.0,
+          "raw_unit": "ns",
+          "value": 1788.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__fpclassify.normal.mean": {
+          "source_name": "math-inlines.__fpclassify.normal.mean",
+          "source_field": "mean",
+          "raw_value": 2055.0,
+          "raw_unit": "ns",
+          "value": 2055.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.__fpclassify_builtin.normal.mean": {
+          "source_name": "math-inlines.__fpclassify_builtin.normal.mean",
+          "source_field": "mean",
+          "raw_value": 2091.0,
+          "raw_unit": "ns",
+          "value": 2091.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.fpclassify.normal.mean": {
+          "source_name": "math-inlines.fpclassify.normal.mean",
+          "source_field": "mean",
+          "raw_value": 2367.0,
+          "raw_unit": "ns",
+          "value": 2367.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.remainder_test1.normal.mean": {
+          "source_name": "math-inlines.remainder_test1.normal.mean",
+          "source_field": "mean",
+          "raw_value": 7591.0,
+          "raw_unit": "ns",
+          "value": 7591.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.remainder_test2.normal.mean": {
+          "source_name": "math-inlines.remainder_test2.normal.mean",
+          "source_field": "mean",
+          "raw_value": 7948.0,
+          "raw_unit": "ns",
+          "value": 7948.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "sprintf.positional.mean": {
+          "source_name": "sprintf.positional.mean",
+          "source_field": "mean",
+          "raw_value": 299.164,
+          "raw_unit": "ns",
+          "value": 299.164,
+          "unit": "ns",
+          "source_file": "bench-sprintf.out"
+        },
+        "sprintf.non-positional.mean": {
+          "source_name": "sprintf.non-positional.mean",
+          "source_field": "mean",
+          "raw_value": 168.296,
+          "raw_unit": "ns",
+          "value": 168.296,
+          "unit": "ns",
+          "source_file": "bench-sprintf.out"
+        },
+        "fclose.duration": {
+          "source_name": "fclose.duration",
+          "source_field": "duration",
+          "raw_value": 36051.0,
+          "raw_unit": "ns",
+          "value": 36051.0,
+          "unit": "ns",
+          "source_file": "bench-fclose.out"
+        },
+        "random.single-threaded": {
+          "source_name": "random.single-threaded",
+          "source_field": "results[0]",
+          "raw_value": 4.52894,
+          "raw_unit": "ns",
+          "value": 4.52894,
+          "unit": "ns",
+          "source_file": "bench-random-lock.out"
+        },
+        "random.multi-threaded": {
+          "source_name": "random.multi-threaded",
+          "source_field": "results[0]",
+          "raw_value": 4.37428,
+          "raw_unit": "ns",
+          "value": 4.37428,
+          "unit": "ns",
+          "source_file": "bench-random-lock.out"
+        }
+      }
+    },
+    "math_inlines_raw": {
+      "path": "benchtests/bench-math-inlines.out",
+      "size": 5163
+    },
+    "sprintf_raw": {
+      "path": "benchtests/bench-sprintf.out",
+      "size": 307
+    },
+    "fclose_raw": {
+      "path": "benchtests/bench-fclose.out",
+      "size": 155
+    },
+    "random_lock_raw": {
+      "path": "benchtests/bench-random-lock.out",
+      "size": 213
+    }
+  },
+  "metrics": {
+    "math-inlines.__isnan.inf/nan.mean": {
+      "value": 4483.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnan_inl.inf/nan.mean": {
+      "value": 2243.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnan_builtin.inf/nan.mean": {
+      "value": 1958.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isnan.inf/nan.mean": {
+      "value": 1953.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf.inf/nan.mean": {
+      "value": 4760.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_ns2.inf/nan.mean": {
+      "value": 1954.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_ns_builtin.inf/nan.mean": {
+      "value": 2235.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_builtin.inf/nan.mean": {
+      "value": 2238.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isinf.inf/nan.mean": {
+      "value": 2234.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__finite.inf/nan.mean": {
+      "value": 4216.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__finite_inl.inf/nan.mean": {
+      "value": 1968.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isfinite_builtin.inf/nan.mean": {
+      "value": 1406.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isfinite.inf/nan.mean": {
+      "value": 1408.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnormal_inl.inf/nan.mean": {
+      "value": 4496.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnormal_builtin.inf/nan.mean": {
+      "value": 1407.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isnormal.inf/nan.mean": {
+      "value": 1406.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__fpclassify.inf/nan.mean": {
+      "value": 1967.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__fpclassify_builtin.inf/nan.mean": {
+      "value": 2331.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.fpclassify.inf/nan.mean": {
+      "value": 2605.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.remainder_test1.inf/nan.mean": {
+      "value": 5870.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.remainder_test2.inf/nan.mean": {
+      "value": 5757.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnan.normal.mean": {
+      "value": 4233.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnan_inl.normal.mean": {
+      "value": 2002.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnan_builtin.normal.mean": {
+      "value": 1434.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isnan.normal.mean": {
+      "value": 1434.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf.normal.mean": {
+      "value": 3389.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_ns2.normal.mean": {
+      "value": 1708.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_ns_builtin.normal.mean": {
+      "value": 1987.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isinf_builtin.normal.mean": {
+      "value": 1989.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isinf.normal.mean": {
+      "value": 1987.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__finite.normal.mean": {
+      "value": 3959.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__finite_inl.normal.mean": {
+      "value": 2000.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isfinite_builtin.normal.mean": {
+      "value": 1438.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isfinite.normal.mean": {
+      "value": 1434.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnormal_inl.normal.mean": {
+      "value": 3213.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__isnormal_builtin.normal.mean": {
+      "value": 1805.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isnormal.normal.mean": {
+      "value": 1788.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__fpclassify.normal.mean": {
+      "value": 2055.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.__fpclassify_builtin.normal.mean": {
+      "value": 2091.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.fpclassify.normal.mean": {
+      "value": 2367.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.remainder_test1.normal.mean": {
+      "value": 7591.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.remainder_test2.normal.mean": {
+      "value": 7948.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "sprintf.positional.mean": {
+      "value": 299.164,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "sprintf.non-positional.mean": {
+      "value": 168.296,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "fclose.duration": {
+      "value": 36051.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "random.single-threaded": {
+      "value": 4.52894,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "random.multi-threaded": {
+      "value": 4.37428,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    }
+  }
+}
