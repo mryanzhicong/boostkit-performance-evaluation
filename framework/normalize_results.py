@@ -66,7 +66,10 @@ def _load_output(
                 f"output {output_name} JSON root must be an object: {filename}"
             )
         return value
-    return {"path": str(path), "size": path.stat().st_size}
+    # Keep a portable result-directory-relative path.  The workflow downloads
+    # artifacts into a different workspace before publishing history, so an
+    # absolute runner path cannot be used to preserve declared text evidence.
+    return {"path": filename, "size": path.stat().st_size}
 
 
 def validate_stage_outputs(context: RunContext, stage: str) -> None:

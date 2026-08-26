@@ -762,8 +762,15 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         result = normalized_result(architecture, throughput, latency)
         result.update({"run_id": run_id, "cleanup_status": "passed"})
         result_dir = input_root / folder
+        result["sources"] = {
+            "raw_evidence": {"path": "evidence/original-output.txt", "size": 12}
+        }
         atomic_write_json(result_dir / "normalized_result.json", result)
         atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
+        (result_dir / "evidence").mkdir(parents=True)
+        (result_dir / "evidence" / "original-output.txt").write_text(
+            f"source evidence for {architecture}\n", encoding="utf-8"
+        )
         (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
         (result_dir / "raw-output.log").write_text(
             f"raw benchmark output for {architecture}\n", encoding="utf-8"
@@ -798,6 +805,9 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert (run_root / "aarch64" / "raw-output.log").read_text(
         encoding="utf-8"
     ) == "raw benchmark output for aarch64\n"
+    assert (run_root / "x86_64" / "evidence" / "original-output.txt").read_text(
+        encoding="utf-8"
+    ) == "source evidence for x86_64\n"
     assert not (run_root / "aarch64" / "results.log").exists()
     assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()

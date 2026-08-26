@@ -19,13 +19,31 @@ REQUIRED_IDENTITY_FIELDS = ("category", "software", "version", "architecture", "
 RESULT_TIMEZONE = timezone(timedelta(hours=8))
 
 
-def _copy_permanent_files(source: Path, destination: Path) -> None:
+def _copy_permanent_files(source: Path, destination: Path, result: dict) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for path in sorted(source.iterdir()):
         if not path.is_file():
             continue
         if path.suffix == ".json" or path.name in PERMANENT_TEXT_FILES:
             shutil.copy2(path, destination / path.name)
+    # JSON outputs are already copied above.  Preserve every declared text
+    # output as well, including nested raw evidence files, using the portable
+    # relative paths recorded in normalized_result.json.
+    for source_definition in result.get("sources", {}).values():
+        if not isinstance(source_definition, dict):
+            continue
+        path_text = source_definition.get("path")
+        if not isinstance(path_text, str):
+            continue
+        relative_path = Path(path_text)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            continue
+        source_path = source / relative_path
+        if not source_path.is_file():
+            continue
+        destination_path = destination / relative_path
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination_path)
 
 
 def _identity(result: dict) -> tuple[str, str, str, str, str]:
@@ -60,7 +78,7 @@ def prepare(
         "# Performance result history\n\n"
         "This branch is maintained by the manually triggered performance workflow.\n"
         "Result directories use UTC+8 time: YYYY-MM-DD-HH-MM-SS_RUN_ID-ATTEMPT.\n"
-        "Each architecture keeps its normalized data, report, declared JSON outputs, "
+        "Each architecture keeps its normalized data, report, declared outputs, "
         "and original test-stage stdout/stderr in raw-output.log. Other stage logs "
         "remain in GitHub Actions artifacts.\n",
         encoding="utf-8",
@@ -90,7 +108,7 @@ def prepare(
         for result, source_dir in entries:
             architecture = str(result["architecture"])
             destination = run_root / architecture
-            _copy_permanent_files(source_dir, destination)
+            _copy_permanent_files(source_dir, destination, result)
             architecture_dirs[architecture] = destination
             if result.get("parameter_signature"):
                 parameter_signatures.add(str(result["parameter_signature"]))
