@@ -51,24 +51,44 @@ def benchmark_command(binary: Path, port: int, operation: str) -> list[str]:
     ]
 
 
-def parse_requests_per_second(output: str, operation: str) -> float:
-    pattern = re.compile(
-        rf"(?im)^\s*{re.escape(operation)}\s*:\s*"
-        r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
+def parse_requests_per_second(output: str, operation: str) -> tuple[float, str]:
+    patterns = (
+        (
+            f"{operation}: <value> requests per second",
+            re.compile(
+                rf"(?im)^\s*{re.escape(operation)}\s*:\s*"
+                r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
+            ),
+        ),
+        (
+            "throughput summary: <value> requests per second",
+            re.compile(
+                r"(?im)^\s*throughput summary:\s*"
+                r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
+            ),
+        ),
     )
-    matches = pattern.findall(output)
+    matches = [
+        (source_field, value)
+        for source_field, pattern in patterns
+        for value in pattern.findall(output)
+    ]
     if len(matches) != 1:
         raise RuntimeError(
-            f"expected exactly one {operation} requests-per-second line, "
+            f"expected exactly one {operation} requests-per-second line or "
+            f"throughput summary, "
             f"found {len(matches)}"
         )
-    value = float(matches[0])
+    source_field, raw_value = matches[0]
+    value = float(raw_value)
     if not math.isfinite(value) or value <= 0:
-        raise RuntimeError(f"{operation} requests per second is invalid: {matches[0]}")
-    return value
+        raise RuntimeError(f"{operation} requests per second is invalid: {raw_value}")
+    return value, source_field
 
 
-def run_benchmark(binary: Path, port: int, operation: str) -> tuple[list[str], str, float]:
+def run_benchmark(
+    binary: Path, port: int, operation: str
+) -> tuple[list[str], str, float, str]:
     command = benchmark_command(binary, port, operation)
     print(f"[redis-benchmark] {' '.join(command)}", flush=True)
     completed = subprocess.run(
@@ -86,7 +106,8 @@ def run_benchmark(binary: Path, port: int, operation: str) -> tuple[list[str], s
         raise RuntimeError(
             f"redis-benchmark {operation} exited with code {completed.returncode}"
         )
-    return command, completed.stdout, parse_requests_per_second(completed.stdout, operation)
+    value, source_field = parse_requests_per_second(completed.stdout, operation)
+    return command, completed.stdout, value, source_field
 
 
 def main() -> int:
@@ -105,12 +126,14 @@ def main() -> int:
     raw_sections: list[str] = []
     results: list[dict[str, Any]] = []
     for operation in OPERATIONS:
-        command, output, value = run_benchmark(benchmark_binary, port, operation)
+        command, output, value, source_field = run_benchmark(
+            benchmark_binary, port, operation
+        )
         raw_sections.append(f"$ {' '.join(command)}\n{output}")
         results.append(
             {
                 "source_name": f"{operation}: requests per second",
-                "source_field": f"{operation}: <value> requests per second",
+                "source_field": source_field,
                 "group": operation,
                 "value": value,
                 "unit": "requests/s",
@@ -134,7 +157,10 @@ def main() -> int:
             "clients": CLIENT_COUNT,
             "keyspace_length": KEYSPACE_LENGTH,
             "threads": THREAD_COUNT,
-            "metric_source": "<operation>: <value> requests per second",
+            "metric_source": [
+                "<operation>: <value> requests per second",
+                "throughput summary: <value> requests per second",
+            ],
         },
         "results": results,
     }

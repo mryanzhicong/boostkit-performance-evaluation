@@ -101,11 +101,14 @@ Redis 服务数据不放在 `/tmp`。每次运行使用唯一的持久化目录�
 
 | 报告分组 | 原始输出字段 | 报告指标名 | 单位 | 优化方向 |
 |---|---|---|---:|---|
-| SET | `SET: <值> requests per second` | `SET: requests per second` | requests/s | 越大越好 |
-| GET | `GET: <值> requests per second` | `GET: requests per second` | requests/s | 越大越好 |
+| SET | `SET: <值> requests per second` 或 `throughput summary: <值> requests per second` | `SET: requests per second` | requests/s | 越大越好 |
+| GET | `GET: <值> requests per second` 或 `throughput summary: <值> requests per second` | `GET: requests per second` | requests/s | 越大越好 |
 
 `benchmark_redis.json` 保存两项结构化结果以及固定测试参数；指标名称直接对应原始
-输出字段，便于核对。
+输出的吞吐语义。较旧 Redis 在操作行直接输出吞吐，当前 Redis 8 在每条独立命令的
+`Summary` 中输出 `throughput summary`；两种格式均为 Redis 自带 benchmark 的官方
+输出。由于 SET 与 GET 分别单独执行，即使使用 `throughput summary`，仍可由原始命令
+与结果分组准确对应到操作。
 
 ## 独立执行、结果与清理
 
