@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# GNU glibc performance case.
+#
+# Each framework stage uses the same isolated work area: download and build
+# the requested GNU release, build its official benchtests, run them, then
+# copy their raw output and normalized metrics to RESULTS_DIR. The installed
+# system glibc is never replaced or preloaded.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,15 +21,26 @@ GLIBC_SOURCE_URL="${GLIBC_SOURCE_URL:-https://ftp.gnu.org/gnu/glibc}"
 # stdio-common formatting and stdlib workloads. USE_CLOCK_GETTIME=1 switches
 # every benchtest to clock_gettime timing so both x86_64 and aarch64 report
 # nanoseconds instead of architecture-specific cycles.
-GLIBC_BENCHSET="${GLIBC_BENCHSET:-math-benchset stdio-benchset stdio-common-benchset stdlib-benchset}"
+GLIBC_BENCHSET="${GLIBC_BENCHSET:-math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset}"
 GLIBC_USE_CLOCK_GETTIME=1
-# Benchtest outputs whose JSON documents carry verbatim named metric paths;
-# the remaining bench-set outputs (bench-arc4random, bench-bsearch,
-# bench-strtod) print unnamed arrays or text and are archived as evidence only.
-GLIBC_PARSED_OUTPUTS="bench-math-inlines bench-fclose bench-sprintf bench-random-lock"
-# All bench-set outputs produced by GLIBC_BENCHSET, copied into the results
-# directory as permanent raw evidence.
-GLIBC_EVIDENCE_OUTPUTS="bench-math-inlines bench-fclose bench-sprintf bench-arc4random bench-bsearch bench-random-lock bench-strtod"
+# Benchtest outputs whose JSON documents carry verbatim named metric paths.
+GLIBC_PARSED_OUTPUTS=(
+    bench-math-inlines
+    bench-fclose
+    bench-sprintf
+    bench-random-lock
+)
+# All outputs produced by GLIBC_BENCHSET are retained as raw evidence. Some
+# outputs are not normalized because they contain unnamed arrays or plain text.
+GLIBC_EVIDENCE_OUTPUTS=(
+    bench-math-inlines
+    bench-fclose
+    bench-sprintf
+    bench-arc4random
+    bench-bsearch
+    bench-random-lock
+    bench-strtod
+)
 
 SRC_DIR=""
 BUILD_DIR=""
@@ -35,43 +53,29 @@ STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
-log_message() { printf '[glibc] %s\n' "$*"; }
-
-normalize_architecture() {
-    case "${1,,}" in
-        x86_64|amd64) printf 'x86_64\n' ;;
-        aarch64|arm64) printf 'aarch64\n' ;;
-        *) printf '%s\n' "${1,,}" ;;
-    esac
-}
-
-# Print the official SHA-256 checksum of the GNU release tarball for
-# SOFTWARE_VERSION; errors go to stderr so the caller can capture the result
-# with a command substitution.
-glibc_tarball_sha256() {
-    case "${SOFTWARE_VERSION}" in
-        2.43)
-            printf '%s\n' "d9c86c6b5dbddb43a3e08270c5844fc5177d19442cf5b8df4be7c07cd5fa3831"
-            ;;
-        2.44)
-            printf '%s\n' "37f600f2bef3c5e8300147059568b2a2e40a7ad6ccc65ce942556d49429cc667"
-            ;;
-        *)
-            printf '[glibc] ERROR: unsupported glibc version: %s\n' \
-                "${SOFTWARE_VERSION}" >&2
-            return 20
-            ;;
-    esac
+log() {
+    printf '[glibc] %s\n' "$*"
 }
 
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
-    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
-        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+    if [[ ! "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
-    }
+    fi
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64)
+            EXPECTED_ARCH="x86_64"
+            ;;
+        aarch64|arm64)
+            EXPECTED_ARCH="aarch64"
+            ;;
+        *)
+            EXPECTED_ARCH="${EXPECTED_ARCH,,}"
+            ;;
+    esac
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
@@ -92,101 +96,131 @@ configure_runtime_paths() {
 }
 
 initialize_runtime() {
-    configure_runtime_paths
+    local runner_architecture
+
+    configure_runtime_paths || return $?
+    runner_architecture="$(uname -m)"
+    if [[ "${runner_architecture}" != "${EXPECTED_ARCH}" ]]; then
+        log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
+        return 20
+    fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
 require_commands() {
-    local required missing=0
+    local required package missing=0
+    local packages=()
+
     for required in gcc make tar xz sha256sum curl python3 awk nproc bison; do
         if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
+            log "missing required command: ${required}"
             missing=1
+            case "${required}" in
+                gcc) package="gcc" ;;
+                make) package="make" ;;
+                tar) package="tar" ;;
+                xz) package="xz" ;;
+                sha256sum|nproc) package="coreutils" ;;
+                curl) package="curl" ;;
+                python3) package="python3" ;;
+                awk) package="gawk" ;;
+                bison) package="bison" ;;
+            esac
+            packages+=("${package}")
         fi
     done
-    [[ "${missing}" -eq 0 ]]
-}
+    if [[ "${missing}" -eq 0 ]]; then
+        return 0
+    fi
 
-check_architecture() {
-    local actual expected
-    actual="$(normalize_architecture "$(uname -m)")"
-    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
-    [[ "${actual}" == "${expected}" ]] || {
-        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
-        return 20
-    }
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install glibc build prerequisites"
+        return 30
+    fi
+    log "installing missing glibc build packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log "ERROR: sudo is required to install glibc build prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log "ERROR: failed to install glibc build prerequisites"
+        return 30
+    fi
+
+    for required in gcc make tar xz sha256sum curl python3 awk nproc bison; do
+        if ! command -v "${required}" >/dev/null 2>&1; then
+            log "ERROR: required command is still missing after installation: ${required}"
+            return 30
+        fi
+    done
 }
 
 prepare_glibc_source() {
     local tarball expected_sha256 actual_sha256 source_root
-    [[ ! -e "${SRC_DIR}" ]] || {
-        log_message "ERROR: source directory already exists: ${SRC_DIR}"
+    if [[ -e "${SRC_DIR}" ]]; then
+        log "ERROR: source directory already exists: ${SRC_DIR}"
         return 30
-    }
+    fi
+    # The official GNU release checksums are declared beside the download
+    # logic: adding a version requires adding its checksum here.
+    case "${SOFTWARE_VERSION}" in
+        2.43)
+            expected_sha256="d9c86c6b5dbddb43a3e08270c5844fc5177d19442cf5b8df4be7c07cd5fa3831"
+            ;;
+        2.44)
+            expected_sha256="37f600f2bef3c5e8300147059568b2a2e40a7ad6ccc65ce942556d49429cc667"
+            ;;
+        *)
+            log "ERROR: no official GNU checksum is declared for glibc ${SOFTWARE_VERSION}"
+            return 20
+            ;;
+    esac
     tarball="${PERF_WORK_DIR}/glibc-${SOFTWARE_VERSION}.tar.xz"
-    log_message "downloading official glibc ${SOFTWARE_VERSION} release tarball from ${GLIBC_SOURCE_URL}"
-    curl -fsSL --retry 3 --connect-timeout 30 \
+    log "downloading official glibc ${SOFTWARE_VERSION} release tarball from ${GLIBC_SOURCE_URL}"
+    if ! curl -fsSL --retry 3 --connect-timeout 30 \
         -o "${tarball}" \
-        "${GLIBC_SOURCE_URL}/glibc-${SOFTWARE_VERSION}.tar.xz" || {
-        log_message "ERROR: failed to download glibc-${SOFTWARE_VERSION}.tar.xz"
+        "${GLIBC_SOURCE_URL}/glibc-${SOFTWARE_VERSION}.tar.xz"; then
+        log "ERROR: failed to download glibc-${SOFTWARE_VERSION}.tar.xz"
         return 30
-    }
-    expected_sha256="$(glibc_tarball_sha256)" || return 30
+    fi
     actual_sha256="$(sha256sum "${tarball}" | awk '{print $1}')"
-    [[ "${actual_sha256}" == "${expected_sha256}" ]] || {
-        log_message "ERROR: glibc tarball checksum mismatch"
-        log_message "expected: ${expected_sha256}"
-        log_message "actual:   ${actual_sha256}"
+    if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
+        log "ERROR: glibc tarball checksum mismatch"
+        log "expected: ${expected_sha256}"
+        log "actual:   ${actual_sha256}"
         return 30
-    }
-    tar -xJf "${tarball}" -C "${PERF_WORK_DIR}" || {
-        log_message "ERROR: failed to extract the glibc tarball"
+    fi
+    if ! tar -xJf "${tarball}" -C "${PERF_WORK_DIR}"; then
+        log "ERROR: failed to extract the glibc tarball"
         return 30
-    }
+    fi
     source_root="${PERF_WORK_DIR}/glibc-${SOFTWARE_VERSION}"
-    [[ -f "${source_root}/configure" ]] || {
-        log_message "ERROR: tarball did not create glibc-${SOFTWARE_VERSION}/configure"
+    if [[ ! -f "${source_root}/configure" ]]; then
+        log "ERROR: tarball did not create glibc-${SOFTWARE_VERSION}/configure"
         return 30
-    }
-    mv "${source_root}" "${SRC_DIR}" || return 30
+    fi
+    if ! mv "${source_root}" "${SRC_DIR}"; then
+        log "ERROR: failed to move the unpacked source into ${SRC_DIR}"
+        return 30
+    fi
     rm -f "${tarball}"
 }
 
-# Verify the built glibc by asking a real build artifact (elf/ldconfig) for
-# its version string and recording it as the actual software version.
-verify_glibc_build() {
-    local version_output actual_version
-    [[ -x "${LDCONFIG_BIN}" ]] || {
-        log_message "ERROR: built ldconfig is missing: ${LDCONFIG_BIN}"
-        return 40
-    }
-    version_output="$("${LDCONFIG_BIN}" --version 2>/dev/null | head -n 1)" || {
-        log_message "ERROR: built ldconfig cannot report its version"
-        return 40
-    }
-    # Output format: "ldconfig (GNU libc) 2.44"
-    actual_version="$(printf '%s\n' "${version_output}" | awk '{print $NF}')"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: built glibc reports ${actual_version}, requested ${SOFTWARE_VERSION}"
-        return 40
-    }
-    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-}
-
 build_glibc() {
+    local actual_version
+    local version_output
+
     initialize_runtime || return $?
-    check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SRC_DIR}" && ! -e "${BUILD_DIR}" && ! -e "${INSTALL_DIR}" ]] || {
-        log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
+    if [[ -e "${SRC_DIR}" || -e "${BUILD_DIR}" || -e "${INSTALL_DIR}" ]]; then
+        log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
-    }
-    glibc_tarball_sha256 >/dev/null || return $?
+    fi
     prepare_glibc_source || return $?
     GCC_VERSION_STRING="$(gcc --version | head -n 1)"
 
-    log_message "configuring glibc ${SOFTWARE_VERSION} (out-of-tree build)"
+    log "configuring glibc ${SOFTWARE_VERSION} (out-of-tree build)"
     mkdir -p "${BUILD_DIR}"
     (
         cd "${BUILD_DIR}"
@@ -194,95 +228,121 @@ build_glibc() {
             --prefix="${INSTALL_DIR}" \
             --disable-werror
     ) || {
-        log_message "ERROR: glibc configure failed"
+        log "ERROR: glibc configure failed"
         return 40
     }
-    log_message "building glibc ${SOFTWARE_VERSION} with make -j$(nproc)"
+    log "building glibc ${SOFTWARE_VERSION} with make -j$(nproc)"
     (
         cd "${BUILD_DIR}"
         make -j"$(nproc)"
     ) || {
-        log_message "ERROR: glibc make build failed"
+        log "ERROR: glibc make build failed"
         return 40
     }
-    verify_glibc_build || return $?
-    log_message "glibc ${SOFTWARE_VERSION} build is ready at ${BUILD_DIR}"
+    if [[ ! -x "${LDCONFIG_BIN}" ]]; then
+        log "ERROR: built ldconfig is missing: ${LDCONFIG_BIN}"
+        return 40
+    fi
+    if ! version_output="$("${LDCONFIG_BIN}" --version 2>/dev/null | head -n 1)"; then
+        log "ERROR: built ldconfig cannot report its version"
+        return 40
+    fi
+    # Output format: "ldconfig (GNU libc) 2.44".
+    actual_version="$(printf '%s\n' "${version_output}" | awk '{print $NF}')"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+        log "ERROR: built glibc reports ${actual_version}, requested ${SOFTWARE_VERSION}"
+        return 40
+    fi
+    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    log "glibc ${SOFTWARE_VERSION} build is ready at ${BUILD_DIR}"
 }
 
 start_glibc_runtime() {
     initialize_runtime || return $?
-    check_architecture || return $?
-    verify_glibc_build || return $?
-    log_message "building official benchtests for benchset: ${GLIBC_BENCHSET}"
-    log_message "timing: USE_CLOCK_GETTIME=${GLIBC_USE_CLOCK_GETTIME} (clock_gettime, ns on all architectures)"
+    if [[ ! -x "${LDCONFIG_BIN}" ]]; then
+        log "ERROR: glibc is not built; run the build stage first"
+        return 40
+    fi
+    log "building official benchtests for benchset: ${GLIBC_BENCHSET}"
+    log "timing: USE_CLOCK_GETTIME=${GLIBC_USE_CLOCK_GETTIME} (clock_gettime, ns on all architectures)"
     (
         cd "${BUILD_DIR}"
         make bench-build \
             BENCHSET="${GLIBC_BENCHSET}" \
             USE_CLOCK_GETTIME="${GLIBC_USE_CLOCK_GETTIME}"
     ) || {
-        log_message "ERROR: glibc bench-build failed"
+        log "ERROR: glibc bench-build failed"
         return 40
     }
     local bench_name
-    for bench_name in ${GLIBC_PARSED_OUTPUTS}; do
-        [[ -x "${BUILD_DIR}/benchtests/${bench_name}" ]] || {
-            log_message "ERROR: benchtest binary is missing: ${BUILD_DIR}/benchtests/${bench_name}"
+    for bench_name in "${GLIBC_PARSED_OUTPUTS[@]}"; do
+        if [[ ! -x "${BUILD_DIR}/benchtests/${bench_name}" ]]; then
+            log "ERROR: benchtest binary is missing: ${BUILD_DIR}/benchtests/${bench_name}"
             return 40
-        }
+        fi
     done
-    TIMING_TYPE_OUTPUT="$("${BUILD_DIR}/benchtests/bench-timing-type")" || {
-        log_message "ERROR: bench-timing-type is not runnable"
+    if ! TIMING_TYPE_OUTPUT="$("${BUILD_DIR}/benchtests/bench-timing-type")"; then
+        log "ERROR: bench-timing-type is not runnable"
         return 40
-    }
-    log_message "benchtests report timing backend: ${TIMING_TYPE_OUTPUT}"
-    log_message "glibc official benchtest runtime is ready"
+    fi
+    log "benchtests report timing backend: ${TIMING_TYPE_OUTPUT}"
+    log "glibc official benchtest runtime is ready"
 }
 
 run_glibc_benchmarks() {
     initialize_runtime || return $?
-    check_architecture || return $?
-    verify_glibc_build || return $?
+    if [[ ! -x "${LDCONFIG_BIN}" ]]; then
+        log "ERROR: glibc is not built; run the build stage first"
+        return 50
+    fi
     mkdir -p "${RESULTS_DIR}"
-    log_message "running official benchtests with make bench (BENCHSET=\"${GLIBC_BENCHSET}\" USE_CLOCK_GETTIME=${GLIBC_USE_CLOCK_GETTIME})"
+    if ! TIMING_TYPE_OUTPUT="$("${BUILD_DIR}/benchtests/bench-timing-type")"; then
+        log "ERROR: bench-timing-type is not runnable"
+        return 50
+    fi
+    log "running official benchtests with make bench (BENCHSET=\"${GLIBC_BENCHSET}\" USE_CLOCK_GETTIME=${GLIBC_USE_CLOCK_GETTIME})"
     if ! (
         cd "${BUILD_DIR}"
         make bench \
             BENCHSET="${GLIBC_BENCHSET}" \
             USE_CLOCK_GETTIME="${GLIBC_USE_CLOCK_GETTIME}"
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_bench.txt"; then
-        log_message "ERROR: glibc make bench run failed"
+        log "ERROR: glibc make bench run failed"
         return 50
     fi
-    [[ -s "${RESULTS_DIR}/benchmark_bench.txt" ]] || {
-        log_message "ERROR: make bench output is empty: ${RESULTS_DIR}/benchmark_bench.txt"
+    if [[ ! -s "${RESULTS_DIR}/benchmark_bench.txt" ]]; then
+        log "ERROR: make bench output is empty: ${RESULTS_DIR}/benchmark_bench.txt"
         return 50
-    }
+    fi
     local output_name
-    for output_name in ${GLIBC_EVIDENCE_OUTPUTS}; do
-        [[ -s "${BUILD_DIR}/benchtests/${output_name}.out" ]] || {
-            log_message "ERROR: benchtest output is missing: ${BUILD_DIR}/benchtests/${output_name}.out"
+    for output_name in "${GLIBC_EVIDENCE_OUTPUTS[@]}"; do
+        if [[ ! -s "${BUILD_DIR}/benchtests/${output_name}.out" ]]; then
+            log "ERROR: benchtest output is missing: ${BUILD_DIR}/benchtests/${output_name}.out"
             return 50
-        }
+        fi
     done
     mkdir -p "${RESULTS_DIR}/benchtests"
-    for output_name in ${GLIBC_EVIDENCE_OUTPUTS}; do
-        cp "${BUILD_DIR}/benchtests/${output_name}.out" \
-            "${RESULTS_DIR}/benchtests/${output_name}.out" || return 50
+    for output_name in "${GLIBC_EVIDENCE_OUTPUTS[@]}"; do
+        if ! cp "${BUILD_DIR}/benchtests/${output_name}.out" \
+            "${RESULTS_DIR}/benchtests/${output_name}.out"; then
+            log "ERROR: failed to save raw benchtest output: ${output_name}.out"
+            return 50
+        fi
     done
     export SOFTWARE_VERSION EXPECTED_ARCH GLIBC_BENCHSET GLIBC_USE_CLOCK_GETTIME \
         TIMING_TYPE_OUTPUT
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchtests" \
         "${RESULTS_DIR}/benchmark_glibc.json" || {
-        log_message "ERROR: failed to normalize official glibc benchtest results"
+        log "ERROR: failed to normalize official glibc benchtest results"
         return 50
     }
-    log_message "benchtest results written to benchmark_bench.txt and benchmark_glibc.json"
+    log "benchtest results written to benchmark_bench.txt and benchmark_glibc.json"
 }
 
 stop_glibc_runtime() {
-    log_message "glibc benchmark has no background service to stop"
+    log "glibc benchmark has no background service to stop"
 }
 
 standalone_runtime() {
@@ -291,22 +351,22 @@ standalone_runtime() {
 
 cleanup_standalone_workdir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
-        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
+        log "keeping standalone work directory: ${PERF_WORK_DIR}"
         return 0
     fi
     if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
-        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
+        log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/glibc-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/glibc-perf" ]] || {
-        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+    if [[ "${PERF_WORK_DIR}" != /tmp/glibc-perf/local-* || \
+          "${PERF_WORK_DIR}" == "/tmp/glibc-perf" ]]; then
+        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
-    }
+    fi
     if [[ -d "${PERF_WORK_DIR}" ]]; then
         rm -rf -- "${PERF_WORK_DIR}" || return 70
     fi
-    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
+    log "cleaned standalone work directory: ${PERF_WORK_DIR}"
 }
 
 emergency_standalone_cleanup() {
@@ -343,7 +403,7 @@ run_glibc_standalone() {
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}" \
                 "${GCC_VERSION_STRING}" \
                 --source-url="${GLIBC_SOURCE_URL}" \
@@ -394,7 +454,7 @@ run_glibc_standalone() {
     if standalone_runtime finalize \
         "${RESULTS_DIR}" \
         "${SOFTWARE_VERSION}" \
-        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${EXPECTED_ARCH}" \
         "${PERF_RUN_ID}" \
         "${command_status}" \
         "${cleanup_status}" \
@@ -433,12 +493,18 @@ main() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             --version)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --version requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --version requires a value"
+                    return 10
+                fi
                 SOFTWARE_VERSION="$2"
                 shift 2
                 ;;
             --results-dir)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --results-dir requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --results-dir requires a value"
+                    return 10
+                fi
                 RESULTS_DIR="$2"
                 shift 2
                 ;;
@@ -451,7 +517,7 @@ main() {
                 return 0
                 ;;
             *)
-                log_message "ERROR: unsupported option: $1"
+                log "ERROR: unsupported option: $1"
                 usage
                 return 10
                 ;;
@@ -466,7 +532,7 @@ main() {
     run_glibc_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
     pipeline_status="${PIPESTATUS[0]}"
     set -e
-    log_message "standalone results: ${RESULTS_DIR}"
+    log "standalone results: ${RESULTS_DIR}"
     return "${pipeline_status}"
 }
 

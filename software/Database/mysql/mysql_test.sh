@@ -200,20 +200,74 @@ extract_mysql_archive() {
 }
 
 require_mysql_tools() {
-    local command_name
+    local command_name package
+    local packages=()
 
-    for command_name in md5sum tar ldd sed tee; do
+    # The MySQL binary archive needs the first group.  The remaining tools and
+    # development headers are required later when this case builds the
+    # database_blue Sysbench 1.0 client from its original source.
+    for command_name in md5sum tar ldd sed tee curl git make gcc autoreconf automake libtoolize pkg-config python3 sudo; do
+        if command -v "${command_name}" >/dev/null 2>&1; then
+            continue
+        fi
+        case "${command_name}" in
+            md5sum|tee) package="coreutils" ;;
+            tar) package="tar" ;;
+            ldd) package="glibc-common" ;;
+            sed) package="sed" ;;
+            curl) package="curl" ;;
+            git) package="git" ;;
+            make) package="make" ;;
+            gcc) package="gcc" ;;
+            autoreconf) package="autoconf" ;;
+            automake) package="automake" ;;
+            libtoolize) package="libtool" ;;
+            pkg-config) package="pkgconf-pkg-config" ;;
+            python3) package="python3" ;;
+            sudo) package="sudo" ;;
+        esac
+        log "missing required MySQL test command: ${command_name}"
+        packages+=("${package}")
+    done
+
+    for package in libaio-devel openssl-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log "missing required MySQL test package: ${package}"
+            packages+=("${package}")
+        fi
+    done
+
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install MySQL test prerequisites"
+        return 30
+    fi
+
+    log "installing missing MySQL test packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log "ERROR: sudo is required to install MySQL test prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log "ERROR: failed to install MySQL test prerequisites"
+        return 30
+    fi
+
+    for command_name in md5sum tar ldd sed tee curl git make gcc autoreconf automake libtoolize pkg-config python3 sudo; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
-            log "ERROR: required command is missing: ${command_name}"
-            log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
+            log "ERROR: required MySQL test command remains unavailable: ${command_name}"
             return 30
         fi
     done
-    if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
-        log "ERROR: curl or wget is required to fetch the tarball"
-        log "ERROR: provision the missing MySQL test prerequisites on the dedicated runner"
-        return 30
-    fi
+    for package in libaio-devel openssl-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log "ERROR: required MySQL test package remains unavailable: ${package}"
+            return 30
+        fi
+    done
 }
 
 configure_benchmark_account() {
@@ -357,18 +411,11 @@ run_mysql_benchmarks() {
     local suite_start_time
 
     initialize_runtime || return $?
+    require_mysql_tools || return $?
     if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
         "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e "SELECT 1" \
         >/dev/null 2>&1; then
         log "ERROR: MySQL is not reachable on ${MYSQL_HOST}:${MYSQL_PORT}"
-        return 50
-    fi
-    if ! command -v git >/dev/null 2>&1; then
-        log "ERROR: git is required to retrieve database_blue"
-        return 50
-    fi
-    if ! command -v python3 >/dev/null 2>&1; then
-        log "ERROR: python3 is required to collect database_blue results"
         return 50
     fi
     database_blue_dir="${PERF_WORK_DIR}/database_blue"
