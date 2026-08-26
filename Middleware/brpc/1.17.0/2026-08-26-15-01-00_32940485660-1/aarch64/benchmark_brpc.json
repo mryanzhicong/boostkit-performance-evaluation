@@ -1,0 +1,126 @@
+{
+  "benchmark": "brpc_official_benchmark_http",
+  "software": "brpc",
+  "version": "1.17.0",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-26T06:58:57Z",
+  "parameters": {
+    "official_entry": "example/http_c++/benchmark_http.cpp",
+    "official_server": "example/http_c++/http_server.cpp",
+    "url": "127.0.0.1:18010/HttpService/Echo",
+    "protocol": "http",
+    "thread_num": 50,
+    "duration_s": 60,
+    "warmup_s": 5,
+    "metric_source": "/vars/client_* of the benchmark_http dummy server"
+  },
+  "metric_contract": {
+    "scope": "scalar client_* bvar values of the official LatencyRecorder",
+    "source_field": "bvar",
+    "direction_by_metric": {
+      "client_qps": "higher_is_better",
+      "client_count": "higher_is_better",
+      "client_latency": "lower_is_better",
+      "client_max_latency": "lower_is_better",
+      "client_latency_80": "lower_is_better",
+      "client_latency_90": "lower_is_better",
+      "client_latency_99": "lower_is_better",
+      "client_latency_999": "lower_is_better",
+      "client_latency_9999": "lower_is_better"
+    },
+    "unit_by_metric": {
+      "client_qps": "requests/s",
+      "client_count": "requests",
+      "client_latency": "us",
+      "client_max_latency": "us",
+      "client_latency_80": "us",
+      "client_latency_90": "us",
+      "client_latency_99": "us",
+      "client_latency_999": "us",
+      "client_latency_9999": "us"
+    }
+  },
+  "results": {
+    "client_qps": {
+      "source_name": "client_qps",
+      "source_field": "bvar",
+      "raw_value": 125708.0,
+      "raw_unit": "requests/s",
+      "value": 125708.0,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "client_count": {
+      "source_name": "client_count",
+      "source_field": "bvar",
+      "raw_value": 7711737.0,
+      "raw_unit": "requests",
+      "value": 7711737.0,
+      "unit": "requests",
+      "direction": "higher_is_better"
+    },
+    "client_latency": {
+      "source_name": "client_latency",
+      "source_field": "bvar",
+      "raw_value": 394.0,
+      "raw_unit": "us",
+      "value": 394.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_max_latency": {
+      "source_name": "client_max_latency",
+      "source_field": "bvar",
+      "raw_value": 2868.0,
+      "raw_unit": "us",
+      "value": 2868.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_latency_80": {
+      "source_name": "client_latency_80",
+      "source_field": "bvar",
+      "raw_value": 435.0,
+      "raw_unit": "us",
+      "value": 435.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_latency_90": {
+      "source_name": "client_latency_90",
+      "source_field": "bvar",
+      "raw_value": 455.0,
+      "raw_unit": "us",
+      "value": 455.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_latency_99": {
+      "source_name": "client_latency_99",
+      "source_field": "bvar",
+      "raw_value": 514.0,
+      "raw_unit": "us",
+      "value": 514.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_latency_999": {
+      "source_name": "client_latency_999",
+      "source_field": "bvar",
+      "raw_value": 553.0,
+      "raw_unit": "us",
+      "value": 553.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "client_latency_9999": {
+      "source_name": "client_latency_9999",
+      "source_field": "bvar",
+      "raw_value": 612.0,
+      "raw_unit": "us",
+      "value": 612.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    }
+  }
+}
