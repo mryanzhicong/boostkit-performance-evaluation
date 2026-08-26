@@ -120,12 +120,13 @@ require_brpc_dependencies() {
 
     # BRPC links against these system libraries.  Test the headers instead of
     # assuming that a package name proves the compiler can use the library.
-    for library in openssl gflags leveldb protobuf; do
+    for library in openssl gflags leveldb protobuf gperftools; do
         case "${library}" in
             openssl) header="openssl/ssl.h"; package="openssl-devel" ;;
             gflags) header="gflags/gflags.h"; package="gflags-devel" ;;
             leveldb) header="leveldb/db.h"; package="leveldb-devel" ;;
             protobuf) header="google/protobuf/message.h"; package="protobuf-devel" ;;
+            gperftools) header="gperftools/profiler.h"; package="gperftools-devel" ;;
         esac
         if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>/dev/null; then
@@ -158,12 +159,13 @@ require_brpc_dependencies() {
             return 30
         fi
     done
-    for library in openssl gflags leveldb protobuf; do
+    for library in openssl gflags leveldb protobuf gperftools; do
         case "${library}" in
             openssl) header="openssl/ssl.h" ;;
             gflags) header="gflags/gflags.h" ;;
             leveldb) header="leveldb/db.h" ;;
             protobuf) header="google/protobuf/message.h" ;;
+            gperftools) header="gperftools/profiler.h" ;;
         esac
         if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>/dev/null; then
