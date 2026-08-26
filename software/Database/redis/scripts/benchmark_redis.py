@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Run database_blue's Redis SET/GET design without its VM harness.
+"""Run Redis's complete default benchmark suite with database_blue load settings.
 
-database_blue's physical-machine Redis case runs Redis's own redis-benchmark
-against one server and records the ``requests per second`` line for SET and
-GET. Its test topology has separate client and server machines; this project
-uses the same command and load parameters against the isolated local service
-because each architecture job has one dedicated runner.
+database_blue's physical-machine Redis case supplies the common load parameters
+for Redis's own redis-benchmark. This project uses those parameters against the
+isolated local service because each architecture job has one dedicated runner,
+but deliberately omits ``-t`` so redis-benchmark runs its complete official
+default operation set for the built Redis version.
 """
 
 from __future__ import annotations
@@ -21,17 +21,22 @@ from pathlib import Path
 from typing import Any
 
 
-# Fixed parameters from database_blue's physical-machine Redis performance
-# case: virtuall_redis_ori_0001.py.
-OPERATIONS = ("SET", "GET")
+# Load parameters from database_blue's physical-machine Redis performance case:
+# virtuall_redis_ori_0001.py. The operation list is intentionally not declared:
+# without -t, redis-benchmark selects its own complete default operation set.
 REQUEST_COUNT = 10_000_000
 CLIENT_COUNT = 1_000
 KEYSPACE_LENGTH = 10_000_000
 THREAD_COUNT = 20
-COMMAND_TIMEOUT_SECONDS = 1_500
+COMMAND_TIMEOUT_SECONDS = 14_400
+OPERATION_HEADER = re.compile(r"(?m)^======\s*(.+?)\s*======\s*$")
+THROUGHPUT_SUMMARY = re.compile(
+    r"(?im)^\s*throughput summary:\s*"
+    r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
+)
 
 
-def benchmark_command(binary: Path, port: int, operation: str) -> list[str]:
+def benchmark_command(binary: Path, port: int) -> list[str]:
     return [
         str(binary),
         "-h",
@@ -44,52 +49,49 @@ def benchmark_command(binary: Path, port: int, operation: str) -> list[str]:
         str(CLIENT_COUNT),
         "-r",
         str(KEYSPACE_LENGTH),
-        "-t",
-        operation.lower(),
         "--threads",
         str(THREAD_COUNT),
     ]
 
 
-def parse_requests_per_second(output: str, operation: str) -> tuple[float, str]:
-    patterns = (
-        (
-            f"{operation}: <value> requests per second",
-            re.compile(
-                rf"(?im)^\s*{re.escape(operation)}\s*:\s*"
-                r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
-            ),
-        ),
-        (
-            "throughput summary: <value> requests per second",
-            re.compile(
-                r"(?im)^\s*throughput summary:\s*"
-                r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
-            ),
-        ),
-    )
-    matches = [
-        (source_field, value)
-        for source_field, pattern in patterns
-        for value in pattern.findall(output)
-    ]
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"expected exactly one {operation} requests-per-second line or "
-            f"throughput summary, "
-            f"found {len(matches)}"
-        )
-    source_field, raw_value = matches[0]
-    value = float(raw_value)
-    if not math.isfinite(value) or value <= 0:
-        raise RuntimeError(f"{operation} requests per second is invalid: {raw_value}")
-    return value, source_field
+def parse_default_operation_results(output: str) -> list[dict[str, Any]]:
+    headers = list(OPERATION_HEADER.finditer(output))
+    if not headers:
+        raise RuntimeError("redis-benchmark output contains no default-operation headers")
+
+    results: list[dict[str, Any]] = []
+    seen_operations: set[str] = set()
+    for index, header in enumerate(headers):
+        operation = header.group(1).strip()
+        if not operation or operation in seen_operations:
+            raise RuntimeError(f"redis-benchmark has an invalid or duplicate operation: {operation!r}")
+        section_end = headers[index + 1].start() if index + 1 < len(headers) else len(output)
+        section = output[header.end():section_end]
+        summaries = THROUGHPUT_SUMMARY.findall(section)
+        if len(summaries) != 1:
+            raise RuntimeError(
+                f"redis-benchmark operation {operation} must contain exactly one "
+                f"throughput summary, found {len(summaries)}"
+            )
+        value = float(summaries[0])
+        if not math.isfinite(value) or value <= 0:
+            raise RuntimeError(
+                f"redis-benchmark operation {operation} has an invalid throughput: {summaries[0]}"
+            )
+        seen_operations.add(operation)
+        results.append({
+            "source_name": f"{operation}: requests per second",
+            "source_field": "throughput summary: <value> requests per second",
+            "group": operation,
+            "value": value,
+            "unit": "requests/s",
+            "direction": "higher_is_better",
+        })
+    return results
 
 
-def run_benchmark(
-    binary: Path, port: int, operation: str
-) -> tuple[list[str], str, float, str]:
-    command = benchmark_command(binary, port, operation)
+def run_benchmark(binary: Path, port: int) -> tuple[list[str], str]:
+    command = benchmark_command(binary, port)
     print(f"[redis-benchmark] {' '.join(command)}", flush=True)
     completed = subprocess.run(
         command,
@@ -103,11 +105,8 @@ def run_benchmark(
     )
     print(completed.stdout, end="", flush=True)
     if completed.returncode:
-        raise RuntimeError(
-            f"redis-benchmark {operation} exited with code {completed.returncode}"
-        )
-    value, source_field = parse_requests_per_second(completed.stdout, operation)
-    return command, completed.stdout, value, source_field
+        raise RuntimeError(f"redis-benchmark exited with code {completed.returncode}")
+    return command, completed.stdout
 
 
 def main() -> int:
@@ -123,28 +122,13 @@ def main() -> int:
         raise RuntimeError(f"redis-benchmark executable is unavailable: {benchmark_binary}")
 
     port = int(os.environ["REDIS_SERVICE_PORT"])
-    raw_sections: list[str] = []
-    results: list[dict[str, Any]] = []
-    for operation in OPERATIONS:
-        command, output, value, source_field = run_benchmark(
-            benchmark_binary, port, operation
-        )
-        raw_sections.append(f"$ {' '.join(command)}\n{output}")
-        results.append(
-            {
-                "source_name": f"{operation}: requests per second",
-                "source_field": source_field,
-                "group": operation,
-                "value": value,
-                "unit": "requests/s",
-                "direction": "higher_is_better",
-            }
-        )
+    command, output = run_benchmark(benchmark_binary, port)
+    results = parse_default_operation_results(output)
 
     raw_output.parent.mkdir(parents=True, exist_ok=True)
-    raw_output.write_text("\n\n".join(raw_sections), encoding="utf-8")
+    raw_output.write_text(f"$ {' '.join(command)}\n{output}", encoding="utf-8")
     payload = {
-        "benchmark": "database_blue_redis_benchmark_design",
+        "benchmark": "redis_default_benchmark_with_database_blue_load",
         "software": "redis",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
@@ -152,15 +136,12 @@ def main() -> int:
         "parameters": {
             "reference_case": "database_blue virtuall_redis_ori_0001.py",
             "client_host": "127.0.0.1 (single-runner adaptation)",
-            "operations": list(OPERATIONS),
+            "operations": "redis-benchmark default operation set (no -t)",
             "requests": REQUEST_COUNT,
             "clients": CLIENT_COUNT,
             "keyspace_length": KEYSPACE_LENGTH,
             "threads": THREAD_COUNT,
-            "metric_source": [
-                "<operation>: <value> requests per second",
-                "throughput summary: <value> requests per second",
-            ],
+            "metric_source": "throughput summary: <value> requests per second",
         },
         "results": results,
     }
@@ -168,7 +149,7 @@ def main() -> int:
     normalized_output.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    print(f"[redis-benchmark] normalized {len(results)} database_blue-style metrics")
+    print(f"[redis-benchmark] normalized {len(results)} default-operation metrics")
     return 0
 
 

@@ -143,33 +143,33 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, dict[str, Any]]:
-    if benchmark.get("benchmark") != "database_blue_redis_benchmark_design":
+    if benchmark.get("benchmark") != "redis_default_benchmark_with_database_blue_load":
         raise RuntimeError("benchmark_redis.json has an invalid benchmark identity")
     if benchmark.get("software") != "redis":
         raise RuntimeError("benchmark_redis.json has an invalid software identity")
     if benchmark.get("version") != version or benchmark.get("architecture") != architecture:
         raise RuntimeError("benchmark_redis.json identity differs from this run")
     results = benchmark.get("results")
-    if not isinstance(results, list) or len(results) != 2:
-        raise RuntimeError("benchmark_redis.json must contain exactly SET and GET results")
+    if not isinstance(results, list) or not results:
+        raise RuntimeError("benchmark_redis.json must contain default-operation results")
 
     metrics: dict[str, dict[str, Any]] = {}
-    for operation in ("SET", "GET"):
-        matches = [
-            item for item in results
-            if isinstance(item, dict) and item.get("group") == operation
-        ]
-        if len(matches) != 1:
-            raise RuntimeError(f"benchmark_redis.json has no unique {operation} result")
-        item = matches[0]
+    for item in results:
+        if not isinstance(item, dict):
+            raise RuntimeError("benchmark_redis.json has an invalid result entry")
+        operation = item.get("group")
+        if not isinstance(operation, str) or not operation:
+            raise RuntimeError("benchmark_redis.json result has no official operation name")
         metric_name = f"{operation}: requests per second"
-        if item.get("source_name") != metric_name:
+        if metric_name in metrics or item.get("source_name") != metric_name:
             raise RuntimeError(f"{operation} metric name is not the documented source name")
         value = item.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"{operation} requests per second is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"{operation} requests per second must be positive and finite")
+        if item.get("source_field") != "throughput summary: <value> requests per second":
+            raise RuntimeError(f"{operation} metric source field is invalid")
         if item.get("unit") != "requests/s" or item.get("direction") != "higher_is_better":
             raise RuntimeError(f"{operation} metric contract is invalid")
         metrics[metric_name] = {
@@ -221,14 +221,12 @@ def render_report(result: dict[str, Any]) -> str:
     ):
         lines.append(f"| {label} | {markdown_cell(result['system_info'].get(field))} |")
     lines.extend(["", "## 性能指标"])
-    for operation in ("SET", "GET"):
-        metric = result["metrics"].get(f"{operation}: requests per second")
-        if metric is None:
-            continue
+    for metric_name, metric in result["metrics"].items():
+        operation = metric["group"]
         lines.extend([
             "", f"### {operation}", "",
             "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|",
-            f"| {operation}: requests per second | {metric['value']} | "
+            f"| {metric_name} | {metric['value']} | "
             f"{metric['unit']} | 越大越好 |",
         ])
     if result.get("error"):

@@ -1,7 +1,8 @@
 # Redis 性能测试说明
 
 本目录从 Redis 官方仓库构建指定版本，启动一个任务私有 Redis 实例，并按
-`database_blue` 的物理机 Redis 性能用例执行 Redis 自带的 `redis-benchmark`。
+`database_blue` 的物理机 Redis 性能用例提供 Redis 自带 `redis-benchmark` 的负载
+参数。当前测试不指定 `-t`，直接运行该工具的完整默认操作集。
 Framework 通过 `case.yaml` 调用 `redis_test.sh` 的 `build`、`start`、`test`、
 `stop` 四个阶段；直接执行入口脚本会使用同一套构建、测试、信息收集和清理流程。
 
@@ -67,19 +68,16 @@ Redis 服务数据不放在 `/tmp`。每次运行使用唯一的持久化目录�
 ## 性能测试
 
 测试参考 `database_blue` 的物理机用例
-`tests/kunpeng_virtual/performance_loss/25.0/redis/virtuall_redis_ori_0001.py`。
-该参考用例在独立客户端机器上对单 Redis 实例执行 SET、GET，并记录
-`requests per second`。当前 Workflow 每个架构只有一台专用 Runner，因此服务端和
-客户端均位于 `127.0.0.1`；命令参数、操作和指标提取规则保持一致。
+`tests/kunpeng_virtual/performance_loss/25.0/redis/virtuall_redis_ori_0001.py` 的
+请求数、客户端数、随机键空间和客户端线程数。当前 Workflow 每个架构只有一台专用
+Runner，因此服务端和客户端均位于 `127.0.0.1`。在此负载参数基础上，不传 `-t`，
+由 Redis 版本自身选择完整默认操作集。
 
-正式执行的两条命令为：
+正式执行的一条命令为：
 
 ```bash
 ./src/redis-benchmark -h 127.0.0.1 -p "${REDIS_SERVICE_PORT}" \
-  -n 10000000 -c 1000 -r 10000000 -t set --threads 20
-
-./src/redis-benchmark -h 127.0.0.1 -p "${REDIS_SERVICE_PORT}" \
-  -n 10000000 -c 1000 -r 10000000 -t get --threads 20
+  -n 10000000 -c 1000 -r 10000000 --threads 20
 ```
 
 参数含义如下：
@@ -91,24 +89,20 @@ Redis 服务数据不放在 `/tmp`。每次运行使用唯一的持久化目录�
 | `-r` | 10,000,000 | 随机键空间大小 |
 | `--threads` | 20 | benchmark 客户端线程数 |
 
-每项最长允许 1,500 秒；任何命令退出失败、未产生唯一吞吐行或吞吐为非正数时，测试
-直接失败。完整原始输出（包含实际命令）保存为 `redis_benchmark_raw.log`。
+整套默认操作集最长允许 14,400 秒；任何默认操作缺少唯一吞吐摘要或吞吐为非正数时，
+测试直接失败。完整原始输出（包含实际命令）保存为 `redis_benchmark_raw.log`。
 
 ## 指标
 
-只保留参考用例记录的官方 `redis-benchmark` 吞吐字段，不做自定义并发矩阵、
-微基准、跨操作平均或综合评分。
+保留 `redis-benchmark` 本次默认操作集中的全部操作，不做自定义并发矩阵、微基准、
+跨操作平均或综合评分。默认集由 Redis 版本本身决定，脚本不维护也不筛选操作清单。
 
 | 报告分组 | 原始输出字段 | 报告指标名 | 单位 | 优化方向 |
 |---|---|---|---:|---|
-| SET | `SET: <值> requests per second` 或 `throughput summary: <值> requests per second` | `SET: requests per second` | requests/s | 越大越好 |
-| GET | `GET: <值> requests per second` 或 `throughput summary: <值> requests per second` | `GET: requests per second` | requests/s | 越大越好 |
+| 每个官方默认操作 | 该操作 `====== <操作> ======` 段中的 `throughput summary: <值> requests per second` | `<操作>: requests per second` | requests/s | 越大越好 |
 
-`benchmark_redis.json` 保存两项结构化结果以及固定测试参数；指标名称直接对应原始
-输出的吞吐语义。较旧 Redis 在操作行直接输出吞吐，当前 Redis 8 在每条独立命令的
-`Summary` 中输出 `throughput summary`；两种格式均为 Redis 自带 benchmark 的官方
-输出。由于 SET 与 GET 分别单独执行，即使使用 `throughput summary`，仍可由原始命令
-与结果分组准确对应到操作。
+`benchmark_redis.json` 保存全部结构化结果和固定测试参数。解析器按每个官方操作的
+输出分段记录吞吐，因此操作名称和 `throughput summary` 一一对应。
 
 ## 独立执行、结果与清理
 
@@ -123,8 +117,8 @@ bash software/Database/redis/redis_test.sh \
 独立执行会依次完成环境采集、构建、启动、测试、停止、结果校验和单架构报告生成。
 结果目录至少包含：
 
-- `redis_benchmark_raw.log`：两条官方压测命令的完整原始输出；
-- `benchmark_redis.json`：两项结构化吞吐及测试参数；
+- `redis_benchmark_raw.log`：一条官方默认集压测命令的完整原始输出；
+- `benchmark_redis.json`：全部默认操作的结构化吞吐及测试参数；
 - `system_info.json`、`runtime_before.json`、`runtime_after.json`：测试环境信息；
 - `build_info.json`、`results.json`、`status.json`、`report.md`：构建记录、校验结果和报告。
 
