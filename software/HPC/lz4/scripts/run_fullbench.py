@@ -93,6 +93,18 @@ def parse_result(output: str, case: dict[str, Any]) -> dict[str, float | int]:
     return {"source_size_bytes": int(source_size), "speed_mbs": float(speed)}
 
 
+def display_command(case: dict[str, Any]) -> str:
+    """Return the stable form of the fullbench command shown in reports."""
+    return " ".join((
+        "./tests/fullbench",
+        "--no-prompt",
+        f"-i{ITERATION_LOOPS}",
+        f"-{case['block_option']}",
+        f"-{case['operation_option']}",
+        "silesia.tar",
+    ))
+
+
 def run_case(fullbench: Path, corpus: Path, case: dict[str, Any]) -> dict[str, Any]:
     command = [
         str(fullbench),
@@ -127,6 +139,7 @@ def run_case(fullbench: Path, corpus: Path, case: dict[str, Any]) -> dict[str, A
         )
     return {
         "command": command,
+        "command_display": display_command(case),
         "function": case["function"],
         "operation": case["operation"],
         "block_size_bytes": case["block_size_bytes"],
@@ -147,8 +160,8 @@ def main() -> int:
 
     results: dict[str, dict[str, Any]] = {}
     for case in CASES:
-        block_results = results.setdefault(case["block_option"], {})
-        block_results[case["result_name"]] = run_case(fullbench, corpus, case)
+        metric_name = f"{case['block_option']}/{case['result_name']}"
+        results[metric_name] = run_case(fullbench, corpus, case)
     payload = {
         "benchmark": "lz4_fullbench",
         "software": "lz4",
