@@ -18,10 +18,12 @@ Two outputs repeat JSON keys and therefore cannot be loaded into plain dicts:
 * ``bench-random-lock.out`` repeats the ``functions.random`` key once per
   bench-variant (single-threaded / multi-threaded).
 
-All outputs are parsed with ordered pairs preserved. Every metric name records
-the exact official JSON field and its fixed test scenario.  All timings run
-through ``clock_gettime`` (``USE_CLOCK_GETTIME=1``) and are reported in
-nanoseconds on every architecture.
+All outputs are parsed with ordered pairs preserved.  The normalized result is
+a deliberately small set of representative, directly comparable official
+fields; it does not average unrelated APIs into a synthetic score.  Every
+metric name records the exact official JSON field and its fixed test scenario.
+All timings run through ``clock_gettime`` (``USE_CLOCK_GETTIME=1``) and are
+reported in nanoseconds on every architecture.
 """
 
 from __future__ import annotations
@@ -136,10 +138,20 @@ def extract_math_inlines(benchtests_dir: Path, results: dict[str, Any]) -> None:
     functions = require_single_pair(root, "math-inlines", source_file)
     if not isinstance(functions, list) or not functions:
         raise RuntimeError(f"{source_file} has no math functions")
+    # The official output contains internal, inline and compiler-builtin
+    # variants for every operation and input class.  They are useful raw
+    # evidence but not independent report metrics.  Keep the public API with
+    # the regular-input case for the four distinct operations covered here.
+    selected_functions = {"isnan", "isinf", "isfinite", "isnormal"}
+    selected_count: set[str] = set()
     for function, variants in functions:
+        if function not in selected_functions:
+            continue
         if not isinstance(variants, list) or not variants:
             raise RuntimeError(f"{source_file} function {function} has no variants")
         for variant, fields in variants:
+            if variant != "normal":
+                continue
             if not isinstance(fields, list):
                 raise RuntimeError(
                     f"{source_file} function {function} variant {variant} is malformed"
@@ -152,6 +164,13 @@ def extract_math_inlines(benchtests_dir: Path, results: dict[str, Any]) -> None:
                 mean,
                 source_file,
             )
+            selected_count.add(function)
+    missing_functions = selected_functions - selected_count
+    if missing_functions:
+        raise RuntimeError(
+            f"{source_file} is missing selected math functions: "
+            f"{', '.join(sorted(missing_functions))}"
+        )
 
 
 def extract_sprintf(benchtests_dir: Path, results: dict[str, Any]) -> None:
@@ -294,7 +313,6 @@ def extract_string_api_metrics(benchtests_dir: Path, results: dict[str, Any]) ->
     """Normalize fixed generic string API scenarios from string-benchset."""
     scenarios = (
         ("bench-memcpy.out", "memcpy", "generic_memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 0}),
-        ("bench-memcpy.out", "memcpy", "generic_memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 1}),
         ("bench-memmove.out", "memmove", "generic_memmove", {"length": 4096, "align1": 0, "align2": 32}),
         ("bench-memset.out", "memset", "generic_memset", {"length": 4096, "alignment": 0, "char": 0}),
         ("bench-strlen.out", "strlen", "generic_strlen", {"length": 4096, "alignment": 0}),
@@ -356,16 +374,15 @@ def extract_malloc_metrics(benchtests_dir: Path, results: dict[str, Any]) -> Non
     )
 
     tcache_file = "bench-malloc-tcache-64.out"
-    for variant in ("simple", "optimized"):
-        fields = load_named_function_fields(benchtests_dir, tcache_file, "malloc", variant)
-        require_exact_number(fields, "alloc_size", 64, tcache_file)
-        record_metric(
-            results,
-            f"malloc-tcache.{variant}[alloc_size=64].time_per_iteration",
-            f"functions.malloc.{variant}.time_per_iteration",
-            fields.get("time_per_iteration"),
-            tcache_file,
-        )
+    fields = load_named_function_fields(benchtests_dir, tcache_file, "malloc", "optimized")
+    require_exact_number(fields, "alloc_size", 64, tcache_file)
+    record_metric(
+        results,
+        "malloc-tcache.optimized[alloc_size=64].time_per_iteration",
+        "functions.malloc.optimized.time_per_iteration",
+        fields.get("time_per_iteration"),
+        tcache_file,
+    )
 
     thread_file = "bench-malloc-thread-8.out"
     thread_fields = load_named_function_fields(
@@ -447,7 +464,10 @@ def main() -> int:
             "official_suite": "glibc benchtests (make bench, benchtests/Makefile)",
         },
         "metric_contract": {
-            "scope": "verbatim named JSON paths from official glibc benchtest outputs",
+            "scope": "representative verbatim named JSON paths from official glibc benchtest outputs",
+            "selection_policy": (
+                "one fixed scenario per distinct operation; no average across unrelated APIs"
+            ),
             "source_fields": [
                 "mean",
                 "duration",
