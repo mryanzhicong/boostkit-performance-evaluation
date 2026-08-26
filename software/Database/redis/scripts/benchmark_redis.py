@@ -13,9 +13,12 @@ from __future__ import annotations
 import json
 import math
 import os
+import pty
 import re
+import select
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -93,20 +96,65 @@ def parse_default_operation_results(output: str) -> list[dict[str, Any]]:
 def run_benchmark(binary: Path, port: int) -> tuple[list[str], str]:
     command = benchmark_command(binary, port)
     print(f"[redis-benchmark] {' '.join(command)}", flush=True)
-    completed = subprocess.run(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=COMMAND_TIMEOUT_SECONDS,
-        check=False,
-    )
-    print(completed.stdout, end="", flush=True)
-    if completed.returncode:
-        raise RuntimeError(f"redis-benchmark exited with code {completed.returncode}")
-    return command, completed.stdout
+    master_fd, slave_fd = pty.openpty()
+    process: subprocess.Popen[bytes] | None = None
+    chunks: list[bytes] = []
+    deadline = time.monotonic() + COMMAND_TIMEOUT_SECONDS
+    try:
+        # redis-benchmark buffers output when its stdout is a pipe. A pseudo-TTY
+        # makes its progress and completed-operation output visible in the live
+        # Actions log while the same bytes are retained for strict parsing.
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            close_fds=True,
+        )
+    finally:
+        os.close(slave_fd)
+
+    try:
+        while process.poll() is None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                process.kill()
+                process.wait()
+                raise RuntimeError(
+                    f"redis-benchmark exceeded {COMMAND_TIMEOUT_SECONDS} seconds"
+                )
+            readable, _, _ = select.select([master_fd], [], [], min(1.0, remaining))
+            if not readable:
+                continue
+            try:
+                chunk = os.read(master_fd, 65_536)
+            except OSError:
+                break
+            if not chunk:
+                continue
+            chunks.append(chunk)
+            sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+            sys.stdout.flush()
+
+        while True:
+            readable, _, _ = select.select([master_fd], [], [], 0)
+            if not readable:
+                break
+            try:
+                chunk = os.read(master_fd, 65_536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            chunks.append(chunk)
+            sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+            sys.stdout.flush()
+    finally:
+        os.close(master_fd)
+
+    if process.returncode:
+        raise RuntimeError(f"redis-benchmark exited with code {process.returncode}")
+    return command, b"".join(chunks).decode("utf-8", errors="replace")
 
 
 def main() -> int:
