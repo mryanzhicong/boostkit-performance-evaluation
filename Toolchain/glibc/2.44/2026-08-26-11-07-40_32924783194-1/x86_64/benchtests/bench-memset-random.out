@@ -1,0 +1,34 @@
+{
+ "timing_type": "hp_timing",
+ "functions": {
+  "memset": {
+   "bench-variant": "random",
+   "ifuncs": ["__memset_erms", "__memset_avx512_unaligned_erms", "__memset_avx512_unaligned", "__memset_avx512_no_vzeroupper", "__memset_evex_unaligned", "__memset_evex_unaligned_erms", "__memset_avx2_unaligned", "__memset_avx2_unaligned_erms", "__memset_sse2_unaligned", "__memset_sse2_unaligned_erms"],
+   "results": [
+    {
+     "length": 32768,
+     "timings": [70086.7, 45356.3, 45375.2, 66515.9, 46961, 47001.4, 41692.8, 49374.4, 55030.2, 55033.2]
+    },
+    {
+     "length": 65536,
+     "timings": [70698.7, 44757.7, 34941.3, 49685.4, 46927.4, 46864.9, 49067.1, 49057.2, 42205.1, 55035.6]
+    },
+    {
+     "length": 131072,
+     "timings": [71302.9, 46464.8, 46606.7, 67130.9, 46981.7, 46988.5, 49316.9, 49250.1, 54928.1, 55080.9]
+    },
+    {
+     "length": 262144,
+     "timings": [71167.5, 46527.3, 46468.6, 61289.6, 46807.4, 46798, 49146.5, 49143.1, 54596.7, 54596.1]
+    },
+    {
+     "length": 524288,
+     "timings": [71028.5, 47025.9, 47225.6, 63836, 47126.2, 47128.4, 49510, 49466.8, 55133.7, 55249.4]
+    },
+    {
+     "length": 1048576,
+     "timings": [78734, 47924.8, 47862.5, 64052.4, 47935.3, 47930.7, 50252.5, 50263.2, 55981.2, 56593.5]
+    }]
+  }
+ }
+}
