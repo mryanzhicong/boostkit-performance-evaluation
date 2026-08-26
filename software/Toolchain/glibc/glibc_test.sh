@@ -353,17 +353,27 @@ run_glibc_benchmarks() {
         log "ERROR: make bench produced no raw benchtest outputs"
         return 50
     fi
+    local saved_output_count=0
     for output_path in "${raw_output_paths[@]}"; do
         if [[ ! -s "${output_path}" ]]; then
-            log "ERROR: raw benchtest output is empty: ${output_path}"
-            return 50
+            # glibc creates bench.out for the bench-func group even when this
+            # BENCHSET does not select that group.  It is then an empty
+            # placeholder, not a failed benchmark.  Required parsed outputs
+            # remain checked by parse_benchmark.py below.
+            log "skipping empty optional benchtest output: ${output_path}"
+            continue
         fi
         if ! cp "${output_path}" "${RESULTS_DIR}/benchtests/"; then
             log "ERROR: failed to save raw benchtest output: ${output_path}"
             return 50
         fi
+        saved_output_count=$((saved_output_count + 1))
     done
-    log "saved ${#raw_output_paths[@]} official glibc raw benchtest outputs"
+    if [[ "${saved_output_count}" -eq 0 ]]; then
+        log "ERROR: make bench produced no non-empty raw benchtest outputs"
+        return 50
+    fi
+    log "saved ${saved_output_count} official glibc raw benchtest outputs"
     export SOFTWARE_VERSION EXPECTED_ARCH GLIBC_BENCHSET GLIBC_USE_CLOCK_GETTIME \
         TIMING_TYPE_OUTPUT
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
