@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 SOFTWARE_STAGES = ("build", "start", "test", "stop")
 VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "neutral"}
-VALID_OUTPUT_FORMATS = {"json", "text", "binary"}
+VALID_OUTPUT_FORMATS = {"json", "text", "binary", "directory"}
 SHELL_FUNCTION_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 OUTPUT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 

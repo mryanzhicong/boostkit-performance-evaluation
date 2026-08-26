@@ -560,6 +560,36 @@ def test_stage_output_validation_checks_only_the_completed_stage(tmp_path: Path)
         validate_stage_outputs(context, "test")
 
 
+def test_stage_output_validation_accepts_a_nonempty_declared_directory(tmp_path: Path) -> None:
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "raw_evidence": {
+                    "path": "evidence",
+                    "stage": "test",
+                    "format": "directory",
+                    "required": True,
+                }
+            },
+            "metrics": {},
+        },
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=tmp_path / "output",
+        work_dir=tmp_path / "work",
+    )
+    (context.output_dir / "evidence").mkdir(parents=True)
+    (context.output_dir / "evidence" / "raw.txt").write_text("raw\n", encoding="utf-8")
+
+    validate_stage_outputs(context, "test")
+
+
 def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     comparison = compare_pair(
         normalized_result("x86_64", higher=100, lower=20),
@@ -763,13 +793,21 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         result.update({"run_id": run_id, "cleanup_status": "passed"})
         result_dir = input_root / folder
         result["sources"] = {
-            "raw_evidence": {"path": "evidence/original-output.txt", "size": 12}
+            "raw_evidence": {"path": "evidence/original-output.txt", "size": 12},
+            "raw_benchmark_outputs": {"path": "benchtests", "file_count": 2},
         }
         atomic_write_json(result_dir / "normalized_result.json", result)
         atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
         (result_dir / "evidence").mkdir(parents=True)
         (result_dir / "evidence" / "original-output.txt").write_text(
             f"source evidence for {architecture}\n", encoding="utf-8"
+        )
+        (result_dir / "benchtests" / "nested").mkdir(parents=True)
+        (result_dir / "benchtests" / "bench-alpha.out").write_text(
+            f"official output for {architecture}\n", encoding="utf-8"
+        )
+        (result_dir / "benchtests" / "nested" / "bench-beta.out").write_text(
+            f"nested official output for {architecture}\n", encoding="utf-8"
         )
         (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
         (result_dir / "raw-output.log").write_text(
@@ -808,6 +846,12 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert (run_root / "x86_64" / "evidence" / "original-output.txt").read_text(
         encoding="utf-8"
     ) == "source evidence for x86_64\n"
+    assert (run_root / "aarch64" / "benchtests" / "bench-alpha.out").read_text(
+        encoding="utf-8"
+    ) == "official output for aarch64\n"
+    assert (run_root / "x86_64" / "benchtests" / "nested" / "bench-beta.out").read_text(
+        encoding="utf-8"
+    ) == "nested official output for x86_64\n"
     assert not (run_root / "aarch64" / "results.log").exists()
     assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()

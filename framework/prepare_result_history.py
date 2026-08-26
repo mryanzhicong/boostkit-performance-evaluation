@@ -38,12 +38,13 @@ def _copy_permanent_files(source: Path, destination: Path, result: dict) -> None
         relative_path = Path(path_text)
         if relative_path.is_absolute() or ".." in relative_path.parts:
             continue
-        source_path = source / relative_path
-        if not source_path.is_file():
-            continue
         destination_path = destination / relative_path
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_path, destination_path)
+        source_path = source / relative_path
+        if source_path.is_file():
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, destination_path)
+        elif source_path.is_dir():
+            shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
 
 
 def _identity(result: dict) -> tuple[str, str, str, str, str]:

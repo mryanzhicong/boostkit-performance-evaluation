@@ -46,6 +46,18 @@ def _load_output(
 ) -> Any | None:
     filename = definition["path"]
     path = context.output_dir / filename
+    output_format = definition["format"]
+    if output_format == "directory":
+        if not path.is_dir():
+            if definition["required"]:
+                raise ResultValidationError(
+                    f"required output {output_name} is missing directory: {filename}"
+                )
+            return None
+        file_count = sum(1 for entry in path.rglob("*") if entry.is_file())
+        if file_count == 0:
+            raise ResultValidationError(f"output {output_name} directory is empty: {filename}")
+        return {"path": filename, "file_count": file_count}
     if not path.is_file():
         if definition["required"]:
             raise ResultValidationError(
@@ -54,7 +66,7 @@ def _load_output(
         return None
     if path.stat().st_size == 0:
         raise ResultValidationError(f"output {output_name} is empty: {filename}")
-    if definition["format"] == "json":
+    if output_format == "json":
         try:
             value = load_json(path)
         except (OSError, json.JSONDecodeError) as exc:

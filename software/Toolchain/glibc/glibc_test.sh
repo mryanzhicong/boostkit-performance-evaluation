@@ -16,32 +16,31 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 GLIBC_SOURCE_URL="${GLIBC_SOURCE_URL:-https://ftp.gnu.org/gnu/glibc}"
-# Official benchmark selection: the benchtests shipped inside the glibc source
-# tree (benchtests/Makefile BENCHSET groups), covering math inlines, stdio,
-# stdio-common formatting and stdlib workloads. USE_CLOCK_GETTIME=1 switches
-# every benchtest to clock_gettime timing so both x86_64 and aarch64 report
-# nanoseconds instead of architecture-specific cycles.
-GLIBC_BENCHSET="${GLIBC_BENCHSET:-math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset}"
+# Official benchmark selection from glibc's benchtests/Makefile.  The suite
+# covers math inlines, stdio, stdlib, string APIs, and malloc.  The parser
+# reports only the fixed, documented scenarios declared in its metric contract;
+# all other official outputs remain available in results/benchtests.
+# USE_CLOCK_GETTIME=1 switches every benchtest to clock_gettime timing so both
+# x86_64 and aarch64 report nanoseconds instead of architecture-specific cycles.
+GLIBC_BENCHSET="${GLIBC_BENCHSET:-math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset malloc-simple malloc-tcache malloc-thread}"
 GLIBC_USE_CLOCK_GETTIME=1
-# Benchtest outputs whose JSON documents carry verbatim named metric paths.
-GLIBC_PARSED_OUTPUTS=(
+# Benchtest executables required for the normalized metric contract.  Their
+# output fields are named verbatim in scripts/parse_benchmark.py.
+GLIBC_REQUIRED_BENCHMARKS=(
     bench-math-inlines
     bench-fclose
     bench-sprintf
     bench-random-lock
+    bench-memcpy
+    bench-memmove
+    bench-memset
+    bench-strlen
+    bench-strcmp
+    bench-strstr
+    bench-malloc-simple
+    bench-malloc-tcache
+    bench-malloc-thread
 )
-# All outputs produced by GLIBC_BENCHSET are retained as raw evidence. Some
-# outputs are not normalized because they contain unnamed arrays or plain text.
-GLIBC_EVIDENCE_OUTPUTS=(
-    bench-math-inlines
-    bench-fclose
-    bench-sprintf
-    bench-arc4random
-    bench-bsearch
-    bench-random-lock
-    bench-strtod
-)
-
 SRC_DIR=""
 BUILD_DIR=""
 INSTALL_DIR=""
@@ -302,7 +301,7 @@ start_glibc_runtime() {
         return 40
     }
     local bench_name
-    for bench_name in "${GLIBC_PARSED_OUTPUTS[@]}"; do
+    for bench_name in "${GLIBC_REQUIRED_BENCHMARKS[@]}"; do
         if [[ ! -x "${BUILD_DIR}/benchtests/${bench_name}" ]]; then
             log "ERROR: benchtest binary is missing: ${BUILD_DIR}/benchtests/${bench_name}"
             return 40
@@ -341,21 +340,30 @@ run_glibc_benchmarks() {
         log "ERROR: make bench output is empty: ${RESULTS_DIR}/benchmark_bench.txt"
         return 50
     fi
-    local output_name
-    for output_name in "${GLIBC_EVIDENCE_OUTPUTS[@]}"; do
-        if [[ ! -s "${BUILD_DIR}/benchtests/${output_name}.out" ]]; then
-            log "ERROR: benchtest output is missing: ${BUILD_DIR}/benchtests/${output_name}.out"
-            return 50
-        fi
-    done
     mkdir -p "${RESULTS_DIR}/benchtests"
-    for output_name in "${GLIBC_EVIDENCE_OUTPUTS[@]}"; do
-        if ! cp "${BUILD_DIR}/benchtests/${output_name}.out" \
-            "${RESULTS_DIR}/benchtests/${output_name}.out"; then
-            log "ERROR: failed to save raw benchtest output: ${output_name}.out"
+    local output_path
+    local raw_output_paths=()
+    shopt -s nullglob
+    raw_output_paths=(
+        "${BUILD_DIR}/benchtests"/bench-*.out
+        "${BUILD_DIR}/benchtests"/bench.out
+    )
+    shopt -u nullglob
+    if [[ "${#raw_output_paths[@]}" -eq 0 ]]; then
+        log "ERROR: make bench produced no raw benchtest outputs"
+        return 50
+    fi
+    for output_path in "${raw_output_paths[@]}"; do
+        if [[ ! -s "${output_path}" ]]; then
+            log "ERROR: raw benchtest output is empty: ${output_path}"
+            return 50
+        fi
+        if ! cp "${output_path}" "${RESULTS_DIR}/benchtests/"; then
+            log "ERROR: failed to save raw benchtest output: ${output_path}"
             return 50
         fi
     done
+    log "saved ${#raw_output_paths[@]} official glibc raw benchtest outputs"
     export SOFTWARE_VERSION EXPECTED_ARCH GLIBC_BENCHSET GLIBC_USE_CLOCK_GETTIME \
         TIMING_TYPE_OUTPUT
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \

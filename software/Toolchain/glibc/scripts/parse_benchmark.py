@@ -18,10 +18,10 @@ Two outputs repeat JSON keys and therefore cannot be loaded into plain dicts:
 * ``bench-random-lock.out`` repeats the ``functions.random`` key once per
   bench-variant (single-threaded / multi-threaded).
 
-All outputs are parsed with ordered pairs preserved. Every metric name is the
-verbatim JSON path of a named numeric field in the official output; all
-timings run through ``clock_gettime`` (``USE_CLOCK_GETTIME=1``) and are
-reported in nanoseconds on every architecture.
+All outputs are parsed with ordered pairs preserved. Every metric name records
+the exact official JSON field and its fixed test scenario.  All timings run
+through ``clock_gettime`` (``USE_CLOCK_GETTIME=1``) and are reported in
+nanoseconds on every architecture.
 """
 
 from __future__ import annotations
@@ -81,6 +81,16 @@ def require_single_pair(pairs: PairList, key: str, source_file: str) -> Any:
     if len(values) != 1:
         raise RuntimeError(f"{source_file} must contain exactly one {key} object")
     return values[0]
+
+
+def pairs_to_mapping(pairs: PairList, source_file: str) -> dict[str, Any]:
+    """Convert an object that must not contain repeated keys into a mapping."""
+    values: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in values:
+            raise RuntimeError(f"{source_file} repeats object key: {key}")
+        values[key] = value
+    return values
 
 
 def require_timing_type(root: PairList, source_file: str) -> None:
@@ -204,6 +214,150 @@ def extract_random_lock(benchtests_dir: Path, results: dict[str, Any]) -> None:
         )
 
 
+def extract_public_string_timing(
+    benchtests_dir: Path,
+    results: dict[str, Any],
+    source_file: str,
+    function: str,
+    scenario: dict[str, int],
+) -> None:
+    """Extract one public string API timing from a fixed official scenario.
+
+    String benchtests list implementation timings in ``ifuncs`` order.  That
+    order is architecture-dependent, therefore the public API name is located
+    explicitly instead of assuming a fixed array index.  The selected API is
+    the official exported function (for example ``memcpy``), not a private
+    IFUNC implementation.
+    """
+    root = load_pairs_output(benchtests_dir / source_file)
+    require_timing_type(root, source_file)
+    functions = require_single_pair(root, "functions", source_file)
+    if not isinstance(functions, list):
+        raise RuntimeError(f"{source_file} has malformed functions object")
+    function_data = require_single_pair(functions, function, source_file)
+    if not isinstance(function_data, list):
+        raise RuntimeError(f"{source_file} {function} entry is malformed")
+    ifuncs = require_single_pair(function_data, "ifuncs", source_file)
+    rows = require_single_pair(function_data, "results", source_file)
+    if not isinstance(ifuncs, list) or not all(isinstance(item, str) for item in ifuncs):
+        raise RuntimeError(f"{source_file} {function} has malformed ifuncs")
+    if function not in ifuncs:
+        raise RuntimeError(f"{source_file} has no public {function} timing")
+    if not isinstance(rows, list):
+        raise RuntimeError(f"{source_file} {function} has malformed results")
+
+    matched_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, list):
+            raise RuntimeError(f"{source_file} {function} has malformed result row")
+        row_values = pairs_to_mapping(row, source_file)
+        if all(row_values.get(name) == expected for name, expected in scenario.items()):
+            matched_rows.append(row_values)
+    if len(matched_rows) != 1:
+        selectors = ",".join(f"{name}={value}" for name, value in scenario.items())
+        raise RuntimeError(
+            f"{source_file} {function} must contain exactly one scenario: {selectors}"
+        )
+    timings = matched_rows[0].get("timings")
+    public_index = ifuncs.index(function)
+    if not isinstance(timings, list) or public_index >= len(timings):
+        raise RuntimeError(f"{source_file} {function} has no public timing value")
+    selectors = ",".join(f"{name}={value}" for name, value in scenario.items())
+    metric_name = f"{function}.results[{selectors}].timings[ifuncs='{function}']"
+    source_field = f"functions.{function}.results[{selectors}].timings[{public_index}]"
+    record_metric(results, metric_name, source_field, timings[public_index], source_file)
+
+
+def extract_string_api_metrics(benchtests_dir: Path, results: dict[str, Any]) -> None:
+    """Normalize representative public string API scenarios from string-benchset."""
+    scenarios = (
+        ("bench-memcpy.out", "memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 0}),
+        ("bench-memcpy.out", "memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 1}),
+        ("bench-memmove.out", "memmove", {"length": 4096, "align1": 0, "align2": 32}),
+        ("bench-memset.out", "memset", {"length": 4096, "alignment": 0, "char": 0}),
+        ("bench-strlen.out", "strlen", {"length": 4096, "alignment": 0}),
+        ("bench-strcmp.out", "strcmp", {"length": 4096, "align1": 0, "align2": 0}),
+        ("bench-strstr.out", "strstr", {"len_haystack": 4096, "len_needle": 64, "align_haystack": 1, "align_needle": 11, "fail": 0}),
+    )
+    for source_file, function, scenario in scenarios:
+        extract_public_string_timing(
+            benchtests_dir,
+            results,
+            source_file,
+            function,
+            scenario,
+        )
+
+
+def load_named_function_fields(
+    benchtests_dir: Path,
+    source_file: str,
+    function: str,
+    variant: str,
+) -> dict[str, Any]:
+    """Load an official ``functions.<function>.<variant>`` object."""
+    root = load_pairs_output(benchtests_dir / source_file)
+    require_timing_type(root, source_file)
+    functions = require_single_pair(root, "functions", source_file)
+    if not isinstance(functions, list):
+        raise RuntimeError(f"{source_file} has malformed functions object")
+    function_data = require_single_pair(functions, function, source_file)
+    if not isinstance(function_data, list):
+        raise RuntimeError(f"{source_file} {function} entry is malformed")
+    variant_data = require_single_pair(function_data, variant, source_file)
+    if not isinstance(variant_data, list):
+        raise RuntimeError(f"{source_file} {function}.{variant} entry is malformed")
+    return pairs_to_mapping(variant_data, source_file)
+
+
+def require_exact_number(fields: dict[str, Any], key: str, expected: int, source_file: str) -> None:
+    actual = fields.get(key)
+    if actual != expected:
+        raise RuntimeError(f"{source_file} must report {key}={expected}, got {actual!r}")
+
+
+def extract_malloc_metrics(benchtests_dir: Path, results: dict[str, Any]) -> None:
+    """Normalize fixed official malloc scenarios from glibc's bench-malloc."""
+    simple_file = "bench-malloc-simple-64.out"
+    simple_fields = load_named_function_fields(
+        benchtests_dir, simple_file, "malloc", ""
+    )
+    require_exact_number(simple_fields, "malloc_block_size", 64, simple_file)
+    simple_field = "main_arena_st_allocs_0100_time"
+    record_metric(
+        results,
+        "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time",
+        f"functions.malloc.''.{simple_field}",
+        simple_fields.get(simple_field),
+        simple_file,
+    )
+
+    tcache_file = "bench-malloc-tcache-64.out"
+    for variant in ("simple", "optimized"):
+        fields = load_named_function_fields(benchtests_dir, tcache_file, "malloc", variant)
+        require_exact_number(fields, "alloc_size", 64, tcache_file)
+        record_metric(
+            results,
+            f"malloc-tcache.{variant}[alloc_size=64].time_per_iteration",
+            f"functions.malloc.{variant}.time_per_iteration",
+            fields.get("time_per_iteration"),
+            tcache_file,
+        )
+
+    thread_file = "bench-malloc-thread-8.out"
+    thread_fields = load_named_function_fields(
+        benchtests_dir, thread_file, "malloc", ""
+    )
+    require_exact_number(thread_fields, "threads", 8, thread_file)
+    record_metric(
+        results,
+        "malloc-thread.results[threads=8].time_per_iteration",
+        "functions.malloc.''.time_per_iteration",
+        thread_fields.get("time_per_iteration"),
+        thread_file,
+    )
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print(
@@ -243,6 +397,8 @@ def main() -> int:
         extract_sprintf(benchtests_dir, results)
         extract_fclose(benchtests_dir, results)
         extract_random_lock(benchtests_dir, results)
+        extract_string_api_metrics(benchtests_dir, results)
+        extract_malloc_metrics(benchtests_dir, results)
     except (RuntimeError, TypeError) as exc:
         fail(str(exc))
         return 1
@@ -269,7 +425,14 @@ def main() -> int:
         },
         "metric_contract": {
             "scope": "verbatim named JSON paths from official glibc benchtest outputs",
-            "source_fields": ["mean", "duration", "results[0]"],
+            "source_fields": [
+                "mean",
+                "duration",
+                "results[0]",
+                "timings[ifuncs='<public API>']",
+                "time_per_iteration",
+                "main_arena_st_allocs_0100_time",
+            ],
             "normalized_unit": "ns",
             "direction": "lower_is_better",
         },
