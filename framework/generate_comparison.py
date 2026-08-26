@@ -52,6 +52,9 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         directions = {metric.get("direction") for metric in present_metrics}
         if len(directions) != 1:
             raise ValueError(f"metric {name} directions differ between architectures")
+        groups = {metric.get("group") for metric in present_metrics}
+        if len(groups) != 1:
+            raise ValueError(f"metric {name} groups differ between architectures")
         x_value = _number(x_metric.get("value")) if x_metric is not None else None
         a_value = _number(a_metric.get("value")) if a_metric is not None else None
         if (
@@ -71,7 +74,7 @@ def compare_pair(x86: dict, arm: dict) -> dict:
                 relative = raw_ratio
             elif direction == "lower_is_better" and raw_ratio != 0:
                 relative = 1 / raw_ratio
-        metrics[name] = {
+        metric_data = {
             "x86_64": x_metric.get("value") if x_metric is not None else None,
             "aarch64": a_metric.get("value") if a_metric is not None else None,
             "unit": next(iter(units)),
@@ -79,6 +82,12 @@ def compare_pair(x86: dict, arm: dict) -> dict:
             "raw_ratio": round(raw_ratio, 4) if raw_ratio is not None else None,
             "relative_performance": round(relative, 4) if relative is not None else None,
         }
+        group = next(iter(groups))
+        if group is not None:
+            if not isinstance(group, str) or not group:
+                raise ValueError(f"metric {name} has an invalid group")
+            metric_data["group"] = group
+        metrics[name] = metric_data
     return {
         "category": arm["category"],
         "software": arm["software"],

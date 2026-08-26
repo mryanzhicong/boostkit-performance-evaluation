@@ -21,7 +21,7 @@ from mark_cleanup import mark
 from normalize_results import ResultValidationError, normalize, validate_stage_outputs
 from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
-from reporting import render_comparison, render_single
+from reporting import render_comparison, render_single, render_summary
 
 
 def normalized_result(architecture: str, higher: float, lower: float) -> dict:
@@ -303,12 +303,14 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
                     "value": 304.9,
                     "unit": "messages/s",
                     "direction": "higher_is_better",
+                    "group": "吞吐",
                 },
                 "latency": {
                     "source_name": "serialize_latency_us",
                     "value": 2.5,
                     "unit": "us",
                     "direction": "lower_is_better",
+                    "group": "延迟",
                 },
             }
         },
@@ -334,6 +336,7 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
                     "value_path": "value",
                     "unit_path": "unit",
                     "direction_path": "direction",
+                    "group_path": "group",
                 },
             },
         },
@@ -352,11 +355,13 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
             "value": 304.9,
             "unit": "messages/s",
             "direction": "higher_is_better",
+            "group": "吞吐",
         },
         "serialize_latency_us": {
             "value": 2.5,
             "unit": "us",
             "direction": "lower_is_better",
+            "group": "延迟",
         },
     }
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
@@ -620,6 +625,32 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "Example CPU" in markdown
     assert "13.2.1" in markdown
     assert "glibc 2.38" in markdown
+
+
+def test_explicit_metric_groups_render_as_separate_tables() -> None:
+    x86 = normalized_result("x86_64", higher=100, lower=20)
+    arm = normalized_result("aarch64", higher=120, lower=10)
+    for result in (x86, arm):
+        result["metrics"]["throughput"]["group"] = "吞吐"
+        result["metrics"]["latency"]["group"] = "延迟"
+
+    comparison = compare_pair(x86, arm)
+    assert comparison["metrics"]["throughput"]["group"] == "吞吐"
+
+    single = render_single(x86)
+    assert "### 吞吐" in single
+    assert "### 延迟" in single
+
+    cross_architecture = render_comparison(comparison)
+    assert "## 吞吐" in cross_architecture
+    assert "## 延迟" in cross_architecture
+
+    summary = render_summary(
+        {"total": 2, "passed": 2, "failed": 0, "comparisons": 1, "items": [x86, arm]},
+        [comparison],
+    )
+    assert "##### 吞吐" in summary
+    assert "##### 延迟" in summary
 
 
 def test_single_report_includes_build_and_system_environment() -> None:

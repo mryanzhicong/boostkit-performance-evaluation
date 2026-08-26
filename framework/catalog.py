@@ -384,6 +384,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     "unit_path",
                     "direction",
                     "direction_path",
+                    "group_path",
                 }
                 if unknown_fields:
                     errors.append(
@@ -401,6 +402,13 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                 ):
                     errors.append(
                         "metrics.collection.name_path must be a non-empty string"
+                    )
+                group_path = collection.get("group_path")
+                if group_path is not None and (
+                    not isinstance(group_path, str) or not group_path
+                ):
+                    errors.append(
+                        "metrics.collection.group_path must be a non-empty string"
                     )
                 unit = collection.get("unit")
                 unit_path = collection.get("unit_path")

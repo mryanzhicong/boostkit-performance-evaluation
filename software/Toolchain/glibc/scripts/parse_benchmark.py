@@ -398,6 +398,30 @@ def extract_malloc_metrics(benchtests_dir: Path, results: dict[str, Any]) -> Non
     )
 
 
+def assign_report_groups(results: dict[str, Any]) -> None:
+    """Assign presentation groups without changing the official metric names."""
+    prefixes = (
+        ("math-inlines.", "数学函数"),
+        ("sprintf.", "标准 I/O"),
+        ("fclose.", "标准 I/O"),
+        ("random.", "随机数锁"),
+        ("memcpy.", "字符串与内存"),
+        ("memmove.", "字符串与内存"),
+        ("memset.", "字符串与内存"),
+        ("strlen.", "字符串与内存"),
+        ("strcmp.", "字符串与内存"),
+        ("strstr.", "字符串与内存"),
+        ("malloc-", "内存分配"),
+    )
+    for name, metric in results.items():
+        for prefix, group in prefixes:
+            if name.startswith(prefix):
+                metric["group"] = group
+                break
+        else:
+            raise RuntimeError(f"no report group is declared for metric: {name}")
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print(
@@ -439,6 +463,7 @@ def main() -> int:
         extract_random_lock(benchtests_dir, results)
         extract_string_api_metrics(benchtests_dir, results)
         extract_malloc_metrics(benchtests_dir, results)
+        assign_report_groups(results)
     except (RuntimeError, TypeError) as exc:
         fail(str(exc))
         return 1

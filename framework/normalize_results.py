@@ -106,7 +106,13 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
     metric_config = context.case.get("metrics", {})
     default_source = metric_config.get("source")
 
-    def add_metric(name: str, value: Any, unit: str, direction: str) -> None:
+    def add_metric(
+        name: str,
+        value: Any,
+        unit: str,
+        direction: str,
+        group: str | None = None,
+    ) -> None:
         if not name:
             raise ResultValidationError("metric name must not be empty")
         if name in metrics:
@@ -118,11 +124,16 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
         numeric_value = float(value)
         if not math.isfinite(numeric_value):
             raise ResultValidationError(f"metric {name} must be finite")
-        metrics[name] = {
+        metric = {
             "value": value,
             "unit": unit,
             "direction": direction,
         }
+        if group is not None:
+            if not isinstance(group, str) or not group:
+                raise ResultValidationError(f"metric {name} has an invalid group")
+            metric["group"] = group
+        metrics[name] = metric
 
     for metric_name, definition in metric_config.get("definitions", {}).items():
         source_name = definition.get("source", default_source)
@@ -200,7 +211,15 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                 raise ResultValidationError(
                     f"metric {metric_name} has invalid direction: {direction}"
                 )
-            add_metric(metric_name, value, unit, direction)
+            group = None
+            group_path = collection.get("group_path")
+            if group_path is not None:
+                group = get_path(item, group_path, MISSING)
+                if group is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing group path {group_path}"
+                    )
+            add_metric(metric_name, value, unit, direction, group)
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics
