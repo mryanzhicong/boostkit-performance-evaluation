@@ -1,0 +1,390 @@
+{
+  "software": "glibc",
+  "category": "Toolchain",
+  "version": "2.44",
+  "architecture": "x86_64",
+  "run_id": "32925762756-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-26T03:17:25Z",
+    "category": "Toolchain",
+    "software": "glibc",
+    "requested_version": "2.44",
+    "actual_version": "2.44",
+    "architecture": "x86_64",
+    "run_id": "32925762756-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "make",
+        "bench",
+        "BENCHSET=math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset malloc-simple malloc-tcache malloc-thread",
+        "USE_CLOCK_GETTIME=1"
+      ],
+      "benchset": [
+        "math-benchset",
+        "stdio-benchset",
+        "stdio-common-benchset",
+        "stdlib-benchset",
+        "string-benchset",
+        "malloc-simple",
+        "malloc-tcache",
+        "malloc-thread"
+      ],
+      "use_clock_gettime": 1,
+      "timing_backend": "clock_gettime (CLOCK_MONOTONIC, ns)",
+      "bench_duration_seconds": 1,
+      "official_suite": "glibc benchtests (make bench, benchtests/Makefile)"
+    }
+  },
+  "parameter_signature": "062fb18b58ebe9946340907e8a39ce3e93b1f4bc4df5130b793f27c12ccaeb4a",
+  "test_tools": {},
+  "system_info": {
+    "collected_at": "2026-08-26T03:15:47Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-26T03:15:47Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192   987013120 29986381824    64921600  1625821184 31136899072\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-26T03:22:46Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  2186334208 28749012992  1197244416  2802888704 29937577984\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "benchmark_bench.txt",
+      "size": 24561
+    },
+    "benchmark_result": {
+      "benchmark": "glibc_official_benchtests",
+      "software": "glibc",
+      "version": "2.44",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-26T03:22:46Z",
+      "parameters": {
+        "command": [
+          "make",
+          "bench",
+          "BENCHSET=math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset malloc-simple malloc-tcache malloc-thread",
+          "USE_CLOCK_GETTIME=1"
+        ],
+        "benchset": [
+          "math-benchset",
+          "stdio-benchset",
+          "stdio-common-benchset",
+          "stdlib-benchset",
+          "string-benchset",
+          "malloc-simple",
+          "malloc-tcache",
+          "malloc-thread"
+        ],
+        "use_clock_gettime": 1,
+        "timing_backend": "clock_gettime (CLOCK_MONOTONIC, ns)",
+        "bench_duration_seconds": 1,
+        "official_suite": "glibc benchtests (make bench, benchtests/Makefile)"
+      },
+      "metric_contract": {
+        "scope": "representative verbatim named JSON paths from official glibc benchtest outputs",
+        "selection_policy": "one fixed scenario per distinct operation; no average across unrelated APIs",
+        "source_fields": [
+          "mean",
+          "duration",
+          "results[0]",
+          "timings[ifuncs='<named generic implementation>'] (arithmetic mean of duplicate scenarios)",
+          "time_per_iteration",
+          "main_arena_st_allocs_0100_time"
+        ],
+        "normalized_unit": "ns",
+        "direction": "lower_is_better"
+      },
+      "runtime_context": {
+        "bench_timing_type": "hp_timing"
+      },
+      "results": {
+        "math-inlines.isnan.normal.mean": {
+          "source_name": "math-inlines.isnan.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1429.0,
+          "raw_unit": "ns",
+          "value": 1429.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isinf.normal.mean": {
+          "source_name": "math-inlines.isinf.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1992.0,
+          "raw_unit": "ns",
+          "value": 1992.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isfinite.normal.mean": {
+          "source_name": "math-inlines.isfinite.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1433.0,
+          "raw_unit": "ns",
+          "value": 1433.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "math-inlines.isnormal.normal.mean": {
+          "source_name": "math-inlines.isnormal.normal.mean",
+          "source_field": "mean",
+          "raw_value": 1789.0,
+          "raw_unit": "ns",
+          "value": 1789.0,
+          "unit": "ns",
+          "source_file": "bench-math-inlines.out"
+        },
+        "sprintf.positional.mean": {
+          "source_name": "sprintf.positional.mean",
+          "source_field": "mean",
+          "raw_value": 298.394,
+          "raw_unit": "ns",
+          "value": 298.394,
+          "unit": "ns",
+          "source_file": "bench-sprintf.out"
+        },
+        "sprintf.non-positional.mean": {
+          "source_name": "sprintf.non-positional.mean",
+          "source_field": "mean",
+          "raw_value": 166.218,
+          "raw_unit": "ns",
+          "value": 166.218,
+          "unit": "ns",
+          "source_file": "bench-sprintf.out"
+        },
+        "fclose.duration": {
+          "source_name": "fclose.duration",
+          "source_field": "duration",
+          "raw_value": 35881.0,
+          "raw_unit": "ns",
+          "value": 35881.0,
+          "unit": "ns",
+          "source_file": "bench-fclose.out"
+        },
+        "random.single-threaded": {
+          "source_name": "random.single-threaded",
+          "source_field": "results[0]",
+          "raw_value": 4.52847,
+          "raw_unit": "ns",
+          "value": 4.52847,
+          "unit": "ns",
+          "source_file": "bench-random-lock.out"
+        },
+        "random.multi-threaded": {
+          "source_name": "random.multi-threaded",
+          "source_field": "results[0]",
+          "raw_value": 4.80355,
+          "raw_unit": "ns",
+          "value": 4.80355,
+          "unit": "ns",
+          "source_file": "bench-random-lock.out"
+        },
+        "memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[ifuncs='generic_memcpy'].arithmetic_mean": {
+          "source_name": "memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[ifuncs='generic_memcpy'].arithmetic_mean",
+          "source_field": "functions.memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[0]",
+          "raw_value": 100.71166666666666,
+          "raw_unit": "ns",
+          "value": 100.71166666666666,
+          "unit": "ns",
+          "source_file": "bench-memcpy.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 3
+        },
+        "memmove.results[length=4096,align1=0,align2=32].timings[ifuncs='generic_memmove'].arithmetic_mean": {
+          "source_name": "memmove.results[length=4096,align1=0,align2=32].timings[ifuncs='generic_memmove'].arithmetic_mean",
+          "source_field": "functions.memmove.results[length=4096,align1=0,align2=32].timings[0]",
+          "raw_value": 95.0265,
+          "raw_unit": "ns",
+          "value": 95.0265,
+          "unit": "ns",
+          "source_file": "bench-memmove.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 2
+        },
+        "memset.results[length=4096,alignment=0,char=0].timings[ifuncs='generic_memset'].arithmetic_mean": {
+          "source_name": "memset.results[length=4096,alignment=0,char=0].timings[ifuncs='generic_memset'].arithmetic_mean",
+          "source_field": "functions.memset.results[length=4096,alignment=0,char=0].timings[0]",
+          "raw_value": 69.2024,
+          "raw_unit": "ns",
+          "value": 69.2024,
+          "unit": "ns",
+          "source_file": "bench-memset.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 1
+        },
+        "strlen.results[length=4096,alignment=0].timings[ifuncs='generic_strlen'].arithmetic_mean": {
+          "source_name": "strlen.results[length=4096,alignment=0].timings[ifuncs='generic_strlen'].arithmetic_mean",
+          "source_field": "functions.strlen.results[length=4096,alignment=0].timings[0]",
+          "raw_value": 258.89750000000004,
+          "raw_unit": "ns",
+          "value": 258.89750000000004,
+          "unit": "ns",
+          "source_file": "bench-strlen.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 2
+        },
+        "strcmp.results[length=4096,align1=0,align2=0].timings[ifuncs='generic_strcmp'].arithmetic_mean": {
+          "source_name": "strcmp.results[length=4096,align1=0,align2=0].timings[ifuncs='generic_strcmp'].arithmetic_mean",
+          "source_field": "functions.strcmp.results[length=4096,align1=0,align2=0].timings[0]",
+          "raw_value": 289.5674,
+          "raw_unit": "ns",
+          "value": 289.5674,
+          "unit": "ns",
+          "source_file": "bench-strcmp.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 5
+        },
+        "strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[ifuncs='twoway_strstr'].arithmetic_mean": {
+          "source_name": "strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[ifuncs='twoway_strstr'].arithmetic_mean",
+          "source_field": "functions.strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[1]",
+          "raw_value": 785.312,
+          "raw_unit": "ns",
+          "value": 785.312,
+          "unit": "ns",
+          "source_file": "bench-strstr.out",
+          "aggregation": "arithmetic_mean",
+          "sample_count": 1
+        },
+        "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time": {
+          "source_name": "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time",
+          "source_field": "functions.malloc.''.main_arena_st_allocs_0100_time",
+          "raw_value": 17.9685,
+          "raw_unit": "ns",
+          "value": 17.9685,
+          "unit": "ns",
+          "source_file": "bench-malloc-simple-64.out"
+        },
+        "malloc-tcache.optimized[alloc_size=64].time_per_iteration": {
+          "source_name": "malloc-tcache.optimized[alloc_size=64].time_per_iteration",
+          "source_field": "functions.malloc.optimized.time_per_iteration",
+          "raw_value": 6.06175,
+          "raw_unit": "ns",
+          "value": 6.06175,
+          "unit": "ns",
+          "source_file": "bench-malloc-tcache-64.out"
+        },
+        "malloc-thread.results[threads=8].time_per_iteration": {
+          "source_name": "malloc-thread.results[threads=8].time_per_iteration",
+          "source_field": "functions.malloc.''.time_per_iteration",
+          "raw_value": 8.33993,
+          "raw_unit": "ns",
+          "value": 8.33993,
+          "unit": "ns",
+          "source_file": "bench-malloc-thread-8.out"
+        }
+      }
+    },
+    "raw_benchmark_outputs": {
+      "path": "benchtests",
+      "file_count": 70
+    }
+  },
+  "metrics": {
+    "math-inlines.isnan.normal.mean": {
+      "value": 1429.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isinf.normal.mean": {
+      "value": 1992.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isfinite.normal.mean": {
+      "value": 1433.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "math-inlines.isnormal.normal.mean": {
+      "value": 1789.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "sprintf.positional.mean": {
+      "value": 298.394,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "sprintf.non-positional.mean": {
+      "value": 166.218,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "fclose.duration": {
+      "value": 35881.0,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "random.single-threaded": {
+      "value": 4.52847,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "random.multi-threaded": {
+      "value": 4.80355,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[ifuncs='generic_memcpy'].arithmetic_mean": {
+      "value": 100.71166666666666,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "memmove.results[length=4096,align1=0,align2=32].timings[ifuncs='generic_memmove'].arithmetic_mean": {
+      "value": 95.0265,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "memset.results[length=4096,alignment=0,char=0].timings[ifuncs='generic_memset'].arithmetic_mean": {
+      "value": 69.2024,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "strlen.results[length=4096,alignment=0].timings[ifuncs='generic_strlen'].arithmetic_mean": {
+      "value": 258.89750000000004,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "strcmp.results[length=4096,align1=0,align2=0].timings[ifuncs='generic_strcmp'].arithmetic_mean": {
+      "value": 289.5674,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[ifuncs='twoway_strstr'].arithmetic_mean": {
+      "value": 785.312,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time": {
+      "value": 17.9685,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "malloc-tcache.optimized[alloc_size=64].time_per_iteration": {
+      "value": 6.06175,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    },
+    "malloc-thread.results[threads=8].time_per_iteration": {
+      "value": 8.33993,
+      "unit": "ns",
+      "direction": "lower_is_better"
+    }
+  }
+}

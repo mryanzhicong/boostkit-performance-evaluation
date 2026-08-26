@@ -1,0 +1,222 @@
+{
+  "benchmark": "glibc_official_benchtests",
+  "software": "glibc",
+  "version": "2.44",
+  "architecture": "aarch64",
+  "timestamp": "2026-08-26T03:19:04Z",
+  "parameters": {
+    "command": [
+      "make",
+      "bench",
+      "BENCHSET=math-benchset stdio-benchset stdio-common-benchset stdlib-benchset string-benchset malloc-simple malloc-tcache malloc-thread",
+      "USE_CLOCK_GETTIME=1"
+    ],
+    "benchset": [
+      "math-benchset",
+      "stdio-benchset",
+      "stdio-common-benchset",
+      "stdlib-benchset",
+      "string-benchset",
+      "malloc-simple",
+      "malloc-tcache",
+      "malloc-thread"
+    ],
+    "use_clock_gettime": 1,
+    "timing_backend": "clock_gettime (CLOCK_MONOTONIC, ns)",
+    "bench_duration_seconds": 1,
+    "official_suite": "glibc benchtests (make bench, benchtests/Makefile)"
+  },
+  "metric_contract": {
+    "scope": "representative verbatim named JSON paths from official glibc benchtest outputs",
+    "selection_policy": "one fixed scenario per distinct operation; no average across unrelated APIs",
+    "source_fields": [
+      "mean",
+      "duration",
+      "results[0]",
+      "timings[ifuncs='<named generic implementation>'] (arithmetic mean of duplicate scenarios)",
+      "time_per_iteration",
+      "main_arena_st_allocs_0100_time"
+    ],
+    "normalized_unit": "ns",
+    "direction": "lower_is_better"
+  },
+  "runtime_context": {
+    "bench_timing_type": "hp_timing"
+  },
+  "results": {
+    "math-inlines.isnan.normal.mean": {
+      "source_name": "math-inlines.isnan.normal.mean",
+      "source_field": "mean",
+      "raw_value": 1109.0,
+      "raw_unit": "ns",
+      "value": 1109.0,
+      "unit": "ns",
+      "source_file": "bench-math-inlines.out"
+    },
+    "math-inlines.isinf.normal.mean": {
+      "source_name": "math-inlines.isinf.normal.mean",
+      "source_field": "mean",
+      "raw_value": 1461.0,
+      "raw_unit": "ns",
+      "value": 1461.0,
+      "unit": "ns",
+      "source_file": "bench-math-inlines.out"
+    },
+    "math-inlines.isfinite.normal.mean": {
+      "source_name": "math-inlines.isfinite.normal.mean",
+      "source_field": "mean",
+      "raw_value": 1214.0,
+      "raw_unit": "ns",
+      "value": 1214.0,
+      "unit": "ns",
+      "source_file": "bench-math-inlines.out"
+    },
+    "math-inlines.isnormal.normal.mean": {
+      "source_name": "math-inlines.isnormal.normal.mean",
+      "source_field": "mean",
+      "raw_value": 2429.0,
+      "raw_unit": "ns",
+      "value": 2429.0,
+      "unit": "ns",
+      "source_file": "bench-math-inlines.out"
+    },
+    "sprintf.positional.mean": {
+      "source_name": "sprintf.positional.mean",
+      "source_field": "mean",
+      "raw_value": 460.578,
+      "raw_unit": "ns",
+      "value": 460.578,
+      "unit": "ns",
+      "source_file": "bench-sprintf.out"
+    },
+    "sprintf.non-positional.mean": {
+      "source_name": "sprintf.non-positional.mean",
+      "source_field": "mean",
+      "raw_value": 244.907,
+      "raw_unit": "ns",
+      "value": 244.907,
+      "unit": "ns",
+      "source_file": "bench-sprintf.out"
+    },
+    "fclose.duration": {
+      "source_name": "fclose.duration",
+      "source_field": "duration",
+      "raw_value": 28560.0,
+      "raw_unit": "ns",
+      "value": 28560.0,
+      "unit": "ns",
+      "source_file": "bench-fclose.out"
+    },
+    "random.single-threaded": {
+      "source_name": "random.single-threaded",
+      "source_field": "results[0]",
+      "raw_value": 3.69539,
+      "raw_unit": "ns",
+      "value": 3.69539,
+      "unit": "ns",
+      "source_file": "bench-random-lock.out"
+    },
+    "random.multi-threaded": {
+      "source_name": "random.multi-threaded",
+      "source_field": "results[0]",
+      "raw_value": 21.4407,
+      "raw_unit": "ns",
+      "value": 21.4407,
+      "unit": "ns",
+      "source_file": "bench-random-lock.out"
+    },
+    "memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[ifuncs='generic_memcpy'].arithmetic_mean": {
+      "source_name": "memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[ifuncs='generic_memcpy'].arithmetic_mean",
+      "source_field": "functions.memcpy.results[length=4096,align1=0,align2=0,dst > src=0].timings[0]",
+      "raw_value": 114.66699999999999,
+      "raw_unit": "ns",
+      "value": 114.66699999999999,
+      "unit": "ns",
+      "source_file": "bench-memcpy.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 3
+    },
+    "memmove.results[length=4096,align1=0,align2=32].timings[ifuncs='generic_memmove'].arithmetic_mean": {
+      "source_name": "memmove.results[length=4096,align1=0,align2=32].timings[ifuncs='generic_memmove'].arithmetic_mean",
+      "source_field": "functions.memmove.results[length=4096,align1=0,align2=32].timings[0]",
+      "raw_value": 105.455,
+      "raw_unit": "ns",
+      "value": 105.455,
+      "unit": "ns",
+      "source_file": "bench-memmove.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 2
+    },
+    "memset.results[length=4096,alignment=0,char=0].timings[ifuncs='generic_memset'].arithmetic_mean": {
+      "source_name": "memset.results[length=4096,alignment=0,char=0].timings[ifuncs='generic_memset'].arithmetic_mean",
+      "source_field": "functions.memset.results[length=4096,alignment=0,char=0].timings[0]",
+      "raw_value": 55.2832,
+      "raw_unit": "ns",
+      "value": 55.2832,
+      "unit": "ns",
+      "source_file": "bench-memset.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 1
+    },
+    "strlen.results[length=4096,alignment=0].timings[ifuncs='generic_strlen'].arithmetic_mean": {
+      "source_name": "strlen.results[length=4096,alignment=0].timings[ifuncs='generic_strlen'].arithmetic_mean",
+      "source_field": "functions.strlen.results[length=4096,alignment=0].timings[0]",
+      "raw_value": 197.8475,
+      "raw_unit": "ns",
+      "value": 197.8475,
+      "unit": "ns",
+      "source_file": "bench-strlen.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 2
+    },
+    "strcmp.results[length=4096,align1=0,align2=0].timings[ifuncs='generic_strcmp'].arithmetic_mean": {
+      "source_name": "strcmp.results[length=4096,align1=0,align2=0].timings[ifuncs='generic_strcmp'].arithmetic_mean",
+      "source_field": "functions.strcmp.results[length=4096,align1=0,align2=0].timings[1]",
+      "raw_value": 369.64119999999997,
+      "raw_unit": "ns",
+      "value": 369.64119999999997,
+      "unit": "ns",
+      "source_file": "bench-strcmp.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 5
+    },
+    "strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[ifuncs='twoway_strstr'].arithmetic_mean": {
+      "source_name": "strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[ifuncs='twoway_strstr'].arithmetic_mean",
+      "source_field": "functions.strstr.results[len_haystack=4096,len_needle=64,align_haystack=1,align_needle=11,fail=0].timings[1]",
+      "raw_value": 1226.25,
+      "raw_unit": "ns",
+      "value": 1226.25,
+      "unit": "ns",
+      "source_file": "bench-strstr.out",
+      "aggregation": "arithmetic_mean",
+      "sample_count": 1
+    },
+    "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time": {
+      "source_name": "malloc-simple.results[malloc_block_size=64].main_arena_st_allocs_0100_time",
+      "source_field": "functions.malloc.''.main_arena_st_allocs_0100_time",
+      "raw_value": 19.5095,
+      "raw_unit": "ns",
+      "value": 19.5095,
+      "unit": "ns",
+      "source_file": "bench-malloc-simple-64.out"
+    },
+    "malloc-tcache.optimized[alloc_size=64].time_per_iteration": {
+      "source_name": "malloc-tcache.optimized[alloc_size=64].time_per_iteration",
+      "source_field": "functions.malloc.optimized.time_per_iteration",
+      "raw_value": 5.83209,
+      "raw_unit": "ns",
+      "value": 5.83209,
+      "unit": "ns",
+      "source_file": "bench-malloc-tcache-64.out"
+    },
+    "malloc-thread.results[threads=8].time_per_iteration": {
+      "source_name": "malloc-thread.results[threads=8].time_per_iteration",
+      "source_field": "functions.malloc.''.time_per_iteration",
+      "raw_value": 9.78389,
+      "raw_unit": "ns",
+      "value": 9.78389,
+      "unit": "ns",
+      "source_file": "bench-malloc-thread-8.out"
+    }
+  }
+}
