@@ -214,20 +214,22 @@ def extract_random_lock(benchtests_dir: Path, results: dict[str, Any]) -> None:
         )
 
 
-def extract_public_string_timing(
+def extract_named_string_timing(
     benchtests_dir: Path,
     results: dict[str, Any],
     source_file: str,
     function: str,
+    implementation: str,
     scenario: dict[str, int],
 ) -> None:
-    """Extract one public string API timing from a fixed official scenario.
+    """Extract one named official string implementation from a fixed scenario.
 
     String benchtests list implementation timings in ``ifuncs`` order.  That
-    order is architecture-dependent, therefore the public API name is located
-    explicitly instead of assuming a fixed array index.  The selected API is
-    the official exported function (for example ``memcpy``), not a private
-    IFUNC implementation.
+    order is architecture-dependent, therefore the required implementation is
+    located by name instead of assuming a fixed array index.  glibc removes the
+    public symbol (for example ``memcpy``) from this list when IFUNC dispatch
+    is available, so the contract uses the named generic implementation that
+    is emitted on both architectures.
     """
     root = load_pairs_output(benchtests_dir / source_file)
     require_timing_type(root, source_file)
@@ -241,8 +243,10 @@ def extract_public_string_timing(
     rows = require_single_pair(function_data, "results", source_file)
     if not isinstance(ifuncs, list) or not all(isinstance(item, str) for item in ifuncs):
         raise RuntimeError(f"{source_file} {function} has malformed ifuncs")
-    if function not in ifuncs:
-        raise RuntimeError(f"{source_file} has no public {function} timing")
+    if implementation not in ifuncs:
+        raise RuntimeError(
+            f"{source_file} has no {implementation} timing for {function}"
+        )
     if not isinstance(rows, list):
         raise RuntimeError(f"{source_file} {function} has malformed results")
 
@@ -259,32 +263,43 @@ def extract_public_string_timing(
             f"{source_file} {function} must contain exactly one scenario: {selectors}"
         )
     timings = matched_rows[0].get("timings")
-    public_index = ifuncs.index(function)
-    if not isinstance(timings, list) or public_index >= len(timings):
-        raise RuntimeError(f"{source_file} {function} has no public timing value")
+    implementation_index = ifuncs.index(implementation)
+    if not isinstance(timings, list) or implementation_index >= len(timings):
+        raise RuntimeError(
+            f"{source_file} {function} has no {implementation} timing value"
+        )
     selectors = ",".join(f"{name}={value}" for name, value in scenario.items())
-    metric_name = f"{function}.results[{selectors}].timings[ifuncs='{function}']"
-    source_field = f"functions.{function}.results[{selectors}].timings[{public_index}]"
-    record_metric(results, metric_name, source_field, timings[public_index], source_file)
+    metric_name = f"{function}.results[{selectors}].timings[ifuncs='{implementation}']"
+    source_field = (
+        f"functions.{function}.results[{selectors}].timings[{implementation_index}]"
+    )
+    record_metric(
+        results,
+        metric_name,
+        source_field,
+        timings[implementation_index],
+        source_file,
+    )
 
 
 def extract_string_api_metrics(benchtests_dir: Path, results: dict[str, Any]) -> None:
-    """Normalize representative public string API scenarios from string-benchset."""
+    """Normalize fixed generic string API scenarios from string-benchset."""
     scenarios = (
-        ("bench-memcpy.out", "memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 0}),
-        ("bench-memcpy.out", "memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 1}),
-        ("bench-memmove.out", "memmove", {"length": 4096, "align1": 0, "align2": 32}),
-        ("bench-memset.out", "memset", {"length": 4096, "alignment": 0, "char": 0}),
-        ("bench-strlen.out", "strlen", {"length": 4096, "alignment": 0}),
-        ("bench-strcmp.out", "strcmp", {"length": 4096, "align1": 0, "align2": 0}),
-        ("bench-strstr.out", "strstr", {"len_haystack": 4096, "len_needle": 64, "align_haystack": 1, "align_needle": 11, "fail": 0}),
+        ("bench-memcpy.out", "memcpy", "generic_memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 0}),
+        ("bench-memcpy.out", "memcpy", "generic_memcpy", {"length": 4096, "align1": 0, "align2": 0, "dst > src": 1}),
+        ("bench-memmove.out", "memmove", "generic_memmove", {"length": 4096, "align1": 0, "align2": 32}),
+        ("bench-memset.out", "memset", "generic_memset", {"length": 4096, "alignment": 0, "char": 0}),
+        ("bench-strlen.out", "strlen", "generic_strlen", {"length": 4096, "alignment": 0}),
+        ("bench-strcmp.out", "strcmp", "generic_strcmp", {"length": 4096, "align1": 0, "align2": 0}),
+        ("bench-strstr.out", "strstr", "twoway_strstr", {"len_haystack": 4096, "len_needle": 64, "align_haystack": 1, "align_needle": 11, "fail": 0}),
     )
-    for source_file, function, scenario in scenarios:
-        extract_public_string_timing(
+    for source_file, function, implementation, scenario in scenarios:
+        extract_named_string_timing(
             benchtests_dir,
             results,
             source_file,
             function,
+            implementation,
             scenario,
         )
 
@@ -429,7 +444,7 @@ def main() -> int:
                 "mean",
                 "duration",
                 "results[0]",
-                "timings[ifuncs='<public API>']",
+                "timings[ifuncs='<named generic implementation>']",
                 "time_per_iteration",
                 "main_arena_st_allocs_0100_time",
             ],
