@@ -644,6 +644,8 @@ def test_explicit_metric_groups_render_as_separate_tables() -> None:
     cross_architecture = render_comparison(comparison)
     assert "## 吞吐" in cross_architecture
     assert "## 延迟" in cross_architecture
+    assert "ARM/x86 原始比值" not in cross_architecture
+    assert "相对性能" in cross_architecture
 
     summary = render_summary(
         {"total": 2, "passed": 2, "failed": 0, "comparisons": 1, "items": [x86, arm]},

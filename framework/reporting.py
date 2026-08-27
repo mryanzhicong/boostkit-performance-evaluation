@@ -49,7 +49,7 @@ REPORT_TABLE_WIDTH = 1380
 SUMMARY_STATUS_COLUMN_WIDTHS = (180, 220, 160, 220, 240, 360)
 SINGLE_METRIC_COLUMN_WIDTHS = (180, 160, 420, 200, 160, 260)
 CROSS_METRIC_COLUMN_WIDTHS = (160, 140, 340, 180, 160, 160, 240)
-COMPARISON_METRIC_COLUMN_WIDTHS = (380, 200, 180, 180, 220, 220)
+COMPARISON_METRIC_COLUMN_WIDTHS = (400, 200, 200, 200, 380)
 REPORT_METRIC_COLUMN_WIDTHS = (500, 280, 200, 400)
 TEST_TOOL_COLUMN_WIDTHS = (500, 880)
 SYSBENCH_METRIC_PATTERN = re.compile(
@@ -279,18 +279,16 @@ def _comparison_metric_table(metrics: dict, metric_names: list[str]) -> list[str
     rows: list[list[object]] = []
     for name in metric_names:
         metric = metrics[name]
-        raw = metric.get("raw_ratio")
         relative = metric.get("relative_performance")
         rows.append([
             name,
             direction_label(metric.get("direction")),
             metric.get("x86_64", "N/A"),
             metric.get("aarch64", "N/A"),
-            raw if raw is not None else "N/A",
             relative if relative is not None else "N/A",
         ])
     return _fixed_width_table(
-        ("指标", "优化方向", "x86_64", "aarch64", "ARM/x86 原始比值", "相对性能"),
+        ("指标", "优化方向", "x86_64", "aarch64", "相对性能"),
         rows,
         COMPARISON_METRIC_COLUMN_WIDTHS,
     )
