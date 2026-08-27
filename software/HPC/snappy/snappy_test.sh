@@ -59,14 +59,51 @@ initialize_runtime() {
 }
 
 require_commands() {
-    local required missing=0
+    local required package
+    local packages=()
+
+    for required in git python3 cmake make c++ sed tee; do
+        if command -v "${required}" >/dev/null 2>&1; then
+            continue
+        fi
+        case "${required}" in
+            git) package="git" ;;
+            python3) package="python3" ;;
+            cmake) package="cmake" ;;
+            make) package="make" ;;
+            c++) package="gcc-c++" ;;
+            sed) package="sed" ;;
+            tee) package="coreutils" ;;
+        esac
+        log "missing required Snappy build command: ${required}"
+        packages+=("${package}")
+    done
+
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install Snappy build prerequisites"
+        return 30
+    fi
+
+    log "installing missing Snappy build packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log "ERROR: sudo is required to install Snappy build prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log "ERROR: failed to install Snappy build prerequisites"
+        return 30
+    fi
+
     for required in git python3 cmake make c++ sed tee; do
         if ! command -v "${required}" >/dev/null 2>&1; then
-            log "ERROR: required command is missing: ${required}"
-            missing=1
+            log "ERROR: required Snappy build command remains unavailable: ${required}"
+            return 30
         fi
     done
-    [[ "${missing}" -eq 0 ]]
 }
 
 check_architecture() {

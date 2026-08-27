@@ -15,34 +15,6 @@ from pathlib import Path
 from typing import Any
 
 
-METRICS = {
-    "B4/1-LZ4_compress_default": (
-        "B4",
-        "1-LZ4_compress_default",
-        "MB/s",
-        "higher_is_better",
-    ),
-    "B4/4-LZ4_decompress_safe": (
-        "B4",
-        "4-LZ4_decompress_safe",
-        "MB/s",
-        "higher_is_better",
-    ),
-    "B7/1-LZ4_compress_default": (
-        "B7",
-        "1-LZ4_compress_default",
-        "MB/s",
-        "higher_is_better",
-    ),
-    "B7/4-LZ4_decompress_safe": (
-        "B7",
-        "4-LZ4_decompress_safe",
-        "MB/s",
-        "higher_is_better",
-    ),
-}
-
-
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -184,13 +156,11 @@ def extract_metrics(benchmark: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(results, dict):
         raise RuntimeError("benchmark_fullbench.json is missing results")
     metrics: dict[str, Any] = {}
-    for metric_name, (block_name, result_name, unit, direction) in METRICS.items():
-        block_results = results.get(block_name)
-        result = (
-            block_results.get(result_name)
-            if isinstance(block_results, dict)
-            else None
-        )
+    for metric_name, result in results.items():
+        if not isinstance(metric_name, str) or not metric_name:
+            raise RuntimeError("benchmark_fullbench.json contains an invalid metric name")
+        if not isinstance(result, dict):
+            raise RuntimeError(f"metric {metric_name} is not an object")
         value = result.get("speed_mbs") if isinstance(result, dict) else None
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is missing or is not numeric")
@@ -198,8 +168,9 @@ def extract_metrics(benchmark: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": unit,
-            "direction": direction,
+            "unit": "MB/s",
+            "direction": "higher_is_better",
+            "group": result.get("command_display"),
         }
     return metrics
 
@@ -245,18 +216,18 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend([
-        "",
-        "## 性能指标",
-        "",
-        "| 指标 | 数值 | 单位 | 优化方向 |",
-        "|---|---:|---|---|",
-    ])
+    lines.extend(["", "## 性能指标"])
+    metric_groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        direction = "越大越好" if metric["direction"] == "higher_is_better" else metric["direction"]
-        lines.append(
-            f"| {metric_name} | {metric['value']} | {metric['unit']} | {direction} |"
-        )
+        group = metric.get("group") or "未分组"
+        metric_groups.setdefault(str(group), []).append((metric_name, metric))
+    for group, metrics in metric_groups.items():
+        lines.extend(["", f"### `{group}`", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
+        for metric_name, metric in metrics:
+            direction = "越大越好" if metric["direction"] == "higher_is_better" else metric["direction"]
+            lines.append(
+                f"| {metric_name} | {metric['value']} | {metric['unit']} | {direction} |"
+            )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")

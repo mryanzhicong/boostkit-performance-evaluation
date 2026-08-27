@@ -21,7 +21,7 @@ from mark_cleanup import mark
 from normalize_results import ResultValidationError, normalize, validate_stage_outputs
 from prepare_result_history import prepare
 from process_scanner import matching_processes, references_root
-from reporting import render_comparison, render_single
+from reporting import render_comparison, render_single, render_summary
 
 
 def normalized_result(architecture: str, higher: float, lower: float) -> dict:
@@ -59,6 +59,27 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
             "latency": {"value": lower, "unit": "us", "direction": "lower_is_better"},
         },
     }
+
+
+def sysbench_result(architecture: str, factor: float) -> dict:
+    result = normalized_result(architecture, 100 * factor, 20 * factor)
+    result.update({"category": "Database", "software": "mysql", "version": "8.0.46"})
+    metrics = {}
+    for scenario, base in (("sum", 1000), ("delete", 2000)):
+        for threads in (128, 256):
+            for field, unit, multiplier in (
+                ("TPS", "transactions/s", 1),
+                ("QPS", "queries/s", 2),
+                ("transactions", "transactions", 60),
+            ):
+                name = f"sysbench {scenario} --threads={threads}: {field}"
+                metrics[name] = {
+                    "value": base * threads * multiplier * factor,
+                    "unit": unit,
+                    "direction": "higher_is_better",
+                }
+    result["metrics"] = metrics
+    return result
 
 
 def record_requested_build(context: RunContext) -> dict:
@@ -268,6 +289,81 @@ def test_normalizer_extracts_every_metric_from_a_declared_collection(
         normalize(context, "passed")
 
 
+def test_normalizer_collection_reads_unit_and_direction_from_each_item(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "output"
+    output.mkdir()
+    atomic_write_json(
+        output / "results.json",
+        {
+            "results": {
+                "throughput": {
+                    "source_name": "serialize_qps",
+                    "value": 304.9,
+                    "unit": "messages/s",
+                    "direction": "higher_is_better",
+                    "group": "吞吐",
+                },
+                "latency": {
+                    "source_name": "serialize_latency_us",
+                    "value": 2.5,
+                    "unit": "us",
+                    "direction": "lower_is_better",
+                    "group": "延迟",
+                },
+            }
+        },
+    )
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "result": {
+                    "path": "results.json",
+                    "stage": "test",
+                    "format": "json",
+                    "required": True,
+                }
+            },
+            "metrics": {
+                "source": "result",
+                "collection": {
+                    "path": "results",
+                    "name_path": "source_name",
+                    "value_path": "value",
+                    "unit_path": "unit",
+                    "direction_path": "direction",
+                    "group_path": "group",
+                },
+            },
+        },
+        category="HPC",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=output,
+        work_dir=tmp_path / "work",
+    )
+    record_requested_build(context)
+    result = normalize(context, "passed")
+    assert result["metrics"] == {
+        "serialize_qps": {
+            "value": 304.9,
+            "unit": "messages/s",
+            "direction": "higher_is_better",
+            "group": "吞吐",
+        },
+        "serialize_latency_us": {
+            "value": 2.5,
+            "unit": "us",
+            "direction": "lower_is_better",
+            "group": "延迟",
+        },
+    }
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:
     import pytest
 
@@ -469,6 +565,36 @@ def test_stage_output_validation_checks_only_the_completed_stage(tmp_path: Path)
         validate_stage_outputs(context, "test")
 
 
+def test_stage_output_validation_accepts_a_nonempty_declared_directory(tmp_path: Path) -> None:
+    context = RunContext(
+        root=tmp_path,
+        case_path=tmp_path / "case.yaml",
+        case={
+            "execution": {},
+            "outputs": {
+                "raw_evidence": {
+                    "path": "evidence",
+                    "stage": "test",
+                    "format": "directory",
+                    "required": True,
+                }
+            },
+            "metrics": {},
+        },
+        category="AI",
+        software="sample",
+        version="1.0",
+        architecture="x86_64",
+        run_id="unit-run",
+        output_dir=tmp_path / "output",
+        work_dir=tmp_path / "work",
+    )
+    (context.output_dir / "evidence").mkdir(parents=True)
+    (context.output_dir / "evidence" / "raw.txt").write_text("raw\n", encoding="utf-8")
+
+    validate_stage_outputs(context, "test")
+
+
 def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     comparison = compare_pair(
         normalized_result("x86_64", higher=100, lower=20),
@@ -487,7 +613,7 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "### 系统信息" in environment
     assert environment.count('<table width="1380">') == 2
     assert environment.count('<th width="180">项目</th>') == 2
-    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">x86_64</th>') == 2
     assert environment.count('<th width="600">aarch64</th>') == 2
     assert '<td width="180">CPU 型号</td>' in environment
     assert '<td width="600">Example CPU</td>' in environment
@@ -501,6 +627,34 @@ def test_comparison_inverts_lower_is_better_and_explains_direction() -> None:
     assert "glibc 2.38" in markdown
 
 
+def test_explicit_metric_groups_render_as_separate_tables() -> None:
+    x86 = normalized_result("x86_64", higher=100, lower=20)
+    arm = normalized_result("aarch64", higher=120, lower=10)
+    for result in (x86, arm):
+        result["metrics"]["throughput"]["group"] = "吞吐"
+        result["metrics"]["latency"]["group"] = "延迟"
+
+    comparison = compare_pair(x86, arm)
+    assert comparison["metrics"]["throughput"]["group"] == "吞吐"
+
+    single = render_single(x86)
+    assert "### 吞吐" in single
+    assert "### 延迟" in single
+
+    cross_architecture = render_comparison(comparison)
+    assert "## 吞吐" in cross_architecture
+    assert "## 延迟" in cross_architecture
+    assert "ARM/x86 原始比值" not in cross_architecture
+    assert "相对性能" in cross_architecture
+
+    summary = render_summary(
+        {"total": 2, "passed": 2, "failed": 0, "comparisons": 1, "items": [x86, arm]},
+        [comparison],
+    )
+    assert "##### 吞吐" in summary
+    assert "##### 延迟" in summary
+
+
 def test_single_report_includes_build_and_system_environment() -> None:
     markdown = render_single(normalized_result("aarch64", 120, 10))
     assert "## 测试环境" in markdown
@@ -509,7 +663,7 @@ def test_single_report_includes_build_and_system_environment() -> None:
     assert markdown.count('<table width="1380">') == 3
     assert markdown.count('<th width="180">项目</th>') == 2
     assert markdown.count('<th width="1200">aarch64</th>') == 2
-    assert '<th width="1200">x86</th>' not in markdown
+    assert '<th width="1200">x86_64</th>' not in markdown
     assert "|---" not in markdown
     assert "实际软件版本" in markdown
     assert "Example CPU" in markdown
@@ -521,8 +675,27 @@ def test_single_report_includes_build_and_system_environment() -> None:
 
     x86_markdown = render_single(normalized_result("x86_64", 100, 20))
     assert x86_markdown.count('<table width="1380">') == 3
-    assert x86_markdown.count('<th width="1200">x86</th>') == 2
+    assert x86_markdown.count('<th width="1200">x86_64</th>') == 2
     assert '<th width="1200">aarch64</th>' not in x86_markdown
+
+
+def test_report_lists_shared_test_tools_once() -> None:
+    x86 = normalized_result("x86_64", 100, 20)
+    arm = normalized_result("aarch64", 120, 10)
+    tools = {
+        "database_blue": {"version": "af475922"},
+        "sysbench": {"version": "1.0.17", "revision": "d634bce"},
+    }
+    x86["test_tools"] = tools
+    arm["test_tools"] = tools
+
+    comparison = compare_pair(x86, arm)
+    markdown = render_comparison(comparison)
+    environment = markdown.split("## 测试环境", 1)[1]
+    assert "### 测试工具" in environment
+    assert "database_blue" in environment
+    assert "1.0.17 (d634bce)" in environment
+    assert environment.count('<table width="1380">') == 3
 
 
 def test_comparison_rejects_incompatible_metric_contracts() -> None:
@@ -536,8 +709,10 @@ def test_comparison_rejects_incompatible_metric_contracts() -> None:
 
     arm = normalized_result("aarch64", higher=120, lower=10)
     del arm["metrics"]["latency"]
-    with pytest.raises(ValueError, match="metric sets differ"):
-        compare_pair(x86, arm)
+    comparison = compare_pair(x86, arm)
+    assert comparison["metrics"]["latency"]["x86_64"] == 20
+    assert comparison["metrics"]["latency"]["aarch64"] is None
+    assert comparison["metrics"]["latency"]["relative_performance"] is None
 
 
 def test_comparison_rejects_different_resolved_workload_parameters() -> None:
@@ -576,7 +751,7 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     assert "#### 系统信息" in environment
     assert environment.count('<table width="1380">') == 2
     assert environment.count('<th width="180">项目</th>') == 2
-    assert environment.count('<th width="600">x86</th>') == 2
+    assert environment.count('<th width="600">x86_64</th>') == 2
     assert environment.count('<th width="600">aarch64</th>') == 2
     assert combined.count('<table width="1380">') == 6
     assert "|---" not in combined
@@ -609,6 +784,33 @@ def test_single_architecture_metrics_are_visible_in_combined_report(tmp_path: Pa
     assert "越大越好" in combined
 
 
+def test_sysbench_reports_group_metrics_by_workload_then_threads(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    atomic_write_json(
+        input_root / "x86" / "normalized_result.json",
+        sysbench_result("x86_64", 1),
+    )
+    atomic_write_json(
+        input_root / "arm" / "normalized_result.json",
+        sysbench_result("aarch64", 1.1),
+    )
+    generate(input_root, tmp_path / "report")
+
+    combined = (tmp_path / "report" / "combined-report.md").read_text(encoding="utf-8")
+    x86_metrics = combined.split("### x86_64", 1)[1].split("### aarch64", 1)[0]
+    sum_section = x86_metrics.split("##### sum", 1)[1].split("##### delete", 1)[0]
+    assert '<td width="180">128</td>' in sum_section
+    assert '<td width="180">256</td>' in sum_section
+    assert sum_section.index('<td width="180">128</td>') < sum_section.index(
+        '<td width="180">256</td>'
+    )
+    assert "sysbench sum --threads=128: TPS" not in sum_section
+
+    cross_architecture = combined.split("## 跨架构指标", 1)[1]
+    assert cross_architecture.index("#### sum") < cross_architecture.index("#### delete")
+    assert "线程数" in cross_architecture
+
+
 def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     tmp_path: Path,
 ) -> None:
@@ -623,8 +825,23 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
         result = normalized_result(architecture, throughput, latency)
         result.update({"run_id": run_id, "cleanup_status": "passed"})
         result_dir = input_root / folder
+        result["sources"] = {
+            "raw_evidence": {"path": "evidence/original-output.txt", "size": 12},
+            "raw_benchmark_outputs": {"path": "benchtests", "file_count": 2},
+        }
         atomic_write_json(result_dir / "normalized_result.json", result)
         atomic_write_json(result_dir / "benchmark.json", {"throughput": throughput})
+        (result_dir / "evidence").mkdir(parents=True)
+        (result_dir / "evidence" / "original-output.txt").write_text(
+            f"source evidence for {architecture}\n", encoding="utf-8"
+        )
+        (result_dir / "benchtests" / "nested").mkdir(parents=True)
+        (result_dir / "benchtests" / "bench-alpha.out").write_text(
+            f"official output for {architecture}\n", encoding="utf-8"
+        )
+        (result_dir / "benchtests" / "nested" / "bench-beta.out").write_text(
+            f"nested official output for {architecture}\n", encoding="utf-8"
+        )
         (result_dir / "report.md").write_text(f"# {architecture}\n", encoding="utf-8")
         (result_dir / "raw-output.log").write_text(
             f"raw benchmark output for {architecture}\n", encoding="utf-8"
@@ -659,6 +876,15 @@ def test_permanent_history_keeps_compact_results_and_updates_dual_arch_baseline(
     assert (run_root / "aarch64" / "raw-output.log").read_text(
         encoding="utf-8"
     ) == "raw benchmark output for aarch64\n"
+    assert (run_root / "x86_64" / "evidence" / "original-output.txt").read_text(
+        encoding="utf-8"
+    ) == "source evidence for x86_64\n"
+    assert (run_root / "aarch64" / "benchtests" / "bench-alpha.out").read_text(
+        encoding="utf-8"
+    ) == "official output for aarch64\n"
+    assert (run_root / "x86_64" / "benchtests" / "nested" / "bench-beta.out").read_text(
+        encoding="utf-8"
+    ) == "nested official output for x86_64\n"
     assert not (run_root / "aarch64" / "results.log").exists()
     assert not (run_root / "aarch64" / "results.txt").exists()
     assert (run_root / "comparison.json").is_file()

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Normalize folly's official benchmark JSON outputs into per-scenario metrics.
+"""Normalize the output of Folly's official CMake BENCHMARK targets.
 
-Every official BENCHMARK target declared in folly's CMakeLists.txt runs its
-own binary (built with folly/Benchmark.cpp) with --bm_json_verbose, whose
-schema is the official [file, name, timeInNs, counters?] array consumed by
-folly's benchmark_ab.py. This script extracts one timeInNs value per official
-benchmark and names it <official DIRECTORY>/<cmake target>/<benchmark name>
-so names stay verbatim traceable to the official entries.
+Most targets use folly/Benchmark.cpp and write the official
+``--bm_json_verbose`` array. Two official targets print their own tables
+instead; their raw stdout is parsed using the exact printed column names.
 """
 
 from __future__ import annotations
@@ -14,6 +11,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,7 +35,7 @@ def load_manifest(path: Path) -> list[dict[str, Any]]:
     return payload
 
 
-def load_target_results(path: Path, target: str) -> list[Any]:
+def load_json_target_results(path: Path, target: str) -> list[Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -72,18 +70,143 @@ def to_metric(entry: Any, target: str, directory: str) -> dict[str, Any]:
         "raw_unit": "ns",
         "value": value,
         "unit": "ns",
+        "direction": "lower_is_better",
     }
 
 
+def custom_metric(
+    target: str,
+    directory: str,
+    threads: str,
+    scenario: str,
+    column: str,
+    value: str,
+) -> dict[str, Any]:
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or numeric_value < 0:
+        raise RuntimeError(
+            f"benchmark {target}/{scenario}/{column} has an invalid value"
+        )
+    source_name = (
+        f"{directory}/{target}/threads={threads}/{scenario}/{column} (ns/op)"
+    )
+    return {
+        "source_name": source_name,
+        "source_field": column,
+        "raw_value": numeric_value,
+        "raw_unit": "ns/op",
+        "value": numeric_value,
+        "unit": "ns/op",
+        "direction": "lower_is_better",
+    }
+
+
+def parse_concurrent_hash_map_output(
+    raw_output: str, target: str, directory: str
+) -> list[dict[str, Any]]:
+    thread_pattern = re.compile(r"^=+\s*(\d+)\s+threads")
+    row_pattern = re.compile(
+        r"^(CHM .+?)\s+(\d+)\s+ns\s+(\d+)\s+ns\s+(\d+)\s+ns$"
+    )
+    threads: str | None = None
+    metrics: list[dict[str, Any]] = []
+    for raw_line in raw_output.splitlines():
+        line = raw_line.strip()
+        thread_match = thread_pattern.match(line)
+        if thread_match:
+            threads = thread_match.group(1)
+            continue
+        row_match = row_pattern.match(line)
+        if row_match:
+            if threads is None:
+                raise RuntimeError(f"benchmark {target} emitted a row before a thread count")
+            scenario, maximum, average, minimum = row_match.groups()
+            for column, value in (
+                ("Max time", maximum),
+                ("Avg time", average),
+                ("Min time", minimum),
+            ):
+                metrics.append(
+                    custom_metric(target, directory, threads, scenario, column, value)
+                )
+    if not metrics:
+        raise RuntimeError(f"benchmark target {target} produced no parseable rows")
+    return metrics
+
+
+def parse_request_context_output(
+    raw_output: str, target: str, directory: str
+) -> list[dict[str, Any]]:
+    thread_pattern = re.compile(r"^=+\s*(\d+)\s+threads")
+    row_pattern = re.compile(
+        r"^(.+?)\s+(\d+)\s+ns\s+(\d+)\s+ns\s+(\d+)\s+ns\s+(\d+)\s+ns$"
+    )
+    threads: str | None = None
+    metrics: list[dict[str, Any]] = []
+    for raw_line in raw_output.splitlines():
+        line = raw_line.strip()
+        thread_match = thread_pattern.match(line)
+        if thread_match:
+            threads = thread_match.group(1)
+            continue
+        row_match = row_pattern.match(line)
+        if row_match:
+            if threads is None:
+                raise RuntimeError(f"benchmark {target} emitted a row before a thread count")
+            scenario, maximum, average, deviation, minimum = row_match.groups()
+            for column, value in (
+                ("Max time", maximum),
+                ("Avg time", average),
+                ("Dev time", deviation),
+                ("Min time", minimum),
+            ):
+                metrics.append(
+                    custom_metric(target, directory, threads, scenario, column, value)
+                )
+    if not metrics:
+        raise RuntimeError(f"benchmark target {target} produced no parseable rows")
+    return metrics
+
+
+CUSTOM_OUTPUT_PARSERS = {
+    "concurrency_concurrent_hash_map_bench": parse_concurrent_hash_map_output,
+    "io_async_request_context_benchmark": parse_request_context_output,
+}
+
+
+def load_custom_target_results(
+    path: Path, target: str, directory: str
+) -> list[dict[str, Any]]:
+    parser = CUSTOM_OUTPUT_PARSERS.get(target)
+    if parser is None:
+        raise RuntimeError(
+            f"benchmark target {target} produced no --bm_json_verbose output and "
+            "has no declared raw-output parser"
+        )
+    try:
+        raw_output = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"cannot read raw output of {target}: {exc}") from exc
+    return parser(raw_output, target, directory)
+
+
 def normalize_results(
-    manifest: list[dict[str, Any]], bench_json_dir: Path
+    manifest: list[dict[str, Any]], bench_json_dir: Path, bench_stdout_dir: Path
 ) -> dict[str, dict[str, Any]]:
     results: dict[str, dict[str, Any]] = {}
     for entry in manifest:
         target, directory = entry["target"], entry["dir"]
         target_path = bench_json_dir / f"{target}.json"
-        for row in load_target_results(target_path, target):
-            metric = to_metric(row, target, directory)
+        if target_path.is_file() and target_path.stat().st_size > 0:
+            metrics = [
+                to_metric(row, target, directory)
+                for row in load_json_target_results(target_path, target)
+            ]
+        else:
+            metrics = load_custom_target_results(
+                bench_stdout_dir / f"{target}.log", target, directory
+            )
+        for metric in metrics:
             source_name = metric["source_name"]
             if source_name in results:
                 raise RuntimeError(
@@ -96,19 +219,20 @@ def normalize_results(
 
 
 def main() -> int:
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print(
-            "usage: parse_benchmark.py MANIFEST_JSON BENCH_JSON_DIR NORMALIZED_OUTPUT",
+            "usage: parse_benchmark.py MANIFEST_JSON BENCH_JSON_DIR "
+            "BENCH_STDOUT_DIR NORMALIZED_OUTPUT",
             file=sys.stderr,
         )
         return 1
-    manifest_path = Path(sys.argv[1])
-    bench_json_dir = Path(sys.argv[2])
-    normalized_output = Path(sys.argv[3])
+    manifest_path, bench_json_dir, bench_stdout_dir, normalized_output = map(
+        Path, sys.argv[1:]
+    )
 
     try:
         manifest = load_manifest(manifest_path)
-        results = normalize_results(manifest, bench_json_dir)
+        results = normalize_results(manifest, bench_json_dir, bench_stdout_dir)
     except (RuntimeError, TypeError, ValueError) as exc:
         print(f"[folly-parse] ERROR: {exc}", file=sys.stderr)
         return 1
@@ -123,17 +247,21 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "official_entry": (
-                "official BENCHMARK targets of CMakeLists.txt, each binary run "
-                "with --bm_json_verbose (folly/Benchmark.cpp)"
+                "official BENCHMARK targets of CMakeLists.txt; standard targets "
+                "use --bm_json_verbose and the two official custom-table targets "
+                "retain and parse their stdout"
             ),
-            "command": ["<target>", "--bm_json_verbose=<output>"],
+            "command": ["<target>", "--bm_json_verbose=<output>", "> <target>.log"],
             "benchmark_targets": len(manifest),
-            "metric_source": "timeInNs of every --bm_json_verbose row",
+            "metric_source": (
+                "timeInNs of --bm_json_verbose rows, or the verbatim time "
+                "columns of official custom benchmark tables"
+            ),
         },
         "metric_contract": {
-            "scope": "timeInNs of every benchmark in every official target",
-            "source_field": "timeInNs",
-            "normalized_unit": "ns",
+            "scope": "every parsed time value of every official target",
+            "source_field": "timeInNs or a verbatim official table column",
+            "normalized_unit": "ns or ns/op",
             "direction": "lower_is_better",
         },
         "results": results,

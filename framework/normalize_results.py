@@ -46,6 +46,18 @@ def _load_output(
 ) -> Any | None:
     filename = definition["path"]
     path = context.output_dir / filename
+    output_format = definition["format"]
+    if output_format == "directory":
+        if not path.is_dir():
+            if definition["required"]:
+                raise ResultValidationError(
+                    f"required output {output_name} is missing directory: {filename}"
+                )
+            return None
+        file_count = sum(1 for entry in path.rglob("*") if entry.is_file())
+        if file_count == 0:
+            raise ResultValidationError(f"output {output_name} directory is empty: {filename}")
+        return {"path": filename, "file_count": file_count}
     if not path.is_file():
         if definition["required"]:
             raise ResultValidationError(
@@ -54,7 +66,7 @@ def _load_output(
         return None
     if path.stat().st_size == 0:
         raise ResultValidationError(f"output {output_name} is empty: {filename}")
-    if definition["format"] == "json":
+    if output_format == "json":
         try:
             value = load_json(path)
         except (OSError, json.JSONDecodeError) as exc:
@@ -66,7 +78,10 @@ def _load_output(
                 f"output {output_name} JSON root must be an object: {filename}"
             )
         return value
-    return {"path": str(path), "size": path.stat().st_size}
+    # Keep a portable result-directory-relative path.  The workflow downloads
+    # artifacts into a different workspace before publishing history, so an
+    # absolute runner path cannot be used to preserve declared text evidence.
+    return {"path": filename, "size": path.stat().st_size}
 
 
 def validate_stage_outputs(context: RunContext, stage: str) -> None:
@@ -91,7 +106,13 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
     metric_config = context.case.get("metrics", {})
     default_source = metric_config.get("source")
 
-    def add_metric(name: str, value: Any, unit: str, direction: str) -> None:
+    def add_metric(
+        name: str,
+        value: Any,
+        unit: str,
+        direction: str,
+        group: str | None = None,
+    ) -> None:
         if not name:
             raise ResultValidationError("metric name must not be empty")
         if name in metrics:
@@ -103,11 +124,16 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
         numeric_value = float(value)
         if not math.isfinite(numeric_value):
             raise ResultValidationError(f"metric {name} must be finite")
-        metrics[name] = {
+        metric = {
             "value": value,
             "unit": unit,
             "direction": direction,
         }
+        if group is not None:
+            if not isinstance(group, str) or not group:
+                raise ResultValidationError(f"metric {name} has an invalid group")
+            metric["group"] = group
+        metrics[name] = metric
 
     for metric_name, definition in metric_config.get("definitions", {}).items():
         source_name = definition.get("source", default_source)
@@ -161,12 +187,39 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                     f"{default_source}:{collection['path']}.{item_key}."
                     f"{collection['value_path']}"
                 )
-            add_metric(
-                metric_name,
-                value,
-                collection["unit"],
-                collection["direction"],
-            )
+            unit = collection.get("unit")
+            if unit is None:
+                unit_path = collection["unit_path"]
+                unit = get_path(item, unit_path, MISSING)
+                if unit is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing unit path {unit_path}"
+                    )
+            if not isinstance(unit, str) or not unit:
+                raise ResultValidationError(
+                    f"metric {metric_name} must have a non-empty unit"
+                )
+            direction = collection.get("direction")
+            if direction is None:
+                direction_path = collection["direction_path"]
+                direction = get_path(item, direction_path, MISSING)
+                if direction is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing direction path {direction_path}"
+                    )
+            if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
+                raise ResultValidationError(
+                    f"metric {metric_name} has invalid direction: {direction}"
+                )
+            group = None
+            group_path = collection.get("group_path")
+            if group_path is not None:
+                group = get_path(item, group_path, MISSING)
+                if group is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing group path {group_path}"
+                    )
+            add_metric(metric_name, value, unit, direction, group)
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics
@@ -186,6 +239,7 @@ def normalize(context: RunContext, command_status: str) -> dict[str, Any]:
         "build_info": load_build_info(context),
         "parameters": parameters,
         "parameter_signature": parameter_signature(context, parameters),
+        "test_tools": context.case.get("test_tools", {}),
         "system_info": load_json(context.output_dir / "system_info.json", {}),
         "runtime_before": load_json(context.output_dir / "runtime_before.json", {}),
         "runtime_after": load_json(context.output_dir / "runtime_after.json", {}),

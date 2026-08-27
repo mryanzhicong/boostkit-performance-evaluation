@@ -1,0 +1,52 @@
+name: mysql
+category: Database
+enabled: true
+versions:
+  - "8.0.46"
+environment:
+  DATABASE_BLUE_REPOSITORY: https://gitcode.com/mwx5319395/database_blue.git
+  DATABASE_BLUE_COMMIT: af4759227538961f0b0bed5ffc25434d65e7456b
+  DATABASE_BLUE_SYSBENCH_REPOSITORY: https://github.com/akopytov/sysbench.git
+  DATABASE_BLUE_SYSBENCH_REF: "1.0.17"
+  DATABASE_BLUE_SYSBENCH_COMMIT: d634bce
+test_tools:
+  database_blue:
+    version: af4759227538961f0b0bed5ffc25434d65e7456b
+  sysbench:
+    version: "1.0.17"
+    revision: d634bce
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: mysql_test.sh
+      function: build_mysql
+    start:
+      script: mysql_test.sh
+      function: start_mysql_service
+    test:
+      script: mysql_test.sh
+      function: run_mysql_benchmarks
+    stop:
+      script: mysql_test.sh
+      function: stop_mysql_service
+  timeout_minutes: 600
+outputs:
+  database_blue_sysbench_output:
+    path: database_blue_sysbench_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction

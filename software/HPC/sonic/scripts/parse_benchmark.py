@@ -149,7 +149,7 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "command": [
-                "bazel-bin/benchmark",
+                "build/benchmark/bench",
                 "--benchmark_out_format=json",
                 "--benchmark_repetitions=" + repetitions,
                 "--benchmark_report_aggregates_only=true",

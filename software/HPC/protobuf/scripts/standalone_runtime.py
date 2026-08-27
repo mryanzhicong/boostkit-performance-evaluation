@@ -165,30 +165,28 @@ def extract_metrics(
 ) -> dict[str, Any]:
     if benchmark.get("software") != "protobuf" or benchmark.get("version") != version:
         raise RuntimeError("aggregate_results.json identity differs from this run")
-    summary = benchmark.get("summary")
-    if not isinstance(summary, dict) or not summary:
-        raise RuntimeError("aggregate_results.json is missing the upstream summary")
-    metadata = {
-        "avg_serialize_qps_size100": ("messages/s", "higher_is_better"),
-        "max_serialize_qps_size100": ("messages/s", "higher_is_better"),
-        "avg_deserialize_qps_size100": ("messages/s", "higher_is_better"),
-        "max_deserialize_qps_size100": ("messages/s", "higher_is_better"),
-        "avg_fidelity_size100": ("ratio", "higher_is_better"),
-        "avg_serialize_latency_us_size100": ("us", "lower_is_better"),
-        "max_serialize_latency_us_size100": ("us", "lower_is_better"),
-        "single_serialize_qps": ("messages/s", "higher_is_better"),
-        "single_deserialize_qps": ("messages/s", "higher_is_better"),
-        "multithread_serialize_scaling_ratio": ("ratio", "higher_is_better"),
-        "multithread_deserialize_scaling_ratio": ("ratio", "higher_is_better"),
-        "binary_vs_json_qps_ratio": ("ratio", "higher_is_better"),
-    }
+    raw_metrics = benchmark.get("metrics")
+    if not isinstance(raw_metrics, dict) or not raw_metrics:
+        raise RuntimeError("aggregate_results.json is missing validated metrics")
     metrics: dict[str, Any] = {}
-    for metric_name, (unit, direction) in metadata.items():
-        value = summary.get(metric_name)
+    for metric_name, metric in raw_metrics.items():
+        if not isinstance(metric_name, str) or not metric_name:
+            raise TypeError("aggregate_results.json has an invalid metric name")
+        if not isinstance(metric, dict):
+            raise TypeError(f"metric {metric_name} must be an object")
+        if metric.get("source_name") != metric_name:
+            raise RuntimeError(f"metric {metric_name} source name does not match its key")
+        value = metric.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
+        unit = metric.get("unit")
+        direction = metric.get("direction")
+        if not isinstance(unit, str) or not unit:
+            raise TypeError(f"metric {metric_name} has no unit")
+        if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
+            raise RuntimeError(f"metric {metric_name} has an invalid direction")
         metrics[metric_name] = {
             "value": value,
             "unit": unit,
@@ -246,7 +244,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（上游脚本的聚合字段）",
+            "## 性能指标（固定场景的原始字段）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
