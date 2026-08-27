@@ -49,21 +49,22 @@ gflags、Snappy、zlib、bzip2、LZ4 和 Zstandard 开发包。
 | 64B Key / 512B Value | 8 | 同上 |
 | 128B Key / 1024B Value | 8 | 同上 |
 
-因此每个架构会执行 24 条 `db_bench` 命令：每组规格两条预埋命令与六条 600 秒正式
+因此每个架构会执行 24 条 `db_bench` 命令：每组规格两条预埋命令与六条 60 秒正式
 负载。每一组规格均从空目录开始，完成后才进入下一组；数据和 WAL 均在当前运行的
 任务私有目录中，不会使用 `/tmp`。
 
-`case.yaml` 声明并传入 `database_blue` 的基线参数：`num=167772160`、正式负载时长
-600 秒、混合读写比 70:30、16 GiB 缓存、无压缩及 DIO。不绑定 CPU，由 runner 按
-其正常调度策略执行。单条命令的形态如下：
+入口脚本保留 `database_blue` 的场景和主要 LSM/DIO 参数，并将工作流负载缩放为
+`num=10000000`、正式负载时长 60 秒、1 GiB 缓存，以便在两种架构上完成整套矩阵。
+混合读写比仍为 70:30，不绑定 CPU，由 runner 按其正常调度策略执行。单条命令的
+形态如下：
 
 ```bash
 db_bench \
   --db="${ROCKSDB_BENCH_DATA_DIR}/key-64B-value-128B" \
   --wal_dir="${ROCKSDB_BENCH_DATA_DIR}/key-64B-value-128B" \
   --benchmarks=readrandomwriterandom,stats \
-  --num=167772160 --key_size=64 --value_size=128 \
-  --threads=16 --duration=600 --readwritepercent=70 \
+  --num=10000000 --key_size=64 --value_size=128 \
+  --threads=16 --duration=60 --readwritepercent=70 \
   --compression_type=none --use_direct_reads=true \
   --use_direct_io_for_flush_and_compaction=true
 ```
