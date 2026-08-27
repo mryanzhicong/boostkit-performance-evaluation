@@ -1,0 +1,765 @@
+{
+  "software": "rocksdb",
+  "category": "Database",
+  "version": "11.8.1",
+  "architecture": "x86_64",
+  "run_id": "33045461547-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-27T06:22:13Z",
+    "category": "Database",
+    "software": "rocksdb",
+    "requested_version": "11.8.1",
+    "actual_version": "11.8.1",
+    "architecture": "x86_64",
+    "run_id": "33045461547-1"
+  },
+  "parameters": {
+    "aggregate_result": {
+      "profiles": [
+        "64B key / 128B value",
+        "64B key / 512B value",
+        "128B key / 1024B value"
+      ],
+      "num": 10000000,
+      "duration_seconds": 60,
+      "readwrite_percent": 70,
+      "cache_size_bytes": 1073741824,
+      "compression_type": "none",
+      "use_direct_reads": true,
+      "use_direct_io_for_flush_and_compaction": true
+    }
+  },
+  "parameter_signature": "64a0394065c65370d82da70157a97dd254461652550c4f0505f03bea9b9be264",
+  "test_tools": {
+    "db_bench": {
+      "version": "RocksDB 11.8.1"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-08-27T06:19:53Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-27T06:19:53Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1027006464 29628272640    65343488  1950363648 31096905728\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-27T06:45:15Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1183870976 29449719808   236347392  2143285248 30940041216\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "db_bench_raw_output": {
+      "path": "db_bench_raw.log",
+      "size": 7318746
+    },
+    "aggregate_result": {
+      "benchmark": "rocksdb_db_bench_database_blue_open_source_baseline",
+      "software": "rocksdb",
+      "version": "11.8.1",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-27T06:45:15Z",
+      "parameters": {
+        "profiles": [
+          "64B key / 128B value",
+          "64B key / 512B value",
+          "128B key / 1024B value"
+        ],
+        "num": 10000000,
+        "duration_seconds": 60,
+        "readwrite_percent": 70,
+        "cache_size_bytes": 1073741824,
+        "compression_type": "none",
+        "use_direct_reads": true,
+        "use_direct_io_for_flush_and_compaction": true
+      },
+      "results": {
+        "64B key / 128B value: pre_fillseq 1 threads micros/op": {
+          "source_name": "64B key / 128B value: pre_fillseq 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 0.725,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: pre_fillseq 1 threads ops/sec": {
+          "source_name": "64B key / 128B value: pre_fillseq 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 1379805.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: pre_overwrite 1 threads micros/op": {
+          "source_name": "64B key / 128B value: pre_overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 1.955,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: pre_overwrite 1 threads ops/sec": {
+          "source_name": "64B key / 128B value: pre_overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 511618.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: overwrite 1 threads micros/op": {
+          "source_name": "64B key / 128B value: overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 2.253,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: overwrite 1 threads ops/sec": {
+          "source_name": "64B key / 128B value: overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 443927.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: overwrite 16 threads micros/op": {
+          "source_name": "64B key / 128B value: overwrite 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 42.881,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: overwrite 16 threads ops/sec": {
+          "source_name": "64B key / 128B value: overwrite 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 373113.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: readrandom 1 threads micros/op": {
+          "source_name": "64B key / 128B value: readrandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 763.99,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: readrandom 1 threads ops/sec": {
+          "source_name": "64B key / 128B value: readrandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 1308.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: readrandom 16 threads micros/op": {
+          "source_name": "64B key / 128B value: readrandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 1209.651,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: readrandom 16 threads ops/sec": {
+          "source_name": "64B key / 128B value: readrandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 13203.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: readrandomwriterandom 1 threads micros/op": {
+          "source_name": "64B key / 128B value: readrandomwriterandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 160.523,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: readrandomwriterandom 1 threads ops/sec": {
+          "source_name": "64B key / 128B value: readrandomwriterandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 6229.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 128B value: readrandomwriterandom 16 threads micros/op": {
+          "source_name": "64B key / 128B value: readrandomwriterandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 128B value",
+          "value": 674.83,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 128B value: readrandomwriterandom 16 threads ops/sec": {
+          "source_name": "64B key / 128B value: readrandomwriterandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 128B value",
+          "value": 23691.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: pre_fillseq 1 threads micros/op": {
+          "source_name": "64B key / 512B value: pre_fillseq 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 2.18,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: pre_fillseq 1 threads ops/sec": {
+          "source_name": "64B key / 512B value: pre_fillseq 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 458775.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: pre_overwrite 1 threads micros/op": {
+          "source_name": "64B key / 512B value: pre_overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 5.904,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: pre_overwrite 1 threads ops/sec": {
+          "source_name": "64B key / 512B value: pre_overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 169373.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: overwrite 1 threads micros/op": {
+          "source_name": "64B key / 512B value: overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 8.11,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: overwrite 1 threads ops/sec": {
+          "source_name": "64B key / 512B value: overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 123296.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: overwrite 16 threads micros/op": {
+          "source_name": "64B key / 512B value: overwrite 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 865.338,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: overwrite 16 threads ops/sec": {
+          "source_name": "64B key / 512B value: overwrite 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 18489.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: readrandom 1 threads micros/op": {
+          "source_name": "64B key / 512B value: readrandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 1958.654,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: readrandom 1 threads ops/sec": {
+          "source_name": "64B key / 512B value: readrandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 510.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: readrandom 16 threads micros/op": {
+          "source_name": "64B key / 512B value: readrandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 2774.499,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: readrandom 16 threads ops/sec": {
+          "source_name": "64B key / 512B value: readrandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 5726.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: readrandomwriterandom 1 threads micros/op": {
+          "source_name": "64B key / 512B value: readrandomwriterandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 456.883,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: readrandomwriterandom 1 threads ops/sec": {
+          "source_name": "64B key / 512B value: readrandomwriterandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 2188.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "64B key / 512B value: readrandomwriterandom 16 threads micros/op": {
+          "source_name": "64B key / 512B value: readrandomwriterandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "64B key / 512B value",
+          "value": 1194.818,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "64B key / 512B value: readrandomwriterandom 16 threads ops/sec": {
+          "source_name": "64B key / 512B value: readrandomwriterandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "64B key / 512B value",
+          "value": 13373.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: pre_fillseq 1 threads micros/op": {
+          "source_name": "128B key / 1024B value: pre_fillseq 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 4.361,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: pre_fillseq 1 threads ops/sec": {
+          "source_name": "128B key / 1024B value: pre_fillseq 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 229280.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: pre_overwrite 1 threads micros/op": {
+          "source_name": "128B key / 1024B value: pre_overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 11.618,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: pre_overwrite 1 threads ops/sec": {
+          "source_name": "128B key / 1024B value: pre_overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 86072.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: overwrite 1 threads micros/op": {
+          "source_name": "128B key / 1024B value: overwrite 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 75.321,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: overwrite 1 threads ops/sec": {
+          "source_name": "128B key / 1024B value: overwrite 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 13276.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: overwrite 16 threads micros/op": {
+          "source_name": "128B key / 1024B value: overwrite 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 3348.078,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: overwrite 16 threads ops/sec": {
+          "source_name": "128B key / 1024B value: overwrite 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 4771.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: readrandom 1 threads micros/op": {
+          "source_name": "128B key / 1024B value: readrandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 1316.746,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: readrandom 1 threads ops/sec": {
+          "source_name": "128B key / 1024B value: readrandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 759.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: readrandom 16 threads micros/op": {
+          "source_name": "128B key / 1024B value: readrandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 3382.185,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: readrandom 16 threads ops/sec": {
+          "source_name": "128B key / 1024B value: readrandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 4713.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: readrandomwriterandom 1 threads micros/op": {
+          "source_name": "128B key / 1024B value: readrandomwriterandom 1 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 904.872,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: readrandomwriterandom 1 threads ops/sec": {
+          "source_name": "128B key / 1024B value: readrandomwriterandom 1 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 1105.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        },
+        "128B key / 1024B value: readrandomwriterandom 16 threads micros/op": {
+          "source_name": "128B key / 1024B value: readrandomwriterandom 16 threads micros/op",
+          "source_field": "micros/op",
+          "group": "128B key / 1024B value",
+          "value": 2374.653,
+          "unit": "micros/op",
+          "direction": "lower_is_better"
+        },
+        "128B key / 1024B value: readrandomwriterandom 16 threads ops/sec": {
+          "source_name": "128B key / 1024B value: readrandomwriterandom 16 threads ops/sec",
+          "source_field": "ops/sec",
+          "group": "128B key / 1024B value",
+          "value": 6718.0,
+          "unit": "ops/sec",
+          "direction": "higher_is_better"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "64B key / 128B value: pre_fillseq 1 threads micros/op": {
+      "value": 0.725,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: pre_fillseq 1 threads ops/sec": {
+      "value": 1379805.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: pre_overwrite 1 threads micros/op": {
+      "value": 1.955,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: pre_overwrite 1 threads ops/sec": {
+      "value": 511618.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: overwrite 1 threads micros/op": {
+      "value": 2.253,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: overwrite 1 threads ops/sec": {
+      "value": 443927.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: overwrite 16 threads micros/op": {
+      "value": 42.881,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: overwrite 16 threads ops/sec": {
+      "value": 373113.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandom 1 threads micros/op": {
+      "value": 763.99,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandom 1 threads ops/sec": {
+      "value": 1308.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandom 16 threads micros/op": {
+      "value": 1209.651,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandom 16 threads ops/sec": {
+      "value": 13203.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandomwriterandom 1 threads micros/op": {
+      "value": 160.523,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandomwriterandom 1 threads ops/sec": {
+      "value": 6229.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandomwriterandom 16 threads micros/op": {
+      "value": 674.83,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 128B value: readrandomwriterandom 16 threads ops/sec": {
+      "value": 23691.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 128B value"
+    },
+    "64B key / 512B value: pre_fillseq 1 threads micros/op": {
+      "value": 2.18,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: pre_fillseq 1 threads ops/sec": {
+      "value": 458775.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: pre_overwrite 1 threads micros/op": {
+      "value": 5.904,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: pre_overwrite 1 threads ops/sec": {
+      "value": 169373.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: overwrite 1 threads micros/op": {
+      "value": 8.11,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: overwrite 1 threads ops/sec": {
+      "value": 123296.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: overwrite 16 threads micros/op": {
+      "value": 865.338,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: overwrite 16 threads ops/sec": {
+      "value": 18489.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandom 1 threads micros/op": {
+      "value": 1958.654,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandom 1 threads ops/sec": {
+      "value": 510.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandom 16 threads micros/op": {
+      "value": 2774.499,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandom 16 threads ops/sec": {
+      "value": 5726.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandomwriterandom 1 threads micros/op": {
+      "value": 456.883,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandomwriterandom 1 threads ops/sec": {
+      "value": 2188.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandomwriterandom 16 threads micros/op": {
+      "value": 1194.818,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "64B key / 512B value"
+    },
+    "64B key / 512B value: readrandomwriterandom 16 threads ops/sec": {
+      "value": 13373.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "64B key / 512B value"
+    },
+    "128B key / 1024B value: pre_fillseq 1 threads micros/op": {
+      "value": 4.361,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: pre_fillseq 1 threads ops/sec": {
+      "value": 229280.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: pre_overwrite 1 threads micros/op": {
+      "value": 11.618,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: pre_overwrite 1 threads ops/sec": {
+      "value": 86072.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: overwrite 1 threads micros/op": {
+      "value": 75.321,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: overwrite 1 threads ops/sec": {
+      "value": 13276.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: overwrite 16 threads micros/op": {
+      "value": 3348.078,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: overwrite 16 threads ops/sec": {
+      "value": 4771.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandom 1 threads micros/op": {
+      "value": 1316.746,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandom 1 threads ops/sec": {
+      "value": 759.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandom 16 threads micros/op": {
+      "value": 3382.185,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandom 16 threads ops/sec": {
+      "value": 4713.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandomwriterandom 1 threads micros/op": {
+      "value": 904.872,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandomwriterandom 1 threads ops/sec": {
+      "value": 1105.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandomwriterandom 16 threads micros/op": {
+      "value": 2374.653,
+      "unit": "micros/op",
+      "direction": "lower_is_better",
+      "group": "128B key / 1024B value"
+    },
+    "128B key / 1024B value: readrandomwriterandom 16 threads ops/sec": {
+      "value": 6718.0,
+      "unit": "ops/sec",
+      "direction": "higher_is_better",
+      "group": "128B key / 1024B value"
+    }
+  }
+}
