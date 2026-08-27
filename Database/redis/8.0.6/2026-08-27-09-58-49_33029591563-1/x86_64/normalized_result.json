@@ -1,0 +1,375 @@
+{
+  "software": "redis",
+  "category": "Database",
+  "version": "8.0.6",
+  "architecture": "x86_64",
+  "run_id": "33029591563-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-27T01:17:39Z",
+    "category": "Database",
+    "software": "redis",
+    "requested_version": "8.0.6",
+    "actual_version": "8.0.6",
+    "architecture": "x86_64",
+    "run_id": "33029591563-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "reference_case": "database_blue virtuall_redis_ori_0001.py",
+      "client_host": "127.0.0.1 (single-runner adaptation)",
+      "operations": "redis-benchmark default operation set (no -t)",
+      "requests": 10000000,
+      "clients": 1000,
+      "keyspace_length": 10000000,
+      "threads": 20,
+      "metric_source": "throughput summary: <value> requests per second"
+    }
+  },
+  "parameter_signature": "d321228e6613549cd5ede304a1e8b316c50eaeacb872a51ccc241d4799304ed1",
+  "test_tools": {},
+  "system_info": {
+    "collected_at": "2026-08-27T01:17:12Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-27T01:17:12Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1022902272 29676118016    65765376  1906507776 31101009920\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-27T01:51:15Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1276522496 29409812480   345661440  2199449600 30847389696\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "redis_benchmark_raw_output": {
+      "path": "redis_benchmark_raw.log",
+      "size": 1401479
+    },
+    "benchmark_result": {
+      "benchmark": "redis_default_benchmark_with_database_blue_load",
+      "software": "redis",
+      "version": "8.0.6",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-27T01:51:15Z",
+      "parameters": {
+        "reference_case": "database_blue virtuall_redis_ori_0001.py",
+        "client_host": "127.0.0.1 (single-runner adaptation)",
+        "operations": "redis-benchmark default operation set (no -t)",
+        "requests": 10000000,
+        "clients": 1000,
+        "keyspace_length": 10000000,
+        "threads": 20,
+        "metric_source": "throughput summary: <value> requests per second"
+      },
+      "results": {
+        "PING_INLINE": {
+          "source_name": "PING_INLINE: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "PING_INLINE",
+          "value": 146149.69,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "PING_MBULK": {
+          "source_name": "PING_MBULK: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "PING_MBULK",
+          "value": 146849.34,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "SET": {
+          "source_name": "SET: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "SET",
+          "value": 128340.05,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "GET": {
+          "source_name": "GET: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "GET",
+          "value": 133938.73,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "INCR": {
+          "source_name": "INCR: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "INCR",
+          "value": 127908.31,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LPUSH": {
+          "source_name": "LPUSH: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LPUSH",
+          "value": 138700.11,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "RPUSH": {
+          "source_name": "RPUSH: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "RPUSH",
+          "value": 141049.69,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LPOP": {
+          "source_name": "LPOP: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LPOP",
+          "value": 139080.12,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "RPOP": {
+          "source_name": "RPOP: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "RPOP",
+          "value": 138727.05,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "SADD": {
+          "source_name": "SADD: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "SADD",
+          "value": 129587.4,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "HSET": {
+          "source_name": "HSET: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "HSET",
+          "value": 126736.29,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "SPOP": {
+          "source_name": "SPOP: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "SPOP",
+          "value": 127189.24,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "ZADD": {
+          "source_name": "ZADD: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "ZADD",
+          "value": 88281.51,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "ZPOPMIN": {
+          "source_name": "ZPOPMIN: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "ZPOPMIN",
+          "value": 133858.05,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LPUSH (needed to benchmark LRANGE)": {
+          "source_name": "LPUSH (needed to benchmark LRANGE): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LPUSH (needed to benchmark LRANGE)",
+          "value": 139653.09,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LRANGE_100 (first 100 elements)": {
+          "source_name": "LRANGE_100 (first 100 elements): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LRANGE_100 (first 100 elements)",
+          "value": 105576.55,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LRANGE_300 (first 300 elements)": {
+          "source_name": "LRANGE_300 (first 300 elements): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LRANGE_300 (first 300 elements)",
+          "value": 71665.58,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LRANGE_500 (first 500 elements)": {
+          "source_name": "LRANGE_500 (first 500 elements): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LRANGE_500 (first 500 elements)",
+          "value": 53378.6,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "LRANGE_600 (first 600 elements)": {
+          "source_name": "LRANGE_600 (first 600 elements): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "LRANGE_600 (first 600 elements)",
+          "value": 47258.09,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "MSET (10 keys)": {
+          "source_name": "MSET (10 keys): requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "MSET (10 keys)",
+          "value": 70621.47,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        },
+        "XADD": {
+          "source_name": "XADD: requests per second",
+          "source_field": "throughput summary: <value> requests per second",
+          "group": "XADD",
+          "value": 131281.84,
+          "unit": "requests/s",
+          "direction": "higher_is_better"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "PING_INLINE: requests per second": {
+      "value": 146149.69,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "PING_INLINE"
+    },
+    "PING_MBULK: requests per second": {
+      "value": 146849.34,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "PING_MBULK"
+    },
+    "SET: requests per second": {
+      "value": 128340.05,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "SET"
+    },
+    "GET: requests per second": {
+      "value": 133938.73,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "GET"
+    },
+    "INCR: requests per second": {
+      "value": 127908.31,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "INCR"
+    },
+    "LPUSH: requests per second": {
+      "value": 138700.11,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LPUSH"
+    },
+    "RPUSH: requests per second": {
+      "value": 141049.69,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "RPUSH"
+    },
+    "LPOP: requests per second": {
+      "value": 139080.12,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LPOP"
+    },
+    "RPOP: requests per second": {
+      "value": 138727.05,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "RPOP"
+    },
+    "SADD: requests per second": {
+      "value": 129587.4,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "SADD"
+    },
+    "HSET: requests per second": {
+      "value": 126736.29,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "HSET"
+    },
+    "SPOP: requests per second": {
+      "value": 127189.24,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "SPOP"
+    },
+    "ZADD: requests per second": {
+      "value": 88281.51,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "ZADD"
+    },
+    "ZPOPMIN: requests per second": {
+      "value": 133858.05,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "ZPOPMIN"
+    },
+    "LPUSH (needed to benchmark LRANGE): requests per second": {
+      "value": 139653.09,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LPUSH (needed to benchmark LRANGE)"
+    },
+    "LRANGE_100 (first 100 elements): requests per second": {
+      "value": 105576.55,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LRANGE_100 (first 100 elements)"
+    },
+    "LRANGE_300 (first 300 elements): requests per second": {
+      "value": 71665.58,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LRANGE_300 (first 300 elements)"
+    },
+    "LRANGE_500 (first 500 elements): requests per second": {
+      "value": 53378.6,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LRANGE_500 (first 500 elements)"
+    },
+    "LRANGE_600 (first 600 elements): requests per second": {
+      "value": 47258.09,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "LRANGE_600 (first 600 elements)"
+    },
+    "MSET (10 keys): requests per second": {
+      "value": 70621.47,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "MSET (10 keys)"
+    },
+    "XADD: requests per second": {
+      "value": 131281.84,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "XADD"
+    }
+  }
+}
