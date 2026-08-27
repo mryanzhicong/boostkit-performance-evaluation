@@ -93,12 +93,12 @@ def parse_default_operation_results(output: str) -> dict[str, dict[str, Any]]:
     return results
 
 
-def run_benchmark(binary: Path, port: int) -> tuple[list[str], str]:
+def run_benchmark(binary: Path, port: int, raw_output: Path) -> None:
     command = benchmark_command(binary, port)
     print(f"[redis-benchmark] {' '.join(command)}", flush=True)
+    raw_output.parent.mkdir(parents=True, exist_ok=True)
     master_fd, slave_fd = pty.openpty()
     process: subprocess.Popen[bytes] | None = None
-    chunks: list[bytes] = []
     deadline = time.monotonic() + COMMAND_TIMEOUT_SECONDS
     try:
         # redis-benchmark buffers output when its stdout is a pipe. A pseudo-TTY
@@ -114,47 +114,48 @@ def run_benchmark(binary: Path, port: int) -> tuple[list[str], str]:
     finally:
         os.close(slave_fd)
 
-    try:
-        while process.poll() is None:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                process.kill()
-                process.wait()
-                raise RuntimeError(
-                    f"redis-benchmark exceeded {COMMAND_TIMEOUT_SECONDS} seconds"
-                )
-            readable, _, _ = select.select([master_fd], [], [], min(1.0, remaining))
-            if not readable:
-                continue
-            try:
-                chunk = os.read(master_fd, 65_536)
-            except OSError:
-                break
-            if not chunk:
-                continue
-            chunks.append(chunk)
-            sys.stdout.write(chunk.decode("utf-8", errors="replace"))
-            sys.stdout.flush()
+    with raw_output.open("wb") as raw_file:
+        raw_file.write(f"$ {' '.join(command)}\n".encode("utf-8"))
+        try:
+            while process.poll() is None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    process.kill()
+                    process.wait()
+                    raise RuntimeError(
+                        f"redis-benchmark exceeded {COMMAND_TIMEOUT_SECONDS} seconds"
+                    )
+                readable, _, _ = select.select([master_fd], [], [], min(1.0, remaining))
+                if not readable:
+                    continue
+                try:
+                    chunk = os.read(master_fd, 65_536)
+                except OSError:
+                    break
+                if not chunk:
+                    continue
+                raw_file.write(chunk)
+                sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+                sys.stdout.flush()
 
-        while True:
-            readable, _, _ = select.select([master_fd], [], [], 0)
-            if not readable:
-                break
-            try:
-                chunk = os.read(master_fd, 65_536)
-            except OSError:
-                break
-            if not chunk:
-                break
-            chunks.append(chunk)
-            sys.stdout.write(chunk.decode("utf-8", errors="replace"))
-            sys.stdout.flush()
-    finally:
-        os.close(master_fd)
+            while True:
+                readable, _, _ = select.select([master_fd], [], [], 0)
+                if not readable:
+                    break
+                try:
+                    chunk = os.read(master_fd, 65_536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                raw_file.write(chunk)
+                sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+                sys.stdout.flush()
+        finally:
+            os.close(master_fd)
 
     if process.returncode:
         raise RuntimeError(f"redis-benchmark exited with code {process.returncode}")
-    return command, b"".join(chunks).decode("utf-8", errors="replace")
 
 
 def main() -> int:
@@ -170,11 +171,10 @@ def main() -> int:
         raise RuntimeError(f"redis-benchmark executable is unavailable: {benchmark_binary}")
 
     port = int(os.environ["REDIS_SERVICE_PORT"])
-    command, output = run_benchmark(benchmark_binary, port)
+    run_benchmark(benchmark_binary, port, raw_output)
+    output = raw_output.read_text(encoding="utf-8", errors="replace")
     results = parse_default_operation_results(output)
 
-    raw_output.parent.mkdir(parents=True, exist_ok=True)
-    raw_output.write_text(f"$ {' '.join(command)}\n{output}", encoding="utf-8")
     payload = {
         "benchmark": "redis_default_benchmark_with_database_blue_load",
         "software": "redis",
