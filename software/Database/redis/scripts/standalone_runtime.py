@@ -150,15 +150,15 @@ def extract_metrics(
     if benchmark.get("version") != version or benchmark.get("architecture") != architecture:
         raise RuntimeError("benchmark_redis.json identity differs from this run")
     results = benchmark.get("results")
-    if not isinstance(results, list) or not results:
+    if not isinstance(results, dict) or not results:
         raise RuntimeError("benchmark_redis.json must contain default-operation results")
 
     metrics: dict[str, dict[str, Any]] = {}
-    for item in results:
+    for result_key, item in results.items():
         if not isinstance(item, dict):
             raise RuntimeError("benchmark_redis.json has an invalid result entry")
         operation = item.get("group")
-        if not isinstance(operation, str) or not operation:
+        if not isinstance(operation, str) or not operation or result_key != operation:
             raise RuntimeError("benchmark_redis.json result has no official operation name")
         metric_name = f"{operation}: requests per second"
         if metric_name in metrics or item.get("source_name") != metric_name:

@@ -57,12 +57,12 @@ def benchmark_command(binary: Path, port: int) -> list[str]:
     ]
 
 
-def parse_default_operation_results(output: str) -> list[dict[str, Any]]:
+def parse_default_operation_results(output: str) -> dict[str, dict[str, Any]]:
     headers = list(OPERATION_HEADER.finditer(output))
     if not headers:
         raise RuntimeError("redis-benchmark output contains no default-operation headers")
 
-    results: list[dict[str, Any]] = []
+    results: dict[str, dict[str, Any]] = {}
     seen_operations: set[str] = set()
     for index, header in enumerate(headers):
         operation = header.group(1).strip()
@@ -82,14 +82,14 @@ def parse_default_operation_results(output: str) -> list[dict[str, Any]]:
                 f"redis-benchmark operation {operation} has an invalid throughput: {summaries[0]}"
             )
         seen_operations.add(operation)
-        results.append({
+        results[operation] = {
             "source_name": f"{operation}: requests per second",
             "source_field": "throughput summary: <value> requests per second",
             "group": operation,
             "value": value,
             "unit": "requests/s",
             "direction": "higher_is_better",
-        })
+        }
     return results
 
 
