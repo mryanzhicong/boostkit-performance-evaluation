@@ -65,13 +65,14 @@ db_bench \
   --num=167772160 --key_size=64 --value_size=128 \
   --threads=16 --duration=600 --readwritepercent=70 \
   --compression_type=none --use_direct_reads=true \
-  --use_direct_writes=true --use_direct_io_for_flush_and_compaction=true
+  --use_direct_io_for_flush_and_compaction=true
 ```
 
 原始方案会格式化、挂载专用 NVMe，并使用 KSAL 版本与鲲鹏专属资源采集。这里保留
 可跨架构复现的开源 `db_bench` 命令与参数，明确不执行格式化磁盘、卸载文件系统、
-KSAL 切换和专属采集。任何命令失败、结果行不唯一、或指标为空/非正，都会使测试
-失败。
+KSAL 切换和专属采集。`use_direct_writes` 属于其旧版/定制 `db_bench` 参数，当前
+官方 11.8.1 `db_bench` 不支持，故不传入。任何命令失败、结果行不唯一、或指标为空/
+非正，都会使测试失败。
 
 ## 指标
 
