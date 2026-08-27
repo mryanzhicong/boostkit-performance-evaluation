@@ -9,7 +9,7 @@ execution:
   stages:
     build:
       script: golang_test.sh
-      function: build_golang
+      function: install_golang_binary
     start:
       script: golang_test.sh
       function: start_golang_runtime
@@ -19,10 +19,14 @@ execution:
     stop:
       script: golang_test.sh
       function: stop_golang_runtime
-  timeout_minutes: 120
+  timeout_minutes: 720
+test_tools:
+  golang_benchmarks:
+    version: master
+    revision: 70693762b6a0d7f393892f0ace40979e3cbe5737
 outputs:
   official_benchmark:
-    path: benchmark_gotest.txt
+    path: benchmark_go_bench.txt
     stage: test
     format: text
     required: true
@@ -37,5 +41,6 @@ metrics:
     path: results
     name_path: source_name
     value_path: value
-    unit: ns/op
-    direction: lower_is_better
+    unit_path: unit
+    direction_path: direction
+    group_path: group

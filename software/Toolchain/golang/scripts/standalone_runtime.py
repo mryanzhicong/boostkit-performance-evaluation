@@ -138,8 +138,7 @@ def record_build_info(
     architecture: str,
     run_id: str,
     gcc_version: str,
-    bootstrap_version: str,
-    source_url: str,
+    release_url: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
@@ -155,9 +154,8 @@ def record_build_info(
             "architecture": architecture,
             "run_id": run_id,
             "gcc_version": gcc_version,
-            "bootstrap_version": bootstrap_version,
-            "source_url": source_url,
-            "build_command": "src/make.bash",
+            "release_url": release_url,
+            "installation_method": "official precompiled binary distribution",
         },
     )
 
@@ -188,17 +186,33 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate golang benchmark: {metric_name}")
-        if result.get("source_field") != "ns/op":
-            raise RuntimeError(f"metric {metric_name} is not sourced from ns/op")
+        source_benchmark = result.get("source_benchmark")
+        source_package = result.get("source_package")
+        source_field = result.get("source_field")
+        unit = result.get("unit")
+        direction = result.get("direction")
+        group = result.get("group")
+        if not all(
+            isinstance(field, str) and field
+            for field in (source_benchmark, source_package, source_field, unit, group)
+        ):
+            raise RuntimeError(
+                f"metric {metric_name} must preserve its official source fields"
+            )
+        if source_field != unit:
+            raise RuntimeError(f"metric {metric_name} changes its original unit")
+        if direction not in {"higher_is_better", "lower_is_better"}:
+            raise RuntimeError(f"metric {metric_name} has an invalid optimization direction")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
-        if not math.isfinite(float(value)) or value <= 0:
-            raise RuntimeError(f"metric {metric_name} must be positive and finite")
+        if not math.isfinite(float(value)) or value < 0:
+            raise RuntimeError(f"metric {metric_name} must be non-negative and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "ns/op",
-            "direction": "lower_is_better",
+            "unit": unit,
+            "direction": direction,
+            "group": group,
         }
     if not metrics:
         raise RuntimeError("benchmark_golang.json contains no metrics")
@@ -229,9 +243,8 @@ def render_report(result: dict[str, Any]) -> str:
     for label, field in (
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
-        ("源码仓库", "source_url"),
-        ("构建方式", "build_command"),
-        ("Bootstrap 工具链", "bootstrap_version"),
+        ("官方发布地址", "release_url"),
+        ("安装方式", "installation_method"),
         ("构建编译器 (gcc)", "gcc_version"),
         ("记录时间", "recorded_at"),
     ):
@@ -250,20 +263,29 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标（官方 go test benchmark 逐字名称，median ns/op）",
-            "",
-            "| 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---:|---|---|",
-        ]
-    )
+    lines.extend(["", "## 性能指标（官方 cmd/bench 原始字段，median）"])
+    metrics_by_group: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越小越好 |"
+        group = str(metric.get("group", "未分组"))
+        metrics_by_group.setdefault(group, []).append((metric_name, metric))
+    for group in sorted(metrics_by_group):
+        lines.extend(
+            [
+                "",
+                f"### {markdown_cell(group)}",
+                "",
+                "| 指标 | 数值 | 单位 | 优化方向 |",
+                "|---|---:|---|---|",
+            ]
         )
+        for metric_name, metric in sorted(metrics_by_group[group]):
+            direction = "越大越好"
+            if metric["direction"] == "lower_is_better":
+                direction = "越小越好"
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | {direction} |"
+            )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
@@ -342,14 +364,9 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("run_id")
     build.add_argument("gcc_version")
     build.add_argument(
-        "--bootstrap-version",
+        "--release-url",
         required=True,
-        help="official binary release used as GOROOT_BOOTSTRAP",
-    )
-    build.add_argument(
-        "--source-url",
-        required=True,
-        help="source repository of the Go toolchain",
+        help="official release location of the Go binary distribution",
     )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
@@ -378,8 +395,7 @@ def main() -> int:
             args.architecture,
             args.run_id,
             args.gcc_version,
-            args.bootstrap_version,
-            args.source_url,
+            args.release_url,
         )
         return 0
     return finalize(

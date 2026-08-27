@@ -8,25 +8,14 @@ PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-GO_SOURCE_URL="${GO_SOURCE_URL:-https://github.com/golang/go.git}"
-# Bootstrap release pinned so both architectures build the source tree with
-# the same official binary toolchain; it is used only as GOROOT_BOOTSTRAP.
-GO_BOOTSTRAP_VERSION="${GO_BOOTSTRAP_VERSION:-1.27.0}"
-# Official benchmark selection: the go test benchmarks shipped in the Go
-# standard library source tree (golang/go), covering parsing, encoding,
-# hashing, compression, regular expression and sorting workloads.
-GO_BENCH_PACKAGES="strconv encoding/json encoding/base64 crypto/sha256 compress/flate regexp sort math"
-# Fixed benchmark knobs shared by both architectures: -cpu=1 keeps benchmark
-# names free of a GOMAXPROCS suffix so metric names are identical on every
-# runner, three samples per benchmark are aggregated to the median by the
-# parser, and benchtime stays at the official default.
-GO_BENCH_CPU="1"
-GO_BENCH_COUNT="3"
-GO_BENCHTIME="1s"
 
-BOOTSTRAP_DIR=""
-GO_TREE_DIR=""
-BENCH_WORK_DIR=""
+GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
+GO_BENCHMARKS_URL="${GO_BENCHMARKS_URL:-https://go.googlesource.com/benchmarks}"
+GO_BENCHMARKS_COMMIT="${GO_BENCHMARKS_COMMIT:-70693762b6a0d7f393892f0ace40979e3cbe5737}"
+GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
+
+GO_INSTALL_DIR=""
+BENCHMARKS_DIR=""
 GO_BIN=""
 GO_ARCH=""
 GCC_VERSION_STRING=""
@@ -35,298 +24,265 @@ STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
-log_message() { printf '[golang] %s\n' "$*"; }
-
-normalize_architecture() {
-    case "${1,,}" in
-        x86_64|amd64) printf 'x86_64\n' ;;
-        aarch64|arm64) printf 'aarch64\n' ;;
-        *) printf '%s\n' "${1,,}" ;;
-    esac
+log() {
+    printf '[golang] %s\n' "$*"
 }
 
-# Print the Go architecture name for EXPECTED_ARCH; errors go to stderr so the
-# caller can capture the result with a command substitution.
-go_architecture() {
-    case "$(normalize_architecture "${EXPECTED_ARCH}")" in
-        x86_64) printf 'amd64\n' ;;
-        aarch64) printf 'arm64\n' ;;
+initialize_runtime() {
+    local actual_arch expected_arch
+
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64)
+            expected_arch="x86_64"
+            GO_ARCH="amd64"
+            ;;
+        aarch64|arm64)
+            expected_arch="aarch64"
+            GO_ARCH="arm64"
+            ;;
         *)
-            printf '[golang] ERROR: unsupported architecture for Go builds: %s\n' \
-                "${EXPECTED_ARCH}" >&2
+            log "ERROR: unsupported expected architecture: ${EXPECTED_ARCH}"
             return 20
             ;;
     esac
-}
+    case "$(uname -m)" in
+        x86_64|amd64) actual_arch="x86_64" ;;
+        aarch64|arm64) actual_arch="aarch64" ;;
+        *) actual_arch="$(uname -m)" ;;
+    esac
+    if [[ "${actual_arch}" != "${expected_arch}" ]]; then
+        log "ERROR: expected architecture ${expected_arch}, runner is ${actual_arch}"
+        return 20
+    fi
+    EXPECTED_ARCH="${expected_arch}"
 
-configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
-    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
-        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+    if [[ ! "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
-    }
+    fi
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/tmp/golang-perf/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
-        TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    BOOTSTRAP_DIR="${PERF_WORK_DIR}/go-bootstrap"
-    GO_TREE_DIR="${PERF_WORK_DIR}/go-tree"
-    BENCH_WORK_DIR="${PERF_WORK_DIR}/go-bench-work"
-    GO_BIN="${GO_TREE_DIR}/bin/go"
+
+    export TMPDIR="${PERF_WORK_DIR}/tmp"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
+    GO_INSTALL_DIR="${PERF_WORK_DIR}/go-install"
+    BENCHMARKS_DIR="${PERF_WORK_DIR}/go-benchmarks"
+    GO_BIN="${GO_INSTALL_DIR}/bin/go"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
-initialize_runtime() {
-    configure_runtime_paths
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+run_as_root() {
+    if [[ "${EUID}" -eq 0 ]]; then
+        "$@"
+        return
+    fi
+    if ! command -v sudo >/dev/null 2>&1 || ! sudo -n true >/dev/null 2>&1; then
+        log "ERROR: root privileges are required to install missing dependencies"
+        return 30
+    fi
+    sudo -n "$@"
 }
 
-require_commands() {
-    local required missing=0
-    for required in git curl gcc sha256sum awk tar python3 nproc; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
-            missing=1
+install_dependencies() {
+    local missing=0 command_name
+    for command_name in git curl gcc tar gzip sha256sum awk python3 perf; do
+        command -v "${command_name}" >/dev/null 2>&1 || missing=1
+    done
+    if [[ "${missing}" -eq 0 ]]; then
+        return
+    fi
+
+    log "installing missing Go runtime and official benchmark dependencies"
+    if command -v dnf >/dev/null 2>&1; then
+        run_as_root dnf install -y \
+            git curl gcc tar gzip coreutils gawk python3 perf
+    elif command -v yum >/dev/null 2>&1; then
+        run_as_root yum install -y \
+            git curl gcc tar gzip coreutils gawk python3 perf
+    elif command -v apt-get >/dev/null 2>&1; then
+        run_as_root env DEBIAN_FRONTEND=noninteractive apt-get update
+        run_as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git curl gcc tar gzip coreutils gawk python3 linux-perf
+    else
+        log "ERROR: unsupported package manager; cannot install Go dependencies"
+        return 30
+    fi
+
+    for command_name in git curl gcc tar gzip sha256sum awk python3 perf; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            log "ERROR: required command is still missing after installation: ${command_name}"
+            return 30
         fi
     done
-    [[ "${missing}" -eq 0 ]]
 }
 
-check_architecture() {
-    local actual expected
-    actual="$(normalize_architecture "$(uname -m)")"
-    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
-    [[ "${actual}" == "${expected}" ]] || {
-        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
-        return 20
-    }
-}
-
-# Export a hermetic environment for the built toolchain so no host Go
-# configuration leaks into the smoke build or the benchmark runs.
-apply_go_environment() {
-    export GOROOT="${GO_TREE_DIR}"
+configure_go_environment() {
+    export GOROOT="${GO_INSTALL_DIR}"
     export GOCACHE="${PERF_WORK_DIR}/go-cache"
     export GOMODCACHE="${PERF_WORK_DIR}/go-mod-cache"
     export GOPATH="${PERF_WORK_DIR}/gopath"
     export GOTOOLCHAIN=local
-    export GOPROXY=off
     export GOENV=off
     export GOWORK=off
+    export GOPROXY="${GOPROXY:-https://proxy.golang.org,direct}"
+    export GOSUMDB="${GOSUMDB:-sum.golang.org}"
     unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOAMD64
 }
 
-# Print the official SHA-256 checksum of the bootstrap tarball from go.dev/dl
-# metadata; must stay free of stdout noise for command substitution.
-fetch_bootstrap_sha256() {
-    local go_arch="$1"
-    local filename="go${GO_BOOTSTRAP_VERSION}.linux-${go_arch}.tar.gz"
-    curl -fsSL "https://go.dev/dl/?mode=json&include=all" | \
-        python3 "${SCRIPT_DIR}/scripts/bootstrap_sha256.py" "${filename}"
+copy_or_download_go_archive() {
+    local filename="$1" archive="$2" expected actual
+    local offline_archive="${GO_OFFLINE_DIR}/${filename}"
+
+    case "${SOFTWARE_VERSION}:${GO_ARCH}" in
+        1.26.7:amd64)
+            expected="ffb5f8de10c62550dfddab66b36b57030721e0a44a3218e9e1181d7b59f121ca"
+            ;;
+        1.26.7:arm64)
+            expected="5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37"
+            ;;
+        1.27.0:amd64)
+            expected="675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685"
+            ;;
+        1.27.0:arm64)
+            expected="51798d2c42d0e1c6ed7fd9f48728b4193abac9e8aad6dbac2fe96a81f5909bda"
+            ;;
+        *)
+            log "ERROR: no verified Go binary release is declared for ${SOFTWARE_VERSION} on ${GO_ARCH}"
+            return 10
+            ;;
+    esac
+
+    if [[ -f "${offline_archive}" ]]; then
+        log "using offline Go archive ${offline_archive}"
+        cp "${offline_archive}" "${archive}"
+    else
+        log "downloading official Go archive ${filename}"
+        if ! curl -fsSL --retry 3 --connect-timeout 30 -o "${archive}" \
+            "${GO_RELEASE_URL}/${filename}"; then
+            log "ERROR: failed to download ${filename}"
+            return 30
+        fi
+    fi
+    actual="$(sha256sum "${archive}" | awk '{print $1}')"
+    if [[ "${actual}" != "${expected}" ]]; then
+        log "ERROR: Go archive checksum mismatch: ${filename}"
+        return 30
+    fi
 }
 
-prepare_go_bootstrap() {
-    local tarball expected_sha256 actual_sha256
-    [[ ! -e "${BOOTSTRAP_DIR}" ]] || {
-        log_message "ERROR: bootstrap directory already exists: ${BOOTSTRAP_DIR}"
+prepare_benchmark_suite() {
+    log "cloning official Go benchmarks at ${GO_BENCHMARKS_COMMIT}"
+    git init --quiet "${BENCHMARKS_DIR}"
+    git -C "${BENCHMARKS_DIR}" remote add origin "${GO_BENCHMARKS_URL}"
+    if ! git -C "${BENCHMARKS_DIR}" fetch --quiet --depth 1 origin "${GO_BENCHMARKS_COMMIT}"; then
+        log "ERROR: failed to fetch official Go benchmarks"
         return 30
-    }
-    tarball="${PERF_WORK_DIR}/go${GO_BOOTSTRAP_VERSION}.linux-${GO_ARCH}.tar.gz"
-    export GIT_TERMINAL_PROMPT=0
-    log_message "downloading official Go bootstrap go${GO_BOOTSTRAP_VERSION} (linux/${GO_ARCH})"
-    curl -fsSL --retry 3 --connect-timeout 30 \
-        -o "${tarball}" \
-        "https://go.dev/dl/go${GO_BOOTSTRAP_VERSION}.linux-${GO_ARCH}.tar.gz" || {
-        log_message "ERROR: failed to download go${GO_BOOTSTRAP_VERSION}.linux-${GO_ARCH}.tar.gz"
+    fi
+    git -C "${BENCHMARKS_DIR}" checkout --quiet --detach FETCH_HEAD
+    if [[ ! -f "${BENCHMARKS_DIR}/cmd/bench/main.go" ]]; then
+        log "ERROR: Go benchmarks cmd/bench entrypoint is missing"
         return 30
-    }
-    expected_sha256="$(fetch_bootstrap_sha256 "${GO_ARCH}")" || {
-        log_message "ERROR: failed to fetch the official checksum of the bootstrap tarball"
-        return 30
-    }
-    actual_sha256="$(sha256sum "${tarball}" | awk '{print $1}')"
-    [[ "${actual_sha256}" == "${expected_sha256}" ]] || {
-        log_message "ERROR: bootstrap tarball checksum mismatch"
-        log_message "expected: ${expected_sha256}"
-        log_message "actual:   ${actual_sha256}"
-        return 30
-    }
-    tar -xzf "${tarball}" -C "${PERF_WORK_DIR}" || {
-        log_message "ERROR: failed to extract the bootstrap tarball"
-        return 30
-    }
-    [[ -d "${PERF_WORK_DIR}/go" ]] || {
-        log_message "ERROR: bootstrap tarball did not create a go directory"
-        return 30
-    }
-    mv "${PERF_WORK_DIR}/go" "${BOOTSTRAP_DIR}" || return 30
-    rm -f "${tarball}"
-    [[ -x "${BOOTSTRAP_DIR}/bin/go" ]] || {
-        log_message "ERROR: bootstrap toolchain is incomplete: ${BOOTSTRAP_DIR}/bin/go"
-        return 30
-    }
-    "${BOOTSTRAP_DIR}/bin/go" version || {
-        log_message "ERROR: bootstrap toolchain is not runnable"
-        return 30
-    }
+    fi
 }
 
-prepare_go_source() {
-    [[ ! -e "${GO_TREE_DIR}" ]] || {
-        log_message "ERROR: source directory already exists: ${GO_TREE_DIR}"
-        return 30
-    }
-    export GIT_TERMINAL_PROMPT=0
-    log_message "cloning Go source (tag go${SOFTWARE_VERSION}) from ${GO_SOURCE_URL}"
-    git clone --branch "go${SOFTWARE_VERSION}" --depth 1 \
-        "${GO_SOURCE_URL}" "${GO_TREE_DIR}" || {
-        log_message "ERROR: failed to clone Go source tag go${SOFTWARE_VERSION}"
-        return 30
-    }
+verify_golang_binary() {
+    local actual_version actual_arch
+    if [[ ! -x "${GO_BIN}" ]]; then
+        log "ERROR: installed Go binary is missing: ${GO_BIN}"
+        return 40
+    fi
+    actual_version="$("${GO_BIN}" version | awk '{print $3}' | sed 's/^go//')" || return 40
+    actual_arch="$("${GO_BIN}" env GOARCH)" || return 40
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" || "${actual_arch}" != "${GO_ARCH}" ]]; then
+        log "ERROR: installed Go is ${actual_version}/${actual_arch}, expected ${SOFTWARE_VERSION}/${GO_ARCH}"
+        return 40
+    fi
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
 }
 
-verify_go_build() {
-    local version_output version_field actual_version actual_goarch
-    [[ -x "${GO_BIN}" ]] || {
-        log_message "ERROR: built Go toolchain is missing: ${GO_BIN}"
-        return 40
-    }
-    version_output="$("${GO_BIN}" version)" || {
-        log_message "ERROR: built Go toolchain cannot report its version"
-        return 40
-    }
-    version_field="$(printf '%s\n' "${version_output}" | awk '{print $3}')"
-    actual_version="${version_field#go}"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: built Go reports ${actual_version}, requested ${SOFTWARE_VERSION}"
-        return 40
-    }
-    actual_goarch="$("${GO_BIN}" env GOARCH)" || return 40
-    [[ "${actual_goarch}" == "${GO_ARCH}" ]] || {
-        log_message "ERROR: built Go targets ${actual_goarch}, expected ${GO_ARCH}"
-        return 40
-    }
-    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-}
+install_golang_binary() {
+    local archive
 
-build_golang() {
     initialize_runtime || return $?
-    check_architecture || return $?
-    require_commands || return $?
-    [[ ! -e "${BOOTSTRAP_DIR}" && ! -e "${GO_TREE_DIR}" && ! -e "${BENCH_WORK_DIR}" ]] || {
-        log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
+    install_dependencies || return $?
+    if [[ -e "${GO_INSTALL_DIR}" || -e "${BENCHMARKS_DIR}" ]]; then
+        log "ERROR: installation directories are not clean under ${PERF_WORK_DIR}"
         return 20
-    }
-    GO_ARCH="$(go_architecture)" || return $?
-    prepare_go_bootstrap || return $?
-    prepare_go_source || return $?
+    fi
+    archive="${PERF_WORK_DIR}/go${SOFTWARE_VERSION}.linux-${GO_ARCH}.tar.gz"
+    copy_or_download_go_archive "$(basename "${archive}")" "${archive}" || return $?
+    if ! mkdir -p "${GO_INSTALL_DIR}" || \
+       ! tar -xzf "${archive}" -C "${GO_INSTALL_DIR}" --strip-components=1; then
+        log "ERROR: failed to install official Go binary ${SOFTWARE_VERSION}"
+        return 30
+    fi
+    rm -f "${archive}"
     GCC_VERSION_STRING="$(gcc --version | head -n 1)"
-
-    log_message "building Go ${SOFTWARE_VERSION} from source with bootstrap go${GO_BOOTSTRAP_VERSION}"
-    (
-        cd "${GO_TREE_DIR}/src"
-        unset GOROOT GOFLAGS GO111MODULE GOOS GOARCH
-        GOROOT_BOOTSTRAP="${BOOTSTRAP_DIR}" ./make.bash
-    ) || {
-        log_message "ERROR: Go make.bash build failed"
-        return 40
-    }
-    apply_go_environment
-    verify_go_build || return $?
-    log_message "Go ${SOFTWARE_VERSION} toolchain is ready at ${GO_BIN}"
+    log "installed official precompiled Go ${SOFTWARE_VERSION} for ${GO_ARCH}"
+    configure_go_environment
+    verify_golang_binary || return $?
 }
 
 start_golang_runtime() {
     initialize_runtime || return $?
-    [[ -x "${GO_BIN}" ]] || {
-        log_message "ERROR: built Go toolchain is unavailable: ${GO_BIN}"
+    configure_go_environment
+    verify_golang_binary || return $?
+    mkdir -p "${PERF_WORK_DIR}/smoke"
+    printf 'package main\nfunc main() {}\n' > "${PERF_WORK_DIR}/smoke/main.go"
+    if ! (
+        cd "${PERF_WORK_DIR}/smoke"
+        "${GO_BIN}" build -o smoke main.go
+        ./smoke
+    ); then
+        log "ERROR: installed Go binary failed its smoke build"
         return 40
-    }
-    GO_ARCH="$(go_architecture)" || return $?
-    apply_go_environment
-    "${GO_BIN}" version
-    "${GO_BIN}" env GOOS GOARCH GOROOT
-    verify_go_build || return $?
-    mkdir -p "${BENCH_WORK_DIR}"
-    cat > "${BENCH_WORK_DIR}/smoke.go" <<'EOF'
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Println("go toolchain smoke test ok")
-}
-EOF
-    (
-        cd "${BENCH_WORK_DIR}"
-        "${GO_BIN}" build -o smoke.bin smoke.go
-        ./smoke.bin
-    ) || {
-        log_message "ERROR: built Go toolchain failed the smoke build"
+    fi
+    if ! prepare_benchmark_suite; then
+        log "ERROR: failed to prepare the official Go benchmark suite"
         return 40
-    }
-    log_message "Go official benchmark runtime is ready"
+    fi
 }
 
 run_golang_benchmarks() {
     initialize_runtime || return $?
-    [[ -x "${GO_BIN}" ]] || {
-        log_message "ERROR: built Go toolchain is unavailable: ${GO_BIN}"
-        return 40
-    }
-    GO_ARCH="$(go_architecture)" || return $?
-    apply_go_environment
-    verify_go_build || return $?
-    mkdir -p "${RESULTS_DIR}"
-    local bench_packages=()
-    read -r -a bench_packages <<< "${GO_BENCH_PACKAGES}"
-    [[ "${#bench_packages[@]}" -gt 0 ]] || {
-        log_message "ERROR: benchmark package selection is empty"
+    configure_go_environment
+    verify_golang_binary || return $?
+    if [[ ! -f "${BENCHMARKS_DIR}/cmd/bench/main.go" ]]; then
+        log "ERROR: official Go benchmark suite was not prepared"
         return 50
-    }
-    log_message "running official go test benchmarks in: ${GO_BENCH_PACKAGES}"
-    log_message "flags: -cpu=${GO_BENCH_CPU} -count=${GO_BENCH_COUNT} -benchtime=${GO_BENCHTIME}"
-    (
-        cd "${GO_TREE_DIR}/src"
-        "${GO_BIN}" test \
-            -run='^$' -bench='.' \
-            -cpu="${GO_BENCH_CPU}" \
-            -count="${GO_BENCH_COUNT}" \
-            -benchtime="${GO_BENCHTIME}" \
-            "${bench_packages[@]}" \
-            2>&1 | tee "${RESULTS_DIR}/benchmark_gotest.txt"
-    ) || {
-        log_message "ERROR: official go test benchmark run failed"
+    fi
+    log "running official golang.org/x/benchmarks/cmd/bench suite"
+    if ! (
+        cd "${BENCHMARKS_DIR}"
+        "${GO_BIN}" run ./cmd/bench -goroot "${GO_INSTALL_DIR}"
+    ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
+        log "ERROR: official Go benchmark suite failed"
         return 50
-    }
-    [[ -s "${RESULTS_DIR}/benchmark_gotest.txt" ]] || {
-        log_message "ERROR: official go test output is empty: ${RESULTS_DIR}/benchmark_gotest.txt"
+    fi
+    if [[ ! -s "${RESULTS_DIR}/benchmark_go_bench.txt" ]]; then
+        log "ERROR: official Go benchmark output is empty"
         return 50
-    }
-    export SOFTWARE_VERSION EXPECTED_ARCH GO_BENCH_PACKAGES GO_BENCH_COUNT \
-        GO_BENCH_CPU GO_BENCHTIME GO_BOOTSTRAP_VERSION
+    fi
+    export GO_BENCHMARKS_COMMIT
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${RESULTS_DIR}/benchmark_gotest.txt" \
-        "${RESULTS_DIR}/benchmark_golang.json" || {
-        log_message "ERROR: failed to normalize official go test results"
-        return 50
-    }
-    log_message "go test results written to benchmark_gotest.txt and benchmark_golang.json"
+        "${RESULTS_DIR}/benchmark_go_bench.txt" \
+        "${RESULTS_DIR}/benchmark_golang.json" || return 50
 }
 
 stop_golang_runtime() {
-    log_message "golang benchmark has no background service to stop"
+    log "Go benchmark suite has no background service to stop"
 }
 
 standalone_runtime() {
@@ -335,68 +291,55 @@ standalone_runtime() {
 
 cleanup_standalone_workdir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
-        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
-        return 0
+        log "keeping standalone work directory: ${PERF_WORK_DIR}"
+        return
     fi
     if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
-        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
-        return 0
+        log "external work directory was not removed: ${PERF_WORK_DIR}"
+        return
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/golang-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/golang-perf" ]] || {
-        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+    if [[ "${PERF_WORK_DIR}" != /tmp/golang-perf/local-* || "${PERF_WORK_DIR}" == /tmp/golang-perf ]]; then
+        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
-    }
-    if [[ -d "${PERF_WORK_DIR}" ]]; then
-        rm -rf -- "${PERF_WORK_DIR}" || return 70
     fi
-    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
-}
-
-emergency_standalone_cleanup() {
-    set +e
-    if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
-        stop_golang_runtime
-    fi
-    if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
-        cleanup_standalone_workdir
-    fi
+    rm -rf -- "${PERF_WORK_DIR}"
 }
 
 run_golang_standalone() {
-    local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
-    local command_status="passed"
+    local stage_status=0 failed_stage="" cleanup_status="passed"
+    local command_status="passed" finalize_status=0
 
-    configure_runtime_paths || return $?
-    STANDALONE_STOP_DONE=0
-    STANDALONE_CLEANUP_DONE=0
-    trap emergency_standalone_cleanup EXIT
     initialize_runtime || return $?
+    trap 'stop_golang_runtime || :; cleanup_standalone_workdir || :' EXIT
 
-    if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
-        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
+    if standalone_runtime system "${RESULTS_DIR}/system_info.json"; then
         :
     else
         stage_status=$?
         failed_stage="prepare"
     fi
-
     if [[ "${stage_status}" -eq 0 ]]; then
-        if build_golang; then
-            if standalone_runtime build-info \
-                "${RESULTS_DIR}/build_info.json" \
-                "${SOFTWARE_VERSION}" \
-                "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_architecture "${EXPECTED_ARCH}")" \
-                "${PERF_RUN_ID}" \
-                "${GCC_VERSION_STRING}" \
-                --bootstrap-version="${GO_BOOTSTRAP_VERSION}" \
-                --source-url="${GO_SOURCE_URL}"; then
-                :
-            else
-                stage_status=$?
-                failed_stage="build"
-            fi
+        if standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
+            :
+        else
+            stage_status=$?
+            failed_stage="prepare"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if install_golang_binary; then
+            :
+        else
+            stage_status=$?
+            failed_stage="build"
+        fi
+    fi
+    if [[ "${stage_status}" -eq 0 ]]; then
+        if standalone_runtime build-info "${RESULTS_DIR}/build_info.json" \
+            "${SOFTWARE_VERSION}" "${PERF_ACTUAL_VERSION_FILE}" "${EXPECTED_ARCH}" \
+            "${PERF_RUN_ID}" "${GCC_VERSION_STRING}" \
+            --release-url="${GO_RELEASE_URL}"; then
+            :
         else
             stage_status=$?
             failed_stage="build"
@@ -422,33 +365,30 @@ run_golang_standalone() {
     if ! stop_golang_runtime; then
         cleanup_status="failed"
     fi
-    STANDALONE_STOP_DONE=1
     if ! standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json"; then
         cleanup_status="failed"
     fi
     if ! cleanup_standalone_workdir; then
         cleanup_status="failed"
     fi
-    STANDALONE_CLEANUP_DONE=1
+    trap - EXIT
 
     if [[ "${stage_status}" -ne 0 ]]; then
         command_status="failed"
     fi
-    if standalone_runtime finalize \
-        "${RESULTS_DIR}" \
-        "${SOFTWARE_VERSION}" \
-        "$(normalize_architecture "${EXPECTED_ARCH}")" \
-        "${PERF_RUN_ID}" \
-        "${command_status}" \
-        "${cleanup_status}" \
-        "${failed_stage}"; then
+    if standalone_runtime finalize "${RESULTS_DIR}" "${SOFTWARE_VERSION}" "${EXPECTED_ARCH}" \
+        "${PERF_RUN_ID}" "${command_status}" "${cleanup_status}" "${failed_stage}"; then
         finalize_status=0
     else
         finalize_status=$?
     fi
-    trap - EXIT
-    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
-    [[ "${cleanup_status}" == "passed" ]] || return 70
+
+    if [[ "${stage_status}" -ne 0 ]]; then
+        return "${stage_status}"
+    fi
+    if [[ "${cleanup_status}" != "passed" ]]; then
+        return 70
+    fi
     return "${finalize_status}"
 }
 
@@ -456,9 +396,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build Go from the official source repository and run the official go test
-standard-library benchmarks as a standalone performance evaluation. Results
-default to results/<version>/<run-id>/ inside this directory.
+Install the official precompiled Go release and run the official
+golang.org/x/benchmarks/cmd/bench suite.
 
 Options:
   --version VERSION       Go version (default: ${SOFTWARE_VERSION})
@@ -466,9 +405,8 @@ Options:
   --keep-workdir          Keep the isolated work directory for debugging
   -h, --help              Show this help
 
-Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  GO_SOURCE_URL, GO_BOOTSTRAP_VERSION
+Offline archives take priority from ${GO_OFFLINE_DIR}:
+  go<VERSION>.linux-<amd64|arm64>.tar.gz
 USAGE
 }
 
@@ -476,41 +414,34 @@ main() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             --version)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --version requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --version requires a value"
+                    return 10
+                fi
                 SOFTWARE_VERSION="$2"
                 shift 2
                 ;;
             --results-dir)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --results-dir requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --results-dir requires a value"
+                    return 10
+                fi
                 RESULTS_DIR="$2"
                 shift 2
                 ;;
-            --keep-workdir)
-                STANDALONE_KEEP_WORK_DIR=1
-                shift
-                ;;
-            -h|--help)
-                usage
-                return 0
-                ;;
-            *)
-                log_message "ERROR: unsupported option: $1"
-                usage
-                return 10
-                ;;
+            --keep-workdir) STANDALONE_KEEP_WORK_DIR=1; shift ;;
+            -h|--help) usage; return 0 ;;
+            *) log "ERROR: unsupported option: $1"; return 10 ;;
         esac
     done
-
-    configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" || return 10
+    initialize_runtime || return $?
     : > "${RESULTS_DIR}/results.log"
-    local pipeline_status=0
     set +e
     run_golang_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
-    pipeline_status="${PIPESTATUS[0]}"
+    local result="${PIPESTATUS[0]}"
     set -e
-    log_message "standalone results: ${RESULTS_DIR}"
-    return "${pipeline_status}"
+    log "standalone results: ${RESULTS_DIR}"
+    return "${result}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

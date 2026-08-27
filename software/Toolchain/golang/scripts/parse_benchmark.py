@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Normalize official ``go test -bench`` output into the framework schema.
+"""Normalize the official ``golang.org/x/benchmarks/cmd/bench`` output.
 
-The raw output is produced by running the Go standard library benchmarks from
-the official golang/go source tree with a fixed set of flags. Every metric is
-the median ns/op of the per-benchmark samples; benchmark names are preserved
-verbatim from the official output.
+The Go benchmark format records one benchmark name followed by one or more
+``value unit`` pairs. A metric is identified by the exact benchmark name, its
+official package tag, and its original unit. This adapter creates no workload
+name, metric name, or derived score.
 """
 
 from __future__ import annotations
@@ -19,208 +19,147 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# Benchmark result line: name, iterations, ns/op value, then optional extra
-# metric columns (B/op, allocs/op, custom report metrics) that are ignored.
-BENCHMARK_PATTERN = re.compile(
-    r"^(?P<name>Benchmark\S+)\s+(?P<iterations>\d+)\s+(?P<value>[0-9.]+)\s+ns/op(?:\s.*)?$"
+BENCHMARK_LINE = re.compile(
+    r"^(?P<name>Benchmark\S+)\s+(?P<iterations>\d+)\s+(?P<values>.+)$"
 )
-# Output header lines such as "goos: linux" / "pkg: strconv" / "cpu: ...".
-HEADER_PATTERN = re.compile(r"^(?P<key>goos|goarch|pkg|cpu):\s+(?P<value>.+)$")
-# A trailing "-N" is the GOMAXPROCS suffix appended when -cpu is not 1.
-GOMAXPROCS_SUFFIX_PATTERN = re.compile(r"-\d+$")
-
-ARCH_TO_GOARCH = {"x86_64": "amd64", "aarch64": "arm64"}
+MEASUREMENT = re.compile(
+    r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+(?P<unit>\S+)"
+)
+TAG_LINE = re.compile(r"^(?P<key>pkg|shortname|toolchain|pgo):\s*(?P<value>.+)$")
 
 
 def fail(message: str) -> None:
     print(f"[golang-parse] ERROR: {message}", file=sys.stderr)
 
 
-def parse_raw_output(
-    lines: list[str],
-    expected_packages: list[str],
-    expected_count: int,
-    expected_goarch: str,
-) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
-    samples: dict[str, list[float]] = {}
-    package_of: dict[str, str] = {}
-    header_values: dict[str, list[str]] = {}
-    packages_seen: set[str] = set()
-    current_package = ""
+def direction_for_unit(unit: str) -> str:
+    """Return the direction inherent in the original Go benchmark unit."""
+    if unit.endswith(("/s", "/sec")):
+        return "higher_is_better"
+    return "lower_is_better"
+
+
+def metric_name(package: str, benchmark: str, unit: str) -> str:
+    """Return the complete official benchmark measurement identity."""
+    return f"{package} :: {benchmark} :: {unit}"
+
+
+def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    samples: dict[tuple[str, str, str], list[float]] = {}
+    tags: dict[str, str] = {}
+    suites: set[str] = set()
 
     for line in lines:
-        header = HEADER_PATTERN.match(line)
-        if header is not None:
-            key = header.group("key")
-            value = header.group("value").strip()
-            header_values.setdefault(key, []).append(value)
-            if key == "pkg":
-                current_package = value
-                packages_seen.add(value)
+        tag_match = TAG_LINE.match(line)
+        if tag_match is not None:
+            tags[tag_match.group("key")] = tag_match.group("value").strip()
             continue
-        match = BENCHMARK_PATTERN.match(line)
-        if match is None:
+
+        line_match = BENCHMARK_LINE.match(line)
+        if line_match is None:
             continue
-        name = match.group("name")
-        if GOMAXPROCS_SUFFIX_PATTERN.search(name):
+
+        benchmark = line_match.group("name")
+        package = tags.get("pkg", "")
+        if benchmark == "BenchmarkGoDistribution":
+            package = "golang.org/x/benchmarks/cmd/bench/distsize"
+        toolchain = tags.get("toolchain", "")
+        if not package:
+            raise RuntimeError(f"benchmark {benchmark} has no preceding official pkg tag")
+        if toolchain != "experiment":
             raise RuntimeError(
-                f"benchmark {name} carries a GOMAXPROCS suffix; "
-                "output does not come from a -cpu=1 run"
+                f"benchmark {benchmark} has unexpected toolchain tag: "
+                f"{toolchain or '<missing>'}"
             )
-        value = float(match.group("value"))
-        if not math.isfinite(value) or value <= 0:
-            raise RuntimeError(f"benchmark {name} has an invalid ns/op value")
-        if name in samples and package_of[name] != current_package:
-            raise RuntimeError(
-                f"duplicate benchmark {name} in packages "
-                f"{package_of[name]} and {current_package}"
-            )
-        samples.setdefault(name, []).append(value)
-        package_of.setdefault(name, current_package)
+        measurements = list(MEASUREMENT.finditer(line_match.group("values")))
+        if not measurements:
+            raise RuntimeError(f"benchmark {benchmark} has no value/unit measurements")
+        suites.add(tags.get("shortname", package))
+
+        for measurement in measurements:
+            value = float(measurement.group("value"))
+            unit = measurement.group("unit")
+            if not math.isfinite(value) or value < 0:
+                raise RuntimeError(f"benchmark {benchmark} has invalid {unit} value: {value}")
+            samples.setdefault((package, benchmark, unit), []).append(value)
 
     if not samples:
-        raise RuntimeError("official go test output contains no benchmark results")
-
-    goos_values = set(header_values.get("goos", []))
-    if goos_values != {"linux"}:
-        raise RuntimeError(f"unexpected goos in go test output: {sorted(goos_values)}")
-    goarch_values = set(header_values.get("goarch", []))
-    if goarch_values != {expected_goarch}:
-        raise RuntimeError(
-            f"unexpected goarch in go test output: {sorted(goarch_values)}, "
-            f"expected {expected_goarch}"
-        )
-    cpu_models = set(header_values.get("cpu", []))
-    if len(cpu_models) > 1:
-        raise RuntimeError(f"inconsistent cpu models in go test output: {sorted(cpu_models)}")
-
-    missing_packages = [p for p in expected_packages if p not in packages_seen]
-    if missing_packages:
-        raise RuntimeError(
-            "official go test output is missing packages: " + ",".join(missing_packages)
-        )
-    empty_packages = [
-        p for p in expected_packages if not any(origin == p for origin in package_of.values())
-    ]
-    if empty_packages:
-        raise RuntimeError(
-            "packages without benchmark results: " + ",".join(empty_packages)
-        )
-
-    for name, values in samples.items():
-        if len(values) != expected_count:
-            raise RuntimeError(
-                f"benchmark {name} has {len(values)} samples, expected {expected_count}"
-            )
+        raise RuntimeError("official cmd/bench output contains no benchmark measurements")
 
     results: dict[str, dict[str, Any]] = {}
-    for name, values in samples.items():
-        median = statistics.median(values)
-        if not math.isfinite(median) or median <= 0:
-            raise RuntimeError(f"benchmark {name} has an invalid median ns/op")
+    for (package, benchmark, unit), values in sorted(samples.items()):
+        name = metric_name(package, benchmark, unit)
+        if name in results:
+            raise RuntimeError(f"duplicate official benchmark measurement: {name}")
+        value = statistics.median(values)
         results[name] = {
             "source_name": name,
-            "source_field": "ns/op",
-            "raw_value": median,
-            "raw_unit": "ns/op",
-            "value": median,
-            "unit": "ns/op",
+            "source_benchmark": benchmark,
+            "source_package": package,
+            "source_field": unit,
+            "raw_value": value,
+            "raw_unit": unit,
+            "value": value,
+            "unit": unit,
+            "direction": direction_for_unit(unit),
             "samples": len(values),
-            "package": package_of[name],
+            "group": package,
         }
 
-    runtime_context: dict[str, Any] = {"goos": "linux", "goarch": expected_goarch}
-    if cpu_models:
-        runtime_context["cpu"] = sorted(cpu_models)[0]
-    return results, runtime_context
+    return results, {
+        "packages": sorted({key[0] for key in samples}),
+        "suites": sorted(suites),
+    }
 
 
 def main() -> int:
     if len(sys.argv) != 3:
-        print(
-            "usage: parse_benchmark.py GO_TEST_OUTPUT NORMALIZED_OUTPUT",
-            file=sys.stderr,
-        )
+        print("usage: parse_benchmark.py RAW_OUTPUT NORMALIZED_OUTPUT", file=sys.stderr)
         return 1
-    raw_path, normalized_output = Path(sys.argv[1]), Path(sys.argv[2])
-
+    raw_path, output_path = Path(sys.argv[1]), Path(sys.argv[2])
     try:
         version = os.environ["SOFTWARE_VERSION"]
         architecture = os.environ["EXPECTED_ARCH"]
+        suite_revision = os.environ["GO_BENCHMARKS_COMMIT"]
     except KeyError as exc:
         fail(f"missing environment variable: {exc}")
         return 1
-    expected_goarch = ARCH_TO_GOARCH.get(architecture)
-    if expected_goarch is None:
-        fail(f"unsupported architecture: {architecture}")
-        return 1
-    packages = [item for item in os.environ.get("GO_BENCH_PACKAGES", "").split() if item]
-    if not packages:
-        fail("GO_BENCH_PACKAGES is empty")
-        return 1
-    try:
-        expected_count = int(os.environ.get("GO_BENCH_COUNT", "3"))
-    except ValueError:
-        fail("GO_BENCH_COUNT is not an integer")
-        return 1
-    if expected_count < 1:
-        fail("GO_BENCH_COUNT must be positive")
-        return 1
-    benchtime = os.environ.get("GO_BENCHTIME", "1s")
-    bench_cpu = os.environ.get("GO_BENCH_CPU", "1")
-    bootstrap_version = os.environ.get("GO_BOOTSTRAP_VERSION", "")
 
     try:
-        lines = raw_path.read_text(encoding="utf-8", errors="replace").splitlines()
-        results, runtime_context = parse_raw_output(
-            lines, packages, expected_count, expected_goarch
+        results, context = parse_output(
+            raw_path.read_text(encoding="utf-8", errors="replace").splitlines()
         )
-    except (RuntimeError, OSError) as exc:
+    except (OSError, RuntimeError, ValueError) as exc:
         fail(str(exc))
         return 1
 
-    normalized = {
-        "benchmark": "golang_official_go_test_stdlib",
+    payload = {
+        "benchmark": "golang_official_benchmarks_cmd_bench",
         "software": "golang",
         "version": version,
         "architecture": architecture,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "command": [
-                "go",
-                "test",
-                "-run=^$",
-                "-bench=.",
-                f"-cpu={bench_cpu}",
-                f"-count={expected_count}",
-                f"-benchtime={benchtime}",
-                *packages,
-            ],
-            "packages": packages,
-            "benchtime": benchtime,
-            "cpu": bench_cpu,
-            "count": expected_count,
-            "bootstrap_version": bootstrap_version,
+            "command": ["go", "run", "./cmd/bench", "-goroot", "<built-goroot>"],
+            "suite": "golang.org/x/benchmarks/cmd/bench",
+            "suite_revision": suite_revision,
+            "toolchain": "experiment",
             "aggregation": "median",
-            "official_suite": "go test -bench (Go standard library benchmarks)",
         },
         "metric_contract": {
-            "scope": "median ns/op of every official go test benchmark in the selected packages",
-            "source_field": "ns/op",
-            "normalized_unit": "ns/op",
-            "direction": "lower_is_better",
-            "aggregation": "median",
+            "scope": "every value/unit pair in the official Go benchmark format",
+            "identity": "official pkg tag + benchmark name + original unit",
+            "aggregation": "median of repeated official measurements",
         },
-        "runtime_context": runtime_context,
+        "runtime_context": context,
         "results": results,
     }
-
-    normalized_output.parent.mkdir(parents=True, exist_ok=True)
-    normalized_output.write_text(
-        json.dumps(normalized, ensure_ascii=False, indent=2) + "\n",
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"[golang-parse] normalized {len(results)} official go test benchmarks")
+    print(f"[golang-parse] normalized {len(results)} official benchmark measurements")
     return 0
 
 
