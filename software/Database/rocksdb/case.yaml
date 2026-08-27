@@ -1,0 +1,55 @@
+name: rocksdb
+category: Database
+enabled: true
+versions:
+  - "11.8.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: rocksdb_test.sh
+      function: build_rocksdb
+    start:
+      script: rocksdb_test.sh
+      function: start_rocksdb_service
+    test:
+      script: rocksdb_test.sh
+      function: run_rocksdb_benchmarks
+    stop:
+      script: rocksdb_test.sh
+      function: stop_rocksdb_service
+  timeout_minutes: 180
+outputs:
+  kv_benchmark_result:
+    path: benchmark_kv.json
+    stage: test
+    format: json
+    required: true
+  kv_benchmark_log:
+    path: benchmark_kv.log
+    stage: test
+    format: text
+    required: true
+  micro_benchmark_result:
+    path: micro_benchmark.json
+    stage: test
+    format: json
+    required: true
+  micro_benchmark_log:
+    path: micro_benchmark.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
