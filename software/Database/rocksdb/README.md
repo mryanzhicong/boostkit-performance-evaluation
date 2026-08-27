@@ -15,11 +15,15 @@ KV 性能测试。RocksDB 是嵌入式数据库，不启动网络服务；Framew
 ```bash
 git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
   https://github.com/facebook/rocksdb.git rocksdb-source
-cmake -S rocksdb-source -B rocksdb-build -DCMAKE_BUILD_TYPE=Release
+cmake -S rocksdb-source -B rocksdb-build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DFAIL_ON_WARNINGS=OFF
 cmake --build rocksdb-build --target db_bench --parallel "$(nproc)"
 ```
 
 脚本从 `include/rocksdb/version.h` 读取实际版本，必须与请求版本完全一致。
+`FAIL_ON_WARNINGS=OFF` 保留编译器诊断，但不会将已知的 GCC 12 `restrict` 诊断升级
+为构建错误。
 缺失的构建依赖由脚本通过 `dnf` 或 `sudo -n dnf` 自动安装：编译工具链、CMake、
 gflags、Snappy、zlib、bzip2、LZ4 和 Zstandard 开发包。
 

@@ -123,7 +123,9 @@ build_rocksdb() {
         return 40
     fi
     log "building official db_bench target"
-    if ! cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE=Release; then
+    if ! cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DFAIL_ON_WARNINGS=OFF; then
         log "ERROR: CMake configuration failed"
         return 40
     fi
