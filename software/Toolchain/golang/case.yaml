@@ -1,0 +1,41 @@
+name: golang
+category: Toolchain
+enabled: true
+versions:
+  - "1.26.7"
+  - "1.27.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: golang_test.sh
+      function: build_golang
+    start:
+      script: golang_test.sh
+      function: start_golang_runtime
+    test:
+      script: golang_test.sh
+      function: run_golang_benchmarks
+    stop:
+      script: golang_test.sh
+      function: stop_golang_runtime
+  timeout_minutes: 120
+outputs:
+  official_benchmark:
+    path: benchmark_gotest.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_golang.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: ns/op
+    direction: lower_is_better
