@@ -1,50 +1,37 @@
 #!/usr/bin/env bash
-# RocksDB performance case (official source build).
-#
-# The software under test is cloned from the official facebook/rocksdb
-# repository at a release tag and built with CMake, so the exact release under
-# evaluation can be pinned.  The `db_bench` tool produced by that build is the
-# performance driver: it runs LSM-tree KV workloads (fillseq, readrandom,
-# overwrite, readwhilewriting) plus auxiliary micro benchmarks (thread scaling,
-# compression type sweep, value size sweep) without a persistent server.
-#
-# The four framework stages map to: clone + build db_bench (build), prepare the
-# throwaway data directory (start), run the KV and micro benchmarks and
-# aggregate their metrics (test), and remove the throwaway data (stop).
+# Build RocksDB and run its db_bench tool in a task-private data directory.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_NAME="rocksdb"
 SOFTWARE_VERSION="${SOFTWARE_VERSION:-11.8.1}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
+ROCKSDB_REPOSITORY="${ROCKSDB_REPOSITORY:-https://github.com/facebook/rocksdb.git}"
+ROCKSDB_DATA_ROOT="${ROCKSDB_DATA_ROOT:-/home/runner/rocksdb-data}"
+ROCKSDB_BENCH_PROFILES="${ROCKSDB_BENCH_PROFILES:-64:128,64:512,128:1024}"
+ROCKSDB_BENCH_NUM="${ROCKSDB_BENCH_NUM:-167772160}"
+ROCKSDB_BENCH_DURATION_SECONDS="${ROCKSDB_BENCH_DURATION_SECONDS:-600}"
+ROCKSDB_BENCH_READWRITE_PERCENT="${ROCKSDB_BENCH_READWRITE_PERCENT:-70}"
+ROCKSDB_BENCH_CACHE_SIZE_BYTES="${ROCKSDB_BENCH_CACHE_SIZE_BYTES:-17179869184}"
+
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
-STANDALONE_STOP_DONE=0
-STANDALONE_CLEANUP_DONE=0
-
-# Official upstream repository and db_bench workload parameters.
-ROCKSDB_REPOSITORY="${ROCKSDB_REPOSITORY:-https://github.com/facebook/rocksdb.git}"
-DATA_NUM="${DATA_NUM:-1000000}"
-KEY_SIZE="${KEY_SIZE:-16}"
-VALUE_SIZE="${VALUE_SIZE:-1024}"
-ITERATIONS="${ITERATIONS:-1}"
-
-# Lifecycle paths (assigned in configure_runtime_paths).
-SRC_DIR=""
+SOURCE_DIR=""
 BUILD_DIR=""
 DB_BENCH_BIN=""
-BENCH_TMPDIR=""
+BENCH_DATA_DIR=""
 
 log() {
     printf '[rocksdb] %s\n' "$*"
 }
 
-configure_runtime_paths() {
+initialize_runtime() {
+    local runner_architecture
+
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
@@ -53,16 +40,15 @@ configure_runtime_paths() {
         return 10
     fi
     case "${EXPECTED_ARCH,,}" in
-        x86_64|amd64)
-            EXPECTED_ARCH="x86_64"
-            ;;
-        aarch64|arm64)
-            EXPECTED_ARCH="aarch64"
-            ;;
-        *)
-            EXPECTED_ARCH="${EXPECTED_ARCH,,}"
-            ;;
+        x86_64|amd64) EXPECTED_ARCH="x86_64" ;;
+        aarch64|arm64) EXPECTED_ARCH="aarch64" ;;
+        *) EXPECTED_ARCH="${EXPECTED_ARCH,,}" ;;
     esac
+    runner_architecture="$(uname -m)"
+    if [[ "${runner_architecture}" != "${EXPECTED_ARCH}" ]]; then
+        log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
+        return 20
+    fi
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
@@ -73,391 +59,201 @@ configure_runtime_paths() {
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    SRC_DIR="${PERF_WORK_DIR}/rocksdb-src"
+    SOURCE_DIR="${PERF_WORK_DIR}/rocksdb-source"
     BUILD_DIR="${PERF_WORK_DIR}/rocksdb-build"
     DB_BENCH_BIN="${BUILD_DIR}/db_bench"
-    BENCH_TMPDIR="${PERF_WORK_DIR}/bench-data"
+    BENCH_DATA_DIR="${ROCKSDB_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE
+    export PERF_ACTUAL_VERSION_FILE ROCKSDB_BENCH_DATA_DIR="${BENCH_DATA_DIR}"
+    export ROCKSDB_BENCH_PROFILES ROCKSDB_BENCH_NUM
+    export ROCKSDB_BENCH_DURATION_SECONDS ROCKSDB_BENCH_READWRITE_PERCENT
+    export ROCKSDB_BENCH_CACHE_SIZE_BYTES
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}"
 }
 
-initialize_runtime() {
-    configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${BENCH_TMPDIR}"
-}
-
-require_rocksdb_tools() {
+install_rocksdb_dependencies() {
     local command_name package
     local packages=()
 
-    for command_name in git cmake make g++ gcc python3 sed grep nproc; do
+    for command_name in git cmake gcc g++ make nproc python3 sed; do
         if command -v "${command_name}" >/dev/null 2>&1; then
             continue
         fi
         case "${command_name}" in
             git) package="git" ;;
             cmake) package="cmake" ;;
-            make) package="make" ;;
-            g++) package="gcc-c++" ;;
             gcc) package="gcc" ;;
+            g++) package="gcc-c++" ;;
+            make) package="make" ;;
+            nproc) package="coreutils" ;;
             python3) package="python3" ;;
             sed) package="sed" ;;
-            grep) package="grep" ;;
-            nproc) package="coreutils" ;;
         esac
-        log "missing required RocksDB build command: ${command_name}"
         packages+=("${package}")
     done
-
-    for package in gflags-devel snappy-devel zstd-devel zlib-devel libatomic; do
+    for package in gflags-devel snappy-devel zlib-devel bzip2-devel lz4-devel zstd-devel libatomic; do
         if ! rpm -q "${package}" >/dev/null 2>&1; then
-            log "missing required RocksDB build package: ${package}"
             packages+=("${package}")
         fi
     done
-
     if [[ "${#packages[@]}" -eq 0 ]]; then
         return 0
     fi
-    if ! command -v dnf >/dev/null 2>&1; then
-        log "ERROR: dnf is required to install RocksDB build prerequisites"
-        return 30
-    fi
-
-    log "installing missing RocksDB build packages: ${packages[*]}"
+    log "installing missing RocksDB dependencies: ${packages[*]}"
     if [[ "$(id -u)" -eq 0 ]]; then
         dnf install -y "${packages[@]}" || return 30
-    elif ! command -v sudo >/dev/null 2>&1; then
-        log "ERROR: sudo is required to install RocksDB build prerequisites"
-        return 30
-    elif ! sudo -n dnf install -y "${packages[@]}"; then
-        log "ERROR: failed to install RocksDB build prerequisites"
+    elif command -v sudo >/dev/null 2>&1 && sudo -n dnf install -y "${packages[@]}"; then
+        :
+    else
+        log "ERROR: cannot install required RocksDB dependencies"
         return 30
     fi
-
-    for command_name in git cmake make g++ gcc python3 sed grep nproc; do
-        if ! command -v "${command_name}" >/dev/null 2>&1; then
-            log "ERROR: required RocksDB build command remains unavailable: ${command_name}"
-            return 30
-        fi
-    done
-    for package in gflags-devel snappy-devel zstd-devel zlib-devel libatomic; do
-        if ! rpm -q "${package}" >/dev/null 2>&1; then
-            log "ERROR: required RocksDB build package remains unavailable: ${package}"
-            return 30
-        fi
-    done
 }
 
 build_rocksdb() {
-    local ver_tag
-    local version_header
-    local major minor patch actual_version
-    local runner_architecture
+    local source_tag actual_version major minor patch
 
     initialize_runtime || return $?
-    runner_architecture="$(uname -m)"
-    if [[ "${runner_architecture}" != "${EXPECTED_ARCH}" ]]; then
-        log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
-        return 20
-    fi
-    require_rocksdb_tools || return $?
-
-    if [[ -x "${DB_BENCH_BIN}" ]]; then
-        log "ERROR: build output is not clean under ${PERF_WORK_DIR}"
-        return 20
-    fi
-
-    ver_tag="${SOFTWARE_VERSION}"
-    [[ "${ver_tag:0:1}" == "v" ]] || ver_tag="v${ver_tag}"
-
-    log "cloning RocksDB tag ${ver_tag} from ${ROCKSDB_REPOSITORY}"
-    rm -rf "${SRC_DIR}" "${BUILD_DIR}"
-    if ! git clone --branch "${ver_tag}" --depth 1 "${ROCKSDB_REPOSITORY}" "${SRC_DIR}"; then
-        log "ERROR: failed to clone RocksDB tag ${ver_tag}"
+    install_rocksdb_dependencies || return $?
+    source_tag="v${SOFTWARE_VERSION#v}"
+    rm -rf "${SOURCE_DIR}" "${BUILD_DIR}"
+    log "cloning RocksDB ${source_tag} from ${ROCKSDB_REPOSITORY}"
+    if ! git clone --branch "${source_tag}" --depth 1 "${ROCKSDB_REPOSITORY}" "${SOURCE_DIR}"; then
+        log "ERROR: failed to clone RocksDB ${source_tag}"
         return 40
     fi
-
-    log "configuring RocksDB with CMake"
-    mkdir -p "${BUILD_DIR}"
-    if ! (
-        cd "${BUILD_DIR}"
-        cmake -DCMAKE_BUILD_TYPE=Release \
-            -DFAIL_ON_WARNINGS=OFF \
-            -DWITH_SNAPPY=ON \
-            -DWITH_ZSTD=ON \
-            -DWITH_ZLIB=ON \
-            "${SRC_DIR}"
-    ); then
-        log "ERROR: cmake configuration failed"
+    log "building official db_bench target"
+    if ! cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE=Release; then
+        log "ERROR: CMake configuration failed"
         return 40
     fi
-
-    log "building db_bench"
-    if ! ( cd "${BUILD_DIR}" && make -j"$(nproc)" db_bench ); then
-        log "ERROR: make db_bench failed"
+    if ! cmake --build "${BUILD_DIR}" --target db_bench --parallel "$(nproc)"; then
+        log "ERROR: db_bench build failed"
         return 40
     fi
-
     if [[ ! -x "${DB_BENCH_BIN}" ]]; then
-        DB_BENCH_BIN="$(find "${BUILD_DIR}" -name db_bench -type f -executable 2>/dev/null | head -n 1)"
+        DB_BENCH_BIN="$(find "${BUILD_DIR}" -type f -name db_bench -executable -print -quit)"
     fi
     if [[ -z "${DB_BENCH_BIN}" || ! -x "${DB_BENCH_BIN}" ]]; then
-        log "ERROR: db_bench not found after build"
+        log "ERROR: db_bench was not created"
         return 40
     fi
-
-    version_header="${SRC_DIR}/include/rocksdb/version.h"
-    major="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_MAJOR[[:space:]]+([0-9]+).*/\1/p' "${version_header}")"
-    minor="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_MINOR[[:space:]]+([0-9]+).*/\1/p' "${version_header}")"
-    patch="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_PATCH[[:space:]]+([0-9]+).*/\1/p' "${version_header}")"
+    major="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_MAJOR[[:space:]]+([0-9]+).*/\1/p' "${SOURCE_DIR}/include/rocksdb/version.h")"
+    minor="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_MINOR[[:space:]]+([0-9]+).*/\1/p' "${SOURCE_DIR}/include/rocksdb/version.h")"
+    patch="$(sed -nE 's/^#define[[:space:]]+ROCKSDB_PATCH[[:space:]]+([0-9]+).*/\1/p' "${SOURCE_DIR}/include/rocksdb/version.h")"
     actual_version="${major}.${minor}.${patch}"
-    if [[ ! "${actual_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log "ERROR: cannot determine RocksDB version from ${version_header}"
-        return 40
-    fi
-    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION#v}" ]]; then
         log "ERROR: built RocksDB is ${actual_version}, expected ${SOFTWARE_VERSION}"
         return 40
     fi
-    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
-    log "RocksDB ${actual_version} built (db_bench at ${DB_BENCH_BIN})"
 }
 
-start_rocksdb_service() {
+prepare_rocksdb_benchmark_data() {
     initialize_runtime || return $?
     if [[ ! -x "${DB_BENCH_BIN}" ]]; then
-        log "ERROR: db_bench is not built (run build first)"
+        log "ERROR: db_bench is not built"
         return 40
     fi
-    mkdir -p "${BENCH_TMPDIR}"
-    log "benchmark environment ready (${BENCH_TMPDIR})"
+    if [[ -e "${BENCH_DATA_DIR}" ]]; then
+        log "ERROR: benchmark data directory already exists: ${BENCH_DATA_DIR}"
+        return 20
+    fi
+    mkdir -p "${BENCH_DATA_DIR}"
+    log "prepared task-private benchmark data directory: ${BENCH_DATA_DIR}"
 }
 
 run_rocksdb_benchmarks() {
     initialize_runtime || return $?
-    if [[ ! -x "${DB_BENCH_BIN}" ]]; then
-        log "ERROR: db_bench is not built (run build first)"
+    if [[ ! -x "${DB_BENCH_BIN}" || ! -d "${BENCH_DATA_DIR}" ]]; then
+        log "ERROR: build or benchmark data preparation is incomplete"
         return 50
     fi
-
-    log "running KV operations benchmark"
-    python3 "${SCRIPT_DIR}/scripts/benchmark_kv.py" \
-        "${DB_BENCH_BIN}" "${RESULTS_DIR}/benchmark_kv.json" \
-        "${DATA_NUM}" "${KEY_SIZE}" "${VALUE_SIZE}" "${ITERATIONS}" || return 50
-
-    log "running micro benchmark"
-    python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
-        "${DB_BENCH_BIN}" "${RESULTS_DIR}/micro_benchmark.json" \
-        "${DATA_NUM}" "${KEY_SIZE}" "${VALUE_SIZE}" "${ITERATIONS}" || return 50
-
-    log "aggregating results"
-    python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
-        "${RESULTS_DIR}" "${RESULTS_DIR}/results.json" || return 50
-
-    log "RocksDB benchmarks completed"
+    python3 "${SCRIPT_DIR}/scripts/run_db_bench.py" \
+        "${DB_BENCH_BIN}" "${RESULTS_DIR}/results.json" \
+        "${RESULTS_DIR}/db_bench_raw.log" || return 50
 }
 
-stop_rocksdb_service() {
+cleanup_rocksdb_benchmark_data() {
     initialize_runtime || return $?
-    if [[ -d "${BENCH_TMPDIR}" ]]; then
-        rm -rf "${BENCH_TMPDIR}"
-        log "removed benchmark data directory: ${BENCH_TMPDIR}"
-    else
-        log "no benchmark data directory; nothing to stop"
+    if [[ ! -e "${BENCH_DATA_DIR}" ]]; then
+        log "benchmark data directory is already absent"
+        return 0
     fi
+    if [[ "${BENCH_DATA_DIR}" != "${ROCKSDB_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+        log "ERROR: refusing to remove unexpected data directory: ${BENCH_DATA_DIR}"
+        return 70
+    fi
+    rm -rf -- "${BENCH_DATA_DIR}"
+    log "removed task-private benchmark data directory: ${BENCH_DATA_DIR}"
+}
+
+cleanup_standalone_work_directory() {
+    if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 || "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
+        return 0
+    fi
+    if [[ "${PERF_WORK_DIR}" != /tmp/rocksdb-perf/local-* ]]; then
+        log "ERROR: refusing to remove unexpected standalone work directory: ${PERF_WORK_DIR}"
+        return 70
+    fi
+    rm -rf -- "${PERF_WORK_DIR}"
+    log "removed standalone build directory: ${PERF_WORK_DIR}"
 }
 
 standalone_runtime() {
     python3 "${SCRIPT_DIR}/scripts/standalone_runtime.py" "$@"
 }
 
-cleanup_standalone_workdir() {
-    if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
-        log "keeping standalone work directory: ${PERF_WORK_DIR}"
-        return 0
-    fi
-    if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
-        log "external work directory was not removed: ${PERF_WORK_DIR}"
-        return 0
-    fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/rocksdb-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/rocksdb-perf" ]]; then
-        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
-        return 70
-    fi
-    if [[ -d "${PERF_WORK_DIR}" ]]; then
-        rm -rf -- "${PERF_WORK_DIR}" || return 70
-    fi
-    log "cleaned standalone work directory: ${PERF_WORK_DIR}"
-}
-
-emergency_standalone_cleanup() {
-    set +e
-    if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
-        stop_rocksdb_service
-    fi
-    if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
-        cleanup_standalone_workdir
-    fi
-}
-
 run_rocksdb_standalone() {
-    local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
-    local command_status="passed"
+    local status=0 cleanup_status="passed" failed_stage=""
 
-    configure_runtime_paths || return $?
-    STANDALONE_STOP_DONE=0
-    STANDALONE_CLEANUP_DONE=0
-    trap emergency_standalone_cleanup EXIT
     initialize_runtime || return $?
-
-    if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
-        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
-        :
+    trap 'cleanup_rocksdb_benchmark_data >/dev/null 2>&1 || true; cleanup_standalone_work_directory >/dev/null 2>&1 || true' EXIT
+    standalone_runtime system "${RESULTS_DIR}/system_info.json" || { status=$?; failed_stage="prepare"; }
+    if [[ "${status}" -eq 0 ]]; then
+        standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json" || { status=$?; failed_stage="prepare"; }
+    fi
+    if [[ "${status}" -eq 0 ]]; then
+        build_rocksdb || { status=$?; failed_stage="build"; }
+    fi
+    if [[ "${status}" -eq 0 ]]; then
+        standalone_runtime build-info "${RESULTS_DIR}/build_info.json" "${SOFTWARE_VERSION}" \
+            "${PERF_ACTUAL_VERSION_FILE}" "${EXPECTED_ARCH}" "${PERF_RUN_ID}" || { status=$?; failed_stage="build"; }
+    fi
+    if [[ "${status}" -eq 0 ]]; then
+        prepare_rocksdb_benchmark_data || { status=$?; failed_stage="start"; }
+    fi
+    if [[ "${status}" -eq 0 ]]; then
+        run_rocksdb_benchmarks || { status=$?; failed_stage="test"; }
+    fi
+    cleanup_rocksdb_benchmark_data || cleanup_status="failed"
+    standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json" || cleanup_status="failed"
+    if [[ "${status}" -eq 0 ]]; then
+        standalone_runtime finalize "${RESULTS_DIR}" "${SOFTWARE_VERSION}" "${EXPECTED_ARCH}" \
+            "${PERF_RUN_ID}" passed "${cleanup_status}" "" || status=$?
     else
-        stage_status=$?
-        failed_stage="prepare"
+        standalone_runtime finalize "${RESULTS_DIR}" "${SOFTWARE_VERSION}" "${EXPECTED_ARCH}" \
+            "${PERF_RUN_ID}" failed "${cleanup_status}" "${failed_stage}" || true
     fi
-
-    if [[ "${stage_status}" -eq 0 ]]; then
-        if build_rocksdb; then
-            if standalone_runtime build-info \
-                "${RESULTS_DIR}/build_info.json" \
-                "${SOFTWARE_VERSION}" \
-                "${PERF_ACTUAL_VERSION_FILE}" \
-                "${EXPECTED_ARCH}" \
-                "${PERF_RUN_ID}"; then
-                :
-            else
-                stage_status=$?
-                failed_stage="build"
-            fi
-        else
-            stage_status=$?
-            failed_stage="build"
-        fi
-    fi
-    if [[ "${stage_status}" -eq 0 ]]; then
-        if start_rocksdb_service; then
-            :
-        else
-            stage_status=$?
-            failed_stage="start"
-        fi
-    fi
-    if [[ "${stage_status}" -eq 0 ]]; then
-        if run_rocksdb_benchmarks; then
-            :
-        else
-            stage_status=$?
-            failed_stage="test"
-        fi
-    fi
-
-    if ! stop_rocksdb_service; then
-        cleanup_status="failed"
-    fi
-    STANDALONE_STOP_DONE=1
-    if ! standalone_runtime runtime "${RESULTS_DIR}/runtime_after.json"; then
-        cleanup_status="failed"
-    fi
-    if ! cleanup_standalone_workdir; then
-        cleanup_status="failed"
-    fi
-    STANDALONE_CLEANUP_DONE=1
-
-    if [[ "${stage_status}" -ne 0 ]]; then
-        command_status="failed"
-    fi
-    if standalone_runtime finalize \
-        "${RESULTS_DIR}" \
-        "${SOFTWARE_VERSION}" \
-        "${EXPECTED_ARCH}" \
-        "${PERF_RUN_ID}" \
-        "${command_status}" \
-        "${cleanup_status}" \
-        "${failed_stage}"; then
-        finalize_status=0
-    else
-        finalize_status=$?
-    fi
+    cleanup_standalone_work_directory || status=$?
     trap - EXIT
-    if [[ "${stage_status}" -ne 0 ]]; then
-        return "${stage_status}"
-    fi
-    if [[ "${cleanup_status}" != "passed" ]]; then
-        return 70
-    fi
-    return "${finalize_status}"
-}
-
-usage() {
-    cat <<USAGE
-Usage: $(basename "$0") [OPTIONS]
-
-Build RocksDB from the official source release and run db_bench KV and micro
-benchmarks as a standalone performance evaluation.
-Results default to results/<version>/<run-id>/ inside this directory.
-
-Options:
-  --version VERSION       RocksDB version (default: ${SOFTWARE_VERSION})
-  --results-dir DIR       Persistent result directory
-  --keep-workdir          Keep the isolated work directory for debugging
-  -h, --help              Show this help
-
-Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, ROCKSDB_REPOSITORY,
-  DATA_NUM, KEY_SIZE, VALUE_SIZE, ITERATIONS
-USAGE
+    return "${status}"
 }
 
 main() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
-            --version)
-                if [[ "$#" -lt 2 ]]; then
-                    log "ERROR: --version requires a value"
-                    return 10
-                fi
-                SOFTWARE_VERSION="$2"
-                shift 2
-                ;;
-            --results-dir)
-                if [[ "$#" -lt 2 ]]; then
-                    log "ERROR: --results-dir requires a value"
-                    return 10
-                fi
-                RESULTS_DIR="$2"
-                shift 2
-                ;;
-            --keep-workdir)
-                STANDALONE_KEEP_WORK_DIR=1
-                shift
-                ;;
+            --version) SOFTWARE_VERSION="$2"; shift 2 ;;
+            --results-dir) RESULTS_DIR="$2"; shift 2 ;;
+            --keep-workdir) STANDALONE_KEEP_WORK_DIR=1; shift ;;
             -h|--help)
-                usage
+                printf 'Usage: %s [--version VERSION] [--results-dir DIRECTORY] [--keep-workdir]\n' "$(basename "$0")"
                 return 0
                 ;;
-            *)
-                log "ERROR: unsupported option: $1"
-                usage
-                return 10
-                ;;
+            *) log "ERROR: unsupported option: $1"; return 10 ;;
         esac
     done
-
-    configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" || return $?
-    : > "${RESULTS_DIR}/results.log"
-    local pipeline_status=0
-    set +e
-    run_rocksdb_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
-    pipeline_status="${PIPESTATUS[0]}"
-    set -e
-    log "standalone results: ${RESULTS_DIR}"
-    return "${pipeline_status}"
+    run_rocksdb_standalone
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

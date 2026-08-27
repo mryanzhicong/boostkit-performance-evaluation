@@ -3,6 +3,15 @@ category: Database
 enabled: true
 versions:
   - "11.8.1"
+test_tools:
+  db_bench:
+    version: "RocksDB 11.8.1"
+environment:
+  ROCKSDB_BENCH_PROFILES: "64:128,64:512,128:1024"
+  ROCKSDB_BENCH_NUM: 167772160
+  ROCKSDB_BENCH_DURATION_SECONDS: 600
+  ROCKSDB_BENCH_READWRITE_PERCENT: 70
+  ROCKSDB_BENCH_CACHE_SIZE_BYTES: 17179869184
 execution:
   type: shell-functions
   stages:
@@ -11,32 +20,17 @@ execution:
       function: build_rocksdb
     start:
       script: rocksdb_test.sh
-      function: start_rocksdb_service
+      function: prepare_rocksdb_benchmark_data
     test:
       script: rocksdb_test.sh
       function: run_rocksdb_benchmarks
     stop:
       script: rocksdb_test.sh
-      function: stop_rocksdb_service
+      function: cleanup_rocksdb_benchmark_data
   timeout_minutes: 180
 outputs:
-  kv_benchmark_result:
-    path: benchmark_kv.json
-    stage: test
-    format: json
-    required: true
-  kv_benchmark_log:
-    path: benchmark_kv.log
-    stage: test
-    format: text
-    required: true
-  micro_benchmark_result:
-    path: micro_benchmark.json
-    stage: test
-    format: json
-    required: true
-  micro_benchmark_log:
-    path: micro_benchmark.log
+  db_bench_raw_output:
+    path: db_bench_raw.log
     stage: test
     format: text
     required: true
@@ -53,3 +47,4 @@ metrics:
     value_path: value
     unit_path: unit
     direction_path: direction
+    group_path: group

@@ -183,10 +183,14 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} has no unit")
         if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
             raise RuntimeError(f"metric {metric_name} has an invalid direction")
+        group = metric.get("group")
+        if not isinstance(group, str) or not group:
+            raise RuntimeError(f"metric {metric_name} has no workload group")
         metrics[metric_name] = {
             "value": value,
             "unit": unit,
             "direction": direction,
+            "group": group,
         }
     if not metrics:
         raise RuntimeError("results.json contains no metrics")
@@ -234,18 +238,17 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend([
-        "",
-        "## 性能指标",
-        "",
-        "| 指标 | 数值 | 单位 | 优化方向 |",
-        "|---|---:|---|---|",
-    ])
+    lines.extend(["", "## 性能指标"])
+    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | {direction_label(metric['direction'])} |"
-        )
+        groups.setdefault(metric["group"], []).append((metric_name, metric))
+    for group, entries in groups.items():
+        lines.extend(["", f"### {group}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
+        for metric_name, metric in entries:
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | {direction_label(metric['direction'])} |"
+            )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
