@@ -48,6 +48,7 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
     samples: dict[tuple[str, str, str], list[float]] = {}
     tags: dict[str, str] = {}
     suites: set[str] = set()
+    bent_measurements = 0
 
     for line in lines:
         tag_match = TAG_LINE.match(line)
@@ -75,16 +76,22 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
         if not measurements:
             raise RuntimeError(f"benchmark {benchmark} has no value/unit measurements")
         suites.add(tags.get("shortname", package))
+        is_bent_measurement = "shortname" in tags
 
         for measurement in measurements:
             value = float(measurement.group("value"))
             unit = measurement.group("unit")
             if not math.isfinite(value) or value < 0:
                 raise RuntimeError(f"benchmark {benchmark} has invalid {unit} value: {value}")
-            samples.setdefault((package, benchmark, unit), []).append(value)
+            key = (package, benchmark, unit)
+            samples.setdefault(key, []).append(value)
+            if is_bent_measurement:
+                bent_measurements += 1
 
     if not samples:
         raise RuntimeError("selected official Go benchmark output contains no measurements")
+    if bent_measurements == 0:
+        raise RuntimeError("official Bent benchmark produced no measurements")
 
     results: dict[str, dict[str, Any]] = {}
     for (package, benchmark, unit), values in sorted(samples.items()):
@@ -109,6 +116,7 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
     return results, {
         "packages": sorted({key[0] for key in samples}),
         "suites": sorted(suites),
+        "bent_measurements": bent_measurements,
     }
 
 
@@ -157,7 +165,7 @@ def main() -> int:
                     "-N",
                     "10",
                     "-B",
-                    "cmd/bent/configs/benchmarks-trial.toml",
+                    "cmd/bent/configs/benchmarks-gcplus.toml",
                 ],
             },
             "suite": "golang.org/x/benchmarks",

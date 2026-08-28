@@ -301,7 +301,7 @@ run_official_distribution_size_benchmark() {
     rm -rf -- "${distsize_dir}"
 }
 
-run_official_bent_trial_benchmarks() {
+run_official_bent_gcplus_benchmarks() {
     local bent_dir bent_binary configuration
 
     bent_dir="$(mktemp -d "${TMPDIR}/go-bent.XXXXXX")" || return 50
@@ -315,12 +315,12 @@ run_official_bent_trial_benchmarks() {
         cd "${bent_dir}"
         "${bent_binary}" -I
         "${bent_binary}" -N 10 -C "${configuration}" \
-            -B "${BENCHMARKS_DIR}/cmd/bent/configs/benchmarks-trial.toml" \
+            -B "${BENCHMARKS_DIR}/cmd/bent/configs/benchmarks-gcplus.toml" \
             -report-build-time=false -v
     ); then
         chmod -R u+w "${bent_dir}" 2>/dev/null || :
         rm -rf -- "${bent_dir}"
-        log "ERROR: official Bent trial benchmark failed"
+        log "ERROR: official Bent gcplus benchmark failed"
         return 50
     fi
     chmod -R u+w "${bent_dir}" 2>/dev/null || :
@@ -339,7 +339,7 @@ run_golang_benchmarks() {
     if ! (
         run_official_go_test_benchmarks
         run_official_distribution_size_benchmark
-        run_official_bent_trial_benchmarks
+        run_official_bent_gcplus_benchmarks
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
         log "ERROR: selected official Go benchmark components failed"
         return 50

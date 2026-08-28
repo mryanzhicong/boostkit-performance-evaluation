@@ -70,17 +70,20 @@ GOROOT_BOOTSTRAP="${PERF_WORK_DIR}/go-install" \
   ./make.bash -distpack
 
 # 使用脚本生成的 experiment 配置、官方 Bent 工具和官方试运行配置
-./bent -N 10 -B cmd/bent/configs/benchmarks-trial.toml
+./bent -N 10 -B cmd/bent/configs/benchmarks-gcplus.toml
 ```
 
 测试矩阵如下：
 
 - Go test 基准：官方 `cmd/bench/gotest.go` 中的原始命令，`-count=6`；
 - 发行包体积：官方 `cmd/bench/distsize.go` 使用的 `make.bash -distpack`；
-- Bent 微基准：官方 `cmd/bent/configs/benchmarks-trial.toml` 的 2 项，每项 10 次；
+- Bent 微基准：官方 `cmd/bent/configs/benchmarks-gcplus.toml` 的 6 项，每项 10 次；
 - 不执行 Sweet 宏基准。
 
 完整原始控制台输出保存为 `benchmark_go_bench.txt`。
+
+报告保留官方原始 benchmark 名称，包括 Go 输出的 `-16`、`-256` 等并发度后缀；
+不同并发度的指标不会合并或跨架构对齐。Bent 未产生任何指标时，结果规范化直接失败。
 
 两个架构的模块下载均使用 Go 模块代理 `https://goproxy.cn`，不回退直连。
 
