@@ -263,6 +263,70 @@ start_golang_runtime() {
     fi
 }
 
+run_official_go_test_benchmarks() {
+    log "running official Go test benchmarks"
+    printf 'toolchain: experiment\n'
+    (
+        cd "${BENCHMARKS_DIR}"
+        "${GO_BIN}" test -v -run=none -short -bench=. -count=6 \
+            golang.org/x/benchmarks/...
+    )
+}
+
+run_official_distribution_size_benchmark() {
+    local distsize_dir copied_goroot go_version archive size
+
+    distsize_dir="$(mktemp -d "${TMPDIR}/go-distsize.XXXXXX")" || return 50
+    copied_goroot="${distsize_dir}/goroot"
+    if ! (
+        cp -a "${GO_INSTALL_DIR}" "${copied_goroot}"
+        go_version="$("${GO_BIN}" version | awk '{print $3}')"
+        printf '%s\n' "${go_version}" > "${copied_goroot}/VERSION"
+        (
+            cd "${copied_goroot}/src"
+            GOROOT="${copied_goroot}" GOROOT_BOOTSTRAP="${GO_INSTALL_DIR}" ./make.bash -distpack
+        )
+        archive="${copied_goroot}/pkg/distpack/v0.0.1-${go_version}.linux-${GO_ARCH}.zip"
+        size="$(stat -c '%s' "${archive}")"
+        printf 'toolchain: experiment\n'
+        printf 'Unit total-bytes assume=exact\n'
+        printf 'BenchmarkGoDistribution 1 %s total-bytes\n' "${size}"
+    ); then
+        chmod -R u+w "${distsize_dir}" 2>/dev/null || :
+        rm -rf -- "${distsize_dir}"
+        log "ERROR: official Go distribution-size benchmark failed"
+        return 50
+    fi
+    chmod -R u+w "${distsize_dir}" 2>/dev/null || :
+    rm -rf -- "${distsize_dir}"
+}
+
+run_official_bent_trial_benchmarks() {
+    local bent_dir bent_binary configuration
+
+    bent_dir="$(mktemp -d "${TMPDIR}/go-bent.XXXXXX")" || return 50
+    bent_binary="${bent_dir}/bent"
+    configuration="${bent_dir}/configurations.toml"
+    if ! (
+        cd "${BENCHMARKS_DIR}"
+        "${GO_BIN}" build -o "${bent_binary}" ./cmd/bent
+        printf '[[Configurations]]\n  Name = "experiment"\n  Root = "%s"\n  AfterBuild = ["benchsize"]\n' \
+            "${GO_INSTALL_DIR}" > "${configuration}"
+        cd "${bent_dir}"
+        "${bent_binary}" -I
+        "${bent_binary}" -N 10 -C "${configuration}" \
+            -B "${BENCHMARKS_DIR}/cmd/bent/configs/benchmarks-trial.toml" \
+            -report-build-time=false -v
+    ); then
+        chmod -R u+w "${bent_dir}" 2>/dev/null || :
+        rm -rf -- "${bent_dir}"
+        log "ERROR: official Bent trial benchmark failed"
+        return 50
+    fi
+    chmod -R u+w "${bent_dir}" 2>/dev/null || :
+    rm -rf -- "${bent_dir}"
+}
+
 run_golang_benchmarks() {
     initialize_runtime || return $?
     configure_go_environment
@@ -271,12 +335,13 @@ run_golang_benchmarks() {
         log "ERROR: official Go benchmark suite was not prepared"
         return 50
     fi
-    log "running the official golang.org/x/benchmarks/cmd/bench suite"
+    log "running selected official Go benchmark components"
     if ! (
-        cd "${BENCHMARKS_DIR}"
-        "${GO_BIN}" run ./cmd/bench -goroot "${GO_INSTALL_DIR}"
+        run_official_go_test_benchmarks
+        run_official_distribution_size_benchmark
+        run_official_bent_trial_benchmarks
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
-        log "ERROR: official Go benchmark suite failed"
+        log "ERROR: selected official Go benchmark components failed"
         return 50
     fi
     if [[ ! -s "${RESULTS_DIR}/benchmark_go_bench.txt" ]]; then

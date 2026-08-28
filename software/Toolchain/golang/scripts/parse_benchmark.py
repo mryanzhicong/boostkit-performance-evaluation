@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize the official ``golang.org/x/benchmarks/cmd/bench`` output.
+"""Normalize output from selected official ``golang.org/x/benchmarks`` components.
 
 The Go benchmark format records one benchmark name followed by one or more
 ``value unit`` pairs. A metric is identified by the exact benchmark name, its
@@ -84,7 +84,7 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
             samples.setdefault((package, benchmark, unit), []).append(value)
 
     if not samples:
-        raise RuntimeError("official cmd/bench output contains no benchmark measurements")
+        raise RuntimeError("selected official Go benchmark output contains no measurements")
 
     results: dict[str, dict[str, Any]] = {}
     for (package, benchmark, unit), values in sorted(samples.items()):
@@ -134,20 +134,39 @@ def main() -> int:
         return 1
 
     payload = {
-        "benchmark": "golang_official_benchmarks_cmd_bench",
+        "benchmark": "golang_official_benchmark_components",
         "software": "golang",
         "version": version,
         "architecture": architecture,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "command": ["go", "run", "./cmd/bench", "-goroot", "<built-goroot>"],
-            "suite": "golang.org/x/benchmarks/cmd/bench",
+            "components": {
+                "go_test": [
+                    "go",
+                    "test",
+                    "-v",
+                    "-run=none",
+                    "-short",
+                    "-bench=.",
+                    "-count=6",
+                    "golang.org/x/benchmarks/...",
+                ],
+                "distribution_size": ["src/make.bash", "-distpack"],
+                "bent": [
+                    "cmd/bent",
+                    "-N",
+                    "10",
+                    "-B",
+                    "cmd/bent/configs/benchmarks-trial.toml",
+                ],
+            },
+            "suite": "golang.org/x/benchmarks",
             "suite_revision": suite_revision,
             "toolchain": "experiment",
             "aggregation": "median",
         },
         "metric_contract": {
-            "scope": "every value/unit pair in the official Go benchmark format",
+            "scope": "every value/unit pair emitted by the selected official Go components",
             "identity": "official pkg tag + benchmark name + original unit",
             "aggregation": "median of repeated official measurements",
         },
