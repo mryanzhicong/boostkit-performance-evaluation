@@ -144,7 +144,7 @@ configure_go_environment() {
     export GOTOOLCHAIN=local
     export GOENV=off
     export GOWORK=off
-    export GOPROXY="${GOPROXY:-https://proxy.golang.org,direct}"
+    export GOPROXY="https://goproxy.cn"
     export GOSUMDB="${GOSUMDB:-sum.golang.org}"
     unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOAMD64
 }
@@ -271,13 +271,12 @@ run_golang_benchmarks() {
         log "ERROR: official Go benchmark suite was not prepared"
         return 50
     fi
-    log "running the official golang.org/x/benchmarks Go test benchmark suite"
+    log "running the official golang.org/x/benchmarks/cmd/bench suite"
     if ! (
         cd "${BENCHMARKS_DIR}"
-        "${GO_BIN}" test -v -run=none -short -bench=. -count=6 \
-            golang.org/x/benchmarks/...
+        "${GO_BIN}" run ./cmd/bench -goroot "${GO_INSTALL_DIR}"
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
-        log "ERROR: official Go test benchmark suite failed"
+        log "ERROR: official Go benchmark suite failed"
         return 50
     fi
     if [[ ! -s "${RESULTS_DIR}/benchmark_go_bench.txt" ]]; then
@@ -424,7 +423,7 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Install the official precompiled Go release and run the official
-golang.org/x/benchmarks Go test benchmark suite.
+golang.org/x/benchmarks/cmd/bench suite.
 
 Options:
   --version VERSION       Go version (default: ${SOFTWARE_VERSION})
