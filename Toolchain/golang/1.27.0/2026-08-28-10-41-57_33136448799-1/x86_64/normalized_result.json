@@ -1,0 +1,272 @@
+{
+  "software": "golang",
+  "category": "Toolchain",
+  "version": "1.27.0",
+  "architecture": "x86_64",
+  "run_id": "33136448799-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-28T02:37:26Z",
+    "category": "Toolchain",
+    "software": "golang",
+    "requested_version": "1.27.0",
+    "actual_version": "1.27.0",
+    "architecture": "x86_64",
+    "run_id": "33136448799-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "components": {
+        "go_test": [
+          "go",
+          "test",
+          "-v",
+          "-run=none",
+          "-short",
+          "-bench=.",
+          "-count=6",
+          "golang.org/x/benchmarks/..."
+        ],
+        "distribution_size": [
+          "src/make.bash",
+          "-distpack"
+        ],
+        "bent": [
+          "cmd/bent",
+          "-N",
+          "10",
+          "-B",
+          "cmd/bent/configs/benchmarks-trial.toml"
+        ]
+      },
+      "suite": "golang.org/x/benchmarks",
+      "suite_revision": "70693762b6a0d7f393892f0ace40979e3cbe5737",
+      "toolchain": "experiment",
+      "aggregation": "median"
+    }
+  },
+  "parameter_signature": "14e463eae05f9696959c87511f524ac750cf11cd39a2ad18d43a11b130512dbd",
+  "test_tools": {
+    "golang_benchmarks": {
+      "version": "master",
+      "revision": "70693762b6a0d7f393892f0ace40979e3cbe5737"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-08-28T02:37:21Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-28T02:37:21Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1039880192 29621141504    66064384  1952608256 31084032000\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-28T02:40:56Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1392791552 29262331904   384008192  2277752832 30731120640\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "benchmark_go_bench.txt",
+      "size": 12280
+    },
+    "benchmark_result": {
+      "benchmark": "golang_official_benchmark_components",
+      "software": "golang",
+      "version": "1.27.0",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-28T02:40:55Z",
+      "parameters": {
+        "components": {
+          "go_test": [
+            "go",
+            "test",
+            "-v",
+            "-run=none",
+            "-short",
+            "-bench=.",
+            "-count=6",
+            "golang.org/x/benchmarks/..."
+          ],
+          "distribution_size": [
+            "src/make.bash",
+            "-distpack"
+          ],
+          "bent": [
+            "cmd/bent",
+            "-N",
+            "10",
+            "-B",
+            "cmd/bent/configs/benchmarks-trial.toml"
+          ]
+        },
+        "suite": "golang.org/x/benchmarks",
+        "suite_revision": "70693762b6a0d7f393892f0ace40979e3cbe5737",
+        "toolchain": "experiment",
+        "aggregation": "median"
+      },
+      "metric_contract": {
+        "scope": "every value/unit pair emitted by the selected official Go components",
+        "identity": "official pkg tag + benchmark name + original unit",
+        "aggregation": "median of repeated official measurements"
+      },
+      "runtime_context": {
+        "packages": [
+          "golang.org/x/benchmarks/cmd/bench/distsize",
+          "golang.org/x/benchmarks/gc_latency"
+        ],
+        "suites": [
+          "golang.org/x/benchmarks/cmd/bench/distsize",
+          "golang.org/x/benchmarks/gc_latency"
+        ]
+      },
+      "results": {
+        "golang.org/x/benchmarks/cmd/bench/distsize :: BenchmarkGoDistribution :: total-bytes": {
+          "source_name": "golang.org/x/benchmarks/cmd/bench/distsize :: BenchmarkGoDistribution :: total-bytes",
+          "source_benchmark": "BenchmarkGoDistribution",
+          "source_package": "golang.org/x/benchmarks/cmd/bench/distsize",
+          "source_field": "total-bytes",
+          "raw_value": 75481644.0,
+          "raw_unit": "total-bytes",
+          "value": 75481644.0,
+          "unit": "total-bytes",
+          "direction": "lower_is_better",
+          "samples": 1,
+          "group": "golang.org/x/benchmarks/cmd/bench/distsize"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=global/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.999-ns",
+          "raw_value": 160014.0,
+          "raw_unit": "p99.999-ns",
+          "value": 160014.0,
+          "unit": "p99.999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.9999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.9999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=global/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.9999-ns",
+          "raw_value": 793987.0,
+          "raw_unit": "p99.9999-ns",
+          "value": 793987.0,
+          "unit": "p99.9999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=heap/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.999-ns",
+          "raw_value": 157139.5,
+          "raw_unit": "p99.999-ns",
+          "value": 157139.5,
+          "unit": "p99.999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.9999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.9999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=heap/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.9999-ns",
+          "raw_value": 171530.0,
+          "raw_unit": "p99.9999-ns",
+          "value": 171530.0,
+          "unit": "p99.9999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=stack/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.999-ns",
+          "raw_value": 158889.0,
+          "raw_unit": "p99.999-ns",
+          "value": 158889.0,
+          "unit": "p99.999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        },
+        "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.9999-ns": {
+          "source_name": "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.9999-ns",
+          "source_benchmark": "BenchmarkGCLatency/how=stack/fluff=false-16",
+          "source_package": "golang.org/x/benchmarks/gc_latency",
+          "source_field": "p99.9999-ns",
+          "raw_value": 169630.0,
+          "raw_unit": "p99.9999-ns",
+          "value": 169630.0,
+          "unit": "p99.9999-ns",
+          "direction": "lower_is_better",
+          "samples": 6,
+          "group": "golang.org/x/benchmarks/gc_latency"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "golang.org/x/benchmarks/cmd/bench/distsize :: BenchmarkGoDistribution :: total-bytes": {
+      "value": 75481644.0,
+      "unit": "total-bytes",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/cmd/bench/distsize"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.999-ns": {
+      "value": 160014.0,
+      "unit": "p99.999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=global/fluff=false-16 :: p99.9999-ns": {
+      "value": 793987.0,
+      "unit": "p99.9999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.999-ns": {
+      "value": 157139.5,
+      "unit": "p99.999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=heap/fluff=false-16 :: p99.9999-ns": {
+      "value": 171530.0,
+      "unit": "p99.9999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.999-ns": {
+      "value": 158889.0,
+      "unit": "p99.999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    },
+    "golang.org/x/benchmarks/gc_latency :: BenchmarkGCLatency/how=stack/fluff=false-16 :: p99.9999-ns": {
+      "value": 169630.0,
+      "unit": "p99.9999-ns",
+      "direction": "lower_is_better",
+      "group": "golang.org/x/benchmarks/gc_latency"
+    }
+  }
+}
