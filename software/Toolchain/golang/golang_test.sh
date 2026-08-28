@@ -138,6 +138,10 @@ install_dependencies() {
 
 configure_go_environment() {
     export GOROOT="${GO_INSTALL_DIR}"
+    # Bent invokes the Go command by its basename while it prepares each
+    # official benchmark module.  Make this task's Go installation available
+    # to those child processes instead of relying on a runner-wide Go command.
+    export PATH="${GO_INSTALL_DIR}/bin:${PATH}"
     export GOCACHE="${GO_RUNTIME_DIR}/go-cache"
     export GOMODCACHE="${GO_RUNTIME_DIR}/go-mod-cache"
     export GOPATH="${GO_RUNTIME_DIR}/gopath"
