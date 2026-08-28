@@ -10,14 +10,16 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
-GO_BENCHMARKS_URL="${GO_BENCHMARKS_URL:-https://go.googlesource.com/benchmarks}"
+GO_BENCHMARKS_URL="${GO_BENCHMARKS_URL:-https://github.com/golang/benchmarks.git}"
 GO_BENCHMARKS_COMMIT="${GO_BENCHMARKS_COMMIT:-70693762b6a0d7f393892f0ace40979e3cbe5737}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
+GO_RUNTIME_ROOT="/home/runner/golang-work"
 
 GO_INSTALL_DIR=""
 BENCHMARKS_DIR=""
 GO_BIN=""
 GO_ARCH=""
+GO_RUNTIME_DIR=""
 GCC_VERSION_STRING=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
@@ -74,7 +76,13 @@ initialize_runtime() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
 
-    export TMPDIR="${PERF_WORK_DIR}/tmp"
+    GO_RUNTIME_DIR="${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    if ! mkdir -p "${GO_RUNTIME_DIR}/tmp"; then
+        log "ERROR: cannot create the Go runtime directory: ${GO_RUNTIME_DIR}"
+        return 30
+    fi
+
+    export TMPDIR="${GO_RUNTIME_DIR}/tmp"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
     GO_INSTALL_DIR="${PERF_WORK_DIR}/go-install"
@@ -130,9 +138,9 @@ install_dependencies() {
 
 configure_go_environment() {
     export GOROOT="${GO_INSTALL_DIR}"
-    export GOCACHE="${PERF_WORK_DIR}/go-cache"
-    export GOMODCACHE="${PERF_WORK_DIR}/go-mod-cache"
-    export GOPATH="${PERF_WORK_DIR}/gopath"
+    export GOCACHE="${GO_RUNTIME_DIR}/go-cache"
+    export GOMODCACHE="${GO_RUNTIME_DIR}/go-mod-cache"
+    export GOPATH="${GO_RUNTIME_DIR}/gopath"
     export GOTOOLCHAIN=local
     export GOENV=off
     export GOWORK=off
@@ -263,12 +271,13 @@ run_golang_benchmarks() {
         log "ERROR: official Go benchmark suite was not prepared"
         return 50
     fi
-    log "running official golang.org/x/benchmarks/cmd/bench suite"
+    log "running the official golang.org/x/benchmarks Go test benchmark suite"
     if ! (
         cd "${BENCHMARKS_DIR}"
-        "${GO_BIN}" run ./cmd/bench -goroot "${GO_INSTALL_DIR}"
+        "${GO_BIN}" test -v -run=none -short -bench=. -count=6 \
+            golang.org/x/benchmarks/...
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
-        log "ERROR: official Go benchmark suite failed"
+        log "ERROR: official Go test benchmark suite failed"
         return 50
     fi
     if [[ ! -s "${RESULTS_DIR}/benchmark_go_bench.txt" ]]; then
@@ -282,7 +291,25 @@ run_golang_benchmarks() {
 }
 
 stop_golang_runtime() {
-    log "Go benchmark suite has no background service to stop"
+    initialize_runtime || return $?
+    configure_go_environment
+    if [[ ! -e "${GO_RUNTIME_DIR}" ]]; then
+        log "Go benchmark suite has no background service to stop"
+        return
+    fi
+    if [[ "${GO_RUNTIME_DIR}" != "${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+        log "ERROR: refusing to clean unexpected Go runtime directory: ${GO_RUNTIME_DIR}"
+        return 50
+    fi
+    if ! chmod -R u+w "${GO_RUNTIME_DIR}"; then
+        log "ERROR: failed to make the private Go runtime directory writable for cleanup"
+        return 50
+    fi
+    if ! rm -rf -- "${GO_RUNTIME_DIR}"; then
+        log "ERROR: failed to remove the private Go runtime directory"
+        return 50
+    fi
+    log "removed private Go runtime directory: ${GO_RUNTIME_DIR}"
 }
 
 standalone_runtime() {
@@ -397,7 +424,7 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Install the official precompiled Go release and run the official
-golang.org/x/benchmarks/cmd/bench suite.
+golang.org/x/benchmarks Go test benchmark suite.
 
 Options:
   --version VERSION       Go version (default: ${SOFTWARE_VERSION})

@@ -1,8 +1,8 @@
 # Go 性能测试说明
 
 本目录使用 Go 官方发布的 Linux 预编译二进制包，并运行 Go 官方
-`golang.org/x/benchmarks/cmd/bench` 性能入口，对 x86_64 与 aarch64 进行开箱
-性能对比。
+`golang.org/x/benchmarks` 的 Go test 基准，对 x86_64 与 aarch64 进行开箱性能
+对比。
 
 Framework 通过 `case.yaml` 调用 `golang_test.sh` 的 `build`、`start`、`test`、
 `stop` 四阶段；直接执行入口脚本会按相同顺序运行并生成单机结果。
@@ -34,7 +34,9 @@ sha256sum go1.27.0.linux-amd64.tar.gz
 tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-components=1
 ```
 
-解压目标为本次任务私有目录 `${PERF_WORK_DIR}/go-install`。脚本执行以下命令，
+解压目标为本次任务私有目录 `${PERF_WORK_DIR}/go-install`。Go 的临时目录、模块
+缓存、编译缓存和 GOPATH 位于
+`/home/runner/golang-work/<版本>/<架构>/<运行 ID>`，不写入 `/tmp`。脚本执行以下命令，
 确认实际版本和二进制架构与清单一致：
 
 ```bash
@@ -51,22 +53,22 @@ tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-co
 `start` 阶段准备固定提交的官方 benchmarks 仓库：
 
 ```text
-仓库：https://go.googlesource.com/benchmarks
+仓库：https://github.com/golang/benchmarks.git
 提交：70693762b6a0d7f393892f0ace40979e3cbe5737
 ```
 
-脚本从上述官方仓库抓取固定提交。测试阶段直接执行官方入口，
-不自行筛选标准库包、迭代次数或基准参数：
+脚本从上述 Go 官方组织仓库抓取固定提交。测试阶段采用该提交中
+`cmd/bench/gotest.go` 的官方 Go test 基准命令：
 
 ```bash
 cd "${PERF_WORK_DIR}/go-benchmarks"
-"${PERF_WORK_DIR}/go-install/bin/go" run ./cmd/bench \
-  -goroot "${PERF_WORK_DIR}/go-install"
+"${PERF_WORK_DIR}/go-install/bin/go" test -v -run=none -short -bench=. -count=6 \
+  golang.org/x/benchmarks/...
 ```
 
-该入口使用其当前固定提交中的默认矩阵，包含 Go test 基准、发行包体积、Bent
-微基准和 Sweet 宏基准；本项目不另行添加或删除其中的场景。完整原始控制台输出
-保存为 `benchmark_go_bench.txt`。
+该命令覆盖官方仓库中带 benchmark 的 Go test 包；`-short`、`-bench=.` 和
+`-count=6` 均与官方 `cmd/bench/gotest.go` 一致。完整原始控制台输出保存为
+`benchmark_go_bench.txt`。
 
 可脱离 Workflow 执行完整流程：
 
@@ -104,9 +106,10 @@ BenchmarkExample-8  100  12.5 ns/op  4 B/op  2 allocs/op
 
 `case.yaml` 声明以下必需产物：
 
-- `benchmark_go_bench.txt`：官方 `cmd/bench` 的完整控制台输出；
+- `benchmark_go_bench.txt`：官方 Go test 基准命令的完整控制台输出；
 - `benchmark_golang.json`：由原始 benchmark 字段规范化后的结构化结果。
 
-Go 基准没有后台服务，`stop` 阶段不停止系统进程。独立执行时，脚本只删除本次
-任务在 `/tmp/golang-perf/local-<运行 ID>` 创建的私有工作目录；指定
+Go 基准没有后台服务。`stop` 阶段解除本次任务 Go 运行目录中的只读权限并删除该
+目录。独立执行时，脚本还会删除本次任务在
+`/tmp/golang-perf/local-<运行 ID>` 创建的私有工作目录；指定
 `--keep-workdir` 时保留该目录用于排查。`--results-dir` 指定的结果目录不会被删除。
