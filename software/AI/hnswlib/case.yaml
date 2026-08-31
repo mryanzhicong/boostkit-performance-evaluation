@@ -22,41 +22,22 @@ execution:
       function: stop_hnswlib_runtime
   timeout_minutes: 60
 outputs:
-  benchmark_speedtest:
-    path: benchmark_speedtest.json
+  benchmark_hnswlib:
+    path: benchmark_hnswlib.json
     stage: test
     format: json
     required: true
-  speedtest_raw:
-    path: speedtest_stdout.log
-    stage: test
-    format: text
-    required: true
-  speedtest_log:
-    path: log2_128_t1.txt
+  benchmark_raw:
+    path: hnswlib_ann_raw.log
     stage: test
     format: text
     required: true
 metrics:
-  source: benchmark_speedtest
-  definitions:
-    "np.mean(times)":
-      path: results.mean.value
-      unit: seconds
-      direction: lower_is_better
-    "np.median(times)":
-      path: results.median.value
-      unit: seconds
-      direction: lower_is_better
-    "np.std(times)":
-      path: results.std.value
-      unit: seconds
-      direction: lower_is_better
-    construction_time:
-      path: results.construction_time.value
-      unit: seconds
-      direction: lower_is_better
-    recall:
-      path: results.recall.value
-      unit: ratio
-      direction: higher_is_better
+  source: benchmark_hnswlib
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
