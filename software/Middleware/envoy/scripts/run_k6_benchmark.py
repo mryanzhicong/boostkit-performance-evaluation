@@ -38,10 +38,12 @@ def value(metrics: dict[str, Any], metric: str, field: str, scenario: str) -> fl
     entry = metrics.get(metric)
     if not isinstance(entry, dict):
         raise TypeError(f"{scenario}: k6 summary is missing {metric}")
-    values = entry.get("values")
+    values = entry.get("values", entry)
     if not isinstance(values, dict):
-        raise TypeError(f"{scenario}: k6 summary has invalid {metric}.values")
+        raise TypeError(f"{scenario}: k6 summary has invalid {metric} values")
     result = values.get(field)
+    if result is None and field == "rate":
+        result = values.get("value")
     if isinstance(result, bool) or not isinstance(result, (int, float)):
         raise TypeError(f"{scenario}: k6 summary is missing {metric}.{field}")
     result = float(result)
