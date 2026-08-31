@@ -1,0 +1,202 @@
+{
+  "software": "envoy",
+  "category": "Middleware",
+  "version": "1.39.1",
+  "architecture": "x86_64",
+  "run_id": "33368362497-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-08-31T07:26:34Z",
+    "category": "Middleware",
+    "software": "envoy",
+    "requested_version": "1.39.1",
+    "actual_version": "1.39.1",
+    "architecture": "x86_64",
+    "run_id": "33368362497-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "tool": "k6",
+      "vus": 30,
+      "duration_seconds": 20,
+      "connection_reuse": false,
+      "scenarios": {
+        "direct_response": "TLS listener with Envoy direct_response 200",
+        "reverse_proxy": "TLS listener forwarding to a local Envoy backend"
+      }
+    }
+  },
+  "parameter_signature": "5cd132593543aad207d450b27749d4f99845fee4b0c6695cbe42e96fb76cc44b",
+  "test_tools": {
+    "k6": {
+      "version": "2.2.0"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-08-31T07:26:29Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-08-31T07:26:29Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1064861696 29400760320    67313664  2150621184 31059050496\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-08-31T07:27:19Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1273917440 29191278592   358502400  2442375168 30849994752\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "raw_benchmark_output": {
+      "path": "benchmark_envoy_raw.log",
+      "size": 8482
+    },
+    "benchmark_result": {
+      "benchmark": "envoy_single_machine_https",
+      "software": "envoy",
+      "version": "1.39.1",
+      "architecture": "x86_64",
+      "timestamp": "2026-08-31T07:27:16Z",
+      "parameters": {
+        "tool": "k6",
+        "vus": 30,
+        "duration_seconds": 20,
+        "connection_reuse": false,
+        "scenarios": {
+          "direct_response": "TLS listener with Envoy direct_response 200",
+          "reverse_proxy": "TLS listener forwarding to a local Envoy backend"
+        }
+      },
+      "metric_contract": {
+        "scope": "k6 summary fields for each declared HTTPS scenario",
+        "source": "http_reqs and http_req_duration",
+        "failure_policy": "http_req_failed.rate must be zero"
+      },
+      "results": {
+        "direct_response :: http_reqs.count": {
+          "source_name": "direct_response :: http_reqs.count",
+          "source_field": "http_reqs.count",
+          "value": 153905.0,
+          "unit": "requests",
+          "direction": "higher_is_better",
+          "group": "HTTPS direct response"
+        },
+        "direct_response :: http_reqs.rate": {
+          "source_name": "direct_response :: http_reqs.rate",
+          "source_field": "http_reqs.rate",
+          "value": 7693.405068764686,
+          "unit": "requests/s",
+          "direction": "higher_is_better",
+          "group": "HTTPS direct response"
+        },
+        "direct_response :: http_req_duration.avg": {
+          "source_name": "direct_response :: http_req_duration.avg",
+          "source_field": "http_req_duration.avg",
+          "value": 1.397815928520842,
+          "unit": "ms",
+          "direction": "lower_is_better",
+          "group": "HTTPS direct response"
+        },
+        "direct_response :: http_req_duration.p(95)": {
+          "source_name": "direct_response :: http_req_duration.p(95)",
+          "source_field": "http_req_duration.p(95)",
+          "value": 3.9897359999999997,
+          "unit": "ms",
+          "direction": "lower_is_better",
+          "group": "HTTPS direct response"
+        },
+        "reverse_proxy :: http_reqs.count": {
+          "source_name": "reverse_proxy :: http_reqs.count",
+          "source_field": "http_reqs.count",
+          "value": 139850.0,
+          "unit": "requests",
+          "direction": "higher_is_better",
+          "group": "HTTPS reverse proxy"
+        },
+        "reverse_proxy :: http_reqs.rate": {
+          "source_name": "reverse_proxy :: http_reqs.rate",
+          "source_field": "http_reqs.rate",
+          "value": 6991.351662099878,
+          "unit": "requests/s",
+          "direction": "higher_is_better",
+          "group": "HTTPS reverse proxy"
+        },
+        "reverse_proxy :: http_req_duration.avg": {
+          "source_name": "reverse_proxy :: http_req_duration.avg",
+          "source_field": "http_req_duration.avg",
+          "value": 2.005362793972103,
+          "unit": "ms",
+          "direction": "lower_is_better",
+          "group": "HTTPS reverse proxy"
+        },
+        "reverse_proxy :: http_req_duration.p(95)": {
+          "source_name": "reverse_proxy :: http_req_duration.p(95)",
+          "source_field": "http_req_duration.p(95)",
+          "value": 5.868132499999999,
+          "unit": "ms",
+          "direction": "lower_is_better",
+          "group": "HTTPS reverse proxy"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "direct_response :: http_reqs.count": {
+      "value": 153905.0,
+      "unit": "requests",
+      "direction": "higher_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_reqs.rate": {
+      "value": 7693.405068764686,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_req_duration.avg": {
+      "value": 1.397815928520842,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_req_duration.p(95)": {
+      "value": 3.9897359999999997,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS direct response"
+    },
+    "reverse_proxy :: http_reqs.count": {
+      "value": 139850.0,
+      "unit": "requests",
+      "direction": "higher_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_reqs.rate": {
+      "value": 6991.351662099878,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_req_duration.avg": {
+      "value": 2.005362793972103,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_req_duration.p(95)": {
+      "value": 5.868132499999999,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS reverse proxy"
+    }
+  }
+}
