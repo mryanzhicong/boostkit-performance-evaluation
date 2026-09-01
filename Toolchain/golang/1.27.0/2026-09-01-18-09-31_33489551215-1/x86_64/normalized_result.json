@@ -1,0 +1,3206 @@
+{
+  "software": "golang",
+  "category": "Toolchain",
+  "version": "1.27.0",
+  "architecture": "x86_64",
+  "run_id": "33489551215-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-09-01T08:56:11Z",
+    "category": "Toolchain",
+    "software": "golang",
+    "requested_version": "1.27.0",
+    "actual_version": "1.27.0",
+    "architecture": "x86_64",
+    "run_id": "33489551215-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "components": {
+        "install": [
+          "go",
+          "install",
+          "golang.org/x/benchmarks/cmd/bent@latest"
+        ],
+        "run": [
+          "bent",
+          "-N",
+          "15"
+        ]
+      },
+      "suite": "golang.org/x/benchmarks/cmd/bent",
+      "configuration_files": [
+        "suites.toml",
+        "benchmarks-100.toml",
+        "configurations.toml"
+      ],
+      "configuration": {
+        "name": "Baseline",
+        "run_environment": [
+          "GOGC=100",
+          "GOMAXPROCS=$(nproc)"
+        ]
+      },
+      "aggregation": "median"
+    }
+  },
+  "parameter_signature": "972c706a6d98ecc90d62ff69efd3659ded3edc196f25e2f6b11b796bd17cb14d",
+  "test_tools": {
+    "bent": {
+      "version": "latest"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-09-01T08:56:06Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP4)",
+    "kernel": "6.6.0-159.4.10.164.oe2403sp4.x86_64",
+    "cpu_model": "General Purpose Processor",
+    "cpu_count": 16,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-09-01T08:56:06Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1073229824 29296443392    66867200  2246352896 31050682368\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "runtime_after": {
+    "collected_at": "2026-09-01T09:44:22Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     32123912192  1337237504 29020053504   382791680  2576916480 30786674688\nSwap:              0           0           0",
+    "cpu_governor": ""
+  },
+  "sources": {
+    "official_benchmark": {
+      "path": "benchmark_go_bench.txt",
+      "size": 371785
+    },
+    "benchmark_result": {
+      "benchmark": "golang_official_bent",
+      "software": "golang",
+      "version": "1.27.0",
+      "architecture": "x86_64",
+      "timestamp": "2026-09-01T09:44:19Z",
+      "parameters": {
+        "components": {
+          "install": [
+            "go",
+            "install",
+            "golang.org/x/benchmarks/cmd/bent@latest"
+          ],
+          "run": [
+            "bent",
+            "-N",
+            "15"
+          ]
+        },
+        "suite": "golang.org/x/benchmarks/cmd/bent",
+        "configuration_files": [
+          "suites.toml",
+          "benchmarks-100.toml",
+          "configurations.toml"
+        ],
+        "configuration": {
+          "name": "Baseline",
+          "run_environment": [
+            "GOGC=100",
+            "GOMAXPROCS=$(nproc)"
+          ]
+        },
+        "aggregation": "median"
+      },
+      "metric_contract": {
+        "scope": "every value/unit pair emitted by the official Bent benchmark command",
+        "identity": "official pkg tag + benchmark name + original unit",
+        "aggregation": "median of repeated official measurements"
+      },
+      "runtime_context": {
+        "packages": [
+          "git.sr.ht/~nelsam/gxui/interval",
+          "github.com/IBM/sarama",
+          "github.com/Masterminds/semver/v3",
+          "github.com/Workiva/go-datastructures/augmentedtree",
+          "github.com/Workiva/go-datastructures/bitarray",
+          "github.com/Workiva/go-datastructures/btree/palm",
+          "github.com/Workiva/go-datastructures/queue",
+          "github.com/Workiva/go-datastructures/rangetree",
+          "github.com/Workiva/go-datastructures/rangetree/skiplist",
+          "github.com/Workiva/go-datastructures/rtree/hilbert",
+          "github.com/Workiva/go-datastructures/set",
+          "github.com/Workiva/go-datastructures/tree/avl",
+          "github.com/Workiva/go-datastructures/trie/yfast",
+          "github.com/benhoyt/goawk/interp",
+          "github.com/bits-and-blooms/bitset",
+          "github.com/cespare/xxhash/v2",
+          "github.com/dustin/go-broadcast",
+          "github.com/dustin/go-humanize",
+          "github.com/ericlagergren/decimal_benchmarks",
+          "github.com/ethereum/go-ethereum/consensus/ethash",
+          "github.com/ethereum/go-ethereum/crypto/ecies",
+          "github.com/ethereum/go-ethereum/trie",
+          "github.com/ethereum/go-ethereum/whisper/whisperv6",
+          "github.com/flanglet/kanzi-go/v2/benchmark",
+          "github.com/gohugoio/hugo/helpers",
+          "github.com/gohugoio/hugo/hugolib",
+          "github.com/google/uuid",
+          "github.com/minio/minio/cmd",
+          "github.com/rcrowley/go-metrics",
+          "github.com/tetratelabs/wazero/internal/integration_test/bench",
+          "github.com/uber-go/tally/v4",
+          "gitlab.com/golang-commonmark/markdown",
+          "go.uber.org/thriftrw/gen",
+          "go.uber.org/zap/zapcore",
+          "gonum.org/v1/gonum/graph/community",
+          "gonum.org/v1/gonum/graph/topo",
+          "gonum.org/v1/gonum/graph/traverse",
+          "gonum.org/v1/gonum/lapack/gonum",
+          "gonum.org/v1/gonum/mat",
+          "google.golang.org/protobuf/encoding",
+          "google.golang.org/protobuf/internal/benchmarks/micro",
+          "google.golang.org/protobuf/internal/encoding/json",
+          "google.golang.org/protobuf/proto",
+          "google.golang.org/protobuf/reflect/protoreflect",
+          "k8s.io/client-go/tools/cache",
+          "k8s.io/client-go/util/workqueue",
+          "zombiezen.com/go/capnproto2"
+        ],
+        "suites": [
+          "benhoyt_goawk-BuiltinGsubAmpersand",
+          "benhoyt_goawk-NativeFunc",
+          "benhoyt_goawk-RecursiveFunc",
+          "benhoyt_goawk-RepeatNew",
+          "benhoyt_goawk-SimpleBuiltins",
+          "bloom_bits-BitSetExtractDeposit%2Fsize%3D64%2Ffn%3DDepositTo",
+          "capnproto2-Growth_MultiSegment",
+          "capnproto2-Unmarshal_Reuse",
+          "cespare_xxhash-DigestBytes%2F100B",
+          "commonmark_markdown-RenderSpecNoHTML",
+          "dustin_broadcast-DirectSend",
+          "dustin_broadcast-ParallelBrodcast",
+          "dustin_humanize-BigCommas",
+          "dustin_humanize-Commaf",
+          "dustin_humanize-ParseBytes",
+          "dustin_humanize-ParseSI",
+          "ericlagergren_decimal-Mandelbrot_decimal_GDA_9",
+          "ericlagergren_decimal-Pi%2Ffoo%3Dapmckinlay%2Fprec%3D19",
+          "ericlagergren_decimal-Pi%2Ffoo%3Dcockroachdb%2Fapd%2Fprec%3D100",
+          "ericlagergren_decimal-Pi%2Ffoo%3Dgo-inf%2Fprec%3D100",
+          "ethereum_ecies-GenSharedKeyP256",
+          "ethereum_ethash-DifficultyCalculator%2Fu256-homestead",
+          "ethereum_trie-DecodeShortNodeUnsafe",
+          "ethereum_whisper-DecryptionAsymInvalid",
+          "ethereum_whisper-DecryptionSymInvalid",
+          "gonum_community-NewDirectedLayers%2FgraphSize%3D10%2CnumGraphs%3D1",
+          "gonum_community-NewDirectedLayers%2FgraphSize%3D1000%2CnumGraphs%3D1",
+          "gonum_community-NewUndirectedLayers%2FgraphSize%3D1000%2CnumGraphs%3D10",
+          "gonum_lapack_native-Dgeev%2FCirculant5",
+          "gonum_lapack_native-Dlantb%2FFrobeniusLowerNonUnitN%3D10000K%3D2",
+          "gonum_mat-AddScaledVec10Inc1",
+          "gonum_mat-CholeskyFactorize%2Fn%3D10",
+          "gonum_mat-CholeskyInverseTo%2Fn%3D100",
+          "gonum_mat-MarshalToVecDense10",
+          "gonum_mat-Pool100by100Uncleared",
+          "gonum_mat-TriMulDiag%2FBenchmarkTriMulDiag100",
+          "gonum_mat-UnmarshalVecDense10",
+          "gonum_topo-SortStabilizedPath_100000",
+          "gonum_traverse-WalkAllDepthFirstGnp_100_half",
+          "gproto_encoding-TextDecode",
+          "gproto_json-Bool",
+          "gproto_json-Int",
+          "gproto_micro-EmptyMessage%2FWire%2FMarshal",
+          "gproto_micro-Extension%2FGet%2FSet",
+          "gproto_proto-Decode%2Fbasic_scalar_types_%28%2Atest.TestAllTypes%29",
+          "gproto_proto-Decode%2Ffield_type_mismatch_%28%2Atest3.TestAllTypes%29",
+          "gproto_proto-Decode%2Fjust_at_recursion_limit_%28%2Atest3.TestAllTypes%29",
+          "gproto_proto-Decode%2Frequired_field_in_oneof_message_set_%28%2Atest.TestRequiredForeign%29",
+          "gproto_proto-Decode%2Frequired_group_set_%28%2Arequired_opaque.Group%29",
+          "gproto_proto-EqualWithDeeplyNestedEqual",
+          "gproto_proto-EqualWithDeeplyNestedIdenticalPtr",
+          "gproto_reflect-Value%2FInterface",
+          "hugo_helpers-AbsURL%2Fabsurl",
+          "hugo_helpers-RelURL",
+          "hugo_hugolib-CreateShortcodePlaceholders",
+          "k8s_cache-EachListItemWithAlloc%2FPodList",
+          "k8s_workqueue-DelayingQueue_AddAfter",
+          "kanzi-ANS0",
+          "kanzi-BWTSmallBlock",
+          "kanzi-CM",
+          "kanzi-Huffman",
+          "minio-AppendMsgBatchJobExpire",
+          "minio-AppendMsgBucketStats",
+          "minio-DecodeBatchJobKeyRotateV1",
+          "minio-DecodeBucketStats",
+          "minio-EncodedataUsageCacheInfo",
+          "minio-MarshalMsgBatchJobReplicateFlags",
+          "minio-UnmarshalBatchJobKeyRotateV1",
+          "minio-UnmarshalBucketStats",
+          "minio-UnmarshalReplicationMRFStats",
+          "nelsam_gxui_interval-General",
+          "rcrowley_metrics-Histogram",
+          "rcrowley_metrics-Timer",
+          "semver-CheckVersionRange",
+          "semver-CoerceNewVersionSimple",
+          "semver-ValidateVersionRangeFail",
+          "shopify_sarama-ZstdMemoryConsumption%2Fno_drain",
+          "shopify_sarama-_getMetricNameForTopic",
+          "thriftrw_gen-RoundTrip%2FContainersOfContainers%2FDecode",
+          "thriftrw_gen-RoundTrip%2FContainersOfContainers%2FEncode",
+          "thriftrw_gen-RoundTrip%2FPrimitiveOptionalStruct%2FStreaming_Decode",
+          "uber_tally-ScopeTaggedCachedSubscopes",
+          "uber_tally-TimerReport",
+          "uber_zap-JSONLogMarshalerFunc",
+          "uuid-New",
+          "uuid-UUID_MarshalJSON",
+          "uuid-UUID_UnmarshalJSON",
+          "wazero-Compilation%2Fwithout_extern_cache",
+          "workiva_augmentedtree-AddItems",
+          "workiva_avl-ImmutableInsert",
+          "workiva_bitarray-CompressedIntersects",
+          "workiva_btree_palm-BulkGet",
+          "workiva_hilbert-BulkUpdatePoints",
+          "workiva_queue-PriorityQueue",
+          "workiva_rangetree-Apply",
+          "workiva_rangetree-ImmutableInsertSecondDimension",
+          "workiva_rangetree_skiplist-MultiDimensionInsertAtZeroDimension",
+          "workiva_set-Clear",
+          "workiva_set-Exists",
+          "workiva_triey-Iterator"
+        ],
+        "bent_measurements": 2310
+      },
+      "results": {
+        "git.sr.ht/~nelsam/gxui/interval :: BenchmarkGeneral-16 :: ns/op": {
+          "source_name": "git.sr.ht/~nelsam/gxui/interval :: BenchmarkGeneral-16 :: ns/op",
+          "source_benchmark": "BenchmarkGeneral-16",
+          "source_package": "git.sr.ht/~nelsam/gxui/interval",
+          "source_field": "ns/op",
+          "raw_value": 202.8,
+          "raw_unit": "ns/op",
+          "value": 202.8,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "git.sr.ht/~nelsam/gxui/interval"
+        },
+        "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: B/op": {
+          "source_name": "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: B/op",
+          "source_benchmark": "BenchmarkZstdMemoryConsumption/no_drain-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "B/op",
+          "raw_value": 9749.0,
+          "raw_unit": "B/op",
+          "value": 9749.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: allocs/op": {
+          "source_name": "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: allocs/op",
+          "source_benchmark": "BenchmarkZstdMemoryConsumption/no_drain-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "allocs/op",
+          "raw_value": 4.0,
+          "raw_unit": "allocs/op",
+          "value": 4.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: ns/op": {
+          "source_name": "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: ns/op",
+          "source_benchmark": "BenchmarkZstdMemoryConsumption/no_drain-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "ns/op",
+          "raw_value": 355807.0,
+          "raw_unit": "ns/op",
+          "value": 355807.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: B/op": {
+          "source_name": "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: B/op",
+          "source_benchmark": "Benchmark_getMetricNameForTopic-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "B/op",
+          "raw_value": 16.0,
+          "raw_unit": "B/op",
+          "value": 16.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: allocs/op": {
+          "source_name": "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: allocs/op",
+          "source_benchmark": "Benchmark_getMetricNameForTopic-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "allocs/op",
+          "raw_value": 1.0,
+          "raw_unit": "allocs/op",
+          "value": 1.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: ns/op": {
+          "source_name": "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: ns/op",
+          "source_benchmark": "Benchmark_getMetricNameForTopic-16",
+          "source_package": "github.com/IBM/sarama",
+          "source_field": "ns/op",
+          "raw_value": 53.98,
+          "raw_unit": "ns/op",
+          "value": 53.98,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/IBM/sarama"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: B/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: B/op",
+          "source_benchmark": "BenchmarkCheckVersionRange-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: allocs/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: allocs/op",
+          "source_benchmark": "BenchmarkCheckVersionRange-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: ns/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: ns/op",
+          "source_benchmark": "BenchmarkCheckVersionRange-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "ns/op",
+          "raw_value": 26.65,
+          "raw_unit": "ns/op",
+          "value": 26.65,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: B/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: B/op",
+          "source_benchmark": "BenchmarkCoerceNewVersionSimple-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "B/op",
+          "raw_value": 128.0,
+          "raw_unit": "B/op",
+          "value": 128.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: allocs/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: allocs/op",
+          "source_benchmark": "BenchmarkCoerceNewVersionSimple-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "allocs/op",
+          "raw_value": 2.0,
+          "raw_unit": "allocs/op",
+          "value": 2.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: ns/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: ns/op",
+          "source_benchmark": "BenchmarkCoerceNewVersionSimple-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "ns/op",
+          "raw_value": 91.43,
+          "raw_unit": "ns/op",
+          "value": 91.43,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: B/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: B/op",
+          "source_benchmark": "BenchmarkValidateVersionRangeFail-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "B/op",
+          "raw_value": 189.0,
+          "raw_unit": "B/op",
+          "value": 189.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: allocs/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: allocs/op",
+          "source_benchmark": "BenchmarkValidateVersionRangeFail-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "allocs/op",
+          "raw_value": 7.0,
+          "raw_unit": "allocs/op",
+          "value": 7.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: ns/op": {
+          "source_name": "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: ns/op",
+          "source_benchmark": "BenchmarkValidateVersionRangeFail-16",
+          "source_package": "github.com/Masterminds/semver/v3",
+          "source_field": "ns/op",
+          "raw_value": 311.5,
+          "raw_unit": "ns/op",
+          "value": 311.5,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Masterminds/semver/v3"
+        },
+        "github.com/Workiva/go-datastructures/augmentedtree :: BenchmarkAddItems-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/augmentedtree :: BenchmarkAddItems-16 :: ns/op",
+          "source_benchmark": "BenchmarkAddItems-16",
+          "source_package": "github.com/Workiva/go-datastructures/augmentedtree",
+          "source_field": "ns/op",
+          "raw_value": 120551.0,
+          "raw_unit": "ns/op",
+          "value": 120551.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/augmentedtree"
+        },
+        "github.com/Workiva/go-datastructures/bitarray :: BenchmarkCompressedIntersects-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/bitarray :: BenchmarkCompressedIntersects-16 :: ns/op",
+          "source_benchmark": "BenchmarkCompressedIntersects-16",
+          "source_package": "github.com/Workiva/go-datastructures/bitarray",
+          "source_field": "ns/op",
+          "raw_value": 29.92,
+          "raw_unit": "ns/op",
+          "value": 29.92,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/bitarray"
+        },
+        "github.com/Workiva/go-datastructures/btree/palm :: BenchmarkBulkGet-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/btree/palm :: BenchmarkBulkGet-16 :: ns/op",
+          "source_benchmark": "BenchmarkBulkGet-16",
+          "source_package": "github.com/Workiva/go-datastructures/btree/palm",
+          "source_field": "ns/op",
+          "raw_value": 509602.0,
+          "raw_unit": "ns/op",
+          "value": 509602.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/btree/palm"
+        },
+        "github.com/Workiva/go-datastructures/queue :: BenchmarkPriorityQueue-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/queue :: BenchmarkPriorityQueue-16 :: ns/op",
+          "source_benchmark": "BenchmarkPriorityQueue-16",
+          "source_package": "github.com/Workiva/go-datastructures/queue",
+          "source_field": "ns/op",
+          "raw_value": 369.9,
+          "raw_unit": "ns/op",
+          "value": 369.9,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/queue"
+        },
+        "github.com/Workiva/go-datastructures/rangetree :: BenchmarkApply-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/rangetree :: BenchmarkApply-16 :: ns/op",
+          "source_benchmark": "BenchmarkApply-16",
+          "source_package": "github.com/Workiva/go-datastructures/rangetree",
+          "source_field": "ns/op",
+          "raw_value": 11043.0,
+          "raw_unit": "ns/op",
+          "value": 11043.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/rangetree"
+        },
+        "github.com/Workiva/go-datastructures/rangetree :: BenchmarkImmutableInsertSecondDimension-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/rangetree :: BenchmarkImmutableInsertSecondDimension-16 :: ns/op",
+          "source_benchmark": "BenchmarkImmutableInsertSecondDimension-16",
+          "source_package": "github.com/Workiva/go-datastructures/rangetree",
+          "source_field": "ns/op",
+          "raw_value": 12788815.0,
+          "raw_unit": "ns/op",
+          "value": 12788815.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/rangetree"
+        },
+        "github.com/Workiva/go-datastructures/rangetree/skiplist :: BenchmarkMultiDimensionInsertAtZeroDimension-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/rangetree/skiplist :: BenchmarkMultiDimensionInsertAtZeroDimension-16 :: ns/op",
+          "source_benchmark": "BenchmarkMultiDimensionInsertAtZeroDimension-16",
+          "source_package": "github.com/Workiva/go-datastructures/rangetree/skiplist",
+          "source_field": "ns/op",
+          "raw_value": 939633.0,
+          "raw_unit": "ns/op",
+          "value": 939633.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/rangetree/skiplist"
+        },
+        "github.com/Workiva/go-datastructures/rtree/hilbert :: BenchmarkBulkUpdatePoints-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/rtree/hilbert :: BenchmarkBulkUpdatePoints-16 :: ns/op",
+          "source_benchmark": "BenchmarkBulkUpdatePoints-16",
+          "source_package": "github.com/Workiva/go-datastructures/rtree/hilbert",
+          "source_field": "ns/op",
+          "raw_value": 203245.0,
+          "raw_unit": "ns/op",
+          "value": 203245.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/rtree/hilbert"
+        },
+        "github.com/Workiva/go-datastructures/set :: BenchmarkClear-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/set :: BenchmarkClear-16 :: ns/op",
+          "source_benchmark": "BenchmarkClear-16",
+          "source_package": "github.com/Workiva/go-datastructures/set",
+          "source_field": "ns/op",
+          "raw_value": 27.71,
+          "raw_unit": "ns/op",
+          "value": 27.71,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/set"
+        },
+        "github.com/Workiva/go-datastructures/set :: BenchmarkExists-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/set :: BenchmarkExists-16 :: ns/op",
+          "source_benchmark": "BenchmarkExists-16",
+          "source_package": "github.com/Workiva/go-datastructures/set",
+          "source_field": "ns/op",
+          "raw_value": 14.5,
+          "raw_unit": "ns/op",
+          "value": 14.5,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/set"
+        },
+        "github.com/Workiva/go-datastructures/tree/avl :: BenchmarkImmutableInsert-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/tree/avl :: BenchmarkImmutableInsert-16 :: ns/op",
+          "source_benchmark": "BenchmarkImmutableInsert-16",
+          "source_package": "github.com/Workiva/go-datastructures/tree/avl",
+          "source_field": "ns/op",
+          "raw_value": 617.5,
+          "raw_unit": "ns/op",
+          "value": 617.5,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/tree/avl"
+        },
+        "github.com/Workiva/go-datastructures/trie/yfast :: BenchmarkIterator-16 :: ns/op": {
+          "source_name": "github.com/Workiva/go-datastructures/trie/yfast :: BenchmarkIterator-16 :: ns/op",
+          "source_benchmark": "BenchmarkIterator-16",
+          "source_package": "github.com/Workiva/go-datastructures/trie/yfast",
+          "source_field": "ns/op",
+          "raw_value": 2011.0,
+          "raw_unit": "ns/op",
+          "value": 2011.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/Workiva/go-datastructures/trie/yfast"
+        },
+        "github.com/benhoyt/goawk/interp :: BenchmarkBuiltinGsubAmpersand-16 :: ns/op": {
+          "source_name": "github.com/benhoyt/goawk/interp :: BenchmarkBuiltinGsubAmpersand-16 :: ns/op",
+          "source_benchmark": "BenchmarkBuiltinGsubAmpersand-16",
+          "source_package": "github.com/benhoyt/goawk/interp",
+          "source_field": "ns/op",
+          "raw_value": 8959.0,
+          "raw_unit": "ns/op",
+          "value": 8959.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/benhoyt/goawk/interp"
+        },
+        "github.com/benhoyt/goawk/interp :: BenchmarkNativeFunc-16 :: ns/op": {
+          "source_name": "github.com/benhoyt/goawk/interp :: BenchmarkNativeFunc-16 :: ns/op",
+          "source_benchmark": "BenchmarkNativeFunc-16",
+          "source_package": "github.com/benhoyt/goawk/interp",
+          "source_field": "ns/op",
+          "raw_value": 4538.0,
+          "raw_unit": "ns/op",
+          "value": 4538.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/benhoyt/goawk/interp"
+        },
+        "github.com/benhoyt/goawk/interp :: BenchmarkRecursiveFunc-16 :: ns/op": {
+          "source_name": "github.com/benhoyt/goawk/interp :: BenchmarkRecursiveFunc-16 :: ns/op",
+          "source_benchmark": "BenchmarkRecursiveFunc-16",
+          "source_package": "github.com/benhoyt/goawk/interp",
+          "source_field": "ns/op",
+          "raw_value": 6527.0,
+          "raw_unit": "ns/op",
+          "value": 6527.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/benhoyt/goawk/interp"
+        },
+        "github.com/benhoyt/goawk/interp :: BenchmarkRepeatNew-16 :: ns/op": {
+          "source_name": "github.com/benhoyt/goawk/interp :: BenchmarkRepeatNew-16 :: ns/op",
+          "source_benchmark": "BenchmarkRepeatNew-16",
+          "source_package": "github.com/benhoyt/goawk/interp",
+          "source_field": "ns/op",
+          "raw_value": 65.45,
+          "raw_unit": "ns/op",
+          "value": 65.45,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/benhoyt/goawk/interp"
+        },
+        "github.com/benhoyt/goawk/interp :: BenchmarkSimpleBuiltins-16 :: ns/op": {
+          "source_name": "github.com/benhoyt/goawk/interp :: BenchmarkSimpleBuiltins-16 :: ns/op",
+          "source_benchmark": "BenchmarkSimpleBuiltins-16",
+          "source_package": "github.com/benhoyt/goawk/interp",
+          "source_field": "ns/op",
+          "raw_value": 455.0,
+          "raw_unit": "ns/op",
+          "value": 455.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/benhoyt/goawk/interp"
+        },
+        "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: B/op": {
+          "source_name": "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: B/op",
+          "source_benchmark": "BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16",
+          "source_package": "github.com/bits-and-blooms/bitset",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/bits-and-blooms/bitset"
+        },
+        "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: allocs/op": {
+          "source_name": "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: allocs/op",
+          "source_benchmark": "BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16",
+          "source_package": "github.com/bits-and-blooms/bitset",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/bits-and-blooms/bitset"
+        },
+        "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: ns/op": {
+          "source_name": "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: ns/op",
+          "source_benchmark": "BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16",
+          "source_package": "github.com/bits-and-blooms/bitset",
+          "source_field": "ns/op",
+          "raw_value": 17.55,
+          "raw_unit": "ns/op",
+          "value": 17.55,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/bits-and-blooms/bitset"
+        },
+        "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: MB/s": {
+          "source_name": "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: MB/s",
+          "source_benchmark": "BenchmarkDigestBytes/100B-16",
+          "source_package": "github.com/cespare/xxhash/v2",
+          "source_field": "MB/s",
+          "raw_value": 5125.31,
+          "raw_unit": "MB/s",
+          "value": 5125.31,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/cespare/xxhash/v2"
+        },
+        "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: ns/op": {
+          "source_name": "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: ns/op",
+          "source_benchmark": "BenchmarkDigestBytes/100B-16",
+          "source_package": "github.com/cespare/xxhash/v2",
+          "source_field": "ns/op",
+          "raw_value": 19.51,
+          "raw_unit": "ns/op",
+          "value": 19.51,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/cespare/xxhash/v2"
+        },
+        "github.com/dustin/go-broadcast :: BenchmarkDirectSend-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-broadcast :: BenchmarkDirectSend-16 :: ns/op",
+          "source_benchmark": "BenchmarkDirectSend-16",
+          "source_package": "github.com/dustin/go-broadcast",
+          "source_field": "ns/op",
+          "raw_value": 224.0,
+          "raw_unit": "ns/op",
+          "value": 224.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-broadcast"
+        },
+        "github.com/dustin/go-broadcast :: BenchmarkParallelBrodcast-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-broadcast :: BenchmarkParallelBrodcast-16 :: ns/op",
+          "source_benchmark": "BenchmarkParallelBrodcast-16",
+          "source_package": "github.com/dustin/go-broadcast",
+          "source_field": "ns/op",
+          "raw_value": 357.7,
+          "raw_unit": "ns/op",
+          "value": 357.7,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-broadcast"
+        },
+        "github.com/dustin/go-humanize :: BenchmarkBigCommas-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-humanize :: BenchmarkBigCommas-16 :: ns/op",
+          "source_benchmark": "BenchmarkBigCommas-16",
+          "source_package": "github.com/dustin/go-humanize",
+          "source_field": "ns/op",
+          "raw_value": 255.6,
+          "raw_unit": "ns/op",
+          "value": 255.6,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-humanize"
+        },
+        "github.com/dustin/go-humanize :: BenchmarkCommaf-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-humanize :: BenchmarkCommaf-16 :: ns/op",
+          "source_benchmark": "BenchmarkCommaf-16",
+          "source_package": "github.com/dustin/go-humanize",
+          "source_field": "ns/op",
+          "raw_value": 151.2,
+          "raw_unit": "ns/op",
+          "value": 151.2,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-humanize"
+        },
+        "github.com/dustin/go-humanize :: BenchmarkParseBytes-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-humanize :: BenchmarkParseBytes-16 :: ns/op",
+          "source_benchmark": "BenchmarkParseBytes-16",
+          "source_package": "github.com/dustin/go-humanize",
+          "source_field": "ns/op",
+          "raw_value": 59.06,
+          "raw_unit": "ns/op",
+          "value": 59.06,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-humanize"
+        },
+        "github.com/dustin/go-humanize :: BenchmarkParseSI-16 :: ns/op": {
+          "source_name": "github.com/dustin/go-humanize :: BenchmarkParseSI-16 :: ns/op",
+          "source_benchmark": "BenchmarkParseSI-16",
+          "source_package": "github.com/dustin/go-humanize",
+          "source_field": "ns/op",
+          "raw_value": 258.4,
+          "raw_unit": "ns/op",
+          "value": 258.4,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/dustin/go-humanize"
+        },
+        "github.com/ericlagergren/decimal_benchmarks :: BenchmarkMandelbrot_decimal_GDA_9-16 :: ns/op": {
+          "source_name": "github.com/ericlagergren/decimal_benchmarks :: BenchmarkMandelbrot_decimal_GDA_9-16 :: ns/op",
+          "source_benchmark": "BenchmarkMandelbrot_decimal_GDA_9-16",
+          "source_package": "github.com/ericlagergren/decimal_benchmarks",
+          "source_field": "ns/op",
+          "raw_value": 1477382819.0,
+          "raw_unit": "ns/op",
+          "value": 1477382819.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ericlagergren/decimal_benchmarks"
+        },
+        "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=apmckinlay/prec=19-16 :: ns/op": {
+          "source_name": "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=apmckinlay/prec=19-16 :: ns/op",
+          "source_benchmark": "BenchmarkPi/foo=apmckinlay/prec=19-16",
+          "source_package": "github.com/ericlagergren/decimal_benchmarks",
+          "source_field": "ns/op",
+          "raw_value": 1405.0,
+          "raw_unit": "ns/op",
+          "value": 1405.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ericlagergren/decimal_benchmarks"
+        },
+        "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=cockroachdb/apd/prec=100-16 :: ns/op": {
+          "source_name": "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=cockroachdb/apd/prec=100-16 :: ns/op",
+          "source_benchmark": "BenchmarkPi/foo=cockroachdb/apd/prec=100-16",
+          "source_package": "github.com/ericlagergren/decimal_benchmarks",
+          "source_field": "ns/op",
+          "raw_value": 3705054.0,
+          "raw_unit": "ns/op",
+          "value": 3705054.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ericlagergren/decimal_benchmarks"
+        },
+        "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=go-inf/prec=100-16 :: ns/op": {
+          "source_name": "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=go-inf/prec=100-16 :: ns/op",
+          "source_benchmark": "BenchmarkPi/foo=go-inf/prec=100-16",
+          "source_package": "github.com/ericlagergren/decimal_benchmarks",
+          "source_field": "ns/op",
+          "raw_value": 54775.0,
+          "raw_unit": "ns/op",
+          "value": 54775.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ericlagergren/decimal_benchmarks"
+        },
+        "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: B/op": {
+          "source_name": "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: B/op",
+          "source_benchmark": "BenchmarkDifficultyCalculator/u256-homestead-16",
+          "source_package": "github.com/ethereum/go-ethereum/consensus/ethash",
+          "source_field": "B/op",
+          "raw_value": 64.0,
+          "raw_unit": "B/op",
+          "value": 64.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+        },
+        "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: allocs/op": {
+          "source_name": "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: allocs/op",
+          "source_benchmark": "BenchmarkDifficultyCalculator/u256-homestead-16",
+          "source_package": "github.com/ethereum/go-ethereum/consensus/ethash",
+          "source_field": "allocs/op",
+          "raw_value": 2.0,
+          "raw_unit": "allocs/op",
+          "value": 2.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+        },
+        "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: ns/op": {
+          "source_name": "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: ns/op",
+          "source_benchmark": "BenchmarkDifficultyCalculator/u256-homestead-16",
+          "source_package": "github.com/ethereum/go-ethereum/consensus/ethash",
+          "source_field": "ns/op",
+          "raw_value": 49.49,
+          "raw_unit": "ns/op",
+          "value": 49.49,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+        },
+        "github.com/ethereum/go-ethereum/crypto/ecies :: BenchmarkGenSharedKeyP256-16 :: ns/op": {
+          "source_name": "github.com/ethereum/go-ethereum/crypto/ecies :: BenchmarkGenSharedKeyP256-16 :: ns/op",
+          "source_benchmark": "BenchmarkGenSharedKeyP256-16",
+          "source_package": "github.com/ethereum/go-ethereum/crypto/ecies",
+          "source_field": "ns/op",
+          "raw_value": 52464.0,
+          "raw_unit": "ns/op",
+          "value": 52464.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/crypto/ecies"
+        },
+        "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: B/op": {
+          "source_name": "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: B/op",
+          "source_benchmark": "BenchmarkDecodeShortNodeUnsafe-16",
+          "source_package": "github.com/ethereum/go-ethereum/trie",
+          "source_field": "B/op",
+          "raw_value": 109.0,
+          "raw_unit": "B/op",
+          "value": 109.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/trie"
+        },
+        "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: allocs/op": {
+          "source_name": "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: allocs/op",
+          "source_benchmark": "BenchmarkDecodeShortNodeUnsafe-16",
+          "source_package": "github.com/ethereum/go-ethereum/trie",
+          "source_field": "allocs/op",
+          "raw_value": 3.0,
+          "raw_unit": "allocs/op",
+          "value": 3.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/trie"
+        },
+        "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: ns/op": {
+          "source_name": "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecodeShortNodeUnsafe-16",
+          "source_package": "github.com/ethereum/go-ethereum/trie",
+          "source_field": "ns/op",
+          "raw_value": 76.91,
+          "raw_unit": "ns/op",
+          "value": 76.91,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/trie"
+        },
+        "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionAsymInvalid-16 :: ns/op": {
+          "source_name": "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionAsymInvalid-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecryptionAsymInvalid-16",
+          "source_package": "github.com/ethereum/go-ethereum/whisper/whisperv6",
+          "source_field": "ns/op",
+          "raw_value": 115217.0,
+          "raw_unit": "ns/op",
+          "value": 115217.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/whisper/whisperv6"
+        },
+        "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionSymInvalid-16 :: ns/op": {
+          "source_name": "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionSymInvalid-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecryptionSymInvalid-16",
+          "source_package": "github.com/ethereum/go-ethereum/whisper/whisperv6",
+          "source_field": "ns/op",
+          "raw_value": 52.61,
+          "raw_unit": "ns/op",
+          "value": 52.61,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/ethereum/go-ethereum/whisper/whisperv6"
+        },
+        "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkANS0-16 :: ns/op": {
+          "source_name": "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkANS0-16 :: ns/op",
+          "source_benchmark": "BenchmarkANS0-16",
+          "source_package": "github.com/flanglet/kanzi-go/v2/benchmark",
+          "source_field": "ns/op",
+          "raw_value": 1428786.0,
+          "raw_unit": "ns/op",
+          "value": 1428786.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+        },
+        "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkBWTSmallBlock-16 :: ns/op": {
+          "source_name": "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkBWTSmallBlock-16 :: ns/op",
+          "source_benchmark": "BenchmarkBWTSmallBlock-16",
+          "source_package": "github.com/flanglet/kanzi-go/v2/benchmark",
+          "source_field": "ns/op",
+          "raw_value": 26849281.0,
+          "raw_unit": "ns/op",
+          "value": 26849281.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+        },
+        "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkCM-16 :: ns/op": {
+          "source_name": "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkCM-16 :: ns/op",
+          "source_benchmark": "BenchmarkCM-16",
+          "source_package": "github.com/flanglet/kanzi-go/v2/benchmark",
+          "source_field": "ns/op",
+          "raw_value": 32577939.0,
+          "raw_unit": "ns/op",
+          "value": 32577939.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+        },
+        "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkHuffman-16 :: ns/op": {
+          "source_name": "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkHuffman-16 :: ns/op",
+          "source_benchmark": "BenchmarkHuffman-16",
+          "source_package": "github.com/flanglet/kanzi-go/v2/benchmark",
+          "source_field": "ns/op",
+          "raw_value": 1304879.0,
+          "raw_unit": "ns/op",
+          "value": 1304879.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+        },
+        "github.com/gohugoio/hugo/helpers :: BenchmarkAbsURL/absurl-16 :: ns/op": {
+          "source_name": "github.com/gohugoio/hugo/helpers :: BenchmarkAbsURL/absurl-16 :: ns/op",
+          "source_benchmark": "BenchmarkAbsURL/absurl-16",
+          "source_package": "github.com/gohugoio/hugo/helpers",
+          "source_field": "ns/op",
+          "raw_value": 3.838,
+          "raw_unit": "ns/op",
+          "value": 3.838,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/gohugoio/hugo/helpers"
+        },
+        "github.com/gohugoio/hugo/helpers :: BenchmarkRelURL-16 :: ns/op": {
+          "source_name": "github.com/gohugoio/hugo/helpers :: BenchmarkRelURL-16 :: ns/op",
+          "source_benchmark": "BenchmarkRelURL-16",
+          "source_package": "github.com/gohugoio/hugo/helpers",
+          "source_field": "ns/op",
+          "raw_value": 203.0,
+          "raw_unit": "ns/op",
+          "value": 203.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/gohugoio/hugo/helpers"
+        },
+        "github.com/gohugoio/hugo/hugolib :: BenchmarkCreateShortcodePlaceholders-16 :: ns/op": {
+          "source_name": "github.com/gohugoio/hugo/hugolib :: BenchmarkCreateShortcodePlaceholders-16 :: ns/op",
+          "source_benchmark": "BenchmarkCreateShortcodePlaceholders-16",
+          "source_package": "github.com/gohugoio/hugo/hugolib",
+          "source_field": "ns/op",
+          "raw_value": 39.27,
+          "raw_unit": "ns/op",
+          "value": 39.27,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/gohugoio/hugo/hugolib"
+        },
+        "github.com/google/uuid :: BenchmarkNew-16 :: ns/op": {
+          "source_name": "github.com/google/uuid :: BenchmarkNew-16 :: ns/op",
+          "source_benchmark": "BenchmarkNew-16",
+          "source_package": "github.com/google/uuid",
+          "source_field": "ns/op",
+          "raw_value": 644.6,
+          "raw_unit": "ns/op",
+          "value": 644.6,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/google/uuid"
+        },
+        "github.com/google/uuid :: BenchmarkUUID_MarshalJSON-16 :: ns/op": {
+          "source_name": "github.com/google/uuid :: BenchmarkUUID_MarshalJSON-16 :: ns/op",
+          "source_benchmark": "BenchmarkUUID_MarshalJSON-16",
+          "source_package": "github.com/google/uuid",
+          "source_field": "ns/op",
+          "raw_value": 175.2,
+          "raw_unit": "ns/op",
+          "value": 175.2,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/google/uuid"
+        },
+        "github.com/google/uuid :: BenchmarkUUID_UnmarshalJSON-16 :: ns/op": {
+          "source_name": "github.com/google/uuid :: BenchmarkUUID_UnmarshalJSON-16 :: ns/op",
+          "source_benchmark": "BenchmarkUUID_UnmarshalJSON-16",
+          "source_package": "github.com/google/uuid",
+          "source_field": "ns/op",
+          "raw_value": 246.1,
+          "raw_unit": "ns/op",
+          "value": 246.1,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/google/uuid"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: B/op",
+          "source_benchmark": "BenchmarkAppendMsgBatchJobExpire-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: MB/s",
+          "source_benchmark": "BenchmarkAppendMsgBatchJobExpire-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 2901.32,
+          "raw_unit": "MB/s",
+          "value": 2901.32,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: allocs/op",
+          "source_benchmark": "BenchmarkAppendMsgBatchJobExpire-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: ns/op",
+          "source_benchmark": "BenchmarkAppendMsgBatchJobExpire-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 32.4,
+          "raw_unit": "ns/op",
+          "value": 32.4,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: B/op",
+          "source_benchmark": "BenchmarkAppendMsgBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: MB/s",
+          "source_benchmark": "BenchmarkAppendMsgBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 5074.56,
+          "raw_unit": "MB/s",
+          "value": 5074.56,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: allocs/op",
+          "source_benchmark": "BenchmarkAppendMsgBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: ns/op",
+          "source_benchmark": "BenchmarkAppendMsgBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 89.66,
+          "raw_unit": "ns/op",
+          "value": 89.66,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: B/op",
+          "source_benchmark": "BenchmarkDecodeBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: MB/s",
+          "source_benchmark": "BenchmarkDecodeBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 710.94,
+          "raw_unit": "MB/s",
+          "value": 710.94,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: allocs/op",
+          "source_benchmark": "BenchmarkDecodeBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecodeBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 323.5,
+          "raw_unit": "ns/op",
+          "value": 323.5,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: B/op",
+          "source_benchmark": "BenchmarkDecodeBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: MB/s",
+          "source_benchmark": "BenchmarkDecodeBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 726.99,
+          "raw_unit": "MB/s",
+          "value": 726.99,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: allocs/op",
+          "source_benchmark": "BenchmarkDecodeBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecodeBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 625.9,
+          "raw_unit": "ns/op",
+          "value": 625.9,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: B/op",
+          "source_benchmark": "BenchmarkEncodedataUsageCacheInfo-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: MB/s",
+          "source_benchmark": "BenchmarkEncodedataUsageCacheInfo-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 1702.47,
+          "raw_unit": "MB/s",
+          "value": 1702.47,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: allocs/op",
+          "source_benchmark": "BenchmarkEncodedataUsageCacheInfo-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: ns/op",
+          "source_benchmark": "BenchmarkEncodedataUsageCacheInfo-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 33.48,
+          "raw_unit": "ns/op",
+          "value": 33.48,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: B/op",
+          "source_benchmark": "BenchmarkMarshalMsgBatchJobReplicateFlags-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 208.0,
+          "raw_unit": "B/op",
+          "value": 208.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: allocs/op",
+          "source_benchmark": "BenchmarkMarshalMsgBatchJobReplicateFlags-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 1.0,
+          "raw_unit": "allocs/op",
+          "value": 1.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: ns/op",
+          "source_benchmark": "BenchmarkMarshalMsgBatchJobReplicateFlags-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 65.03,
+          "raw_unit": "ns/op",
+          "value": 65.03,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: B/op",
+          "source_benchmark": "BenchmarkUnmarshalBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: MB/s",
+          "source_benchmark": "BenchmarkUnmarshalBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 1262.85,
+          "raw_unit": "MB/s",
+          "value": 1262.85,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: allocs/op",
+          "source_benchmark": "BenchmarkUnmarshalBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: ns/op",
+          "source_benchmark": "BenchmarkUnmarshalBatchJobKeyRotateV1-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 182.1,
+          "raw_unit": "ns/op",
+          "value": 182.1,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: B/op",
+          "source_benchmark": "BenchmarkUnmarshalBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: MB/s",
+          "source_benchmark": "BenchmarkUnmarshalBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 1509.45,
+          "raw_unit": "MB/s",
+          "value": 1509.45,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: allocs/op",
+          "source_benchmark": "BenchmarkUnmarshalBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: ns/op",
+          "source_benchmark": "BenchmarkUnmarshalBucketStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 301.4,
+          "raw_unit": "ns/op",
+          "value": 301.4,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: B/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: B/op",
+          "source_benchmark": "BenchmarkUnmarshalReplicationMRFStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: MB/s": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: MB/s",
+          "source_benchmark": "BenchmarkUnmarshalReplicationMRFStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "MB/s",
+          "raw_value": 1997.21,
+          "raw_unit": "MB/s",
+          "value": 1997.21,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: allocs/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: allocs/op",
+          "source_benchmark": "BenchmarkUnmarshalReplicationMRFStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: ns/op": {
+          "source_name": "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: ns/op",
+          "source_benchmark": "BenchmarkUnmarshalReplicationMRFStats-16",
+          "source_package": "github.com/minio/minio/cmd",
+          "source_field": "ns/op",
+          "raw_value": 28.04,
+          "raw_unit": "ns/op",
+          "value": 28.04,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/minio/minio/cmd"
+        },
+        "github.com/rcrowley/go-metrics :: BenchmarkHistogram-16 :: ns/op": {
+          "source_name": "github.com/rcrowley/go-metrics :: BenchmarkHistogram-16 :: ns/op",
+          "source_benchmark": "BenchmarkHistogram-16",
+          "source_package": "github.com/rcrowley/go-metrics",
+          "source_field": "ns/op",
+          "raw_value": 14.05,
+          "raw_unit": "ns/op",
+          "value": 14.05,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/rcrowley/go-metrics"
+        },
+        "github.com/rcrowley/go-metrics :: BenchmarkTimer-16 :: ns/op": {
+          "source_name": "github.com/rcrowley/go-metrics :: BenchmarkTimer-16 :: ns/op",
+          "source_benchmark": "BenchmarkTimer-16",
+          "source_package": "github.com/rcrowley/go-metrics",
+          "source_field": "ns/op",
+          "raw_value": 194.0,
+          "raw_unit": "ns/op",
+          "value": 194.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/rcrowley/go-metrics"
+        },
+        "github.com/tetratelabs/wazero/internal/integration_test/bench :: BenchmarkCompilation/without_extern_cache-16 :: ns/op": {
+          "source_name": "github.com/tetratelabs/wazero/internal/integration_test/bench :: BenchmarkCompilation/without_extern_cache-16 :: ns/op",
+          "source_benchmark": "BenchmarkCompilation/without_extern_cache-16",
+          "source_package": "github.com/tetratelabs/wazero/internal/integration_test/bench",
+          "source_field": "ns/op",
+          "raw_value": 10054583.0,
+          "raw_unit": "ns/op",
+          "value": 10054583.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/tetratelabs/wazero/internal/integration_test/bench"
+        },
+        "github.com/uber-go/tally/v4 :: BenchmarkScopeTaggedCachedSubscopes-16 :: ns/op": {
+          "source_name": "github.com/uber-go/tally/v4 :: BenchmarkScopeTaggedCachedSubscopes-16 :: ns/op",
+          "source_benchmark": "BenchmarkScopeTaggedCachedSubscopes-16",
+          "source_package": "github.com/uber-go/tally/v4",
+          "source_field": "ns/op",
+          "raw_value": 490.7,
+          "raw_unit": "ns/op",
+          "value": 490.7,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/uber-go/tally/v4"
+        },
+        "github.com/uber-go/tally/v4 :: BenchmarkTimerReport-16 :: ns/op": {
+          "source_name": "github.com/uber-go/tally/v4 :: BenchmarkTimerReport-16 :: ns/op",
+          "source_benchmark": "BenchmarkTimerReport-16",
+          "source_package": "github.com/uber-go/tally/v4",
+          "source_field": "ns/op",
+          "raw_value": 73.5,
+          "raw_unit": "ns/op",
+          "value": 73.5,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "github.com/uber-go/tally/v4"
+        },
+        "gitlab.com/golang-commonmark/markdown :: BenchmarkRenderSpecNoHTML-16 :: ns/op": {
+          "source_name": "gitlab.com/golang-commonmark/markdown :: BenchmarkRenderSpecNoHTML-16 :: ns/op",
+          "source_benchmark": "BenchmarkRenderSpecNoHTML-16",
+          "source_package": "gitlab.com/golang-commonmark/markdown",
+          "source_field": "ns/op",
+          "raw_value": 3815180.0,
+          "raw_unit": "ns/op",
+          "value": 3815180.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gitlab.com/golang-commonmark/markdown"
+        },
+        "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Decode-16 :: ns/op": {
+          "source_name": "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Decode-16 :: ns/op",
+          "source_benchmark": "BenchmarkRoundTrip/ContainersOfContainers/Decode-16",
+          "source_package": "go.uber.org/thriftrw/gen",
+          "source_field": "ns/op",
+          "raw_value": 30250.0,
+          "raw_unit": "ns/op",
+          "value": 30250.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "go.uber.org/thriftrw/gen"
+        },
+        "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Encode-16 :: ns/op": {
+          "source_name": "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Encode-16 :: ns/op",
+          "source_benchmark": "BenchmarkRoundTrip/ContainersOfContainers/Encode-16",
+          "source_package": "go.uber.org/thriftrw/gen",
+          "source_field": "ns/op",
+          "raw_value": 13258.0,
+          "raw_unit": "ns/op",
+          "value": 13258.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "go.uber.org/thriftrw/gen"
+        },
+        "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/PrimitiveOptionalStruct/Streaming_Decode-16 :: ns/op": {
+          "source_name": "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/PrimitiveOptionalStruct/Streaming_Decode-16 :: ns/op",
+          "source_benchmark": "BenchmarkRoundTrip/PrimitiveOptionalStruct/Streaming_Decode-16",
+          "source_package": "go.uber.org/thriftrw/gen",
+          "source_field": "ns/op",
+          "raw_value": 560.7,
+          "raw_unit": "ns/op",
+          "value": 560.7,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "go.uber.org/thriftrw/gen"
+        },
+        "go.uber.org/zap/zapcore :: BenchmarkJSONLogMarshalerFunc-16 :: ns/op": {
+          "source_name": "go.uber.org/zap/zapcore :: BenchmarkJSONLogMarshalerFunc-16 :: ns/op",
+          "source_benchmark": "BenchmarkJSONLogMarshalerFunc-16",
+          "source_package": "go.uber.org/zap/zapcore",
+          "source_field": "ns/op",
+          "raw_value": 303.6,
+          "raw_unit": "ns/op",
+          "value": 303.6,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "go.uber.org/zap/zapcore"
+        },
+        "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=10,numGraphs=1-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=10,numGraphs=1-16 :: ns/op",
+          "source_benchmark": "BenchmarkNewDirectedLayers/graphSize=10,numGraphs=1-16",
+          "source_package": "gonum.org/v1/gonum/graph/community",
+          "source_field": "ns/op",
+          "raw_value": 691.4,
+          "raw_unit": "ns/op",
+          "value": 691.4,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/graph/community"
+        },
+        "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=1000,numGraphs=1-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=1000,numGraphs=1-16 :: ns/op",
+          "source_benchmark": "BenchmarkNewDirectedLayers/graphSize=1000,numGraphs=1-16",
+          "source_package": "gonum.org/v1/gonum/graph/community",
+          "source_field": "ns/op",
+          "raw_value": 79438.0,
+          "raw_unit": "ns/op",
+          "value": 79438.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/graph/community"
+        },
+        "gonum.org/v1/gonum/graph/community :: BenchmarkNewUndirectedLayers/graphSize=1000,numGraphs=10-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/graph/community :: BenchmarkNewUndirectedLayers/graphSize=1000,numGraphs=10-16 :: ns/op",
+          "source_benchmark": "BenchmarkNewUndirectedLayers/graphSize=1000,numGraphs=10-16",
+          "source_package": "gonum.org/v1/gonum/graph/community",
+          "source_field": "ns/op",
+          "raw_value": 934283.0,
+          "raw_unit": "ns/op",
+          "value": 934283.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/graph/community"
+        },
+        "gonum.org/v1/gonum/graph/topo :: BenchmarkSortStabilizedPath_100000-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/graph/topo :: BenchmarkSortStabilizedPath_100000-16 :: ns/op",
+          "source_benchmark": "BenchmarkSortStabilizedPath_100000-16",
+          "source_package": "gonum.org/v1/gonum/graph/topo",
+          "source_field": "ns/op",
+          "raw_value": 78026452.0,
+          "raw_unit": "ns/op",
+          "value": 78026452.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/graph/topo"
+        },
+        "gonum.org/v1/gonum/graph/traverse :: BenchmarkWalkAllDepthFirstGnp_100_half-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/graph/traverse :: BenchmarkWalkAllDepthFirstGnp_100_half-16 :: ns/op",
+          "source_benchmark": "BenchmarkWalkAllDepthFirstGnp_100_half-16",
+          "source_package": "gonum.org/v1/gonum/graph/traverse",
+          "source_field": "ns/op",
+          "raw_value": 244697.0,
+          "raw_unit": "ns/op",
+          "value": 244697.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/graph/traverse"
+        },
+        "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDgeev/Circulant5-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDgeev/Circulant5-16 :: ns/op",
+          "source_benchmark": "BenchmarkDgeev/Circulant5-16",
+          "source_package": "gonum.org/v1/gonum/lapack/gonum",
+          "source_field": "ns/op",
+          "raw_value": 6602.0,
+          "raw_unit": "ns/op",
+          "value": 6602.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/lapack/gonum"
+        },
+        "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDlantb/FrobeniusLowerNonUnitN=10000K=2-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDlantb/FrobeniusLowerNonUnitN=10000K=2-16 :: ns/op",
+          "source_benchmark": "BenchmarkDlantb/FrobeniusLowerNonUnitN=10000K=2-16",
+          "source_package": "gonum.org/v1/gonum/lapack/gonum",
+          "source_field": "ns/op",
+          "raw_value": 97420.0,
+          "raw_unit": "ns/op",
+          "value": 97420.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/lapack/gonum"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkAddScaledVec10Inc1-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkAddScaledVec10Inc1-16 :: ns/op",
+          "source_benchmark": "BenchmarkAddScaledVec10Inc1-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 128.1,
+          "raw_unit": "ns/op",
+          "value": 128.1,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkCholeskyFactorize/n=10-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkCholeskyFactorize/n=10-16 :: ns/op",
+          "source_benchmark": "BenchmarkCholeskyFactorize/n=10-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 2433.0,
+          "raw_unit": "ns/op",
+          "value": 2433.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkCholeskyInverseTo/n=100-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkCholeskyInverseTo/n=100-16 :: ns/op",
+          "source_benchmark": "BenchmarkCholeskyInverseTo/n=100-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 196680.0,
+          "raw_unit": "ns/op",
+          "value": 196680.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkMarshalToVecDense10-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkMarshalToVecDense10-16 :: ns/op",
+          "source_benchmark": "BenchmarkMarshalToVecDense10-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 290.3,
+          "raw_unit": "ns/op",
+          "value": 290.3,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkPool100by100Uncleared-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkPool100by100Uncleared-16 :: ns/op",
+          "source_benchmark": "BenchmarkPool100by100Uncleared-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 14.39,
+          "raw_unit": "ns/op",
+          "value": 14.39,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkTriMulDiag/BenchmarkTriMulDiag100-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkTriMulDiag/BenchmarkTriMulDiag100-16 :: ns/op",
+          "source_benchmark": "BenchmarkTriMulDiag/BenchmarkTriMulDiag100-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 32740.0,
+          "raw_unit": "ns/op",
+          "value": 32740.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "gonum.org/v1/gonum/mat :: BenchmarkUnmarshalVecDense10-16 :: ns/op": {
+          "source_name": "gonum.org/v1/gonum/mat :: BenchmarkUnmarshalVecDense10-16 :: ns/op",
+          "source_benchmark": "BenchmarkUnmarshalVecDense10-16",
+          "source_package": "gonum.org/v1/gonum/mat",
+          "source_field": "ns/op",
+          "raw_value": 175.3,
+          "raw_unit": "ns/op",
+          "value": 175.3,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "gonum.org/v1/gonum/mat"
+        },
+        "google.golang.org/protobuf/encoding :: BenchmarkTextDecode-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/encoding :: BenchmarkTextDecode-16 :: ns/op",
+          "source_benchmark": "BenchmarkTextDecode-16",
+          "source_package": "google.golang.org/protobuf/encoding",
+          "source_field": "ns/op",
+          "raw_value": 21130410.0,
+          "raw_unit": "ns/op",
+          "value": 21130410.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/encoding"
+        },
+        "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkEmptyMessage/Wire/Marshal-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkEmptyMessage/Wire/Marshal-16 :: ns/op",
+          "source_benchmark": "BenchmarkEmptyMessage/Wire/Marshal-16",
+          "source_package": "google.golang.org/protobuf/internal/benchmarks/micro",
+          "source_field": "ns/op",
+          "raw_value": 4.138,
+          "raw_unit": "ns/op",
+          "value": 4.138,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/internal/benchmarks/micro"
+        },
+        "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkExtension/Get/Set-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkExtension/Get/Set-16 :: ns/op",
+          "source_benchmark": "BenchmarkExtension/Get/Set-16",
+          "source_package": "google.golang.org/protobuf/internal/benchmarks/micro",
+          "source_field": "ns/op",
+          "raw_value": 77.78,
+          "raw_unit": "ns/op",
+          "value": 77.78,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/internal/benchmarks/micro"
+        },
+        "google.golang.org/protobuf/internal/encoding/json :: BenchmarkBool-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/internal/encoding/json :: BenchmarkBool-16 :: ns/op",
+          "source_benchmark": "BenchmarkBool-16",
+          "source_package": "google.golang.org/protobuf/internal/encoding/json",
+          "source_field": "ns/op",
+          "raw_value": 40.94,
+          "raw_unit": "ns/op",
+          "value": 40.94,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/internal/encoding/json"
+        },
+        "google.golang.org/protobuf/internal/encoding/json :: BenchmarkInt-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/internal/encoding/json :: BenchmarkInt-16 :: ns/op",
+          "source_benchmark": "BenchmarkInt-16",
+          "source_package": "google.golang.org/protobuf/internal/encoding/json",
+          "source_field": "ns/op",
+          "raw_value": 157.7,
+          "raw_unit": "ns/op",
+          "value": 157.7,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/internal/encoding/json"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkDecode/basic_scalar_types_(*test.TestAllTypes)-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkDecode/basic_scalar_types_(*test.TestAllTypes)-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecode/basic_scalar_types_(*test.TestAllTypes)-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 238.0,
+          "raw_unit": "ns/op",
+          "value": 238.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkDecode/field_type_mismatch_(*test3.TestAllTypes)-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkDecode/field_type_mismatch_(*test3.TestAllTypes)-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecode/field_type_mismatch_(*test3.TestAllTypes)-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 190.4,
+          "raw_unit": "ns/op",
+          "value": 190.4,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkDecode/just_at_recursion_limit_(*test3.TestAllTypes)-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkDecode/just_at_recursion_limit_(*test3.TestAllTypes)-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecode/just_at_recursion_limit_(*test3.TestAllTypes)-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 394.1,
+          "raw_unit": "ns/op",
+          "value": 394.1,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkDecode/required_field_in_oneof_message_set_(*test.TestRequiredForeign)-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkDecode/required_field_in_oneof_message_set_(*test.TestRequiredForeign)-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecode/required_field_in_oneof_message_set_(*test.TestRequiredForeign)-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 50.54,
+          "raw_unit": "ns/op",
+          "value": 50.54,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkDecode/required_group_set_(*required_opaque.Group)-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkDecode/required_group_set_(*required_opaque.Group)-16 :: ns/op",
+          "source_benchmark": "BenchmarkDecode/required_group_set_(*required_opaque.Group)-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 28.02,
+          "raw_unit": "ns/op",
+          "value": 28.02,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: B/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: B/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedEqual-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: allocs/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: allocs/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedEqual-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: ns/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedEqual-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 41058.0,
+          "raw_unit": "ns/op",
+          "value": 41058.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: B/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: B/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedIdenticalPtr-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: allocs/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: allocs/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedIdenticalPtr-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: ns/op",
+          "source_benchmark": "BenchmarkEqualWithDeeplyNestedIdenticalPtr-16",
+          "source_package": "google.golang.org/protobuf/proto",
+          "source_field": "ns/op",
+          "raw_value": 3.837,
+          "raw_unit": "ns/op",
+          "value": 3.837,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/proto"
+        },
+        "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: B/op": {
+          "source_name": "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: B/op",
+          "source_benchmark": "BenchmarkValue/Interface-16",
+          "source_package": "google.golang.org/protobuf/reflect/protoreflect",
+          "source_field": "B/op",
+          "raw_value": 16.0,
+          "raw_unit": "B/op",
+          "value": 16.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/reflect/protoreflect"
+        },
+        "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: allocs/op": {
+          "source_name": "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: allocs/op",
+          "source_benchmark": "BenchmarkValue/Interface-16",
+          "source_package": "google.golang.org/protobuf/reflect/protoreflect",
+          "source_field": "allocs/op",
+          "raw_value": 1.0,
+          "raw_unit": "allocs/op",
+          "value": 1.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/reflect/protoreflect"
+        },
+        "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: ns/op": {
+          "source_name": "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: ns/op",
+          "source_benchmark": "BenchmarkValue/Interface-16",
+          "source_package": "google.golang.org/protobuf/reflect/protoreflect",
+          "source_field": "ns/op",
+          "raw_value": 13.12,
+          "raw_unit": "ns/op",
+          "value": 13.12,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "google.golang.org/protobuf/reflect/protoreflect"
+        },
+        "k8s.io/client-go/tools/cache :: BenchmarkEachListItemWithAlloc/PodList-16 :: ns/op": {
+          "source_name": "k8s.io/client-go/tools/cache :: BenchmarkEachListItemWithAlloc/PodList-16 :: ns/op",
+          "source_benchmark": "BenchmarkEachListItemWithAlloc/PodList-16",
+          "source_package": "k8s.io/client-go/tools/cache",
+          "source_field": "ns/op",
+          "raw_value": 36621.0,
+          "raw_unit": "ns/op",
+          "value": 36621.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "k8s.io/client-go/tools/cache"
+        },
+        "k8s.io/client-go/util/workqueue :: BenchmarkDelayingQueue_AddAfter-16 :: ns/op": {
+          "source_name": "k8s.io/client-go/util/workqueue :: BenchmarkDelayingQueue_AddAfter-16 :: ns/op",
+          "source_benchmark": "BenchmarkDelayingQueue_AddAfter-16",
+          "source_package": "k8s.io/client-go/util/workqueue",
+          "source_field": "ns/op",
+          "raw_value": 1960.0,
+          "raw_unit": "ns/op",
+          "value": 1960.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "k8s.io/client-go/util/workqueue"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: B/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: B/op",
+          "source_benchmark": "BenchmarkGrowth_MultiSegment-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "B/op",
+          "raw_value": 1648627.0,
+          "raw_unit": "B/op",
+          "value": 1648627.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: MB/s": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: MB/s",
+          "source_benchmark": "BenchmarkGrowth_MultiSegment-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "MB/s",
+          "raw_value": 110.68,
+          "raw_unit": "MB/s",
+          "value": 110.68,
+          "unit": "MB/s",
+          "direction": "higher_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: allocs/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: allocs/op",
+          "source_benchmark": "BenchmarkGrowth_MultiSegment-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "allocs/op",
+          "raw_value": 21.0,
+          "raw_unit": "allocs/op",
+          "value": 21.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: ns/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: ns/op",
+          "source_benchmark": "BenchmarkGrowth_MultiSegment-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "ns/op",
+          "raw_value": 9474570.0,
+          "raw_unit": "ns/op",
+          "value": 9474570.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: B/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: B/op",
+          "source_benchmark": "BenchmarkUnmarshal_Reuse-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "B/op",
+          "raw_value": 0.0,
+          "raw_unit": "B/op",
+          "value": 0.0,
+          "unit": "B/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: allocs/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: allocs/op",
+          "source_benchmark": "BenchmarkUnmarshal_Reuse-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "allocs/op",
+          "raw_value": 0.0,
+          "raw_unit": "allocs/op",
+          "value": 0.0,
+          "unit": "allocs/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        },
+        "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: ns/op": {
+          "source_name": "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: ns/op",
+          "source_benchmark": "BenchmarkUnmarshal_Reuse-16",
+          "source_package": "zombiezen.com/go/capnproto2",
+          "source_field": "ns/op",
+          "raw_value": 249.0,
+          "raw_unit": "ns/op",
+          "value": 249.0,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "samples": 15,
+          "group": "zombiezen.com/go/capnproto2"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "git.sr.ht/~nelsam/gxui/interval :: BenchmarkGeneral-16 :: ns/op": {
+      "value": 202.8,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "git.sr.ht/~nelsam/gxui/interval"
+    },
+    "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: B/op": {
+      "value": 9749.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: allocs/op": {
+      "value": 4.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/IBM/sarama :: BenchmarkZstdMemoryConsumption/no_drain-16 :: ns/op": {
+      "value": 355807.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: B/op": {
+      "value": 16.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: allocs/op": {
+      "value": 1.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/IBM/sarama :: Benchmark_getMetricNameForTopic-16 :: ns/op": {
+      "value": 53.98,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/IBM/sarama"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCheckVersionRange-16 :: ns/op": {
+      "value": 26.65,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: B/op": {
+      "value": 128.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: allocs/op": {
+      "value": 2.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkCoerceNewVersionSimple-16 :: ns/op": {
+      "value": 91.43,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: B/op": {
+      "value": 189.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: allocs/op": {
+      "value": 7.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Masterminds/semver/v3 :: BenchmarkValidateVersionRangeFail-16 :: ns/op": {
+      "value": 311.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Masterminds/semver/v3"
+    },
+    "github.com/Workiva/go-datastructures/augmentedtree :: BenchmarkAddItems-16 :: ns/op": {
+      "value": 120551.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/augmentedtree"
+    },
+    "github.com/Workiva/go-datastructures/bitarray :: BenchmarkCompressedIntersects-16 :: ns/op": {
+      "value": 29.92,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/bitarray"
+    },
+    "github.com/Workiva/go-datastructures/btree/palm :: BenchmarkBulkGet-16 :: ns/op": {
+      "value": 509602.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/btree/palm"
+    },
+    "github.com/Workiva/go-datastructures/queue :: BenchmarkPriorityQueue-16 :: ns/op": {
+      "value": 369.9,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/queue"
+    },
+    "github.com/Workiva/go-datastructures/rangetree :: BenchmarkApply-16 :: ns/op": {
+      "value": 11043.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/rangetree"
+    },
+    "github.com/Workiva/go-datastructures/rangetree :: BenchmarkImmutableInsertSecondDimension-16 :: ns/op": {
+      "value": 12788815.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/rangetree"
+    },
+    "github.com/Workiva/go-datastructures/rangetree/skiplist :: BenchmarkMultiDimensionInsertAtZeroDimension-16 :: ns/op": {
+      "value": 939633.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/rangetree/skiplist"
+    },
+    "github.com/Workiva/go-datastructures/rtree/hilbert :: BenchmarkBulkUpdatePoints-16 :: ns/op": {
+      "value": 203245.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/rtree/hilbert"
+    },
+    "github.com/Workiva/go-datastructures/set :: BenchmarkClear-16 :: ns/op": {
+      "value": 27.71,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/set"
+    },
+    "github.com/Workiva/go-datastructures/set :: BenchmarkExists-16 :: ns/op": {
+      "value": 14.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/set"
+    },
+    "github.com/Workiva/go-datastructures/tree/avl :: BenchmarkImmutableInsert-16 :: ns/op": {
+      "value": 617.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/tree/avl"
+    },
+    "github.com/Workiva/go-datastructures/trie/yfast :: BenchmarkIterator-16 :: ns/op": {
+      "value": 2011.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/Workiva/go-datastructures/trie/yfast"
+    },
+    "github.com/benhoyt/goawk/interp :: BenchmarkBuiltinGsubAmpersand-16 :: ns/op": {
+      "value": 8959.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/benhoyt/goawk/interp"
+    },
+    "github.com/benhoyt/goawk/interp :: BenchmarkNativeFunc-16 :: ns/op": {
+      "value": 4538.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/benhoyt/goawk/interp"
+    },
+    "github.com/benhoyt/goawk/interp :: BenchmarkRecursiveFunc-16 :: ns/op": {
+      "value": 6527.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/benhoyt/goawk/interp"
+    },
+    "github.com/benhoyt/goawk/interp :: BenchmarkRepeatNew-16 :: ns/op": {
+      "value": 65.45,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/benhoyt/goawk/interp"
+    },
+    "github.com/benhoyt/goawk/interp :: BenchmarkSimpleBuiltins-16 :: ns/op": {
+      "value": 455.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/benhoyt/goawk/interp"
+    },
+    "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/bits-and-blooms/bitset"
+    },
+    "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/bits-and-blooms/bitset"
+    },
+    "github.com/bits-and-blooms/bitset :: BenchmarkBitSetExtractDeposit/size=64/fn=DepositTo-16 :: ns/op": {
+      "value": 17.55,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/bits-and-blooms/bitset"
+    },
+    "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: MB/s": {
+      "value": 5125.31,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/cespare/xxhash/v2"
+    },
+    "github.com/cespare/xxhash/v2 :: BenchmarkDigestBytes/100B-16 :: ns/op": {
+      "value": 19.51,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/cespare/xxhash/v2"
+    },
+    "github.com/dustin/go-broadcast :: BenchmarkDirectSend-16 :: ns/op": {
+      "value": 224.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-broadcast"
+    },
+    "github.com/dustin/go-broadcast :: BenchmarkParallelBrodcast-16 :: ns/op": {
+      "value": 357.7,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-broadcast"
+    },
+    "github.com/dustin/go-humanize :: BenchmarkBigCommas-16 :: ns/op": {
+      "value": 255.6,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-humanize"
+    },
+    "github.com/dustin/go-humanize :: BenchmarkCommaf-16 :: ns/op": {
+      "value": 151.2,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-humanize"
+    },
+    "github.com/dustin/go-humanize :: BenchmarkParseBytes-16 :: ns/op": {
+      "value": 59.06,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-humanize"
+    },
+    "github.com/dustin/go-humanize :: BenchmarkParseSI-16 :: ns/op": {
+      "value": 258.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/dustin/go-humanize"
+    },
+    "github.com/ericlagergren/decimal_benchmarks :: BenchmarkMandelbrot_decimal_GDA_9-16 :: ns/op": {
+      "value": 1477382819.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ericlagergren/decimal_benchmarks"
+    },
+    "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=apmckinlay/prec=19-16 :: ns/op": {
+      "value": 1405.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ericlagergren/decimal_benchmarks"
+    },
+    "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=cockroachdb/apd/prec=100-16 :: ns/op": {
+      "value": 3705054.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ericlagergren/decimal_benchmarks"
+    },
+    "github.com/ericlagergren/decimal_benchmarks :: BenchmarkPi/foo=go-inf/prec=100-16 :: ns/op": {
+      "value": 54775.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ericlagergren/decimal_benchmarks"
+    },
+    "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: B/op": {
+      "value": 64.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+    },
+    "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: allocs/op": {
+      "value": 2.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+    },
+    "github.com/ethereum/go-ethereum/consensus/ethash :: BenchmarkDifficultyCalculator/u256-homestead-16 :: ns/op": {
+      "value": 49.49,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/consensus/ethash"
+    },
+    "github.com/ethereum/go-ethereum/crypto/ecies :: BenchmarkGenSharedKeyP256-16 :: ns/op": {
+      "value": 52464.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/crypto/ecies"
+    },
+    "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: B/op": {
+      "value": 109.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/trie"
+    },
+    "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: allocs/op": {
+      "value": 3.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/trie"
+    },
+    "github.com/ethereum/go-ethereum/trie :: BenchmarkDecodeShortNodeUnsafe-16 :: ns/op": {
+      "value": 76.91,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/trie"
+    },
+    "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionAsymInvalid-16 :: ns/op": {
+      "value": 115217.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/whisper/whisperv6"
+    },
+    "github.com/ethereum/go-ethereum/whisper/whisperv6 :: BenchmarkDecryptionSymInvalid-16 :: ns/op": {
+      "value": 52.61,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/ethereum/go-ethereum/whisper/whisperv6"
+    },
+    "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkANS0-16 :: ns/op": {
+      "value": 1428786.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+    },
+    "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkBWTSmallBlock-16 :: ns/op": {
+      "value": 26849281.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+    },
+    "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkCM-16 :: ns/op": {
+      "value": 32577939.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+    },
+    "github.com/flanglet/kanzi-go/v2/benchmark :: BenchmarkHuffman-16 :: ns/op": {
+      "value": 1304879.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/flanglet/kanzi-go/v2/benchmark"
+    },
+    "github.com/gohugoio/hugo/helpers :: BenchmarkAbsURL/absurl-16 :: ns/op": {
+      "value": 3.838,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/gohugoio/hugo/helpers"
+    },
+    "github.com/gohugoio/hugo/helpers :: BenchmarkRelURL-16 :: ns/op": {
+      "value": 203.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/gohugoio/hugo/helpers"
+    },
+    "github.com/gohugoio/hugo/hugolib :: BenchmarkCreateShortcodePlaceholders-16 :: ns/op": {
+      "value": 39.27,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/gohugoio/hugo/hugolib"
+    },
+    "github.com/google/uuid :: BenchmarkNew-16 :: ns/op": {
+      "value": 644.6,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/google/uuid"
+    },
+    "github.com/google/uuid :: BenchmarkUUID_MarshalJSON-16 :: ns/op": {
+      "value": 175.2,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/google/uuid"
+    },
+    "github.com/google/uuid :: BenchmarkUUID_UnmarshalJSON-16 :: ns/op": {
+      "value": 246.1,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/google/uuid"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: MB/s": {
+      "value": 2901.32,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBatchJobExpire-16 :: ns/op": {
+      "value": 32.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: MB/s": {
+      "value": 5074.56,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkAppendMsgBucketStats-16 :: ns/op": {
+      "value": 89.66,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: MB/s": {
+      "value": 710.94,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBatchJobKeyRotateV1-16 :: ns/op": {
+      "value": 323.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: MB/s": {
+      "value": 726.99,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkDecodeBucketStats-16 :: ns/op": {
+      "value": 625.9,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: MB/s": {
+      "value": 1702.47,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkEncodedataUsageCacheInfo-16 :: ns/op": {
+      "value": 33.48,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: B/op": {
+      "value": 208.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: allocs/op": {
+      "value": 1.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkMarshalMsgBatchJobReplicateFlags-16 :: ns/op": {
+      "value": 65.03,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: MB/s": {
+      "value": 1262.85,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBatchJobKeyRotateV1-16 :: ns/op": {
+      "value": 182.1,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: MB/s": {
+      "value": 1509.45,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalBucketStats-16 :: ns/op": {
+      "value": 301.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: MB/s": {
+      "value": 1997.21,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/minio/minio/cmd :: BenchmarkUnmarshalReplicationMRFStats-16 :: ns/op": {
+      "value": 28.04,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/minio/minio/cmd"
+    },
+    "github.com/rcrowley/go-metrics :: BenchmarkHistogram-16 :: ns/op": {
+      "value": 14.05,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/rcrowley/go-metrics"
+    },
+    "github.com/rcrowley/go-metrics :: BenchmarkTimer-16 :: ns/op": {
+      "value": 194.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/rcrowley/go-metrics"
+    },
+    "github.com/tetratelabs/wazero/internal/integration_test/bench :: BenchmarkCompilation/without_extern_cache-16 :: ns/op": {
+      "value": 10054583.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/tetratelabs/wazero/internal/integration_test/bench"
+    },
+    "github.com/uber-go/tally/v4 :: BenchmarkScopeTaggedCachedSubscopes-16 :: ns/op": {
+      "value": 490.7,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/uber-go/tally/v4"
+    },
+    "github.com/uber-go/tally/v4 :: BenchmarkTimerReport-16 :: ns/op": {
+      "value": 73.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "github.com/uber-go/tally/v4"
+    },
+    "gitlab.com/golang-commonmark/markdown :: BenchmarkRenderSpecNoHTML-16 :: ns/op": {
+      "value": 3815180.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gitlab.com/golang-commonmark/markdown"
+    },
+    "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Decode-16 :: ns/op": {
+      "value": 30250.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "go.uber.org/thriftrw/gen"
+    },
+    "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/ContainersOfContainers/Encode-16 :: ns/op": {
+      "value": 13258.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "go.uber.org/thriftrw/gen"
+    },
+    "go.uber.org/thriftrw/gen :: BenchmarkRoundTrip/PrimitiveOptionalStruct/Streaming_Decode-16 :: ns/op": {
+      "value": 560.7,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "go.uber.org/thriftrw/gen"
+    },
+    "go.uber.org/zap/zapcore :: BenchmarkJSONLogMarshalerFunc-16 :: ns/op": {
+      "value": 303.6,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "go.uber.org/zap/zapcore"
+    },
+    "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=10,numGraphs=1-16 :: ns/op": {
+      "value": 691.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/graph/community"
+    },
+    "gonum.org/v1/gonum/graph/community :: BenchmarkNewDirectedLayers/graphSize=1000,numGraphs=1-16 :: ns/op": {
+      "value": 79438.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/graph/community"
+    },
+    "gonum.org/v1/gonum/graph/community :: BenchmarkNewUndirectedLayers/graphSize=1000,numGraphs=10-16 :: ns/op": {
+      "value": 934283.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/graph/community"
+    },
+    "gonum.org/v1/gonum/graph/topo :: BenchmarkSortStabilizedPath_100000-16 :: ns/op": {
+      "value": 78026452.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/graph/topo"
+    },
+    "gonum.org/v1/gonum/graph/traverse :: BenchmarkWalkAllDepthFirstGnp_100_half-16 :: ns/op": {
+      "value": 244697.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/graph/traverse"
+    },
+    "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDgeev/Circulant5-16 :: ns/op": {
+      "value": 6602.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/lapack/gonum"
+    },
+    "gonum.org/v1/gonum/lapack/gonum :: BenchmarkDlantb/FrobeniusLowerNonUnitN=10000K=2-16 :: ns/op": {
+      "value": 97420.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/lapack/gonum"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkAddScaledVec10Inc1-16 :: ns/op": {
+      "value": 128.1,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkCholeskyFactorize/n=10-16 :: ns/op": {
+      "value": 2433.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkCholeskyInverseTo/n=100-16 :: ns/op": {
+      "value": 196680.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkMarshalToVecDense10-16 :: ns/op": {
+      "value": 290.3,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkPool100by100Uncleared-16 :: ns/op": {
+      "value": 14.39,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkTriMulDiag/BenchmarkTriMulDiag100-16 :: ns/op": {
+      "value": 32740.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "gonum.org/v1/gonum/mat :: BenchmarkUnmarshalVecDense10-16 :: ns/op": {
+      "value": 175.3,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "gonum.org/v1/gonum/mat"
+    },
+    "google.golang.org/protobuf/encoding :: BenchmarkTextDecode-16 :: ns/op": {
+      "value": 21130410.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/encoding"
+    },
+    "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkEmptyMessage/Wire/Marshal-16 :: ns/op": {
+      "value": 4.138,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/internal/benchmarks/micro"
+    },
+    "google.golang.org/protobuf/internal/benchmarks/micro :: BenchmarkExtension/Get/Set-16 :: ns/op": {
+      "value": 77.78,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/internal/benchmarks/micro"
+    },
+    "google.golang.org/protobuf/internal/encoding/json :: BenchmarkBool-16 :: ns/op": {
+      "value": 40.94,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/internal/encoding/json"
+    },
+    "google.golang.org/protobuf/internal/encoding/json :: BenchmarkInt-16 :: ns/op": {
+      "value": 157.7,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/internal/encoding/json"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkDecode/basic_scalar_types_(*test.TestAllTypes)-16 :: ns/op": {
+      "value": 238.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkDecode/field_type_mismatch_(*test3.TestAllTypes)-16 :: ns/op": {
+      "value": 190.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkDecode/just_at_recursion_limit_(*test3.TestAllTypes)-16 :: ns/op": {
+      "value": 394.1,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkDecode/required_field_in_oneof_message_set_(*test.TestRequiredForeign)-16 :: ns/op": {
+      "value": 50.54,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkDecode/required_group_set_(*required_opaque.Group)-16 :: ns/op": {
+      "value": 28.02,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedEqual-16 :: ns/op": {
+      "value": 41058.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/proto :: BenchmarkEqualWithDeeplyNestedIdenticalPtr-16 :: ns/op": {
+      "value": 3.837,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/proto"
+    },
+    "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: B/op": {
+      "value": 16.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/reflect/protoreflect"
+    },
+    "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: allocs/op": {
+      "value": 1.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/reflect/protoreflect"
+    },
+    "google.golang.org/protobuf/reflect/protoreflect :: BenchmarkValue/Interface-16 :: ns/op": {
+      "value": 13.12,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "google.golang.org/protobuf/reflect/protoreflect"
+    },
+    "k8s.io/client-go/tools/cache :: BenchmarkEachListItemWithAlloc/PodList-16 :: ns/op": {
+      "value": 36621.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "k8s.io/client-go/tools/cache"
+    },
+    "k8s.io/client-go/util/workqueue :: BenchmarkDelayingQueue_AddAfter-16 :: ns/op": {
+      "value": 1960.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "k8s.io/client-go/util/workqueue"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: B/op": {
+      "value": 1648627.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: MB/s": {
+      "value": 110.68,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: allocs/op": {
+      "value": 21.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkGrowth_MultiSegment-16 :: ns/op": {
+      "value": 9474570.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: B/op": {
+      "value": 0.0,
+      "unit": "B/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: allocs/op": {
+      "value": 0.0,
+      "unit": "allocs/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    },
+    "zombiezen.com/go/capnproto2 :: BenchmarkUnmarshal_Reuse-16 :: ns/op": {
+      "value": 249.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "zombiezen.com/go/capnproto2"
+    }
+  }
+}
