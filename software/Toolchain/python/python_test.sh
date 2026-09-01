@@ -10,12 +10,13 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 CPYTHON_SOURCE_URL="${CPYTHON_SOURCE_URL:-https://github.com/python/cpython.git}"
 PYPI_INDEX_URL="https://mirrors.huaweicloud.com/repository/pypi/simple"
-# pyperformance version pinned so both architectures run the same official suite.
-PYPERFORMANCE_VERSION="1.14.0"
-# Original openEuler test selection: official benchmarks, all pure stdlib.
-PYPERFORMANCE_BENCHMARKS="json_dumps,json_loads,nbody,telco,fannkuch,regex_v8,meteor_contest"
-# Original test build configuration: PGO/LTO disabled.
-CONFIGURE_OPTIONS="--enable-optimizations=no"
+# Keep the benchmark runner and warmup policy identical on both architectures.
+PYPERFORMANCE_VERSION="1.13.0"
+PYPERFORMANCE_WARMUP="3"
+# An empty selection deliberately invokes pyperformance's complete default suite.
+PYPERFORMANCE_BENCHMARKS=""
+# Match the documented CPython performance-build configuration.
+CONFIGURE_OPTIONS="--enable-optimizations --with-lto"
 
 SOURCE_DIR=""
 INSTALL_DIR=""
@@ -205,7 +206,7 @@ run_python_benchmarks() {
     }
     mkdir -p "${BENCH_WORK_DIR}" "${RESULTS_DIR}"
     log_message "installing pyperformance ${PYPERFORMANCE_VERSION} into the private CPython"
-    log_message "running official pyperformance benchmarks: ${PYPERFORMANCE_BENCHMARKS}"
+    log_message "running the complete official pyperformance suite with ${PYPERFORMANCE_WARMUP} warmups"
     (
         cd "${BENCH_WORK_DIR}"
         export PIP_NO_CACHE_DIR=1
@@ -215,7 +216,7 @@ run_python_benchmarks() {
             --trusted-host mirrors.huaweicloud.com \
             "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
         "${PYTHON_BIN}" -m pyperformance run \
-            -b "${PYPERFORMANCE_BENCHMARKS}" \
+            --warmup "${PYPERFORMANCE_WARMUP}" \
             -o "${RESULTS_DIR}/benchmark.json" || exit 50
     ) || {
         log_message "ERROR: official pyperformance run failed"
@@ -226,6 +227,7 @@ run_python_benchmarks() {
         return 50
     }
     export SOFTWARE_VERSION EXPECTED_ARCH PYPERFORMANCE_BENCHMARKS PYPERFORMANCE_VERSION
+    export PYPERFORMANCE_WARMUP CONFIGURE_OPTIONS
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark.json" \
         "${RESULTS_DIR}/benchmark_python.json" || {

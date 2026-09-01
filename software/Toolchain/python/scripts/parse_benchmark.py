@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Normalize pyperformance's official pyperf JSON into per-benchmark metrics.
 
-pyperformance (the official Python performance suite) is executed with a fixed
-benchmark selection and emits pyperf JSON. This script extracts one median
-value per official benchmark, preserving the official benchmark name verbatim.
+pyperformance (the official Python performance suite) is executed with its
+complete default benchmark selection and emits pyperf JSON. This script extracts
+one median value per official benchmark, preserving the official benchmark name
+verbatim.
 The median reproduces pyperf's own median: statistics.median over every
 recorded run value, with warmup values excluded.
 """
@@ -152,7 +153,8 @@ def normalize_results(
 
 def validate_requested_benchmarks(results: dict[str, Any], requested: str) -> list[str]:
     if not requested:
-        raise RuntimeError("requested benchmark selection is empty")
+        # No -b option means pyperformance ran its complete default suite.
+        return list(results)
     requested_list = [name for name in requested.split(",") if name]
     if not requested_list:
         raise RuntimeError("requested benchmark selection is empty")
@@ -191,6 +193,8 @@ def main() -> int:
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
     pyperformance_version = os.environ.get("PYPERFORMANCE_VERSION", "")
+    warmup = os.environ.get("PYPERFORMANCE_WARMUP", "")
+    configure_options = os.environ.get("CONFIGURE_OPTIONS", "").split()
     normalized = {
         "benchmark": "python_official_pyperformance",
         "software": "python",
@@ -203,14 +207,14 @@ def main() -> int:
                 "-m",
                 "pyperformance",
                 "run",
-                "-b",
-                ",".join(requested),
+                "--warmup",
+                warmup,
                 "-o",
                 "benchmark.json",
             ],
             "pyperformance_version": pyperformance_version,
             "benchmarks": requested,
-            "build_options": ["--enable-optimizations=no"],
+            "build_options": configure_options,
             "aggregation": "median",
             "official_suite": "pyperformance",
         },
