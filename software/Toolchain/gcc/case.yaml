@@ -1,0 +1,50 @@
+name: gcc
+category: Toolchain
+enabled: true
+versions:
+  - "15.3.0"
+  - "16.2.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: gcc_test.sh
+      function: build_gcc
+    start:
+      script: gcc_test.sh
+      function: start_gcc_runtime
+    test:
+      script: gcc_test.sh
+      function: run_gcc_benchmarks
+    stop:
+      script: gcc_test.sh
+      function: stop_gcc_runtime
+  timeout_minutes: 240
+environment:
+  GCC_OPT_LEVEL: O2
+  GCC_BENCHMARK_ITERATIONS: 3
+  GCC_BENCHMARK_DATA_ROOT: /home/runner/gcc-data
+outputs:
+  official_benchmark:
+    path: benchmark_compile.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_gcc.json
+    stage: test
+    format: json
+    required: true
+  compiler_output:
+    path: compiler-output.log
+    stage: test
+    format: text
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: s
+    direction: lower_is_better

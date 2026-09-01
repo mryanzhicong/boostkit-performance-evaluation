@@ -9,20 +9,12 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 HNSWLIB_SOURCE_URL="${HNSWLIB_SOURCE_URL:-https://github.com/nmslib/hnswlib.git}"
+HNSWLIB_DATA_ROOT="${HNSWLIB_DATA_ROOT:-/home/runner/hnswlib-data}"
 readonly NUMPY_VERSION="2.4.6"
 readonly SETUPTOOLS_VERSION="80.9.0"
 readonly PYBIND11_VERSION="2.13.6"
 readonly WHEEL_VERSION="0.45.1"
-readonly OFFICIAL_SPEEDTEST_SHA256="18f03fca047d2e649adacbcc7b030b5e55d465a920a7a949e8114d23ec26b20b"
-readonly SPEEDTEST_DIMENSION=128
-readonly SPEEDTEST_SEARCH_THREADS=1
-readonly SPEEDTEST_NAME="hnswlib"
-
-# Official tests/python/speedtest.py workload for v0.7.0, v0.8.0 and v0.9.0:
-# 400,000 deterministic float32 vectors x 128 dimensions (~195 MiB), HNSW
-# M=16, ef_construction=60, construction_threads=64, search_ef=15, three
-# searches over 5,000 vectors using one search thread. The script is identical
-# in all declared versions and is executed without modification.
+readonly H5PY_VERSION="3.16.0"
 
 SOURCE_DIR=""
 INSTALL_DIR=""
@@ -34,105 +26,121 @@ STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
 
-log_message() {
+log() {
     printf '[hnswlib] %s\n' "$*"
 }
 
 
-normalize_architecture() {
-    local architecture
-    architecture="${1,,}"
-    case "${architecture}" in
-        x86_64|amd64)
-            printf 'x86_64\n'
-            ;;
-        aarch64|arm64)
-            printf 'aarch64\n'
-            ;;
-        *)
-            printf '%s\n' "${architecture}"
-            ;;
-    esac
-}
-
-
 configure_runtime_paths() {
+    local actual_architecture
+
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
     if [[ ! "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
-        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+        log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
     fi
-    EXPECTED_ARCH="$(normalize_architecture "${EXPECTED_ARCH}")"
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64) EXPECTED_ARCH="x86_64" ;;
+        aarch64|arm64) EXPECTED_ARCH="aarch64" ;;
+        *)
+            log "ERROR: unsupported expected architecture: ${EXPECTED_ARCH}"
+            return 20
+            ;;
+    esac
+    case "$(uname -m)" in
+        x86_64|amd64) actual_architecture="x86_64" ;;
+        aarch64|arm64) actual_architecture="aarch64" ;;
+        *) actual_architecture="$(uname -m)" ;;
+    esac
+    if [[ "${actual_architecture}" != "${EXPECTED_ARCH}" ]]; then
+        log "ERROR: expected ${EXPECTED_ARCH}, runner is ${actual_architecture}"
+        return 20
+    fi
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/tmp/hnswlib-perf/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
-        TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    if [[ -z "${XDG_CACHE_HOME}" ]]; then
-        XDG_CACHE_HOME="${PERF_WORK_DIR}/cache"
-    fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
+    XDG_CACHE_HOME="${PERF_WORK_DIR}/cache"
 
     SOURCE_DIR="${PERF_WORK_DIR}/hnswlib-source"
     INSTALL_DIR="${PERF_WORK_DIR}/hnswlib-install"
     PYTHON_DEPENDENCY_DIR="${PERF_WORK_DIR}/python-dependencies"
-    BENCHMARK_RUN_DIR="${PERF_WORK_DIR}/speedtest-run"
+    BENCHMARK_RUN_DIR="${PERF_WORK_DIR}/ann-benchmark-run"
 
-    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
+    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR HNSWLIB_DATA_ROOT
     export PERF_ACTUAL_VERSION_FILE TMPDIR XDG_CACHE_HOME
 }
 
 
 initialize_runtime() {
     configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}" || return $?
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" "${XDG_CACHE_HOME}" \
+        "${HNSWLIB_DATA_ROOT}" || return $?
 }
 
 
-require_build_commands() {
-    local required_command
-    local missing_command=0
-    for required_command in git g++ cc nproc sed tee sha256sum python3; do
-        if ! command -v "${required_command}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required_command}"
-            missing_command=1
+require_hnswlib_tools() {
+    local command_name package
+    local packages=()
+
+    for command_name in git g++ sed tee sha256sum python3; do
+        if command -v "${command_name}" >/dev/null 2>&1; then
+            continue
         fi
+        case "${command_name}" in
+            git) package="git" ;;
+            g++) package="gcc-c++" ;;
+            sed) package="sed" ;;
+            tee|sha256sum) package="coreutils" ;;
+            python3) package="python3" ;;
+        esac
+        log "missing required hnswlib command: ${command_name}"
+        packages+=("${package}")
     done
     if ! python3 -m pip --version >/dev/null 2>&1; then
-        log_message "ERROR: python3 pip module is unavailable"
-        missing_command=1
+        log "missing required hnswlib Python module: pip"
+        packages+=("python3-pip")
     fi
-    if [[ "${missing_command}" -ne 0 ]]; then
-        return 20
+    if ! rpm -q python3-devel >/dev/null 2>&1; then
+        log "missing required hnswlib build package: python3-devel"
+        packages+=("python3-devel")
     fi
-}
-
-
-check_architecture() {
-    local actual_architecture
-    local expected_architecture
-    actual_architecture="$(normalize_architecture "$(uname -m)")"
-    expected_architecture="$(normalize_architecture "${EXPECTED_ARCH}")"
-    if [[ "${actual_architecture}" != "${expected_architecture}" ]]; then
-        log_message "ERROR: expected ${expected_architecture}, runner is ${actual_architecture}"
-        return 20
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
     fi
-}
-
-
-operating_system_id() {
-    local os_id
-    os_id="$(sed -n 's/^ID=//p' /etc/os-release 2>/dev/null | head -n 1)"
-    os_id="${os_id%\"}"
-    os_id="${os_id#\"}"
-    printf '%s\n' "${os_id,,}"
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install hnswlib prerequisites"
+        return 30
+    fi
+    log "installing missing hnswlib packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log "ERROR: sudo is required to install hnswlib prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log "ERROR: failed to install hnswlib prerequisites"
+        return 30
+    fi
+    for command_name in git g++ sed tee sha256sum python3; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            log "ERROR: required hnswlib command remains unavailable: ${command_name}"
+            return 30
+        fi
+    done
+    if ! python3 -m pip --version >/dev/null 2>&1 || ! rpm -q python3-devel >/dev/null 2>&1; then
+        log "ERROR: required hnswlib Python build dependencies remain unavailable"
+        return 30
+    fi
 }
 
 
@@ -146,20 +154,23 @@ install_python_build_dependencies() {
         --only-binary=:all:
         --target "${PYTHON_DEPENDENCY_DIR}"
     )
-    os_id="$(operating_system_id)"
+    os_id="$(sed -n 's/^ID=//p' /etc/os-release 2>/dev/null | head -n 1)"
+    os_id="${os_id%\"}"
+    os_id="${os_id#\"}"
     if [[ "${os_id}" != "ubuntu" ]]; then
         pip_options+=(
             --trusted-host mirrors.huaweicloud.com
             --index-url https://mirrors.huaweicloud.com/repository/pypi/simple
         )
     fi
-    log_message "installing private Python build dependencies"
+    log "installing private Python build dependencies"
     if ! python3 -m pip install "${pip_options[@]}" \
         "numpy==${NUMPY_VERSION}" \
         "setuptools==${SETUPTOOLS_VERSION}" \
         "pybind11==${PYBIND11_VERSION}" \
-        "wheel==${WHEEL_VERSION}"; then
-        log_message "ERROR: failed to install private Python build dependencies"
+        "wheel==${WHEEL_VERSION}" \
+        "h5py==${H5PY_VERSION}"; then
+        log "ERROR: failed to install private Python build dependencies"
         return 30
     fi
     PYTHONPATH="${PYTHON_DEPENDENCY_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
@@ -171,31 +182,7 @@ activate_hnswlib_runtime() {
     PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}"
     export PYTHONPATH
     if ! python3 -c 'import hnswlib, numpy'; then
-        log_message "ERROR: built hnswlib Python module cannot be imported"
-        return 40
-    fi
-}
-
-
-installed_hnswlib_version() {
-    PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 -c '
-import importlib.metadata
-print(importlib.metadata.version("hnswlib"))
-'
-}
-
-
-verify_official_speedtest() {
-    local speedtest_path
-    local actual_sha256
-    speedtest_path="${SOURCE_DIR}/tests/python/speedtest.py"
-    if [[ ! -f "${speedtest_path}" ]]; then
-        log_message "ERROR: official tests/python/speedtest.py is missing"
-        return 40
-    fi
-    actual_sha256="$(sha256sum "${speedtest_path}" | sed -n 's/ .*//p')" || return 40
-    if [[ "${actual_sha256}" != "${OFFICIAL_SPEEDTEST_SHA256}" ]]; then
-        log_message "ERROR: unexpected official speedtest.py SHA256: ${actual_sha256}"
+        log "ERROR: built hnswlib Python module cannot be imported"
         return 40
     fi
 }
@@ -206,15 +193,11 @@ build_hnswlib() {
     local actual_tag
     local actual_version
 
-    if ! initialize_runtime; then
-        log_message "ERROR: failed to initialize runtime paths"
-        return 20
-    fi
-    check_architecture || return $?
-    require_build_commands || return $?
+    initialize_runtime || return $?
+    require_hnswlib_tools || return $?
     if [[ -e "${SOURCE_DIR}" || -e "${INSTALL_DIR}" || \
           -e "${PYTHON_DEPENDENCY_DIR}" ]]; then
-        log_message "ERROR: build directory is not clean under ${PERF_WORK_DIR}"
+        log "ERROR: build directory is not clean under ${PERF_WORK_DIR}"
         return 20
     fi
 
@@ -224,23 +207,21 @@ build_hnswlib() {
         source_tag="v${source_tag}"
     fi
     export GIT_TERMINAL_PROMPT=0
-    log_message "cloning hnswlib ${source_tag} from ${HNSWLIB_SOURCE_URL}"
+    log "cloning hnswlib ${source_tag} from ${HNSWLIB_SOURCE_URL}"
     if ! git clone --branch "${source_tag}" --depth 1 \
         "${HNSWLIB_SOURCE_URL}" "${SOURCE_DIR}"; then
-        log_message "ERROR: failed to clone hnswlib ${source_tag}"
+        log "ERROR: failed to clone hnswlib ${source_tag}"
         return 30
     fi
     actual_tag="$(git -C "${SOURCE_DIR}" describe --tags --exact-match HEAD)" || {
-        log_message "ERROR: cloned source is not at an exact version tag"
+        log "ERROR: cloned source is not at an exact version tag"
         return 30
     }
     if [[ "${actual_tag}" != "${source_tag}" ]]; then
-        log_message "ERROR: cloned source tag ${actual_tag}, expected ${source_tag}"
+        log "ERROR: cloned source tag ${actual_tag}, expected ${source_tag}"
         return 30
     fi
-    verify_official_speedtest || return $?
-
-    log_message "building and installing hnswlib ${source_tag} in the private work area"
+    log "building and installing hnswlib ${source_tag} in the private work area"
     if ! PYTHONPATH="${PYTHON_DEPENDENCY_DIR}" python3 -m pip install \
         --disable-pip-version-check \
         --no-input \
@@ -249,40 +230,39 @@ build_hnswlib() {
         --no-deps \
         --target "${INSTALL_DIR}" \
         "${SOURCE_DIR}"; then
-        log_message "ERROR: hnswlib source build failed"
+        log "ERROR: hnswlib source build failed"
         return 40
     fi
     activate_hnswlib_runtime || return $?
-    actual_version="$(installed_hnswlib_version)" || return 40
+    actual_version="$(PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 -c '
+import importlib.metadata
+print(importlib.metadata.version("hnswlib"))
+')" || return 40
     if [[ -z "${actual_version}" ]]; then
-        log_message "ERROR: cannot read the built hnswlib version"
+        log "ERROR: cannot read the built hnswlib version"
         return 40
     fi
     if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
-        log_message "ERROR: built hnswlib reports ${actual_version}, requested ${SOFTWARE_VERSION}"
+        log "ERROR: built hnswlib reports ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
     fi
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     if ! printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"; then
-        log_message "ERROR: failed to record built hnswlib version"
+        log "ERROR: failed to record built hnswlib version"
         return 40
     fi
-    log_message "hnswlib ${actual_version} and official speedtest.py are ready"
+    log "hnswlib ${actual_version} is ready for ANN-Benchmarks datasets"
 }
 
 
 start_hnswlib_runtime() {
-    if ! initialize_runtime; then
-        log_message "ERROR: failed to initialize runtime paths"
-        return 20
-    fi
+    initialize_runtime || return $?
     activate_hnswlib_runtime || return $?
-    verify_official_speedtest || return $?
     if ! mkdir -p "${BENCHMARK_RUN_DIR}"; then
-        log_message "ERROR: failed to create private speedtest run directory"
+        log "ERROR: failed to create private ANN benchmark run directory"
         return 40
     fi
-    log_message "official hnswlib speedtest runtime is ready"
+    log "hnswlib ANN-Benchmarks runtime is ready"
 }
 
 
@@ -290,55 +270,38 @@ run_hnswlib_benchmarks() {
     local actual_version
     local benchmark_status
 
-    if ! initialize_runtime; then
-        log_message "ERROR: failed to initialize runtime paths"
-        return 20
-    fi
+    initialize_runtime || return $?
     activate_hnswlib_runtime || return $?
-    verify_official_speedtest || return $?
     if [[ ! -f "${PERF_ACTUAL_VERSION_FILE}" ]]; then
-        log_message "ERROR: actual version file is missing"
+        log "ERROR: actual version file is missing"
         return 50
     fi
     actual_version="$(sed -n '1p' "${PERF_ACTUAL_VERSION_FILE}")" || return 50
-    if [[ -e "${BENCHMARK_RUN_DIR}/log2_128_t1.txt" ]]; then
-        log_message "ERROR: official speedtest result log already exists"
+    if [[ -e "${RESULTS_DIR}/benchmark_hnswlib.json" ]]; then
+        log "ERROR: hnswlib benchmark result already exists"
         return 50
     fi
 
-    log_message "running unchanged official tests/python/speedtest.py"
-    if ( cd "${BENCHMARK_RUN_DIR}" && \
-        python3 "${SOURCE_DIR}/tests/python/speedtest.py" \
-            -d "${SPEEDTEST_DIMENSION}" \
-            -n "${SPEEDTEST_NAME}" \
-            -t "${SPEEDTEST_SEARCH_THREADS}" ) \
-        | tee "${RESULTS_DIR}/speedtest_stdout.log"; then
+    log "running hnswlib on five ANN-Benchmarks datasets"
+    if PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 \
+        "${SCRIPT_DIR}/scripts/run_ann_benchmark.py" \
+        --data-root "${HNSWLIB_DATA_ROOT}" \
+        --output "${RESULTS_DIR}/benchmark_hnswlib.json" \
+        --raw-output "${RESULTS_DIR}/hnswlib_ann_raw.log" \
+        --version "${actual_version}" \
+        --architecture "${EXPECTED_ARCH}"; then
         :
     else
         benchmark_status=$?
-        log_message "ERROR: official speedtest.py failed with status ${benchmark_status}"
+        log "ERROR: hnswlib ANN-Benchmarks test failed with status ${benchmark_status}"
         return "${benchmark_status}"
     fi
-    if ! cp "${BENCHMARK_RUN_DIR}/log2_128_t1.txt" \
-        "${RESULTS_DIR}/log2_128_t1.txt"; then
-        log_message "ERROR: official speedtest result log was not created"
-        return 50
-    fi
-
-    if ! python3 "${SCRIPT_DIR}/scripts/parse_speedtest_output.py" \
-        --raw-output "${RESULTS_DIR}/speedtest_stdout.log" \
-        --output "${RESULTS_DIR}/benchmark_speedtest.json" \
-        --version "${actual_version}" \
-        --architecture "$(normalize_architecture "${EXPECTED_ARCH}")"; then
-        log_message "ERROR: failed to parse official speedtest output"
-        return 50
-    fi
-    log_message "hnswlib benchmark results written to benchmark_speedtest.json"
+    log "hnswlib benchmark results written to benchmark_hnswlib.json"
 }
 
 
 stop_hnswlib_runtime() {
-    log_message "hnswlib benchmark has no background service to stop"
+    log "hnswlib benchmark has no background service to stop"
 }
 
 
@@ -349,25 +312,25 @@ standalone_runtime() {
 
 cleanup_standalone_workdir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
-        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
+        log "keeping standalone work directory: ${PERF_WORK_DIR}"
         return 0
     fi
     if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
-        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
+        log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
     if [[ "${PERF_WORK_DIR}" != /tmp/hnswlib-perf/local-* || \
           "${PERF_WORK_DIR}" == "/tmp/hnswlib-perf" ]]; then
-        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi
     if [[ -d "${PERF_WORK_DIR}" ]]; then
         if ! rm -rf -- "${PERF_WORK_DIR}"; then
-            log_message "ERROR: failed to clean standalone work directory"
+            log "ERROR: failed to clean standalone work directory"
             return 70
         fi
     fi
-    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
+    log "cleaned standalone work directory: ${PERF_WORK_DIR}"
 }
 
 
@@ -409,7 +372,7 @@ run_hnswlib_standalone() {
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}"; then
                 :
             else
@@ -457,7 +420,7 @@ run_hnswlib_standalone() {
     if standalone_runtime finalize \
         "${RESULTS_DIR}" \
         "${SOFTWARE_VERSION}" \
-        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${EXPECTED_ARCH}" \
         "${PERF_RUN_ID}" \
         "${command_status}" \
         "${cleanup_status}" \
@@ -482,9 +445,9 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build hnswlib from the official source, run the unchanged official
-tests/python/speedtest.py benchmark, collect environment information, validate
-results, generate a report, and clean the private work area.
+Build hnswlib from the official source, run the five-dataset ANN-Benchmarks
+workload, collect environment information, validate results, generate a
+report, and clean the private work area.
 
 Options:
   --version VERSION       hnswlib version (default: ${SOFTWARE_VERSION})
@@ -494,7 +457,7 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  HNSWLIB_SOURCE_URL
+  HNSWLIB_SOURCE_URL, HNSWLIB_DATA_ROOT
 USAGE
 }
 
@@ -505,7 +468,7 @@ main() {
         case "$1" in
             --version)
                 if [[ "$#" -lt 2 ]]; then
-                    log_message "ERROR: --version requires a value"
+                    log "ERROR: --version requires a value"
                     return 10
                 fi
                 SOFTWARE_VERSION="$2"
@@ -513,7 +476,7 @@ main() {
                 ;;
             --results-dir)
                 if [[ "$#" -lt 2 ]]; then
-                    log_message "ERROR: --results-dir requires a value"
+                    log "ERROR: --results-dir requires a value"
                     return 10
                 fi
                 RESULTS_DIR="$2"
@@ -528,7 +491,7 @@ main() {
                 return 0
                 ;;
             *)
-                log_message "ERROR: unsupported option: $1"
+                log "ERROR: unsupported option: $1"
                 usage
                 return 10
                 ;;
@@ -543,7 +506,7 @@ main() {
     run_hnswlib_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
     pipeline_status="${PIPESTATUS[0]}"
     set -e
-    log_message "standalone results: ${RESULTS_DIR}"
+    log "standalone results: ${RESULTS_DIR}"
     return "${pipeline_status}"
 }
 

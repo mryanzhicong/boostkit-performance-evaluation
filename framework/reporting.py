@@ -12,7 +12,7 @@ DIRECTION_LABELS = {
     "neutral": "仅展示",
 }
 ARCHITECTURE_ORDER = ("x86_64", "aarch64")
-ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86"), ("aarch64", "aarch64"))
+ENVIRONMENT_ARCHITECTURES = (("x86_64", "x86_64"), ("aarch64", "aarch64"))
 FIELD_LABELS = {
     "recorded_at": "构建信息记录时间",
     "requested_version": "请求软件版本",
@@ -46,10 +46,12 @@ SYSTEM_FIELD_ORDER = (
 ENVIRONMENT_LABEL_COLUMN_WIDTH = 180
 REPORT_TABLE_WIDTH = 1380
 SUMMARY_STATUS_COLUMN_WIDTHS = (180, 220, 160, 220, 240, 360)
-SINGLE_METRIC_COLUMN_WIDTHS = (180, 160, 420, 200, 160, 260)
-CROSS_METRIC_COLUMN_WIDTHS = (160, 140, 340, 180, 160, 160, 240)
-COMPARISON_METRIC_COLUMN_WIDTHS = (380, 200, 180, 180, 220, 220)
+GROUPED_COMPARISON_METRIC_COLUMN_WIDTHS = (400, 200, 200, 200, 380)
+UNGROUPED_COMPARISON_METRIC_COLUMN_WIDTHS = (450, 190, 190, 190, 360)
 REPORT_METRIC_COLUMN_WIDTHS = (500, 280, 200, 400)
+TEST_TOOL_COLUMN_WIDTHS = (500, 880)
+MATRIX_SINGLE_COLUMN_WIDTHS = (180, 400, 400, 400)
+MATRIX_COMPARISON_COLUMN_WIDTHS = (150, 300, 190, 190, 190, 360)
 
 
 def direction_label(direction: object) -> str:
@@ -180,6 +182,221 @@ def _environment_tables(
     return lines
 
 
+def _test_tools_section(test_tools: object, heading_level: int) -> list[str]:
+    if not isinstance(test_tools, dict) or not test_tools:
+        return []
+    rows: list[list[object]] = []
+    for name, definition in test_tools.items():
+        if not isinstance(definition, dict):
+            continue
+        version = definition.get("version")
+        revision = definition.get("revision")
+        if isinstance(revision, str) and revision:
+            version = f"{version} ({revision})"
+        rows.append([name, version])
+    if not rows:
+        return []
+    lines = [f"{'#' * heading_level} 测试工具", ""]
+    lines.extend(
+        _fixed_width_table(
+            ("工具", "版本"),
+            rows,
+            TEST_TOOL_COLUMN_WIDTHS,
+        )
+    )
+    return lines
+
+
+def _matrix_metric_groups(
+    metrics: dict,
+    metric_names: list[str],
+) -> tuple[dict[str, dict], list[str]]:
+    """Collect declarative matrix metrics without inspecting metric names."""
+    groups: dict[str, dict] = {}
+    other_names: list[str] = []
+    for name in metric_names:
+        metric = metrics.get(name)
+        matrix = metric.get("matrix") if isinstance(metric, dict) else None
+        if not isinstance(matrix, dict):
+            other_names.append(name)
+            continue
+        group = matrix.get("group")
+        row = matrix.get("row")
+        column = matrix.get("column")
+        row_label = matrix.get("row_label")
+        column_order = matrix.get("column_order")
+        if (
+            not isinstance(group, str)
+            or not group
+            or isinstance(row, bool)
+            or not isinstance(row, (int, float, str))
+            or row == ""
+            or not isinstance(column, str)
+            or not column
+            or not isinstance(row_label, str)
+            or not row_label
+            or not isinstance(column_order, list)
+        ):
+            raise ValueError(f"metric {name} has an invalid matrix declaration")
+        group_data = groups.setdefault(
+            group,
+            {
+                "row_label": row_label,
+                "column_order": column_order,
+                "single_note": matrix.get("single_note"),
+                "rows": {},
+            },
+        )
+        if (
+            group_data["row_label"] != row_label
+            or group_data["column_order"] != column_order
+            or group_data["single_note"] != matrix.get("single_note")
+        ):
+            raise ValueError(f"matrix group {group} has inconsistent table metadata")
+        row_data = group_data["rows"].setdefault(row, {})
+        if column in row_data:
+            raise ValueError(f"matrix group {group} has duplicate cell {row}/{column}")
+        row_data[column] = metric
+    return groups, other_names
+
+
+def _presentation_metric_groups(
+    metrics: dict,
+    metric_names: list[str],
+) -> tuple[dict[str, list[str]], list[str]]:
+    """Split metrics with explicit presentation groups from ordinary metrics."""
+    groups: dict[str, list[str]] = {}
+    other_names: list[str] = []
+    for name in metric_names:
+        metric = metrics.get(name)
+        group = metric.get("group") if isinstance(metric, dict) else None
+        if isinstance(group, str) and group:
+            groups.setdefault(group, []).append(name)
+        else:
+            other_names.append(name)
+    return groups, other_names
+
+
+def _single_metric_table(metrics: dict, metric_names: list[str]) -> list[str]:
+    rows: list[list[object]] = []
+    for name in metric_names:
+        metric = metrics[name]
+        rows.append([
+            name,
+            metric.get("value") if metric.get("value") is not None else "N/A",
+            metric.get("unit", ""),
+            direction_label(metric.get("direction")),
+        ])
+    return _fixed_width_table(
+        ("指标", "数值", "单位", "优化方向"),
+        rows,
+        REPORT_METRIC_COLUMN_WIDTHS,
+    )
+
+
+def _comparison_metric_rows(metrics: dict, metric_names: list[str]) -> list[list[object]]:
+    rows: list[list[object]] = []
+    for name in metric_names:
+        metric = metrics[name]
+        relative = metric.get("relative_performance")
+        rows.append([
+            name,
+            direction_label(metric.get("direction")),
+            metric.get("x86_64", "N/A"),
+            metric.get("aarch64", "N/A"),
+            relative if relative is not None else "N/A",
+        ])
+    return rows
+
+
+def _grouped_comparison_metric_table(metrics: dict, metric_names: list[str]) -> list[str]:
+    return _fixed_width_table(
+        ("指标", "优化方向", "x86_64", "aarch64", "相对性能"),
+        _comparison_metric_rows(metrics, metric_names),
+        GROUPED_COMPARISON_METRIC_COLUMN_WIDTHS,
+    )
+
+
+def _ungrouped_comparison_metric_table(metrics: dict, metric_names: list[str]) -> list[str]:
+    return _fixed_width_table(
+        ("指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
+        _comparison_metric_rows(metrics, metric_names),
+        UNGROUPED_COMPARISON_METRIC_COLUMN_WIDTHS,
+    )
+
+
+def _matrix_row_sort_key(value: object) -> tuple[int, float | str]:
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return (0, float(value))
+    return (1, str(value))
+
+
+def _matrix_single_tables(
+    groups: dict[str, dict],
+    heading_level: int,
+) -> list[str]:
+    lines: list[str] = []
+    for group, table in groups.items():
+        rows_by_key = table["rows"]
+        columns = [column for column in table["column_order"] if any(
+            column in row for row in rows_by_key.values()
+        )]
+        columns.extend(sorted({column for row in rows_by_key.values() for column in row} - set(columns)))
+        headers = [table["row_label"]]
+        for column in columns:
+            metric = next(row[column] for row in rows_by_key.values() if column in row)
+            headers.append(f"{column}（{metric.get('unit', '')}）")
+        lines.extend([f"{'#' * heading_level} {group}", ""])
+        rows = []
+        for row_key in sorted(rows_by_key, key=_matrix_row_sort_key):
+            rows.append([
+                row_key,
+                *(rows_by_key[row_key].get(column, {}).get("value") for column in columns),
+            ])
+        if len(headers) != 4:
+            raise ValueError(f"matrix group {group} must declare exactly three columns")
+        lines.extend(_fixed_width_table(tuple(headers), rows, MATRIX_SINGLE_COLUMN_WIDTHS))
+        note = table["single_note"]
+        if isinstance(note, str) and note:
+            lines.extend([f"> {note}", ""])
+    return lines
+
+
+def _matrix_comparison_tables(
+    groups: dict[str, dict],
+    heading_level: int,
+) -> list[str]:
+    lines: list[str] = []
+    for group, table in groups.items():
+        rows_by_key = table["rows"]
+        columns = [column for column in table["column_order"] if any(
+            column in row for row in rows_by_key.values()
+        )]
+        columns.extend(sorted({column for row in rows_by_key.values() for column in row} - set(columns)))
+        lines.extend([f"{'#' * heading_level} {group}", ""])
+        rows = []
+        for row_key in sorted(rows_by_key, key=_matrix_row_sort_key):
+            for column in columns:
+                metric = rows_by_key[row_key].get(column, {})
+                relative = metric.get("relative_performance")
+                rows.append([
+                    row_key,
+                    f"{column}（{metric.get('unit', '')}）",
+                    direction_label(metric.get("direction")),
+                    metric.get("x86_64"),
+                    metric.get("aarch64"),
+                    relative if relative is not None else "N/A",
+                ])
+        lines.extend(
+            _fixed_width_table(
+                (table["row_label"], "指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
+                rows,
+                MATRIX_COMPARISON_COLUMN_WIDTHS,
+            )
+        )
+    return lines
+
+
 def render_single(data: dict) -> str:
     lines = [
         f"# {data.get('software')} {data.get('version')} 性能报告",
@@ -202,55 +419,44 @@ def render_single(data: dict) -> str:
             ),),
         )
     )
+    lines.extend(_test_tools_section(data.get("test_tools"), heading_level=3))
     lines.extend(["## 性能指标", ""])
-    metric_rows: list[list[object]] = []
-    for name, metric in data.get("metrics", {}).items():
-        value = metric.get("value")
-        metric_rows.append([
-            name,
-            value if value is not None else "N/A",
-            metric.get("unit", ""),
-            direction_label(metric.get("direction")),
-        ])
-    lines.extend(
-        _fixed_width_table(
-            ("指标", "数值", "单位", "优化方向"),
-            metric_rows,
-            REPORT_METRIC_COLUMN_WIDTHS,
-        )
-    )
+    metrics = data.get("metrics", {})
+    matrix_groups, other_names = _matrix_metric_groups(metrics, list(metrics))
+    if matrix_groups:
+        lines.extend(_matrix_single_tables(matrix_groups, heading_level=3))
+    presentation_groups, other_names = _presentation_metric_groups(metrics, other_names)
+    for group, metric_names in presentation_groups.items():
+        lines.extend([f"### {group}", ""])
+        lines.extend(_single_metric_table(metrics, metric_names))
+    if not other_names:
+        return "\n".join(lines)
+    lines.extend(_single_metric_table(metrics, other_names))
     return "\n".join(lines)
 
 
 def render_comparison(comparison: dict) -> str:
     lines = [f"# {comparison['software']} {comparison['version']} 跨架构对比", ""]
-    metric_rows: list[list[object]] = []
-    for name, metric in comparison.get("metrics", {}).items():
-        raw = metric.get("raw_ratio")
-        relative = metric.get("relative_performance")
-        metric_rows.append([
-            name,
-            direction_label(metric.get("direction")),
-            metric.get("x86_64", "N/A"),
-            metric.get("aarch64", "N/A"),
-            raw if raw is not None else "N/A",
-            relative if relative is not None else "N/A",
+    metrics = comparison.get("metrics", {})
+    matrix_groups, other_names = _matrix_metric_groups(metrics, list(metrics))
+    if matrix_groups:
+        lines.extend(_matrix_comparison_tables(matrix_groups, heading_level=2))
+    presentation_groups, other_names = _presentation_metric_groups(metrics, other_names)
+    for group, metric_names in presentation_groups.items():
+        lines.extend([f"## {group}", ""])
+        lines.extend(_grouped_comparison_metric_table(metrics, metric_names))
+    if other_names:
+        lines.extend(_ungrouped_comparison_metric_table(metrics, other_names))
+    if matrix_groups or presentation_groups or other_names:
+        lines.extend([
+            "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
+            "",
         ])
-    lines.extend(
-        _fixed_width_table(
-            ("指标", "优化方向", "x86_64", "aarch64", "ARM/x86 原始比值", "相对性能"),
-            metric_rows,
-            COMPARISON_METRIC_COLUMN_WIDTHS,
-        )
-    )
-    lines.extend([
-        "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
-        "",
-    ])
     environments = comparison.get("environments", {})
     if isinstance(environments, dict) and environments:
         lines.extend(["## 测试环境", ""])
         lines.extend(_environment_tables(environments))
+    lines.extend(_test_tools_section(comparison.get("test_tools"), heading_level=3))
     return "\n".join(lines)
 
 
@@ -316,6 +522,11 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
         for (_category, software, version), environments in grouped_environments.items():
             lines.extend([f"### {software} {version}", ""])
             lines.extend(_environment_tables(environments, heading_level=4))
+            for environment in environments.values():
+                test_tools = environment.get("test_tools")
+                if isinstance(test_tools, dict) and test_tools:
+                    lines.extend(_test_tools_section(test_tools, heading_level=4))
+                    break
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
     if metric_items:
         comparison_orders = {
@@ -332,55 +543,52 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
         lines.extend(["## 单架构指标", ""])
         for architecture in architecture_order:
             lines.extend([f"### {architecture}", ""])
-            metric_rows = []
             architecture_items = sorted(
                 (item for item in metric_items if item.get("architecture") == architecture),
                 key=_result_key,
             )
             for item in architecture_items:
-                for name in _metric_names(item, comparison_orders):
-                    metric = item["metrics"][name]
-                    metric_rows.append([
-                        item.get("software"),
-                        item.get("version"),
-                        name,
-                        metric.get("value"),
-                        metric.get("unit", ""),
-                        direction_label(metric.get("direction")),
-                    ])
-            lines.extend(
-                _fixed_width_table(
-                    ("软件", "版本", "指标", "数值", "单位", "优化方向"),
-                    metric_rows,
-                    SINGLE_METRIC_COLUMN_WIDTHS,
+                metric_names = _metric_names(item, comparison_orders)
+                matrix_groups, other_names = _matrix_metric_groups(
+                    item["metrics"], metric_names
                 )
-            )
+                presentation_groups, other_names = _presentation_metric_groups(
+                    item["metrics"], other_names
+                )
+                if matrix_groups:
+                    lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
+                    lines.extend(_matrix_single_tables(matrix_groups, heading_level=5))
+                if presentation_groups:
+                    lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
+                    for group, group_names in presentation_groups.items():
+                        lines.extend([f"##### {group}", ""])
+                        lines.extend(_single_metric_table(item["metrics"], group_names))
+                if other_names:
+                    lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
+                    lines.extend(_single_metric_table(item["metrics"], other_names))
     if comparisons:
         lines.extend(["## 跨架构指标", ""])
-        comparison_rows: list[list[object]] = []
+        has_comparison_metrics = False
         for comparison in comparisons:
-            for name, metric in comparison.get("metrics", {}).items():
-                relative = metric.get("relative_performance")
-                comparison_rows.append([
-                    comparison.get("software"),
-                    comparison.get("version"),
-                    name,
-                    direction_label(metric.get("direction")),
-                    metric.get("x86_64"),
-                    metric.get("aarch64"),
-                    relative if relative is not None else "N/A",
-                ])
-        lines.extend(
-            _fixed_width_table(
-                ("软件", "版本", "指标", "优化方向", "x86_64", "aarch64", "aarch64 相对性能"),
-                comparison_rows,
-                CROSS_METRIC_COLUMN_WIDTHS,
-            )
-        )
-        lines.extend([
-            "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已经反向换算。",
-            "",
-        ])
+            metrics = comparison.get("metrics", {})
+            matrix_groups, other_names = _matrix_metric_groups(metrics, list(metrics))
+            presentation_groups, other_names = _presentation_metric_groups(metrics, other_names)
+            if matrix_groups or presentation_groups or other_names:
+                has_comparison_metrics = True
+                lines.extend([f"### {comparison.get('software')} {comparison.get('version')}", ""])
+            if matrix_groups:
+                lines.extend(_matrix_comparison_tables(matrix_groups, heading_level=4))
+            if presentation_groups:
+                for group, group_names in presentation_groups.items():
+                    lines.extend([f"#### {group}", ""])
+                    lines.extend(_grouped_comparison_metric_table(metrics, group_names))
+            if other_names:
+                lines.extend(_ungrouped_comparison_metric_table(metrics, other_names))
+        if has_comparison_metrics:
+            lines.extend([
+                "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已经反向换算。",
+                "",
+            ])
     return "\n".join(lines)
 
 
