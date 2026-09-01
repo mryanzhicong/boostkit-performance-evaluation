@@ -18,8 +18,10 @@ Python，也不向系统路径安装 Python。
 3. 安装到本次任务私有的 `PERF_WORK_DIR/cpython-install`；
 4. 校验私有解释器的实际版本、`pip` 与 `ssl`、`zlib`、`ctypes` 模块。
 
-脚本需要 `git`、`gcc`、`make`、`python3` 和 `nproc` 命令。CPython 构建环境还必须
-具备生成 `ssl`、`zlib`、`ctypes` 模块所需的系统开发库，否则构建后的校验会失败。
+脚本自动检查并通过 `dnf` 安装缺失依赖；非 root Runner 使用 `sudo -n dnf`。其中包括
+`git`、`gcc`、`make`、`python3`、`nproc` 以及 CPython 标准库模块和官方基准集所需
+的 `openssl-devel`、`zlib-devel`、`libffi-devel`、`sqlite-devel`、`bzip2-devel`、
+`xz-devel`、`readline-devel`、`gdbm-devel`、`libuuid-devel`。
 
 构建命令如下，安装前缀由每次任务运行时生成：
 
@@ -63,8 +65,8 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
 正式流程如下：
 
 1. 使用本次任务私有 CPython 安装 `pyperformance==1.13.0`；
-2. 执行 `pyperformance run --warmup 3`，不传递 `-b` 参数；
-3. 由 pyperformance 执行该版本默认提供的完整基准集，每项预热 3 次；
+2. 执行 `pyperformance run -b 2to3,python_startup,python_startup_no_site --warmup 3`；
+3. 由 pyperformance 依次执行 3 项文档中的代表性基准，每项预热 3 次；
 4. 保留官方原始 JSON，并从每个 benchmark 的全部有效测量值中提取 median。
 
 实际命令如下：
@@ -76,6 +78,7 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
   pyperformance==1.13.0
 
 "${PYTHON_BIN}" -m pyperformance run \
+  -b 2to3,python_startup,python_startup_no_site \
   --warmup 3 \
   -o "${RESULTS_DIR}/benchmark.json"
 ```
@@ -91,9 +94,12 @@ bash software/Toolchain/python/python_test.sh \
 
 ## 指标
 
-每个 pyperformance 默认 benchmark 保留一个指标，不做平均、加权、评分或跨场景
-聚合。指标数等于本次 `benchmark.json` 中的 benchmark 数量；报告按官方 benchmark
-名称展示，便于对齐两个架构实际执行的相同工作负载。
+每个 pyperformance benchmark 保留一个指标，不做平均、加权、评分或跨场景聚合。共
+3 个指标，报告按官方 benchmark 名称展示，便于对齐两个架构实际执行的相同工作负载：
+
+```text
+2to3、python_startup、python_startup_no_site
+```
 
 | 原始字段 | 报告中的指标名 | 单位 | 优化方向 | 含义 |
 |---|---|---:|---|---|

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Normalize pyperformance's official pyperf JSON into per-benchmark metrics.
 
-pyperformance (the official Python performance suite) is executed with its
-complete default benchmark selection and emits pyperf JSON. This script extracts
-one median value per official benchmark, preserving the official benchmark name
+pyperformance (the official Python performance suite) is executed with a fixed
+documented benchmark selection and emits pyperf JSON. This script extracts one
+median value per official benchmark, preserving the official benchmark name
 verbatim.
 The median reproduces pyperf's own median: statistics.median over every
 recorded run value, with warmup values excluded.
@@ -153,8 +153,7 @@ def normalize_results(
 
 def validate_requested_benchmarks(results: dict[str, Any], requested: str) -> list[str]:
     if not requested:
-        # No -b option means pyperformance ran its complete default suite.
-        return list(results)
+        raise RuntimeError("requested benchmark selection is empty")
     requested_list = [name for name in requested.split(",") if name]
     if not requested_list:
         raise RuntimeError("requested benchmark selection is empty")
@@ -207,6 +206,8 @@ def main() -> int:
                 "-m",
                 "pyperformance",
                 "run",
+                "-b",
+                ",".join(requested),
                 "--warmup",
                 warmup,
                 "-o",

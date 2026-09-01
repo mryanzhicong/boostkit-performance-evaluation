@@ -13,8 +13,9 @@ PYPI_INDEX_URL="https://mirrors.huaweicloud.com/repository/pypi/simple"
 # Keep the benchmark runner and warmup policy identical on both architectures.
 PYPERFORMANCE_VERSION="1.13.0"
 PYPERFORMANCE_WARMUP="3"
-# An empty selection deliberately invokes pyperformance's complete default suite.
-PYPERFORMANCE_BENCHMARKS=""
+# Representative official selection used by the documented Python AutoJIT
+# comparison: source transformation plus startup with and without site.py.
+PYPERFORMANCE_BENCHMARKS="2to3,python_startup,python_startup_no_site"
 # Match the documented CPython performance-build configuration.
 CONFIGURE_OPTIONS="--enable-optimizations --with-lto"
 
@@ -72,15 +73,67 @@ initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
-require_commands() {
-    local required missing=0
-    for required in git gcc make python3 nproc; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
-            missing=1
+require_python_tools() {
+    local command_name package
+    local packages=()
+
+    for command_name in git gcc make python3 nproc sudo; do
+        if command -v "${command_name}" >/dev/null 2>&1; then
+            continue
+        fi
+        case "${command_name}" in
+            git) package="git" ;;
+            gcc) package="gcc" ;;
+            make) package="make" ;;
+            python3) package="python3" ;;
+            nproc) package="coreutils" ;;
+            sudo) package="sudo" ;;
+        esac
+        log_message "missing required Python test command: ${command_name}"
+        packages+=("${package}")
+    done
+
+    # These headers build the CPython modules verified before pyperformance
+    # runs: _ssl, zlib and _ctypes.  The remaining headers keep the standard
+    # library feature-complete for the complete official benchmark suite.
+    for package in bzip2-devel gdbm-devel libffi-devel libuuid-devel openssl-devel readline-devel sqlite-devel xz-devel zlib-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log_message "missing required Python test package: ${package}"
+            packages+=("${package}")
         fi
     done
-    [[ "${missing}" -eq 0 ]]
+
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log_message "ERROR: dnf is required to install Python test prerequisites"
+        return 30
+    fi
+
+    log_message "installing missing Python test packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log_message "ERROR: sudo is required to install Python test prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log_message "ERROR: failed to install Python test prerequisites"
+        return 30
+    fi
+
+    for command_name in git gcc make python3 nproc sudo; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            log_message "ERROR: required Python test command remains unavailable: ${command_name}"
+            return 30
+        fi
+    done
+    for package in bzip2-devel gdbm-devel libffi-devel libuuid-devel openssl-devel readline-devel sqlite-devel xz-devel zlib-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log_message "ERROR: required Python test package remains unavailable: ${package}"
+            return 30
+        fi
+    done
 }
 
 check_architecture() {
@@ -147,7 +200,7 @@ build_python() {
 
     initialize_runtime || return $?
     check_architecture || return $?
-    require_commands || return $?
+    require_python_tools || return $?
     [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" && ! -e "${BENCH_WORK_DIR}" ]] || {
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
@@ -213,7 +266,7 @@ run_python_benchmarks() {
     }
     mkdir -p "${BENCH_WORK_DIR}" "${RESULTS_DIR}"
     log_message "installing pyperformance ${PYPERFORMANCE_VERSION} into the private CPython"
-    log_message "running the complete official pyperformance suite with ${PYPERFORMANCE_WARMUP} warmups"
+    log_message "running official pyperformance benchmarks: ${PYPERFORMANCE_BENCHMARKS}"
     (
         cd "${BENCH_WORK_DIR}"
         export PIP_NO_CACHE_DIR=1
@@ -223,6 +276,7 @@ run_python_benchmarks() {
             --trusted-host mirrors.huaweicloud.com \
             "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
         "${PYTHON_BIN}" -m pyperformance run \
+            -b "${PYPERFORMANCE_BENCHMARKS}" \
             --warmup "${PYPERFORMANCE_WARMUP}" \
             -o "${RESULTS_DIR}/benchmark.json" || exit 50
     ) || {
