@@ -385,6 +385,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     "direction",
                     "direction_path",
                     "group_path",
+                    "matrix",
                 }
                 if unknown_fields:
                     errors.append(
@@ -410,6 +411,40 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         "metrics.collection.group_path must be a non-empty string"
                     )
+                matrix = collection.get("matrix")
+                if matrix is not None:
+                    if not isinstance(matrix, dict):
+                        errors.append("metrics.collection.matrix must be a mapping")
+                    else:
+                        unknown_fields = set(matrix) - {
+                            "group_path", "row_path", "column_path", "row_label",
+                            "column_order", "single_note",
+                        }
+                        if unknown_fields:
+                            errors.append(
+                                "metrics.collection.matrix contains unsupported fields: "
+                                f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                            )
+                        for field in ("group_path", "row_path", "column_path", "row_label"):
+                            if not isinstance(matrix.get(field), str) or not matrix[field]:
+                                errors.append(
+                                    f"metrics.collection.matrix.{field} must be a non-empty string"
+                                )
+                        column_order = matrix.get("column_order")
+                        if (
+                            not isinstance(column_order, list)
+                            or not column_order
+                            or not all(isinstance(value, str) and value for value in column_order)
+                            or len(column_order) != len(set(column_order))
+                        ):
+                            errors.append(
+                                "metrics.collection.matrix.column_order must be a non-empty unique string list"
+                            )
+                        note = matrix.get("single_note")
+                        if note is not None and (not isinstance(note, str) or not note):
+                            errors.append(
+                                "metrics.collection.matrix.single_note must be a non-empty string"
+                            )
                 unit = collection.get("unit")
                 unit_path = collection.get("unit_path")
                 if (unit is None) == (unit_path is None):

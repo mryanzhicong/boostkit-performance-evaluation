@@ -72,11 +72,19 @@ def sysbench_result(architecture: str, factor: float) -> dict:
                 ("QPS", "queries/s", 2),
                 ("transactions", "transactions", 60),
             ):
-                name = f"sysbench {scenario} --threads={threads}: {field}"
+                name = f"metric {scenario}/{threads}/{field}"
                 metrics[name] = {
                     "value": base * threads * multiplier * factor,
                     "unit": unit,
                     "direction": "higher_is_better",
+                    "matrix": {
+                        "group": scenario,
+                        "row": threads,
+                        "column": field,
+                        "row_label": "线程数",
+                        "column_order": ["TPS", "QPS", "transactions"],
+                        "single_note": "TPS、QPS 和 transactions 均为越大越好。",
+                    },
                 }
     result["metrics"] = metrics
     return result
@@ -646,6 +654,9 @@ def test_explicit_metric_groups_render_as_separate_tables() -> None:
     assert "## 延迟" in cross_architecture
     assert "ARM/x86 原始比值" not in cross_architecture
     assert "相对性能" in cross_architecture
+    assert '<th width="400">指标</th>' in cross_architecture
+    assert '<th width="380">相对性能</th>' in cross_architecture
+    assert "aarch64 相对性能" not in cross_architecture
 
     summary = render_summary(
         {"total": 2, "passed": 2, "failed": 0, "comparisons": 1, "items": [x86, arm]},
@@ -765,6 +776,17 @@ def test_report_generator_pairs_architectures(tmp_path: Path) -> None:
     x86_metrics = combined.split("### x86_64", 1)[1].split("### aarch64", 1)[0]
     arm_metrics = combined.split("### aarch64", 1)[1].split("## 跨架构指标", 1)[0]
     cross_architecture_metrics = combined.split("## 跨架构指标", 1)[1]
+    assert "#### sample 1.0" in x86_metrics
+    assert "#### sample 1.0" in arm_metrics
+    assert '<th width="500">指标</th>' in x86_metrics
+    assert '<th width="500">指标</th>' in arm_metrics
+    assert '<th width="180">软件</th>' not in x86_metrics
+    assert '<th width="180">软件</th>' not in arm_metrics
+    assert "### sample 1.0" in cross_architecture_metrics
+    assert '<th width="450">指标</th>' in cross_architecture_metrics
+    assert '<th width="190">优化方向</th>' in cross_architecture_metrics
+    assert '<th width="360">aarch64 相对性能</th>' in cross_architecture_metrics
+    assert "软件（版本）" not in cross_architecture_metrics
     for section in (arm_metrics, x86_metrics, cross_architecture_metrics):
         assert section.index("throughput") < section.index("latency")
 
@@ -804,7 +826,7 @@ def test_sysbench_reports_group_metrics_by_workload_then_threads(tmp_path: Path)
     assert sum_section.index('<td width="180">128</td>') < sum_section.index(
         '<td width="180">256</td>'
     )
-    assert "sysbench sum --threads=128: TPS" not in sum_section
+    assert "metric sum/128/TPS" not in sum_section
 
     cross_architecture = combined.split("## 跨架构指标", 1)[1]
     assert cross_architecture.index("#### sum") < cross_architecture.index("#### delete")
