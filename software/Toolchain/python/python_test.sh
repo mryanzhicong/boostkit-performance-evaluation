@@ -143,6 +143,8 @@ verify_cpython_build() {
 }
 
 build_python() {
+    local -a configure_options
+
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
@@ -152,11 +154,16 @@ build_python() {
     }
     prepare_cpython_source || return $?
     GCC_VERSION_STRING="$(gcc --version | head -n 1)"
+    read -r -a configure_options <<< "${CONFIGURE_OPTIONS}"
+    [[ "${#configure_options[@]}" -gt 0 ]] || {
+        log_message "ERROR: CPython configure options are empty"
+        return 40
+    }
 
     log_message "configuring CPython v${SOFTWARE_VERSION} with ${CONFIGURE_OPTIONS} into a private prefix"
     (
         cd "${SOURCE_DIR}"
-        ./configure --prefix="${INSTALL_DIR}" "${CONFIGURE_OPTIONS}"
+        ./configure --prefix="${INSTALL_DIR}" "${configure_options[@]}"
     ) || {
         log_message "ERROR: CPython configure failed"
         return 40
