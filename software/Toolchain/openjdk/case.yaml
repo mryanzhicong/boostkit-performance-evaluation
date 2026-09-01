@@ -1,0 +1,41 @@
+name: openjdk
+category: Toolchain
+enabled: true
+versions:
+  - "25.0.2"
+  - "26.0.2.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: openjdk_test.sh
+      function: build_openjdk
+    start:
+      script: openjdk_test.sh
+      function: start_openjdk_runtime
+    test:
+      script: openjdk_test.sh
+      function: run_openjdk_benchmarks
+    stop:
+      script: openjdk_test.sh
+      function: stop_openjdk_runtime
+  timeout_minutes: 240
+outputs:
+  official_benchmark:
+    path: benchmark_micro.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_openjdk.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: us
+    direction: lower_is_better
