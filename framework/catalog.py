@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARCHITECTURES = ("x86_64", "aarch64")
 SOFTWARE_STAGES = ("build", "start", "test", "stop")
 VALID_DIRECTIONS = {"higher_is_better", "lower_is_better", "neutral"}
-VALID_OUTPUT_FORMATS = {"json", "text", "binary"}
+VALID_OUTPUT_FORMATS = {"json", "text", "binary", "directory"}
 SHELL_FUNCTION_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 OUTPUT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -135,6 +135,36 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         errors.append("versions must be a non-empty list of strings")
     elif len(versions) != len(set(versions)):
         errors.append("versions must not contain duplicates")
+
+    test_tools = case.get("test_tools")
+    if test_tools is not None:
+        if not isinstance(test_tools, dict) or not test_tools:
+            errors.append("test_tools must be a non-empty mapping when declared")
+        else:
+            for tool_name, definition in test_tools.items():
+                if not isinstance(tool_name, str) or not tool_name:
+                    errors.append("test_tools names must be non-empty strings")
+                    continue
+                if not isinstance(definition, dict):
+                    errors.append(f"test_tools.{tool_name} must be a mapping")
+                    continue
+                unknown_fields = set(definition) - {"version", "revision"}
+                if unknown_fields:
+                    errors.append(
+                        f"test_tools.{tool_name} contains unsupported fields: "
+                        f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                    )
+                if not isinstance(definition.get("version"), str) or not definition["version"]:
+                    errors.append(
+                        f"test_tools.{tool_name}.version must be a non-empty string"
+                    )
+                revision = definition.get("revision")
+                if revision is not None and (
+                    not isinstance(revision, str) or not revision
+                ):
+                    errors.append(
+                        f"test_tools.{tool_name}.revision must be a non-empty string"
+                    )
 
     execution = case.get("execution")
     if not isinstance(execution, dict):
@@ -354,6 +384,8 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     "unit_path",
                     "direction",
                     "direction_path",
+                    "group_path",
+                    "matrix",
                 }
                 if unknown_fields:
                     errors.append(
@@ -372,6 +404,47 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         "metrics.collection.name_path must be a non-empty string"
                     )
+                group_path = collection.get("group_path")
+                if group_path is not None and (
+                    not isinstance(group_path, str) or not group_path
+                ):
+                    errors.append(
+                        "metrics.collection.group_path must be a non-empty string"
+                    )
+                matrix = collection.get("matrix")
+                if matrix is not None:
+                    if not isinstance(matrix, dict):
+                        errors.append("metrics.collection.matrix must be a mapping")
+                    else:
+                        unknown_fields = set(matrix) - {
+                            "group_path", "row_path", "column_path", "row_label",
+                            "column_order", "single_note",
+                        }
+                        if unknown_fields:
+                            errors.append(
+                                "metrics.collection.matrix contains unsupported fields: "
+                                f"{', '.join(sorted(str(field) for field in unknown_fields))}"
+                            )
+                        for field in ("group_path", "row_path", "column_path", "row_label"):
+                            if not isinstance(matrix.get(field), str) or not matrix[field]:
+                                errors.append(
+                                    f"metrics.collection.matrix.{field} must be a non-empty string"
+                                )
+                        column_order = matrix.get("column_order")
+                        if (
+                            not isinstance(column_order, list)
+                            or not column_order
+                            or not all(isinstance(value, str) and value for value in column_order)
+                            or len(column_order) != len(set(column_order))
+                        ):
+                            errors.append(
+                                "metrics.collection.matrix.column_order must be a non-empty unique string list"
+                            )
+                        note = matrix.get("single_note")
+                        if note is not None and (not isinstance(note, str) or not note):
+                            errors.append(
+                                "metrics.collection.matrix.single_note must be a non-empty string"
+                            )
                 unit = collection.get("unit")
                 unit_path = collection.get("unit_path")
                 if (unit is None) == (unit_path is None):

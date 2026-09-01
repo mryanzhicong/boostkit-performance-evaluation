@@ -341,13 +341,14 @@ python3 -m pytest framework/tests
 |---|---|
 | `README.md` | 项目总览，包含架构、运行方式、公共流程和文档入口。 |
 | `.gitignore` | 排除运行产物、缓存、历史结果工作区和本地临时文件。 |
+| `.gitattributes` | 为软件分类清单启用 Git 内置 `union` 合并，保留并发分支各自追加的软件登记项。 |
 | `.github/workflows/performance-test.yml` | 唯一 Workflow；处理手动输入、矩阵、双架构任务、前后清理、报告和永久历史。 |
 
 ### 公共配置
 
 | 文件 | 用途 |
 |---|---|
-| `config/categories.yaml` | 分类顺序和分类下软件列表的唯一注册表；空值表示当前没有软件。 |
+| `config/categories.yaml` | 分类顺序和分类下软件列表的唯一注册表；空值表示当前没有软件。该文件使用 Git `union` 合并驱动，支持并发追加不同软件。 |
 | `config/defaults.yaml` | 默认双架构、架构到 Runner 标签的唯一映射、输出根目录和裸机工作根目录。 |
 
 ### 项目文档

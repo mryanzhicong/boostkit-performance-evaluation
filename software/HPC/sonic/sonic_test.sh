@@ -9,20 +9,12 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 SONIC_SOURCE_URL="${SONIC_SOURCE_URL:-https://github.com/bytedance/sonic-cpp.git}"
-# Bazel version pinned by the official repository's .bazelversion (master).
-BAZEL_VERSION="8.5.1"
 # Repetitions used by the official CI benchmark workflow (repetitions=5).
 BENCHMARK_REPETITIONS="5"
-# The official WORKSPACE.bzlmod/MODULE.bazel pull third-party dependencies from
-# branch = "master"/"main", which is not reproducible. lock_dependency_snapshots
-# replaces those pins with commit snapshots recorded on 2026-08-20 (see the
-# Python lock table below for the exact SHAs).
 
 SOURCE_DIR=""
-BUILD_TOOLCHAIN_DIR=""
+BUILD_DIR=""
 BENCHMARK_BIN=""
-COMPILER_BINARY=""
-COMPILER_VERSION_STRING=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -35,27 +27,6 @@ normalize_architecture() {
         x86_64|amd64) printf 'x86_64\n' ;;
         aarch64|arm64) printf 'aarch64\n' ;;
         *) printf '%s\n' "${1,,}" ;;
-    esac
-}
-
-github_download_url() {
-    local source_url="$1"
-
-    if [[ -n "${PERF_GITHUB_DOWNLOAD_PROXY:-}" && "${source_url}" == https://github.com/* ]]; then
-        printf '%s/%s\n' "${PERF_GITHUB_DOWNLOAD_PROXY%/}" "${source_url}"
-        return
-    fi
-    printf '%s\n' "${source_url}"
-}
-
-sonic_arch_flag() {
-    # Maps the runner architecture onto the official :sonic_arch build flag.
-    local arch
-    arch="$(normalize_architecture "$1")"
-    case "${arch}" in
-        x86_64) printf 'haswell\n' ;;
-        aarch64) printf 'arm\n' ;;
-        *) return 1 ;;
     esac
 }
 
@@ -79,8 +50,8 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     SOURCE_DIR="${PERF_WORK_DIR}/sonic-source"
-    BUILD_TOOLCHAIN_DIR="${PERF_WORK_DIR}/build-toolchain"
-    BENCHMARK_BIN="${SOURCE_DIR}/bazel-bin/benchmark"
+    BUILD_DIR="${PERF_WORK_DIR}/build"
+    BENCHMARK_BIN="${BUILD_DIR}/benchmark/bench"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -92,7 +63,7 @@ initialize_runtime() {
 
 require_commands() {
     local required missing=0
-    for required in git python3 curl tar sed tee nproc; do
+    for required in git python3 cmake sed tee; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is missing: ${required}"
             missing=1
@@ -109,52 +80,6 @@ check_architecture() {
         log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
         return 20
     }
-}
-
-prepare_bazel() {
-    local arch bazel_file
-    arch="$(normalize_architecture "${EXPECTED_ARCH}")"
-    case "${arch}" in
-        x86_64) bazel_file="bazel-${BAZEL_VERSION}-linux-x86_64" ;;
-        aarch64) bazel_file="bazel-${BAZEL_VERSION}-linux-arm64" ;;
-        *)
-            log_message "ERROR: unsupported build architecture: ${arch}"
-            return 30
-            ;;
-    esac
-    mkdir -p "${BUILD_TOOLCHAIN_DIR}"
-    if [[ -x "${BUILD_TOOLCHAIN_DIR}/bazel" ]]; then
-        "${BUILD_TOOLCHAIN_DIR}/bazel" --version
-        return 0
-    fi
-    log_message "downloading bazel ${BAZEL_VERSION} (official .bazelversion pin) for ${arch}"
-    curl -fsSL -o "${BUILD_TOOLCHAIN_DIR}/bazel" \
-        "$(github_download_url "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${bazel_file}")" || {
-        log_message "ERROR: failed to download bazel ${BAZEL_VERSION} for ${arch}"
-        return 30
-    }
-    chmod +x "${BUILD_TOOLCHAIN_DIR}/bazel"
-    "${BUILD_TOOLCHAIN_DIR}/bazel" --version
-}
-
-prepare_compiler() {
-    # sonic's official CI invokes bazel with the default system toolchain
-    # (no CC override), so record the default compiler actually used by bazel.
-    local compiler=""
-    if [[ -n "${CC:-}" ]] && command -v "${CC}" >/dev/null 2>&1; then
-        compiler="${CC}"
-    elif command -v gcc >/dev/null 2>&1; then
-        compiler="gcc"
-    elif command -v cc >/dev/null 2>&1; then
-        compiler="cc"
-    fi
-    [[ -n "${compiler}" ]] || {
-        log_message "ERROR: no C/C++ compiler is available for bazel"
-        return 30
-    }
-    COMPILER_BINARY="${compiler}"
-    COMPILER_VERSION_STRING="$("${COMPILER_BINARY}" --version | head -n 1)"
-    log_message "using default bazel compiler: ${COMPILER_BINARY} (${COMPILER_VERSION_STRING})"
 }
 
 prepare_sonic_source() {
@@ -184,86 +109,42 @@ report_actual_version() {
     printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 }
 
-lock_dependency_snapshots() {
-    # Replace the unpinned branch = "master"/"main" git pins in the official
-    # WORKSPACE.bzlmod and MODULE.bazel with the recorded commit snapshots so
-    # every build resolves identical third-party dependencies.
-    log_message "locking third-party dependencies to recorded commit snapshots"
-    python3 - "${SOURCE_DIR}" <<'PYEOF'
-import re
-import sys
-from pathlib import Path
+repair_gflags_source_reference() {
+    local external_cmake_file="${SOURCE_DIR}/cmake/external.cmake"
 
-source_dir = Path(sys.argv[1])
-lock = {
-    "rapidjson": "24b5e7a8b27f42fa16b96fc70aade9106cf7102f",
-    "cJSON": "fb16e5cf358798aabb049655975cde8427101056",
-    "simdjson": "edd9760b14b0ae5a0eb1038caa9c4ed8ce200a38",
-    "yyjson": "db37a64d63d38a8ddea35aa811b1163831028490",
-    "jsoncpp": "60de77f915ab08499032d6e5a63e05e974f85d01",
-    "google_benchmark": "267a11154f14269384879dc7f6b8d25acb3684db",
-    "gtest": "0daf775f8c9324e7d42582a09de1240805f25a54",
-    "gflags": "bdda022e7c34ab865c96fc933604b4b3e617d74d",
-}
-pinned = 0
-for manifest in ("WORKSPACE.bzlmod", "MODULE.bazel"):
-    path = source_dir / manifest
-    if not path.exists():
-        continue
-    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
-    current_repo = None
-    for index, line in enumerate(lines):
-        name_match = re.search(r'name\s*=\s*"([^"]+)"', line)
-        if name_match:
-            current_repo = name_match.group(1)
-        if current_repo in lock and re.search(r'branch\s*=\s*"(master|main)"', line):
-            lines[index] = re.sub(
-                r'branch\s*=\s*"(master|main)"',
-                f'commit = "{lock[current_repo]}"',
-                line,
-            )
-            pinned += 1
-            current_repo = None
-    path.write_text("".join(lines), encoding="utf-8")
-if pinned < len(lock):
-    raise SystemExit(
-        f"expected to pin at least {len(lock)} dependency blocks, pinned {pinned}"
-    )
-print(f"pinned {pinned} branch-based dependency pins to commit snapshots")
-PYEOF
+    [[ -f "${external_cmake_file}" ]] || {
+        log_message "ERROR: Sonic CMake dependency file is missing: ${external_cmake_file}"
+        return 40
+    }
+    # Sonic v1.0.2 requests gflags' retired master branch.  Keep the upstream
+    # CMake build path intact while selecting the repository's current branch.
+    if ! sed -i \
+        '\|GIT_REPOSITORY https://github.com/gflags/gflags.git|,\|GIT_SHALLOW TRUE| s/GIT_TAG  master/GIT_TAG  main/' \
+        "${external_cmake_file}"; then
+        log_message "ERROR: failed to update Sonic's stale gflags branch reference"
+        return 40
+    fi
+    log_message "using gflags main because the v1.0.2 master reference is retired"
 }
 
 build_sonic() {
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_TOOLCHAIN_DIR}" ]] || {
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" ]] || {
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
-    prepare_bazel || return $?
-    prepare_compiler || return $?
     prepare_sonic_source || return $?
-    lock_dependency_snapshots || return $?
     report_actual_version || return $?
+    repair_gflags_source_reference || return $?
 
-    local sonic_arch
-    sonic_arch="$(sonic_arch_flag "${EXPECTED_ARCH}")" || {
-        log_message "ERROR: unsupported architecture for sonic: ${EXPECTED_ARCH}"
-        return 30
-    }
-    log_message "building official //:benchmark with bazel ${BAZEL_VERSION} (:sonic_arch=${sonic_arch})"
+    log_message "building official CMake benchmark target: bench"
     (
-        cd "${SOURCE_DIR}"
-        "${BUILD_TOOLCHAIN_DIR}/bazel" \
-            "--output_user_root=${BUILD_TOOLCHAIN_DIR}/bazel-cache" \
-            build "--repository_cache=${BUILD_TOOLCHAIN_DIR}/bazel-repo-cache" \
-            --compilation_mode=opt \
-            "--//:sonic_arch=${sonic_arch}" \
-            "--//:sonic_dispatch=static" \
-            //:benchmark
+        cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" -DBUILD_BENCH=ON
+        cmake --build "${BUILD_DIR}" --target bench -j
     ) || {
-        log_message "ERROR: official bazel build of //:benchmark failed"
+        log_message "ERROR: official CMake build of benchmark target failed"
         return 40
     }
     [[ -x "${BENCHMARK_BIN}" ]] || {
@@ -288,8 +169,8 @@ run_sonic_benchmarks() {
         log_message "ERROR: official sonic benchmark binary is unavailable: ${BENCHMARK_BIN}"
         return 40
     }
-    log_message "running official benchmark/main.cpp with the official CI parameters"
-    # Mirrors the official CI benchmark workflow (repetitions=5,
+    log_message "running official CMake benchmark (benchmark/main.cpp)"
+    # Uses Google Benchmark repetitions=5,
     # report_aggregates_only=true) but omits its --benchmark_filter=Sonic so the
     # full official scenario matrix (all libraries / all testdata files) is kept.
     (
@@ -444,7 +325,7 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run sonic-cpp's official Bazel benchmark (benchmark/main.cpp) as a
+Build and run sonic-cpp's official CMake benchmark (benchmark/main.cpp) as a
 standalone performance evaluation. Results default to
 results/<version>/<run-id>/ inside this directory.
 

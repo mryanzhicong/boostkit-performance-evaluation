@@ -1,0 +1,40 @@
+name: x264
+category: Media
+enabled: true
+versions:
+  - "0.164.x"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: x264_test.sh
+      function: build_x264
+    start:
+      script: x264_test.sh
+      function: start_x264_runtime
+    test:
+      script: x264_test.sh
+      function: run_x264_benchmarks
+    stop:
+      script: x264_test.sh
+      function: stop_x264_runtime
+  timeout_minutes: 120
+outputs:
+  official_benchmark:
+    path: benchmark_encode.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_x264.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit: fps
+    direction: higher_is_better

@@ -86,10 +86,13 @@ categories:
     - example
 ```
 
+该文件已配置 Git 内置 `union` 合并驱动。不同分支向同一分类追加不同软件时，合并会保留两项；仍须避免登记同名软件，并在合并后运行 `python3 framework/catalog.py validate`。
+
 目录结构：
 
 ```text
 software/<category>/<software>/
+├── README.md              # 本软件的构建、测试、指标和清理说明
 ├── case.yaml
 ├── <software>_test.sh
 └── scripts/                 # 软件私有基准、独立环境采集和结果处理工具
@@ -101,7 +104,8 @@ software/<category>/<software>/
 - 注册名、软件目录名和 `case.yaml` 的 `name` 完全一致；
 - 分类名、上一级目录名和 `case.yaml` 的 `category` 完全一致；
 - 注册项与实际 `case.yaml` 双向一致；
-- 不在软件目录中增加自己的 README，公共接入规则只维护在本文。
+- 必须维护软件目录内的 `README.md`。它记录已确认的构建或安装方式、正式性能
+  命令、测试矩阵、纳入报告的指标、原始输出和清理边界；公共接入契约只维护在本文。
 - `<software>_test.sh` 直接执行时必须完成构建、运行时准备、测试、停止、必要信息采集、结果校验、报告生成和私有资源清理；被 Framework 加载时只能定义变量和函数。
 
 ## 第三步：声明 `case.yaml`
@@ -223,7 +227,11 @@ metrics:
 
 适配层可以为机器解析创建 `results`、`parameters`、`runtime_context` 等 JSON 容器，也可以使用 `value`、`unit`、`source_name`、`source_field` 等技术字段，但必须满足：
 
-- `source_name` 保存来源中的完整原名，并作为最终对外指标名；
+- `source_name` 通常保存来源中的完整原名，并作为最终对外指标名。若正式原始格式
+  明确以多个原始字段共同标识一个数值（例如包标签、benchmark 名称和单位），且任一
+  单独字段不足以唯一定位该数值，可以按文档化的固定顺序仅拼接这些原始字段作为机器
+  唯一键；不得翻译、缩写、增添语义词或混入适配层变量。所有组成字段必须同时原样
+  保留，以便逐项回溯原始输出；
 - 技术字段只能承载原值、单位换算值或来源信息，不能创造来源中不存在的性能概念；
 - 单位换算不得改变指标名称和语义，必须保留原始字段、原始单位以及确定性的换算关系；
 - `case.yaml` 的指标键或 `collection.name_path` 决定最终报告名称，不能使用适配层自造的描述字段替代 `source_name`。

@@ -22,41 +22,22 @@ execution:
       function: stop_redis_service
   timeout_minutes: 600
 outputs:
-  primary_benchmark:
+  redis_benchmark_raw_output:
+    path: redis_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
     path: benchmark_redis.json
     stage: test
     format: json
     required: true
-  micro_benchmark:
-    path: micro_benchmark.json
-    stage: test
-    format: json
-    required: true
-  aggregate_result:
-    path: results.json
-    stage: test
-    format: json
-    required: true
 metrics:
-  source: aggregate_result
-  definitions:
-    set_qps_c50:
-      path: summary.set_qps_c50
-      unit: ops/s
-      direction: higher_is_better
-    get_qps_c50:
-      path: summary.get_qps_c50
-      unit: ops/s
-      direction: higher_is_better
-    average_latency:
-      path: summary.avg_latency_ms
-      unit: ms
-      direction: lower_is_better
-    maximum_p99_latency:
-      path: summary.max_p99_latency_ms
-      unit: ms
-      direction: lower_is_better
-    client_scaling_ratio:
-      path: summary.client_scaling_ratio
-      unit: ratio
-      direction: higher_is_better
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group

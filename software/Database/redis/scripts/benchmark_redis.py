@@ -1,157 +1,203 @@
 #!/usr/bin/env python3
-"""Run the existing Redis command/concurrency benchmark on either architecture."""
+"""Run Redis's complete default benchmark suite with database_blue load settings.
+
+database_blue's physical-machine Redis case supplies the common load parameters
+for Redis's own redis-benchmark. This project uses those parameters against the
+isolated local service because each architecture job has one dedicated runner,
+but deliberately omits ``-t`` so redis-benchmark runs its complete official
+default operation set for the built Redis version.
+"""
 
 from __future__ import annotations
 
-import csv
 import json
+import math
 import os
+import pty
+import re
+import select
 import subprocess
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 
-COMMANDS = ["SET", "GET", "INCR", "LPUSH", "LRANGE_100", "SADD", "HSET", "ZADD"]
-CONCURRENCY_LEVELS = [1, 10, 50, 100, 200]
-NUM_REQUESTS = 100000
-ITERATIONS = 3
-REDIS_CLI = os.environ["REDIS_CLI_BIN"]
+# Load parameters from database_blue's physical-machine Redis performance case:
+# virtuall_redis_ori_0001.py. The operation list is intentionally not declared:
+# without -t, redis-benchmark selects its own complete default operation set.
+REQUEST_COUNT = 10_000_000
+CLIENT_COUNT = 1_000
+KEYSPACE_LENGTH = 10_000_000
+THREAD_COUNT = 20
+COMMAND_TIMEOUT_SECONDS = 14_400
+OPERATION_HEADER = re.compile(r"(?m)^======\s*(.+?)\s*======\s*$")
+THROUGHPUT_SUMMARY = re.compile(
+    r"(?im)^\s*throughput summary:\s*"
+    r"([0-9]+(?:\.[0-9]+)?)\s+requests per second\b"
+)
 
 
-def start_redis_server(redis_server: str, port: int, data_dir: Path, extra_args: list[str] | None = None) -> None:
-    data_dir.mkdir(parents=True, exist_ok=True)
-    command = [
-        redis_server,
-        "--bind", "127.0.0.1",
-        "--protected-mode", "yes",
-        "--port", str(port),
-        "--dir", str(data_dir),
-        "--save", "",
-        "--appendonly", "no",
-        "--daemonize", "yes",
-        "--loglevel", "warning",
-        "--pidfile", str(data_dir / "redis.pid"),
+def benchmark_command(binary: Path, port: int) -> list[str]:
+    return [
+        str(binary),
+        "-h",
+        "127.0.0.1",
+        "-p",
+        str(port),
+        "-n",
+        str(REQUEST_COUNT),
+        "-c",
+        str(CLIENT_COUNT),
+        "-r",
+        str(KEYSPACE_LENGTH),
+        "--threads",
+        str(THREAD_COUNT),
     ]
-    if extra_args:
-        command.extend(extra_args)
-    completed = subprocess.run(command, capture_output=True, text=True, timeout=15, check=False)
-    if completed.returncode:
-        raise RuntimeError(f"redis-server failed: {completed.stderr.strip()}")
-    for _ in range(30):
-        ping = subprocess.run(
-            [REDIS_CLI, "-h", "127.0.0.1", "-p", str(port), "PING"],
-            capture_output=True,
-            text=True,
-            timeout=3,
-            check=False,
-        )
-        if ping.returncode == 0 and ping.stdout.strip() == "PONG":
-            return
-        time.sleep(0.2)
-    raise RuntimeError("redis-server did not become ready")
 
 
-def stop_redis_server(port: int, data_dir: Path) -> None:
+def parse_default_operation_results(output: str) -> dict[str, dict[str, Any]]:
+    headers = list(OPERATION_HEADER.finditer(output))
+    if not headers:
+        raise RuntimeError("redis-benchmark output contains no default-operation headers")
+
+    results: dict[str, dict[str, Any]] = {}
+    seen_operations: set[str] = set()
+    for index, header in enumerate(headers):
+        operation = header.group(1).strip()
+        if not operation or operation in seen_operations:
+            raise RuntimeError(f"redis-benchmark has an invalid or duplicate operation: {operation!r}")
+        section_end = headers[index + 1].start() if index + 1 < len(headers) else len(output)
+        section = output[header.end():section_end]
+        summaries = THROUGHPUT_SUMMARY.findall(section)
+        if len(summaries) != 1:
+            raise RuntimeError(
+                f"redis-benchmark operation {operation} must contain exactly one "
+                f"throughput summary, found {len(summaries)}"
+            )
+        value = float(summaries[0])
+        if not math.isfinite(value) or value <= 0:
+            raise RuntimeError(
+                f"redis-benchmark operation {operation} has an invalid throughput: {summaries[0]}"
+            )
+        seen_operations.add(operation)
+        results[operation] = {
+            "source_name": f"{operation}: requests per second",
+            "source_field": "throughput summary: <value> requests per second",
+            "group": operation,
+            "value": value,
+            "unit": "requests/s",
+            "direction": "higher_is_better",
+        }
+    return results
+
+
+def run_benchmark(binary: Path, port: int, raw_output: Path) -> None:
+    command = benchmark_command(binary, port)
+    print(f"[redis-benchmark] {' '.join(command)}", flush=True)
+    raw_output.parent.mkdir(parents=True, exist_ok=True)
+    master_fd, slave_fd = pty.openpty()
+    process: subprocess.Popen[bytes] | None = None
+    deadline = time.monotonic() + COMMAND_TIMEOUT_SECONDS
     try:
-        subprocess.run(
-            [REDIS_CLI, "-h", "127.0.0.1", "-p", str(port), "SHUTDOWN", "NOSAVE"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
+        # redis-benchmark buffers output when its stdout is a pipe. A pseudo-TTY
+        # makes its progress and completed-operation output visible in the live
+        # Actions log while the same bytes are retained for strict parsing.
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            close_fds=True,
         )
-    except subprocess.TimeoutExpired:
-        pass
-    pidfile = data_dir / "redis.pid"
-    if pidfile.exists():
+    finally:
+        os.close(slave_fd)
+
+    with raw_output.open("wb") as raw_file:
+        raw_file.write(f"$ {' '.join(command)}\n".encode("utf-8"))
         try:
-            os.kill(int(pidfile.read_text(encoding="utf-8").strip()), 9)
-        except (OSError, ValueError):
-            pass
+            while process.poll() is None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    process.kill()
+                    process.wait()
+                    raise RuntimeError(
+                        f"redis-benchmark exceeded {COMMAND_TIMEOUT_SECONDS} seconds"
+                    )
+                readable, _, _ = select.select([master_fd], [], [], min(1.0, remaining))
+                if not readable:
+                    continue
+                try:
+                    chunk = os.read(master_fd, 65_536)
+                except OSError:
+                    break
+                if not chunk:
+                    continue
+                raw_file.write(chunk)
+                sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+                sys.stdout.flush()
 
+            while True:
+                readable, _, _ = select.select([master_fd], [], [], 0)
+                if not readable:
+                    break
+                try:
+                    chunk = os.read(master_fd, 65_536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                raw_file.write(chunk)
+                sys.stdout.write(chunk.decode("utf-8", errors="replace"))
+                sys.stdout.flush()
+        finally:
+            os.close(master_fd)
 
-def parse_benchmark(output: str, expected_command: str) -> dict[str, float]:
-    expected = expected_command.upper()
-    for row in csv.reader(output.splitlines()):
-        reported = row[0].strip().upper().split()[0] if row else ""
-        if len(row) >= 7 and reported == expected:
-            return {
-                "qps": round(float(row[1]), 2),
-                "avg_latency_ms": round(float(row[2]), 4),
-                "p99_latency_ms": round(float(row[6]), 4),
-            }
-    raise RuntimeError(f"cannot parse redis-benchmark CSV for {expected_command}")
-
-
-def run_redis_benchmark(
-    redis_benchmark: str,
-    port: int,
-    command: str,
-    concurrency: int,
-    *,
-    data_size: int | None = None,
-) -> dict[str, float]:
-    samples: list[dict[str, float]] = []
-    for _ in range(ITERATIONS):
-        invocation = [
-            redis_benchmark,
-            "-h", "127.0.0.1",
-            "-p", str(port),
-            "-t", command.lower(),
-            "-c", str(concurrency),
-            "-n", str(NUM_REQUESTS),
-            "--csv",
-        ]
-        if data_size is not None:
-            invocation.extend(["-d", str(data_size)])
-        completed = subprocess.run(invocation, capture_output=True, text=True, timeout=300, check=False)
-        if completed.returncode:
-            raise RuntimeError(f"redis-benchmark {command} failed: {completed.stderr.strip()}")
-        samples.append(parse_benchmark(completed.stdout, command))
-    return {
-        field: round(sum(sample[field] for sample in samples) / len(samples), 4)
-        for field in ("qps", "avg_latency_ms", "p99_latency_ms")
-    }
+    if process.returncode:
+        raise RuntimeError(f"redis-benchmark exited with code {process.returncode}")
 
 
 def main() -> int:
     if len(sys.argv) != 4:
-        print("usage: benchmark_redis.py REDIS_SERVER REDIS_BENCHMARK OUTPUT", file=sys.stderr)
+        print(
+            "usage: benchmark_redis.py REDIS_BENCHMARK RAW_OUTPUT NORMALIZED_OUTPUT",
+            file=sys.stderr,
+        )
         return 1
-    redis_server, redis_benchmark, output = sys.argv[1:]
-    for binary in (redis_server, redis_benchmark, REDIS_CLI):
-        if not os.path.isfile(binary) or not os.access(binary, os.X_OK):
-            raise RuntimeError(f"Redis executable is unavailable: {binary}")
+
+    benchmark_binary, raw_output, normalized_output = map(Path, sys.argv[1:])
+    if not benchmark_binary.is_file() or not os.access(benchmark_binary, os.X_OK):
+        raise RuntimeError(f"redis-benchmark executable is unavailable: {benchmark_binary}")
 
     port = int(os.environ["REDIS_SERVICE_PORT"])
-    results: dict[str, dict[str, dict[str, float]]] = {}
-    for command in COMMANDS:
-        results[command] = {}
-        for concurrency in CONCURRENCY_LEVELS:
-            label = f"concurrency_{concurrency}"
-            print(f"[primary] {command} {label}", flush=True)
-            results[command][label] = run_redis_benchmark(
-                redis_benchmark, port, command, concurrency
-            )
+    run_benchmark(benchmark_binary, port, raw_output)
+    output = raw_output.read_text(encoding="utf-8", errors="replace")
+    results = parse_default_operation_results(output)
 
     payload = {
-        "benchmark": "redis_ops",
+        "benchmark": "redis_default_benchmark_with_database_blue_load",
         "software": "redis",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "commands": COMMANDS,
-            "concurrency_levels": CONCURRENCY_LEVELS,
-            "num_requests": NUM_REQUESTS,
-            "iterations": ITERATIONS,
-            "persistence": "none",
+            "reference_case": "database_blue virtuall_redis_ori_0001.py",
+            "client_host": "127.0.0.1 (single-runner adaptation)",
+            "operations": "redis-benchmark default operation set (no -t)",
+            "requests": REQUEST_COUNT,
+            "clients": CLIENT_COUNT,
+            "keyspace_length": KEYSPACE_LENGTH,
+            "threads": THREAD_COUNT,
+            "metric_source": "throughput summary: <value> requests per second",
         },
-        "results_summary": results,
+        "results": results,
     }
-    Path(output).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    normalized_output.parent.mkdir(parents=True, exist_ok=True)
+    normalized_output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"[redis-benchmark] normalized {len(results)} default-operation metrics")
     return 0
 
 
