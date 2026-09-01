@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize output from selected official ``golang.org/x/benchmarks`` components.
+"""Normalize output from the official Bent benchmark command.
 
 The Go benchmark format records one benchmark name followed by one or more
 ``value unit`` pairs. A metric is identified by the exact benchmark name, its
@@ -62,21 +62,12 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
 
         benchmark = line_match.group("name")
         package = tags.get("pkg", "")
-        if benchmark == "BenchmarkGoDistribution":
-            package = "golang.org/x/benchmarks/cmd/bench/distsize"
-        toolchain = tags.get("toolchain", "")
         if not package:
             raise RuntimeError(f"benchmark {benchmark} has no preceding official pkg tag")
-        if toolchain != "experiment":
-            raise RuntimeError(
-                f"benchmark {benchmark} has unexpected toolchain tag: "
-                f"{toolchain or '<missing>'}"
-            )
         measurements = list(MEASUREMENT.finditer(line_match.group("values")))
         if not measurements:
             raise RuntimeError(f"benchmark {benchmark} has no value/unit measurements")
         suites.add(tags.get("shortname", package))
-        is_bent_measurement = "shortname" in tags
 
         for measurement in measurements:
             value = float(measurement.group("value"))
@@ -85,8 +76,7 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
                 raise RuntimeError(f"benchmark {benchmark} has invalid {unit} value: {value}")
             key = (package, benchmark, unit)
             samples.setdefault(key, []).append(value)
-            if is_bent_measurement:
-                bent_measurements += 1
+            bent_measurements += 1
 
     if not samples:
         raise RuntimeError("selected official Go benchmark output contains no measurements")
@@ -128,7 +118,6 @@ def main() -> int:
     try:
         version = os.environ["SOFTWARE_VERSION"]
         architecture = os.environ["EXPECTED_ARCH"]
-        suite_revision = os.environ["GO_BENCHMARKS_COMMIT"]
     except KeyError as exc:
         fail(f"missing environment variable: {exc}")
         return 1
@@ -142,39 +131,26 @@ def main() -> int:
         return 1
 
     payload = {
-        "benchmark": "golang_official_benchmark_components",
+        "benchmark": "golang_official_bent",
         "software": "golang",
         "version": version,
         "architecture": architecture,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "components": {
-                "go_test": [
-                    "go",
-                    "test",
-                    "-v",
-                    "-run=none",
-                    "-short",
-                    "-bench=.",
-                    "-count=6",
-                    "golang.org/x/benchmarks/...",
-                ],
-                "distribution_size": ["src/make.bash", "-distpack"],
-                "bent": [
-                    "cmd/bent",
-                    "-N",
-                    "10",
-                    "-B",
-                    "cmd/bent/configs/benchmarks-gcplus.toml",
-                ],
+                "install": ["go", "install", "golang.org/x/benchmarks/cmd/bent@latest"],
+                "run": ["bent", "-N", "15"],
             },
-            "suite": "golang.org/x/benchmarks",
-            "suite_revision": suite_revision,
-            "toolchain": "experiment",
+            "suite": "golang.org/x/benchmarks/cmd/bent",
+            "configuration_files": [
+                "suites.toml",
+                "benchmarks-50.toml",
+                "configurations.toml",
+            ],
             "aggregation": "median",
         },
         "metric_contract": {
-            "scope": "every value/unit pair emitted by the selected official Go components",
+            "scope": "every value/unit pair emitted by the official Bent benchmark command",
             "identity": "official pkg tag + benchmark name + original unit",
             "aggregation": "median of repeated official measurements",
         },

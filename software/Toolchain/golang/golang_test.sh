@@ -10,13 +10,10 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
-GO_BENCHMARKS_URL="${GO_BENCHMARKS_URL:-https://github.com/golang/benchmarks.git}"
-GO_BENCHMARKS_COMMIT="${GO_BENCHMARKS_COMMIT:-70693762b6a0d7f393892f0ace40979e3cbe5737}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
 GO_RUNTIME_ROOT="/home/runner/golang-work"
 
 GO_INSTALL_DIR=""
-BENCHMARKS_DIR=""
 GO_BIN=""
 GO_ARCH=""
 GO_RUNTIME_DIR=""
@@ -86,7 +83,6 @@ initialize_runtime() {
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
     GO_INSTALL_DIR="${PERF_WORK_DIR}/go-install"
-    BENCHMARKS_DIR="${PERF_WORK_DIR}/go-benchmarks"
     GO_BIN="${GO_INSTALL_DIR}/bin/go"
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
@@ -194,21 +190,6 @@ copy_or_download_go_archive() {
     fi
 }
 
-prepare_benchmark_suite() {
-    log "cloning official Go benchmarks at ${GO_BENCHMARKS_COMMIT}"
-    git init --quiet "${BENCHMARKS_DIR}"
-    git -C "${BENCHMARKS_DIR}" remote add origin "${GO_BENCHMARKS_URL}"
-    if ! git -C "${BENCHMARKS_DIR}" fetch --quiet --depth 1 origin "${GO_BENCHMARKS_COMMIT}"; then
-        log "ERROR: failed to fetch official Go benchmarks"
-        return 30
-    fi
-    git -C "${BENCHMARKS_DIR}" checkout --quiet --detach FETCH_HEAD
-    if [[ ! -f "${BENCHMARKS_DIR}/cmd/bench/main.go" ]]; then
-        log "ERROR: Go benchmarks cmd/bench entrypoint is missing"
-        return 30
-    fi
-}
-
 verify_golang_binary() {
     local actual_version actual_arch
     if [[ ! -x "${GO_BIN}" ]]; then
@@ -229,7 +210,7 @@ install_golang_binary() {
 
     initialize_runtime || return $?
     install_dependencies || return $?
-    if [[ -e "${GO_INSTALL_DIR}" || -e "${BENCHMARKS_DIR}" ]]; then
+    if [[ -e "${GO_INSTALL_DIR}" ]]; then
         log "ERROR: installation directories are not clean under ${PERF_WORK_DIR}"
         return 20
     fi
@@ -261,98 +242,66 @@ start_golang_runtime() {
         log "ERROR: installed Go binary failed its smoke build"
         return 40
     fi
-    if ! prepare_benchmark_suite; then
-        log "ERROR: failed to prepare the official Go benchmark suite"
-        return 40
-    fi
 }
 
-run_official_go_test_benchmarks() {
-    log "running official Go test benchmarks"
-    printf 'toolchain: experiment\n'
-    (
-        cd "${BENCHMARKS_DIR}"
-        "${GO_BIN}" test -v -run=none -short -bench=. -count=6 \
-            golang.org/x/benchmarks/...
-    )
-}
+run_official_bent_benchmarks() {
+    local bent_dir bent_module_dirs bent_module_dir bent_binary
 
-run_official_distribution_size_benchmark() {
-    local distsize_dir copied_goroot go_version archive size
-
-    distsize_dir="$(mktemp -d "${TMPDIR}/go-distsize.XXXXXX")" || return 50
-    copied_goroot="${distsize_dir}/goroot"
-    if ! (
-        cp -a "${GO_INSTALL_DIR}" "${copied_goroot}"
-        go_version="$("${GO_BIN}" version | awk '{print $3}')"
-        printf '%s\n' "${go_version}" > "${copied_goroot}/VERSION"
-        (
-            cd "${copied_goroot}/src"
-            GOROOT="${copied_goroot}" GOROOT_BOOTSTRAP="${GO_INSTALL_DIR}" ./make.bash -distpack
-        )
-        archive="${copied_goroot}/pkg/distpack/v0.0.1-${go_version}.linux-${GO_ARCH}.zip"
-        size="$(stat -c '%s' "${archive}")"
-        printf 'toolchain: experiment\n'
-        printf 'Unit total-bytes assume=exact\n'
-        printf 'BenchmarkGoDistribution 1 %s total-bytes\n' "${size}"
-    ); then
-        chmod -R u+w "${distsize_dir}" 2>/dev/null || :
-        rm -rf -- "${distsize_dir}"
-        log "ERROR: official Go distribution-size benchmark failed"
+    bent_dir="${GO_RUNTIME_DIR}/bent"
+    rm -rf -- "${bent_dir}"
+    mkdir -p "${bent_dir}" || return 50
+    log "installing official Bent with go install"
+    "${GO_BIN}" install golang.org/x/benchmarks/cmd/bent@latest || return 50
+    bent_binary="${GOPATH}/bin/bent"
+    if [[ ! -x "${bent_binary}" ]]; then
+        log "ERROR: go install did not create Bent: ${bent_binary}"
         return 50
     fi
-    chmod -R u+w "${distsize_dir}" 2>/dev/null || :
-    rm -rf -- "${distsize_dir}"
-}
-
-run_official_bent_gcplus_benchmarks() {
-    local bent_dir bent_binary configuration
-
-    bent_dir="$(mktemp -d "${TMPDIR}/go-bent.XXXXXX")" || return 50
-    bent_binary="${bent_dir}/bent"
-    configuration="${bent_dir}/configurations.toml"
+    shopt -s nullglob
+    bent_module_dirs=("${GOMODCACHE}"/golang.org/x/benchmarks@*/cmd/bent)
+    shopt -u nullglob
+    if [[ "${#bent_module_dirs[@]}" -ne 1 ]]; then
+        log "ERROR: expected one installed Bent module directory, found ${#bent_module_dirs[@]}"
+        return 50
+    fi
+    bent_module_dir="${bent_module_dirs[0]}"
+    # Bent prepares its own scripts and Dockerfile with -I.  The test itself
+    # remains the official command requested for this case: bent -N 15.
     if ! (
-        cd "${BENCHMARKS_DIR}"
-        "${GO_BIN}" build -o "${bent_binary}" ./cmd/bent
-        printf '[[Configurations]]\n  Name = "experiment"\n  Root = "%s"\n  AfterBuild = ["benchsize"]\n' \
-            "${GO_INSTALL_DIR}" > "${configuration}"
         cd "${bent_dir}"
         "${bent_binary}" -I
-        "${bent_binary}" -N 10 -C "${configuration}" \
-            -B "${BENCHMARKS_DIR}/cmd/bent/configs/benchmarks-gcplus.toml" \
-            -report-build-time=false -v
     ); then
-        chmod -R u+w "${bent_dir}" 2>/dev/null || :
-        rm -rf -- "${bent_dir}"
-        log "ERROR: official Bent gcplus benchmark failed"
+        log "ERROR: Bent initialization failed"
         return 50
     fi
-    chmod -R u+w "${bent_dir}" 2>/dev/null || :
-    rm -rf -- "${bent_dir}"
+    if ! cp "${bent_module_dir}/configs/suites.toml" "${bent_dir}/suites.toml" || \
+       ! cp "${bent_module_dir}/configs/benchmarks-50.toml" "${bent_dir}/benchmarks-50.toml" || \
+       ! cp "${bent_module_dir}/configs/configurations-sample.toml" "${bent_dir}/configurations.toml"; then
+        log "ERROR: Bent module is missing its official suite, benchmark, or sample configuration"
+        return 50
+    fi
+    log "running official Bent benchmark suite: bent -N 15"
+    (
+        cd "${bent_dir}"
+        "${bent_binary}" -N 15
+    )
 }
 
 run_golang_benchmarks() {
     initialize_runtime || return $?
     configure_go_environment
     verify_golang_binary || return $?
-    if [[ ! -f "${BENCHMARKS_DIR}/cmd/bench/main.go" ]]; then
-        log "ERROR: official Go benchmark suite was not prepared"
-        return 50
-    fi
-    log "running selected official Go benchmark components"
+    log "running official Bent benchmark suite"
     if ! (
-        run_official_go_test_benchmarks
-        run_official_distribution_size_benchmark
-        run_official_bent_gcplus_benchmarks
+        run_official_bent_benchmarks
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
-        log "ERROR: selected official Go benchmark components failed"
+        log "ERROR: official Bent benchmark failed"
         return 50
     fi
     if [[ ! -s "${RESULTS_DIR}/benchmark_go_bench.txt" ]]; then
         log "ERROR: official Go benchmark output is empty"
         return 50
     fi
-    export GO_BENCHMARKS_COMMIT
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark_go_bench.txt" \
         "${RESULTS_DIR}/benchmark_golang.json" || return 50

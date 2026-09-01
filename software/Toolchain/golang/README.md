@@ -1,7 +1,7 @@
 # Go 性能测试说明
 
 本目录使用 Go 官方发布的 Linux 预编译二进制包，并运行 Go 官方
-`golang.org/x/benchmarks` 的官方子工具，对 x86_64 与 aarch64 进行开箱性能对比。
+官方 Bent 工具，对 x86_64 与 aarch64 进行开箱性能对比。
 
 Framework 通过 `case.yaml` 调用 `golang_test.sh` 的 `build`、`start`、`test`、
 `stop` 四阶段；直接执行入口脚本会按相同顺序运行并生成单机结果。
@@ -47,43 +47,29 @@ tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-co
 `perf`；缺失时通过 `dnf`、`yum` 或 `apt-get` 自动安装。Go 二进制位于
 任务私有安装目录。
 
-## 官方测试矩阵
+## 官方测试
 
-`start` 阶段准备固定提交的官方 benchmarks 仓库：
-
-```text
-仓库：https://github.com/golang/benchmarks.git
-提交：70693762b6a0d7f393892f0ace40979e3cbe5737
-```
-
-脚本从上述 Go 官方组织仓库抓取固定提交，并执行以下官方组件：
+测试阶段使用当前任务安装的 Go 执行 Bent 官方安装命令：
 
 ```bash
-cd "${PERF_WORK_DIR}/go-benchmarks"
-"${PERF_WORK_DIR}/go-install/bin/go" test -v -run=none -short -bench=. -count=6 \
-  golang.org/x/benchmarks/...
-
-# 使用官方 cmd/bench/distsize.go 的构建命令；在 Go 安装目录的私有副本中执行
-cd "<Go 安装目录私有副本>/src"
-GOROOT="<Go 安装目录私有副本>" \
-GOROOT_BOOTSTRAP="${PERF_WORK_DIR}/go-install" \
-  ./make.bash -distpack
-
-# 使用脚本生成的 experiment 配置、官方 Bent 工具和官方试运行配置
-./bent -N 10 -B cmd/bent/configs/benchmarks-gcplus.toml
+go install golang.org/x/benchmarks/cmd/bent@latest
 ```
 
-测试矩阵如下：
+随后从该模块缓存复制官方配置，并在私有工作目录运行：
 
-- Go test 基准：官方 `cmd/bench/gotest.go` 中的原始命令，`-count=6`；
-- 发行包体积：官方 `cmd/bench/distsize.go` 使用的 `make.bash -distpack`；
-- Bent 微基准：官方 `cmd/bent/configs/benchmarks-gcplus.toml` 的 6 项，每项 10 次；
-- 不执行 Sweet 宏基准。
+```bash
+bent_mod=$(go env GOMODCACHE)/golang.org/x/benchmarks@*/cmd/bent
+cp "${bent_mod}/configs/suites.toml" suites.toml
+cp "${bent_mod}/configs/benchmarks-50.toml" benchmarks-50.toml
+cp "${bent_mod}/configs/configurations-sample.toml" configurations.toml
+bent -N 15
+```
+
+运行前通过 `bent -I` 在任务私有目录初始化 Bent 所需的脚本和 Dockerfile。`-N 15` 表示每个 Bent 基准执行 15 次。
 
 完整原始控制台输出保存为 `benchmark_go_bench.txt`。
 
-报告保留官方原始 benchmark 名称，包括 Go 输出的 `-16`、`-256` 等并发度后缀；
-不同并发度的指标不会合并或跨架构对齐。Bent 未产生任何指标时，结果规范化直接失败。
+报告保留 Bent 原始 benchmark 名称和原始单位；Bent 未产生任何指标时，结果规范化直接失败。
 
 两个架构的模块下载均使用 Go 模块代理 `https://goproxy.cn`，不回退直连。
 
@@ -97,7 +83,7 @@ bash software/Toolchain/golang/golang_test.sh \
 
 ## 指标
 
-这些官方组件使用标准 Go benchmark 格式。一条原始结果可包含多个“数值 + 单位”
+Bent 使用标准 Go benchmark 格式。一条原始结果可包含多个“数值 + 单位”
 字段，例如：
 
 ```text
