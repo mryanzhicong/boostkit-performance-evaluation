@@ -210,6 +210,8 @@ def main() -> int:
                 ",".join(requested),
                 "--warmup",
                 warmup,
+                "--inherit-environ",
+                "PIP_INDEX_URL,PIP_TRUSTED_HOST",
                 "-o",
                 "benchmark.json",
             ],

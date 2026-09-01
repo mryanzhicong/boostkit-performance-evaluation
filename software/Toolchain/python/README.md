@@ -80,8 +80,13 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
 "${PYTHON_BIN}" -m pyperformance run \
   -b 2to3,python_startup,python_startup_no_site \
   --warmup 3 \
+  --inherit-environ PIP_INDEX_URL,PIP_TRUSTED_HOST \
   -o "${RESULTS_DIR}/benchmark.json"
 ```
+
+脚本将华为云 PyPI 地址与可信主机写入 `PIP_INDEX_URL`、`PIP_TRUSTED_HOST`，并通过
+`--inherit-environ` 传入 pyperformance 创建的测试虚拟环境。`2to3` 在 CPython 3.14
+上会在该虚拟环境中安装其附带的兼容实现，必须使用相同的包源。
 
 可以脱离 Workflow 执行完整流程；脚本会依次执行 build、start、test、stop 并保存
 相同的产物。例如：
