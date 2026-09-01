@@ -101,7 +101,7 @@ run_as_root() {
 
 install_dependencies() {
     local missing=0 command_name
-    for command_name in git curl gcc tar gzip sha256sum awk python3 perf; do
+    for command_name in git curl gcc tar gzip sha256sum awk python3 perf nproc; do
         command -v "${command_name}" >/dev/null 2>&1 || missing=1
     done
     if [[ "${missing}" -eq 0 ]]; then
@@ -124,7 +124,7 @@ install_dependencies() {
         return 30
     fi
 
-    for command_name in git curl gcc tar gzip sha256sum awk python3 perf; do
+    for command_name in git curl gcc tar gzip sha256sum awk python3 perf nproc; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${command_name}"
             return 30
@@ -245,7 +245,7 @@ start_golang_runtime() {
 }
 
 run_official_bent_benchmarks() {
-    local bent_dir bent_module_dirs bent_module_dir bent_binary
+    local bent_dir bent_module_dirs bent_module_dir bent_binary processor_count
 
     bent_dir="${GO_RUNTIME_DIR}/bent"
     rm -rf -- "${bent_dir}"
@@ -275,9 +275,18 @@ run_official_bent_benchmarks() {
         return 50
     fi
     if ! cp "${bent_module_dir}/configs/suites.toml" "${bent_dir}/suites.toml" || \
-       ! cp "${bent_module_dir}/configs/benchmarks-50.toml" "${bent_dir}/benchmarks-50.toml" || \
-       ! cp "${bent_module_dir}/configs/configurations-sample.toml" "${bent_dir}/configurations.toml"; then
-        log "ERROR: Bent module is missing its official suite, benchmark, or sample configuration"
+       ! cp "${bent_module_dir}/configs/benchmarks-100.toml" "${bent_dir}/benchmarks-100.toml"; then
+        log "ERROR: Bent module is missing its official suite or benchmarks-100 configuration"
+        return 50
+    fi
+    processor_count="$(nproc)"
+    if [[ ! "${processor_count}" =~ ^[1-9][0-9]*$ ]]; then
+        log "ERROR: nproc returned an invalid processor count: ${processor_count}"
+        return 50
+    fi
+    if ! printf '[[Configurations]]\n  Name = "Baseline"\n  RunEnv = ["GOGC=100", "GOMAXPROCS=%s"]\n  Root = "%s"\n' \
+        "${processor_count}" "${GO_INSTALL_DIR}" > "${bent_dir}/configurations.toml"; then
+        log "ERROR: cannot write Bent Baseline configuration"
         return 50
     fi
     log "running official Bent benchmark suite: bent -N 15"

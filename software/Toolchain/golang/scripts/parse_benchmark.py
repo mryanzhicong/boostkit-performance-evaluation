@@ -144,9 +144,13 @@ def main() -> int:
             "suite": "golang.org/x/benchmarks/cmd/bent",
             "configuration_files": [
                 "suites.toml",
-                "benchmarks-50.toml",
+                "benchmarks-100.toml",
                 "configurations.toml",
             ],
+            "configuration": {
+                "name": "Baseline",
+                "run_environment": ["GOGC=100", "GOMAXPROCS=$(nproc)"],
+            },
             "aggregation": "median",
         },
         "metric_contract": {

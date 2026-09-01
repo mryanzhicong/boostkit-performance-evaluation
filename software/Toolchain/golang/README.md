@@ -44,7 +44,7 @@ tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-co
 ```
 
 脚本检查 `git`、`curl`、`gcc`、`tar`、`gzip`、`sha256sum`、`awk`、`python3`、
-`perf`；缺失时通过 `dnf`、`yum` 或 `apt-get` 自动安装。Go 二进制位于
+`perf`、`nproc`；缺失时通过 `dnf`、`yum` 或 `apt-get` 自动安装。Go 二进制位于
 任务私有安装目录。
 
 ## 官方测试
@@ -60,12 +60,22 @@ go install golang.org/x/benchmarks/cmd/bent@latest
 ```bash
 bent_mod=$(go env GOMODCACHE)/golang.org/x/benchmarks@*/cmd/bent
 cp "${bent_mod}/configs/suites.toml" suites.toml
-cp "${bent_mod}/configs/benchmarks-50.toml" benchmarks-50.toml
-cp "${bent_mod}/configs/configurations-sample.toml" configurations.toml
+cp "${bent_mod}/configs/benchmarks-100.toml" benchmarks-100.toml
+printf '[[Configurations]]\n  Name = "Baseline"\n  RunEnv = ["GOGC=100", "GOMAXPROCS=%s"]\n  Root = "%s"\n' \
+  "$(nproc)" "${PERF_WORK_DIR}/go-install" > configurations.toml
 bent -N 15
 ```
 
-运行前通过 `bent -I` 在任务私有目录初始化 Bent 所需的脚本和 Dockerfile。`-N 15` 表示每个 Bent 基准执行 15 次。
+实际写入 `configurations.toml` 的配置为：
+
+```toml
+[[Configurations]]
+  Name = "Baseline"
+  RunEnv = ["GOGC=100", "GOMAXPROCS=<nproc 实际值>"]
+  Root = "<本次任务的 go-install 目录>"
+```
+
+运行前通过 `bent -I` 在任务私有目录初始化 Bent 所需的脚本和 Dockerfile。当前官方 latest 提供 `benchmarks-100.toml`；`-N 15` 表示每个 Bent 基准执行 15 次。`Baseline` 使用当前任务安装的 Go，并设置 `GOGC=100` 和本机 CPU 逻辑核数对应的 `GOMAXPROCS`。
 
 完整原始控制台输出保存为 `benchmark_go_bench.txt`。
 
