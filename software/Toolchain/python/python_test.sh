@@ -96,7 +96,7 @@ require_python_tools() {
     # These headers build the CPython modules verified before pyperformance
     # runs: _ssl, zlib and _ctypes.  The remaining headers keep the standard
     # library feature-complete for the complete official benchmark suite.
-    for package in bzip2-devel gdbm-devel libffi-devel libuuid-devel openssl-devel readline-devel sqlite-devel xz-devel zlib-devel; do
+    for package in bzip2-devel gdbm-devel libffi-devel openssl-devel readline-devel sqlite-devel uuid-devel xz-devel zlib-devel; do
         if ! rpm -q "${package}" >/dev/null 2>&1; then
             log_message "missing required Python test package: ${package}"
             packages+=("${package}")
@@ -128,7 +128,7 @@ require_python_tools() {
             return 30
         fi
     done
-    for package in bzip2-devel gdbm-devel libffi-devel libuuid-devel openssl-devel readline-devel sqlite-devel xz-devel zlib-devel; do
+    for package in bzip2-devel gdbm-devel libffi-devel openssl-devel readline-devel sqlite-devel uuid-devel xz-devel zlib-devel; do
         if ! rpm -q "${package}" >/dev/null 2>&1; then
             log_message "ERROR: required Python test package remains unavailable: ${package}"
             return 30

@@ -21,7 +21,7 @@ Python，也不向系统路径安装 Python。
 脚本自动检查并通过 `dnf` 安装缺失依赖；非 root Runner 使用 `sudo -n dnf`。其中包括
 `git`、`gcc`、`make`、`python3`、`nproc` 以及 CPython 标准库模块和官方基准集所需
 的 `openssl-devel`、`zlib-devel`、`libffi-devel`、`sqlite-devel`、`bzip2-devel`、
-`xz-devel`、`readline-devel`、`gdbm-devel`、`libuuid-devel`。
+`xz-devel`、`readline-devel`、`gdbm-devel`、`uuid-devel`。
 
 构建命令如下，安装前缀由每次任务运行时生成：
 
