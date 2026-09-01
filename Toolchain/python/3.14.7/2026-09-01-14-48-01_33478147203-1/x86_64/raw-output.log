@@ -1,0 +1,171 @@
+[python] installing pyperformance 1.13.0 into the private CPython
+[python] running official pyperformance benchmarks: 2to3,python_startup,python_startup_no_site
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Collecting pyperformance==1.13.0
+  Downloading pyperformance-1.13.0-py3-none-any.whl (9.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.0/9.0 MB 20.4 MB/s  0:00:00
+Collecting packaging (from pyperformance==1.13.0)
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pyperf (from pyperformance==1.13.0)
+  Downloading pyperf-2.10.0-py3-none-any.whl (144 kB)
+Collecting psutil>=5.9.0 (from pyperf->pyperformance==1.13.0)
+  Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Installing collected packages: psutil, packaging, pyperf, pyperformance
+
+Successfully installed packaging-26.3 psutil-7.2.2 pyperf-2.10.0 pyperformance-1.13.0
+Python benchmark suite 1.13.0
+
+Creating the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/cpython-install/bin/python3 -m venv --without-pip /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m ensurepip -v -U
+Using pip 26.2.1 from /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmpgjdb8xlt/pip-26.2.1-py3-none-any.whl/pip (python 3.14)
+Looking in links: /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmpgjdb8xlt
+Processing /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmpgjdb8xlt/pip-26.2.1-py3-none-any.whl
+Installing collected packages: pip
+  changing mode of /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/pip3 to 755
+  changing mode of /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/pip3.14 to 755
+Successfully installed pip-26.2.1
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install -U 'setuptools>=18.5' wheel
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Collecting setuptools>=18.5
+  Downloading setuptools-84.0.0-py3-none-any.whl (818 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 818.2/818.2 kB 6.1 MB/s  0:00:00
+Collecting wheel
+  Downloading wheel-0.48.0-py3-none-any.whl (33 kB)
+Collecting packaging>=24.0 (from wheel)
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Installing collected packages: setuptools, packaging, wheel
+
+Successfully installed packaging-26.3 setuptools-84.0.0 wheel-0.48.0
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip --version
+pip 26.2.1 from /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages/pip (python 3.14)
+
+==================================================
+( 1/3) creating venv for benchmark (2to3)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install pyperf==2.9.0
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Collecting pyperf==2.9.0
+  Downloading pyperf-2.9.0-py3-none-any.whl (144 kB)
+Collecting psutil>=5.9.0 (from pyperf==2.9.0)
+  Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Installing collected packages: psutil, pyperf
+
+Successfully installed psutil-7.2.2 pyperf-2.9.0
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install psutil
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Requirement already satisfied: psutil in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 2/3) creating venv for benchmark (python_startup)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install pyperf==2.9.0
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Requirement already satisfied: pyperf==2.9.0 in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (2.9.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (from pyperf==2.9.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install psutil
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Requirement already satisfied: psutil in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+
+==================================================
+( 3/3) creating venv for benchmark (python_startup_no_site)
+
+(trying common venv first)
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install pyperf==2.9.0
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Requirement already satisfied: pyperf==2.9.0 in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (2.9.0)
+Requirement already satisfied: psutil>=5.9.0 in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (from pyperf==2.9.0) (7.2.2)
+Installing requirements into the virtual environment /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip install psutil
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Requirement already satisfied: psutil in ./venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/lib/python3.14/site-packages (7.2.2)
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -m pip freeze
+packaging==26.3
+psutil==7.2.2
+pyperf==2.9.0
+setuptools==84.0.0
+wheel==0.48.0
+
+[1/3] 2to3...
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -u /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_2to3/run_benchmark.py --inherit-environ PIP_TRUSTED_HOST,PIP_INDEX_URL,PYPERFORMANCE_RUNID --warmups=3 --output /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmppi8nrtno
+Looking in indexes: https://mirrors.huaweicloud.com/repository/pypi/simple
+Processing /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_2to3/vendor
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: lib2to3
+  Building wheel for lib2to3 (pyproject.toml): started
+  Building wheel for lib2to3 (pyproject.toml): finished with status 'done'
+  Created wheel for lib2to3: filename=lib2to3-3.12-py3-none-any.whl size=110877 sha256=3fbd23126cec5579bca9bd13d9e0b7ec76c8f4bc992e46887125eef90139c73f
+  Stored in directory: /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/pip-ephem-wheel-cache-7zmvgo66/wheels/9b/97/e1/0e0a26e71edbea89b8e2aa75a3de1d33425db89d5e3630fd63
+Successfully built lib2to3
+Installing collected packages: lib2to3
+Successfully installed lib2to3-3.12
+.....................
+2to3: Mean +- std dev: 200 ms +- 1 ms
+[2/3] python_startup...
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -u /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_python_startup/run_benchmark.py --inherit-environ PIP_TRUSTED_HOST,PIP_INDEX_URL,PYPERFORMANCE_RUNID --warmups=3 --output /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmpw6d4ly4j
+.....................
+python_startup: Mean +- std dev: 9.13 ms +- 0.02 ms
+[3/3] python_startup_no_site...
+# /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/pyperformance-work/venv/cpython3.14-4c5ecdb0c497-compat-e184a69aa441/bin/python -u /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/cpython-install/lib/python3.14/site-packages/pyperformance/data-files/benchmarks/bm_python_startup/run_benchmark.py --no-site --inherit-environ PIP_TRUSTED_HOST,PIP_INDEX_URL,PYPERFORMANCE_RUNID --warmups=3 --output /tmp/boostkit-perf/33478147203-1/Toolchain/python/3.14.7/x86_64/tmp/tmpccchzmad
+.....................
+python_startup_no_site: Mean +- std dev: 6.04 ms +- 0.01 ms
+
+Performance version: 1.13.0
+Report on Linux-6.6.0-159.4.10.164.oe2403sp4.x86_64-x86_64-with-glibc2.38
+Number of logical CPUs: 16
+Start date: 2026-09-01 14:38:22.971525
+End date: 2026-09-01 14:40:46.152374
+
+### 2to3 ###
+Mean +- std dev: 200 ms +- 1 ms
+
+### python_startup ###
+Mean +- std dev: 9.13 ms +- 0.02 ms
+
+### python_startup_no_site ###
+Mean +- std dev: 6.04 ms +- 0.01 ms
+
+[python-parse] normalized 3 official benchmarks
+[python] pyperformance results written to benchmark.json and benchmark_python.json
