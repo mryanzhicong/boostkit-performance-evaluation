@@ -1,0 +1,88 @@
+{
+  "benchmark": "envoy_single_machine_https",
+  "software": "envoy",
+  "version": "1.39.1",
+  "architecture": "x86_64",
+  "timestamp": "2026-09-01T07:28:32Z",
+  "parameters": {
+    "tool": "k6",
+    "vus": 30,
+    "duration_seconds": 20,
+    "connection_reuse": false,
+    "scenarios": {
+      "direct_response": "TLS listener with Envoy direct_response 200",
+      "reverse_proxy": "TLS listener forwarding to a local Envoy backend"
+    }
+  },
+  "metric_contract": {
+    "scope": "k6 summary fields for each declared HTTPS scenario",
+    "source": "http_reqs and http_req_duration",
+    "failure_policy": "http_req_failed.rate must be zero"
+  },
+  "results": {
+    "direct_response :: http_reqs.count": {
+      "source_name": "direct_response :: http_reqs.count",
+      "source_field": "http_reqs.count",
+      "value": 153593.0,
+      "unit": "requests",
+      "direction": "higher_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_reqs.rate": {
+      "source_name": "direct_response :: http_reqs.rate",
+      "source_field": "http_reqs.rate",
+      "value": 7678.688585956251,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_req_duration.avg": {
+      "source_name": "direct_response :: http_req_duration.avg",
+      "source_field": "http_req_duration.avg",
+      "value": 1.402847957511077,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS direct response"
+    },
+    "direct_response :: http_req_duration.p(95)": {
+      "source_name": "direct_response :: http_req_duration.p(95)",
+      "source_field": "http_req_duration.p(95)",
+      "value": 4.009857999999997,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS direct response"
+    },
+    "reverse_proxy :: http_reqs.count": {
+      "source_name": "reverse_proxy :: http_reqs.count",
+      "source_field": "http_reqs.count",
+      "value": 139739.0,
+      "unit": "requests",
+      "direction": "higher_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_reqs.rate": {
+      "source_name": "reverse_proxy :: http_reqs.rate",
+      "source_field": "http_reqs.rate",
+      "value": 6985.879785571666,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_req_duration.avg": {
+      "source_name": "reverse_proxy :: http_req_duration.avg",
+      "source_field": "http_req_duration.avg",
+      "value": 2.0073922424019153,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS reverse proxy"
+    },
+    "reverse_proxy :: http_req_duration.p(95)": {
+      "source_name": "reverse_proxy :: http_req_duration.p(95)",
+      "source_field": "http_req_duration.p(95)",
+      "value": 5.8929110000000025,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "HTTPS reverse proxy"
+    }
+  }
+}
