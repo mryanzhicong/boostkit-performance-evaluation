@@ -9,73 +9,79 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 GCC_SOURCE_BASE="${GCC_SOURCE_BASE:-https://ftp.gnu.org/gnu/gcc}"
+GCC_OFFLINE_DIR="${GCC_OFFLINE_DIR:-/home/runner/software/gcc}"
+GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-/home/runner/gcc-data}"
 # The benchmark workload is the official GCC regression corpus shipped inside
 # the release tarball: gcc/testsuite/gcc.c-torture/compile/*.c. Every file is
 # an official, self-contained C translation unit maintained in the GCC source
 # tree, so no external corpus download is required and every metric name is
 # verbatim the official source file name.
 GCC_OPT_LEVEL="${GCC_OPT_LEVEL:-O2}"
-# Limit the number of corpus files benchmarked (empty = all files). A positive
-# integer bounds the run to a deterministic prefix of the sorted corpus.
-GCC_CORPUS_LIMIT="${GCC_CORPUS_LIMIT:-}"
+GCC_BENCHMARK_ITERATIONS="${GCC_BENCHMARK_ITERATIONS:-3}"
 
 SRC_DIR=""
 BUILD_DIR=""
 INSTALL_DIR=""
 GCC_BIN=""
 GCC_VERSION_STRING=""
+GCC_SOURCE_SHA256=""
 CORPUS_DIR=""
-CORPUS_COUNT=0
+BENCHMARK_DATA_DIR=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
-log_message() { printf '[gcc] %s\n' "$*"; }
-
-normalize_architecture() {
-    case "${1,,}" in
-        x86_64|amd64) printf 'x86_64\n' ;;
-        aarch64|arm64) printf 'aarch64\n' ;;
-        *) printf '%s\n' "${1,,}" ;;
-    esac
-}
-
-# Print the official SHA-256 checksum of the GNU release tarball for
-# SOFTWARE_VERSION. Checksums were computed from the files mirrored by
-# ftp.gnu.org (content-length cross-checked against the official server).
-gcc_tarball_sha256() {
-    case "${SOFTWARE_VERSION}" in
-        15.3.0)
-            printf '%s\n' "fa59c1beef8995f27c4d71c1df227587189315d3e6faff1bb4306e61b0c530eb"
-            ;;
-        16.2.0)
-            printf '%s\n' "e6738e29597f733270731aa90600f37ffdc045079dfc27ec7e8192cc81085c3e"
-            ;;
-        *)
-            printf '[gcc] ERROR: unsupported gcc version: %s\n' \
-                "${SOFTWARE_VERSION}" >&2
-            return 20
-            ;;
-    esac
+log() {
+    printf '[gcc] %s\n' "$*"
 }
 
 configure_runtime_paths() {
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
-    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || {
-        log_message "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
+    if [[ ! "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        log "ERROR: PERF_RUN_ID contains unsafe characters: ${PERF_RUN_ID}"
         return 10
-    }
+    fi
+    case "${EXPECTED_ARCH,,}" in
+        x86_64|amd64)
+            EXPECTED_ARCH="x86_64"
+            ;;
+        aarch64|arm64)
+            EXPECTED_ARCH="aarch64"
+            ;;
+        *)
+            log "ERROR: unsupported expected architecture: ${EXPECTED_ARCH}"
+            return 20
+            ;;
+    esac
+    case "$(uname -m)" in
+        x86_64|amd64)
+            if [[ "${EXPECTED_ARCH}" != "x86_64" ]]; then
+                log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is x86_64"
+                return 20
+            fi
+            ;;
+        aarch64|arm64)
+            if [[ "${EXPECTED_ARCH}" != "aarch64" ]]; then
+                log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is aarch64"
+                return 20
+            fi
+            ;;
+        *)
+            log "ERROR: unsupported runner architecture: $(uname -m)"
+            return 20
+            ;;
+    esac
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/tmp/gcc-perf/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
-        TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
+    TMPDIR="${TMPDIR:-${PERF_WORK_DIR}/tmp}"
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
@@ -84,69 +90,172 @@ configure_runtime_paths() {
     INSTALL_DIR="${PERF_WORK_DIR}/gcc-install"
     GCC_BIN="${BUILD_DIR}/gcc/xgcc"
     CORPUS_DIR="${SRC_DIR}/gcc/testsuite/gcc.c-torture/compile"
+    BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
 
 initialize_runtime() {
-    configure_runtime_paths
+    if configure_runtime_paths; then
+        :
+    else
+        return $?
+    fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
-require_commands() {
+install_dependencies() {
     local required missing=0
     for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
             missing=1
         fi
     done
-    [[ "${missing}" -eq 0 ]]
-}
+    if [[ "${missing}" -eq 0 ]] && printf \
+        '#include <gmp.h>\n#include <mpfr.h>\n#include <mpc.h>\nint main(void) { return 0; }\n' | \
+        g++ -x c++ -fsyntax-only - >/dev/null 2>&1; then
+        return
+    fi
 
-check_architecture() {
-    local actual expected
-    actual="$(normalize_architecture "$(uname -m)")"
-    expected="$(normalize_architecture "${EXPECTED_ARCH}")"
-    [[ "${actual}" == "${expected}" ]] || {
-        log_message "ERROR: expected architecture ${expected}, runner is ${actual}"
-        return 20
-    }
+    log "installing missing GCC build dependencies"
+    if command -v dnf >/dev/null 2>&1; then
+        if [[ "${EUID}" -eq 0 ]]; then
+            if ! dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+            if ! sudo -n dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        else
+            log "ERROR: root privileges are required to install GCC build dependencies"
+            return 30
+        fi
+    elif command -v yum >/dev/null 2>&1; then
+        if [[ "${EUID}" -eq 0 ]]; then
+            if ! yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+            if ! sudo -n yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        else
+            log "ERROR: root privileges are required to install GCC build dependencies"
+            return 30
+        fi
+    elif command -v apt-get >/dev/null 2>&1; then
+        if [[ "${EUID}" -eq 0 ]]; then
+            if ! env DEBIAN_FRONTEND=noninteractive apt-get update; then
+                log "ERROR: failed to update APT package metadata"
+                return 30
+            fi
+            if ! env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                build-essential tar xz-utils coreutils curl python3 gawk findutils \
+                libgmp-dev libmpfr-dev libmpc-dev bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+            if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get update; then
+                log "ERROR: failed to update APT package metadata"
+                return 30
+            fi
+            if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                build-essential tar xz-utils coreutils curl python3 gawk findutils \
+                libgmp-dev libmpfr-dev libmpc-dev bison flex; then
+                log "ERROR: failed to install GCC build dependencies"
+                return 30
+            fi
+        else
+            log "ERROR: root privileges are required to install GCC build dependencies"
+            return 30
+        fi
+    else
+        log "ERROR: unsupported package manager; cannot install GCC dependencies"
+        return 30
+    fi
+
+    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc; do
+        if ! command -v "${required}" >/dev/null 2>&1; then
+            log "ERROR: required command is still missing after installation: ${required}"
+            return 30
+        fi
+    done
+    if ! printf '#include <gmp.h>\n#include <mpfr.h>\n#include <mpc.h>\nint main(void) { return 0; }\n' | \
+        g++ -x c++ -fsyntax-only - >/dev/null 2>&1; then
+        log "ERROR: GMP, MPFR, or MPC development headers are unavailable after installation"
+        return 30
+    fi
 }
 
 prepare_gcc_source() {
-    local tarball expected_sha256 actual_sha256 source_root
-    [[ ! -e "${SRC_DIR}" ]] || {
-        log_message "ERROR: source directory already exists: ${SRC_DIR}"
+    local tarball offline_tarball actual_sha256 source_root
+
+    case "${SOFTWARE_VERSION}" in
+        15.3.0)
+            GCC_SOURCE_SHA256="fa59c1beef8995f27c4d71c1df227587189315d3e6faff1bb4306e61b0c530eb"
+            ;;
+        16.2.0)
+            GCC_SOURCE_SHA256="e6738e29597f733270731aa90600f37ffdc045079dfc27ec7e8192cc81085c3e"
+            ;;
+        *)
+            log "ERROR: unsupported GCC version: ${SOFTWARE_VERSION}"
+            return 20
+            ;;
+    esac
+
+    if [[ -e "${SRC_DIR}" ]]; then
+        log "ERROR: source directory already exists: ${SRC_DIR}"
         return 30
-    }
+    fi
     tarball="${PERF_WORK_DIR}/gcc-${SOFTWARE_VERSION}.tar.xz"
-    log_message "downloading official gcc ${SOFTWARE_VERSION} release tarball from ${GCC_SOURCE_BASE}"
-    curl -fsSL --retry 3 --connect-timeout 30 \
-        -o "${tarball}" \
-        "${GCC_SOURCE_BASE}/gcc-${SOFTWARE_VERSION}/gcc-${SOFTWARE_VERSION}.tar.xz" || {
-        log_message "ERROR: failed to download gcc-${SOFTWARE_VERSION}.tar.xz"
-        return 30
-    }
-    expected_sha256="$(gcc_tarball_sha256)" || return 30
+    offline_tarball="${GCC_OFFLINE_DIR}/gcc-${SOFTWARE_VERSION}.tar.xz"
+    if [[ -f "${offline_tarball}" ]]; then
+        log "using local GCC archive ${offline_tarball}"
+        if ! cp "${offline_tarball}" "${tarball}"; then
+            log "ERROR: failed to copy local GCC archive"
+            return 30
+        fi
+    else
+        log "downloading official gcc ${SOFTWARE_VERSION} release tarball from ${GCC_SOURCE_BASE}"
+        if ! curl -fsSL --retry 3 --connect-timeout 30 \
+            -o "${tarball}" \
+            "${GCC_SOURCE_BASE}/gcc-${SOFTWARE_VERSION}/gcc-${SOFTWARE_VERSION}.tar.xz"; then
+            log "ERROR: failed to download gcc-${SOFTWARE_VERSION}.tar.xz"
+            return 30
+        fi
+    fi
     actual_sha256="$(sha256sum "${tarball}" | awk '{print $1}')"
-    [[ "${actual_sha256}" == "${expected_sha256}" ]] || {
-        log_message "ERROR: gcc tarball checksum mismatch"
-        log_message "expected: ${expected_sha256}"
-        log_message "actual:   ${actual_sha256}"
+    if [[ "${actual_sha256}" != "${GCC_SOURCE_SHA256}" ]]; then
+        log "ERROR: GCC tarball checksum mismatch"
+        log "expected: ${GCC_SOURCE_SHA256}"
+        log "actual:   ${actual_sha256}"
         return 30
-    }
-    log_message "extracting gcc source (checksum verified)"
-    tar -xJf "${tarball}" -C "${PERF_WORK_DIR}" || {
-        log_message "ERROR: failed to extract the gcc tarball"
+    fi
+    log "extracting GCC source (checksum verified)"
+    if ! tar -xJf "${tarball}" -C "${PERF_WORK_DIR}"; then
+        log "ERROR: failed to extract the GCC tarball"
         return 30
-    }
+    fi
     source_root="${PERF_WORK_DIR}/gcc-${SOFTWARE_VERSION}"
-    [[ -f "${source_root}/configure" && -d "${source_root}/gcc/testsuite/gcc.c-torture/compile" ]] || {
-        log_message "ERROR: tarball did not create the expected gcc source tree"
+    if [[ ! -f "${source_root}/configure" || \
+          ! -d "${source_root}/gcc/testsuite/gcc.c-torture/compile" ]]; then
+        log "ERROR: tarball did not create the expected GCC source tree"
         return 30
-    }
-    mv "${source_root}" "${SRC_DIR}" || return 30
+    fi
+    if ! mv "${source_root}" "${SRC_DIR}"; then
+        log "ERROR: failed to place the extracted GCC source tree"
+        return 30
+    fi
     rm -f "${tarball}"
 }
 
@@ -155,19 +264,31 @@ prepare_gcc_source() {
 # avoids a full bootstrap and target-library build while still exercising the
 # real compiler for the requested version.
 build_gcc() {
-    initialize_runtime || return $?
-    check_architecture || return $?
-    require_commands || return $?
-    [[ ! -e "${SRC_DIR}" && ! -e "${BUILD_DIR}" && ! -e "${INSTALL_DIR}" ]] || {
-        log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
-        return 20
-    }
-    gcc_tarball_sha256 >/dev/null || return $?
-    prepare_gcc_source || return $?
+    local version_output actual_version
 
-    log_message "configuring gcc ${SOFTWARE_VERSION} (C-only, out-of-tree build)"
+    if initialize_runtime; then
+        :
+    else
+        return $?
+    fi
+    if install_dependencies; then
+        :
+    else
+        return $?
+    fi
+    if [[ -e "${SRC_DIR}" || -e "${BUILD_DIR}" || -e "${INSTALL_DIR}" ]]; then
+        log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
+        return 20
+    fi
+    if prepare_gcc_source; then
+        :
+    else
+        return $?
+    fi
+
+    log "configuring GCC ${SOFTWARE_VERSION} (C-only, out-of-tree build)"
     mkdir -p "${BUILD_DIR}"
-    (
+    if ! (
         cd "${BUILD_DIR}"
         "${SRC_DIR}/configure" \
             --prefix="${INSTALL_DIR}" \
@@ -175,135 +296,168 @@ build_gcc() {
             --disable-bootstrap \
             --disable-multilib \
             --disable-nls
-    ) || {
-        log_message "ERROR: gcc configure failed"
+    ); then
+        log "ERROR: GCC configure failed"
         return 40
-    }
-    log_message "building gcc ${SOFTWARE_VERSION} (all-gcc) with make -j$(nproc)"
-    (
+    fi
+    log "building GCC ${SOFTWARE_VERSION} (all-gcc) with make -j$(nproc)"
+    if ! (
         cd "${BUILD_DIR}"
         make all-gcc -j"$(nproc)"
-    ) || {
-        log_message "ERROR: gcc make all-gcc failed"
+    ); then
+        log "ERROR: GCC make all-gcc failed"
         return 40
-    }
-    verify_gcc_build || return $?
-    log_message "gcc ${SOFTWARE_VERSION} compiler is ready at ${GCC_BIN}"
-}
-
-# Verify the freshly built compiler by asking it for its version string and
-# recording it as the actual software version.
-verify_gcc_build() {
-    local version_output actual_version
-    [[ -x "${GCC_BIN}" ]] || {
-        log_message "ERROR: built compiler is missing: ${GCC_BIN}"
+    fi
+    if [[ ! -x "${GCC_BIN}" ]]; then
+        log "ERROR: built compiler is missing: ${GCC_BIN}"
         return 40
-    }
-    version_output="$("${GCC_BIN}" -B"${BUILD_DIR}/gcc/" --version 2>/dev/null | head -n 1)" || {
-        log_message "ERROR: built gcc cannot report its version"
+    fi
+    if ! version_output="$("${GCC_BIN}" -B"${BUILD_DIR}/gcc/" --version 2>/dev/null | head -n 1)"; then
+        log "ERROR: built GCC cannot report its version"
         return 40
-    }
-    # Output format: "xgcc (GCC) 16.2.0"
+    fi
     actual_version="$(printf '%s\n' "${version_output}" | awk '{print $NF}')"
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: built gcc reports ${actual_version}, requested ${SOFTWARE_VERSION}"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+        log "ERROR: built GCC reports ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
-    }
+    fi
     GCC_VERSION_STRING="${version_output}"
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
+    log "GCC ${SOFTWARE_VERSION} compiler is ready at ${GCC_BIN}"
 }
 
 start_gcc_runtime() {
-    initialize_runtime || return $?
-    check_architecture || return $?
-    verify_gcc_build || return $?
-    [[ -d "${CORPUS_DIR}" ]] || {
-        log_message "ERROR: official corpus directory is missing: ${CORPUS_DIR}"
+    if initialize_runtime; then
+        :
+    else
+        return $?
+    fi
+    if [[ ! -x "${GCC_BIN}" ]]; then
+        log "ERROR: built compiler is missing: ${GCC_BIN}"
         return 40
-    }
-    CORPUS_COUNT="$(find "${CORPUS_DIR}" -maxdepth 1 -name '*.c' -type f | wc -l)"
-    [[ "${CORPUS_COUNT}" -gt 0 ]] || {
-        log_message "ERROR: official corpus has no .c files: ${CORPUS_DIR}"
+    fi
+    if [[ ! -d "${CORPUS_DIR}" ]]; then
+        log "ERROR: official corpus directory is missing: ${CORPUS_DIR}"
         return 40
-    }
-    log_message "official c-torture/compile corpus: ${CORPUS_COUNT} C files at -${GCC_OPT_LEVEL}"
-    log_message "gcc benchmark runtime is ready"
+    fi
+    local corpus_count
+    corpus_count="$(find "${CORPUS_DIR}" -maxdepth 1 -name '*.c' -type f | wc -l)"
+    if [[ "${corpus_count}" -le 0 ]]; then
+        log "ERROR: official corpus has no .c files: ${CORPUS_DIR}"
+        return 40
+    fi
+    if [[ ! "${GCC_BENCHMARK_ITERATIONS}" =~ ^[1-9][0-9]*$ ]]; then
+        log "ERROR: GCC_BENCHMARK_ITERATIONS must be a positive integer: ${GCC_BENCHMARK_ITERATIONS}"
+        return 40
+    fi
+    log "official c-torture/compile corpus: ${corpus_count} C files at -${GCC_OPT_LEVEL}"
+    log "GCC benchmark runtime is ready"
 }
 
-# Time-compilation of the official corpus. Each translation unit is compiled
-# with the built compiler at -${GCC_OPT_LEVEL}; the wall-clock duration is
-# captured with nanosecond timestamps. One line "<basename> <elapsed_ns>" is
-# written per successfully compiled file.
+# Compile every official corpus file repeatedly with the built compiler at
+# -${GCC_OPT_LEVEL}.  Each duration uses Python's monotonic clock; raw compiler
+# output and the machine-readable timing stream are preserved separately.
 run_gcc_benchmarks() {
-    initialize_runtime || return $?
-    check_architecture || return $?
-    verify_gcc_build || return $?
+    local actual_version
+
+    if initialize_runtime; then
+        :
+    else
+        return $?
+    fi
+    if [[ ! -x "${GCC_BIN}" ]]; then
+        log "ERROR: built compiler is missing: ${GCC_BIN}"
+        return 40
+    fi
+    if ! GCC_VERSION_STRING="$("${GCC_BIN}" -B"${BUILD_DIR}/gcc/" --version 2>/dev/null | head -n 1)"; then
+        log "ERROR: built GCC cannot report its version"
+        return 40
+    fi
+    actual_version="$(printf '%s\n' "${GCC_VERSION_STRING}" | awk '{print $NF}')"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+        log "ERROR: built GCC reports ${actual_version}, requested ${SOFTWARE_VERSION}"
+        return 40
+    fi
     mkdir -p "${RESULTS_DIR}"
-    local raw_output="${RESULTS_DIR}/benchmark_compile.txt"
-    : > "${raw_output}"
+    local timing_output="${RESULTS_DIR}/benchmark_compile.txt"
+    local compiler_output="${RESULTS_DIR}/compiler-output.log"
+    : > "${timing_output}"
+    printf '[gcc] raw compiler output for GCC %s\n' "${SOFTWARE_VERSION}" > "${compiler_output}"
 
     local corpus_files=()
     while IFS= read -r -d '' file; do
         corpus_files+=("${file}")
     done < <(find "${CORPUS_DIR}" -maxdepth 1 -name '*.c' -type f -print0 | sort -z)
-    if [[ -n "${GCC_CORPUS_LIMIT}" ]]; then
-        [[ "${GCC_CORPUS_LIMIT}" =~ ^[1-9][0-9]*$ ]] || {
-            log_message "ERROR: GCC_CORPUS_LIMIT must be a positive integer: ${GCC_CORPUS_LIMIT}"
-            return 50
-        }
-        corpus_files=("${corpus_files[@]:0:${GCC_CORPUS_LIMIT}}")
-    fi
     local total="${#corpus_files[@]}"
-    [[ "${total}" -gt 0 ]] || {
-        log_message "ERROR: no corpus files selected for benchmarking"
+    if [[ "${total}" -le 0 ]]; then
+        log "ERROR: no corpus files selected for benchmarking"
         return 50
-    }
-    log_message "benchmarking ${total} corpus files with gcc ${SOFTWARE_VERSION} at -${GCC_OPT_LEVEL}"
+    fi
+    log "benchmarking ${total} corpus files for ${GCC_BENCHMARK_ITERATIONS} iterations with GCC ${SOFTWARE_VERSION} at -${GCC_OPT_LEVEL}"
 
-    local file basename obj start_ns end_ns elapsed_ns compiled=0 skipped=0
-    local obj_dir="${PERF_WORK_DIR}/obj"
+    local file basename obj start_ns end_ns elapsed_ns compiled=0 iteration
+    local obj_dir="${BENCHMARK_DATA_DIR}/obj"
     mkdir -p "${obj_dir}"
-    for file in "${corpus_files[@]}"; do
-        basename="$(basename "${file}")"
-        obj="${obj_dir}/${basename%.c}.o"
-        start_ns="$(date +%s%N)"
-        if "${GCC_BIN}" -B"${BUILD_DIR}/gcc/" -"${GCC_OPT_LEVEL}" \
-            -c "${file}" -o "${obj}" >/dev/null 2>&1; then
-            end_ns="$(date +%s%N)"
-            elapsed_ns=$(( end_ns - start_ns ))
-            printf '%s %s\n' "${basename}" "${elapsed_ns}" >> "${raw_output}"
-            compiled=$(( compiled + 1 ))
-        else
-            end_ns="$(date +%s%N)"
-            skipped=$(( skipped + 1 ))
-            log_message "WARN: corpus file did not compile, skipped: ${basename}"
-        fi
-        rm -f "${obj}"
+    for ((iteration = 1; iteration <= GCC_BENCHMARK_ITERATIONS; iteration++)); do
+        log "starting official corpus iteration ${iteration}/${GCC_BENCHMARK_ITERATIONS}"
+        for file in "${corpus_files[@]}"; do
+            basename="$(basename "${file}")"
+            obj="${obj_dir}/${basename%.c}.o"
+            start_ns="$(python3 -c 'from time import monotonic_ns; print(monotonic_ns())')"
+            printf '[gcc-compile] iteration=%s source=%s\n' "${iteration}" "${basename}" >> "${compiler_output}"
+            if "${GCC_BIN}" -B"${BUILD_DIR}/gcc/" -"${GCC_OPT_LEVEL}" \
+                -c "${file}" -o "${obj}" >> "${compiler_output}" 2>&1; then
+                end_ns="$(python3 -c 'from time import monotonic_ns; print(monotonic_ns())')"
+                elapsed_ns=$(( end_ns - start_ns ))
+                printf '%s %s %s\n' "${iteration}" "${basename}" "${elapsed_ns}" >> "${timing_output}"
+                compiled=$(( compiled + 1 ))
+            else
+                log "ERROR: official corpus file did not compile: ${basename} (iteration ${iteration})"
+                return 50
+            fi
+            rm -f "${obj}"
+        done
     done
-    [[ "${compiled}" -gt 0 ]] || {
-        log_message "ERROR: no corpus file compiled successfully"
+    if [[ "${compiled}" -ne $(( total * GCC_BENCHMARK_ITERATIONS )) ]]; then
+        log "ERROR: compiled file count is incomplete: ${compiled}"
         return 50
-    }
-    [[ -s "${raw_output}" ]] || {
-        log_message "ERROR: benchmark output is empty: ${raw_output}"
+    fi
+    if [[ ! -s "${timing_output}" ]]; then
+        log "ERROR: benchmark timing output is empty: ${timing_output}"
         return 50
-    }
-    log_message "compiled ${compiled} files, skipped ${skipped}"
+    fi
+    log "compiled ${compiled} official corpus files"
 
     export SOFTWARE_VERSION EXPECTED_ARCH GCC_OPT_LEVEL GCC_VERSION_STRING
-    export GCC_CORPUS_COMPILED="${compiled}" GCC_CORPUS_SKIPPED="${skipped}"
-    python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${raw_output}" \
-        "${RESULTS_DIR}/benchmark_gcc.json" || {
-        log_message "ERROR: failed to normalize the gcc benchmark results"
+    export GCC_CORPUS_COMPILED="${compiled}" GCC_CORPUS_FILES="${total}"
+    export GCC_BENCHMARK_ITERATIONS
+    if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
+        "${timing_output}" \
+        "${RESULTS_DIR}/benchmark_gcc.json"; then
+        log "ERROR: failed to normalize the GCC benchmark results"
         return 50
-    }
-    log_message "benchmark results written to benchmark_compile.txt and benchmark_gcc.json"
+    fi
+    log "benchmark results written to benchmark_compile.txt, compiler-output.log, and benchmark_gcc.json"
 }
 
 stop_gcc_runtime() {
-    log_message "gcc benchmark has no background service to stop"
+    if initialize_runtime; then
+        :
+    else
+        return $?
+    fi
+    if [[ -d "${BENCHMARK_DATA_DIR}" ]]; then
+        if [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT}"/* ]]; then
+            log "ERROR: refusing to clean unexpected GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
+            return 70
+        fi
+        if ! rm -rf -- "${BENCHMARK_DATA_DIR}"; then
+            log "ERROR: failed to clean GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
+            return 70
+        fi
+    fi
+    log "GCC benchmark has no background service to stop"
 }
 
 standalone_runtime() {
@@ -312,22 +466,25 @@ standalone_runtime() {
 
 cleanup_standalone_workdir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
-        log_message "keeping standalone work directory: ${PERF_WORK_DIR}"
+        log "keeping standalone work directory: ${PERF_WORK_DIR}"
         return 0
     fi
     if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
-        log_message "external work directory was not removed: ${PERF_WORK_DIR}"
+        log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/gcc-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/gcc-perf" ]] || {
-        log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
+    if [[ "${PERF_WORK_DIR}" != /tmp/gcc-perf/local-* || \
+          "${PERF_WORK_DIR}" == "/tmp/gcc-perf" ]]; then
+        log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
-    }
-    if [[ -d "${PERF_WORK_DIR}" ]]; then
-        rm -rf -- "${PERF_WORK_DIR}" || return 70
     fi
-    log_message "cleaned standalone work directory: ${PERF_WORK_DIR}"
+    if [[ -d "${PERF_WORK_DIR}" ]]; then
+        if ! rm -rf -- "${PERF_WORK_DIR}"; then
+            log "ERROR: failed to clean standalone work directory: ${PERF_WORK_DIR}"
+            return 70
+        fi
+    fi
+    log "cleaned standalone work directory: ${PERF_WORK_DIR}"
 }
 
 emergency_standalone_cleanup() {
@@ -344,11 +501,19 @@ run_gcc_standalone() {
     local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
     local command_status="passed"
 
-    configure_runtime_paths || return $?
+    if configure_runtime_paths; then
+        :
+    else
+        return $?
+    fi
     STANDALONE_STOP_DONE=0
     STANDALONE_CLEANUP_DONE=0
     trap emergency_standalone_cleanup EXIT
-    initialize_runtime || return $?
+    if initialize_runtime; then
+        :
+    else
+        return $?
+    fi
 
     if standalone_runtime system "${RESULTS_DIR}/system_info.json" && \
         standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json"; then
@@ -364,11 +529,11 @@ run_gcc_standalone() {
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
                 "${PERF_ACTUAL_VERSION_FILE}" \
-                "$(normalize_architecture "${EXPECTED_ARCH}")" \
+                "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}" \
                 "${GCC_VERSION_STRING}" \
                 --source-url="${GCC_SOURCE_BASE}/gcc-${SOFTWARE_VERSION}/gcc-${SOFTWARE_VERSION}.tar.xz" \
-                --source-sha256="$(gcc_tarball_sha256)" \
+                --source-sha256="${GCC_SOURCE_SHA256}" \
                 --configure-flags="--enable-languages=c --disable-bootstrap --disable-multilib --disable-nls" \
                 --opt-level="${GCC_OPT_LEVEL}"; then
                 :
@@ -416,7 +581,7 @@ run_gcc_standalone() {
     if standalone_runtime finalize \
         "${RESULTS_DIR}" \
         "${SOFTWARE_VERSION}" \
-        "$(normalize_architecture "${EXPECTED_ARCH}")" \
+        "${EXPECTED_ARCH}" \
         "${PERF_RUN_ID}" \
         "${command_status}" \
         "${cleanup_status}" \
@@ -426,8 +591,12 @@ run_gcc_standalone() {
         finalize_status=$?
     fi
     trap - EXIT
-    [[ "${stage_status}" -eq 0 ]] || return "${stage_status}"
-    [[ "${cleanup_status}" == "passed" ]] || return 70
+    if [[ "${stage_status}" -ne 0 ]]; then
+        return "${stage_status}"
+    fi
+    if [[ "${cleanup_status}" != "passed" ]]; then
+        return 70
+    fi
     return "${finalize_status}"
 }
 
@@ -448,7 +617,8 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  GCC_SOURCE_BASE, GCC_OPT_LEVEL, GCC_CORPUS_LIMIT
+  GCC_SOURCE_BASE, GCC_OFFLINE_DIR, GCC_BENCHMARK_DATA_ROOT,
+  GCC_OPT_LEVEL, GCC_BENCHMARK_ITERATIONS
 USAGE
 }
 
@@ -456,12 +626,18 @@ main() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             --version)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --version requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --version requires a value"
+                    return 10
+                fi
                 SOFTWARE_VERSION="$2"
                 shift 2
                 ;;
             --results-dir)
-                [[ "$#" -ge 2 ]] || { log_message "ERROR: --results-dir requires a value"; return 10; }
+                if [[ "$#" -lt 2 ]]; then
+                    log "ERROR: --results-dir requires a value"
+                    return 10
+                fi
                 RESULTS_DIR="$2"
                 shift 2
                 ;;
@@ -474,22 +650,29 @@ main() {
                 return 0
                 ;;
             *)
-                log_message "ERROR: unsupported option: $1"
+                log "ERROR: unsupported option: $1"
                 usage
                 return 10
                 ;;
         esac
     done
 
-    configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" || return 10
+    if configure_runtime_paths; then
+        :
+    else
+        return $?
+    fi
+    if ! mkdir -p "${RESULTS_DIR}"; then
+        log "ERROR: failed to create the standalone results directory: ${RESULTS_DIR}"
+        return 10
+    fi
     : > "${RESULTS_DIR}/results.log"
     local pipeline_status=0
     set +e
     run_gcc_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
     pipeline_status="${PIPESTATUS[0]}"
     set -e
-    log_message "standalone results: ${RESULTS_DIR}"
+    log "standalone results: ${RESULTS_DIR}"
     return "${pipeline_status}"
 }
 
