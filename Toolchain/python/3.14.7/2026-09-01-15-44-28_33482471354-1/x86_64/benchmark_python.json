@@ -1,0 +1,75 @@
+{
+  "benchmark": "python_official_pyperformance",
+  "software": "python",
+  "version": "3.14.7",
+  "architecture": "x86_64",
+  "timestamp": "2026-09-01T07:37:22Z",
+  "parameters": {
+    "command": [
+      "<built-python>",
+      "-m",
+      "pyperformance",
+      "run",
+      "-b",
+      "2to3,python_startup,python_startup_no_site",
+      "--warmup",
+      "3",
+      "--inherit-environ",
+      "PIP_INDEX_URL,PIP_TRUSTED_HOST",
+      "-o",
+      "benchmark.json"
+    ],
+    "pyperformance_version": "1.13.0",
+    "benchmarks": [
+      "2to3",
+      "python_startup",
+      "python_startup_no_site"
+    ],
+    "build_options": [
+      "--enable-optimizations",
+      "--with-lto"
+    ],
+    "aggregation": "median",
+    "official_suite": "pyperformance"
+  },
+  "metric_contract": {
+    "scope": "median of every selected official pyperformance benchmark",
+    "source_field": "median",
+    "normalized_unit": "s",
+    "direction": "lower_is_better",
+    "aggregation": "median"
+  },
+  "runtime_context": {
+    "performance_version": "1.13.0",
+    "platform": "Linux-6.6.0-159.4.10.164.oe2403sp4.x86_64-x86_64-with-glibc2.38",
+    "cpu_count": 16,
+    "cpu_model_name": "General Purpose Processor",
+    "hostname": "ecs-657e-0001"
+  },
+  "results": {
+    "2to3": {
+      "source_name": "2to3",
+      "source_field": "median",
+      "raw_value": 0.19921434053685516,
+      "raw_unit": "second",
+      "value": 0.19921434053685516,
+      "unit": "s"
+    },
+    "python_startup": {
+      "source_name": "python_startup",
+      "source_field": "median",
+      "raw_value": 0.00912605712437653,
+      "raw_unit": "second",
+      "value": 0.00912605712437653,
+      "unit": "s"
+    },
+    "python_startup_no_site": {
+      "source_name": "python_startup_no_site",
+      "source_field": "median",
+      "raw_value": 0.006042174811227596,
+      "raw_unit": "second",
+      "value": 0.006042174811227596,
+      "unit": "s"
+    }
+  }
+}
