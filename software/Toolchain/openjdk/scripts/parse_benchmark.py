@@ -9,8 +9,7 @@ one entry per (benchmark method, parameter combination) with the class's own
 ``@OutputTimeUnit`` in ``primaryMetric.scoreUnit`` (ns/op, us/op or ms/op).
 
 Every metric name is the verbatim JMH benchmark name, made unique by
-appending the verbatim ``params`` values in JMH's own
-``(key = value)`` notation, e.g.::
+appending the verbatim ``params`` values as ``(key=value)`` pairs, e.g.::
 
     org.openjdk.bench.java.lang.ArrayCopy.copy(size=10)
 
@@ -140,7 +139,14 @@ def main() -> int:
     bench_classes = [
         item for item in os.environ.get("OPENJDK_BENCH_CLASSES", "").split() if item
     ]
+    bench_sources = [
+        item for item in os.environ.get("OPENJDK_BENCH_SOURCES", "").split() if item
+    ]
     jmh_version = os.environ.get("OPENJDK_JMH_VERSION", "1.37")
+    java_options = os.environ.get("OPENJDK_JAVA_OPTIONS", "")
+    if not bench_classes or not bench_sources or not java_options:
+        fail("OpenJDK benchmark classes, source files, and JVM options must be declared")
+        return 1
 
     if not jmh_result.is_file():
         fail(f"JMH result file does not exist: {jmh_result}")
@@ -209,6 +215,8 @@ def main() -> int:
             ],
             "jmh_version": actual_jmh_version,
             "bench_classes": bench_classes,
+            "bench_sources": bench_sources,
+            "java_options": java_options,
             "benchmark_suite": "OpenJDK test/micro (JMH micro benchmarks)",
             "mode": "avgt (@BenchmarkMode(Mode.AverageTime))",
         },
