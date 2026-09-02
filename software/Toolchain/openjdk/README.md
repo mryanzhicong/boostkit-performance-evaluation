@@ -48,14 +48,18 @@ sudo install -o runner -g runner jtreg-8.3+1.zip \
 脚本会自动检查命令和下列 OpenJDK 开发头文件；任一缺失时，通过系统包管理器安装
 构建依赖。openEuler/RPM 系统安装的开发包为 `freetype-devel`、
 `fontconfig-devel`、`alsa-lib-devel`、`cups-devel`、`libXtst-devel`、
-`libXt-devel`。
+`libXt-devel`、`libXrender-devel`、`libXrandr-devel`、`libXi-devel`。
 
 ```text
 /usr/include/alsa/asoundlib.h
 /usr/include/fontconfig/fontconfig.h
 /usr/include/freetype2/ft2build.h
 /usr/include/cups/cups.h
+/usr/include/X11/extensions/shape.h
+/usr/include/X11/extensions/Xrender.h
+/usr/include/X11/extensions/Xrandr.h
 /usr/include/X11/extensions/XTest.h
+/usr/include/X11/extensions/XInput2.h
 /usr/include/X11/Intrinsic.h
 ```
 

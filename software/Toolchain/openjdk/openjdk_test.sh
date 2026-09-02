@@ -115,7 +115,11 @@ install_dependencies() {
         /usr/include/fontconfig/fontconfig.h \
         /usr/include/freetype2/ft2build.h \
         /usr/include/cups/cups.h \
+        /usr/include/X11/extensions/shape.h \
+        /usr/include/X11/extensions/Xrender.h \
+        /usr/include/X11/extensions/Xrandr.h \
         /usr/include/X11/extensions/XTest.h \
+        /usr/include/X11/extensions/XInput2.h \
         /usr/include/X11/Intrinsic.h; do
         if [[ ! -f "${header}" ]]; then
             missing=1
@@ -127,12 +131,12 @@ install_dependencies() {
     log "installing missing OpenJDK test dependencies"
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
+            if ! dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
+            if ! sudo -n dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -142,12 +146,12 @@ install_dependencies() {
         fi
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
+            if ! yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
+            if ! sudo -n yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -161,7 +165,7 @@ install_dependencies() {
                 log "ERROR: failed to update APT package metadata"
                 return 30
             fi
-            if ! apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev; then
+            if ! apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev libxrender-dev libxrandr-dev libxi-dev; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -170,7 +174,7 @@ install_dependencies() {
                 log "ERROR: failed to update APT package metadata"
                 return 30
             fi
-            if ! sudo -n apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev; then
+            if ! sudo -n apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev libxrender-dev libxrandr-dev libxi-dev; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -193,7 +197,11 @@ install_dependencies() {
         /usr/include/fontconfig/fontconfig.h \
         /usr/include/freetype2/ft2build.h \
         /usr/include/cups/cups.h \
+        /usr/include/X11/extensions/shape.h \
+        /usr/include/X11/extensions/Xrender.h \
+        /usr/include/X11/extensions/Xrandr.h \
         /usr/include/X11/extensions/XTest.h \
+        /usr/include/X11/extensions/XInput2.h \
         /usr/include/X11/Intrinsic.h; do
         if [[ ! -f "${header}" ]]; then
             log "ERROR: required OpenJDK development header is still missing: ${header}"
