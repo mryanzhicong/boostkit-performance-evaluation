@@ -45,9 +45,19 @@ sudo install -o runner -g runner jtreg-8.3+1.zip \
 
 ## 构建
 
-脚本会自动安装缺失的系统构建依赖：Curl、Tar、Python 3、GNU Make、GCC/G++、
-Zip/Unzip，以及 Freetype、Fontconfig、ALSA、CUPS、X11 的开发包。仅缺失时才
-通过系统包管理器安装。
+脚本会自动检查命令和下列 OpenJDK 开发头文件；任一缺失时，通过系统包管理器安装
+构建依赖。openEuler/RPM 系统安装的开发包为 `freetype-devel`、
+`fontconfig-devel`、`alsa-lib-devel`、`cups-devel`、`libXtst-devel`、
+`libXt-devel`。
+
+```text
+/usr/include/alsa/asoundlib.h
+/usr/include/fontconfig/fontconfig.h
+/usr/include/freetype2/ft2build.h
+/usr/include/cups/cups.h
+/usr/include/X11/extensions/XTest.h
+/usr/include/X11/Intrinsic.h
+```
 
 脚本处理 Boot JDK 的过程为：
 

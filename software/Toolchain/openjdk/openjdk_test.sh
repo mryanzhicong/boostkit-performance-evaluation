@@ -104,9 +104,20 @@ initialize_runtime() {
 }
 
 install_dependencies() {
-    local required missing=0
+    local required header missing=0
     for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
+            missing=1
+        fi
+    done
+    for header in \
+        /usr/include/alsa/asoundlib.h \
+        /usr/include/fontconfig/fontconfig.h \
+        /usr/include/freetype2/ft2build.h \
+        /usr/include/cups/cups.h \
+        /usr/include/X11/extensions/XTest.h \
+        /usr/include/X11/Intrinsic.h; do
+        if [[ ! -f "${header}" ]]; then
             missing=1
         fi
     done
@@ -174,6 +185,18 @@ install_dependencies() {
     for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
+            return 30
+        fi
+    done
+    for header in \
+        /usr/include/alsa/asoundlib.h \
+        /usr/include/fontconfig/fontconfig.h \
+        /usr/include/freetype2/ft2build.h \
+        /usr/include/cups/cups.h \
+        /usr/include/X11/extensions/XTest.h \
+        /usr/include/X11/Intrinsic.h; do
+        if [[ ! -f "${header}" ]]; then
+            log "ERROR: required OpenJDK development header is still missing: ${header}"
             return 30
         fi
     done
