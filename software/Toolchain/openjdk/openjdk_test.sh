@@ -372,8 +372,8 @@ build_openjdk_from_source() {
     fi
     version_line="$("${JDK_HOME}/bin/java" -version 2>&1 | head -n 1)"
     actual_version="$(printf '%s\n' "${version_line}" | sed -n 's/^openjdk version "\([^"]*\)".*/\1/p')"
-    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
-        log "ERROR: source-built JDK reports ${actual_version:-unknown}, requested ${SOFTWARE_VERSION}"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}-internal" ]]; then
+        log "ERROR: source-built JDK reports ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}-internal"
         return 40
     fi
     JDK_VERSION_STRING="${version_line}"

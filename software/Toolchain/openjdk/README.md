@@ -102,6 +102,9 @@ ${PERF_WORK_DIR}/openjdk-source/build/linux-aarch64-server-release/images/jdk
 "${PERF_WORK_DIR}/jdk/bin/javac" -version
 ```
 
+源码构建产物会报告 `${请求版本}-internal`，例如 `25.0.4.1-internal`；脚本严格
+校验该格式，并将完整实际版本记录到结果中。
+
 ## 测试
 
 jtreg 压缩包解压至 `${PERF_WORK_DIR}/jtreg`，调用入口为：
