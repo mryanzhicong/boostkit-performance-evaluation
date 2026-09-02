@@ -2,8 +2,7 @@ name: openjdk
 category: Toolchain
 enabled: true
 versions:
-  - "25.0.2"
-  - "26.0.2.1"
+  - "25.0.4.1"
 execution:
   type: shell-functions
   stages:
@@ -22,36 +21,29 @@ execution:
   timeout_minutes: 240
 environment:
   OPENJDK_OFFLINE_DIR: /home/runner/software/openjdk
-  OPENJDK_JMH_VERSION: "1.37"
-  OPENJDK_JAVA_OPTIONS: --add-opens=java.base/java.io=ALL-UNNAMED
-  OPENJDK_BENCH_CLASSES: "org.openjdk.bench.java.lang.ArrayCopy org.openjdk.bench.java.lang.ArrayClone org.openjdk.bench.java.lang.StringDecode org.openjdk.bench.java.lang.StringEncode org.openjdk.bench.java.lang.StringBuilders org.openjdk.bench.java.lang.ArraysSort org.openjdk.bench.java.util.HashMapBench"
-  OPENJDK_BENCH_SOURCES: "test/micro/org/openjdk/bench/java/lang/ArrayCopy.java test/micro/org/openjdk/bench/java/lang/ArrayClone.java test/micro/org/openjdk/bench/java/lang/StringDecode.java test/micro/org/openjdk/bench/java/lang/StringEncode.java test/micro/org/openjdk/bench/java/lang/StringBuilders.java test/micro/org/openjdk/bench/java/util/ArraysSort.java test/micro/org/openjdk/bench/java/util/HashMapBench.java"
+  JTREG_VERSION: "8.3+1"
+  JTREG_TEST_ROOTS: "test/jdk test/lib-test test/langtools test/jaxp test/hotspot/jtreg test/docs"
 outputs:
-  official_benchmark:
-    path: benchmark_micro.txt
+  jtreg_output:
+    path: jtreg-output.log
     stage: test
     format: text
     required: true
-  benchmark_result:
+  jtreg_result:
     path: benchmark_openjdk.json
     stage: test
     format: json
     required: true
-  raw_jmh_result:
-    path: jmh-result.json
+  jtreg_report:
+    path: jtreg-report
     stage: test
-    format: text
-    required: true
-  benchmark_selection:
-    path: benchmark_list.txt
-    stage: start
-    format: text
+    format: directory
     required: true
 metrics:
-  source: benchmark_result
+  source: jtreg_result
   collection:
     path: results
     name_path: source_name
     value_path: value
-    unit: us
+    unit: s
     direction: lower_is_better

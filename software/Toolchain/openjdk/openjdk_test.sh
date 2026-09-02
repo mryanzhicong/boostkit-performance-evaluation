@@ -2,48 +2,31 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-26.0.2.1}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-25.0.4.1}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 OPENJDK_SOURCE_BASE="${OPENJDK_SOURCE_BASE:-https://github.com/openjdk}"
-OPENJDK_BINARY_BASE="${OPENJDK_BINARY_BASE:-https://download.java.net/java/GA}"
-MAVEN_MIRROR="${MAVEN_MIRROR:-https://repo.maven.apache.org/maven2}"
+ADOPTIUM_RELEASE_BASE="${ADOPTIUM_RELEASE_BASE:-https://github.com/adoptium/temurin25-binaries/releases/download}"
+JTREG_DOWNLOAD_URL="${JTREG_DOWNLOAD_URL:-https://builds.shipilev.net/jtreg/jtreg-8.3%2B1.zip}"
 OPENJDK_OFFLINE_DIR="${OPENJDK_OFFLINE_DIR:-/home/runner/software/openjdk}"
-# JMH dependency versions pinned to the official OpenJDK build infrastructure
-# (make/jmh/createJMHBundle.sh in the jdk repository: jmh-core 1.37,
-# jmh-generator-annprocess 1.37, commons-math3 3.6.1, jopt-simple 5.0.4).
-JMH_VERSION="${OPENJDK_JMH_VERSION:-1.37}"
-COMMONS_MATH3_VERSION=3.6.1
-JOPT_SIMPLE_VERSION=5.0.4
-# Official JMH micro benchmark selection from the OpenJDK test/micro suite
-# (seven representative classes). Each class declares
-# @BenchmarkMode(Mode.AverageTime) and its own @OutputTimeUnit: nanoseconds
-# for ArrayCopy/ArrayClone/StringDecode/StringEncode/StringBuilders,
-# microseconds for ArraysSort (declared in package
-# org.openjdk.bench.java.lang even though the source lives under java/util)
-# and milliseconds for HashMapBench. The parser normalizes every score to
-# microseconds. "[.]" is an unanchored JMH regex suffix guard so the pattern
-# matches the class prefix but not longer class names.
-OPENJDK_BENCH_CLASSES="${OPENJDK_BENCH_CLASSES:-org.openjdk.bench.java.lang.ArrayCopy org.openjdk.bench.java.lang.ArrayClone org.openjdk.bench.java.lang.StringDecode org.openjdk.bench.java.lang.StringEncode org.openjdk.bench.java.lang.StringBuilders org.openjdk.bench.java.lang.ArraysSort org.openjdk.bench.java.util.HashMapBench}"
-OPENJDK_BENCH_SOURCES="${OPENJDK_BENCH_SOURCES:-test/micro/org/openjdk/bench/java/lang/ArrayCopy.java test/micro/org/openjdk/bench/java/lang/ArrayClone.java test/micro/org/openjdk/bench/java/lang/StringDecode.java test/micro/org/openjdk/bench/java/lang/StringEncode.java test/micro/org/openjdk/bench/java/lang/StringBuilders.java test/micro/org/openjdk/bench/java/util/ArraysSort.java test/micro/org/openjdk/bench/java/util/HashMapBench.java}"
-# Same JVM flag the official harness (RunTests.gmk SetupRunMicroTest) adds for
-# every micro benchmark run.
-OPENJDK_JAVA_OPTIONS="${OPENJDK_JAVA_OPTIONS:---add-opens=java.base/java.io=ALL-UNNAMED}"
+OPENJDK_BOOT_JDK_HOME="${OPENJDK_BOOT_JDK_HOME:-}"
+JTREG_VERSION="${JTREG_VERSION:-8.3+1}"
+JTREG_TEST_ROOTS="${JTREG_TEST_ROOTS:-test/jdk test/lib-test test/langtools test/jaxp test/hotspot/jtreg test/docs}"
 
 JDK_HOME=""
 SRC_DIR=""
-JMH_DIR=""
-BENCH_JAR=""
-BENCH_CLASSES_DIR=""
+BOOT_JDK_HOME=""
+JTREG_HOME=""
+JTREG_WORK_DIR=""
+JTREG_REPORT_DIR=""
 JDK_VERSION_STRING=""
 OPENJDK_SOURCE_REPO=""
 OPENJDK_SOURCE_TAG=""
-OPENJDK_SOURCE_COMMIT=""
-OPENJDK_BINARY_URL=""
-OPENJDK_BINARY_SHA256=""
+OPENJDK_SOURCE_URL=""
+OPENJDK_SOURCE_SHA256=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -103,10 +86,10 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     JDK_HOME="${PERF_WORK_DIR}/jdk"
-    SRC_DIR="${PERF_WORK_DIR}/micro-src"
-    JMH_DIR="${PERF_WORK_DIR}/jmh"
-    BENCH_JAR="${PERF_WORK_DIR}/benchmarks.jar"
-    BENCH_CLASSES_DIR="${PERF_WORK_DIR}/micro-classes"
+    SRC_DIR="${PERF_WORK_DIR}/openjdk-source"
+    JTREG_HOME="${PERF_WORK_DIR}/jtreg"
+    JTREG_WORK_DIR="${RESULTS_DIR}/jtreg-work"
+    JTREG_REPORT_DIR="${RESULTS_DIR}/jtreg-report"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -122,7 +105,7 @@ initialize_runtime() {
 
 install_dependencies() {
     local required missing=0
-    for required in git curl tar sha256sum python3 awk sed grep tee; do
+    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -133,12 +116,12 @@ install_dependencies() {
     log "installing missing OpenJDK test dependencies"
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! sudo -n dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -148,12 +131,12 @@ install_dependencies() {
         fi
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! sudo -n yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -167,7 +150,7 @@ install_dependencies() {
                 log "ERROR: failed to update APT package metadata"
                 return 30
             fi
-            if ! apt-get install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -176,7 +159,7 @@ install_dependencies() {
                 log "ERROR: failed to update APT package metadata"
                 return 30
             fi
-            if ! sudo -n apt-get install -y git curl tar gzip coreutils python3 gawk findutils sed grep; then
+            if ! sudo -n apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -188,7 +171,7 @@ install_dependencies() {
         log "ERROR: unsupported package manager; cannot install OpenJDK test dependencies"
         return 30
     fi
-    for required in git curl tar sha256sum python3 awk sed grep tee; do
+    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
             return 30
@@ -196,232 +179,224 @@ install_dependencies() {
     done
 }
 
-install_openjdk_binary() {
-    local archive_name archive_path local_archive_path top_dir version_line actual_version
-    local actual_sha256
+prepare_openjdk_source() {
+    local archive_name archive_path local_archive_path top_dir
 
-    case "${SOFTWARE_VERSION}:${EXPECTED_ARCH}" in
-        25.0.2:x86_64)
-            archive_name="openjdk-25.0.2_linux-x64_bin.tar.gz"
-            OPENJDK_BINARY_URL="${OPENJDK_BINARY_BASE}/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/${archive_name}"
-            OPENJDK_BINARY_SHA256="555ce0821e4fe175ea50d54518cd6fbece9663c1998de529bc6ce429534457df"
+    case "${SOFTWARE_VERSION}" in
+        25.0.4.1)
             OPENJDK_SOURCE_REPO="jdk25u"
-            OPENJDK_SOURCE_TAG="jdk-25.0.2-ga"
-            ;;
-        25.0.2:aarch64)
-            archive_name="openjdk-25.0.2_linux-aarch64_bin.tar.gz"
-            OPENJDK_BINARY_URL="${OPENJDK_BINARY_BASE}/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/${archive_name}"
-            OPENJDK_BINARY_SHA256="671208d205e70c9805da45a483f670d49dd64654990a7b7223ccffb2abb070dd"
-            OPENJDK_SOURCE_REPO="jdk25u"
-            OPENJDK_SOURCE_TAG="jdk-25.0.2-ga"
-            ;;
-        26.0.2.1:x86_64)
-            archive_name="openjdk-26.0.2.1_linux-x64_bin.tar.gz"
-            OPENJDK_BINARY_URL="${OPENJDK_BINARY_BASE}/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/${archive_name}"
-            OPENJDK_BINARY_SHA256="a1489256029b389ce6ee52da0de1d01496c5df1776d6870241fe4823b998ea612"
-            OPENJDK_SOURCE_REPO="jdk26u"
-            OPENJDK_SOURCE_TAG="jdk-26.0.2.1-ga"
-            ;;
-        26.0.2.1:aarch64)
-            archive_name="openjdk-26.0.2.1_linux-aarch64_bin.tar.gz"
-            OPENJDK_BINARY_URL="${OPENJDK_BINARY_BASE}/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/${archive_name}"
-            OPENJDK_BINARY_SHA256="b96b265a4a1a36c02454148891aa58ca63303cbc2d1b7979c33b4fe99e09117b"
-            OPENJDK_SOURCE_REPO="jdk26u"
-            OPENJDK_SOURCE_TAG="jdk-26.0.2.1-ga"
+            OPENJDK_SOURCE_TAG="jdk-25.0.4.1-ga"
             ;;
         *)
-            log "ERROR: no verified OpenJDK release is declared for ${SOFTWARE_VERSION} on ${EXPECTED_ARCH}"
-            return 20
+            log "ERROR: no OpenJDK source tag is declared for ${SOFTWARE_VERSION}"
+            return 30
             ;;
     esac
-
+    archive_name="${OPENJDK_SOURCE_REPO}-${OPENJDK_SOURCE_TAG}.tar.gz"
     local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
     archive_path="${PERF_WORK_DIR}/${archive_name}"
+    OPENJDK_SOURCE_URL="${OPENJDK_SOURCE_BASE}/${OPENJDK_SOURCE_REPO}/archive/refs/tags/${OPENJDK_SOURCE_TAG}.tar.gz"
     if [[ -f "${local_archive_path}" ]]; then
-        log "using local OpenJDK archive ${local_archive_path}"
+        log "using local OpenJDK GA source archive ${local_archive_path}"
         if ! cp "${local_archive_path}" "${archive_path}"; then
-            log "ERROR: failed to copy local OpenJDK archive"
+            log "ERROR: failed to copy local OpenJDK source archive"
             return 30
         fi
     else
-        log "downloading official prebuilt OpenJDK ${SOFTWARE_VERSION} binary from jdk.java.net"
-        if ! curl -fL --retry 3 --connect-timeout 30 \
-            -o "${archive_path}" "${OPENJDK_BINARY_URL}"; then
-            log "ERROR: failed to download the OpenJDK ${SOFTWARE_VERSION} binary tarball"
+        log "downloading official OpenJDK GA source ${OPENJDK_SOURCE_TAG}"
+        if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" "${OPENJDK_SOURCE_URL}"; then
+            log "ERROR: failed to download OpenJDK GA source archive"
             return 30
         fi
     fi
-    actual_sha256="$(sha256sum "${archive_path}" | awk '{print $1}')"
-    if [[ "${actual_sha256}" != "${OPENJDK_BINARY_SHA256}" ]]; then
-        log "ERROR: OpenJDK binary tarball checksum mismatch"
-        log "expected: ${OPENJDK_BINARY_SHA256}"
-        log "actual:   ${actual_sha256}"
-        return 30
-    fi
-    log "extracting prebuilt JDK (checksum verified)"
-    top_dir="$(tar -tzf "${archive_path}" | awk -F/ 'NR==1 {print $1}')"
-    if [[ -z "${top_dir}" || "${top_dir}" != jdk-* ]]; then
-        log "ERROR: tarball does not contain a jdk-* root directory: ${top_dir}"
+    OPENJDK_SOURCE_SHA256="$(sha256sum "${archive_path}" | awk '{print $1}')"
+    top_dir="$(tar -tzf "${archive_path}" | awk -F/ 'NR == 1 {print $1}')"
+    if [[ -z "${top_dir}" || "${top_dir}" != "${OPENJDK_SOURCE_REPO}-"* ]]; then
+        log "ERROR: OpenJDK source archive has an unexpected root directory: ${top_dir}"
         return 30
     fi
     if ! tar -xzf "${archive_path}" -C "${PERF_WORK_DIR}"; then
-        log "ERROR: failed to extract the OpenJDK binary tarball"
+        log "ERROR: failed to extract the OpenJDK GA source archive"
         return 30
     fi
-    if [[ ! -d "${PERF_WORK_DIR}/${top_dir}" ]]; then
-        log "ERROR: extraction did not create ${top_dir}"
-        return 30
-    fi
-    if ! mv "${PERF_WORK_DIR}/${top_dir}" "${JDK_HOME}"; then
-        log "ERROR: failed to place the extracted OpenJDK directory"
+    if ! mv "${PERF_WORK_DIR}/${top_dir}" "${SRC_DIR}"; then
+        log "ERROR: failed to place the OpenJDK source tree"
         return 30
     fi
     rm -f "${archive_path}"
-    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JDK_HOME}/bin/javac" ]]; then
-        log "ERROR: prebuilt JDK is missing bin/java or bin/javac: ${JDK_HOME}"
-        return 30
-    fi
-    version_line="$("${JDK_HOME}/bin/java" -version 2>&1 | head -n 1)"
-    actual_version="$(printf '%s\n' "${version_line}" | sed -n 's/^openjdk version "\([^"]*\)".*/\1/p')"
-    if [[ -z "${actual_version}" ]]; then
-        log "ERROR: cannot parse the JDK version line: ${version_line}"
-        return 30
-    fi
-    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
-        log "ERROR: prebuilt JDK reports ${actual_version}, requested ${SOFTWARE_VERSION}"
-        return 30
-    fi
-    JDK_VERSION_STRING="${version_line}"
-    mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    if ! printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"; then
-        log "ERROR: failed to record the actual OpenJDK version"
-        return 30
-    fi
-    log "prebuilt JDK is ready: ${JDK_VERSION_STRING}"
+    log "OpenJDK GA source is ready: ${OPENJDK_SOURCE_TAG} (${OPENJDK_SOURCE_SHA256})"
 }
 
-prepare_benchmark_sources() {
-    local source_file local_source_repo source_url
+prepare_boot_jdk() {
+    local archive_name archive_path boot_jdk_release boot_jdk_version
+    local local_archive_path top_dir version
 
-    if [[ -z "${OPENJDK_BENCH_CLASSES//[[:space:]]/}" || \
-          -z "${OPENJDK_BENCH_SOURCES//[[:space:]]/}" ]]; then
-        log "ERROR: OpenJDK benchmark classes and source files must be declared"
-        return 30
-    fi
-
-    local_source_repo="${OPENJDK_OFFLINE_DIR}/${OPENJDK_SOURCE_REPO}.git"
-    source_url="${OPENJDK_SOURCE_BASE}/${OPENJDK_SOURCE_REPO}"
-    if [[ -d "${local_source_repo}" ]]; then
-        source_url="${local_source_repo}"
-        log "using local OpenJDK source mirror ${local_source_repo}"
-    else
-        log "fetching test/micro benchmark sources from ${source_url} (tag ${OPENJDK_SOURCE_TAG})"
-    fi
-    if ! git clone --depth 1 --branch "${OPENJDK_SOURCE_TAG}" --filter=blob:none --sparse \
-        "${source_url}" "${SRC_DIR}"; then
-        log "ERROR: git sparse clone of ${OPENJDK_SOURCE_REPO} failed"
-        return 30
-    fi
-    if ! (
-        cd "${SRC_DIR}"
-        git sparse-checkout set \
-            test/micro/org/openjdk/bench/java/lang \
-            test/micro/org/openjdk/bench/java/util
-    ); then
-        log "ERROR: git sparse-checkout of test/micro failed"
-        return 30
-    fi
-    for source_file in ${OPENJDK_BENCH_SOURCES}; do
-        if [[ ! -f "${SRC_DIR}/${source_file}" ]]; then
-            log "ERROR: benchmark source is missing: ${source_file}"
+    case "${SOFTWARE_VERSION}" in
+        25.0.4.1)
+            boot_jdk_version="25.0.4.1"
+            boot_jdk_release="jdk-25.0.4.1%2B1"
+            ;;
+        *)
+            log "ERROR: no Temurin boot JDK is declared for OpenJDK ${SOFTWARE_VERSION}"
             return 30
-        fi
-    done
-    OPENJDK_SOURCE_COMMIT="$(git -C "${SRC_DIR}" rev-parse HEAD)"
-    log "benchmark sources are at commit ${OPENJDK_SOURCE_COMMIT}"
-}
-
-prepare_jmh_bundle() {
-    local jar path expected_sha256 actual_sha256
-    if [[ "${JMH_VERSION}" != "1.37" ]]; then
-        log "ERROR: the declared JMH bundle only supports version 1.37, got ${JMH_VERSION}"
-        return 30
-    fi
-    mkdir -p "${JMH_DIR}"
-    for jar in \
-        "jmh-core-${JMH_VERSION}.jar" \
-        "jmh-generator-annprocess-${JMH_VERSION}.jar" \
-        "commons-math3-${COMMONS_MATH3_VERSION}.jar" \
-        "jopt-simple-${JOPT_SIMPLE_VERSION}.jar"; do
-        case "${jar}" in
-            jmh-core-1.37.jar)
-                path="org/openjdk/jmh/jmh-core/${JMH_VERSION}"
-                expected_sha256="dc0eaf2bbf0036a70b60798c785d6e03a9daf06b68b8edb0f1ba9eb3421baeb3"
+            ;;
+    esac
+    if [[ -n "${OPENJDK_BOOT_JDK_HOME}" ]]; then
+        BOOT_JDK_HOME="${OPENJDK_BOOT_JDK_HOME}"
+    else
+        case "${EXPECTED_ARCH}" in
+            x86_64)
+                archive_name="OpenJDK25U-jdk_x64_linux_hotspot_${boot_jdk_version}_1.tar.gz"
                 ;;
-            jmh-generator-annprocess-1.37.jar)
-                path="org/openjdk/jmh/jmh-generator-annprocess/${JMH_VERSION}"
-                expected_sha256="6a5604b5b804e0daca1145df1077609321687734a8b49387e49f10557c186c77"
-                ;;
-            commons-math3-3.6.1.jar)
-                path="org/apache/commons/commons-math3/${COMMONS_MATH3_VERSION}"
-                expected_sha256="1e56d7b058d28b65abd256b8458e3885b674c1d588fa43cd7d1cbb9c7ef2b308"
-                ;;
-            jopt-simple-5.0.4.jar)
-                path="net/sf/jopt-simple/jopt-simple/${JOPT_SIMPLE_VERSION}"
-                expected_sha256="df26cc58f235f477db07f753ba5a3ab243ebe5789d9f89ecf68dd62ea9a66c28"
+            aarch64)
+                archive_name="OpenJDK25U-jdk_aarch64_linux_hotspot_${boot_jdk_version}_1.tar.gz"
                 ;;
             *)
-                log "ERROR: unknown JMH bundle jar: ${jar}"
+                log "ERROR: unsupported architecture for Temurin boot JDK: ${EXPECTED_ARCH}"
                 return 30
                 ;;
         esac
-        if [[ -f "${OPENJDK_OFFLINE_DIR}/${jar}" ]]; then
-            log "using local JMH dependency ${OPENJDK_OFFLINE_DIR}/${jar}"
-            if ! cp "${OPENJDK_OFFLINE_DIR}/${jar}" "${JMH_DIR}/${jar}"; then
-                log "ERROR: failed to copy local JMH dependency ${jar}"
+        local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
+        archive_path="${PERF_WORK_DIR}/${archive_name}"
+        if [[ -f "${local_archive_path}" ]]; then
+            log "using local Temurin boot JDK archive ${local_archive_path}"
+            if ! cp "${local_archive_path}" "${archive_path}"; then
+                log "ERROR: failed to copy local Temurin boot JDK archive"
                 return 30
             fi
         else
-            log "downloading ${jar} from ${MAVEN_MIRROR}"
-            if ! curl -fsSL --retry 3 --connect-timeout 30 \
-                -o "${JMH_DIR}/${jar}" "${MAVEN_MIRROR}/${path}/${jar}"; then
-                log "ERROR: failed to download ${jar}"
+            log "downloading Temurin ${boot_jdk_version} boot JDK for ${EXPECTED_ARCH}"
+            if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" \
+                "${ADOPTIUM_RELEASE_BASE}/${boot_jdk_release}/${archive_name}"; then
+                log "ERROR: failed to download the Temurin boot JDK archive"
                 return 30
             fi
         fi
-        actual_sha256="$(sha256sum "${JMH_DIR}/${jar}" | awk '{print $1}')"
-        if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
-            log "ERROR: checksum mismatch for ${jar}"
-            log "expected: ${expected_sha256}"
-            log "actual:   ${actual_sha256}"
+        top_dir="$(tar -tzf "${archive_path}" | awk -F/ 'NR == 1 {print $1}')"
+        if [[ -z "${top_dir}" || "${top_dir}" != jdk-* ]]; then
+            log "ERROR: Temurin boot JDK archive has an unexpected root directory: ${top_dir}"
             return 30
         fi
-    done
-    log "JMH ${JMH_VERSION} bundle is ready at ${JMH_DIR}"
+        if ! tar -xzf "${archive_path}" -C "${PERF_WORK_DIR}"; then
+            log "ERROR: failed to extract the Temurin boot JDK archive"
+            return 30
+        fi
+        if ! mv "${PERF_WORK_DIR}/${top_dir}" "${PERF_WORK_DIR}/boot-jdk"; then
+            log "ERROR: failed to place the Temurin boot JDK"
+            return 30
+        fi
+        rm -f "${archive_path}"
+        BOOT_JDK_HOME="${PERF_WORK_DIR}/boot-jdk"
+    fi
+    if [[ ! -x "${BOOT_JDK_HOME}/bin/java" || ! -x "${BOOT_JDK_HOME}/bin/javac" ]]; then
+        log "ERROR: boot JDK is missing bin/java or bin/javac: ${BOOT_JDK_HOME}"
+        return 30
+    fi
+    version="$("${BOOT_JDK_HOME}/bin/java" -version 2>&1 | sed -n 's/^openjdk version "\([^"]*\)".*/\1/p' | head -n 1)"
+    if [[ "${version}" != "${boot_jdk_version}" ]]; then
+        log "ERROR: expected Temurin boot JDK ${boot_jdk_version}, found ${version:-unknown}"
+        return 30
+    fi
+    log "using Temurin boot JDK ${version}: ${BOOT_JDK_HOME}"
 }
 
-compile_benchmarks() {
-    local javac_cp
-    javac_cp="${JMH_DIR}/jmh-core-${JMH_VERSION}.jar:${JMH_DIR}/jmh-generator-annprocess-${JMH_VERSION}.jar"
-    log "compiling the selected test/micro benchmarks with ${JDK_HOME}/bin/javac"
-    mkdir -p "${BENCH_CLASSES_DIR}"
+build_openjdk_from_source() {
+    local build_jdk version_line actual_version
+
+    if prepare_boot_jdk; then
+        :
+    else
+        return $?
+    fi
+    log "configuring OpenJDK ${SOFTWARE_VERSION} GA source build"
     if ! (
         cd "${SRC_DIR}"
-        "${JDK_HOME}/bin/javac" -cp "${javac_cp}" -d "${BENCH_CLASSES_DIR}" \
-            ${OPENJDK_BENCH_SOURCES}
+        bash configure \
+            --with-debug-level=release \
+            --with-boot-jdk="${BOOT_JDK_HOME}" \
+            --prefix="${JDK_HOME}" \
+            --disable-warnings-as-errors \
+            --disable-precompiled-headers
     ); then
-        log "ERROR: javac failed to compile the benchmark sources"
+        log "ERROR: OpenJDK configure failed"
         return 40
     fi
-    if ! "${JDK_HOME}/bin/jar" cf "${BENCH_JAR}" -C "${BENCH_CLASSES_DIR}" .; then
-        log "ERROR: failed to package ${BENCH_JAR}"
+    log "building OpenJDK images from source"
+    if ! make -C "${SRC_DIR}" images; then
+        log "ERROR: OpenJDK source build failed"
         return 40
     fi
-    if ! "${JDK_HOME}/bin/jar" tf "${BENCH_JAR}" | grep -q "^META-INF/BenchmarkList$"; then
-        log "ERROR: ${BENCH_JAR} is missing the JMH benchmark registry (META-INF/BenchmarkList)"
+    build_jdk="${SRC_DIR}/build/linux-${EXPECTED_ARCH}-server-release/images/jdk"
+    if [[ ! -d "${build_jdk}" ]]; then
+        log "ERROR: expected source build image is missing: ${build_jdk}"
         return 40
     fi
-    log "benchmarks.jar is ready: ${BENCH_JAR}"
+    if ! mv "${build_jdk}" "${JDK_HOME}"; then
+        log "ERROR: failed to place the source-built JDK"
+        return 40
+    fi
+    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JDK_HOME}/bin/javac" ]]; then
+        log "ERROR: source-built JDK is missing bin/java or bin/javac: ${JDK_HOME}"
+        return 40
+    fi
+    version_line="$("${JDK_HOME}/bin/java" -version 2>&1 | head -n 1)"
+    actual_version="$(printf '%s\n' "${version_line}" | sed -n 's/^openjdk version "\([^"]*\)".*/\1/p')"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+        log "ERROR: source-built JDK reports ${actual_version:-unknown}, requested ${SOFTWARE_VERSION}"
+        return 40
+    fi
+    JDK_VERSION_STRING="${version_line}"
+    if ! printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"; then
+        log "ERROR: failed to record the actual OpenJDK version"
+        return 40
+    fi
+    log "source-built JDK is ready: ${JDK_VERSION_STRING}"
+}
+
+prepare_jtreg() {
+    local archive_name archive_path local_archive_path top_dir
+
+    if [[ "${JTREG_VERSION}" != "8.3+1" ]]; then
+        log "ERROR: only jtreg 8.3+1 is declared, got ${JTREG_VERSION}"
+        return 30
+    fi
+    archive_name="jtreg-8.3+1.zip"
+    archive_path="${PERF_WORK_DIR}/${archive_name}"
+    local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
+    if [[ -f "${local_archive_path}" ]]; then
+        log "using local jtreg archive ${local_archive_path}"
+        if ! cp "${local_archive_path}" "${archive_path}"; then
+            log "ERROR: failed to copy local jtreg archive"
+            return 30
+        fi
+    else
+        log "downloading jtreg ${JTREG_VERSION}"
+        if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" "${JTREG_DOWNLOAD_URL}"; then
+            log "ERROR: failed to download jtreg ${JTREG_VERSION}"
+            return 30
+        fi
+    fi
+    top_dir="$(unzip -Z1 "${archive_path}" | awk -F/ 'NR == 1 {print $1}')"
+    if [[ -z "${top_dir}" ]]; then
+        log "ERROR: jtreg archive is empty"
+        return 30
+    fi
+    if ! unzip -q "${archive_path}" -d "${PERF_WORK_DIR}"; then
+        log "ERROR: failed to extract jtreg archive"
+        return 30
+    fi
+    if [[ "${PERF_WORK_DIR}/${top_dir}" != "${JTREG_HOME}" ]]; then
+        if ! mv "${PERF_WORK_DIR}/${top_dir}" "${JTREG_HOME}"; then
+            log "ERROR: failed to place jtreg"
+            return 30
+        fi
+    fi
+    rm -f "${archive_path}"
+    if [[ ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
+        log "ERROR: jtreg executable is missing: ${JTREG_HOME}/bin/jtreg"
+        return 30
+    fi
+    log "jtreg ${JTREG_VERSION} is ready at ${JTREG_HOME}"
 }
 
 build_openjdk() {
@@ -435,27 +410,21 @@ build_openjdk() {
     else
         return $?
     fi
-    if [[ -e "${JDK_HOME}" || -e "${SRC_DIR}" || -e "${JMH_DIR}" || \
-          -e "${BENCH_JAR}" || -e "${BENCH_CLASSES_DIR}" ]]; then
+    if [[ -e "${JDK_HOME}" || -e "${SRC_DIR}" || -e "${PERF_WORK_DIR}/boot-jdk" || -e "${JTREG_HOME}" ]]; then
         log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     fi
-    if install_openjdk_binary; then
+    if prepare_openjdk_source; then
         :
     else
         return $?
     fi
-    if prepare_benchmark_sources; then
+    if build_openjdk_from_source; then
         :
     else
         return $?
     fi
-    if prepare_jmh_bundle; then
-        :
-    else
-        return $?
-    fi
-    if compile_benchmarks; then
+    if prepare_jtreg; then
         :
     else
         return $?
@@ -464,122 +433,66 @@ build_openjdk() {
 }
 
 start_openjdk_runtime() {
-    local class jar jmh_cp
-
+    local test_root
     if initialize_runtime; then
         :
     else
         return $?
     fi
-    if [[ ! -x "${JDK_HOME}/bin/java" || ! -s "${BENCH_JAR}" ]]; then
-        log "ERROR: OpenJDK runtime or compiled benchmark jar is missing"
+    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
+        log "ERROR: source-built OpenJDK or jtreg is missing"
         return 40
     fi
-    for jar in "jmh-core-${JMH_VERSION}.jar" \
-        "commons-math3-${COMMONS_MATH3_VERSION}.jar" \
-        "jopt-simple-${JOPT_SIMPLE_VERSION}.jar"; do
-        if [[ ! -s "${JMH_DIR}/${jar}" ]]; then
-            log "ERROR: JMH dependency is missing: ${JMH_DIR}/${jar}"
+    for test_root in ${JTREG_TEST_ROOTS}; do
+        if [[ ! -d "${SRC_DIR}/${test_root}" ]]; then
+            log "ERROR: jtreg test root is missing: ${test_root}"
             return 40
         fi
     done
-    mkdir -p "${RESULTS_DIR}"
-    local includes=()
-    for class in ${OPENJDK_BENCH_CLASSES}; do
-        includes+=("${class}[.]")
-    done
-    jmh_cp="${BENCH_JAR}:${JMH_DIR}/jmh-core-${JMH_VERSION}.jar:${JMH_DIR}/commons-math3-${COMMONS_MATH3_VERSION}.jar:${JMH_DIR}/jopt-simple-${JOPT_SIMPLE_VERSION}.jar"
-    log "listing the selected JMH benchmarks (org.openjdk.jmh.Main -l)"
-    if ! "${JDK_HOME}/bin/java" \
-        ${OPENJDK_JAVA_OPTIONS} \
-        -cp "${jmh_cp}" \
-        org.openjdk.jmh.Main \
-        "${includes[@]}" \
-        -l > "${RESULTS_DIR}/benchmark_list.txt"; then
-        log "ERROR: JMH benchmark listing failed"
-        return 40
-    fi
-    if [[ ! -s "${RESULTS_DIR}/benchmark_list.txt" ]]; then
-        log "ERROR: JMH benchmark list is empty: ${RESULTS_DIR}/benchmark_list.txt"
-        return 40
-    fi
-    for class in ${OPENJDK_BENCH_CLASSES}; do
-        if ! grep -q "^${class//./\\.}[.]" "${RESULTS_DIR}/benchmark_list.txt"; then
-            log "ERROR: no benchmarks matched the class: ${class}"
-            return 40
-        fi
-    done
-    log "$(wc -l < "${RESULTS_DIR}/benchmark_list.txt") benchmarks matched the selection"
-    log "OpenJDK JMH benchmark runtime is ready"
+    log "OpenJDK jtreg runtime is ready"
 }
 
 run_openjdk_benchmarks() {
-    local class jar jmh_cp
+    local start_seconds elapsed_seconds
 
     if initialize_runtime; then
         :
     else
         return $?
     fi
-    if [[ ! -x "${JDK_HOME}/bin/java" || ! -s "${BENCH_JAR}" ]]; then
-        log "ERROR: OpenJDK runtime or compiled benchmark jar is missing"
+    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
+        log "ERROR: source-built OpenJDK or jtreg is missing"
         return 40
     fi
-    for jar in "jmh-core-${JMH_VERSION}.jar" \
-        "commons-math3-${COMMONS_MATH3_VERSION}.jar" \
-        "jopt-simple-${JOPT_SIMPLE_VERSION}.jar"; do
-        if [[ ! -s "${JMH_DIR}/${jar}" ]]; then
-            log "ERROR: JMH dependency is missing: ${JMH_DIR}/${jar}"
-            return 40
-        fi
-    done
-    mkdir -p "${RESULTS_DIR}"
-    local includes=()
-    for class in ${OPENJDK_BENCH_CLASSES}; do
-        includes+=("${class}[.]")
-    done
-    jmh_cp="${BENCH_JAR}:${JMH_DIR}/jmh-core-${JMH_VERSION}.jar:${JMH_DIR}/commons-math3-${COMMONS_MATH3_VERSION}.jar:${JMH_DIR}/jopt-simple-${JOPT_SIMPLE_VERSION}.jar"
-    log "running official JMH micro benchmarks (json results: ${RESULTS_DIR}/jmh-result.json)"
+    mkdir -p "${JTREG_WORK_DIR}" "${JTREG_REPORT_DIR}"
+    start_seconds="$(date +%s)"
+    log "running jtreg ${JTREG_VERSION}: ${JTREG_TEST_ROOTS}"
     if ! (
-        "${JDK_HOME}/bin/java" \
-            ${OPENJDK_JAVA_OPTIONS} \
-            -cp "${jmh_cp}" \
-            org.openjdk.jmh.Main \
-            "${includes[@]}" \
-            -rf json \
-            -rff "${RESULTS_DIR}/jmh-result.json" \
-            -jvmArgsPrepend "${OPENJDK_JAVA_OPTIONS}"
-    ) 2>&1 | tee "${RESULTS_DIR}/benchmark_micro.txt"; then
-        log "ERROR: JMH benchmark run failed"
+        cd "${SRC_DIR}"
+        "${JTREG_HOME}/bin/jtreg" \
+            -jdk:"${JDK_HOME}" \
+            -w:"${JTREG_WORK_DIR}" \
+            -r:"${JTREG_REPORT_DIR}" \
+            -va -ignore:quiet -jit -conc:auto -timeout:5 -tl:3590 \
+            ${JTREG_TEST_ROOTS}
+    ) 2>&1 | tee "${RESULTS_DIR}/jtreg-output.log"; then
+        log "ERROR: jtreg test run failed"
         return 50
     fi
-    if [[ ! -s "${RESULTS_DIR}/benchmark_micro.txt" ]]; then
-        log "ERROR: JMH console output is empty: ${RESULTS_DIR}/benchmark_micro.txt"
+    if [[ ! -s "${RESULTS_DIR}/jtreg-output.log" || ! -d "${JTREG_REPORT_DIR}" ]]; then
+        log "ERROR: jtreg output or report directory is missing"
         return 50
     fi
-    if [[ ! -s "${RESULTS_DIR}/jmh-result.json" ]]; then
-        log "ERROR: JMH result file is empty: ${RESULTS_DIR}/jmh-result.json"
-        return 50
-    fi
-    if [[ -s "${RESULTS_DIR}/benchmark_list.txt" ]]; then
-        local listed parsed
-        listed="$(grep -c '^org\.openjdk\.bench\.' "${RESULTS_DIR}/benchmark_list.txt" || true)"
-        parsed="$(python3 -c 'import json,sys; print(len({e["benchmark"] for e in json.load(open(sys.argv[1]))}))' "${RESULTS_DIR}/jmh-result.json")"
-        if [[ "${listed}" -ne "${parsed}" ]]; then
-            log "ERROR: JMH result set (${parsed} benchmarks) differs from the benchmark list (${listed})"
-            return 50
-        fi
-    fi
-    export SOFTWARE_VERSION EXPECTED_ARCH OPENJDK_BENCH_CLASSES
-    export OPENJDK_BENCH_SOURCES OPENJDK_JAVA_OPTIONS
-    export OPENJDK_JMH_VERSION="${JMH_VERSION}"
+    elapsed_seconds="$(( $(date +%s) - start_seconds ))"
+    export SOFTWARE_VERSION EXPECTED_ARCH JTREG_VERSION JTREG_TEST_ROOTS
     if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${RESULTS_DIR}/jmh-result.json" \
-        "${RESULTS_DIR}/benchmark_openjdk.json"; then
-        log "ERROR: failed to normalize the JMH benchmark results"
+        "${RESULTS_DIR}/jtreg-output.log" \
+        "${RESULTS_DIR}/benchmark_openjdk.json" \
+        "${elapsed_seconds}"; then
+        log "ERROR: failed to normalize jtreg results"
         return 50
     fi
-    log "benchmark results written to benchmark_micro.txt, jmh-result.json, and benchmark_openjdk.json"
+    log "jtreg results written to jtreg-output.log, jtreg-report, and benchmark_openjdk.json"
 }
 
 stop_openjdk_runtime() {
@@ -658,13 +571,13 @@ run_openjdk_standalone() {
                 "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}" \
                 "${JDK_VERSION_STRING}" \
-                --binary-url="${OPENJDK_BINARY_URL}" \
-                --binary-sha256="${OPENJDK_BINARY_SHA256}" \
+                --source-url="${OPENJDK_SOURCE_URL}" \
+                --source-sha256="${OPENJDK_SOURCE_SHA256}" \
                 --source-repo="${OPENJDK_SOURCE_REPO}" \
                 --source-tag="${OPENJDK_SOURCE_TAG}" \
-                --source-commit="${OPENJDK_SOURCE_COMMIT}" \
-                --jmh-version="${JMH_VERSION}" \
-                --bench-classes="${OPENJDK_BENCH_CLASSES}"; then
+                --boot-jdk-home="${BOOT_JDK_HOME}" \
+                --jtreg-version="${JTREG_VERSION}" \
+                --test-roots="${JTREG_TEST_ROOTS}"; then
                 :
             else
                 stage_status=$?
@@ -733,11 +646,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Evaluate the official OpenJDK prebuilt GA binary (jdk.java.net) with the
-official JMH micro benchmarks from test/micro of the matching jdkNNu
-source repository. The benchmarks are compiled with the bundled JDK and
-run through org.openjdk.jmh.Main, mirroring the OpenJDK harness
-(RunTests.gmk SetupRunMicroTest). Results default to
+Build the official OpenJDK GA source archive and run the declared official
+jtreg regression test roots with the source-built JDK. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -748,8 +658,8 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  OPENJDK_SOURCE_BASE, OPENJDK_BINARY_BASE, MAVEN_MIRROR,
-  OPENJDK_BENCH_CLASSES
+  OPENJDK_SOURCE_BASE, OPENJDK_OFFLINE_DIR, OPENJDK_BOOT_JDK_HOME,
+  ADOPTIUM_RELEASE_BASE, JTREG_DOWNLOAD_URL, JTREG_TEST_ROOTS
 USAGE
 }
 

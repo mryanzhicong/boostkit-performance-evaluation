@@ -132,19 +132,19 @@ def record_build_info(
     architecture: str,
     run_id: str,
     jdk_version_string: str,
-    binary_url: str,
-    binary_sha256: str,
+    source_url: str,
+    source_sha256: str,
     source_repo: str,
     source_tag: str,
-    source_commit: str,
-    jmh_version: str,
-    bench_classes: str,
+    boot_jdk_home: str,
+    jtreg_version: str,
+    test_roots: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
         raise RuntimeError("actual openjdk version is empty")
     if not jdk_version_string:
-        raise RuntimeError("prebuilt JDK version string is empty")
+        raise RuntimeError("source-built JDK version string is empty")
     atomic_write_json(
         output,
         {
@@ -156,18 +156,19 @@ def record_build_info(
             "architecture": architecture,
             "run_id": run_id,
             "jdk_version_string": jdk_version_string,
-            "binary_source": "jdk.java.net official GA prebuilt binary",
-            "binary_url": binary_url,
-            "binary_sha256": binary_sha256,
-            "benchmark_source_repo": f"https://github.com/openjdk/{source_repo}",
-            "benchmark_source_tag": source_tag,
-            "benchmark_source_commit": source_commit,
-            "benchmark_suite": "OpenJDK test/micro (JMH micro benchmarks)",
-            "jmh_version": jmh_version,
-            "bench_classes": bench_classes.split(),
+            "source": "official OpenJDK GA source archive",
+            "source_url": source_url,
+            "source_sha256": source_sha256,
+            "source_repository": f"https://github.com/openjdk/{source_repo}",
+            "source_tag": source_tag,
+            "boot_jdk_home": boot_jdk_home,
+            "benchmark_suite": "OpenJDK jtreg regression test suite",
+            "jtreg_version": jtreg_version,
+            "test_roots": test_roots.split(),
             "build_command": (
-                "prebuilt JDK tarball (sha256 verified) + javac compile of "
-                "test/micro benchmark sources with the official JMH bundle"
+                "bash configure --with-debug-level=release --prefix=<isolated jdk> "
+                "--disable-warnings-as-errors --disable-precompiled-headers; "
+                "make images; run the declared test roots with jtreg"
             ),
         },
     )
@@ -199,12 +200,12 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate openjdk benchmark: {metric_name}")
-        if result.get("source_field") != "primaryMetric.score":
+        if result.get("source_field") != "external wall-clock elapsed seconds":
             raise RuntimeError(
-                f"metric {metric_name} is not sourced from the official JMH score field"
+                f"metric {metric_name} is not sourced from jtreg elapsed time"
             )
-        if result.get("unit") != "us":
-            raise RuntimeError(f"metric {metric_name} is not expressed in us")
+        if result.get("unit") != "s":
+            raise RuntimeError(f"metric {metric_name} is not expressed in s")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
@@ -212,7 +213,7 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "us",
+            "unit": "s",
             "direction": "lower_is_better",
         }
     if not metrics:
@@ -245,15 +246,15 @@ def render_report(result: dict[str, Any]) -> str:
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
         ("JDK 版本", "jdk_version_string"),
-        ("二进制来源", "binary_source"),
-        ("二进制下载地址", "binary_url"),
-        ("二进制 SHA-256", "binary_sha256"),
-        ("基准源码仓库", "benchmark_source_repo"),
-        ("基准源码标签", "benchmark_source_tag"),
-        ("基准源码提交", "benchmark_source_commit"),
+        ("源码来源", "source"),
+        ("源码下载地址", "source_url"),
+        ("源码 SHA-256", "source_sha256"),
+        ("源码仓库", "source_repository"),
+        ("源码标签", "source_tag"),
+        ("Boot JDK", "boot_jdk_home"),
         ("基准套件", "benchmark_suite"),
-        ("JMH 版本", "jmh_version"),
-        ("基准类", "bench_classes"),
+        ("jtreg 版本", "jtreg_version"),
+        ("测试根目录", "test_roots"),
         ("构建方式", "build_command"),
         ("记录时间", "recorded_at"),
     ):
@@ -274,7 +275,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（官方 JMH 微基准，AverageTime，单位统一为微秒）",
+            "## 性能指标（官方 jtreg 回归测试整轮耗时，单位为秒）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -363,39 +364,39 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("run_id")
     build.add_argument("jdk_version_string")
     build.add_argument(
-        "--binary-url",
+        "--source-url",
         required=True,
-        help="jdk.java.net download URL of the prebuilt JDK tarball",
+        help="GitHub download URL of the official OpenJDK GA source archive",
     )
     build.add_argument(
-        "--binary-sha256",
+        "--source-sha256",
         required=True,
-        help="SHA-256 checksum of the prebuilt JDK tarball",
+        help="SHA-256 checksum of the OpenJDK GA source archive used for this run",
     )
     build.add_argument(
         "--source-repo",
         required=True,
-        help="GitHub repository providing the test/micro benchmark sources",
+        help="GitHub repository providing the OpenJDK GA source archive",
     )
     build.add_argument(
         "--source-tag",
         required=True,
-        help="source tag matching the prebuilt JDK release",
+        help="GA source tag matching the source-built JDK release",
     )
     build.add_argument(
-        "--source-commit",
-        default="",
-        help="resolved commit hash of the benchmark sources",
-    )
-    build.add_argument(
-        "--jmh-version",
+        "--boot-jdk-home",
         required=True,
-        help="JMH version pinned by the official OpenJDK build infrastructure",
+        help="JDK used as the OpenJDK source-build boot JDK",
     )
     build.add_argument(
-        "--bench-classes",
+        "--jtreg-version",
         required=True,
-        help="space-separated selection of test/micro benchmark classes",
+        help="jtreg version used for the OpenJDK regression test run",
+    )
+    build.add_argument(
+        "--test-roots",
+        required=True,
+        help="space-separated OpenJDK jtreg test roots",
     )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
@@ -424,13 +425,13 @@ def main() -> int:
             args.architecture,
             args.run_id,
             args.jdk_version_string,
-            args.binary_url,
-            args.binary_sha256,
+            args.source_url,
+            args.source_sha256,
             args.source_repo,
             args.source_tag,
-            args.source_commit,
-            args.jmh_version,
-            args.bench_classes,
+            args.boot_jdk_home,
+            args.jtreg_version,
+            args.test_roots,
         )
         return 0
     return finalize(
