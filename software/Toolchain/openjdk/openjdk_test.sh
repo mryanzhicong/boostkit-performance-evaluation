@@ -377,8 +377,11 @@ build_openjdk_from_source() {
         return 40
     fi
     JDK_VERSION_STRING="${version_line}"
-    if ! printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"; then
-        log "ERROR: failed to record the actual OpenJDK version"
+    # Framework uses this file to match the requested GA release.  The full
+    # source-build identifier (for example, 25.0.4.1-internal) remains in
+    # JDK_VERSION_STRING and is recorded in build_info.json.
+    if ! printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}"; then
+        log "ERROR: failed to record the OpenJDK release version"
         return 40
     fi
     log "source-built JDK is ready: ${JDK_VERSION_STRING}"

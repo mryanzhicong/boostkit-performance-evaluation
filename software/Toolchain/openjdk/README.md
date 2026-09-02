@@ -103,7 +103,8 @@ ${PERF_WORK_DIR}/openjdk-source/build/linux-aarch64-server-release/images/jdk
 ```
 
 源码构建产物会报告 `${请求版本}-internal`，例如 `25.0.4.1-internal`；脚本严格
-校验该格式，并将完整实际版本记录到结果中。
+校验该格式。框架版本登记为对应的 GA 版本（例如 `25.0.4.1`），完整的源码构建版本
+字符串会保留在 `build_info.json` 中。
 
 ## 测试
 
