@@ -19,14 +19,10 @@ execution:
     stop:
       script: gcc_test.sh
       function: stop_gcc_runtime
-  timeout_minutes: 240
-environment:
-  GCC_OPT_LEVEL: O2
-  GCC_BENCHMARK_ITERATIONS: 3
-  GCC_BENCHMARK_DATA_ROOT: /home/runner/gcc-data
+  timeout_minutes: 1440
 outputs:
   official_benchmark:
-    path: benchmark_compile.txt
+    path: raw-output.log
     stage: test
     format: text
     required: true
@@ -36,9 +32,9 @@ outputs:
     format: json
     required: true
   compiler_output:
-    path: compiler-output.log
+    path: spec-results
     stage: test
-    format: text
+    format: directory
     required: true
 metrics:
   source: benchmark_result
@@ -46,5 +42,5 @@ metrics:
     path: results
     name_path: source_name
     value_path: value
-    unit: s
-    direction: lower_is_better
+    unit: ratio
+    direction: higher_is_better

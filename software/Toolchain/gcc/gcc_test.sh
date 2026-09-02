@@ -11,22 +11,26 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 GCC_SOURCE_BASE="${GCC_SOURCE_BASE:-https://ftp.gnu.org/gnu/gcc}"
 GCC_OFFLINE_DIR="${GCC_OFFLINE_DIR:-/home/runner/software/gcc}"
 GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-/home/runner/gcc-data}"
-# The benchmark workload is the official GCC regression corpus shipped inside
-# the release tarball: gcc/testsuite/gcc.c-torture/compile/*.c. Every file is
-# an official, self-contained C translation unit maintained in the GCC source
-# tree, so no external corpus download is required and every metric name is
-# verbatim the official source file name.
-GCC_OPT_LEVEL="${GCC_OPT_LEVEL:-O2}"
-GCC_BENCHMARK_ITERATIONS="${GCC_BENCHMARK_ITERATIONS:-3}"
+SPEC_CPU2017_ISO="${SPEC_CPU2017_ISO:-/home/runner/software/spec/cpu2017-1.0.5.iso}"
+SPEC_CONFIG_NAME="gcc.cfg"
+SPEC_COPIES="${SPEC_COPIES:-16}"
+SPEC_FASTMATH=0
+SPEC_JEMALLOC=2mb
+SPEC_HUGEPAGES=0
 
 SRC_DIR=""
 BUILD_DIR=""
 INSTALL_DIR=""
 GCC_BIN=""
+GXX_BIN=""
 GCC_VERSION_STRING=""
 GCC_SOURCE_SHA256=""
-CORPUS_DIR=""
 BENCHMARK_DATA_DIR=""
+SPEC_MOUNT_DIR=""
+SPEC_DIR=""
+SPEC_RESULT_DIR=""
+SPEC_CONFIG_PATH=""
+ASLR_STATE_FILE=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -88,9 +92,14 @@ configure_runtime_paths() {
     SRC_DIR="${PERF_WORK_DIR}/gcc-src"
     BUILD_DIR="${PERF_WORK_DIR}/gcc-build"
     INSTALL_DIR="${PERF_WORK_DIR}/gcc-install"
-    GCC_BIN="${BUILD_DIR}/gcc/xgcc"
-    CORPUS_DIR="${SRC_DIR}/gcc/testsuite/gcc.c-torture/compile"
+    GCC_BIN="${INSTALL_DIR}/bin/gcc"
+    GXX_BIN="${INSTALL_DIR}/bin/g++"
     BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    SPEC_MOUNT_DIR="${BENCHMARK_DATA_DIR}/cpu2017-media"
+    SPEC_DIR="${BENCHMARK_DATA_DIR}/cpu2017"
+    SPEC_RESULT_DIR="${SPEC_DIR}/result"
+    SPEC_CONFIG_PATH="${SPEC_DIR}/config/${SPEC_CONFIG_NAME}"
+    ASLR_STATE_FILE="${BENCHMARK_DATA_DIR}/randomize_va_space.before"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -106,7 +115,8 @@ initialize_runtime() {
 
 install_dependencies() {
     local required missing=0
-    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc; do
+    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc \
+        perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -121,13 +131,13 @@ install_dependencies() {
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
             if ! dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
             if ! sudo -n dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -138,13 +148,13 @@ install_dependencies() {
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
             if ! yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
             if ! sudo -n yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -160,7 +170,7 @@ install_dependencies() {
             fi
             if ! env DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential tar xz-utils coreutils curl python3 gawk findutils \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex; then
+                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -171,7 +181,7 @@ install_dependencies() {
             fi
             if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential tar xz-utils coreutils curl python3 gawk findutils \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex; then
+                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -184,7 +194,8 @@ install_dependencies() {
         return 30
     fi
 
-    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc; do
+    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc \
+        perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
             return 30
@@ -259,10 +270,6 @@ prepare_gcc_source() {
     rm -f "${tarball}"
 }
 
-# Build only the C compiler driver (all-gcc) from the extracted source tree.
-# The uninstalled in-tree driver build/gcc/xgcc is used for benchmarking, which
-# avoids a full bootstrap and target-library build while still exercising the
-# real compiler for the requested version.
 build_gcc() {
     local version_output actual_version
 
@@ -286,13 +293,13 @@ build_gcc() {
         return $?
     fi
 
-    log "configuring GCC ${SOFTWARE_VERSION} (C-only, out-of-tree build)"
+    log "configuring GCC ${SOFTWARE_VERSION} (C and C++, out-of-tree build)"
     mkdir -p "${BUILD_DIR}"
     if ! (
         cd "${BUILD_DIR}"
         "${SRC_DIR}/configure" \
             --prefix="${INSTALL_DIR}" \
-            --enable-languages=c \
+            --enable-languages=c,c++ \
             --disable-bootstrap \
             --disable-multilib \
             --disable-nls
@@ -300,19 +307,27 @@ build_gcc() {
         log "ERROR: GCC configure failed"
         return 40
     fi
-    log "building GCC ${SOFTWARE_VERSION} (all-gcc) with make -j$(nproc)"
+    log "building GCC ${SOFTWARE_VERSION} with make -j$(nproc)"
     if ! (
         cd "${BUILD_DIR}"
-        make all-gcc -j"$(nproc)"
+        make -j"$(nproc)"
     ); then
-        log "ERROR: GCC make all-gcc failed"
+        log "ERROR: GCC build failed"
         return 40
     fi
-    if [[ ! -x "${GCC_BIN}" ]]; then
-        log "ERROR: built compiler is missing: ${GCC_BIN}"
+    log "installing GCC ${SOFTWARE_VERSION} into ${INSTALL_DIR}"
+    if ! (
+        cd "${BUILD_DIR}"
+        make install
+    ); then
+        log "ERROR: GCC private installation failed"
         return 40
     fi
-    if ! version_output="$("${GCC_BIN}" -B"${BUILD_DIR}/gcc/" --version 2>/dev/null | head -n 1)"; then
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
+        log "ERROR: private GCC C or C++ compiler is missing"
+        return 40
+    fi
+    if ! version_output="$("${GCC_BIN}" --version 2>/dev/null | head -n 1)"; then
         log "ERROR: built GCC cannot report its version"
         return 40
     fi
@@ -333,44 +348,38 @@ start_gcc_runtime() {
     else
         return $?
     fi
-    if [[ ! -x "${GCC_BIN}" ]]; then
-        log "ERROR: built compiler is missing: ${GCC_BIN}"
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
+        log "ERROR: private GCC C or C++ compiler is missing"
         return 40
     fi
-    if [[ ! -d "${CORPUS_DIR}" ]]; then
-        log "ERROR: official corpus directory is missing: ${CORPUS_DIR}"
+    if [[ ! -r "${SPEC_CPU2017_ISO}" ]]; then
+        log "ERROR: SPEC CPU2017 ISO is missing or unreadable: ${SPEC_CPU2017_ISO}"
         return 40
     fi
-    local corpus_count
-    corpus_count="$(find "${CORPUS_DIR}" -maxdepth 1 -name '*.c' -type f | wc -l)"
-    if [[ "${corpus_count}" -le 0 ]]; then
-        log "ERROR: official corpus has no .c files: ${CORPUS_DIR}"
+    if [[ "${EUID}" -ne 0 ]] && ! sudo -n true >/dev/null 2>&1; then
+        log "ERROR: passwordless sudo is required to mount the SPEC CPU2017 ISO"
         return 40
     fi
-    if [[ ! "${GCC_BENCHMARK_ITERATIONS}" =~ ^[1-9][0-9]*$ ]]; then
-        log "ERROR: GCC_BENCHMARK_ITERATIONS must be a positive integer: ${GCC_BENCHMARK_ITERATIONS}"
+    if [[ ! "${SPEC_COPIES}" =~ ^[1-9][0-9]*$ ]]; then
+        log "ERROR: SPEC_COPIES must be a positive integer: ${SPEC_COPIES}"
         return 40
     fi
-    log "official c-torture/compile corpus: ${corpus_count} C files at -${GCC_OPT_LEVEL}"
-    log "GCC benchmark runtime is ready"
+    log "SPEC CPU2017 ISO is ready: ${SPEC_CPU2017_ISO}"
 }
 
-# Compile every official corpus file repeatedly with the built compiler at
-# -${GCC_OPT_LEVEL}.  Each duration uses Python's monotonic clock; raw compiler
-# output and the machine-readable timing stream are preserved separately.
 run_gcc_benchmarks() {
-    local actual_version
+    local actual_version template
 
     if initialize_runtime; then
         :
     else
         return $?
     fi
-    if [[ ! -x "${GCC_BIN}" ]]; then
-        log "ERROR: built compiler is missing: ${GCC_BIN}"
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
+        log "ERROR: private GCC C or C++ compiler is missing"
         return 40
     fi
-    if ! GCC_VERSION_STRING="$("${GCC_BIN}" -B"${BUILD_DIR}/gcc/" --version 2>/dev/null | head -n 1)"; then
+    if ! GCC_VERSION_STRING="$("${GCC_BIN}" --version 2>/dev/null | head -n 1)"; then
         log "ERROR: built GCC cannot report its version"
         return 40
     fi
@@ -379,85 +388,143 @@ run_gcc_benchmarks() {
         log "ERROR: built GCC reports ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
     fi
-    mkdir -p "${RESULTS_DIR}"
-    local timing_output="${RESULTS_DIR}/benchmark_compile.txt"
-    local compiler_output="${RESULTS_DIR}/compiler-output.log"
-    : > "${timing_output}"
-    printf '[gcc] raw compiler output for GCC %s\n' "${SOFTWARE_VERSION}" > "${compiler_output}"
-
-    local corpus_files=()
-    while IFS= read -r -d '' file; do
-        corpus_files+=("${file}")
-    done < <(find "${CORPUS_DIR}" -maxdepth 1 -name '*.c' -type f -print0 | sort -z)
-    local total="${#corpus_files[@]}"
-    if [[ "${total}" -le 0 ]]; then
-        log "ERROR: no corpus files selected for benchmarking"
+    mkdir -p "${RESULTS_DIR}" "${BENCHMARK_DATA_DIR}" "${SPEC_MOUNT_DIR}"
+    if [[ "${EUID}" -eq 0 ]]; then
+        if ! mount -o loop,ro "${SPEC_CPU2017_ISO}" "${SPEC_MOUNT_DIR}"; then
+            log "ERROR: failed to mount the SPEC CPU2017 ISO"
+            return 50
+        fi
+    elif ! sudo -n mount -o loop,ro "${SPEC_CPU2017_ISO}" "${SPEC_MOUNT_DIR}"; then
+        log "ERROR: failed to mount the SPEC CPU2017 ISO"
         return 50
     fi
-    log "benchmarking ${total} corpus files for ${GCC_BENCHMARK_ITERATIONS} iterations with GCC ${SOFTWARE_VERSION} at -${GCC_OPT_LEVEL}"
-
-    local file basename obj start_ns end_ns elapsed_ns compiled=0 iteration
-    local obj_dir="${BENCHMARK_DATA_DIR}/obj"
-    mkdir -p "${obj_dir}"
-    for ((iteration = 1; iteration <= GCC_BENCHMARK_ITERATIONS; iteration++)); do
-        log "starting official corpus iteration ${iteration}/${GCC_BENCHMARK_ITERATIONS}"
-        for file in "${corpus_files[@]}"; do
-            basename="$(basename "${file}")"
-            obj="${obj_dir}/${basename%.c}.o"
-            start_ns="$(python3 -c 'from time import monotonic_ns; print(monotonic_ns())')"
-            printf '[gcc-compile] iteration=%s source=%s\n' "${iteration}" "${basename}" >> "${compiler_output}"
-            if "${GCC_BIN}" -B"${BUILD_DIR}/gcc/" -"${GCC_OPT_LEVEL}" \
-                -c "${file}" -o "${obj}" >> "${compiler_output}" 2>&1; then
-                end_ns="$(python3 -c 'from time import monotonic_ns; print(monotonic_ns())')"
-                elapsed_ns=$(( end_ns - start_ns ))
-                printf '%s %s %s\n' "${iteration}" "${basename}" "${elapsed_ns}" >> "${timing_output}"
-                compiled=$(( compiled + 1 ))
-            else
-                log "ERROR: official corpus file did not compile: ${basename} (iteration ${iteration})"
-                return 50
-            fi
-            rm -f "${obj}"
-        done
-    done
-    if [[ "${compiled}" -ne $(( total * GCC_BENCHMARK_ITERATIONS )) ]]; then
-        log "ERROR: compiled file count is incomplete: ${compiled}"
+    if ! (
+        cd "${SPEC_MOUNT_DIR}"
+        env -u SPEC ./install.sh -f -d "${SPEC_DIR}"
+    ) 2>&1 | tee "${RESULTS_DIR}/spec-install.log"; then
+        log "ERROR: SPEC CPU2017 installation failed"
         return 50
     fi
-    if [[ ! -s "${timing_output}" ]]; then
-        log "ERROR: benchmark timing output is empty: ${timing_output}"
+    if [[ ! -x "${SPEC_DIR}/bin/runcpu" || ! -x "${SPEC_DIR}/bin/specperl" ]]; then
+        log "ERROR: SPEC CPU2017 installation is incomplete"
         return 50
     fi
-    log "compiled ${compiled} official corpus files"
-
-    export SOFTWARE_VERSION EXPECTED_ARCH GCC_OPT_LEVEL GCC_VERSION_STRING
-    export GCC_CORPUS_COMPILED="${compiled}" GCC_CORPUS_FILES="${total}"
-    export GCC_BENCHMARK_ITERATIONS
+    case "${EXPECTED_ARCH}" in
+        x86_64)
+            template="${SPEC_DIR}/config/Example-gcc-linux-x86.cfg"
+            ;;
+        aarch64)
+            template="${SPEC_DIR}/config/Example-gcc-linux-aarch64.cfg"
+            ;;
+    esac
+    if [[ ! -f "${template}" ]]; then
+        log "ERROR: SPEC CPU2017 GCC configuration template is missing: ${template}"
+        return 50
+    fi
+    if ! sed "s|^%   define  gcc_dir.*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
+        "${template}" > "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: failed to create the SPEC CPU2017 GCC configuration"
+        return 50
+    fi
+    if ! printf '\n# Fixed workload settings passed by runcpu.\n%%define fastmath %s\n%%define jemalloc %s\n%%define hugepages %s\nnotes010 = Requested runcpu settings: fastmath=%%{fastmath}, jemalloc=%%{jemalloc}, hugepages=%%{hugepages}\n' \
+        "${SPEC_FASTMATH}" "${SPEC_JEMALLOC}" "${SPEC_HUGEPAGES}" >> "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: failed to record the SPEC CPU2017 workload settings"
+        return 50
+    fi
+    if ! cat /proc/sys/kernel/randomize_va_space > "${ASLR_STATE_FILE}"; then
+        log "ERROR: failed to record the current ASLR setting"
+        return 50
+    fi
+    if [[ "${EUID}" -eq 0 ]]; then
+        if ! printf '0\n' > /proc/sys/kernel/randomize_va_space || \
+            ! printf '3\n' > /proc/sys/vm/drop_caches; then
+            log "ERROR: failed to prepare the requested SPEC CPU2017 system settings"
+            return 50
+        fi
+    elif ! printf '0\n' | sudo -n tee /proc/sys/kernel/randomize_va_space >/dev/null || \
+        ! printf '3\n' | sudo -n tee /proc/sys/vm/drop_caches >/dev/null; then
+        log "ERROR: failed to prepare the requested SPEC CPU2017 system settings"
+        return 50
+    fi
+    log "running SPEC CPU2017 intrate: ${SPEC_COPIES} copies, one iteration"
+    if ! (
+        cd "${SPEC_DIR}"
+        source ./shrc
+        runcpu --config="${SPEC_CONFIG_NAME}" --rebuild --copies="${SPEC_COPIES}" -n 1 \
+            -S fastmath="${SPEC_FASTMATH}" \
+            -S jemalloc="${SPEC_JEMALLOC}" \
+            -S hugepages="${SPEC_HUGEPAGES}" \
+            intrate
+    ) 2>&1 | tee "${RESULTS_DIR}/raw-output.log"; then
+        log "ERROR: SPEC CPU2017 intrate failed"
+        return 50
+    fi
+    if [[ ! -d "${SPEC_RESULT_DIR}" ]]; then
+        log "ERROR: SPEC CPU2017 result directory is missing"
+        return 50
+    fi
+    if ! mkdir -p "${RESULTS_DIR}/spec-results" || \
+        ! cp -a "${SPEC_RESULT_DIR}/." "${RESULTS_DIR}/spec-results/"; then
+        log "ERROR: failed to preserve SPEC CPU2017 result files"
+        return 50
+    fi
+    export SOFTWARE_VERSION EXPECTED_ARCH GCC_VERSION_STRING SPEC_COPIES
     if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${timing_output}" \
+        "${RESULTS_DIR}/spec-results" \
         "${RESULTS_DIR}/benchmark_gcc.json"; then
-        log "ERROR: failed to normalize the GCC benchmark results"
+        log "ERROR: failed to normalize the SPEC CPU2017 results"
         return 50
     fi
-    log "benchmark results written to benchmark_compile.txt, compiler-output.log, and benchmark_gcc.json"
+    log "SPEC CPU2017 results written to raw-output.log, spec-results, and benchmark_gcc.json"
 }
 
 stop_gcc_runtime() {
+    local cleanup_failed=0 previous_aslr
     if initialize_runtime; then
         :
     else
         return $?
     fi
+    if [[ -f "${ASLR_STATE_FILE}" ]]; then
+        previous_aslr="$(<"${ASLR_STATE_FILE}")"
+        if [[ ! "${previous_aslr}" =~ ^[0-9]+$ ]]; then
+            log "ERROR: recorded ASLR setting is invalid: ${previous_aslr}"
+            cleanup_failed=1
+        elif [[ "${EUID}" -eq 0 ]]; then
+            if ! printf '%s\n' "${previous_aslr}" > /proc/sys/kernel/randomize_va_space; then
+                log "ERROR: failed to restore the ASLR setting"
+                cleanup_failed=1
+            fi
+        elif ! printf '%s\n' "${previous_aslr}" | sudo -n tee /proc/sys/kernel/randomize_va_space >/dev/null; then
+            log "ERROR: failed to restore the ASLR setting"
+            cleanup_failed=1
+        fi
+    fi
+    if grep -F " ${SPEC_MOUNT_DIR} " /proc/mounts >/dev/null 2>&1; then
+        if [[ "${EUID}" -eq 0 ]]; then
+            if ! umount "${SPEC_MOUNT_DIR}"; then
+                log "ERROR: failed to unmount the SPEC CPU2017 ISO"
+                cleanup_failed=1
+            fi
+        elif ! sudo -n umount "${SPEC_MOUNT_DIR}"; then
+            log "ERROR: failed to unmount the SPEC CPU2017 ISO"
+            cleanup_failed=1
+        fi
+    fi
     if [[ -d "${BENCHMARK_DATA_DIR}" ]]; then
         if [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT}"/* ]]; then
             log "ERROR: refusing to clean unexpected GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
-            return 70
+            cleanup_failed=1
         fi
-        if ! rm -rf -- "${BENCHMARK_DATA_DIR}"; then
+        if [[ "${cleanup_failed}" -eq 0 ]] && ! rm -rf -- "${BENCHMARK_DATA_DIR}"; then
             log "ERROR: failed to clean GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
-            return 70
+            cleanup_failed=1
         fi
     fi
-    log "GCC benchmark has no background service to stop"
+    if [[ "${cleanup_failed}" -ne 0 ]]; then
+        return 70
+    fi
+    log "cleaned the private SPEC CPU2017 installation and benchmark data"
 }
 
 standalone_runtime() {
@@ -534,8 +601,8 @@ run_gcc_standalone() {
                 "${GCC_VERSION_STRING}" \
                 --source-url="${GCC_SOURCE_BASE}/gcc-${SOFTWARE_VERSION}/gcc-${SOFTWARE_VERSION}.tar.xz" \
                 --source-sha256="${GCC_SOURCE_SHA256}" \
-                --configure-flags="--enable-languages=c --disable-bootstrap --disable-multilib --disable-nls" \
-                --opt-level="${GCC_OPT_LEVEL}"; then
+                --configure-flags="--enable-languages=c,c++ --disable-bootstrap --disable-multilib --disable-nls" \
+                --spec-iso="${SPEC_CPU2017_ISO}"; then
                 :
             else
                 stage_status=$?
@@ -604,9 +671,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build the C compiler from the official GNU release tarball and time-compile
-the official gcc.c-torture/compile regression corpus shipped inside the
-tarball as a standalone performance evaluation. Results default to
+Build GCC from the official GNU release tarball and run the SPEC CPU2017
+intrate workload with the private GCC installation. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -618,7 +684,7 @@ Options:
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
   GCC_SOURCE_BASE, GCC_OFFLINE_DIR, GCC_BENCHMARK_DATA_ROOT,
-  GCC_OPT_LEVEL, GCC_BENCHMARK_ITERATIONS
+  SPEC_CPU2017_ISO
 USAGE
 }
 

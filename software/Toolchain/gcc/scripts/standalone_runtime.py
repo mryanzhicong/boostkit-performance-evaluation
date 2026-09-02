@@ -149,7 +149,7 @@ def record_build_info(
     source_url: str,
     source_sha256: str,
     configure_flags: str,
-    opt_level: str,
+    spec_iso: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
@@ -171,13 +171,11 @@ def record_build_info(
             "source_url": source_url,
             "source_sha256": source_sha256,
             "configure_flags": configure_flags,
-            "benchmark_corpus": (
-                "gcc/testsuite/gcc.c-torture/compile (official GCC source tree)"
-            ),
-            "opt_level": opt_level,
+            "benchmark_corpus": "SPEC CPU2017 v1.0.5 intrate",
+            "spec_cpu2017_iso": spec_iso,
             "build_command": (
-                "configure --enable-languages=c --disable-bootstrap "
-                "--disable-multilib --disable-nls && make all-gcc -j$(nproc)"
+                "configure --enable-languages=c,c++ --disable-bootstrap "
+                "--disable-multilib --disable-nls && make -j$(nproc) && make install"
             ),
         },
     )
@@ -209,12 +207,12 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate gcc benchmark: {metric_name}")
-        if result.get("source_field") != "elapsed_ns":
+        if result.get("source_field") != "SPECrate2017_int_base":
             raise RuntimeError(
-                f"metric {metric_name} is not sourced from the official corpus timing"
+                f"metric {metric_name} is not sourced from the official SPEC result"
             )
-        if result.get("unit") != "s":
-            raise RuntimeError(f"metric {metric_name} is not expressed in s")
+        if result.get("unit") != "ratio":
+            raise RuntimeError(f"metric {metric_name} is not expressed as a SPEC ratio")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
@@ -222,8 +220,8 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "s",
-            "direction": "lower_is_better",
+            "unit": "ratio",
+            "direction": "higher_is_better",
         }
     if not metrics:
         raise RuntimeError("benchmark_gcc.json contains no metrics")
@@ -259,8 +257,8 @@ def render_report(result: dict[str, Any]) -> str:
         ("源码下载地址", "source_url"),
         ("源码 SHA-256", "source_sha256"),
         ("配置参数", "configure_flags"),
-        ("基准语料", "benchmark_corpus"),
-        ("优化级别", "opt_level"),
+        ("测试套件", "benchmark_corpus"),
+        ("SPEC CPU2017 ISO", "spec_cpu2017_iso"),
         ("构建命令", "build_command"),
         ("记录时间", "recorded_at"),
     ):
@@ -283,7 +281,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（官方 c-torture 语料编译耗时，单位秒）",
+            "## 性能指标（SPEC CPU2017 intrate）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -292,7 +290,7 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越小越好 |"
+            f"{metric['unit']} | 越大越好 |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
@@ -387,9 +385,9 @@ def parse_args() -> argparse.Namespace:
         help="configure flags used to build the compiler",
     )
     build.add_argument(
-        "--opt-level",
+        "--spec-iso",
         required=True,
-        help="optimization level used to compile the corpus",
+        help="local SPEC CPU2017 ISO path used by the benchmark",
     )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
@@ -421,7 +419,7 @@ def main() -> int:
             args.source_url,
             args.source_sha256,
             args.configure_flags,
-            args.opt_level,
+            args.spec_iso,
         )
         return 0
     return finalize(

@@ -1,78 +1,140 @@
 # GCC 性能测试说明
 
-本用例从 GNU 官方发布的 GCC 源码包构建 C 编译器，并对源码包自带的
-`gcc/testsuite/gcc.c-torture/compile` 语料执行编译耗时测试，用于比较
-`x86_64` 与 `aarch64` 的开箱编译性能。
+本用例从 GNU 官方发布包构建 GCC，再使用该私有安装的 C/C++ 编译器运行
+SPEC CPU2017 v1.0.5 的官方整数吞吐量套件 `intrate`，用于比较 `x86_64` 与
+`aarch64` 的开箱性能。
 
-Framework 通过 `case.yaml` 调用 `gcc_test.sh` 的 `build`、`start`、`test`、
-`stop` 四阶段。直接执行入口脚本会按同一顺序构建、测试、收集环境信息
-并清理任务私有目录。
+`case.yaml` 将 `build`、`start`、`test`、`stop` 四阶段映射至
+`gcc_test.sh`。直接执行入口脚本也会完成构建、测试、环境信息收集和清理。
 
-## 构建与安装
+## 测试文件准备
 
-测试版本由 `case.yaml` 的 `versions` 声明。脚本优先读取离线包：
+GCC 源码优先从 Runner 的离线目录读取：
 
 ```text
 /home/runner/software/gcc/gcc-<版本>.tar.xz
 ```
 
-未找到离线包时，下载 GNU 官方发布包：
+不存在时下载 GNU 官方发布包：
 
 ```text
 https://ftp.gnu.org/gnu/gcc/gcc-<版本>/gcc-<版本>.tar.xz
 ```
 
-脚本对 tarball 执行已声明的 SHA-256 校验后，在任务私有目录进行
-out-of-tree 构建：
+脚本会对已声明版本执行 SHA-256 校验。
+
+SPEC CPU2017 是受许可软件，不从网络下载。请在两台 Runner 上预置同一 ISO，且
+保证 `runner` 用户可读：
+
+```text
+/home/runner/software/spec/cpu2017-1.0.5.iso
+```
+
+测试脚本需要通过无密码 `sudo` 执行 `mount`、`umount`，以及测试前的内核设置。
+
+## 构建与安装
+
+脚本自动安装缺失的构建依赖，包括宿主 C/C++ 编译器、Make、GMP、MPFR、MPC、
+Bison、Flex、Perl 和 `util-linux`。
+
+GCC 在本次任务的隔离工作目录中按以下命令构建并安装：
 
 ```bash
 ../gcc-<版本>/configure \
   --prefix="${PERF_WORK_DIR}/gcc-install" \
-  --enable-languages=c \
+  --enable-languages=c,c++ \
   --disable-bootstrap \
   --disable-multilib \
   --disable-nls
-make all-gcc -j"$(nproc)"
+make -j"$(nproc)"
+make install
 ```
 
-构建后使用 `gcc/xgcc --version` 校验实际 GCC 版本。脚本会自动安装缺失的
-构建依赖，包括宿主编译器、Make、GMP、MPFR、MPC、Bison 和 Flex。
-
-## 官方测试
-
-测试语料是每个 GCC 发行包内置的：
-
-```text
-gcc/testsuite/gcc.c-torture/compile/*.c
-```
-
-脚本以 `case.yaml` 声明的 `GCC_OPT_LEVEL=O2` 对每个官方 C 文件编译三次：
+构建完成后，脚本校验：
 
 ```bash
-"${PERF_WORK_DIR}/gcc-build/gcc/xgcc" \
-  -B"${PERF_WORK_DIR}/gcc-build/gcc/" \
-  -O2 -c "<官方语料文件>.c" -o "<任务私有对象文件>.o"
+"${PERF_WORK_DIR}/gcc-install/bin/gcc" --version
+"${PERF_WORK_DIR}/gcc-install/bin/g++" --version
 ```
 
-每次耗时使用 `time.monotonic_ns` 记录；同一文件的三个样本取中位数。任何
-语料文件编译失败、缺少样本或指标数量不完整都会使测试失败。对象文件写入
-`/home/runner/gcc-data/<版本>/<架构>/<运行 ID>/`，停止阶段会仅清理本次运行
-的任务专用目录。
+实际版本必须与 `case.yaml` 请求版本一致。
 
-## 指标
+## SPEC CPU2017 安装与配置
 
-每个指标名称均为官方 `gcc.c-torture/compile` 语料中的原始 C 文件名，例如
-`20020219-1.c`。指标值为该文件三次编译耗时的中位数：
+测试阶段将 ISO 只读挂载到本次任务的数据目录，再使用 ISO 自带的官方安装器：
 
-| 指标 | 单位 | 优化方向 |
-|---|---|---|
-| `<官方文件名>.c` 编译耗时 | s | 越小越好 |
+```bash
+mount -o loop,ro \
+  /home/runner/software/spec/cpu2017-1.0.5.iso \
+  /home/runner/gcc-data/<版本>/<架构>/<运行ID>/cpu2017-media
+
+./install.sh -f -d \
+  /home/runner/gcc-data/<版本>/<架构>/<运行ID>/cpu2017
+```
+
+安装目录会自动使用 ISO 中与架构对应的官方 GCC 模板：
+
+```text
+config/Example-gcc-linux-x86.cfg
+config/Example-gcc-linux-aarch64.cfg
+```
+
+脚本复制模板为 `config/gcc.cfg`，仅将模板的 `gcc_dir` 改为：
+
+```text
+${PERF_WORK_DIR}/gcc-install
+```
+
+因此 SPEC 构建每个工作负载时使用的是本次任务构建的 `gcc` 与 `g++`。
+
+## 测试命令
+
+测试前，脚本记录现有 ASLR 值，再依次执行以下系统设置：
+
+```bash
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+echo 3 | sudo tee /proc/sys/vm/drop_caches
+```
+
+停止阶段会恢复测试前的 ASLR 值、卸载 ISO，并清理本次任务的
+`/home/runner/gcc-data/<版本>/<架构>/<运行ID>/` 目录。
+
+在 SPEC 安装目录中执行的性能测试命令为：
+
+```bash
+source ./shrc
+runcpu --config=gcc.cfg --rebuild --copies=16 -n 1 \
+  -S fastmath=0 \
+  -S jemalloc=2mb \
+  -S hugepages=0 \
+  intrate
+```
+
+`--copies` 在两个架构上均固定为 16，使两侧以相同的并行副本数执行 SPEC rate
+基准。实际值写入 `benchmark_gcc.json`，并随结果一起报告。
+
+`fastmath`、`jemalloc` 与 `hugepages` 作为固定的 SPEC 配置变量传入，并写入
+结果配置的 `notes010` 字段以便追溯；ISO 自带的 GCC 模板没有将它们映射为额外
+的 GCC 选项、jemalloc 预加载或大页配置，脚本不会臆造这些行为。
+
+## 指标与输出
+
+指标为 SPEC 官方定义的 `SPECrate2017_int_base`：整数 Rate 套件的总体吞吐量比值，
+覆盖 10 个整数工作负载。数值越大表示吞吐量越高。
+
+| 指标 | 来源字段 | 单位 | 优化方向 |
+|---|---|---|---|
+| `SPECrate2017_int_base` | SPEC `intrate` 文本结果 | ratio | 越大越好 |
+
+测试成功要求官方文本结果中存在且仅存在一个有效的
+`SPECrate2017_int_base` 值；缺失、冲突或非正数都会使测试失败。
 
 输出文件：
 
-- `benchmark_compile.txt`：每次原始计时记录，格式为 `迭代序号 文件名 纳秒`。
-- `compiler-output.log`：原始编译器标准输出和标准错误。
-- `benchmark_gcc.json`：指标规范化结果，保留样本数和原始单位。
+- `raw-output.log`：完整 `runcpu` 控制台输出。
+- `spec-install.log`：ISO 安装器的原始输出。
+- `spec-results/`：SPEC 原始文本、CSV、配置等结果文件。
+- `benchmark_gcc.json`：规范化后的官方总分、原始命令和固定参数。
 
 ## 独立执行
 
@@ -80,5 +142,5 @@ gcc/testsuite/gcc.c-torture/compile/*.c
 bash software/Toolchain/gcc/gcc_test.sh --version 16.2.0
 ```
 
-可使用 `--results-dir <目录>` 指定结果位置，或使用 `--keep-workdir` 保留构建
-目录供排查。
+可使用 `--results-dir <目录>` 指定持久结果位置，或用 `--keep-workdir` 保留
+GCC 构建工作目录供排查。
