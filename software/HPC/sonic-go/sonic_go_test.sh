@@ -231,7 +231,7 @@ install_go_binary() {
 }
 
 build_sonic_go() {
-    local actual_version loader_version
+    local actual_version
 
     initialize_runtime || return $?
     install_dependencies || return $?
@@ -259,18 +259,9 @@ build_sonic_go() {
         for benchmark_dir in encoder decoder ast; do
             cd "${SOURCE_DIR}/${benchmark_dir}"
             "${GO_BIN}" mod download
-            "${GO_BIN}" test -run='^$'
         done
-        loader_version="$(awk '$1 == "github.com/bytedance/sonic/loader" {print $2; exit}' "${SOURCE_DIR}/go.mod")"
-        if [[ -z "${loader_version}" ]]; then
-            log "ERROR: Sonic source does not declare a loader module version"
-            exit 1
-        fi
         cd "${SOURCE_DIR}/external_jsonlib_test"
-        "${GO_BIN}" mod download github.com/bytedance/sonic/loader
-        "${GO_BIN}" mod download "github.com/bytedance/sonic/loader@${loader_version}"
-        cd "${SOURCE_DIR}/external_jsonlib_test/benchmark_test"
-        "${GO_BIN}" test -run='^$'
+        "${GO_BIN}" mod download
     ); then
         log "ERROR: failed to prepare the official Sonic benchmark packages"
         return 40
@@ -303,6 +294,7 @@ run_sonic_go_benchmarks() {
         cd "${SOURCE_DIR}"
         export SONIC_ENCODER_USE_VM=""
         export SONIC_USE_SVE_WRAPGOC=1
+        export GOFLAGS="${GOFLAGS:+${GOFLAGS} }-mod=mod"
         bash -e scripts/bench.sh
     ) 2>&1 | tee "${RESULTS_DIR}/benchmark_sonic_go.txt"; then
         log "ERROR: official Sonic benchmark failed"
