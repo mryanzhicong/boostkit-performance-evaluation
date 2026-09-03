@@ -111,14 +111,14 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches
 
 ```bash
 source ./shrc
-runcpu --config=gcc.cfg --rebuild --copies=16 -n 1 \
+runcpu --config=gcc.cfg --rebuild --copies=8 -n 1 \
   -S fastmath=0 \
   -S jemalloc=2mb \
   -S hugepages=0 \
   intrate
 ```
 
-`--copies` 在两个架构上均固定为 16，使两侧以相同的并行副本数执行 SPEC rate
+`--copies` 在两个架构上均固定为 8，使两侧以相同的并行副本数执行 SPEC rate
 基准。实际值写入 `benchmark_gcc.json`，并随结果一起报告。
 
 `fastmath`、`jemalloc` 与 `hugepages` 作为固定的 SPEC 配置变量传入，并写入
@@ -128,14 +128,18 @@ runcpu --config=gcc.cfg --rebuild --copies=16 -n 1 \
 ## 指标与输出
 
 指标为 SPEC 官方定义的 `SPECrate2017_int_base`：整数 Rate 套件的总体吞吐量比值，
-覆盖 10 个整数工作负载。数值越大表示吞吐量越高。
+覆盖 10 个整数工作负载。数值越大表示吞吐量越高。当前命令固定 `-n 1`，SPEC
+会在官方文本报告中将该结果标为 `Est. SPECrate2017_int_base`；它是一次运行的
+估算值，不是可提交或可发布的 SPEC 正式分数。规范化结果中的 `score_kind` 会保留
+`estimated` 标识。
 
 | 指标 | 来源字段 | 单位 | 优化方向 |
 |---|---|---|---|
 | `SPECrate2017_int_base` | SPEC `intrate` 文本结果 | ratio | 越大越好 |
 
 测试成功要求官方文本结果中存在且仅存在一个有效的
-`SPECrate2017_int_base` 值；缺失、冲突或非正数都会使测试失败。
+`SPECrate2017_int_base` 或 `Est. SPECrate2017_int_base` 值；缺失、冲突或非正数
+都会使测试失败。
 
 输出文件：
 

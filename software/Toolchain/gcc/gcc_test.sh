@@ -13,7 +13,10 @@ GCC_OFFLINE_DIR="${GCC_OFFLINE_DIR:-/home/runner/software/gcc}"
 GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-}"
 SPEC_CPU2017_ISO="${SPEC_CPU2017_ISO:-/home/runner/software/gcc/cpu2017-1.0.5.iso}"
 SPEC_CONFIG_NAME="gcc.cfg"
-SPEC_COPIES="${SPEC_COPIES:-16}"
+# SPEC's 502.gcc_r workload compiles several large translation units in every
+# rate copy.  Eight concurrent copies keep the suite within the memory budget
+# of both dedicated runners while preserving an identical workload shape.
+SPEC_COPIES="${SPEC_COPIES:-8}"
 SPEC_FASTMATH=0
 SPEC_JEMALLOC=2mb
 SPEC_HUGEPAGES=0
