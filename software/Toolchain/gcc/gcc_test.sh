@@ -115,6 +115,8 @@ initialize_runtime() {
 
 install_dependencies() {
     local required missing=0
+    local rpm_spec_packages=(libnsl)
+    local apt_spec_packages=(libnsl1)
     for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc \
         perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
@@ -123,7 +125,8 @@ install_dependencies() {
     done
     if [[ "${missing}" -eq 0 ]] && printf \
         '#include <gmp.h>\n#include <mpfr.h>\n#include <mpc.h>\nint main(void) { return 0; }\n' | \
-        g++ -x c++ -fsyntax-only - >/dev/null 2>&1; then
+        g++ -x c++ -fsyntax-only - >/dev/null 2>&1 && \
+        ldconfig -p 2>/dev/null | grep -q 'libnsl\.so\.1'; then
         return
     fi
 
@@ -131,13 +134,15 @@ install_dependencies() {
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
             if ! dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
+                "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
             if ! sudo -n dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
+                "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -148,13 +153,15 @@ install_dependencies() {
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
             if ! yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
+                "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
             if ! sudo -n yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux; then
+                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
+                "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -170,7 +177,8 @@ install_dependencies() {
             fi
             if ! env DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential tar xz-utils coreutils curl python3 gawk findutils \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux; then
+                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
+                "${apt_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -181,7 +189,8 @@ install_dependencies() {
             fi
             if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential tar xz-utils coreutils curl python3 gawk findutils \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux; then
+                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
+                "${apt_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
@@ -204,6 +213,10 @@ install_dependencies() {
     if ! printf '#include <gmp.h>\n#include <mpfr.h>\n#include <mpc.h>\nint main(void) { return 0; }\n' | \
         g++ -x c++ -fsyntax-only - >/dev/null 2>&1; then
         log "ERROR: GMP, MPFR, or MPC development headers are unavailable after installation"
+        return 30
+    fi
+    if ! ldconfig -p 2>/dev/null | grep -q 'libnsl\.so\.1'; then
+        log "ERROR: SPEC CPU2017 tools require libnsl.so.1, but libnsl did not provide it"
         return 30
     fi
 }

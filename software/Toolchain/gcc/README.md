@@ -35,7 +35,8 @@ SPEC CPU2017 是受许可软件，不从网络下载。请在两台 Runner 上�
 ## 构建与安装
 
 脚本自动安装缺失的构建依赖，包括宿主 C/C++ 编译器、Make、GMP、MPFR、MPC、
-Bison、Flex、Perl 和 `util-linux`。
+Bison、Flex、Perl、`util-linux` 和 `libnsl`（APT 系统为 `libnsl1`）。两个架构均
+安装并校验 `libnsl.so.1`；SPEC ISO 自带的 `specperl` 需要该运行库。
 
 GCC 在本次任务的隔离工作目录中按以下命令构建并安装：
 
