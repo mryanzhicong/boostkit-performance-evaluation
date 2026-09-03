@@ -10,12 +10,15 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 CPYTHON_SOURCE_URL="${CPYTHON_SOURCE_URL:-https://github.com/python/cpython.git}"
 PYPI_INDEX_URL="https://mirrors.huaweicloud.com/repository/pypi/simple"
-# pyperformance version pinned so both architectures run the same official suite.
-PYPERFORMANCE_VERSION="1.14.0"
-# Original openEuler test selection: official benchmarks, all pure stdlib.
-PYPERFORMANCE_BENCHMARKS="json_dumps,json_loads,nbody,telco,fannkuch,regex_v8,meteor_contest"
-# Original test build configuration: PGO/LTO disabled.
-CONFIGURE_OPTIONS="--enable-optimizations=no"
+PYPI_TRUSTED_HOST="mirrors.huaweicloud.com"
+# Keep the benchmark runner and warmup policy identical on both architectures.
+PYPERFORMANCE_VERSION="1.13.0"
+PYPERFORMANCE_WARMUP="3"
+# Representative official selection used by the documented Python AutoJIT
+# comparison: source transformation plus startup with and without site.py.
+PYPERFORMANCE_BENCHMARKS="2to3,python_startup,python_startup_no_site"
+# Match the documented CPython performance-build configuration.
+CONFIGURE_OPTIONS="--enable-optimizations --with-lto"
 
 SOURCE_DIR=""
 INSTALL_DIR=""
@@ -71,15 +74,67 @@ initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
 }
 
-require_commands() {
-    local required missing=0
-    for required in git gcc make python3 nproc; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
-            missing=1
+require_python_tools() {
+    local command_name package
+    local packages=()
+
+    for command_name in git gcc make python3 nproc sudo; do
+        if command -v "${command_name}" >/dev/null 2>&1; then
+            continue
+        fi
+        case "${command_name}" in
+            git) package="git" ;;
+            gcc) package="gcc" ;;
+            make) package="make" ;;
+            python3) package="python3" ;;
+            nproc) package="coreutils" ;;
+            sudo) package="sudo" ;;
+        esac
+        log_message "missing required Python test command: ${command_name}"
+        packages+=("${package}")
+    done
+
+    # These headers build the CPython modules verified before pyperformance
+    # runs: _ssl, zlib and _ctypes.  The remaining headers keep the standard
+    # library feature-complete for the complete official benchmark suite.
+    for package in bzip2-devel gdbm-devel libffi-devel openssl-devel readline-devel sqlite-devel uuid-devel xz-devel zlib-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log_message "missing required Python test package: ${package}"
+            packages+=("${package}")
         fi
     done
-    [[ "${missing}" -eq 0 ]]
+
+    if [[ "${#packages[@]}" -eq 0 ]]; then
+        return 0
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log_message "ERROR: dnf is required to install Python test prerequisites"
+        return 30
+    fi
+
+    log_message "installing missing Python test packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log_message "ERROR: sudo is required to install Python test prerequisites"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log_message "ERROR: failed to install Python test prerequisites"
+        return 30
+    fi
+
+    for command_name in git gcc make python3 nproc sudo; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            log_message "ERROR: required Python test command remains unavailable: ${command_name}"
+            return 30
+        fi
+    done
+    for package in bzip2-devel gdbm-devel libffi-devel openssl-devel readline-devel sqlite-devel uuid-devel xz-devel zlib-devel; do
+        if ! rpm -q "${package}" >/dev/null 2>&1; then
+            log_message "ERROR: required Python test package remains unavailable: ${package}"
+            return 30
+        fi
+    done
 }
 
 check_architecture() {
@@ -142,20 +197,27 @@ verify_cpython_build() {
 }
 
 build_python() {
+    local -a configure_options
+
     initialize_runtime || return $?
     check_architecture || return $?
-    require_commands || return $?
+    require_python_tools || return $?
     [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" && ! -e "${BENCH_WORK_DIR}" ]] || {
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
     prepare_cpython_source || return $?
     GCC_VERSION_STRING="$(gcc --version | head -n 1)"
+    read -r -a configure_options <<< "${CONFIGURE_OPTIONS}"
+    [[ "${#configure_options[@]}" -gt 0 ]] || {
+        log_message "ERROR: CPython configure options are empty"
+        return 40
+    }
 
     log_message "configuring CPython v${SOFTWARE_VERSION} with ${CONFIGURE_OPTIONS} into a private prefix"
     (
         cd "${SOURCE_DIR}"
-        ./configure --prefix="${INSTALL_DIR}" "${CONFIGURE_OPTIONS}"
+        ./configure --prefix="${INSTALL_DIR}" "${configure_options[@]}"
     ) || {
         log_message "ERROR: CPython configure failed"
         return 40
@@ -210,12 +272,19 @@ run_python_benchmarks() {
         cd "${BENCH_WORK_DIR}"
         export PIP_NO_CACHE_DIR=1
         export PIP_DISABLE_PIP_VERSION_CHECK=1
+        # pyperformance creates benchmark-specific virtual environments.  The
+        # 2to3 benchmark installs its bundled compatibility vendor there on
+        # Python 3.14, so it must inherit the same package source.
+        export PIP_INDEX_URL="${PYPI_INDEX_URL}"
+        export PIP_TRUSTED_HOST="${PYPI_TRUSTED_HOST}"
         "${PYTHON_BIN}" -m pip install --no-cache-dir \
             --index-url "${PYPI_INDEX_URL}" \
-            --trusted-host mirrors.huaweicloud.com \
+            --trusted-host "${PYPI_TRUSTED_HOST}" \
             "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
         "${PYTHON_BIN}" -m pyperformance run \
             -b "${PYPERFORMANCE_BENCHMARKS}" \
+            --warmup "${PYPERFORMANCE_WARMUP}" \
+            --inherit-environ PIP_INDEX_URL,PIP_TRUSTED_HOST \
             -o "${RESULTS_DIR}/benchmark.json" || exit 50
     ) || {
         log_message "ERROR: official pyperformance run failed"
@@ -226,6 +295,7 @@ run_python_benchmarks() {
         return 50
     }
     export SOFTWARE_VERSION EXPECTED_ARCH PYPERFORMANCE_BENCHMARKS PYPERFORMANCE_VERSION
+    export PYPERFORMANCE_WARMUP CONFIGURE_OPTIONS
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark.json" \
         "${RESULTS_DIR}/benchmark_python.json" || {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provide self-contained environment collection and reporting for sonic."""
+"""Provide self-contained environment collection and reporting for openjdk."""
 
 from __future__ import annotations
 
@@ -88,11 +88,6 @@ def cpu_model() -> str:
     return "unknown"
 
 
-def gcc_version() -> str:
-    value = command(["gcc", "-dumpfullversion", "-dumpversion"])
-    return value.splitlines()[0] if value else "unknown"
-
-
 def glibc_version() -> str:
     value = command(["getconf", "GNU_LIBC_VERSION"])
     if value:
@@ -110,7 +105,6 @@ def collect_system_info() -> dict[str, Any]:
         "cpu_model": cpu_model(),
         "cpu_count": os.cpu_count() or 0,
         "python_version": platform.python_version(),
-        "gcc_version": gcc_version(),
         "glibc_version": glibc_version(),
         "numa": command(["numactl", "--hardware"]),
     }
@@ -137,24 +131,45 @@ def record_build_info(
     actual_version_file: Path,
     architecture: str,
     run_id: str,
-    compiler_path: str,
-    compiler_version: str,
+    jdk_version_string: str,
+    source_url: str,
+    source_sha256: str,
+    source_repo: str,
+    source_tag: str,
+    boot_jdk_home: str,
+    jtreg_version: str,
+    test_roots: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
-        raise RuntimeError("actual sonic version is empty")
+        raise RuntimeError("actual openjdk version is empty")
+    if not jdk_version_string:
+        raise RuntimeError("source-built JDK version string is empty")
     atomic_write_json(
         output,
         {
             "recorded_at": timestamp(),
-            "category": "HPC",
-            "software": "sonic",
+            "category": "Toolchain",
+            "software": "openjdk",
             "requested_version": requested_version,
             "actual_version": actual_version,
             "architecture": architecture,
             "run_id": run_id,
-            "compiler_path": compiler_path,
-            "compiler_version": compiler_version,
+            "jdk_version_string": jdk_version_string,
+            "source": "official OpenJDK GA source archive",
+            "source_url": source_url,
+            "source_sha256": source_sha256,
+            "source_repository": f"https://github.com/openjdk/{source_repo}",
+            "source_tag": source_tag,
+            "boot_jdk_home": boot_jdk_home,
+            "benchmark_suite": "OpenJDK jtreg regression test suite",
+            "jtreg_version": jtreg_version,
+            "test_roots": test_roots.split(),
+            "build_command": (
+                "bash configure --with-debug-level=release --prefix=<isolated jdk> "
+                "--disable-warnings-as-errors --disable-precompiled-headers; "
+                "make images; run the declared test roots with jtreg"
+            ),
         },
     )
 
@@ -162,31 +177,35 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "sonic":
-        raise RuntimeError("benchmark_sonic.json has an invalid software identity")
+    if benchmark.get("software") != "openjdk":
+        raise RuntimeError("benchmark_openjdk.json has an invalid software identity")
     if (
         benchmark.get("version") != version
         or benchmark.get("architecture") != architecture
     ):
-        raise RuntimeError("benchmark_sonic.json identity differs from this run")
+        raise RuntimeError("benchmark_openjdk.json identity differs from this run")
     results = benchmark.get("results")
     if not isinstance(results, dict) or not results:
-        raise RuntimeError("benchmark_sonic.json is missing results")
+        raise RuntimeError("benchmark_openjdk.json is missing results")
     metrics: dict[str, Any] = {}
     for result_key, result in results.items():
         if not isinstance(result, dict):
-            raise TypeError(f"sonic scenario {result_key} must be an object")
+            raise TypeError(f"openjdk benchmark {result_key} must be an object")
         metric_name = result.get("source_name")
         if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"sonic scenario {result_key} has no source_name")
+            raise RuntimeError(f"openjdk benchmark {result_key} has no source_name")
         if metric_name != result_key:
             raise RuntimeError(
-                f"sonic scenario key {result_key} differs from source_name {metric_name}"
+                f"openjdk benchmark key {result_key} differs from source_name {metric_name}"
             )
         if metric_name in metrics:
-            raise RuntimeError(f"duplicate sonic scenario: {metric_name}")
-        if result.get("source_field") != "cpu_time":
-            raise RuntimeError(f"metric {metric_name} is not sourced from cpu_time")
+            raise RuntimeError(f"duplicate openjdk benchmark: {metric_name}")
+        if result.get("source_field") != "external wall-clock elapsed seconds":
+            raise RuntimeError(
+                f"metric {metric_name} is not sourced from jtreg elapsed time"
+            )
+        if result.get("unit") != "s":
+            raise RuntimeError(f"metric {metric_name} is not expressed in s")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
@@ -194,11 +213,11 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "ns",
+            "unit": "s",
             "direction": "lower_is_better",
         }
     if not metrics:
-        raise RuntimeError("benchmark_sonic.json contains no metrics")
+        raise RuntimeError("benchmark_openjdk.json contains no metrics")
     return metrics
 
 
@@ -210,7 +229,7 @@ def markdown_cell(value: Any) -> str:
 
 def render_report(result: dict[str, Any]) -> str:
     lines = [
-        f"# sonic {result['version']} 独立性能测试报告",
+        f"# openjdk {result['version']} 独立性能测试报告",
         "",
         f"- Run ID：`{result['run_id']}`",
         f"- 架构：`{result['architecture']}`",
@@ -226,8 +245,17 @@ def render_report(result: dict[str, Any]) -> str:
     for label, field in (
         ("请求软件版本", "requested_version"),
         ("实际软件版本", "actual_version"),
-        ("构建编译器", "compiler_version"),
-        ("构建编译器路径", "compiler_path"),
+        ("JDK 版本", "jdk_version_string"),
+        ("源码来源", "source"),
+        ("源码下载地址", "source_url"),
+        ("源码 SHA-256", "source_sha256"),
+        ("源码仓库", "source_repository"),
+        ("源码标签", "source_tag"),
+        ("Boot JDK", "boot_jdk_home"),
+        ("基准套件", "benchmark_suite"),
+        ("jtreg 版本", "jtreg_version"),
+        ("测试根目录", "test_roots"),
+        ("构建方式", "build_command"),
         ("记录时间", "recorded_at"),
     ):
         lines.append(f"| {label} | {markdown_cell(build_info.get(field))} |")
@@ -240,15 +268,14 @@ def render_report(result: dict[str, Any]) -> str:
         ("CPU 核数", "cpu_count"),
         ("内核", "kernel"),
         ("Python 版本", "python_version"),
-        ("GCC 版本", "gcc_version"),
-        ("glibc 版本", "glibc_version"),
+        ("glibc 版本（系统）", "glibc_version"),
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
     lines.extend(
         [
             "",
-            "## 性能指标（官方场景逐字名称，cpu_time 中位数）",
+            "## 性能指标（官方 jtreg 回归测试整轮耗时，单位为秒）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -274,13 +301,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "benchmark_sonic.json")
+    benchmark = load_json(output_dir / "benchmark_openjdk.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_sonic.json is missing or invalid")
+                raise RuntimeError("benchmark_openjdk.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
@@ -288,8 +315,8 @@ def finalize(
             error = str(exc)
     status = "passed" if command_status == cleanup_status == "passed" else "failed"
     result = {
-        "software": "sonic",
-        "category": "HPC",
+        "software": "openjdk",
+        "category": "Toolchain",
         "version": version,
         "architecture": architecture,
         "run_id": run_id,
@@ -308,8 +335,8 @@ def finalize(
     atomic_write_json(
         output_dir / "status.json",
         {
-            "software": "sonic",
-            "category": "HPC",
+            "software": "openjdk",
+            "category": "Toolchain",
             "version": version,
             "architecture": architecture,
             "run_id": run_id,
@@ -335,8 +362,42 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("actual_version_file", type=Path)
     build.add_argument("architecture")
     build.add_argument("run_id")
-    build.add_argument("compiler_path")
-    build.add_argument("compiler_version")
+    build.add_argument("jdk_version_string")
+    build.add_argument(
+        "--source-url",
+        required=True,
+        help="GitHub download URL of the official OpenJDK GA source archive",
+    )
+    build.add_argument(
+        "--source-sha256",
+        required=True,
+        help="SHA-256 checksum of the OpenJDK GA source archive used for this run",
+    )
+    build.add_argument(
+        "--source-repo",
+        required=True,
+        help="GitHub repository providing the OpenJDK GA source archive",
+    )
+    build.add_argument(
+        "--source-tag",
+        required=True,
+        help="GA source tag matching the source-built JDK release",
+    )
+    build.add_argument(
+        "--boot-jdk-home",
+        required=True,
+        help="JDK used as the OpenJDK source-build boot JDK",
+    )
+    build.add_argument(
+        "--jtreg-version",
+        required=True,
+        help="jtreg version used for the OpenJDK regression test run",
+    )
+    build.add_argument(
+        "--test-roots",
+        required=True,
+        help="space-separated OpenJDK jtreg test roots",
+    )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
     final.add_argument("version")
@@ -363,8 +424,14 @@ def main() -> int:
             args.actual_version_file,
             args.architecture,
             args.run_id,
-            args.compiler_path,
-            args.compiler_version,
+            args.jdk_version_string,
+            args.source_url,
+            args.source_sha256,
+            args.source_repo,
+            args.source_tag,
+            args.boot_jdk_home,
+            args.jtreg_version,
+            args.test_roots,
         )
         return 0
     return finalize(

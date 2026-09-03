@@ -55,6 +55,9 @@ def compare_pair(x86: dict, arm: dict) -> dict:
         groups = {metric.get("group") for metric in present_metrics}
         if len(groups) != 1:
             raise ValueError(f"metric {name} groups differ between architectures")
+        matrices = {json.dumps(metric.get("matrix"), sort_keys=True) for metric in present_metrics}
+        if len(matrices) != 1:
+            raise ValueError(f"metric {name} matrix declarations differ between architectures")
         x_value = _number(x_metric.get("value")) if x_metric is not None else None
         a_value = _number(a_metric.get("value")) if a_metric is not None else None
         if (
@@ -87,6 +90,11 @@ def compare_pair(x86: dict, arm: dict) -> dict:
             if not isinstance(group, str) or not group:
                 raise ValueError(f"metric {name} has an invalid group")
             metric_data["group"] = group
+        matrix = x_metric.get("matrix") if x_metric is not None else a_metric.get("matrix")
+        if matrix is not None:
+            if not isinstance(matrix, dict):
+                raise ValueError(f"metric {name} has an invalid matrix declaration")
+            metric_data["matrix"] = matrix
         metrics[name] = metric_data
     return {
         "category": arm["category"],

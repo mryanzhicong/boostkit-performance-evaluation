@@ -135,15 +135,15 @@ def main() -> int:
         payload = load_official_benchmark(official_path)
         results = normalize_results(payload)
     except (RuntimeError, TypeError, ValueError) as exc:
-        print(f"[sonic-parse] ERROR: {exc}", file=sys.stderr)
+        print(f"[sonic-cpp-parse] ERROR: {exc}", file=sys.stderr)
         return 1
 
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
     repetitions = os.environ.get("BENCHMARK_REPETITIONS", "")
     normalized = {
-        "benchmark": "sonic_official_benchmark",
-        "software": "sonic",
+        "benchmark": "sonic_cpp_official_benchmark",
+        "software": "sonic-cpp",
         "version": version,
         "architecture": architecture,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -176,7 +176,7 @@ def main() -> int:
         json.dumps(normalized, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"[sonic-parse] normalized {len(results)} official scenarios")
+    print(f"[sonic-cpp-parse] normalized {len(results)} official scenarios")
     return 0
 
 

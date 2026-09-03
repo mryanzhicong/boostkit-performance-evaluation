@@ -1,36 +1,35 @@
-name: golang
-category: Toolchain
+name: sonic-go
+category: HPC
 enabled: true
 versions:
-  - "1.26.7"
-  - "1.27.0"
+  - "1.15.2"
 execution:
   type: shell-functions
   stages:
     build:
-      script: golang_test.sh
-      function: install_golang_binary
+      script: sonic_go_test.sh
+      function: build_sonic_go
     start:
-      script: golang_test.sh
-      function: start_golang_runtime
+      script: sonic_go_test.sh
+      function: start_sonic_go_runtime
     test:
-      script: golang_test.sh
-      function: run_golang_benchmarks
+      script: sonic_go_test.sh
+      function: run_sonic_go_benchmarks
     stop:
-      script: golang_test.sh
-      function: stop_golang_runtime
-  timeout_minutes: 720
+      script: sonic_go_test.sh
+      function: stop_sonic_go_runtime
+  timeout_minutes: 180
 test_tools:
-  bent:
-    version: latest
+  go:
+    version: "1.26.7"
 outputs:
   official_benchmark:
-    path: benchmark_go_bench.txt
+    path: benchmark_sonic_go.txt
     stage: test
     format: text
     required: true
   benchmark_result:
-    path: benchmark_golang.json
+    path: benchmark_sonic_go.json
     stage: test
     format: json
     required: true

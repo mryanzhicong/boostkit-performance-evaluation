@@ -2,8 +2,9 @@
 """Normalize pyperformance's official pyperf JSON into per-benchmark metrics.
 
 pyperformance (the official Python performance suite) is executed with a fixed
-benchmark selection and emits pyperf JSON. This script extracts one median
-value per official benchmark, preserving the official benchmark name verbatim.
+documented benchmark selection and emits pyperf JSON. This script extracts one
+median value per official benchmark, preserving the official benchmark name
+verbatim.
 The median reproduces pyperf's own median: statistics.median over every
 recorded run value, with warmup values excluded.
 """
@@ -191,6 +192,8 @@ def main() -> int:
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
     pyperformance_version = os.environ.get("PYPERFORMANCE_VERSION", "")
+    warmup = os.environ.get("PYPERFORMANCE_WARMUP", "")
+    configure_options = os.environ.get("CONFIGURE_OPTIONS", "").split()
     normalized = {
         "benchmark": "python_official_pyperformance",
         "software": "python",
@@ -205,12 +208,16 @@ def main() -> int:
                 "run",
                 "-b",
                 ",".join(requested),
+                "--warmup",
+                warmup,
+                "--inherit-environ",
+                "PIP_INDEX_URL,PIP_TRUSTED_HOST",
                 "-o",
                 "benchmark.json",
             ],
             "pyperformance_version": pyperformance_version,
             "benchmarks": requested,
-            "build_options": ["--enable-optimizations=no"],
+            "build_options": configure_options,
             "aggregation": "median",
             "official_suite": "pyperformance",
         },

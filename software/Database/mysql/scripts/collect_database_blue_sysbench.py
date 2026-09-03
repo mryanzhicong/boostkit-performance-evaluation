@@ -68,6 +68,8 @@ def main() -> int:
                     raise ValueError(f"duplicate database_blue metric: {source_name}")
                 results[source_name] = {
                     "source_name": source_name,
+                    "scenario": scenario,
+                    "threads": int(threads),
                     "source_field": field,
                     "value": value,
                     "unit": unit,

@@ -112,6 +112,7 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
         unit: str,
         direction: str,
         group: str | None = None,
+        matrix: dict[str, Any] | None = None,
     ) -> None:
         if not name:
             raise ResultValidationError("metric name must not be empty")
@@ -133,6 +134,8 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
             if not isinstance(group, str) or not group:
                 raise ResultValidationError(f"metric {name} has an invalid group")
             metric["group"] = group
+        if matrix is not None:
+            metric["matrix"] = matrix
         metrics[name] = metric
 
     for metric_name, definition in metric_config.get("definitions", {}).items():
@@ -219,7 +222,29 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                     raise ResultValidationError(
                         f"metric {metric_name} is missing group path {group_path}"
                     )
-            add_metric(metric_name, value, unit, direction, group)
+            matrix = None
+            matrix_config = collection.get("matrix")
+            if matrix_config is not None:
+                group = get_path(item, matrix_config["group_path"], MISSING)
+                row = get_path(item, matrix_config["row_path"], MISSING)
+                column = get_path(item, matrix_config["column_path"], MISSING)
+                if not isinstance(group, str) or not group:
+                    raise ResultValidationError(f"metric {metric_name} has an invalid matrix group")
+                if isinstance(row, bool) or not isinstance(row, (int, float, str)) or row == "":
+                    raise ResultValidationError(f"metric {metric_name} has an invalid matrix row")
+                if not isinstance(column, str) or not column:
+                    raise ResultValidationError(f"metric {metric_name} has an invalid matrix column")
+                matrix = {
+                    "group": group,
+                    "row": row,
+                    "column": column,
+                    "row_label": matrix_config["row_label"],
+                    "column_order": matrix_config["column_order"],
+                }
+                note = matrix_config.get("single_note")
+                if note is not None:
+                    matrix["single_note"] = note
+            add_metric(metric_name, value, unit, direction, group, matrix)
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics
