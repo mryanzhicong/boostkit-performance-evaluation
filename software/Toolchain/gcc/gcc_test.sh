@@ -457,13 +457,13 @@ run_gcc_benchmarks() {
         -e "s|^%   define  gcc_dir.*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
         -e 's/^ignore_errors[[:space:]]*=.*/ignore_errors        = 0/' \
         -e '/^   CXX[[:space:]]*=.*-std=c++03[[:space:]]*%{model}[[:space:]]*$/ s/[[:space:]]*$/ -fpermissive/' \
-        -e '/^   EXTRA_COPTIMIZE[[:space:]]*=.*-fgnu89-inline[[:space:]]*$/ s/[[:space:]]*$/ -fcommon/' \
+        -e '/^[[:space:]]*EXTRA_COPTIMIZE[[:space:]]*=.*-fgnu89-inline[[:space:]]*$/ s/[[:space:]]*$/ -fcommon/' \
         "${template}" > "${SPEC_CONFIG_PATH}"; then
         log "ERROR: failed to create the SPEC CPU2017 GCC configuration"
         return 50
     fi
     if ! grep -Eq '^   CXX[[:space:]]*=.*-fpermissive([[:space:]]|$)' "${SPEC_CONFIG_PATH}" || \
-        ! grep -Eq '^   EXTRA_COPTIMIZE[[:space:]]*=.*-fcommon([[:space:]]|$)' "${SPEC_CONFIG_PATH}"; then
+        ! grep -Eq '^[[:space:]]*EXTRA_COPTIMIZE[[:space:]]*=.*-fcommon([[:space:]]|$)' "${SPEC_CONFIG_PATH}"; then
         log "ERROR: SPEC CPU2017 GCC compatibility flags were not added to the generated configuration"
         return 50
     fi
