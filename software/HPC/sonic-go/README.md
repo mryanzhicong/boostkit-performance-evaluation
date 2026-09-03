@@ -27,7 +27,7 @@ https://go.dev/dl/go1.27.0.linux-<amd64|arm64>.tar.gz
 ```
 
 Go 安装到本次任务的 `${PERF_WORK_DIR}/go-install`；模块缓存、编译缓存和 `GOPATH`
-位于 `/home/runner/sonic-go-work/<Sonic版本>/<架构>/<运行ID>/`，停止阶段会清理。
+位于本次任务的 `${PERF_WORK_DIR}/runtime/`，停止阶段会清理。
 Go 模块通过 `https://goproxy.cn` 下载。
 
 构建阶段按以下命令获取 Sonic `v1.15.2`，并只编译官方基准涉及的包：

@@ -128,10 +128,11 @@ Workflow 在生成矩阵时指定 `production` 或 `development` Profile，并�
 - 实际 CPU 架构与 Runner 标签一致；
 - 预装 Python 3.11+、pip、Git、编译器和软件清单要求的系统编译依赖；
 - 能够访问 GitHub；软件源码和测试数据均在任务隔离目录中按固定版本下载；
-- 允许测试用户管理 `/tmp/boostkit-perf` 下的全部内容和测试进程；
+- 允许测试用户管理 `/home/runner/boostkit-perf` 下的全部内容和测试进程；
 - 允许测试用户免密且仅以 root 执行固定的 `LC_ALL=C lscpu`，用于读取物理机 DMI/SMBIOS 中的完整 CPU 型号；
 - 系统编译依赖在 Runner 注册前完成安装，测试使用注册时的固定宿主机环境；
-- 所有源码、构建、缓存、数据、临时文件和安装前缀必须进入 `/tmp/boostkit-perf`。
+- 每次任务的全部运行目录（源码、构建、缓存、临时文件、安装前缀、服务日志和高 I/O
+  数据）必须位于 `/home/runner/boostkit-perf/<软件名>/` 下，并由软件脚本显式声明和清理。
 
 CPU 型号通过下列命令读取 `lscpu` 的 `Model name` 字段：
 
@@ -167,7 +168,7 @@ Ubuntu Prepare Job 使用 pip 默认的 PyPI。专用 Performance Runner 使用�
 https://mirrors.aliyun.com/pypi/simple/
 ```
 
-Prepare Job 把依赖安装到 `${RUNNER_TEMP}/boostkit-framework-deps`。每个 Performance Job 在全局前置清理后，把依赖安装到 `/tmp/boostkit-perf/framework-deps`，后续全部阶段共同复用，并在全局后置清理时统一删除。两类 Job 都使用任务私有依赖目录。
+Prepare Job 把依赖安装到 `${RUNNER_TEMP}/boostkit-framework-deps`。每个 Performance Job 在全局前置清理后，把依赖安装到 `/home/runner/boostkit-perf/framework/deps`，后续全部阶段共同复用，并在全局后置清理时统一删除。两类 Job 都使用任务私有依赖目录。
 
 Prepare 与 Performance 分别在各自的 Job 中安装一次依赖；Report Job 使用 Python 标准库生成报告。
 
@@ -176,10 +177,10 @@ Prepare 与 Performance 分别在各自的 Job 中安装一次依赖；Report Jo
 清理入口是 `framework/cleanup_environment.sh`，只允许在同时满足以下条件时运行：
 
 - `PERF_DEDICATED_RUNNER=true`；
-- `PERF_WORK_ROOT=/tmp/boostkit-perf`；
+- `PERF_WORK_ROOT=/home/runner/boostkit-perf`；
 - 参数为 `--before`、`--after` 或 `--verify`。
 
-前置和后置清理都以整个 `/tmp/boostkit-perf` 为作用范围：
+前置和后置清理都以整个 `/home/runner/boostkit-perf` 为作用范围：
 
 1. 扫描所有引用工作根目录或带有性能运行隔离标识的进程。
 2. 先发送 `SIGTERM`，宽限期结束后向残留进程发送 `SIGKILL`。

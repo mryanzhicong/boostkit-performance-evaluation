@@ -68,10 +68,10 @@ make install
 ```bash
 mount -o loop,ro \
   /home/runner/software/spec/cpu2017-1.0.5.iso \
-  /home/runner/gcc-data/<版本>/<架构>/<运行ID>/cpu2017-media
+  ${PERF_WORK_DIR}/data/cpu2017-media
 
 ./install.sh -f -d \
-  /home/runner/gcc-data/<版本>/<架构>/<运行ID>/cpu2017
+  ${PERF_WORK_DIR}/data/cpu2017
 ```
 
 安装目录会自动使用 ISO 中与架构对应的官方 GCC 模板：
@@ -105,7 +105,7 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches
 ```
 
 停止阶段会恢复测试前的 ASLR 值、卸载 ISO，并清理本次任务的
-`/home/runner/gcc-data/<版本>/<架构>/<运行ID>/` 目录。
+`${PERF_WORK_DIR}/data/` 目录。
 
 在 SPEC 安装目录中执行的性能测试命令为：
 

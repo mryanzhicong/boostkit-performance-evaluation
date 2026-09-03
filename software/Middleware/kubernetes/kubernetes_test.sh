@@ -74,23 +74,24 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/kubernetes-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/kubernetes/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     SOURCE_DIR="${PERF_WORK_DIR}/kubernetes"
     BENCH_BIN_DIR="${PERF_WORK_DIR}/bin"
     SMOKE_LOG="${RESULTS_DIR}/smoke_kubernetes.log"
     RAW_LOG="${RESULTS_DIR}/benchmark_kubernetes_raw.log"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
 
 initialize_runtime() {
     configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 supported_go_version() {
@@ -317,8 +318,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/kubernetes-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/kubernetes-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/kubernetes/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/kubernetes" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

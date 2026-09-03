@@ -31,7 +31,7 @@ MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 MYSQL_PORT="${MYSQL_PORT:-}"
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
-MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-/home/runner/mysql-data}"
+MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-}"
 
 # Fixed source for the original database_blue client test scripts.
 DATABASE_BLUE_REPOSITORY="${DATABASE_BLUE_REPOSITORY:-https://gitcode.com/mwx5319395/database_blue.git}"
@@ -76,24 +76,28 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/mysql-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/mysql/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    if [[ -z "${MYSQL_DATA_ROOT}" ]]; then
+        MYSQL_DATA_ROOT="${PERF_WORK_DIR}/data"
+    fi
     MYSQL_BASE_DIR="${PERF_WORK_DIR}/mysql"
     MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
     MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
     MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
-    SERVICE_DIR="${MYSQL_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    SERVICE_DIR="${MYSQL_DATA_ROOT}"
     DATADIR="${SERVICE_DIR}/data"
     SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
     PID_FILE="${SERVICE_DIR}/mysql.pid"
     ERR_LOG="${SERVICE_DIR}/mysql.err"
     MYSQL_TMP_DIR="${SERVICE_DIR}/tmp"
+    TMPDIR="${MYSQL_TMP_DIR}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
 
 initialize_runtime() {
@@ -405,10 +409,8 @@ start_mysql_service() {
 }
 
 run_mysql_benchmarks() {
-    local database_blue_dir
-    local raw_output
-    local report_directory
-    local suite_start_time
+    local database_blue_dir database_blue_suite_dir database_blue_tools_dir
+    local raw_output report_directory suite_start_time
 
     initialize_runtime || return $?
     require_mysql_tools || return $?
@@ -419,8 +421,10 @@ run_mysql_benchmarks() {
         return 50
     fi
     database_blue_dir="${PERF_WORK_DIR}/database_blue"
+    database_blue_suite_dir="${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
+    database_blue_tools_dir="${PERF_WORK_DIR}/database-blue-tools"
     raw_output="${RESULTS_DIR}/database_blue_sysbench_raw.log"
-    report_directory="/home/automation/client/report/sysbench"
+    report_directory="${database_blue_tools_dir}/report"
     rm -rf "${database_blue_dir}"
     log "cloning database_blue at ${DATABASE_BLUE_COMMIT}"
     if ! git clone --quiet "${DATABASE_BLUE_REPOSITORY}" "${database_blue_dir}"; then
@@ -432,11 +436,25 @@ run_mysql_benchmarks() {
         return 50
     fi
     if ! bash "${SCRIPT_DIR}/scripts/prepare_database_blue_tools.sh" \
-        "${PERF_WORK_DIR}/database-blue-tools" \
+        "${database_blue_tools_dir}" \
         "${MYSQL_BASE_DIR}/bin/mysql_config"; then
         log "ERROR: failed to prepare database_blue Sysbench tools"
         return 50
     fi
+    if [[ ! -d "${database_blue_suite_dir}" ]]; then
+        log "ERROR: database_blue Sysbench 1.0 suite is missing: ${database_blue_suite_dir}"
+        return 50
+    fi
+    while IFS= read -r -d '' script_path; do
+        if ! sed -i \
+            -e "s|/home/automation/client/soft/sysbench-1.0.17|${database_blue_tools_dir}/sysbench-1.0.17|g" \
+            -e "s|/tmp/dataCollection/dataCollect.sh|${database_blue_tools_dir}/data-collection/dataCollect.sh|g" \
+            -e "s|/home/automation/client/report/sysbench|${report_directory}|g" \
+            "${script_path}"; then
+            log "ERROR: failed to redirect database_blue working paths: ${script_path}"
+            return 50
+        fi
+    done < <(find "${database_blue_suite_dir}" -type f -name '*.sh' -print0)
 
     if [[ ! "${MYSQL_HOST}" =~ ^[A-Za-z0-9._:-]+$ ]]; then
         log "ERROR: database_blue only accepts a hostname or IP address: ${MYSQL_HOST}"
@@ -450,7 +468,7 @@ run_mysql_benchmarks() {
     suite_start_time="$(date +%s)"
     log "running the original database_blue Sysbench 1.0 suite"
     if ! (
-        cd "${database_blue_dir}/resources/database/client/script/sysbench_mysql_1.0"
+        cd "${database_blue_suite_dir}"
         sed -i "s/^host=.*/host='${MYSQL_HOST}'/" runall.sh
         sed -i "s/^password=.*/password='${MYSQL_PASSWORD}'/" runall.sh
         sed -i "s/-P 3306/-P ${MYSQL_PORT}/g" runall.sh
@@ -496,11 +514,6 @@ stop_mysql_service() {
         fi
         log "MySQL service stopped"
     fi
-    if ! bash "${SCRIPT_DIR}/scripts/prepare_database_blue_tools.sh" \
-        --cleanup "${PERF_WORK_DIR}/database-blue-tools"; then
-        log "ERROR: failed to remove database_blue tool links"
-        return 50
-    fi
     rm -rf "${SERVICE_DIR}"
     log "MySQL runtime data removed from ${SERVICE_DIR}"
 }
@@ -518,8 +531,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/mysql-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/mysql-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/mysql/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/mysql" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

@@ -35,7 +35,7 @@ tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-co
 
 解压目标为本次任务私有目录 `${PERF_WORK_DIR}/go-install`。Go 的临时目录、模块
 缓存、编译缓存和 GOPATH 位于
-`/home/runner/golang-work/<版本>/<架构>/<运行 ID>`，不写入 `/tmp`。脚本执行以下命令，
+`${PERF_WORK_DIR}/runtime/`，不写入 `/tmp`。脚本执行以下命令，
 确认实际版本和二进制架构与清单一致：
 
 ```bash
@@ -88,7 +88,7 @@ bent -N 15
 ```bash
 bash software/Toolchain/golang/golang_test.sh \
   --version 1.27.0 \
-  --results-dir /home/runner/golang-results/1.27.0
+  --results-dir /home/runner/boostkit-perf/golang/results/1.27.0
 ```
 
 ## 指标
@@ -124,5 +124,5 @@ BenchmarkExample-8  100  12.5 ns/op  4 B/op  2 allocs/op
 
 Go 基准没有后台服务。`stop` 阶段解除本次任务 Go 运行目录中的只读权限并删除该
 目录。独立执行时，脚本还会删除本次任务在
-`/tmp/golang-perf/local-<运行 ID>` 创建的私有工作目录；指定
+`/home/runner/boostkit-perf/golang/local-<运行 ID>` 创建的私有工作目录；指定
 `--keep-workdir` 时保留该目录用于排查。`--results-dir` 指定的结果目录不会被删除。

@@ -27,7 +27,7 @@ obd demo -c oceanbase-ce \
 `SELECT version()` 读取实际版本，必须与请求版本完全一致，否则构建失败。缺失依赖
 由脚本通过 `dnf` 或 `sudo -n dnf` 自动安装。
 
-observer 数据与日志位于任务工作目录（默认 `/tmp/oceanbase-perf/local-<运行 ID>`）
+observer 数据与日志位于任务工作目录（默认 `/home/runner/boostkit-perf/oceanbase/local-<运行 ID>`）
 而非系统目录，`stop` 阶段只销毁本运行创建的 `demo` 集群并删除该精确目录。
 
 ## 服务启动（start）
@@ -74,12 +74,12 @@ observer 已就绪并可执行 `SELECT 1`；不可达则失败。
 ```bash
 bash software/Database/oceanbase/oceanbase_test.sh \
   --version 5.0.1.0 \
-  --results-dir /home/runner/oceanbase-results/5.0.1.0
+  --results-dir /home/runner/boostkit-perf/oceanbase/results/5.0.1.0
 ```
 
 独立执行依次完成环境采集、部署、服务就绪确认、基准测试、集群销毁、资源清理、
 结果校验和报告生成。默认会销毁 `demo` 集群并清理其自行创建的
-`/tmp/oceanbase-perf/local-*` 目录；需要保留该目录排查部署问题时，追加
+`/home/runner/boostkit-perf/oceanbase/local-*` 目录；需要保留该目录排查部署问题时，追加
 `--keep-workdir`。
 
 ## 清理（stop）

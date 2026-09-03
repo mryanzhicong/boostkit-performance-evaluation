@@ -31,7 +31,7 @@ gflags、Snappy、zlib、bzip2、LZ4 和 Zstandard 开发包。
 **不**使用 `/tmp`，而是位于：
 
 ```text
-/home/runner/rocksdb-data/<版本>/<架构>/<运行 ID>/
+${PERF_WORK_DIR}/data/
 ```
 
 该目录只属于当前运行 ID，`stop` 阶段只删除这个精确目录，不会格式化磁盘、卸载
@@ -93,9 +93,9 @@ KSAL 切换和专属采集。`use_direct_writes` 属于其旧版/定制 `db_benc
 ```bash
 bash software/Database/rocksdb/rocksdb_test.sh \
   --version 11.8.1 \
-  --results-dir /home/runner/rocksdb-results/11.8.1
+  --results-dir /home/runner/boostkit-perf/rocksdb/results/11.8.1
 ```
 
 独立执行依次完成环境采集、构建、数据准备、测试、数据清理、结果校验和报告生成。
-默认会同时清理其自行创建的 `/tmp/rocksdb-perf/local-*` 构建目录；需要保留该目录
+默认会同时清理其自行创建的 `/home/runner/boostkit-perf/rocksdb/local-*` 构建目录；需要保留该目录
 排查构建问题时，追加 `--keep-workdir`。

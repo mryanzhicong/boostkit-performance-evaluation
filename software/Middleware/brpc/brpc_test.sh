@@ -55,10 +55,10 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/brpc-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/brpc/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
-        TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
@@ -89,7 +89,7 @@ initialize_runtime() {
         log_message "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
         return 20
     }
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 require_brpc_dependencies() {
@@ -504,8 +504,8 @@ cleanup_standalone_workdir() {
         log_message "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/brpc-perf/local-* && \
-       "${PERF_WORK_DIR}" != "/tmp/brpc-perf" ]] || {
+    [[ "${PERF_WORK_DIR}" == /home/runner/boostkit-perf/brpc/local-* && \
+       "${PERF_WORK_DIR}" != "/home/runner/boostkit-perf/brpc" ]] || {
         log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     }

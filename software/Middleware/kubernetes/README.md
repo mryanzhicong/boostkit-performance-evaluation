@@ -60,7 +60,7 @@ test、stop 并保存同样的产物。例如：
 ```bash
 bash software/Middleware/kubernetes/kubernetes_test.sh \
   --version 1.37.0 \
-  --results-dir /home/runner/kubernetes-results/1.37.0
+  --results-dir /home/runner/boostkit-perf/kubernetes/results/1.37.0
 ```
 
 ## 指标

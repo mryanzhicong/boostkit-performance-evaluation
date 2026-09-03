@@ -31,7 +31,7 @@ python3 -m pip install \
 
 `test` 阶段参考鲲鹏 hnswlib 性能用例采用的五个数据集，使用 [ANN-Benchmarks](https://github.com/erikbern/ann-benchmarks) 提供的标准 HDF5 文件，在两种架构上现场执行上游 hnswlib FP32 接口。
 
-数据文件优先从 `/home/runner/hnswlib-data` 读取；缺失时从 `https://ann-benchmarks.com/<dataset>.hdf5` 下载并保存到该目录。数据目录位于 `/home`，不使用 `/tmp`。
+数据文件位于本次任务的 `${PERF_WORK_DIR}/data/`；缺失时从 `https://ann-benchmarks.com/<dataset>.hdf5` 下载并保存到该目录。数据目录位于 `/home/runner/boostkit-perf/hnswlib/`，不使用 `/tmp`。
 
 固定测试配置为 HNSW `M=16`、`ef_construction=60`、64 个构建线程、`ef_search=15`、单个查询线程、`k=10`，每个数据集完整查询三轮并取平均 QPS。每个数据集均使用其随 HDF5 文件发布的 top-100 ground truth，按 top-10 计算实际 recall。
 

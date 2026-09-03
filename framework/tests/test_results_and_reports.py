@@ -1074,8 +1074,8 @@ def test_process_scanner_does_not_match_its_own_root_argument(tmp_path: Path) ->
     )
     assert completed.stdout == ""
     assert references_root(
-        b"python3\0worker.py\0/tmp/boostkit-perf/case-work\0",
-        Path("/tmp/boostkit-perf"),
+        b"python3\0worker.py\0/home/runner/boostkit-perf/case-work\0",
+        Path("/home/runner/boostkit-perf"),
     )
 
 

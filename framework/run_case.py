@@ -70,12 +70,11 @@ def build_context(args: argparse.Namespace, case: dict) -> RunContext:
         / args.run_id
     )
     work_dir = (
-        Path("/tmp/boostkit-perf")
-        / args.run_id
-        / category
+        Path("/home/runner/boostkit-perf")
         / software
         / args.version
         / args.architecture
+        / args.run_id
     )
     return RunContext(
         root=ROOT,

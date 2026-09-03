@@ -94,7 +94,7 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
 ```bash
 bash software/Toolchain/python/python_test.sh \
   --version 3.14.7 \
-  --results-dir /home/runner/python-results/3.14.7
+  --results-dir /home/runner/boostkit-perf/python/results/3.14.7
 ```
 
 ## 指标

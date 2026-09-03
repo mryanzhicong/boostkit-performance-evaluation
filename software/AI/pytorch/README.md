@@ -75,7 +75,7 @@ PY
 ```bash
 bash software/AI/pytorch/pytorch_test.sh \
   --version 2.13.0 \
-  --results-dir /home/runner/pytorch-results/2.13.0
+  --results-dir /home/runner/boostkit-perf/pytorch/results/2.13.0
 ```
 
 ## 指标

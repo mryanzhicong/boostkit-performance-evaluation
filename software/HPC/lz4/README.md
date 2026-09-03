@@ -48,7 +48,7 @@ make -C tests fullbench
 ```bash
 bash software/HPC/lz4/lz4_test.sh \
   --version 1.10.0 \
-  --results-dir /home/runner/lz4-results/1.10.0
+  --results-dir /home/runner/boostkit-perf/lz4/results/1.10.0
 ```
 
 ## 指标

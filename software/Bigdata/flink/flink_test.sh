@@ -11,7 +11,7 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 FLINK_RELEASE_URL="${FLINK_RELEASE_URL:-https://downloads.apache.org/flink}"
 FLINK_OFFLINE_DIR="${FLINK_OFFLINE_DIR:-/home/runner/software/flink}"
-FLINK_RUNTIME_ROOT="${FLINK_RUNTIME_ROOT:-/home/runner/flink-work}"
+FLINK_RUNTIME_ROOT="${FLINK_RUNTIME_ROOT:-}"
 FLINK_BENCHMARK_RECORDS=1000000
 FLINK_BENCHMARK_PARALLELISM=1
 
@@ -63,11 +63,15 @@ initialize_runtime() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/flink-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/flink/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
+    if [[ -z "${FLINK_RUNTIME_ROOT}" ]]; then
+        FLINK_RUNTIME_ROOT="${PERF_WORK_DIR}/runtime"
     fi
 
     case "${SOFTWARE_VERSION}" in
@@ -82,7 +86,7 @@ initialize_runtime() {
     esac
 
     FLINK_HOME="${PERF_WORK_DIR}/flink"
-    FLINK_RUNTIME_DIR="${FLINK_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    FLINK_RUNTIME_DIR="${FLINK_RUNTIME_ROOT}"
     for ((index = 0; index < ${#PERF_RUN_ID}; index++)); do
         printf -v character_code '%d' "'${PERF_RUN_ID:index:1}"
         port_offset=$(((port_offset + character_code) % 10000))
@@ -93,9 +97,9 @@ initialize_runtime() {
     FLINK_TASKMANAGER_RPC_PORT="$((50000 + port_offset))"
     FLINK_REST_URL="http://127.0.0.1:${FLINK_REST_PORT}"
     FLINK_JOB_JAR="${PERF_WORK_DIR}/flink-pass-through-job.jar"
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${FLINK_RUNTIME_DIR}" || return 30
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" "${FLINK_RUNTIME_DIR}" || return 30
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE FLINK_HOME FLINK_RUNTIME_DIR FLINK_REST_PORT FLINK_REST_URL
+    export PERF_ACTUAL_VERSION_FILE FLINK_HOME FLINK_RUNTIME_DIR FLINK_REST_PORT FLINK_REST_URL TMPDIR
 }
 
 run_as_root() {
@@ -234,6 +238,7 @@ taskmanager.numberOfTaskSlots: ${FLINK_BENCHMARK_PARALLELISM}
 parallelism.default: ${FLINK_BENCHMARK_PARALLELISM}
 jobmanager.memory.process.size: 1024m
 taskmanager.memory.process.size: 1024m
+io.tmp.dirs: ${TMPDIR}
 env.log.dir: ${FLINK_RUNTIME_DIR}/logs
 env.pid.dir: ${FLINK_RUNTIME_DIR}/pids
 EOF
@@ -327,7 +332,7 @@ stop_flink_runtime() {
         "${FLINK_HOME}/bin/jobmanager.sh" stop || stop_status=50
     fi
     rm -f "${FLINK_RUNTIME_DIR}/started"
-    if [[ "${FLINK_RUNTIME_DIR}" != "${FLINK_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+    if [[ "${FLINK_RUNTIME_DIR}" != "${FLINK_RUNTIME_ROOT}" ]]; then
         log "ERROR: refusing to clean an unexpected Flink runtime directory"
         return 70
     fi
@@ -347,7 +352,7 @@ cleanup_standalone_work_dir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 || "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
         return
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/flink-perf/local-* || "${PERF_WORK_DIR}" == "/tmp/flink-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/flink/local-* || "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/flink" ]]; then
         log "ERROR: refusing to clean an unexpected standalone work directory"
         return 70
     fi

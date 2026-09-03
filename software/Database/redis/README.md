@@ -39,7 +39,7 @@ src/redis-cli
 Redis 服务数据不放在 `/tmp`。每次运行使用唯一的持久化目录：
 
 ```text
-/home/runner/redis-data/<版本>/<架构>/<运行 ID>/
+${PERF_WORK_DIR}/data/
 ```
 
 该目录包含 Redis 的数据文件、RDB/AOF（如运行期间产生）、日志和 PID。可通过
@@ -111,7 +111,7 @@ Runner，因此服务端和客户端均位于 `127.0.0.1`。在此负载参数�
 ```bash
 bash software/Database/redis/redis_test.sh \
   --version 8.0.6 \
-  --results-dir /home/runner/redis-results/8.0.6
+  --results-dir /home/runner/boostkit-perf/redis/results/8.0.6
 ```
 
 独立执行会依次完成环境采集、构建、启动、测试、停止、结果校验和单架构报告生成。

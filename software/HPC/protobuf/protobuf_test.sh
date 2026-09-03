@@ -50,7 +50,7 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/protobuf-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/protobuf/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
@@ -245,7 +245,7 @@ cleanup_standalone_workdir() {
     if [[ "${STANDALONE_KEEP_WORK_DIR}" -eq 1 || "${STANDALONE_OWNS_WORK_DIR}" -ne 1 ]]; then
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/protobuf-perf/local-* || "${PERF_WORK_DIR}" == /tmp/protobuf-perf ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/protobuf/local-* || "${PERF_WORK_DIR}" == /home/runner/boostkit-perf/protobuf ]]; then
         log_message "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

@@ -11,7 +11,7 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
-GO_RUNTIME_ROOT="/home/runner/golang-work"
+GO_RUNTIME_ROOT="${GO_RUNTIME_ROOT:-}"
 
 GO_INSTALL_DIR=""
 GO_BIN=""
@@ -66,14 +66,17 @@ initialize_runtime() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/golang-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/golang/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    if [[ -z "${GO_RUNTIME_ROOT}" ]]; then
+        GO_RUNTIME_ROOT="${PERF_WORK_DIR}/runtime"
+    fi
 
-    GO_RUNTIME_DIR="${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    GO_RUNTIME_DIR="${GO_RUNTIME_ROOT}"
     if ! mkdir -p "${GO_RUNTIME_DIR}/tmp"; then
         log "ERROR: cannot create the Go runtime directory: ${GO_RUNTIME_DIR}"
         return 30
@@ -323,7 +326,7 @@ stop_golang_runtime() {
         log "Go benchmark suite has no background service to stop"
         return
     fi
-    if [[ "${GO_RUNTIME_DIR}" != "${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+    if [[ "${GO_RUNTIME_DIR}" != "${GO_RUNTIME_ROOT}" ]]; then
         log "ERROR: refusing to clean unexpected Go runtime directory: ${GO_RUNTIME_DIR}"
         return 50
     fi
@@ -351,7 +354,7 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/golang-perf/local-* || "${PERF_WORK_DIR}" == /tmp/golang-perf ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/golang/local-* || "${PERF_WORK_DIR}" == /home/runner/boostkit-perf/golang ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

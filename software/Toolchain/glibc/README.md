@@ -64,7 +64,7 @@ make bench \
 ```bash
 bash software/Toolchain/glibc/glibc_test.sh \
   --version 2.44 \
-  --results-dir /home/runner/glibc-results/2.44
+  --results-dir /home/runner/boostkit-perf/glibc/results/2.44
 ```
 
 ## 指标

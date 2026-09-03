@@ -76,11 +76,12 @@ configure_runtime_paths() {
     fi
 
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/oceanbase-perf/local-${normalized_run_id}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/oceanbase/local-${normalized_run_id}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
 
     PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     OB_DEPLOY_HOME="${PERF_WORK_DIR}/oceanbase-demo"
     OBD_HOME="${PERF_WORK_DIR}/obd-meta"
 
@@ -88,6 +89,7 @@ configure_runtime_paths() {
     export SOFTWARE_VERSION
     export EXPECTED_ARCH
     export OBD_HOME
+    export TMPDIR
 }
 
 compute_oceanbase_ports() {
@@ -112,7 +114,7 @@ compute_oceanbase_ports() {
 initialize_runtime() {
     configure_runtime_paths || return $?
     compute_oceanbase_ports || return $?
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 # ---------------------------------------------------------------------------
@@ -330,7 +332,7 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/oceanbase-perf/local-* || "${PERF_WORK_DIR}" == "/tmp/oceanbase-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/oceanbase/local-* || "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/oceanbase" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

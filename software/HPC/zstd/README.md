@@ -40,7 +40,7 @@ Zstd 没有后台服务。`start` 阶段验证 `fullbench` 可执行；`test` �
 ```bash
 bash software/HPC/zstd/zstd_test.sh \
   --version 1.5.6 \
-  --results-dir /home/runner/zstd-results/1.5.6
+  --results-dir /home/runner/boostkit-perf/zstd/results/1.5.6
 ```
 
 ## 指标

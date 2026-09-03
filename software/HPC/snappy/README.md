@@ -46,7 +46,7 @@ benchmark 的运行参数。
 ```bash
 bash software/HPC/snappy/snappy_test.sh \
   --version 1.2.2 \
-  --results-dir /home/runner/snappy-results/1.2.2
+  --results-dir /home/runner/boostkit-perf/snappy/results/1.2.2
 ```
 
 ## 指标

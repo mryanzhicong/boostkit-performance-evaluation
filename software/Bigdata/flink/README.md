@@ -58,7 +58,7 @@ ${PERF_WORK_DIR}/flink
 直接执行入口脚本时，默认工作目录为：
 
 ```text
-/tmp/flink-perf/local-<运行ID>/flink
+/home/runner/boostkit-perf/flink/local-<运行ID>/flink
 ```
 
 解压和版本验证的实际命令形态为：
@@ -76,7 +76,7 @@ tar -xzf "${PERF_WORK_DIR}/flink-2.3.0-bin-scala_2.12.tgz" \
 每个运行 ID 都有独立的 Flink 运行目录：
 
 ```text
-/home/runner/flink-work/2.3.0/<x86_64|aarch64>/<运行ID>/
+/home/runner/boostkit-perf/flink/<版本>/<架构>/<运行ID>/runtime/
 ├── logs/
 └── pids/
 ```
@@ -98,8 +98,8 @@ taskmanager.numberOfTaskSlots: 1
 parallelism.default: 1
 jobmanager.memory.process.size: 1024m
 taskmanager.memory.process.size: 1024m
-env.log.dir: /home/runner/flink-work/2.3.0/<架构>/<运行ID>/logs
-env.pid.dir: /home/runner/flink-work/2.3.0/<架构>/<运行ID>/pids
+env.log.dir: ${PERF_WORK_DIR}/runtime/logs
+env.pid.dir: ${PERF_WORK_DIR}/runtime/pids
 ```
 
 四个端口由运行 ID 稳定派生，分别位于 `20000–29999`、`30000–39999`、`40000–49999` 与 `50000–59999`，不会占用默认 REST `8081` 或默认 RPC `6123`。
@@ -183,7 +183,7 @@ Framework 要求以下结果：
 "${FLINK_HOME}/bin/jobmanager.sh" stop
 ```
 
-脚本随后只删除该运行 ID 对应的 `/home/runner/flink-work/.../<运行ID>/`。不会停止非本次任务启动的服务，也不会删除 `/home/runner/software/flink/` 中的离线包。Framework 任务完成后再清理其私有 `${PERF_WORK_DIR}`。
+脚本随后只删除本次任务的 `${PERF_WORK_DIR}/runtime/`。不会停止非本次任务启动的服务，也不会删除 `/home/runner/software/flink/` 中的离线包。Framework 任务完成后再清理其私有 `${PERF_WORK_DIR}`。
 
 ## 独立执行
 
@@ -204,7 +204,7 @@ software/Bigdata/flink/results/2.3.0/local-<UTC时间>-<PID>/
 ```bash
 bash software/Bigdata/flink/flink_test.sh \
   --version 2.3.0 \
-  --results-dir /home/runner/flink-results/2.3.0
+  --results-dir /home/runner/boostkit-perf/flink/results/2.3.0
 ```
 
 如需保留 `${PERF_WORK_DIR}` 排查下载、解压、编译或集群启动问题：

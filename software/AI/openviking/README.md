@@ -74,7 +74,7 @@ python3 -m venv "${PERF_WORK_DIR}/venv"
 ```bash
 bash software/AI/openviking/openviking_test.sh \
   --version 0.4.17.1 \
-  --results-dir /home/runner/openviking-results/0.4.17.1
+  --results-dir /home/runner/boostkit-perf/openviking/results/0.4.17.1
 ```
 
 ## 指标

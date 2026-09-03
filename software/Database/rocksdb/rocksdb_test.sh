@@ -11,7 +11,7 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 ROCKSDB_REPOSITORY="${ROCKSDB_REPOSITORY:-https://github.com/facebook/rocksdb.git}"
-ROCKSDB_DATA_ROOT="${ROCKSDB_DATA_ROOT:-/home/runner/rocksdb-data}"
+ROCKSDB_DATA_ROOT="${ROCKSDB_DATA_ROOT:-}"
 ROCKSDB_BENCH_PROFILES="${ROCKSDB_BENCH_PROFILES:-64:128,64:512,128:1024}"
 ROCKSDB_BENCH_NUM="${ROCKSDB_BENCH_NUM:-10000000}"
 ROCKSDB_BENCH_DURATION_SECONDS="${ROCKSDB_BENCH_DURATION_SECONDS:-60}"
@@ -53,22 +53,26 @@ initialize_runtime() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/rocksdb-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/rocksdb/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
+    if [[ -z "${ROCKSDB_DATA_ROOT}" ]]; then
+        ROCKSDB_DATA_ROOT="${PERF_WORK_DIR}/data"
+    fi
     SOURCE_DIR="${PERF_WORK_DIR}/rocksdb-source"
     BUILD_DIR="${PERF_WORK_DIR}/rocksdb-build"
     DB_BENCH_BIN="${BUILD_DIR}/db_bench"
-    BENCH_DATA_DIR="${ROCKSDB_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    BENCH_DATA_DIR="${ROCKSDB_DATA_ROOT}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE ROCKSDB_BENCH_DATA_DIR="${BENCH_DATA_DIR}"
+    export PERF_ACTUAL_VERSION_FILE ROCKSDB_BENCH_DATA_DIR="${BENCH_DATA_DIR}" TMPDIR
     export ROCKSDB_BENCH_PROFILES ROCKSDB_BENCH_NUM
     export ROCKSDB_BENCH_DURATION_SECONDS ROCKSDB_BENCH_READWRITE_PERCENT
     export ROCKSDB_BENCH_CACHE_SIZE_BYTES
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 install_rocksdb_dependencies() {
@@ -182,7 +186,7 @@ cleanup_rocksdb_benchmark_data() {
         log "benchmark data directory is already absent"
         return 0
     fi
-    if [[ "${BENCH_DATA_DIR}" != "${ROCKSDB_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+    if [[ "${BENCH_DATA_DIR}" != "${ROCKSDB_DATA_ROOT}" ]]; then
         log "ERROR: refusing to remove unexpected data directory: ${BENCH_DATA_DIR}"
         return 70
     fi
@@ -194,7 +198,7 @@ cleanup_standalone_work_directory() {
     if [[ "${STANDALONE_OWNS_WORK_DIR}" -ne 1 || "${STANDALONE_KEEP_WORK_DIR}" -eq 1 ]]; then
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/rocksdb-perf/local-* ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/rocksdb/local-* ]]; then
         log "ERROR: refusing to remove unexpected standalone work directory: ${PERF_WORK_DIR}"
         return 70
     fi

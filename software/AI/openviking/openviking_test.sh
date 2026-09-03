@@ -70,16 +70,17 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/openviking-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/openviking/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     OPENVIKING_VENV="${PERF_WORK_DIR}/venv"
     OPENVIKING_PYTHON="${OPENVIKING_VENV}/bin/python"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE OPENVIKING_ITERATIONS
+    export PERF_ACTUAL_VERSION_FILE OPENVIKING_ITERATIONS TMPDIR
 }
 
 initialize_runtime() {
@@ -89,7 +90,7 @@ initialize_runtime() {
         log "ERROR: OPENVIKING_ITERATIONS must be a positive integer: ${OPENVIKING_ITERATIONS}"
         return 10
     fi
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 require_openviking_tools() {
@@ -311,8 +312,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/openviking-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/openviking-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/openviking/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/openviking" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

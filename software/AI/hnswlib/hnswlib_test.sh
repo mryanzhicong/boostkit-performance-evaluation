@@ -9,7 +9,7 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 HNSWLIB_SOURCE_URL="${HNSWLIB_SOURCE_URL:-https://github.com/nmslib/hnswlib.git}"
-HNSWLIB_DATA_ROOT="${HNSWLIB_DATA_ROOT:-/home/runner/hnswlib-data}"
+HNSWLIB_DATA_ROOT="${HNSWLIB_DATA_ROOT:-}"
 readonly NUMPY_VERSION="2.4.6"
 readonly SETUPTOOLS_VERSION="80.9.0"
 readonly PYBIND11_VERSION="2.13.6"
@@ -62,11 +62,14 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/hnswlib-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/hnswlib/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    if [[ -z "${HNSWLIB_DATA_ROOT}" ]]; then
+        HNSWLIB_DATA_ROOT="${PERF_WORK_DIR}/data"
     fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
     XDG_CACHE_HOME="${PERF_WORK_DIR}/cache"
@@ -319,8 +322,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/hnswlib-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/hnswlib-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/hnswlib/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/hnswlib" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

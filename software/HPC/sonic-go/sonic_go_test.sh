@@ -13,7 +13,7 @@ SONIC_GO_PROXY="${SONIC_GO_PROXY:-https://goproxy.cn}"
 GO_VERSION="${GO_VERSION:-1.27.0}"
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
-GO_RUNTIME_ROOT="${GO_RUNTIME_ROOT:-/home/runner/sonic-go-work}"
+GO_RUNTIME_ROOT="${GO_RUNTIME_ROOT:-}"
 
 SOURCE_DIR=""
 GO_RUNTIME_DIR=""
@@ -68,17 +68,21 @@ initialize_runtime() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/sonic-go-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/sonic-go/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    if [[ -z "${GO_RUNTIME_ROOT}" ]]; then
+        GO_RUNTIME_ROOT="${PERF_WORK_DIR}/runtime"
+    fi
 
     SOURCE_DIR="${PERF_WORK_DIR}/sonic-go-source"
-    GO_RUNTIME_DIR="${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    GO_RUNTIME_DIR="${GO_RUNTIME_ROOT}"
     GO_INSTALL_DIR="${PERF_WORK_DIR}/go-install"
     GO_BIN="${GO_INSTALL_DIR}/bin/go"
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     export GOCACHE="${GO_RUNTIME_DIR}/cache"
     export GOMODCACHE="${GO_RUNTIME_DIR}/module-cache"
     export GOPATH="${GO_RUNTIME_DIR}/path"
@@ -87,9 +91,9 @@ initialize_runtime() {
     export GOENV=off
     export GOWORK=off
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
     export SONIC_GO_BIN="${GO_BIN}" SONIC_GO_VERSION="${GO_VERSION}"
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${GOCACHE}" "${GOMODCACHE}" "${GOPATH}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" "${GOCACHE}" "${GOMODCACHE}" "${GOPATH}"
 }
 
 run_as_root() {
@@ -320,7 +324,7 @@ stop_sonic_go_runtime() {
         log "Sonic benchmark has no background service to stop"
         return
     fi
-    if [[ "${GO_RUNTIME_DIR}" != "${GO_RUNTIME_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+    if [[ "${GO_RUNTIME_DIR}" != "${GO_RUNTIME_ROOT}" ]]; then
         log "ERROR: refusing to clean unexpected Sonic Go runtime directory: ${GO_RUNTIME_DIR}"
         return 70
     fi
@@ -344,8 +348,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/sonic-go-perf/local-* || \
-          "${PERF_WORK_DIR}" == /tmp/sonic-go-perf ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/sonic-go/local-* || \
+          "${PERF_WORK_DIR}" == /home/runner/boostkit-perf/sonic-go ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi

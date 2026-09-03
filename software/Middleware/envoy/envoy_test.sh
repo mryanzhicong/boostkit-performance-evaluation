@@ -69,12 +69,13 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/envoy-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/envoy/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
 
     INSTALL_DIR="${PERF_WORK_DIR}/envoy-install"
     ENVOY_BIN="${INSTALL_DIR}/envoy"
@@ -83,12 +84,12 @@ configure_runtime_paths() {
     DIRECT_PID_FILE="${RUNTIME_DIR}/direct.pid"
     PROXY_PID_FILE="${RUNTIME_DIR}/proxy.pid"
     BACKEND_PID_FILE="${RUNTIME_DIR}/backend.pid"
-    export EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR PERF_ACTUAL_VERSION_FILE
+    export EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR PERF_ACTUAL_VERSION_FILE TMPDIR
 }
 
 initialize_runtime() {
     configure_runtime_paths || return $?
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" || return 30
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" || return 30
 }
 
 run_as_root() {
@@ -439,7 +440,7 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    [[ "${PERF_WORK_DIR}" == /tmp/envoy-perf/local-* && "${PERF_WORK_DIR}" != '/tmp/envoy-perf' ]] || {
+    [[ "${PERF_WORK_DIR}" == /home/runner/boostkit-perf/envoy/local-* && "${PERF_WORK_DIR}" != '/home/runner/boostkit-perf/envoy' ]] || {
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     }

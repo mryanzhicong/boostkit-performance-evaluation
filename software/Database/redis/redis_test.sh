@@ -8,7 +8,7 @@ PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-REDIS_DATA_ROOT="${REDIS_DATA_ROOT:-/home/runner/redis-data}"
+REDIS_DATA_ROOT="${REDIS_DATA_ROOT:-}"
 REDIS_SOURCE_URL="${REDIS_SOURCE_URL:-https://github.com/redis/redis.git}"
 REDIS_SERVICE_PORT="${REDIS_SERVICE_PORT:-}"
 
@@ -60,12 +60,15 @@ initialize_runtime() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/boostkit-perf/local/Database/redis/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/redis/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
-        TMPDIR="${PERF_WORK_DIR}/tmp"
     fi
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    if [[ -z "${REDIS_DATA_ROOT}" ]]; then
+        REDIS_DATA_ROOT="${PERF_WORK_DIR}/data"
     fi
     if [[ -z "${REDIS_SERVICE_PORT}" ]]; then
         checksum="$(printf '%s' "${PERF_RUN_ID}" | cksum)"
@@ -81,11 +84,11 @@ initialize_runtime() {
     REDIS_SERVER_BIN="${SOURCE_DIR}/src/redis-server"
     REDIS_BENCHMARK_BIN="${SOURCE_DIR}/src/redis-benchmark"
     REDIS_CLI_BIN="${SOURCE_DIR}/src/redis-cli"
-    SERVICE_DIR="${REDIS_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    SERVICE_DIR="${REDIS_DATA_ROOT}"
     PID_FILE="${SERVICE_DIR}/redis.pid"
     LOG_FILE="${SERVICE_DIR}/redis.log"
 
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE REDIS_SERVICE_PORT REDIS_DATA_ROOT
 }
@@ -271,7 +274,7 @@ stop_redis_service() {
         return 50
     fi
     if [[ -d "${SERVICE_DIR}" ]]; then
-        if [[ "${SERVICE_DIR}" != "${REDIS_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}" ]]; then
+        if [[ "${SERVICE_DIR}" != "${REDIS_DATA_ROOT}" ]]; then
             log "ERROR: refusing to remove unexpected Redis data directory: ${SERVICE_DIR}"
             return 70
         fi
@@ -294,7 +297,7 @@ cleanup_standalone_workdir() {
         return 0
     fi
     if [[ "${PERF_RUN_ID}" != local-* ]] || \
-       [[ "${PERF_WORK_DIR}" != "/tmp/boostkit-perf/local/Database/redis/${SOFTWARE_VERSION}/${PERF_RUN_ID}" ]]; then
+       [[ "${PERF_WORK_DIR}" != "/home/runner/boostkit-perf/redis/${SOFTWARE_VERSION}/${PERF_RUN_ID}" ]]; then
         log "ERROR: refusing to remove unexpected standalone work directory: ${PERF_WORK_DIR}"
         return 70
     fi

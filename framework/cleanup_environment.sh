@@ -5,7 +5,7 @@ set -euo pipefail
 # a run isolation token; cwd/exe/fd and work-root references provide a fallback.
 
 MODE="${1:-}"
-WORK_ROOT="${PERF_WORK_ROOT:-/tmp/boostkit-perf}"
+WORK_ROOT="${PERF_WORK_ROOT:-/home/runner/boostkit-perf}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log() { printf '[cleanup] %s\n' "$*"; }
@@ -14,8 +14,8 @@ fail() { printf '[cleanup] ERROR: %s\n' "$*" >&2; exit 1; }
 if [[ "${PERF_DEDICATED_RUNNER:-}" != "true" ]]; then
     fail "PERF_DEDICATED_RUNNER=true is required; refusing global cleanup"
 fi
-if [[ "${WORK_ROOT}" != "/tmp/boostkit-perf" ]]; then
-    fail "PERF_WORK_ROOT must be exactly /tmp/boostkit-perf"
+if [[ "${WORK_ROOT}" != "/home/runner/boostkit-perf" ]]; then
+    fail "PERF_WORK_ROOT must be exactly /home/runner/boostkit-perf"
 fi
 if [[ "${MODE}" != "--before" && "${MODE}" != "--after" && "${MODE}" != "--verify" ]]; then
     fail "usage: $0 --before|--after|--verify"

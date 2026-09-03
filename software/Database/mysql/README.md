@@ -55,7 +55,7 @@ md5sum /home/runner/software/mysql/mysql-8.0.46-linux-glibc2.28-aarch64.tar.xz
 MySQL 数据目录不放在 `/tmp`，而是位于：
 
 ```text
-/home/runner/mysql-data/<版本>/<架构>/<运行 ID>/
+${PERF_WORK_DIR}/data/
 ```
 
 这样数据写入会经过 Runner 的实际磁盘文件系统。任务结束后，脚本停止
@@ -138,7 +138,7 @@ bash runall.sh
 ```bash
 bash software/Database/mysql/mysql_test.sh \
   --version 8.0.46 \
-  --results-dir /home/runner/mysql-results/8.0.46
+  --results-dir /home/runner/boostkit-perf/mysql/results/8.0.46
 ```
 
 覆盖的场景为：

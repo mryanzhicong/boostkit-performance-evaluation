@@ -79,7 +79,7 @@ jobs:
     timeout-minutes: ${{ matrix.job_timeout_minutes }}
     env:
       PERF_DEDICATED_RUNNER: "true"
-      PERF_WORK_ROOT: /tmp/boostkit-perf
+      PERF_WORK_ROOT: /home/runner/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
       # x86_64 development runners access GitHub directly; domestic aarch64
@@ -92,7 +92,7 @@ jobs:
       - name: Install framework runtime dependencies from Huawei mirror
         shell: bash
         run: |
-          framework_deps="${PERF_WORK_ROOT}/framework-deps"
+          framework_deps="${PERF_WORK_ROOT}/framework/deps"
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \

@@ -73,7 +73,7 @@ curl -fsS http://127.0.0.1:18888/vars/client_*
 ```bash
 bash software/Middleware/brpc/brpc_test.sh \
   --version 1.17.0 \
-  --results-dir /home/runner/brpc-results/1.17.0
+  --results-dir /home/runner/boostkit-perf/brpc/results/1.17.0
 ```
 
 ## 指标

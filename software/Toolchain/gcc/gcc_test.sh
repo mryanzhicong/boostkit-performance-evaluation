@@ -10,7 +10,7 @@ PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 GCC_SOURCE_BASE="${GCC_SOURCE_BASE:-https://ftp.gnu.org/gnu/gcc}"
 GCC_OFFLINE_DIR="${GCC_OFFLINE_DIR:-/home/runner/software/gcc}"
-GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-/home/runner/gcc-data}"
+GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-}"
 SPEC_CPU2017_ISO="${SPEC_CPU2017_ISO:-/home/runner/software/gcc/cpu2017-1.0.5.iso}"
 SPEC_CONFIG_NAME="gcc.cfg"
 SPEC_COPIES="${SPEC_COPIES:-16}"
@@ -83,12 +83,15 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/tmp/gcc-perf/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/gcc/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
-    TMPDIR="${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    TMPDIR="${PERF_WORK_DIR}/tmp"
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
+    if [[ -z "${GCC_BENCHMARK_DATA_ROOT}" ]]; then
+        GCC_BENCHMARK_DATA_ROOT="${PERF_WORK_DIR}/data"
     fi
     SRC_DIR="${PERF_WORK_DIR}/gcc-src"
     BUILD_DIR="${PERF_WORK_DIR}/gcc-build"
@@ -96,7 +99,7 @@ configure_runtime_paths() {
     GCC_BIN="${INSTALL_DIR}/bin/gcc"
     GXX_BIN="${INSTALL_DIR}/bin/g++"
     GFORTRAN_BIN="${INSTALL_DIR}/bin/gfortran"
-    BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
+    BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}"
     SPEC_MOUNT_DIR="${BENCHMARK_DATA_DIR}/cpu2017-media"
     SPEC_DIR="${BENCHMARK_DATA_DIR}/cpu2017"
     SPEC_RESULT_DIR="${SPEC_DIR}/result"
@@ -112,7 +115,7 @@ initialize_runtime() {
     else
         return $?
     fi
-    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR:-${PERF_WORK_DIR}/tmp}"
+    mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
 install_dependencies() {
@@ -564,7 +567,7 @@ stop_gcc_runtime() {
         fi
     fi
     if [[ -d "${BENCHMARK_DATA_DIR}" ]]; then
-        if [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT}"/* ]]; then
+        if [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT}" ]]; then
             log "ERROR: refusing to clean unexpected GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
             cleanup_failed=1
         fi
@@ -592,8 +595,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /tmp/gcc-perf/local-* || \
-          "${PERF_WORK_DIR}" == "/tmp/gcc-perf" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/gcc/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/gcc" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi
