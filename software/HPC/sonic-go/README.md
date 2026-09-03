@@ -4,26 +4,26 @@
 JIT 和 SIMD 的 JSON 序列化、反序列化及 JSON 操作库。当前版本为 `1.15.2`，在
 `x86_64` 和 `aarch64` 上以同一套上游基准进行开箱性能对比。
 
-`case.yaml` 将四阶段映射至 `sonic_go_test.sh`：`build` 下载源码与模块并编译基准包，
+`case.yaml` 将四阶段映射至 `sonic_go_test.sh`：`build` 下载源码与基准模块依赖，
 `start` 校验运行条件，`test` 执行上游基准，`stop` 无后台服务需要停止。入口脚本可独立运行。
 
 ## 依赖与构建
 
 脚本自动检查并安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk 与 Python 3。
-测试使用任务私有的官方预编译 Go `1.26.7`，不使用 Runner 上已有的系统 Go。
+测试使用任务私有的官方预编译 Go `1.27.0`，不使用 Runner 上已有的系统 Go。
 
 Go 压缩包优先从 Runner 的离线目录读取：
 
 ```text
-/home/runner/software/golang/go1.26.7.linux-amd64.tar.gz
-/home/runner/software/golang/go1.26.7.linux-arm64.tar.gz
+/home/runner/software/golang/go1.27.0.linux-amd64.tar.gz
+/home/runner/software/golang/go1.27.0.linux-arm64.tar.gz
 ```
 
 离线包缺失时，脚本从下列官方地址下载对应架构的压缩包，并以脚本内声明的
 SHA-256 校验：
 
 ```text
-https://go.dev/dl/go1.26.7.linux-<amd64|arm64>.tar.gz
+https://go.dev/dl/go1.27.0.linux-<amd64|arm64>.tar.gz
 ```
 
 Go 安装到本次任务的 `${PERF_WORK_DIR}/go-install`；模块缓存、编译缓存和 `GOPATH`
@@ -35,23 +35,22 @@ Go 模块通过 `https://goproxy.cn` 下载。
 ```bash
 git clone --branch v1.15.2 --depth 1 \
   https://github.com/bytedance/sonic.git sonic-go-source
-tar -xzf go1.26.7.linux-<架构>.tar.gz \
+tar -xzf go1.27.0.linux-<架构>.tar.gz \
   -C go-install --strip-components=1
 export GOROOT="$PWD/go-install"
 export PATH="$GOROOT/bin:$PATH"
 cd sonic-go-source
 go mod download
-for benchmark_dir in encoder decoder ast external_jsonlib_test/benchmark_test; do
+for benchmark_dir in encoder decoder ast external_jsonlib_test; do
   (
     cd "${benchmark_dir}"
     go mod download
-    go test -run='^$'
   )
 done
 ```
 
 源码标签必须精确为 `v1.15.2`，否则构建阶段失败；实际版本写入 `actual-version.txt`。
-私有 Go 的版本和架构也必须分别精确为 `1.26.7` 与当前任务架构。
+私有 Go 的版本和架构也必须分别精确为 `1.27.0` 与当前任务架构。
 
 ## 官方性能测试
 
@@ -60,6 +59,7 @@ done
 ```bash
 export SONIC_ENCODER_USE_VM=""
 export SONIC_USE_SVE_WRAPGOC=1
+export GOFLAGS="-mod=mod"
 bash -e scripts/bench.sh
 ```
 
@@ -71,7 +71,9 @@ bash -e scripts/bench.sh
 - `external_jsonlib_test/benchmark_test`：编码/解码，固定 `100000x`；Get/Set，固定 `1000000x`；Parser，固定 `10000x`。
 
 `bash -e` 只增加“任一官方命令失败即失败”的错误处理，不改变上游脚本中的命令、参数或测试矩阵。
-两个 `SONIC_*` 变量仅在性能阶段导出，并写入 `benchmark_sonic_go.json` 的 `environment` 字段。
+`GOFLAGS=-mod=mod` 仅允许 Go 1.27 在本次任务克隆的 `external_jsonlib_test` 模块中补齐其依赖图；
+不会修改本仓库、系统 Go 或 Runner 的全局 Go 环境。两个 `SONIC_*` 变量仅在性能阶段导出，并写入
+`benchmark_sonic_go.json` 的 `environment` 字段。
 
 ## 指标和输出
 
