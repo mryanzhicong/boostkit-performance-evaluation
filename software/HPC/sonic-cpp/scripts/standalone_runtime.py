@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provide self-contained environment collection and reporting for sonic."""
+"""Provide self-contained environment collection and reporting for sonic-cpp."""
 
 from __future__ import annotations
 
@@ -142,13 +142,13 @@ def record_build_info(
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
-        raise RuntimeError("actual sonic version is empty")
+        raise RuntimeError("actual sonic-cpp version is empty")
     atomic_write_json(
         output,
         {
             "recorded_at": timestamp(),
             "category": "HPC",
-            "software": "sonic",
+            "software": "sonic-cpp",
             "requested_version": requested_version,
             "actual_version": actual_version,
             "architecture": architecture,
@@ -162,29 +162,29 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "sonic":
-        raise RuntimeError("benchmark_sonic.json has an invalid software identity")
+    if benchmark.get("software") != "sonic-cpp":
+        raise RuntimeError("benchmark_sonic_cpp.json has an invalid software identity")
     if (
         benchmark.get("version") != version
         or benchmark.get("architecture") != architecture
     ):
-        raise RuntimeError("benchmark_sonic.json identity differs from this run")
+        raise RuntimeError("benchmark_sonic_cpp.json identity differs from this run")
     results = benchmark.get("results")
     if not isinstance(results, dict) or not results:
-        raise RuntimeError("benchmark_sonic.json is missing results")
+        raise RuntimeError("benchmark_sonic_cpp.json is missing results")
     metrics: dict[str, Any] = {}
     for result_key, result in results.items():
         if not isinstance(result, dict):
-            raise TypeError(f"sonic scenario {result_key} must be an object")
+            raise TypeError(f"sonic-cpp scenario {result_key} must be an object")
         metric_name = result.get("source_name")
         if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"sonic scenario {result_key} has no source_name")
+            raise RuntimeError(f"sonic-cpp scenario {result_key} has no source_name")
         if metric_name != result_key:
             raise RuntimeError(
-                f"sonic scenario key {result_key} differs from source_name {metric_name}"
+                f"sonic-cpp scenario key {result_key} differs from source_name {metric_name}"
             )
         if metric_name in metrics:
-            raise RuntimeError(f"duplicate sonic scenario: {metric_name}")
+            raise RuntimeError(f"duplicate sonic-cpp scenario: {metric_name}")
         if result.get("source_field") != "cpu_time":
             raise RuntimeError(f"metric {metric_name} is not sourced from cpu_time")
         value = result.get("value")
@@ -198,7 +198,7 @@ def extract_metrics(
             "direction": "lower_is_better",
         }
     if not metrics:
-        raise RuntimeError("benchmark_sonic.json contains no metrics")
+        raise RuntimeError("benchmark_sonic_cpp.json contains no metrics")
     return metrics
 
 
@@ -210,7 +210,7 @@ def markdown_cell(value: Any) -> str:
 
 def render_report(result: dict[str, Any]) -> str:
     lines = [
-        f"# sonic {result['version']} 独立性能测试报告",
+        f"# sonic-cpp {result['version']} 独立性能测试报告",
         "",
         f"- Run ID：`{result['run_id']}`",
         f"- 架构：`{result['architecture']}`",
@@ -274,13 +274,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "benchmark_sonic.json")
+    benchmark = load_json(output_dir / "benchmark_sonic_cpp.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_sonic.json is missing or invalid")
+                raise RuntimeError("benchmark_sonic_cpp.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
@@ -288,7 +288,7 @@ def finalize(
             error = str(exc)
     status = "passed" if command_status == cleanup_status == "passed" else "failed"
     result = {
-        "software": "sonic",
+        "software": "sonic-cpp",
         "category": "HPC",
         "version": version,
         "architecture": architecture,
@@ -308,7 +308,7 @@ def finalize(
     atomic_write_json(
         output_dir / "status.json",
         {
-            "software": "sonic",
+            "software": "sonic-cpp",
             "category": "HPC",
             "version": version,
             "architecture": architecture,
