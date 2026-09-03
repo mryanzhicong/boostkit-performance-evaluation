@@ -36,12 +36,12 @@ def main() -> int:
         version = os.environ["SOFTWARE_VERSION"]
         architecture = os.environ["EXPECTED_ARCH"]
         jtreg_version = os.environ["JTREG_VERSION"]
-        test_roots = os.environ["JTREG_TEST_ROOTS"].split()
+        test_case = os.environ["JTREG_TEST_CASE"]
     except KeyError as exc:
         fail(f"missing environment variable: {exc}")
         return 1
-    if not test_roots:
-        fail("JTREG_TEST_ROOTS must declare at least one test root")
+    if not test_case:
+        fail("JTREG_TEST_CASE must declare one test case")
         return 1
     if not raw_output.is_file() or not raw_output.stat().st_size:
         fail(f"jtreg output is missing or empty: {raw_output}")
@@ -61,11 +61,11 @@ def main() -> int:
                 "-conc:auto",
                 "-timeout:5",
                 "-tl:3590",
-                *test_roots,
+                test_case,
             ],
             "jtreg_version": jtreg_version,
-            "test_roots": test_roots,
-            "benchmark_suite": "OpenJDK jtreg regression test suite",
+            "test_case": test_case,
+            "benchmark_suite": "OpenJDK jtreg single regression test",
         },
         "metric_contract": {
             "scope": "one complete jtreg invocation",

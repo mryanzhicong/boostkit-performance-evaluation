@@ -138,7 +138,7 @@ def record_build_info(
     source_tag: str,
     boot_jdk_home: str,
     jtreg_version: str,
-    test_roots: str,
+    test_case: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
@@ -162,13 +162,13 @@ def record_build_info(
             "source_repository": f"https://github.com/openjdk/{source_repo}",
             "source_tag": source_tag,
             "boot_jdk_home": boot_jdk_home,
-            "benchmark_suite": "OpenJDK jtreg regression test suite",
+            "benchmark_suite": "OpenJDK jtreg single regression test",
             "jtreg_version": jtreg_version,
-            "test_roots": test_roots.split(),
+            "test_case": test_case,
             "build_command": (
                 "bash configure --with-debug-level=release --prefix=<isolated jdk> "
                 "--disable-warnings-as-errors --disable-precompiled-headers; "
-                "make images; run the declared test roots with jtreg"
+                "make images; run the declared test case with jtreg"
             ),
         },
     )
@@ -254,7 +254,7 @@ def render_report(result: dict[str, Any]) -> str:
         ("Boot JDK", "boot_jdk_home"),
         ("基准套件", "benchmark_suite"),
         ("jtreg 版本", "jtreg_version"),
-        ("测试根目录", "test_roots"),
+        ("测试用例", "test_case"),
         ("构建方式", "build_command"),
         ("记录时间", "recorded_at"),
     ):
@@ -275,7 +275,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（官方 jtreg 回归测试整轮耗时，单位为秒）",
+            "## 性能指标（官方 jtreg 单个测试用例耗时，单位为秒）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -394,9 +394,9 @@ def parse_args() -> argparse.Namespace:
         help="jtreg version used for the OpenJDK regression test run",
     )
     build.add_argument(
-        "--test-roots",
+        "--test-case",
         required=True,
-        help="space-separated OpenJDK jtreg test roots",
+        help="OpenJDK jtreg test case path relative to the source tree",
     )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
@@ -431,7 +431,7 @@ def main() -> int:
             args.source_tag,
             args.boot_jdk_home,
             args.jtreg_version,
-            args.test_roots,
+            args.test_case,
         )
         return 0
     return finalize(

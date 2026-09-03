@@ -14,7 +14,7 @@ JTREG_DOWNLOAD_URL="${JTREG_DOWNLOAD_URL:-https://builds.shipilev.net/jtreg/jtre
 OPENJDK_OFFLINE_DIR="${OPENJDK_OFFLINE_DIR:-/home/runner/software/openjdk}"
 OPENJDK_BOOT_JDK_HOME="${OPENJDK_BOOT_JDK_HOME:-}"
 JTREG_VERSION="${JTREG_VERSION:-8.3+1}"
-JTREG_TEST_ROOTS="${JTREG_TEST_ROOTS:-test/jdk test/lib-test test/langtools test/jaxp test/hotspot/jtreg test/docs}"
+JTREG_TEST_CASE="${JTREG_TEST_CASE:-test/jdk/java/lang/String/StringRepeat.java}"
 
 JDK_HOME=""
 SRC_DIR=""
@@ -477,12 +477,11 @@ start_openjdk_runtime() {
         log "ERROR: source-built OpenJDK or jtreg is missing"
         return 40
     fi
-    for test_root in ${JTREG_TEST_ROOTS}; do
-        if [[ ! -d "${SRC_DIR}/${test_root}" ]]; then
-            log "ERROR: jtreg test root is missing: ${test_root}"
-            return 40
-        fi
-    done
+    if [[ "${JTREG_TEST_CASE}" == /* || "${JTREG_TEST_CASE}" == *".."* || \
+          ! -f "${SRC_DIR}/${JTREG_TEST_CASE}" ]]; then
+        log "ERROR: declared jtreg test case is unavailable: ${JTREG_TEST_CASE}"
+        return 40
+    fi
     log "OpenJDK jtreg runtime is ready"
 }
 
@@ -500,7 +499,7 @@ run_openjdk_benchmarks() {
     fi
     mkdir -p "${JTREG_WORK_DIR}" "${JTREG_REPORT_DIR}"
     start_seconds="$(date +%s)"
-    log "running jtreg ${JTREG_VERSION}: ${JTREG_TEST_ROOTS}"
+    log "running jtreg ${JTREG_VERSION}: ${JTREG_TEST_CASE}"
     if ! (
         cd "${SRC_DIR}"
         "${JTREG_HOME}/bin/jtreg" \
@@ -508,7 +507,7 @@ run_openjdk_benchmarks() {
             -w:"${JTREG_WORK_DIR}" \
             -r:"${JTREG_REPORT_DIR}" \
             -va -ignore:quiet -jit -conc:auto -timeout:5 -tl:3590 \
-            ${JTREG_TEST_ROOTS}
+            "${JTREG_TEST_CASE}"
     ) 2>&1 | tee "${RESULTS_DIR}/jtreg-output.log"; then
         log "ERROR: jtreg test run failed"
         return 50
@@ -518,7 +517,7 @@ run_openjdk_benchmarks() {
         return 50
     fi
     elapsed_seconds="$(( $(date +%s) - start_seconds ))"
-    export SOFTWARE_VERSION EXPECTED_ARCH JTREG_VERSION JTREG_TEST_ROOTS
+    export SOFTWARE_VERSION EXPECTED_ARCH JTREG_VERSION JTREG_TEST_CASE
     if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/jtreg-output.log" \
         "${RESULTS_DIR}/benchmark_openjdk.json" \
@@ -611,7 +610,7 @@ run_openjdk_standalone() {
                 --source-tag="${OPENJDK_SOURCE_TAG}" \
                 --boot-jdk-home="${BOOT_JDK_HOME}" \
                 --jtreg-version="${JTREG_VERSION}" \
-                --test-roots="${JTREG_TEST_ROOTS}"; then
+                --test-case="${JTREG_TEST_CASE}"; then
                 :
             else
                 stage_status=$?
@@ -681,7 +680,7 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Build the official OpenJDK GA source archive and run the declared official
-jtreg regression test roots with the source-built JDK. Results default to
+jtreg regression test case with the source-built JDK. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -693,7 +692,7 @@ Options:
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
   OPENJDK_SOURCE_BASE, OPENJDK_OFFLINE_DIR, OPENJDK_BOOT_JDK_HOME,
-  ADOPTIUM_RELEASE_BASE, JTREG_DOWNLOAD_URL, JTREG_TEST_ROOTS
+  ADOPTIUM_RELEASE_BASE, JTREG_DOWNLOAD_URL, JTREG_TEST_CASE
 USAGE
 }
 

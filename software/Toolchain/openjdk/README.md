@@ -1,8 +1,8 @@
 # OpenJDK 性能测试说明
 
 本用例从 OpenJDK `jdk25u` 的官方标签 `jdk-25.0.4.1-ga` 源码构建
-OpenJDK `25.0.4.1`，再以该构建产物运行 jtreg `8.3+1`。跨架构报告的指标为
-整轮 jtreg 命令的墙钟耗时（秒），越小越好。
+OpenJDK `25.0.4.1`，再以该构建产物运行 jtreg `8.3+1` 的一个官方回归用例。
+跨架构报告的指标为该用例的墙钟耗时（秒），越小越好。
 
 `case.yaml` 将 `build`、`start`、`test`、`stop` 四阶段映射至
 `openjdk_test.sh`。也可以直接执行该脚本，获得相同的构建、测试、信息收集和
@@ -124,23 +124,25 @@ cd "${PERF_WORK_DIR}/openjdk-source"
   -w:"${RESULTS_DIR}/jtreg-work" \
   -r:"${RESULTS_DIR}/jtreg-report" \
   -va -ignore:quiet -jit -conc:auto -timeout:5 -tl:3590 \
-  test/jdk test/lib-test test/langtools test/jaxp test/hotspot/jtreg test/docs
+  test/jdk/java/lang/String/StringRepeat.java
 ```
 
-测试目录由 `case.yaml` 的 `JTREG_TEST_ROOTS` 声明；jtreg 版本由
+测试用例由 `case.yaml` 的 `JTREG_TEST_CASE` 声明；jtreg 版本由
 `JTREG_VERSION` 声明。两者均为 Framework 传入入口脚本的环境变量。
+当前用例 `StringRepeat.java` 仅使用 Java 标准库，不依赖图形显示或 OpenJDK 原生
+测试库，适合两种架构以相同方式执行。
 
 ## 指标与输出
 
-`jtreg elapsed time` 是上述 jtreg 命令从启动到退出的整轮墙钟耗时，单位为 `s`，
+`jtreg elapsed time` 是上述 jtreg 命令从启动到退出的单个用例墙钟耗时，单位为 `s`，
 优化方向为越小越好。命令失败时测试阶段直接失败，不产生可通过的空指标。
 
 | 输出 | 内容 |
 |---|---|
 | `jtreg-output.log` | jtreg 原始控制台输出。 |
-| `jtreg-work/` | jtreg 工作目录，保留每项测试执行产生的工作文件。 |
+| `jtreg-work/` | jtreg 工作目录，保留该测试用例执行产生的工作文件。 |
 | `jtreg-report/` | jtreg 原始报告目录。 |
-| `benchmark_openjdk.json` | 规范化指标、实际命令参数和测试目录。 |
+| `benchmark_openjdk.json` | 规范化指标、实际命令参数和测试用例。 |
 
 ## 独立执行
 
