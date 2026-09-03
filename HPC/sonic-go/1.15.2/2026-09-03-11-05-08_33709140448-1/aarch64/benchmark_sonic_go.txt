@@ -1,0 +1,144 @@
+WARNING: sonic/encoder only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/encoder
+BenchmarkEncoder_Generic_Sonic-256                   	  100000	     54459 ns/op	 239.35 MB/s	    9724 B/op	       8 allocs/op
+BenchmarkEncoder_Generic_Sonic_Fast-256              	  100000	     54796 ns/op	 237.88 MB/s	    9720 B/op	       8 allocs/op
+BenchmarkEncoder_Generic_StdLib-256                  	  100000	     55007 ns/op	 236.97 MB/s	    9717 B/op	       8 allocs/op
+BenchmarkEncoder_Binding_Sonic-256                   	  100000	     27528 ns/op	 473.51 MB/s	    9577 B/op	       3 allocs/op
+BenchmarkEncoder_Binding_Sonic_Fast-256              	  100000	     27437 ns/op	 475.08 MB/s	    9575 B/op	       3 allocs/op
+BenchmarkEncoder_Binding_StdLib-256                  	  100000	     27345 ns/op	 476.68 MB/s	    9572 B/op	       3 allocs/op
+BenchmarkEncoder_Parallel_Generic_Sonic-256          	  100000	      4602 ns/op	2832.66 MB/s	    9757 B/op	       8 allocs/op
+BenchmarkEncoder_Parallel_Generic_Sonic_Fast-256     	  100000	      3681 ns/op	3541.10 MB/s	    9726 B/op	       8 allocs/op
+BenchmarkEncoder_Parallel_Generic_StdLib-256         	  100000	      3785 ns/op	3443.68 MB/s	    9718 B/op	       8 allocs/op
+BenchmarkEncoder_Parallel_Binding_Sonic-256          	  100000	      1949 ns/op	6688.45 MB/s	    9601 B/op	       3 allocs/op
+BenchmarkEncoder_Parallel_Binding_Sonic_Fast-256     	  100000	      2552 ns/op	5108.33 MB/s	    9604 B/op	       3 allocs/op
+BenchmarkEncoder_Parallel_Binding_StdLib-256         	  100000	      2208 ns/op	5902.76 MB/s	    9603 B/op	       3 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/encoder	26.708s
+WARNING: sonic/decoder only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/decoder
+BenchmarkDecoder_Generic_Sonic-256                   	  100000	    209769 ns/op	  62.14 MB/s	   96815 B/op	     946 allocs/op
+BenchmarkDecoder_Generic_Sonic_Fast-256              	  100000	    211909 ns/op	  61.51 MB/s	   96809 B/op	     946 allocs/op
+BenchmarkDecoder_Generic_StdLib-256                  	  100000	    178058 ns/op	  73.21 MB/s	   49736 B/op	     931 allocs/op
+BenchmarkDecoder_Binding_Sonic-256                   	  100000	     96504 ns/op	 135.07 MB/s	   56049 B/op	      85 allocs/op
+BenchmarkDecoder_Binding_Sonic_Fast-256              	  100000	     96640 ns/op	 134.88 MB/s	   56052 B/op	      85 allocs/op
+BenchmarkDecoder_Binding_StdLib-256                  	  100000	     62130 ns/op	 209.80 MB/s	    8978 B/op	      70 allocs/op
+BenchmarkDecoder_Parallel_Generic_Sonic-256          	  100000	     72814 ns/op	 179.02 MB/s	   97537 B/op	     961 allocs/op
+BenchmarkDecoder_Parallel_Generic_Sonic_Fast-256     	  100000	     78024 ns/op	 167.06 MB/s	   97583 B/op	     962 allocs/op
+BenchmarkDecoder_Parallel_Generic_StdLib-256         	  100000	     47304 ns/op	 275.56 MB/s	   49508 B/op	     931 allocs/op
+BenchmarkDecoder_Parallel_Binding_Sonic-256          	  100000	     36327 ns/op	 358.82 MB/s	   56749 B/op	      94 allocs/op
+BenchmarkDecoder_Parallel_Binding_Sonic_Fast-256     	  100000	     36404 ns/op	 358.07 MB/s	   56758 B/op	      94 allocs/op
+BenchmarkDecoder_Parallel_Binding_StdLib-256         	  100000	      6615 ns/op	1970.56 MB/s	    8964 B/op	      70 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/decoder	113.515s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/ast
+BenchmarkGetOne_Sonic-256                  	 1000000	     24508 ns/op	 531.37 MB/s	      32 B/op	       1 allocs/op
+BenchmarkGetOneSafe_Sonic-256              	 1000000	     24609 ns/op	 529.19 MB/s	      56 B/op	       2 allocs/op
+BenchmarkGetFull_Sonic-256                 	 1000000	     15937 ns/op	 817.14 MB/s	       0 B/op	       0 allocs/op
+BenchmarkGetWithManyCompare_Sonic-256      	 1000000	      4682 ns/op	 149.73 MB/s	      32 B/op	       1 allocs/op
+BenchmarkGetOne_Parallel_Sonic-256         	 1000000	       284.0 ns/op	45862.48 MB/s	      33 B/op	       1 allocs/op
+BenchmarkGetOneSafe_Parallel_Sonic-256     	 1000000	       312.0 ns/op	41745.06 MB/s	      56 B/op	       2 allocs/op
+BenchmarkSetOne_Sonic-256                  	 1000000	     29302 ns/op	 444.45 MB/s	    1056 B/op	       2 allocs/op
+BenchmarkSetOne_Parallel_Sonic-256         	 1000000	      1317 ns/op	9890.42 MB/s	    1056 B/op	       2 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/ast	101.037s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/ast
+BenchmarkEncodeRaw_Sonic-256           	   10000	         2.437 ns/op	5343865.41 MB/s	       0 B/op	       0 allocs/op
+BenchmarkEncodeSkip_Sonic-256          	   10000	      3842 ns/op	3389.98 MB/s	   13637 B/op	       1 allocs/op
+BenchmarkEncodeLoad_Sonic-256          	   10000	      4508 ns/op	2888.79 MB/s	   13655 B/op	       1 allocs/op
+BenchmarkParser_Sonic-256              	   10000	     32335 ns/op	 402.76 MB/s	    1096 B/op	       4 allocs/op
+BenchmarkParser_Parallel_Sonic-256     	   10000	      1791 ns/op	7271.95 MB/s	    1153 B/op	       4 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/ast	0.465s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/ast
+BenchmarkNodeGetByPath-256         	10000000	        41.64 ns/op	       0 B/op	       0 allocs/op
+BenchmarkStructGetByPath-256       	10000000	        36.81 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeIndex-256             	10000000	         6.564 ns/op	       0 B/op	       0 allocs/op
+BenchmarkStructIndex-256           	10000000	         0.3465 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceIndex-256            	10000000	         0.3448 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMapIndex-256              	10000000	        55.50 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeGet-256               	10000000	        21.61 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceGet-256              	10000000	         4.366 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMapGet-256                	10000000	        10.04 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeSet-256               	10000000	        22.01 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMapSet-256                	10000000	        12.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeSetByIndex-256        	10000000	        67.72 ns/op	      32 B/op	       1 allocs/op
+BenchmarkSliceSetByIndex-256       	10000000	         0.8634 ns/op	       0 B/op	       0 allocs/op
+BenchmarkStructSetByIndex-256      	10000000	         0.3459 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeUnset-256             	10000000	        24.43 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMapUnset-256              	10000000	         9.554 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodUnsetByIndex-256       	10000000	        13.50 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceUnsetByIndex-256     	10000000	         4.838 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNodeAdd-256               	10000000	       514.9 ns/op	     576 B/op	       1 allocs/op
+BenchmarkSliceAdd-256              	10000000	        37.48 ns/op	      32 B/op	       1 allocs/op
+BenchmarkMapAdd-256                	10000000	        24.70 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/ast	9.329s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/external_jsonlib_test/benchmark_test
+BenchmarkDecoder_Generic_StdLib-256                	  100000	    165381 ns/op	  78.82 MB/s	   49451 B/op	     931 allocs/op
+BenchmarkDecoder_Generic_JsonIter-256              	  100000	    101056 ns/op	 128.99 MB/s	   54306 B/op	    1085 allocs/op
+BenchmarkDecoder_Generic_GoJson-256                	  100000	     91397 ns/op	 142.62 MB/s	   65080 B/op	     996 allocs/op
+BenchmarkDecoder_Binding_StdLib-256                	  100000	     60903 ns/op	 214.03 MB/s	    8927 B/op	      70 allocs/op
+BenchmarkDecoder_Binding_JsonIter-256              	  100000	     43657 ns/op	 298.58 MB/s	   14559 B/op	     379 allocs/op
+BenchmarkDecoder_Binding_GoJson-256                	  100000	     30133 ns/op	 432.58 MB/s	   22146 B/op	      49 allocs/op
+BenchmarkDecoder_Parallel_Generic_StdLib-256       	  100000	     58711 ns/op	 222.02 MB/s	   49544 B/op	     932 allocs/op
+BenchmarkDecoder_Parallel_Generic_JsonIter-256     	  100000	     65619 ns/op	 198.65 MB/s	   54305 B/op	    1085 allocs/op
+BenchmarkDecoder_Parallel_Generic_GoJson-256       	  100000	     53258 ns/op	 244.75 MB/s	   65101 B/op	     997 allocs/op
+BenchmarkDecoder_Parallel_Binding_StdLib-256       	  100000	      9427 ns/op	1382.75 MB/s	    8988 B/op	      70 allocs/op
+BenchmarkDecoder_Parallel_Binding_JsonIter-256     	  100000	     14029 ns/op	 929.18 MB/s	   14559 B/op	     379 allocs/op
+BenchmarkDecoder_Parallel_Binding_GoJson-256       	  100000	      9083 ns/op	1435.05 MB/s	   22222 B/op	      50 allocs/op
+BenchmarkEncoder_Generic_JsonIter-256              	  100000	     58618 ns/op	 222.37 MB/s	   18010 B/op	     153 allocs/op
+BenchmarkEncoder_Generic_GoJson-256                	  100000	     83303 ns/op	 156.48 MB/s	   26970 B/op	      55 allocs/op
+BenchmarkEncoder_Binding_JsonIter-256              	  100000	     26648 ns/op	 489.16 MB/s	    9493 B/op	       2 allocs/op
+BenchmarkEncoder_Binding_GoJson-256                	  100000	      9206 ns/op	1415.86 MB/s	    9484 B/op	       1 allocs/op
+BenchmarkEncoder_Parallel_Generic_JsonIter-256     	  100000	     12222 ns/op	1066.48 MB/s	   18090 B/op	     153 allocs/op
+BenchmarkEncoder_Parallel_Generic_GoJson-256       	  100000	     15817 ns/op	 824.14 MB/s	   27343 B/op	      56 allocs/op
+BenchmarkEncoder_Parallel_Binding_JsonIter-256     	  100000	      2575 ns/op	5061.81 MB/s	    9577 B/op	       2 allocs/op
+BenchmarkEncoder_Parallel_Binding_GoJson-256       	  100000	      1939 ns/op	6721.41 MB/s	    9584 B/op	       1 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/external_jsonlib_test/benchmark_test	91.827s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/external_jsonlib_test/benchmark_test
+BenchmarkGetOne_Gjson-256                 	 1000000	      7765 ns/op	1678.65 MB/s	       0 B/op	       0 allocs/op
+BenchmarkGetOne_Jsoniter-256              	 1000000	     65615 ns/op	 198.66 MB/s	   27709 B/op	     635 allocs/op
+BenchmarkGetOne_Sonic-256                 	 1000000	     24839 ns/op	 524.79 MB/s	      32 B/op	       1 allocs/op
+BenchmarkGetOne_Parallel_Sonic-256        	 1000000	       186.0 ns/op	70080.65 MB/s	      33 B/op	       1 allocs/op
+BenchmarkGetOne_Parallel_Gjson-256        	 1000000	        65.76 ns/op	198222.16 MB/s	       0 B/op	       0 allocs/op
+BenchmarkGetOne_Parallel_Jsoniter-256     	 1000000	     23751 ns/op	 548.82 MB/s	   27694 B/op	     635 allocs/op
+BenchmarkSetOne_Sjson-256                 	 1000000	     32314 ns/op	 403.38 MB/s	   52224 B/op	      10 allocs/op
+BenchmarkSetOne_Jsoniter-256              	 1000000	    105240 ns/op	 123.86 MB/s	   45185 B/op	     952 allocs/op
+BenchmarkSetOne_Parallel_Sjson-256        	 1000000	     15601 ns/op	 835.53 MB/s	   52234 B/op	      10 allocs/op
+BenchmarkSetOne_Parallel_Jsoniter-256     	 1000000	     40622 ns/op	 320.89 MB/s	   45173 B/op	     952 allocs/op
+BenchmarkGetByKeys_Sonic-256              	 1000000	     31593 ns/op	 412.59 MB/s	      32 B/op	       1 allocs/op
+BenchmarkGetByKeys_JsonParser-256         	 1000000	     17662 ns/op	 738.03 MB/s	       0 B/op	       0 allocs/op
+BenchmarkGetOne_Fastjson-256              	 1000000	     50240 ns/op	 259.45 MB/s	   86136 B/op	     152 allocs/op
+BenchmarkGetOne_Parallel_Fastjson-256     	 1000000	     37009 ns/op	 352.21 MB/s	   86136 B/op	     152 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/external_jsonlib_test/benchmark_test	452.800s
+WARNING: sonic/ast only supports (go1.17~1.26 and amd64 CPU) or (go1.20~1.26 and arm64 CPU), but your environment is not suitable and will fallback to encoding/json
+goos: linux
+goarch: arm64
+pkg: github.com/bytedance/sonic/external_jsonlib_test/benchmark_test
+BenchmarkParser_Gjson-256                 	   10000	     90538 ns/op	 143.97 MB/s	   40585 B/op	     335 allocs/op
+BenchmarkParser_Jsoniter-256              	   10000	    137140 ns/op	  95.05 MB/s	   86853 B/op	    1401 allocs/op
+BenchmarkParser_Parallel_Gjson-256        	   10000	     33596 ns/op	 387.99 MB/s	   40715 B/op	     335 allocs/op
+BenchmarkParser_Parallel_Jsoniter-256     	   10000	     75682 ns/op	 172.23 MB/s	   54368 B/op	    1085 allocs/op
+PASS
+ok  	github.com/bytedance/sonic/external_jsonlib_test/benchmark_test	3.449s
