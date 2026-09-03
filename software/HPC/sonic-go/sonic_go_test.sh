@@ -267,6 +267,7 @@ build_sonic_go() {
             exit 1
         fi
         cd "${SOURCE_DIR}/external_jsonlib_test"
+        "${GO_BIN}" mod download github.com/bytedance/sonic/loader
         "${GO_BIN}" mod download "github.com/bytedance/sonic/loader@${loader_version}"
         cd "${SOURCE_DIR}/external_jsonlib_test/benchmark_test"
         "${GO_BIN}" test -run='^$'
