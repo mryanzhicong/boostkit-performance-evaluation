@@ -27,7 +27,7 @@ SPEC CPU2017 是受许可软件，不从网络下载。请在两台 Runner 上�
 保证 `runner` 用户可读：
 
 ```text
-/home/runner/software/cpu2017-1.0.5.iso
+/home/runner/software/gcc/cpu2017-1.0.5.iso
 ```
 
 测试脚本需要通过无密码 `sudo` 执行 `mount`、`umount`，以及测试前的内核设置。
