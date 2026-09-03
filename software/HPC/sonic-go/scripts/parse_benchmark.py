@@ -56,7 +56,9 @@ def parse(path: Path) -> list[dict[str, Any]]:
         for measurement in measurements:
             value = float(measurement.group("value"))
             unit = measurement.group("unit")
-            if not math.isfinite(value) or value <= 0:
+            if not math.isfinite(value) or value < 0:
+                raise RuntimeError(f"official benchmark {benchmark} has invalid {unit}: {value}")
+            if value == 0 and unit not in {"B/op", "allocs/op"}:
                 raise RuntimeError(f"official benchmark {benchmark} has invalid {unit}: {value}")
             source_name = metric_name(package, benchmark, unit)
             if source_name in results:
