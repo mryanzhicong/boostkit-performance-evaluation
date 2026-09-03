@@ -163,7 +163,7 @@ metrics:
 | `enabled` | 使用 YAML 布尔值；`true` 才进入矩阵。 |
 | `versions` | 非空且不重复的字符串列表；必须能与实际构建产物报告的版本逐字匹配。 |
 
-禁止在软件清单中声明 `architectures`、`runner` 或 `runner_label`。所有启用的软件默认展开到 x86_64 和 aarch64；Runner 标签只由 `config/defaults.yaml` 维护。
+禁止在软件清单中声明 `architectures`、`runner` 或 `runner_label`。所有启用的软件默认展开到 x86_64 和 aarch64；正式和开发 Runner Profile 的标签只由 `config/defaults.yaml` 维护。
 
 ### 四阶段入口
 

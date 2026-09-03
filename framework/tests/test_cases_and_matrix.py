@@ -300,10 +300,31 @@ def test_unknown_software_is_rejected() -> None:
         build_matrix("missing", "all", "all")
 
 
-def test_global_runner_mapping_still_defines_both_architectures() -> None:
-    labels = configured_runner_labels()
-    assert set(labels) == {"x86_64", "aarch64"}
-    assert all(labels.values())
+def test_runner_profiles_define_both_architectures() -> None:
+    production_labels = configured_runner_labels()
+    development_labels = configured_runner_labels(runner_profile="development")
+    assert set(production_labels) == {"x86_64", "aarch64"}
+    assert set(development_labels) == {"x86_64", "aarch64"}
+    assert all(production_labels.values())
+    assert all(development_labels.values())
+    assert production_labels != development_labels
+
+
+def test_matrix_uses_selected_runner_profile() -> None:
+    entries, errors = validate_catalog(ROOT)
+    assert errors == []
+    _path, case = next((path, case) for path, case in entries if case["enabled"])
+    matrix = build_matrix(
+        case["name"], case["versions"][0], "x86_64", runner_profile="development"
+    )["include"]
+    assert matrix[0]["runner_label"] == configured_runner_labels(
+        runner_profile="development"
+    )["x86_64"]
+
+
+def test_unknown_runner_profile_is_rejected() -> None:
+    with pytest.raises(ValueError, match="runner profile is not configured"):
+        build_matrix("all", "all", "all", runner_profile="missing")
 
 
 def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
@@ -314,6 +335,8 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     ) in workflow
     assert "matrix.runner_label" in workflow
     assert all(label not in workflow for label in configured_runner_labels().values())
+    assert "--runner-profile \"${INPUT_RUNNER_PROFILE}\"" in workflow
+    assert "INPUT_RUNNER_PROFILE: production" in workflow
     assert "vars.PERF_RUNNER" not in workflow
     assert "test_mode:" not in workflow
     assert "performance-results" in workflow
@@ -336,6 +359,23 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
         assert f"--stage {stage}" in workflow
     for removed_stage in ("validate", "start-service", "stop-service", "collect-report"):
         assert f"--stage {removed_stage}" not in workflow
+
+
+def test_development_workflow_uses_development_runner_profile() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "development-performance-test.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "matrix.runner_label" in workflow
+    assert "INPUT_RUNNER_PROFILE: development" in workflow
+    assert "--runner-profile \"${INPUT_RUNNER_PROFILE}\"" in workflow
+    assert all(
+        label not in workflow
+        for label in configured_runner_labels(runner_profile="development").values()
+    )
+    assert "performance-results" not in workflow
+    assert "prepare_result_history.py" not in workflow
+    assert "publish_result_history.sh" not in workflow
+    assert "update_baseline" not in workflow
 
 
 def test_workflow_uses_default_pypi_on_ubuntu_and_huawei_on_runners() -> None:

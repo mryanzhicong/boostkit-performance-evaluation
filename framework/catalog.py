@@ -72,14 +72,22 @@ def configured_categories(root: Path = ROOT) -> list[str]:
     return list(configured_software(root))
 
 
-def configured_runner_labels(root: Path = ROOT) -> dict[str, str]:
+def configured_runner_labels(
+    root: Path = ROOT, runner_profile: str = "production"
+) -> dict[str, str]:
     defaults = load_yaml(root / "config" / "defaults.yaml")
-    labels = defaults.get("runner_labels")
-    if not isinstance(labels, dict):
+    profiles = defaults.get("runner_labels")
+    if not isinstance(profiles, dict):
         raise ValueError("config/defaults.yaml must define runner_labels")
+    labels = profiles.get(runner_profile)
+    if not isinstance(labels, dict):
+        raise ValueError(f"runner profile is not configured: {runner_profile}")
     missing = set(DEFAULT_ARCHITECTURES) - set(labels)
     if missing:
-        raise ValueError(f"runner labels not configured for: {', '.join(sorted(missing))}")
+        raise ValueError(
+            f"runner labels not configured for {runner_profile}: "
+            f"{', '.join(sorted(missing))}"
+        )
     if not all(
         isinstance(labels[architecture], str) and labels[architecture]
         for architecture in DEFAULT_ARCHITECTURES
@@ -517,7 +525,12 @@ def validate_catalog(root: Path = ROOT) -> tuple[list[tuple[Path, dict[str, Any]
     return entries, errors
 
 
-def build_matrix(software: str, version: str, architecture: str) -> dict:
+def build_matrix(
+    software: str,
+    version: str,
+    architecture: str,
+    runner_profile: str = "production",
+) -> dict:
     entries, errors = validate_catalog(ROOT)
     if errors:
         raise ValueError("invalid software catalog: " + "; ".join(errors))
@@ -532,7 +545,7 @@ def build_matrix(software: str, version: str, architecture: str) -> dict:
         else {value.strip() for value in version.split(",") if value.strip()}
     )
     architectures = DEFAULT_ARCHITECTURES if architecture == "all" else (architecture,)
-    runner_labels = configured_runner_labels()
+    runner_labels = configured_runner_labels(runner_profile=runner_profile)
     include: list[dict[str, Any]] = []
     matched_software: set[str] = set()
     matched_versions: set[str] = set()
@@ -584,6 +597,7 @@ def main() -> int:
     matrix_parser.add_argument(
         "--architecture", choices=("all", *DEFAULT_ARCHITECTURES), default="all"
     )
+    matrix_parser.add_argument("--runner-profile", default="production")
     matrix_parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
 
@@ -599,7 +613,12 @@ def main() -> int:
             print(f"OK {path}")
         return 0
     try:
-        matrix = build_matrix(args.software, args.version, args.architecture)
+        matrix = build_matrix(
+            args.software,
+            args.version,
+            args.architecture,
+            args.runner_profile,
+        )
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

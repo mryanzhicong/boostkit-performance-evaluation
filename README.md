@@ -1,12 +1,12 @@
 # BoostKit Performance Evaluation
 
-本项目通过一个仅支持手动触发的 GitHub Actions Workflow，在专用裸机 Runner 上对开源软件执行 x86_64 与 aarch64 性能测试。软件清单和测试代码由人工维护，公共 Framework 负责矩阵生成、阶段编排、进程隔离、环境清理、指标校验、跨架构报告和结果持久化。
+本项目通过两个仅支持手动触发的 GitHub Actions Workflow，在专用裸机 Runner 上对开源软件执行 x86_64 与 aarch64 性能测试。软件清单和测试代码由人工维护，公共 Framework 负责矩阵生成、阶段编排、进程隔离、环境清理、指标校验、跨架构报告和结果持久化。
 
 当前软件列表以 `config/categories.yaml` 为唯一入口，各软件支持版本以对应 `case.yaml` 为准；默认手动运行会把全部启用的软件版本展开到 x86_64 与 aarch64。
 
 ## 核心设计
 
-- Workflow 使用 `workflow_dispatch` 手动触发。
+- 正式和开发 Workflow 均使用 `workflow_dispatch` 手动触发，并执行相同的完整测试阶段。
 - 默认运行全部启用的软件、全部声明版本和两个架构，也支持手动缩小软件、版本或架构范围。
 - 性能任务在带有对应架构标签的专用裸机 Runner 上完成源码编译、安装和测试。
 - 每个软件实现 build、start、test、stop 四个阶段。
@@ -15,7 +15,7 @@
 - 公共配置统一维护架构和 Runner 标签，软件清单负责软件自身的版本、阶段、输出和指标。
 - `config/categories.yaml` 同时维护分类顺序和各分类的软件注册列表，矩阵以注册内容为执行范围。
 
-## 手动运行
+## 正式手动运行
 
 在 GitHub 仓库的 Actions 页面选择 `Manual performance evaluation`，通过 `Run workflow` 启动。
 
@@ -31,6 +31,15 @@
 `update_baseline=true` 时必须选择 `architecture=all`。只有两个架构的测试和后置清理全部成功，才允许更新基线。
 
 仓库使用固定并发组 `dedicated-performance-runners`，多次手动运行按触发顺序等待专用性能资源。
+
+## 开发全量运行
+
+在 Actions 页面选择 `Development performance evaluation`。它与正式工作流使用相同的输入、
+矩阵、软件阶段和报告生成逻辑，但选择 `development` Runner Profile，并使用独立并发组
+`dedicated-development-performance-runners`。
+
+开发工作流会生成 Workflow Summary、各架构原始结果 Artifact 与汇总报告 Artifact；它不提供
+`update_baseline` 输入，不准备永久结果历史，也不会写入 `performance-results` 分支。
 
 ## Workflow 执行流程
 
@@ -101,14 +110,17 @@ Report Job 始终尝试下载全部架构 Artifact，并完成：
 
 ## Runner 配置
 
-Runner 标签集中维护在 `config/defaults.yaml`：
+Runner 标签按用途集中维护在 `config/defaults.yaml`：
 
-| 架构 | Runner 标签 |
-|---|---|
-| `x86_64` | `PERF_RUNNER_X86_64` |
-| `aarch64` | `PERF_RUNNER_ARM64` |
+| 用途 | 架构 | Runner 标签 |
+|---|---|---|
+| `production` | `x86_64` | `PERF_RUNNER_X86_64` |
+| `production` | `aarch64` | `PERF_RUNNER_ARM64` |
+| `development` | `x86_64` | `PERF_DEV_X86_64` |
+| `development` | `aarch64` | `PERF_DEV_ARM64` |
 
-Workflow 从 `config/defaults.yaml` 读取标签映射；更换 Runner 标签时修改该文件。
+Workflow 在生成矩阵时指定 `production` 或 `development` Profile，并从
+`config/defaults.yaml` 读取对应标签映射；更换 Runner 标签时只修改该文件。
 
 性能 Runner 必须满足：
 

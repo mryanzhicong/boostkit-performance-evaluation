@@ -1,5 +1,5 @@
-name: Manual performance evaluation
-run-name: "Performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})"
+name: Development performance evaluation
+run-name: "Development performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})"
 
 on:
   workflow_dispatch:
@@ -20,17 +20,12 @@ on:
         default: all
         type: choice
         options: [all, x86_64, aarch64]
-      update_baseline:
-        description: "Update baseline.json; requires successful x86_64 and aarch64 results"
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: dedicated-performance-runners
+  group: dedicated-development-performance-runners
   cancel-in-progress: false
 
 jobs:
@@ -41,12 +36,6 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate baseline update scope
-        if: inputs.update_baseline && inputs.architecture != 'all'
-        shell: bash
-        run: |
-          echo "::error::update_baseline requires architecture=all"
-          exit 2
       - name: Install framework runtime dependencies from PyPI
         shell: bash
         run: |
@@ -64,7 +53,7 @@ jobs:
           INPUT_SOFTWARE: ${{ inputs.software }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ARCHITECTURE: ${{ inputs.architecture }}
-          INPUT_RUNNER_PROFILE: production
+          INPUT_RUNNER_PROFILE: development
         shell: bash
         run: |
           matrix="$(python3 framework/catalog.py matrix \
@@ -93,8 +82,8 @@ jobs:
       PERF_WORK_ROOT: /tmp/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
-      # x86_64 runner is overseas and accesses GitHub directly; the domestic
-      # aarch64 runner uses the internal GitHub download proxy.
+      # x86_64 development runners access GitHub directly; domestic aarch64
+      # development runners use the internal GitHub download proxy.
       PERF_GITHUB_DOWNLOAD_PROXY: ${{ matrix.arch == 'aarch64' && 'https://gh-proxy.test.osinfra.cn' || '' }}
     steps:
       - uses: actions/checkout@v4
@@ -184,19 +173,19 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
+          name: development-result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
           path: .perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}
           if-no-files-found: error
           retention-days: 30
 
   report:
-    name: Generate consolidated report
+    name: Generate development report
     if: always()
     needs: [prepare, performance]
     runs-on: ubuntu-latest
     permissions:
       actions: read
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Download task artifacts
@@ -212,32 +201,10 @@ jobs:
       - name: Publish report in workflow summary
         shell: bash
         run: cat .perf-output/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
-      - name: Upload consolidated report
+      - name: Upload development report
         uses: actions/upload-artifact@v4
         with:
-          name: performance-report-${{ github.run_id }}-${{ github.run_attempt }}
+          name: development-performance-report-${{ github.run_id }}-${{ github.run_attempt }}
           path: .perf-output/report
           if-no-files-found: error
-          retention-days: 90
-      - name: Prepare permanent result history
-        if: needs.performance.result == 'success'
-        env:
-          UPDATE_BASELINE: ${{ inputs.update_baseline }}
-        shell: bash
-        run: |
-          baseline_args=()
-          if [[ "${UPDATE_BASELINE}" == "true" ]]; then
-            baseline_args+=(--update-baseline)
-          fi
-          python3 framework/prepare_result_history.py \
-            --input-root .perf-output/downloaded \
-            --report-dir .perf-output/report \
-            --output-root .perf-output/permanent \
-            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
-            --repository '${{ github.repository }}' \
-            --source-commit '${{ github.sha }}' \
-            --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
-            "${baseline_args[@]}"
-      - name: Publish permanent results branch
-        if: needs.performance.result == 'success'
-        run: bash framework/publish_result_history.sh .perf-output/permanent performance-results
+          retention-days: 30
