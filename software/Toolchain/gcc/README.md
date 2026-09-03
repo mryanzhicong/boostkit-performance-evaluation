@@ -1,6 +1,6 @@
 # GCC 性能测试说明
 
-本用例从 GNU 官方发布包构建 GCC，再使用该私有安装的 C/C++ 编译器运行
+本用例从 GNU 官方发布包构建 GCC，再使用该私有安装的 C/C++/Fortran 编译器运行
 SPEC CPU2017 v1.0.5 的官方整数吞吐量套件 `intrate`，用于比较 `x86_64` 与
 `aarch64` 的开箱性能。
 
@@ -34,7 +34,7 @@ SPEC CPU2017 是受许可软件，不从网络下载。请在两台 Runner 上�
 
 ## 构建与安装
 
-脚本自动安装缺失的构建依赖，包括宿主 C/C++ 编译器、Make、GMP、MPFR、MPC、
+脚本自动安装缺失的构建依赖，包括宿主 C/C++/Fortran 编译器、Make、GMP、MPFR、MPC、
 Bison、Flex、Perl、`util-linux` 和 `libnsl`（APT 系统为 `libnsl1`）。两个架构均
 安装并校验 `libnsl.so.1`；SPEC ISO 自带的 `specperl` 需要该运行库。
 
@@ -43,7 +43,7 @@ GCC 在本次任务的隔离工作目录中按以下命令构建并安装：
 ```bash
 ../gcc-<版本>/configure \
   --prefix="${PERF_WORK_DIR}/gcc-install" \
-  --enable-languages=c,c++ \
+  --enable-languages=c,c++,fortran \
   --disable-bootstrap \
   --disable-multilib \
   --disable-nls
@@ -56,6 +56,7 @@ make install
 ```bash
 "${PERF_WORK_DIR}/gcc-install/bin/gcc" --version
 "${PERF_WORK_DIR}/gcc-install/bin/g++" --version
+"${PERF_WORK_DIR}/gcc-install/bin/gfortran" --version
 ```
 
 实际版本必须与 `case.yaml` 请求版本一致。
@@ -80,13 +81,19 @@ config/Example-gcc-linux-x86.cfg
 config/Example-gcc-linux-aarch64.cfg
 ```
 
-脚本复制模板为 `config/gcc.cfg`，仅将模板的 `gcc_dir` 改为：
+脚本复制模板为 `config/gcc.cfg`，将模板的 `gcc_dir` 改为：
 
 ```text
 ${PERF_WORK_DIR}/gcc-install
 ```
 
-因此 SPEC 构建每个工作负载时使用的是本次任务构建的 `gcc` 与 `g++`。
+因此 SPEC 构建每个工作负载时使用的是本次任务构建的 `gcc`、`g++` 与 `gfortran`。
+生成配置还包含两项面向 SPEC CPU2017 v1.0.5 源码兼容性的统一编译选项：C++ 使用
+`-fpermissive`，整数 C 工作负载使用 `-fcommon`。两者均写入所有架构使用的同一份
+官方 GCC 模板配置，避免因 GCC 新版本的诊断或默认链接行为而漏建组件。
+
+模板中的 `ignore_errors` 设为 `0`：任何 SPEC 组件构建失败都会使测试失败，并将
+`make*.out` 原始构建日志保存到 `spec-build-logs/`。
 
 ## 测试命令
 

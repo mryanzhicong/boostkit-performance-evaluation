@@ -23,6 +23,7 @@ BUILD_DIR=""
 INSTALL_DIR=""
 GCC_BIN=""
 GXX_BIN=""
+GFORTRAN_BIN=""
 GCC_VERSION_STRING=""
 GCC_SOURCE_SHA256=""
 BENCHMARK_DATA_DIR=""
@@ -94,6 +95,7 @@ configure_runtime_paths() {
     INSTALL_DIR="${PERF_WORK_DIR}/gcc-install"
     GCC_BIN="${INSTALL_DIR}/bin/gcc"
     GXX_BIN="${INSTALL_DIR}/bin/g++"
+    GFORTRAN_BIN="${INSTALL_DIR}/bin/gfortran"
     BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}/${SOFTWARE_VERSION}/${EXPECTED_ARCH}/${PERF_RUN_ID}"
     SPEC_MOUNT_DIR="${BENCHMARK_DATA_DIR}/cpu2017-media"
     SPEC_DIR="${BENCHMARK_DATA_DIR}/cpu2017"
@@ -117,7 +119,7 @@ install_dependencies() {
     local required missing=0
     local rpm_spec_packages=(libnsl)
     local apt_spec_packages=(libnsl1)
-    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc \
+    for required in gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep \
         perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
@@ -133,14 +135,14 @@ install_dependencies() {
     log "installing missing GCC build dependencies"
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+            if ! dnf install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+            if ! sudo -n dnf install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
@@ -152,14 +154,14 @@ install_dependencies() {
         fi
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+            if ! yum install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum install -y gcc gcc-c++ make tar xz coreutils curl python3 \
+            if ! sudo -n yum install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
@@ -176,7 +178,7 @@ install_dependencies() {
                 return 30
             fi
             if ! env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                build-essential tar xz-utils coreutils curl python3 gawk findutils \
+                build-essential gfortran tar xz-utils coreutils curl python3 gawk findutils grep \
                 libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
                 "${apt_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
@@ -188,7 +190,7 @@ install_dependencies() {
                 return 30
             fi
             if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                build-essential tar xz-utils coreutils curl python3 gawk findutils \
+                build-essential gfortran tar xz-utils coreutils curl python3 gawk findutils grep \
                 libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
                 "${apt_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
@@ -203,7 +205,7 @@ install_dependencies() {
         return 30
     fi
 
-    for required in gcc g++ make tar xz sha256sum curl python3 awk date sort nproc \
+    for required in gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep \
         perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
@@ -312,7 +314,7 @@ build_gcc() {
         cd "${BUILD_DIR}"
         "${SRC_DIR}/configure" \
             --prefix="${INSTALL_DIR}" \
-            --enable-languages=c,c++ \
+            --enable-languages=c,c++,fortran \
             --disable-bootstrap \
             --disable-multilib \
             --disable-nls
@@ -336,8 +338,8 @@ build_gcc() {
         log "ERROR: GCC private installation failed"
         return 40
     fi
-    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
-        log "ERROR: private GCC C or C++ compiler is missing"
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" || ! -x "${GFORTRAN_BIN}" ]]; then
+        log "ERROR: private GCC C, C++, or Fortran compiler is missing"
         return 40
     fi
     if ! version_output="$("${GCC_BIN}" --version 2>/dev/null | head -n 1)"; then
@@ -361,8 +363,8 @@ start_gcc_runtime() {
     else
         return $?
     fi
-    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
-        log "ERROR: private GCC C or C++ compiler is missing"
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" || ! -x "${GFORTRAN_BIN}" ]]; then
+        log "ERROR: private GCC C, C++, or Fortran compiler is missing"
         return 40
     fi
     if [[ ! -r "${SPEC_CPU2017_ISO}" ]]; then
@@ -380,6 +382,23 @@ start_gcc_runtime() {
     log "SPEC CPU2017 ISO is ready: ${SPEC_CPU2017_ISO}"
 }
 
+preserve_spec_build_logs() {
+    local build_log relative_path destination
+
+    if [[ ! -d "${SPEC_DIR}/benchspec/CPU" ]]; then
+        return
+    fi
+    while IFS= read -r -d '' build_log; do
+        relative_path="${build_log#"${SPEC_DIR}/"}"
+        destination="${RESULTS_DIR}/spec-build-logs/${relative_path}"
+        if ! mkdir -p "$(dirname "${destination}")" || \
+           ! cp "${build_log}" "${destination}"; then
+            log "ERROR: failed to preserve SPEC build log: ${build_log}"
+            return 50
+        fi
+    done < <(find "${SPEC_DIR}/benchspec/CPU" -type f -name 'make*.out' -print0)
+}
+
 run_gcc_benchmarks() {
     local actual_version template
 
@@ -388,8 +407,8 @@ run_gcc_benchmarks() {
     else
         return $?
     fi
-    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" ]]; then
-        log "ERROR: private GCC C or C++ compiler is missing"
+    if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" || ! -x "${GFORTRAN_BIN}" ]]; then
+        log "ERROR: private GCC C, C++, or Fortran compiler is missing"
         return 40
     fi
     if ! GCC_VERSION_STRING="$("${GCC_BIN}" --version 2>/dev/null | head -n 1)"; then
@@ -434,9 +453,18 @@ run_gcc_benchmarks() {
         log "ERROR: SPEC CPU2017 GCC configuration template is missing: ${template}"
         return 50
     fi
-    if ! sed "s|^%   define  gcc_dir.*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
+    if ! sed \
+        -e "s|^%   define  gcc_dir.*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
+        -e 's/^ignore_errors[[:space:]]*=.*/ignore_errors        = 0/' \
+        -e '/^   CXX[[:space:]]*=.*-std=c++03[[:space:]]*%{model}[[:space:]]*$/ s/[[:space:]]*$/ -fpermissive/' \
+        -e '/^   EXTRA_COPTIMIZE[[:space:]]*=.*-fgnu89-inline[[:space:]]*$/ s/[[:space:]]*$/ -fcommon/' \
         "${template}" > "${SPEC_CONFIG_PATH}"; then
         log "ERROR: failed to create the SPEC CPU2017 GCC configuration"
+        return 50
+    fi
+    if ! grep -Eq '^   CXX[[:space:]]*=.*-fpermissive([[:space:]]|$)' "${SPEC_CONFIG_PATH}" || \
+        ! grep -Eq '^   EXTRA_COPTIMIZE[[:space:]]*=.*-fcommon([[:space:]]|$)' "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: SPEC CPU2017 GCC compatibility flags were not added to the generated configuration"
         return 50
     fi
     if ! printf '\n# Fixed workload settings passed by runcpu.\n%%define fastmath %s\n%%define jemalloc %s\n%%define hugepages %s\nnotes010 = Requested runcpu settings: fastmath=%%{fastmath}, jemalloc=%%{jemalloc}, hugepages=%%{hugepages}\n' \
@@ -469,7 +497,18 @@ run_gcc_benchmarks() {
             -S hugepages="${SPEC_HUGEPAGES}" \
             intrate
     ) 2>&1 | tee "${RESULTS_DIR}/raw-output.log"; then
+        preserve_spec_build_logs || return $?
         log "ERROR: SPEC CPU2017 intrate failed"
+        return 50
+    fi
+    if awk '
+        /^Build errors for intrate:/ && $0 != "Build errors for intrate: None" {
+            has_build_errors = 1
+        }
+        END { exit !has_build_errors }
+    ' "${RESULTS_DIR}/raw-output.log"; then
+        preserve_spec_build_logs || return $?
+        log "ERROR: SPEC CPU2017 intrate reported benchmark build errors"
         return 50
     fi
     if [[ ! -d "${SPEC_RESULT_DIR}" ]]; then
@@ -614,7 +653,7 @@ run_gcc_standalone() {
                 "${GCC_VERSION_STRING}" \
                 --source-url="${GCC_SOURCE_BASE}/gcc-${SOFTWARE_VERSION}/gcc-${SOFTWARE_VERSION}.tar.xz" \
                 --source-sha256="${GCC_SOURCE_SHA256}" \
-                --configure-flags="--enable-languages=c,c++ --disable-bootstrap --disable-multilib --disable-nls" \
+                --configure-flags="--enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib --disable-nls" \
                 --spec-iso="${SPEC_CPU2017_ISO}"; then
                 :
             else
