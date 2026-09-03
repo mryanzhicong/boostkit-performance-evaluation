@@ -29,7 +29,7 @@ def metric_name(package: str, benchmark: str, unit: str) -> str:
     return f"{package} :: {benchmark} :: {unit}"
 
 
-def parse(path: Path) -> list[dict[str, Any]]:
+def parse(path: Path) -> dict[str, dict[str, Any]]:
     package = ""
     results: dict[str, dict[str, Any]] = {}
     try:
@@ -75,7 +75,7 @@ def parse(path: Path) -> list[dict[str, Any]]:
             }
     if not results:
         raise RuntimeError("official Sonic benchmark output contains no measurements")
-    return [results[key] for key in sorted(results)]
+    return {key: results[key] for key in sorted(results)}
 
 
 def main() -> int:

@@ -85,9 +85,9 @@ def finalize(output_dir: Path, version: str, architecture: str, status: int, fai
     raw_results = benchmark.get("results")
     metrics: list[dict[str, Any]] = []
     if status == 0:
-        if not isinstance(raw_results, list) or not raw_results:
+        if not isinstance(raw_results, dict) or not raw_results:
             raise RuntimeError("benchmark_sonic_go.json has no metrics")
-        for result in raw_results:
+        for result in raw_results.values():
             if not isinstance(result, dict):
                 raise RuntimeError("benchmark result is invalid")
             for field in ("source_name", "value", "unit", "direction", "group"):
