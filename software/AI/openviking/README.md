@@ -20,12 +20,14 @@ openviking RPM。
 1. 确认系统 `python3` 版本在官方 wheel 支持矩阵内（`3.10`–`3.13`）。
 2. 在本次任务工作目录 `PERF_WORK_DIR/openviking-venv` 中创建任务私有虚拟
    环境（框架会为每个 case 预建 `PERF_WORK_DIR/venv`，该路径被框架保留）。
-3. 从 PyPI 官方索引安装精确版本：
+3. 从华为云 PyPI 镜像安装精确版本（国产 Runner 无法稳定访问
+   `files.pythonhosted.org`）：
 
 ```bash
 python3 -m venv "${PERF_WORK_DIR}/openviking-venv"
 "${PERF_WORK_DIR}/openviking-venv/bin/pip" install --no-cache-dir \
-  --index-url https://pypi.org/simple \
+  --index-url https://mirrors.huaweicloud.com/repository/pypi/simple \
+  --trusted-host mirrors.huaweicloud.com \
   "openviking==0.4.17.1"
 ```
 

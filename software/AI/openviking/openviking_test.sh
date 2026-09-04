@@ -199,6 +199,7 @@ build_openviking() {
 
     log "installing the official OpenViking ${SOFTWARE_VERSION} wheel from ${OPENVIKING_PACKAGE_INDEX}"
     if ! "${OPENVIKING_VENV}/bin/pip" install --no-cache-dir \
+            --trusted-host mirrors.huaweicloud.com \
             --index-url "${OPENVIKING_PACKAGE_INDEX}" \
             "openviking==${SOFTWARE_VERSION}"; then
         log "ERROR: failed to install openviking==${SOFTWARE_VERSION} from the official package index"

@@ -18,13 +18,15 @@
 1. 确认系统 `python3` 版本在官方 CPU wheel 支持矩阵内（`3.10`–`3.15`）。
 2. 在本次任务工作目录 `PERF_WORK_DIR/torch-venv` 中创建任务私有虚拟环境
    （框架会为每个 case 预建 `PERF_WORK_DIR/venv`，该路径被框架保留）。
-3. 从 PyTorch 官方 CPU wheel 索引安装精确版本，依赖包来自固定索引：
+3. 从 PyTorch 官方 CPU wheel 索引安装精确版本，依赖包来自华为云 PyPI
+   镜像（国产 Runner 无法稳定访问 `files.pythonhosted.org`）：
 
 ```bash
 python3 -m venv "${PERF_WORK_DIR}/torch-venv"
 "${PERF_WORK_DIR}/torch-venv/bin/pip" install --no-cache-dir \
   --index-url https://download.pytorch.org/whl/cpu \
-  --extra-index-url https://pypi.org/simple \
+  --extra-index-url https://mirrors.huaweicloud.com/repository/pypi/simple \
+  --trusted-host mirrors.huaweicloud.com \
   "torch==2.13.0+cpu"
 ```
 

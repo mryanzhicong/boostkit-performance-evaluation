@@ -193,6 +193,7 @@ build_pytorch() {
 
     log "installing the official PyTorch ${SOFTWARE_VERSION} CPU wheel from ${PYTORCH_WHEEL_INDEX}"
     if ! "${PYTORCH_VENV}/bin/pip" install --no-cache-dir \
+            --trusted-host mirrors.huaweicloud.com \
             --index-url "${PYTORCH_WHEEL_INDEX}" \
             --extra-index-url "${PYTORCH_DEPENDENCY_INDEX}" \
             "torch==${SOFTWARE_VERSION}+cpu"; then
