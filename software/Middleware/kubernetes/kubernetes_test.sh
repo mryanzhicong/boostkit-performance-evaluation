@@ -7,6 +7,10 @@
 # benchmarks are compiled and executed hermetically (GOWORK=off, vendor mode,
 # network disabled) inside an isolated work directory.
 #
+# Go itself is NOT installed from the system package manager: a task-private
+# official Go toolchain (verified sha256) is unpacked from the runner offline
+# golang directory into ${PERF_WORK_DIR}/go-install and used via GOROOT/PATH.
+#
 # Benchmarked packages (pure-compute, no etcd/container runtime required):
 #   pkg/apis/core/v1                                - core API list conversion
 #   pkg/registry/core/service/ipallocator           - service ClusterIP allocation
@@ -33,6 +37,9 @@ STANDALONE_CLEANUP_DONE=0
 
 KUBERNETES_REPOSITORY="${KUBERNETES_REPOSITORY:-https://github.com/kubernetes/kubernetes}"
 KUBERNETES_BENCHTIME="${KUBERNETES_BENCHTIME:-1s}"
+GO_VERSION="${GO_VERSION:-1.26.7}"
+GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
+GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
 
 # package:group:binary-name triples for the benchmark suite.
 BENCH_PACKAGES=(
@@ -46,6 +53,9 @@ SOURCE_DIR=""
 BENCH_BIN_DIR=""
 SMOKE_LOG=""
 RAW_LOG=""
+GO_INSTALL_DIR=""
+GO_BIN=""
+GO_ARCH=""
 
 log() {
     printf '[%s] %s\n' "${SOFTWARE_NAME}" "$*"
@@ -77,6 +87,12 @@ configure_runtime_paths() {
         PERF_WORK_DIR="/home/runner/boostkit-perf/kubernetes/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
+    case "${EXPECTED_ARCH}" in
+        x86_64) GO_ARCH="amd64" ;;
+        aarch64) GO_ARCH="arm64" ;;
+    esac
+    GO_INSTALL_DIR="${PERF_WORK_DIR}/go-install"
+    GO_BIN="${GO_INSTALL_DIR}/bin/go"
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
@@ -94,31 +110,19 @@ initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
-supported_go_version() {
-    local minor
-    if ! command -v go >/dev/null 2>&1; then
-        return 1
-    fi
-    minor="$(go env GOVERSION 2>/dev/null | sed -nE 's/^go1\.([0-9]+).*/\1/p')"
-    if [[ -z "${minor}" ]] || (( minor < 26 )); then
-        return 1
-    fi
-    go env GOVERSION
-}
-
 require_kubernetes_tools() {
     local command_name package
     local packages=()
 
-    for command_name in go git python3 tee; do
+    for command_name in git python3 tee sha256sum awk; do
         if command -v "${command_name}" >/dev/null 2>&1; then
             continue
         fi
         case "${command_name}" in
-            go) package="golang" ;;
             git) package="git" ;;
             python3) package="python3" ;;
-            tee) package="coreutils" ;;
+            tee|sha256sum) package="coreutils" ;;
+            awk) package="gawk" ;;
         esac
         log "missing required ${SOFTWARE_NAME} test command: ${command_name}"
         packages+=("${package}")
@@ -143,7 +147,7 @@ require_kubernetes_tools() {
         return 30
     fi
 
-    for command_name in go git python3 tee; do
+    for command_name in git python3 tee sha256sum awk; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required ${SOFTWARE_NAME} test command remains unavailable: ${command_name}"
             return 30
@@ -151,9 +155,92 @@ require_kubernetes_tools() {
     done
 }
 
+configure_go_environment() {
+    export GOROOT="${GO_INSTALL_DIR}"
+    export PATH="${GO_INSTALL_DIR}/bin:${PATH}"
+    export GOCACHE="${PERF_WORK_DIR}/go-cache"
+    export GOTOOLCHAIN=local
+    export GOENV=off
+    export GOWORK=off
+}
+
+copy_or_download_go_archive() {
+    local filename="$1" archive="$2" expected actual
+    local offline_archive="${GO_OFFLINE_DIR}/${filename}"
+
+    case "${GO_VERSION}:${GO_ARCH}" in
+        1.26.7:amd64)
+            expected="ffb5f8de10c62550dfddab66b36b57030721e0a44a3218e9e1181d7b59f121ca"
+            ;;
+        1.26.7:arm64)
+            expected="5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37"
+            ;;
+        1.27.0:amd64)
+            expected="675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685"
+            ;;
+        1.27.0:arm64)
+            expected="51798d2c42d0e1c6ed7fd9f48728b4193abac9e8aad6dbac2fe96a81f5909bda"
+            ;;
+        *)
+            log "ERROR: no verified Go binary release is declared for ${GO_VERSION} on ${GO_ARCH}"
+            return 10
+            ;;
+    esac
+
+    if [[ -f "${offline_archive}" ]]; then
+        log "using offline Go archive ${offline_archive}"
+        cp "${offline_archive}" "${archive}"
+    else
+        log "downloading official Go archive ${filename}"
+        if ! curl -fsSL --retry 3 --connect-timeout 30 -o "${archive}" \
+            "${GO_RELEASE_URL}/${filename}"; then
+            log "ERROR: failed to download ${filename}"
+            return 30
+        fi
+    fi
+    actual="$(sha256sum "${archive}" | awk '{print $1}')"
+    if [[ "${actual}" != "${expected}" ]]; then
+        log "ERROR: Go archive checksum mismatch: ${filename}"
+        return 30
+    fi
+}
+
+verify_go_binary() {
+    local actual_version actual_arch
+    if [[ ! -x "${GO_BIN}" ]]; then
+        log "ERROR: private Go binary is unavailable: ${GO_BIN}"
+        return 40
+    fi
+    actual_version="$("${GO_BIN}" version | awk '{print $3}' | sed 's/^go//')" || return 40
+    actual_arch="$("${GO_BIN}" env GOARCH)" || return 40
+    if [[ "${actual_version}" != "${GO_VERSION}" || "${actual_arch}" != "${GO_ARCH}" ]]; then
+        log "ERROR: private Go is ${actual_version}/${actual_arch}, expected ${GO_VERSION}/${GO_ARCH}"
+        return 40
+    fi
+}
+
+install_go_toolchain() {
+    local archive
+
+    if [[ -e "${GO_INSTALL_DIR}" ]]; then
+        log "ERROR: Go toolchain directory is not clean under ${PERF_WORK_DIR}"
+        return 20
+    fi
+    archive="${PERF_WORK_DIR}/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+    copy_or_download_go_archive "$(basename "${archive}")" "${archive}" || return $?
+    if ! mkdir -p "${GO_INSTALL_DIR}" || \
+       ! tar -xzf "${archive}" -C "${GO_INSTALL_DIR}" --strip-components=1; then
+        log "ERROR: failed to install official Go ${GO_VERSION} for ${GO_ARCH}"
+        return 30
+    fi
+    rm -f "${archive}"
+    configure_go_environment
+    verify_go_binary || return $?
+    log "installed task-private Go ${GO_VERSION} for ${GO_ARCH} from the golang offline directory"
+}
+
 build_kubernetes() {
     local runner_architecture
-    local go_version
     local tag
     local entry
     local package group bin_name
@@ -169,15 +256,11 @@ build_kubernetes() {
         return 20
     fi
     require_kubernetes_tools || return $?
-    go_version="$(supported_go_version)" || {
-        log "ERROR: go 1.26 or newer is required (kubernetes ${SOFTWARE_VERSION} needs the go1.26 toolchain)"
-        return 20
-    }
-    log "using ${go_version}"
-    if [[ -e "${SOURCE_DIR}" ]]; then
-        log "ERROR: build output is not clean under ${SOURCE_DIR}"
+    if [[ -e "${SOURCE_DIR}" || -e "${GO_INSTALL_DIR}" ]]; then
+        log "ERROR: build output is not clean under ${PERF_WORK_DIR}"
         return 20
     fi
+    install_go_toolchain || return $?
 
     log "cloning kubernetes v${SOFTWARE_VERSION} from ${KUBERNETES_REPOSITORY}"
     git clone --depth 1 --branch "v${SOFTWARE_VERSION}" \
@@ -280,7 +363,7 @@ run_kubernetes_benchmarks() {
     env SOFTWARE_VERSION="${SOFTWARE_VERSION}" \
         EXPECTED_ARCH="${EXPECTED_ARCH}" \
         PERF_RUN_ID="${PERF_RUN_ID}" \
-        GO_VERSION="$(go env GOVERSION 2>/dev/null || echo unknown)" \
+        GO_VERSION="$("${GO_BIN}" env GOVERSION 2>/dev/null || echo unknown)" \
         KUBERNETES_REPOSITORY="${KUBERNETES_REPOSITORY}" \
         python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
             --raw-log "${RAW_LOG}" \
@@ -447,7 +530,8 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  KUBERNETES_REPOSITORY, KUBERNETES_BENCHTIME
+  KUBERNETES_REPOSITORY, KUBERNETES_BENCHTIME, GO_VERSION,
+  GO_OFFLINE_DIR, GO_RELEASE_URL
 USAGE
 }
 

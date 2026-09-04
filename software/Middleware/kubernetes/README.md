@@ -15,9 +15,13 @@
 这里的“构建”是从官方仓库按精确 tag 浅克隆源码，并编译基准二进制，
 不安装集群组件（kubelet/apiserver 等），不改动系统 Go 环境：
 
-1. 确认系统 `go` 版本 ≥ 1.26（`1.37.0` 的 `go.mod` 要求 `go 1.26.0`；
-   运行时缺失的 `golang`、`git`、`python3` 等由脚本自动通过 `dnf`
-   安装；非 root Runner 使用 `sudo -n dnf`）。
+1. 安装任务私有 Go 工具链：优先使用离线目录
+   `/home/runner/software/golang/go<版本>.linux-<架构>.tar.gz`
+   （默认 `GO_VERSION=1.26.7`，对应 `1.37.0` 的 `go.mod` 要求
+   `go 1.26.0`；离线目录缺失时从 `go.dev/dl` 下载兜底），校验
+   sha256 后解压到 `${PERF_WORK_DIR}/go-install`，经 `GOROOT`/`PATH`
+   生效。不安装系统级 `golang`；`git`、`python3` 等运行时依赖缺失时
+   仍由脚本通过 `dnf` 安装（非 root Runner 使用 `sudo -n dnf`）。
 2. `git clone --depth 1 --branch v1.37.0` 克隆到本次任务工作目录。
 3. `git describe --tags --exact-match` 校验 tag 必须精确等于 `v1.37.0`，
    校验失败立即退出；实际版本写入
@@ -81,6 +85,7 @@ bash software/Middleware/kubernetes/kubernetes_test.sh \
 - `benchmark_kubernetes.json`：基准的结构化结果；
 - `results.json`：全部结构化指标及其来源字段。
 
-`stop` 阶段删除本次任务创建的工作目录（含源码树与基准二进制）。
+`stop` 阶段删除本次任务创建的工作目录（含源码树、基准二进制与私有
+Go 工具链）。
 基准二进制无守护进程，无需进程级回收；Framework 随后执行 Runner 级
 环境清理。
