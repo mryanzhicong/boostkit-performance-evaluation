@@ -180,6 +180,25 @@ jobs:
           python3 framework/mark_cleanup.py
           --output-dir '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
           --outcome '${{ steps.post_cleanup.outcome }}'
+      - name: Trust runner CA bundle in Node actions
+        if: always()
+        shell: bash
+        run: |
+          # Node-based actions (upload-artifact) use the bundled Mozilla CA
+          # store, which rejects the TLS-intercepting proxy on the dedicated
+          # runners. Point NODE_EXTRA_CA_CERTS at the runner system CA bundle
+          # (RHEL-family first, Debian-family fallback) so Node trusts it too.
+          for bundle in \
+            /etc/pki/tls/certs/ca-bundle.crt \
+            /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem \
+            /etc/ssl/certs/ca-certificates.crt; do
+            if [[ -s "${bundle}" ]]; then
+              echo "NODE_EXTRA_CA_CERTS=${bundle}" >> "${GITHUB_ENV}"
+              echo "Node actions will trust the runner CA bundle at ${bundle}"
+              exit 0
+            fi
+          done
+          echo "No system CA bundle found; leaving Node CA configuration unchanged"
       - name: Upload raw and normalized result
         if: always()
         uses: actions/upload-artifact@v4
