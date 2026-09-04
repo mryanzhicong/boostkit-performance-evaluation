@@ -89,10 +89,15 @@ def run_context_benchmark(output_file, iterations):
                 times["rm"].append(timed(client.rm, file_path))
 
             dir_path = f"{mount_path}{size_name}_dir/"
+            # AGFS mkdir follows POSIX semantics: the parent must already
+            # exist (memfs returns "not found" for the missing parent), so
+            # create it outside the timed loop and clean up afterwards.
+            client.mkdir(dir_path, "755")
             for i in range(iterations):
                 test_dir = f"{dir_path}subdir_{i}/"
                 times["mkdir"].append(timed(client.mkdir, test_dir, "755"))
                 client.rm(test_dir, recursive=True)
+            client.rm(dir_path, recursive=True)
 
             grep_payload = (b"hello world benchmark test openviking context "
                             * (data_size // 40 + 1))[:data_size]
