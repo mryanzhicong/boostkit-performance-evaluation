@@ -1,0 +1,155 @@
+{
+  "benchmark": "zstd_fullbench",
+  "software": "zstd",
+  "version": "1.5.7",
+  "architecture": "x86_64",
+  "timestamp": "2026-09-04T09:43:34Z",
+  "parameters": {
+    "command": [
+      "./fullbench"
+    ],
+    "sample_size_bytes": 10000000,
+    "fullbench_defaults": true
+  },
+  "results": {
+    "scenario_00": {
+      "scenario_id": 0,
+      "scenario": "compress",
+      "speed_mbs": 312.5,
+      "return_value": 3239077
+    },
+    "scenario_01": {
+      "scenario_id": 1,
+      "scenario": "decompress",
+      "speed_mbs": 1381.0,
+      "return_value": 10000000
+    },
+    "scenario_02": {
+      "scenario_id": 2,
+      "scenario": "compress_freshCCtx",
+      "speed_mbs": 313.3,
+      "return_value": 3239077
+    },
+    "scenario_03": {
+      "scenario_id": 3,
+      "scenario": "decompressDCtx",
+      "speed_mbs": 1381.1,
+      "return_value": 10000000
+    },
+    "scenario_04": {
+      "scenario_id": 4,
+      "scenario": "compressContinue",
+      "speed_mbs": 313.4,
+      "return_value": 3239077
+    },
+    "scenario_05": {
+      "scenario_id": 5,
+      "scenario": "compressContinue_extDict",
+      "speed_mbs": 311.8,
+      "return_value": 3239062
+    },
+    "scenario_06": {
+      "scenario_id": 6,
+      "scenario": "decompressContinue",
+      "speed_mbs": 1374.7,
+      "return_value": 10000000
+    },
+    "scenario_07": {
+      "scenario_id": 7,
+      "scenario": "compressStream",
+      "speed_mbs": 287.3,
+      "return_value": 3239075
+    },
+    "scenario_08": {
+      "scenario_id": 8,
+      "scenario": "compressStream_freshCCtx",
+      "speed_mbs": 287.0,
+      "return_value": 3239075
+    },
+    "scenario_09": {
+      "scenario_id": 9,
+      "scenario": "decompressStream",
+      "speed_mbs": 1381.4,
+      "return_value": 10000000
+    },
+    "scenario_10": {
+      "scenario_id": 10,
+      "scenario": "compress2",
+      "speed_mbs": 313.1,
+      "return_value": 3239077
+    },
+    "scenario_11": {
+      "scenario_id": 11,
+      "scenario": "compressStream2, end",
+      "speed_mbs": 313.1,
+      "return_value": 3239077
+    },
+    "scenario_12": {
+      "scenario_id": 12,
+      "scenario": "compressStream2, end & short",
+      "speed_mbs": 311.4,
+      "return_value": 3239077
+    },
+    "scenario_13": {
+      "scenario_id": 13,
+      "scenario": "compressStream2, continue",
+      "speed_mbs": 287.3,
+      "return_value": 3239075
+    },
+    "scenario_14": {
+      "scenario_id": 14,
+      "scenario": "compressStream2, -T2, continue",
+      "speed_mbs": 499.2,
+      "return_value": 3240235
+    },
+    "scenario_15": {
+      "scenario_id": 15,
+      "scenario": "compressStream2, -T2, end",
+      "speed_mbs": 512.3,
+      "return_value": 3240239
+    },
+    "scenario_16": {
+      "scenario_id": 16,
+      "scenario": "compressSequences",
+      "speed_mbs": 828.7,
+      "return_value": 3239695
+    },
+    "scenario_17": {
+      "scenario_id": 17,
+      "scenario": "compressSequencesAndLiterals",
+      "speed_mbs": 934.4,
+      "return_value": 3239695
+    },
+    "scenario_18": {
+      "scenario_id": 18,
+      "scenario": "convertSequences (1st block)",
+      "speed_mbs": 10915.4,
+      "return_value": 11846
+    },
+    "scenario_19": {
+      "scenario_id": 19,
+      "scenario": "get1BlockSummary (1st block)",
+      "speed_mbs": 24363.8,
+      "return_value": 11846
+    },
+    "scenario_20": {
+      "scenario_id": 20,
+      "scenario": "decodeLiteralsHeader (1st block",
+      "speed_mbs": 184929.8,
+      "return_value": 39
+    },
+    "scenario_21": {
+      "scenario_id": 21,
+      "scenario": "decodeLiteralsBlock (1st block)",
+      "speed_mbs": 12595.6,
+      "return_value": 14193
+    },
+    "scenario_22": {
+      "scenario_id": 22,
+      "scenario": "decodeSeqHeaders (1st block)",
+      "speed_mbs": 52094.9,
+      "return_value": 49
+    }
+  },
+  "raw_output": "*** Zstandard speed analyzer 1.5.7 64-bits, by Yann Collet (Sep  4 2026) ***\n\n                                                                      \n Sample 10000000 bytes : \n\n 0#compress                       :   312.4 MB/s  ( 3239077) \n 0#compress                       :   312.5 MB/s  ( 3239077) \n 0#compress                       :   312.5 MB/s  ( 3239077) \n 0#compress                       :   312.5 MB/s  ( 3239077) \n 0#compress                       :   312.5 MB/s  ( 3239077) \n 0#compress                       :   312.5 MB/s  ( 3239077) \n\n 1#decompress                     :  1380.6 MB/s  (10000000) \n 1#decompress                     :  1380.8 MB/s  (10000000) \n 1#decompress                     :  1381.0 MB/s  (10000000) \n 1#decompress                     :  1381.0 MB/s  (10000000) \n 1#decompress                     :  1381.0 MB/s  (10000000) \n 1#decompress                     :  1381.0 MB/s  (10000000) \n\n 2#compress_freshCCtx             :   313.2 MB/s  ( 3239077) \n 2#compress_freshCCtx             :   313.2 MB/s  ( 3239077) \n 2#compress_freshCCtx             :   313.2 MB/s  ( 3239077) \n 2#compress_freshCCtx             :   313.2 MB/s  ( 3239077) \n 2#compress_freshCCtx             :   313.2 MB/s  ( 3239077) \n 2#compress_freshCCtx             :   313.3 MB/s  ( 3239077) \n\n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n 3#decompressDCtx                 :  1381.1 MB/s  (10000000) \n\n 4#compressContinue               :   313.1 MB/s  ( 3239077) \n 4#compressContinue               :   313.3 MB/s  ( 3239077) \n 4#compressContinue               :   313.4 MB/s  ( 3239077) \n 4#compressContinue               :   313.4 MB/s  ( 3239077) \n 4#compressContinue               :   313.4 MB/s  ( 3239077) \n 4#compressContinue               :   313.4 MB/s  ( 3239077) \n\n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n 5#compressContinue_extDict       :   311.8 MB/s  ( 3239062) \n\n 6#decompressContinue             :  1374.3 MB/s  (10000000) \n 6#decompressContinue             :  1374.7 MB/s  (10000000) \n 6#decompressContinue             :  1374.7 MB/s  (10000000) \n 6#decompressContinue             :  1374.7 MB/s  (10000000) \n 6#decompressContinue             :  1374.7 MB/s  (10000000) \n 6#decompressContinue             :  1374.7 MB/s  (10000000) \n\n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n 7#compressStream                 :   287.3 MB/s  ( 3239075) \n\n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n 8#compressStream_freshCCtx       :   287.0 MB/s  ( 3239075) \n\n 9#decompressStream               :  1381.4 MB/s  (10000000) \n 9#decompressStream               :  1381.4 MB/s  (10000000) \n 9#decompressStream               :  1381.4 MB/s  (10000000) \n 9#decompressStream               :  1381.4 MB/s  (10000000) \n 9#decompressStream               :  1381.4 MB/s  (10000000) \n 9#decompressStream               :  1381.4 MB/s  (10000000) \n\n10#compress2                      :   313.0 MB/s  ( 3239077) \n10#compress2                      :   313.0 MB/s  ( 3239077) \n10#compress2                      :   313.0 MB/s  ( 3239077) \n10#compress2                      :   313.1 MB/s  ( 3239077) \n10#compress2                      :   313.1 MB/s  ( 3239077) \n10#compress2                      :   313.1 MB/s  ( 3239077) \n\n11#compressStream2, end           :   313.0 MB/s  ( 3239077) \n11#compressStream2, end           :   313.0 MB/s  ( 3239077) \n11#compressStream2, end           :   313.0 MB/s  ( 3239077) \n11#compressStream2, end           :   313.1 MB/s  ( 3239077) \n11#compressStream2, end           :   313.1 MB/s  ( 3239077) \n11#compressStream2, end           :   313.1 MB/s  ( 3239077) \n\n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n12#compressStream2, end & short   :   311.4 MB/s  ( 3239077) \n\n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n13#compressStream2, continue      :   287.3 MB/s  ( 3239075) \n\n14#compressStream2, -T2, continue :   497.9 MB/s  ( 3240235) \n14#compressStream2, -T2, continue :   497.9 MB/s  ( 3240235) \n14#compressStream2, -T2, continue :   498.1 MB/s  ( 3240235) \n14#compressStream2, -T2, continue :   498.1 MB/s  ( 3240235) \n14#compressStream2, -T2, continue :   498.1 MB/s  ( 3240235) \n14#compressStream2, -T2, continue :   499.2 MB/s  ( 3240235) \n\n15#compressStream2, -T2, end      :   497.9 MB/s  ( 3240239) \n15#compressStream2, -T2, end      :   498.5 MB/s  ( 3240239) \n15#compressStream2, -T2, end      :   498.5 MB/s  ( 3240239) \n15#compressStream2, -T2, end      :   498.5 MB/s  ( 3240239) \n15#compressStream2, -T2, end      :   501.9 MB/s  ( 3240239) \n15#compressStream2, -T2, end      :   512.3 MB/s  ( 3240239) \n\n16#compressSequences              :   828.2 MB/s  ( 3239695) \n16#compressSequences              :   828.5 MB/s  ( 3239695) \n16#compressSequences              :   828.5 MB/s  ( 3239695) \n16#compressSequences              :   828.5 MB/s  ( 3239695) \n16#compressSequences              :   828.7 MB/s  ( 3239695) \n16#compressSequences              :   828.7 MB/s  ( 3239695) \n\n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n17#compressSequencesAndLiterals   :   934.4 MB/s  ( 3239695) \n\n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n18#convertSequences (1st block)   : 10915.4 MB/s  (   11846) \n\n19#get1BlockSummary (1st block)   : 24360.4 MB/s  (   11846) \n19#get1BlockSummary (1st block)   : 24360.4 MB/s  (   11846) \n19#get1BlockSummary (1st block)   : 24361.2 MB/s  (   11846) \n19#get1BlockSummary (1st block)   : 24362.6 MB/s  (   11846) \n19#get1BlockSummary (1st block)   : 24362.6 MB/s  (   11846) \n19#get1BlockSummary (1st block)   : 24363.8 MB/s  (   11846) \n\n20#decodeLiteralsHeader (1st block:184877.7 MB/s  (      39) \n20#decodeLiteralsHeader (1st block:184877.7 MB/s  (      39) \n20#decodeLiteralsHeader (1st block:184877.7 MB/s  (      39) \n20#decodeLiteralsHeader (1st block:184877.7 MB/s  (      39) \n20#decodeLiteralsHeader (1st block:184877.7 MB/s  (      39) \n20#decodeLiteralsHeader (1st block:184929.8 MB/s  (      39) \n\n21#decodeLiteralsBlock (1st block): 12593.6 MB/s  (   14193) \n21#decodeLiteralsBlock (1st block): 12595.6 MB/s  (   14193) \n21#decodeLiteralsBlock (1st block): 12595.6 MB/s  (   14193) \n21#decodeLiteralsBlock (1st block): 12595.6 MB/s  (   14193) \n21#decodeLiteralsBlock (1st block): 12595.6 MB/s  (   14193) \n21#decodeLiteralsBlock (1st block): 12595.6 MB/s  (   14193) \n\n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n22#decodeSeqHeaders (1st block)   : 52094.9 MB/s  (      49) \n"
+}
