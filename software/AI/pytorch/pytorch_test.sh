@@ -253,7 +253,6 @@ run_pytorch_benchmarks() {
     log "running the torch.utils.benchmark operator suite"
     set +e
     "${PYTORCH_PYTHON}" "${SCRIPT_DIR}/scripts/run_torch_benchmark.py" \
-        --raw-stdout \
         --threads "${TORCH_THREAD_LEVELS}" \
         --results "${RESULTS_DIR}/results.json" 2>&1 | tee "${raw_output}"
     pipeline_status="${PIPESTATUS[0]}"
