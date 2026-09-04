@@ -77,7 +77,9 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
-    OPENVIKING_VENV="${PERF_WORK_DIR}/venv"
+    # The framework pre-creates ${PERF_WORK_DIR}/venv before every stage, so
+    # the task-private environment must live under a different name.
+    OPENVIKING_VENV="${PERF_WORK_DIR}/openviking-venv"
     OPENVIKING_PYTHON="${OPENVIKING_VENV}/bin/python"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE OPENVIKING_ITERATIONS TMPDIR

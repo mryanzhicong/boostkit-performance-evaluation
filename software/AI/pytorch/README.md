@@ -16,12 +16,13 @@
 源码仓库编译，也不安装系统级 torch RPM。
 
 1. 确认系统 `python3` 版本在官方 CPU wheel 支持矩阵内（`3.10`–`3.15`）。
-2. 在本次任务工作目录 `PERF_WORK_DIR/venv` 中创建任务私有虚拟环境。
+2. 在本次任务工作目录 `PERF_WORK_DIR/torch-venv` 中创建任务私有虚拟环境
+   （框架会为每个 case 预建 `PERF_WORK_DIR/venv`，该路径被框架保留）。
 3. 从 PyTorch 官方 CPU wheel 索引安装精确版本，依赖包来自固定索引：
 
 ```bash
-python3 -m venv "${PERF_WORK_DIR}/venv"
-"${PERF_WORK_DIR}/venv/bin/pip" install --no-cache-dir \
+python3 -m venv "${PERF_WORK_DIR}/torch-venv"
+"${PERF_WORK_DIR}/torch-venv/bin/pip" install --no-cache-dir \
   --index-url https://download.pytorch.org/whl/cpu \
   --extra-index-url https://pypi.org/simple \
   "torch==2.13.0+cpu"
@@ -42,7 +43,7 @@ python3 -m venv "${PERF_WORK_DIR}/venv"
 预先存在的系统级 torch。
 
 ```bash
-"${PERF_WORK_DIR}/venv/bin/python" - <<'PY'
+"${PERF_WORK_DIR}/torch-venv/bin/python" - <<'PY'
 import torch
 torch.manual_seed(0)
 b = torch.randn(256, 256) @ torch.randn(256, 256)

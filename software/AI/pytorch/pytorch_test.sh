@@ -72,7 +72,9 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
-    PYTORCH_VENV="${PERF_WORK_DIR}/venv"
+    # The framework pre-creates ${PERF_WORK_DIR}/venv before every stage, so
+    # the task-private environment must live under a different name.
+    PYTORCH_VENV="${PERF_WORK_DIR}/torch-venv"
     PYTORCH_PYTHON="${PYTORCH_VENV}/bin/python"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TORCH_THREAD_LEVELS TMPDIR
