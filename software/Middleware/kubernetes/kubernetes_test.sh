@@ -4,8 +4,8 @@
 # The software under test is the upstream Kubernetes repository
 # (https://github.com/kubernetes/kubernetes) cloned at an exact release tag.
 # The repository is fully vendored, so its own official `go test -bench`
-# benchmarks are compiled and executed hermetically (GOWORK=off, vendor mode,
-# network disabled) inside an isolated work directory.
+# benchmarks are compiled and executed hermetically (go.work workspace mode with
+# vendor mode, network disabled) inside an isolated work directory.
 #
 # Go itself is NOT installed from the system package manager: a task-private
 # official Go toolchain (verified sha256) is unpacked from the runner offline
@@ -161,7 +161,6 @@ configure_go_environment() {
     export GOCACHE="${PERF_WORK_DIR}/go-cache"
     export GOTOOLCHAIN=local
     export GOENV=off
-    export GOWORK=off
 }
 
 copy_or_download_go_archive() {
@@ -280,7 +279,7 @@ build_kubernetes() {
         log "compiling benchmark binary for ${package}"
         (
             cd "${SOURCE_DIR}"
-            env GOWORK=off GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off \
+            env GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off \
                 GOTOOLCHAIN=local \
                 go test -c -o "${BENCH_BIN_DIR}/${bin_name}.test" "./${package}"
         ) || {

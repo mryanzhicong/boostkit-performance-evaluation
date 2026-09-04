@@ -26,12 +26,16 @@
 3. `git describe --tags --exact-match` 校验 tag 必须精确等于 `v1.37.0`，
    校验失败立即退出；实际版本写入
    `results/<版本>/<运行 ID>/actual-version.txt`。
-4. 上游仓库自带完整 `vendor/` 目录，按 Kubernetes 自身测试入口
-   （`hack/lib/golang.sh`）的方式关闭 workspace 并强制 vendor 模式编译：
+4. 上游仓库自带完整 `vendor/` 目录，保留其 `go.work`（workspace 模式）并
+   强制 vendor 模式编译。注意不能设置 `GOWORK=off`：上游的
+   `vendor/modules.txt` 按 workspace 语义生成（staging 模块的 replace 标记
+   仅在多模块校验下一致），关闭 workspace 会触发
+   `inconsistent vendoring`；而 workspace 模式下 `-mod=vendor` 同样使用
+   根 `vendor/` 目录，可完全离线编译：
 
 ```bash
 cd "${PERF_WORK_DIR}/kubernetes"
-env GOWORK=off GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local \
+env GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local \
     go test -c -o "${PERF_WORK_DIR}/bin/<基准名>.test" ./<基准包>
 ```
 
