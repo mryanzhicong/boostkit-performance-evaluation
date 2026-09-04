@@ -92,17 +92,15 @@ def run_micro_benchmark(output_file, iterations):
             op_times = {}
             for op_name in MICRO_OPERATIONS:
                 latencies = []
-                write_path = None
                 for i in range(iterations):
                     file_path = f"{mount_path}{size_name}_micro_{i}.bin"
                     start = time.perf_counter()
                     if op_name == "write":
                         client.write(file_path, payload)
-                        write_path = file_path
                     elif op_name == "read":
-                        client.read(write_path)
+                        client.read(file_path)
                     elif op_name == "stat":
-                        client.stat(write_path)
+                        client.stat(file_path)
                     elif op_name == "ls":
                         client.ls(mount_path)
                     elif op_name == "rm":
