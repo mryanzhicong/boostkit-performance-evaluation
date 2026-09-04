@@ -33,8 +33,10 @@ STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
 # Fixed sources for the official wheel and its Python dependencies.
+# Packages resolve through the Huawei PyPI mirror because domestic runners
+# cannot reliably reach files.pythonhosted.org.
 OPENVIKING_REPOSITORY="${OPENVIKING_REPOSITORY:-https://github.com/volcengine/OpenViking}"
-OPENVIKING_PACKAGE_INDEX="${OPENVIKING_PACKAGE_INDEX:-https://pypi.org/simple}"
+OPENVIKING_PACKAGE_INDEX="${OPENVIKING_PACKAGE_INDEX:-https://mirrors.huaweicloud.com/repository/pypi/simple}"
 
 # Benchmark iterations per operation (overridable).
 OPENVIKING_ITERATIONS="${OPENVIKING_ITERATIONS:-3}"
