@@ -232,6 +232,7 @@ build_glibc() {
     mkdir -p "${BUILD_DIR}"
     (
         cd "${BUILD_DIR}"
+        unset LD_LIBRARY_PATH
         "${SRC_DIR}/configure" \
             --prefix="${INSTALL_DIR}" \
             --disable-werror
@@ -242,6 +243,7 @@ build_glibc() {
     log "building glibc ${SOFTWARE_VERSION} with make -j$(nproc)"
     (
         cd "${BUILD_DIR}"
+        unset LD_LIBRARY_PATH
         make -j"$(nproc)"
     ) || {
         log "ERROR: glibc make build failed"
@@ -254,6 +256,7 @@ build_glibc() {
     log "installing glibc ${SOFTWARE_VERSION} into the isolated prefix ${INSTALL_DIR}"
     (
         cd "${BUILD_DIR}"
+        unset LD_LIBRARY_PATH
         make install cross-compiling=yes
     ) || {
         log "ERROR: glibc installation into ${INSTALL_DIR} failed"
