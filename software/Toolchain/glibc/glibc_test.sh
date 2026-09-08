@@ -290,6 +290,10 @@ build_glibc() {
 
 start_glibc_runtime() {
     initialize_runtime || return $?
+    # Each framework stage starts a new shell and therefore inherits the
+    # runner environment again.  Do not let host library search paths affect
+    # the freshly built glibc benchtest tools.
+    unset LD_LIBRARY_PATH
     if [[ ! -x "${LDCONFIG_BIN}" ]]; then
         log "ERROR: glibc is not built; run the build stage first"
         return 40
@@ -322,6 +326,9 @@ start_glibc_runtime() {
 
 run_glibc_benchmarks() {
     initialize_runtime || return $?
+    # See start_glibc_runtime: benchtest binaries must run without a host
+    # LD_LIBRARY_PATH.
+    unset LD_LIBRARY_PATH
     if [[ ! -x "${LDCONFIG_BIN}" ]]; then
         log "ERROR: glibc is not built; run the build stage first"
         return 50
