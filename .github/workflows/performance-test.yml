@@ -181,16 +181,6 @@ jobs:
           --outcome '${{ steps.post_cleanup.outcome }}'
       - name: Upload raw and normalized result
         if: always()
-        # The TLS-intercepting proxy on the dedicated runners breaks Node's
-        # certificate validation, and the system CA bundle can be rebuilt
-        # mid-run (e.g. by an unattended ca-certificates upgrade). Disable TLS
-        # verification for this Node action only: artifacts are non-sensitive
-        # performance results and must not be lost to proxy churn.
-        env:
-          http_proxy: ${{ secrets.PERF_PROXY }}
-          https_proxy: ${{ secrets.PERF_PROXY }}
-          no_proxy: localhost,127.0.0.1,::1
-          NODE_TLS_REJECT_UNAUTHORIZED: "0"
         uses: actions/upload-artifact@v4
         with:
           name: result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
