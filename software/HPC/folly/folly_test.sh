@@ -22,6 +22,7 @@ FAST_FLOAT_DIR=""
 MANIFEST_FILE=""
 COMPILER_BINARY=""
 COMPILER_VERSION_STRING=""
+SYSTEM_FMT_CMAKE_DIR=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -84,9 +85,20 @@ require_commands() {
 
 check_system_dependencies() {
     # Required development packages per CMake/folly-deps.cmake and the
-    # BUILD_BENCHMARKS code path of the official CMakeLists.txt.
-    local missing=0
-    # Boost >= 1.69.0 is REQUIRED.
+    # BUILD_BENCHMARKS code path of the official CMakeLists.txt.  Verify fmt
+    # by its RPM-owned paths: a separately compiled /usr/local copy must not
+    # satisfy this check or be selected by CMake.
+    local verify_only="${1:-false}"
+    local missing=0 check library header package compiler_output
+    local packages=()
+    local checks=(
+        "libevent:event2/event.h:libevent-devel"
+        "openssl:openssl/ssl.h:openssl-devel"
+        "glog:glog/logging.h:glog-devel"
+        "gtest:gtest/gtest.h:gtest-devel"
+        "gmock:gmock/gmock.h:gtest-devel"
+    )
+
     if ! printf '%s\n' \
         '#include <boost/version.hpp>' \
         '#if BOOST_VERSION < 106900' \
@@ -94,32 +106,58 @@ check_system_dependencies() {
         '#endif' \
         'int main(){return 0;}' \
         | g++ -x c++ -fsyntax-only - 2>/dev/null; then
-        log_message "ERROR: Boost >= 1.69 development headers are missing"
+        log_message "Boost >= 1.69 development headers are missing"
+        packages+=(boost-devel)
         missing=1
     fi
-    local check library header compiler_output
-    local checks=(
-        "libevent:event2/event.h"
-        "openssl:openssl/ssl.h"
-        "fmt:fmt/format.h"
-        "glog:glog/logging.h"
-        "gtest:gtest/gtest.h"
-        "gmock:gmock/gmock.h"
-    )
+
+    if [[ ! -f /usr/include/fmt/format.h || \
+          ! -f /usr/lib64/cmake/fmt/fmt-config.cmake ]]; then
+        log_message "system fmt-devel headers or CMake configuration are missing"
+        packages+=(fmt-devel)
+        missing=1
+    else
+        SYSTEM_FMT_CMAKE_DIR="/usr/lib64/cmake/fmt"
+    fi
+
     for check in "${checks[@]}"; do
         library="${check%%:*}"
-        header="${check#*:}"
+        check="${check#*:}"
+        header="${check%%:*}"
+        package="${check#*:}"
         if ! compiler_output="$(printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>&1)"; then
-            log_message "ERROR: development headers for ${library} are missing"
+            log_message "development headers for ${library} are missing"
             printf '%s\n' "${compiler_output}" >&2
+            packages+=("${package}")
             missing=1
         fi
     done
-    [[ "${missing}" -eq 0 ]] || {
-        log_message "ERROR: install the missing development packages before retrying"
+
+    if [[ "${missing}" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "${verify_only}" == "true" ]]; then
+        log_message "ERROR: required Folly development packages remain unavailable"
         return 30
-    }
+    fi
+    if ! command -v dnf >/dev/null 2>&1; then
+        log_message "ERROR: dnf is required to install Folly development packages"
+        return 30
+    fi
+
+    mapfile -t packages < <(printf '%s\n' "${packages[@]}" | sort -u)
+    log_message "installing missing Folly development packages: ${packages[*]}"
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf install -y "${packages[@]}" || return 30
+    elif ! command -v sudo >/dev/null 2>&1; then
+        log_message "ERROR: sudo is required to install Folly development packages"
+        return 30
+    elif ! sudo -n dnf install -y "${packages[@]}"; then
+        log_message "ERROR: failed to install Folly development packages"
+        return 30
+    fi
+    check_system_dependencies true
 }
 
 check_architecture() {
@@ -366,6 +404,7 @@ build_folly() {
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_BENCHMARKS=ON \
         -DUSE_CMAKE_GOOGLE_TEST_INTEGRATION=OFF \
+        -Dfmt_DIR="${SYSTEM_FMT_CMAKE_DIR}" \
         "${cmake_fast_float_args[@]}" || {
         log_message "ERROR: cmake configure of folly failed"
         return 40
