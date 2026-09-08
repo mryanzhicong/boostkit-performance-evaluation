@@ -190,9 +190,6 @@ jobs:
           # The forward proxy presents a certificate trusted by the runner's
           # system CA bundle; make that bundle available to the Node action.
           NODE_EXTRA_CA_CERTS: /etc/pki/tls/certs/ca-bundle.crt
-          # upload-artifact otherwise sends five 8 MiB Blob blocks in
-          # parallel. Keep one upload stream for the forward proxy.
-          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: "1"
         uses: actions/upload-artifact@v4
         with:
           name: result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
