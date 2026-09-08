@@ -129,14 +129,16 @@ install_dependencies() {
         return 0
     fi
     log "installing missing OpenJDK test dependencies"
+    local package_manager_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || package_manager_options+=("--setopt=proxy=${PERF_PROXY}")
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
+            if ! dnf "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
+            if ! sudo -n dnf "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
@@ -146,12 +148,12 @@ install_dependencies() {
         fi
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
+            if ! yum "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
+            if ! sudo -n yum "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
                 log "ERROR: failed to install OpenJDK test dependencies"
                 return 30
             fi

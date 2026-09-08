@@ -103,6 +103,9 @@ initialize_runtime() {
 }
 
 run_as_root() {
+    if [[ ( "$1" == dnf || "$1" == yum ) && -n "${PERF_PROXY:-}" ]]; then
+        set -- "$1" "--setopt=proxy=${PERF_PROXY}" "${@:2}"
+    fi
     if [[ "${EUID}" -eq 0 ]]; then
         "$@"
         return

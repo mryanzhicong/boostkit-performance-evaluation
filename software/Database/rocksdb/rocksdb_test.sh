@@ -103,10 +103,12 @@ install_rocksdb_dependencies() {
     if [[ "${#packages[@]}" -eq 0 ]]; then
         return 0
     fi
+    local dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     log "installing missing RocksDB dependencies: ${packages[*]}"
     if [[ "$(id -u)" -eq 0 ]]; then
-        dnf install -y "${packages[@]}" || return 30
-    elif command -v sudo >/dev/null 2>&1 && sudo -n dnf install -y "${packages[@]}"; then
+        dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+    elif command -v sudo >/dev/null 2>&1 && sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
         :
     else
         log "ERROR: cannot install required RocksDB dependencies"

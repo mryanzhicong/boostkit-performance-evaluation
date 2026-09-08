@@ -183,14 +183,16 @@ install_oceanbase_dependencies() {
         return 0
     fi
 
+    local dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     log "installing missing OceanBase test dependencies: ${packages[*]}"
     if [[ "$(id -u)" -eq 0 ]]; then
-        if ! dnf install -y "${packages[@]}"; then
+        if ! dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
             log "ERROR: dnf install failed for ${packages[*]}"
             return 30
         fi
     elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
-        if ! sudo dnf install -y "${packages[@]}"; then
+        if ! sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
             log "ERROR: sudo dnf install failed for ${packages[*]}"
             return 30
         fi

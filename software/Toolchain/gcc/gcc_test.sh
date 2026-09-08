@@ -139,16 +139,18 @@ install_dependencies() {
     fi
 
     log "installing missing GCC build dependencies"
+    local package_manager_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || package_manager_options+=("--setopt=proxy=${PERF_PROXY}")
     if command -v dnf >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
+            if ! dnf "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
+            if ! sudo -n dnf "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
@@ -160,14 +162,14 @@ install_dependencies() {
         fi
     elif command -v yum >/dev/null 2>&1; then
         if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
+            if ! yum "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"
                 return 30
             fi
         elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
+            if ! sudo -n yum "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
                 gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
                 "${rpm_spec_packages[@]}"; then
                 log "ERROR: failed to install GCC build dependencies"

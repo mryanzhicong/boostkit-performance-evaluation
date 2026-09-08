@@ -142,13 +142,15 @@ require_brpc_dependencies() {
         log_message "ERROR: dnf is required to install BRPC build prerequisites"
         return 30
     fi
+    local dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     log_message "installing missing BRPC build packages: ${packages[*]}"
     if [[ "$(id -u)" -eq 0 ]]; then
-        dnf install -y "${packages[@]}" || return 30
+        dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
     elif ! command -v sudo >/dev/null 2>&1; then
         log_message "ERROR: sudo is required to install BRPC build prerequisites"
         return 30
-    elif ! sudo -n dnf install -y "${packages[@]}"; then
+    elif ! sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
         log_message "ERROR: failed to install BRPC build prerequisites"
         return 30
     fi

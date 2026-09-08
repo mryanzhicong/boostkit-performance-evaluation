@@ -123,13 +123,15 @@ require_pytorch_tools() {
         return 30
     fi
 
+    local dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     log "installing missing PyTorch test packages: ${packages[*]}"
     if [[ "$(id -u)" -eq 0 ]]; then
-        dnf install -y "${packages[@]}" || return 30
+        dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
     elif ! command -v sudo >/dev/null 2>&1; then
         log "ERROR: sudo is required to install PyTorch test prerequisites"
         return 30
-    elif ! sudo -n dnf install -y "${packages[@]}"; then
+    elif ! sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
         log "ERROR: failed to install PyTorch test prerequisites"
         return 30
     fi
