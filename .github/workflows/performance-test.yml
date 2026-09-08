@@ -181,14 +181,9 @@ jobs:
           --outcome '${{ steps.post_cleanup.outcome }}'
       - name: Upload raw and normalized result
         if: always()
-        # upload-artifact uses the Azure Blob SDK for the data transfer.  Its
-        # bundled HTTP client reads the uppercase proxy environment variables.
         env:
-          HTTP_PROXY: ${{ secrets.PERF_PROXY }}
-          HTTPS_PROXY: ${{ secrets.PERF_PROXY }}
-          NO_PROXY: localhost,127.0.0.1,::1
           # upload-artifact otherwise sends five 8 MiB Blob blocks in
-          # parallel.  Keep one upload stream for the forward proxy.
+          # parallel. Keep one upload stream during the direct-connect test.
           ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: "1"
         uses: actions/upload-artifact@v4
         with:
