@@ -1,0 +1,206 @@
+[envoy-k6] scenario: direct_response
+[envoy-k6] command: /home/runner/boostkit-perf/envoy/1.39.1/aarch64/34200427587-1/tools/k6 run --vus 30 --duration 20s --summary-export /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/benchmark_direct_response_summary.json /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/envoy_k6_request.js
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/envoy_k6_request.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 50s max duration (incl. graceful stop):
+              * default: 30 looping VUs for 20s (gracefulStop: 30s)
+
+
+running (01.0s), 30/30 VUs, 3030 complete and 0 interrupted iterations
+default   [   5% ] 30 VUs  01.0s/20s
+
+running (02.0s), 30/30 VUs, 6243 complete and 0 interrupted iterations
+default   [  10% ] 30 VUs  02.0s/20s
+
+running (03.0s), 30/30 VUs, 9465 complete and 0 interrupted iterations
+default   [  15% ] 30 VUs  03.0s/20s
+
+running (04.0s), 30/30 VUs, 12805 complete and 0 interrupted iterations
+default   [  20% ] 30 VUs  04.0s/20s
+
+running (05.0s), 30/30 VUs, 16501 complete and 0 interrupted iterations
+default   [  25% ] 30 VUs  05.0s/20s
+
+running (06.0s), 30/30 VUs, 20313 complete and 0 interrupted iterations
+default   [  30% ] 30 VUs  06.0s/20s
+
+running (07.0s), 30/30 VUs, 24247 complete and 0 interrupted iterations
+default   [  35% ] 30 VUs  07.0s/20s
+
+running (08.0s), 30/30 VUs, 28062 complete and 0 interrupted iterations
+default   [  40% ] 30 VUs  08.0s/20s
+
+running (09.0s), 30/30 VUs, 31963 complete and 0 interrupted iterations
+default   [  45% ] 30 VUs  09.0s/20s
+
+running (10.0s), 30/30 VUs, 35923 complete and 0 interrupted iterations
+default   [  50% ] 30 VUs  10.0s/20s
+
+running (11.0s), 30/30 VUs, 39963 complete and 0 interrupted iterations
+default   [  55% ] 30 VUs  11.0s/20s
+
+running (12.0s), 30/30 VUs, 43980 complete and 0 interrupted iterations
+default   [  60% ] 30 VUs  12.0s/20s
+
+running (13.0s), 30/30 VUs, 47931 complete and 0 interrupted iterations
+default   [  65% ] 30 VUs  13.0s/20s
+
+running (14.0s), 30/30 VUs, 52309 complete and 0 interrupted iterations
+default   [  70% ] 30 VUs  14.0s/20s
+
+running (15.0s), 30/30 VUs, 56574 complete and 0 interrupted iterations
+default   [  75% ] 30 VUs  15.0s/20s
+
+running (16.0s), 30/30 VUs, 60577 complete and 0 interrupted iterations
+default   [  80% ] 30 VUs  16.0s/20s
+
+running (17.0s), 30/30 VUs, 64705 complete and 0 interrupted iterations
+default   [  85% ] 30 VUs  17.0s/20s
+
+running (18.0s), 30/30 VUs, 68775 complete and 0 interrupted iterations
+default   [  90% ] 30 VUs  18.0s/20s
+
+running (19.0s), 30/30 VUs, 73108 complete and 0 interrupted iterations
+default   [  95% ] 30 VUs  19.0s/20s
+
+running (20.0s), 30/30 VUs, 77426 complete and 0 interrupted iterations
+default   [ 100% ] 30 VUs  20.0s/20s
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=1.32ms min=199.47µs med=834.13µs max=28.31ms p(90)=2.33ms  p(95)=4.18ms
+      { expected_response:true }...: avg=1.32ms min=199.47µs med=834.13µs max=28.31ms p(90)=2.33ms  p(95)=4.18ms
+    http_req_failed................: 0.00%  0 out of 77530
+    http_reqs......................: 77530  3875.664643/s
+
+    EXECUTION
+    iteration_duration.............: avg=7.69ms min=2.22ms   med=4.99ms   max=49.55ms p(90)=15.29ms p(95)=17.1ms
+    iterations.....................: 77530  3875.664643/s
+    vus............................: 30     min=30         max=30
+    vus_max........................: 30     min=30         max=30
+
+    NETWORK
+    data_received..................: 110 MB 5.5 MB/s
+    data_sent......................: 132 MB 6.6 MB/s
+
+
+
+
+running (20.0s), 00/30 VUs, 77530 complete and 0 interrupted iterations
+default ✓ [ 100% ] 30 VUs  20s
+
+[envoy-k6] scenario: reverse_proxy
+[envoy-k6] command: /home/runner/boostkit-perf/envoy/1.39.1/aarch64/34200427587-1/tools/k6 run --vus 30 --duration 20s --summary-export /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/benchmark_reverse_proxy_summary.json /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/envoy_k6_request.js
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Middleware/envoy/1.39.1/aarch64/34200427587-1/envoy_k6_request.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 50s max duration (incl. graceful stop):
+              * default: 30 looping VUs for 20s (gracefulStop: 30s)
+
+
+running (01.0s), 30/30 VUs, 2391 complete and 0 interrupted iterations
+default   [   5% ] 30 VUs  01.0s/20s
+
+running (02.0s), 30/30 VUs, 5489 complete and 0 interrupted iterations
+default   [  10% ] 30 VUs  02.0s/20s
+
+running (03.0s), 30/30 VUs, 8916 complete and 0 interrupted iterations
+default   [  15% ] 30 VUs  03.0s/20s
+
+running (04.0s), 30/30 VUs, 12478 complete and 0 interrupted iterations
+default   [  20% ] 30 VUs  04.0s/20s
+
+running (05.0s), 30/30 VUs, 15926 complete and 0 interrupted iterations
+default   [  25% ] 30 VUs  05.0s/20s
+
+running (06.0s), 30/30 VUs, 19264 complete and 0 interrupted iterations
+default   [  30% ] 30 VUs  06.0s/20s
+
+running (07.0s), 30/30 VUs, 22505 complete and 0 interrupted iterations
+default   [  35% ] 30 VUs  07.0s/20s
+
+running (08.0s), 30/30 VUs, 25946 complete and 0 interrupted iterations
+default   [  40% ] 30 VUs  08.0s/20s
+
+running (09.0s), 30/30 VUs, 29590 complete and 0 interrupted iterations
+default   [  45% ] 30 VUs  09.0s/20s
+
+running (10.0s), 30/30 VUs, 33067 complete and 0 interrupted iterations
+default   [  50% ] 30 VUs  10.0s/20s
+
+running (11.0s), 30/30 VUs, 36750 complete and 0 interrupted iterations
+default   [  55% ] 30 VUs  11.0s/20s
+
+running (12.0s), 30/30 VUs, 40826 complete and 0 interrupted iterations
+default   [  60% ] 30 VUs  12.0s/20s
+
+running (13.0s), 30/30 VUs, 44524 complete and 0 interrupted iterations
+default   [  65% ] 30 VUs  13.0s/20s
+
+running (14.0s), 30/30 VUs, 48300 complete and 0 interrupted iterations
+default   [  70% ] 30 VUs  14.0s/20s
+
+running (15.0s), 30/30 VUs, 52280 complete and 0 interrupted iterations
+default   [  75% ] 30 VUs  15.0s/20s
+
+running (16.0s), 30/30 VUs, 56170 complete and 0 interrupted iterations
+default   [  80% ] 30 VUs  16.0s/20s
+
+running (17.0s), 30/30 VUs, 60094 complete and 0 interrupted iterations
+default   [  85% ] 30 VUs  17.0s/20s
+
+running (18.0s), 30/30 VUs, 63928 complete and 0 interrupted iterations
+default   [  90% ] 30 VUs  18.0s/20s
+
+running (19.0s), 30/30 VUs, 67826 complete and 0 interrupted iterations
+default   [  95% ] 30 VUs  19.0s/20s
+
+running (20.0s), 30/30 VUs, 71769 complete and 0 interrupted iterations
+default   [ 100% ] 30 VUs  20.0s/20s
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=2.14ms min=382.63µs med=1.63ms max=74.02ms p(90)=3.41ms  p(95)=4.76ms 
+      { expected_response:true }...: avg=2.14ms min=382.63µs med=1.63ms max=74.02ms p(90)=3.41ms  p(95)=4.76ms 
+    http_req_failed................: 0.00%  0 out of 71827
+    http_reqs......................: 71827  3590.610377/s
+
+    EXECUTION
+    iteration_duration.............: avg=8.3ms  min=2.54ms   med=5.75ms max=136.2ms p(90)=16.06ms p(95)=18.03ms
+    iterations.....................: 71827  3590.610377/s
+    vus............................: 30     min=30         max=30
+    vus_max........................: 30     min=30         max=30
+
+    NETWORK
+    data_received..................: 106 MB 5.3 MB/s
+    data_sent......................: 122 MB 6.1 MB/s
+
+
+
+
+running (20.0s), 00/30 VUs, 71827 complete and 0 interrupted iterations
+default ✓ [ 100% ] 30 VUs  20s
+
