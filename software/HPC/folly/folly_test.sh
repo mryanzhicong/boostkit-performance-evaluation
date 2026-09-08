@@ -96,7 +96,6 @@ check_system_dependencies() {
         "openssl:openssl/ssl.h:openssl-devel"
         "glog:glog/logging.h:glog-devel"
         "gtest:gtest/gtest.h:gtest-devel"
-        "gmock:gmock/gmock.h:gtest-devel"
     )
 
     if ! printf '%s\n' \
@@ -402,6 +401,7 @@ build_folly() {
     log_message "configuring official folly benchmarks without GoogleTest source discovery"
     cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_FLAGS="-isystem /usr/include" \
         -DBUILD_BENCHMARKS=ON \
         -DUSE_CMAKE_GOOGLE_TEST_INTEGRATION=OFF \
         -Dfmt_DIR="${SYSTEM_FMT_CMAKE_DIR}" \
