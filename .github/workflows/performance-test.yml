@@ -109,7 +109,7 @@ jobs:
       - name: Install framework runtime dependencies from Huawei mirror
         shell: bash
         run: |
-          framework_deps="${PERF_WORK_ROOT}/framework/deps"
+          framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
           python3 -m pip install \
             --disable-pip-version-check \
             --no-input \
@@ -196,7 +196,7 @@ jobs:
           OBS_AK: ${{ secrets.OBS_AK }}
           OBS_SK: ${{ secrets.OBS_SK }}
           OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
-          PYTHONPATH: /home/runner/boostkit-perf/framework/deps
+          PYTHONPATH: ${{ runner.temp }}/boostkit-framework-deps
           http_proxy: ${{ secrets.PERF_PROXY }}
           https_proxy: ${{ secrets.PERF_PROXY }}
           no_proxy: localhost,127.0.0.1,::1
