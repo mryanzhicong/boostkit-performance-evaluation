@@ -3,8 +3,9 @@
 
 Credentials and endpoint settings are read only from environment variables:
 OBS_ENDPOINT, OBS_BUCKET, OBS_PREFIX, OBS_AK, OBS_SK, and optionally
-OBS_SECURITY_TOKEN.  A manifest is uploaded last so report jobs only consume
-complete directory uploads and can verify every downloaded file.
+OBS_SECURITY_TOKEN.  PERF_PROXY optionally configures an explicit SDK proxy.
+A manifest is uploaded last so report jobs only consume complete directory
+uploads and can verify every downloaded file.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import sys
 import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 
 MANIFEST_NAME = ".boostkit-obs-manifest.json"
@@ -52,6 +54,32 @@ def obs_settings() -> tuple[str, str, str, str, str, str | None]:
     )
 
 
+def proxy_settings() -> dict[str, Any]:
+    proxy_url = os.environ.get("PERF_PROXY", "").strip()
+    if not proxy_url:
+        return {}
+
+    parsed = urlsplit(proxy_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        fail("PERF_PROXY must be http[s]://host:port")
+    try:
+        proxy_port = parsed.port
+    except ValueError as error:
+        fail(f"PERF_PROXY has an invalid port: {error}")
+    if proxy_port is None:
+        fail("PERF_PROXY must include a port")
+
+    settings: dict[str, Any] = {
+        "proxy_host": parsed.hostname,
+        "proxy_port": proxy_port,
+    }
+    if parsed.username:
+        settings["proxy_username"] = unquote(parsed.username)
+    if parsed.password:
+        settings["proxy_password"] = unquote(parsed.password)
+    return settings
+
+
 def client() -> tuple[Any, str, str]:
     try:
         from obs import ObsClient
@@ -66,6 +94,7 @@ def client() -> tuple[Any, str, str]:
     }
     if security_token:
         kwargs["security_token"] = security_token
+    kwargs.update(proxy_settings())
     return ObsClient(**kwargs), bucket, prefix
 
 
