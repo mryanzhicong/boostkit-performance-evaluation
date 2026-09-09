@@ -56,8 +56,7 @@ def client() -> tuple[Any, str, str]:
     try:
         from obs import ObsClient
     except ImportError as error:
-        fail("OBS SDK is unavailable; install esdk-obs-python")
-        raise AssertionError from error
+        fail(f"OBS SDK import failed: {error}")
 
     endpoint, bucket, prefix, access_key, secret_key, security_token = obs_settings()
     kwargs: dict[str, Any] = {
