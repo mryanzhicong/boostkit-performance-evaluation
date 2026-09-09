@@ -22,8 +22,6 @@ from urllib.parse import unquote, urlsplit
 
 
 MANIFEST_NAME = ".boostkit-obs-manifest.json"
-TRANSFER_PART_SIZE = 10 * 1024 * 1024
-RESUMABLE_UPLOAD_MINIMUM_SIZE = 100 * 1024
 
 
 def fail(message: str) -> None:
@@ -132,32 +130,13 @@ def object_key(prefix: str, *parts: str) -> str:
 
 
 def upload_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
-    if path.stat().st_size <= RESUMABLE_UPLOAD_MINIMUM_SIZE:
-        response = obs_client.putFile(bucket, key, str(path))
-        response_ok(response, "upload", key)
-        return
-    response = obs_client.uploadFile(
-        bucket,
-        key,
-        str(path),
-        partSize=TRANSFER_PART_SIZE,
-        taskNum=1,
-        enableCheckpoint=True,
-        encoding_type="url",
-    )
+    response = obs_client.putFile(bucket, key, str(path))
     response_ok(response, "upload", key)
 
 
 def download_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    response = obs_client.downloadFile(
-        bucket,
-        key,
-        str(path),
-        partSize=TRANSFER_PART_SIZE,
-        taskNum=1,
-        enableCheckpoint=True,
-    )
+    response = obs_client.getObject(bucket, key, str(path))
     response_ok(response, "download", key)
 
 
