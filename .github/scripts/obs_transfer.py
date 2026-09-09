@@ -11,6 +11,7 @@ uploads and can verify every downloaded file.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -23,6 +24,7 @@ from urllib.parse import unquote, urlsplit
 
 
 MANIFEST_NAME = ".boostkit-obs-manifest.json"
+COMPRESSED_MANIFEST_NAME = f"{MANIFEST_NAME}.gz"
 TRANSFER_CHUNK_SIZE = 64 * 1024
 
 
@@ -203,6 +205,64 @@ def download_chunks(
     temporary_target.replace(target)
 
 
+def upload_manifest(obs_client: Any, bucket: str, base_key: str, manifest: dict[str, Any]) -> None:
+    with tempfile.TemporaryDirectory(prefix="boostkit-obs-") as temporary_directory:
+        temporary_path = Path(temporary_directory)
+        manifest_path = temporary_path / MANIFEST_NAME
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        root_manifest: dict[str, Any] = manifest
+
+        if manifest_path.stat().st_size > TRANSFER_CHUNK_SIZE:
+            compressed_path = temporary_path / COMPRESSED_MANIFEST_NAME
+            compressed_path.write_bytes(gzip.compress(manifest_path.read_bytes()))
+            chunks = upload_file(
+                obs_client,
+                bucket,
+                f"{base_key}/{COMPRESSED_MANIFEST_NAME}",
+                compressed_path,
+                COMPRESSED_MANIFEST_NAME,
+            )
+            root_manifest = {
+                "schema": 2,
+                "compressed_manifest": {
+                    "path": COMPRESSED_MANIFEST_NAME,
+                    "size": compressed_path.stat().st_size,
+                    "sha256": sha256(compressed_path),
+                    "chunks": chunks,
+                },
+            }
+            manifest_path.write_text(
+                json.dumps(root_manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        if manifest_path.stat().st_size > TRANSFER_CHUNK_SIZE:
+            fail("OBS manifest index exceeds the proxy upload limit")
+        manifest_key = f"{base_key}/{MANIFEST_NAME}"
+        response = obs_client.putFile(bucket, manifest_key, str(manifest_path))
+        response_ok(response, "upload", manifest_key)
+
+
+def compressed_manifest_details(manifest: dict[str, Any]) -> dict[str, Any] | None:
+    details = manifest.get("compressed_manifest")
+    if details is None:
+        return None
+    if not isinstance(details, dict):
+        fail("invalid compressed OBS manifest index")
+    path = details.get("path")
+    size = details.get("size")
+    checksum = details.get("sha256")
+    chunks = details.get("chunks")
+    if (
+        path != COMPRESSED_MANIFEST_NAME
+        or not isinstance(size, int)
+        or not isinstance(checksum, str)
+        or not isinstance(chunks, list)
+    ):
+        fail("invalid compressed OBS manifest details")
+    return details
+
+
 def upload_directory(args: argparse.Namespace) -> None:
     source = Path(args.source).resolve()
     if not source.is_dir():
@@ -252,24 +312,33 @@ def upload_directory(args: argparse.Namespace) -> None:
             "version": args.version,
             "architecture": args.architecture,
         })
-    with tempfile.TemporaryDirectory(prefix="boostkit-obs-") as temporary_directory:
-        manifest_path = Path(temporary_directory) / MANIFEST_NAME
-        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        if manifest_path.stat().st_size > TRANSFER_CHUNK_SIZE:
-            fail("OBS manifest exceeds the proxy upload limit")
-        response = obs_client.putFile(bucket, f"{base_key}/{MANIFEST_NAME}", str(manifest_path))
-        response_ok(response, "upload", f"{base_key}/{MANIFEST_NAME}")
+    upload_manifest(obs_client, bucket, base_key, manifest)
     print(f"[obs] uploaded {len(manifest_files)} files to obs://{bucket}/{base_key}", flush=True)
 
 
 def load_manifest(obs_client: Any, bucket: str, key: str) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="boostkit-obs-") as temporary_directory:
-        manifest_path = Path(temporary_directory) / MANIFEST_NAME
+        temporary_path = Path(temporary_directory)
+        manifest_path = temporary_path / MANIFEST_NAME
         download_file(obs_client, bucket, key, manifest_path)
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as error:
             fail(f"invalid OBS manifest {key}: {error}")
+        details = compressed_manifest_details(manifest) if isinstance(manifest, dict) else None
+        if details is not None:
+            compressed_path = temporary_path / COMPRESSED_MANIFEST_NAME
+            chunks = details["chunks"]
+            if chunks:
+                download_chunks(obs_client, bucket, str(Path(key).parent), chunks, compressed_path)
+            else:
+                download_file(obs_client, bucket, f"{Path(key).parent}/{COMPRESSED_MANIFEST_NAME}", compressed_path)
+            if compressed_path.stat().st_size != details["size"] or sha256(compressed_path) != details["sha256"]:
+                fail(f"checksum mismatch after OBS download: {COMPRESSED_MANIFEST_NAME}")
+            try:
+                manifest = json.loads(gzip.decompress(compressed_path.read_bytes()))
+            except (OSError, json.JSONDecodeError) as error:
+                fail(f"invalid compressed OBS manifest {key}: {error}")
     if not isinstance(manifest, dict):
         fail(f"invalid OBS manifest object: {key}")
     return manifest
