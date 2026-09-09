@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -22,7 +23,7 @@ from urllib.parse import unquote, urlsplit
 
 
 MANIFEST_NAME = ".boostkit-obs-manifest.json"
-MULTIPART_UPLOAD_MINIMUM_SIZE = 100 * 1024
+TRANSFER_CHUNK_SIZE = 64 * 1024
 
 
 def fail(message: str) -> None:
@@ -130,27 +131,76 @@ def object_key(prefix: str, *parts: str) -> str:
     return "/".join((prefix, *safe_parts))
 
 
-def upload_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
-    if path.stat().st_size <= MULTIPART_UPLOAD_MINIMUM_SIZE:
+def upload_file(
+    obs_client: Any,
+    bucket: str,
+    key: str,
+    path: Path,
+    relative: str,
+) -> list[dict[str, Any]]:
+    if path.stat().st_size <= TRANSFER_CHUNK_SIZE:
         response = obs_client.putFile(bucket, key, str(path))
         response_ok(response, "upload", key)
-        return
+        return []
 
-    response = obs_client.uploadFile(
-        bucket,
-        key,
-        str(path),
-        partSize=MULTIPART_UPLOAD_MINIMUM_SIZE,
-        taskNum=1,
-        enableCheckpoint=False,
-    )
-    response_ok(response, "upload", key)
+    chunks: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="boostkit-obs-part-") as temporary_directory:
+        chunk_path = Path(temporary_directory) / "chunk"
+        with path.open("rb") as source:
+            part_number = 0
+            while content := source.read(TRANSFER_CHUNK_SIZE):
+                part_number += 1
+                relative_part = f"{relative}.parts/{part_number:06d}"
+                part_key = f"{key}.parts/{part_number:06d}"
+                chunk_path.write_bytes(content)
+                response = obs_client.putFile(bucket, part_key, str(chunk_path))
+                response_ok(response, "upload", part_key)
+                chunks.append({
+                    "path": relative_part,
+                    "size": len(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                })
+    return chunks
 
 
 def download_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     response = obs_client.getObject(bucket, key, str(path))
     response_ok(response, "download", key)
+
+
+def download_chunks(
+    obs_client: Any,
+    bucket: str,
+    base_key: str,
+    chunks: list[dict[str, Any]],
+    target: Path,
+) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary_target = target.with_name(f".{target.name}.partial")
+    with tempfile.TemporaryDirectory(prefix="boostkit-obs-part-") as temporary_directory:
+        chunk_path = Path(temporary_directory) / "chunk"
+        with temporary_target.open("wb") as output:
+            for chunk in chunks:
+                relative = chunk.get("path")
+                expected_size = chunk.get("size")
+                expected_sha256 = chunk.get("sha256")
+                if (
+                    not isinstance(relative, str)
+                    or not isinstance(expected_size, int)
+                    or not isinstance(expected_sha256, str)
+                ):
+                    fail("invalid OBS file chunk in manifest")
+                safe_relative = PurePosixPath(relative)
+                if safe_relative.is_absolute() or ".." in safe_relative.parts:
+                    fail(f"unsafe OBS file chunk path in manifest: {relative!r}")
+                key = f"{base_key}/{relative}"
+                download_file(obs_client, bucket, key, chunk_path)
+                if chunk_path.stat().st_size != expected_size or sha256(chunk_path) != expected_sha256:
+                    fail(f"checksum mismatch after OBS download: {relative}")
+                with chunk_path.open("rb") as input_file:
+                    shutil.copyfileobj(input_file, output)
+    temporary_target.replace(target)
 
 
 def upload_directory(args: argparse.Namespace) -> None:
@@ -176,17 +226,20 @@ def upload_directory(args: argparse.Namespace) -> None:
     manifest_files = []
     for path in files:
         relative = relative_file_path(source, path)
-        manifest_files.append({
+        manifest_entry: dict[str, Any] = {
             "path": relative,
             "size": path.stat().st_size,
             "sha256": sha256(path),
-        })
+        }
         key = f"{base_key}/{relative}"
         print(f"[obs] uploading {relative}", flush=True)
-        upload_file(obs_client, bucket, key, path)
+        chunks = upload_file(obs_client, bucket, key, path, relative)
+        if chunks:
+            manifest_entry["chunks"] = chunks
+        manifest_files.append(manifest_entry)
 
     manifest: dict[str, Any] = {
-        "schema": 1,
+        "schema": 2,
         "kind": args.kind,
         "run_id": args.run_id,
         "result_directory": args.result_directory,
@@ -202,7 +255,10 @@ def upload_directory(args: argparse.Namespace) -> None:
     with tempfile.TemporaryDirectory(prefix="boostkit-obs-") as temporary_directory:
         manifest_path = Path(temporary_directory) / MANIFEST_NAME
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        upload_file(obs_client, bucket, f"{base_key}/{MANIFEST_NAME}", manifest_path)
+        if manifest_path.stat().st_size > TRANSFER_CHUNK_SIZE:
+            fail("OBS manifest exceeds the proxy upload limit")
+        response = obs_client.putFile(bucket, f"{base_key}/{MANIFEST_NAME}", str(manifest_path))
+        response_ok(response, "upload", f"{base_key}/{MANIFEST_NAME}")
     print(f"[obs] uploaded {len(manifest_files)} files to obs://{bucket}/{base_key}", flush=True)
 
 
@@ -282,15 +338,34 @@ def download_results(args: argparse.Namespace) -> None:
             if not isinstance(entry, dict):
                 fail(f"invalid file entry in OBS manifest: {manifest_key}")
             relative = entry.get("path")
+            expected_size = entry.get("size")
             expected_sha256 = entry.get("sha256")
-            if not isinstance(relative, str) or not isinstance(expected_sha256, str):
+            if (
+                not isinstance(relative, str)
+                or not isinstance(expected_size, int)
+                or not isinstance(expected_sha256, str)
+            ):
                 fail(f"invalid file details in OBS manifest: {manifest_key}")
             safe_relative = PurePosixPath(relative)
             if safe_relative.is_absolute() or ".." in safe_relative.parts or relative in {"", "."}:
                 fail(f"unsafe file path in OBS manifest: {relative!r}")
             target = base_path.joinpath(*safe_relative.parts)
             print(f"[obs] downloading {category}/{software}/{version}/{architecture}/{relative}", flush=True)
-            download_file(obs_client, bucket, f"{base_key}/{relative}", target)
+            chunks = entry.get("chunks")
+            if chunks is None:
+                download_file(obs_client, bucket, f"{base_key}/{relative}", target)
+            elif isinstance(chunks, list) and chunks:
+                for chunk in chunks:
+                    if not isinstance(chunk, dict):
+                        fail(f"invalid OBS file chunks in manifest: {relative}")
+                    chunk_path = chunk.get("path")
+                    if not isinstance(chunk_path, str) or not chunk_path.startswith(f"{relative}.parts/"):
+                        fail(f"invalid OBS file chunk path in manifest: {relative}")
+                download_chunks(obs_client, bucket, base_key, chunks, target)
+            else:
+                fail(f"invalid OBS file chunks in manifest: {relative}")
+            if target.stat().st_size != expected_size:
+                fail(f"size mismatch after OBS download: {relative}")
             if sha256(target) != expected_sha256:
                 fail(f"checksum mismatch after OBS download: {relative}")
             downloaded += 1
