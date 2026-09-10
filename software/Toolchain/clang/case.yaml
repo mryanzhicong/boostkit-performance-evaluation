@@ -1,0 +1,59 @@
+name: clang
+category: Toolchain
+enabled: true
+versions:
+  - "22.1.8"
+environment:
+  SQLITE_BENCHMARK_BASE: https://www.sqlite.org/2026
+  SQLITE_AMALGAMATION_PACKAGE: sqlite-amalgamation-3530400.zip
+  SQLITE_AMALGAMATION_SHA3_256: 628a44cfe82c66aed1ccbbe85a562d2e33ebe64b3288981ed76285612227934e
+  SQLITE_SOURCE_PACKAGE: sqlite-src-3530400.zip
+  SQLITE_SOURCE_SHA3_256: b834d474b9b393d85a9e3ee4cc11f1329e007e9376a424ee740796f5c4bda3a8
+test_tools:
+  sqlite:
+    version: "3.53.4"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: clang_test.sh
+      function: build_clang
+    start:
+      script: clang_test.sh
+      function: start_clang_runtime
+    test:
+      script: clang_test.sh
+      function: run_clang_benchmarks
+    stop:
+      script: clang_test.sh
+      function: stop_clang_runtime
+  timeout_minutes: 180
+outputs:
+  sqlite_benchmark_output:
+    path: sqlite_clang_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: workload
+      row_label: 负载档位
+      column_path: source_field
+      column_order:
+        - median wall time
+        - fastest wall time
+        - artifact size
+      single_note: 编译耗时、运行耗时与产物大小均为越小越好。
