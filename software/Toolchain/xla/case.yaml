@@ -1,0 +1,63 @@
+name: xla
+category: Toolchain
+enabled: true
+versions:
+  - "46bedfb7bd71"
+environment:
+  XLA_REPOSITORY: https://github.com/openxla/xla.git
+  XLA_COMMIT: 46bedfb7bd71ae6574ca6d8d4109fdd44fa2971d
+  BAZELISK_VERSION: v1.29.0
+  BAZELISK_X86_64_SHA256: 5a408715e932c0250d28bd84555f12edbf70117de42f9181691c736eacc4a992
+  BAZELISK_AARCH64_SHA256: e20e8b0f4f240091b7a55bf17b9398bd4f40ee70ae0208dff95dd4c445fb4010
+  XLA_GEMMA3_HLO_URL: https://storage.googleapis.com/xla-benchmarking-temp/gemma3_1b_flax_call.hlo
+  XLA_GEMMA3_HLO_SHA256: b3bee2a908477a49d41dd6d0adb8ccf2a25fe0bfecb5aa7d6bdb7cee4633b7de
+  XLA_GEMMA2_HLO_URL: https://storage.googleapis.com/xla-benchmarking-temp/gemma2_2b_keras_jax.hlo
+  XLA_GEMMA2_HLO_SHA256: 78aaab6a47a87edbaba4d6acc10f3d5175a09c4a38b9a4cf02900c96558eb49c
+  XLA_GEMMA4_HLO_SHA256: b3a724c8d9990f10b8b788a8879129bf47024b847da665fccc2271ce9331f5f0
+  XLA_NUM_REPEATS: "5"
+test_tools:
+  bazelisk:
+    version: v1.29.0
+  bazel:
+    version: 8.7.0
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: xla_test.sh
+      function: build_xla
+    start:
+      script: xla_test.sh
+      function: start_xla_runtime
+    test:
+      script: xla_test.sh
+      function: run_xla_benchmarks
+    stop:
+      script: xla_test.sh
+      function: stop_xla_runtime
+  timeout_minutes: 1440
+outputs:
+  hlo_benchmark_output:
+    path: hlo_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result_dir:
+    path: benchmark_runs
+    stage: test
+    format: directory
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
