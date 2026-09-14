@@ -1,0 +1,58 @@
+name: rust
+category: Toolchain
+enabled: true
+versions:
+  - "1.98.1"
+environment:
+  RUST_RELEASE_BASE: https://static.rust-lang.org/dist
+  RIPGREP_VERSION: "15.2.0"
+  RIPGREP_CRATE_BASE: https://static.crates.io/crates/ripgrep
+  RIPGREP_SHA256: a30750b6d0743bfdd2656ebbaf4555aa278c43144b84bc389bcbfa399485ec71
+test_tools:
+  ripgrep:
+    version: "15.2.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: rust_test.sh
+      function: build_rust
+    start:
+      script: rust_test.sh
+      function: start_rust_runtime
+    test:
+      script: rust_test.sh
+      function: run_rust_benchmarks
+    stop:
+      script: rust_test.sh
+      function: stop_rust_runtime
+  timeout_minutes: 240
+outputs:
+  ripgrep_benchmark_output:
+    path: ripgrep_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: workload
+      row_label: 负载档位
+      column_path: source_field
+      column_order:
+        - median wall time
+        - fastest wall time
+        - artifact size
+      single_note: 编译耗时、搜索耗时与产物大小均为越小越好。
