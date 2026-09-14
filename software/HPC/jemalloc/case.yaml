@@ -1,0 +1,53 @@
+name: jemalloc
+category: HPC
+enabled: true
+versions:
+  - "5.3.1"
+environment:
+  JEMALLOC_RELEASE_BASE: https://github.com/jemalloc/jemalloc/releases/download
+  JEMALLOC_OFFLINE_DIR: /home/runner/software/jemalloc
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: jemalloc_test.sh
+      function: build_jemalloc
+    start:
+      script: jemalloc_test.sh
+      function: start_jemalloc_runtime
+    test:
+      script: jemalloc_test.sh
+      function: run_jemalloc_benchmarks
+    stop:
+      script: jemalloc_test.sh
+      function: stop_jemalloc_runtime
+  timeout_minutes: 120
+outputs:
+  raw_benchmark_output:
+    path: jemalloc_alloc_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: workload
+      row_path: threads
+      row_label: 线程数
+      column_path: source_field
+      column_order:
+        - ops/s
+        - avg op
+        - p99 op
+      single_note: ops/s 为越大越好，avg op 与 p99 op 为越小越好（unit=ns）。
