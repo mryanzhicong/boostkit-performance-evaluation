@@ -1,0 +1,59 @@
+name: nginx
+category: Middleware
+enabled: true
+versions:
+  - "1.30.4"
+environment:
+  NGINX_RELEASE_BASE: https://nginx.org/download
+  NGINX_SHA256: 4261dc90e9e47c1c4041276e9aaa3d48ebe2e664f728e14fa95ae6c67d57a08b
+  K6_VERSION: "2.2.0"
+  K6_X86_64_SHA256: b5a8003c86f35f5cd5ceef1490312c48e587696c94d998cefc6d7b3b4cb1597d
+  K6_AARCH64_SHA256: 4ecd64cadcc792402d16293836115480419c4447c032858f564852d98f1bf54c
+test_tools:
+  k6:
+    version: "2.2.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: nginx_test.sh
+      function: build_nginx
+    start:
+      script: nginx_test.sh
+      function: start_nginx_service
+    test:
+      script: nginx_test.sh
+      function: run_nginx_benchmarks
+    stop:
+      script: nginx_test.sh
+      function: stop_nginx_service
+  timeout_minutes: 180
+outputs:
+  raw_benchmark_output:
+    path: nginx_k6_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: vus
+      row_label: 并发 VU 数
+      column_path: source_field
+      column_order:
+        - RPS
+        - avg latency
+        - p95 latency
+      single_note: RPS 为越大越好，avg latency 与 p95 latency 为越小越好。
