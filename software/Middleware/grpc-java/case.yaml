@@ -1,0 +1,53 @@
+name: grpc-java
+category: Middleware
+enabled: true
+versions:
+  - "1.83.1"
+environment:
+  GRPC_MAVEN_BASE: https://repo1.maven.org/maven2
+  GRPC_OFFLINE_DIR: /home/runner/software/grpc-java
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: grpc_java_test.sh
+      function: build_grpc_java
+    start:
+      script: grpc_java_test.sh
+      function: start_grpc_java_runtime
+    test:
+      script: grpc_java_test.sh
+      function: run_grpc_java_benchmarks
+    stop:
+      script: grpc_java_test.sh
+      function: stop_grpc_java_runtime
+  timeout_minutes: 120
+outputs:
+  raw_benchmark_output:
+    path: grpc_java_unary_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: channels
+      row_label: 并发 channel 数
+      column_path: source_field
+      column_order:
+        - calls/s
+        - avg RTT
+        - p99 RTT
+      single_note: calls/s 为越大越好，avg RTT 与 p99 RTT 为越小越好。
