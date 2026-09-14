@@ -1,0 +1,55 @@
+name: netty
+category: Middleware
+enabled: true
+versions:
+  - "4.2.18.Final"
+environment:
+  NETTY_MAVEN_BASE: https://repo1.maven.org/maven2/io/netty
+  NETTY_COMMON_SHA256: 5d97cae5669685872339698efe13f74fe3cdb2dccdb36963b2352bd95acf7070
+  NETTY_BUFFER_SHA256: fdf236d2b76aa9710684401fdad7dff9dec56e43da5d39172c9a55ba5f14b360
+  NETTY_TRANSPORT_SHA256: eac4f12068db4489e60c6520fad663e5d872f0436a7c641aa8e08db649947863
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: netty_test.sh
+      function: build_netty
+    start:
+      script: netty_test.sh
+      function: start_netty_runtime
+    test:
+      script: netty_test.sh
+      function: run_netty_benchmarks
+    stop:
+      script: netty_test.sh
+      function: stop_netty_runtime
+  timeout_minutes: 120
+outputs:
+  raw_benchmark_output:
+    path: netty_echo_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: connections
+      row_label: 并发连接数
+      column_path: source_field
+      column_order:
+        - messages/s
+        - avg RTT
+        - p99 RTT
+      single_note: messages/s 为越大越好，avg RTT 与 p99 RTT 为越小越好。
