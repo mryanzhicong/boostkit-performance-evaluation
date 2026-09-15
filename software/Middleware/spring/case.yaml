@@ -1,0 +1,53 @@
+name: spring
+category: Middleware
+enabled: true
+versions:
+  - "7.0.9"
+environment:
+  SPRING_MAVEN_BASE: https://repo1.maven.org/maven2
+  SPRING_OFFLINE_DIR: /home/runner/software/spring
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: spring_test.sh
+      function: build_spring
+    start:
+      script: spring_test.sh
+      function: start_spring_runtime
+    test:
+      script: spring_test.sh
+      function: run_spring_benchmarks
+    stop:
+      script: spring_test.sh
+      function: stop_spring_runtime
+  timeout_minutes: 120
+outputs:
+  raw_benchmark_output:
+    path: spring_echo_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: concurrency
+      row_label: 并发 exchange 数
+      column_path: source_field
+      column_order:
+        - exchanges/s
+        - avg RTT
+        - p99 RTT
+      single_note: exchanges/s 为越大越好，avg RTT 与 p99 RTT 为越小越好。
