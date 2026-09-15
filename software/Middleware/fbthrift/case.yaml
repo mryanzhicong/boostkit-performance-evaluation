@@ -1,0 +1,56 @@
+name: fbthrift
+category: Middleware
+enabled: true
+versions:
+  - "2026.09.14.00"
+environment:
+  FBTHRIFT_GIT_BASE: https://github.com/facebook/fbthrift
+  FOLLY_GIT_BASE: https://github.com/facebook/folly
+  FIZZ_GIT_BASE: https://github.com/facebookincubator/fizz
+  WANGLE_GIT_BASE: https://github.com/facebook/wangle
+  MVFST_GIT_BASE: https://github.com/facebook/mvfst
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: fbthrift_test.sh
+      function: build_fbthrift
+    start:
+      script: fbthrift_test.sh
+      function: start_fbthrift_runtime
+    test:
+      script: fbthrift_test.sh
+      function: run_fbthrift_benchmarks
+    stop:
+      script: fbthrift_test.sh
+      function: stop_fbthrift_runtime
+  timeout_minutes: 180
+outputs:
+  raw_benchmark_output:
+    path: fbthrift_perf_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: workload
+      row_path: clients
+      row_label: 客户端并发数
+      column_path: source_field
+      column_order:
+        - QPS
+        - avg RTT
+        - p99 RTT
+      single_note: QPS 为越大越好，avg RTT 与 p99 RTT 为越小越好（unit=ns）；客户端使用 rocket 传输、每线程 1 个 event base、异步请求上限 100；noop 为空请求/响应往返，sum 为小结构体序列化往返，download 为 1KiB 负载下行。
