@@ -1,0 +1,53 @@
+name: spdk
+category: Storage
+enabled: true
+versions:
+  - "26.05"
+environment:
+  SPDK_GIT_BASE: https://github.com/spdk/spdk
+  SPDK_OFFLINE_DIR: /home/runner/software/spdk
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: spdk_test.sh
+      function: build_spdk
+    start:
+      script: spdk_test.sh
+      function: start_spdk_runtime
+    test:
+      script: spdk_test.sh
+      function: run_spdk_benchmarks
+    stop:
+      script: spdk_test.sh
+      function: stop_spdk_runtime
+  timeout_minutes: 120
+outputs:
+  raw_benchmark_output:
+    path: spdk_blobstore_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: workload
+      row_path: threads
+      row_label: 线程数
+      column_path: source_field
+      column_order:
+        - ops/s
+        - avg op
+        - p99 op
+      single_note: ops/s 为越大越好，avg op 与 p99 op 为越小越好（unit=ns）；create 场景 1 op = 1 个 blob 创建+删除完整生命周期，write/read 场景 1 op = 1 次 4KiB blob 读写。
