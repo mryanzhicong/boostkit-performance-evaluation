@@ -1,0 +1,35 @@
+name: simdjson
+category: HPC
+enabled: true
+versions:
+  - "4.6.11"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: simdjson_test.sh
+      function: build_simdjson
+    start:
+      script: simdjson_test.sh
+      function: start_simdjson_runtime
+    test:
+      script: simdjson_test.sh
+      function: run_simdjson_benchmarks
+    stop:
+      script: simdjson_test.sh
+      function: stop_simdjson_runtime
+  timeout_minutes: 60
+outputs:
+  primary_benchmark:
+    path: benchmark_googlebench.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: primary_benchmark
+  collection:
+    path: results
+    value_path: value
+    group_path: command_display
+    unit: ns
+    direction: lower_is_better
