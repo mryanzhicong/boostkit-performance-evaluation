@@ -1,0 +1,50 @@
+name: libwebp
+category: Media
+enabled: true
+versions:
+  - "1.6.0"
+environment:
+  LIBWEBP_SOURCE_URL: https://chromium.googlesource.com/webm/libwebp
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: libwebp_test.sh
+      function: build_libwebp
+    start:
+      script: libwebp_test.sh
+      function: start_libwebp_runtime
+    test:
+      script: libwebp_test.sh
+      function: run_libwebp_benchmarks
+    stop:
+      script: libwebp_test.sh
+      function: stop_libwebp_runtime
+  timeout_minutes: 60
+outputs:
+  webp_benchmark_raw_output:
+    path: webp_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: mode
+      row_label: 压缩模式
+      column_path: source_field
+      column_order:
+        - median
+      single_note: median 为编码/解码耗时中位数，越小越好。
