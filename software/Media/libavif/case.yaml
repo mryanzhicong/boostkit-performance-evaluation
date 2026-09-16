@@ -1,0 +1,59 @@
+name: libavif
+category: Media
+enabled: true
+versions:
+  - "1.4.2"
+environment:
+  LIBAVIF_SOURCE_URL: https://github.com/AOMediaCodec/libavif.git
+  AOM_SOURCE_URL: https://aomedia.googlesource.com/aom
+  LIBYUV_SOURCE_URL: https://chromium.googlesource.com/libyuv/libyuv
+test_tools:
+  aom:
+    version: "3.14.1"
+  libyuv:
+    revision: 644251f252a84bf8ce91ff0aca86a9b16b069ab8
+  nasm:
+    version: "2.16.03"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: libavif_test.sh
+      function: build_libavif
+    start:
+      script: libavif_test.sh
+      function: start_libavif_runtime
+    test:
+      script: libavif_test.sh
+      function: run_libavif_benchmarks
+    stop:
+      script: libavif_test.sh
+      function: stop_libavif_runtime
+  timeout_minutes: 90
+outputs:
+  avif_benchmark_raw_output:
+    path: avif_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: threads
+      row_label: 线程数
+      column_path: source_field
+      column_order:
+        - median
+      single_note: median 为单帧编码/解码耗时中位数，越小越好。
