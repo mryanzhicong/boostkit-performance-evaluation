@@ -34,15 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      result_directory: ${{ steps.result_directory.outputs.value }}
     steps:
       - uses: actions/checkout@v4
-      - name: Allocate UTC+8 result directory
-        id: result_directory
-        shell: bash
-        run: |
-          timestamp="$(TZ=Asia/Shanghai date '+%Y-%m-%d-%H-%M-%S')"
-          echo "value=${timestamp}_${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_OUTPUT}"
       - name: Install framework runtime dependencies from PyPI
         shell: bash
         run: |
@@ -108,15 +101,14 @@ jobs:
             --trusted-host mirrors.huaweicloud.com \
             -i https://mirrors.huaweicloud.com/repository/pypi/simple \
             --target "${framework_deps}" \
-            "PyYAML==6.0.2" \
-            "esdk-obs-python"
+            "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
       - name: Verify installed framework runtime
         run: >-
-          python3 -c "import sys, yaml; from obs import ObsClient;
+          python3 -c "import sys, yaml;
           assert sys.version_info >= (3, 11), sys.version;
           assert yaml.__version__ == '6.0.2', yaml.__version__;
-          print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}, OBS SDK available')"
+          print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}')"
       - name: Prepare task and capture environment
         run: >-
           python3 framework/run_case.py
@@ -178,29 +170,19 @@ jobs:
           python3 framework/mark_cleanup.py
           --output-dir '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
           --outcome '${{ steps.post_cleanup.outcome }}'
-      - name: Upload complete result directory to Huawei OBS
+      - name: Upload raw and normalized result
         if: always()
+        # The TLS-intercepting proxy on the dedicated runners breaks Node's
+        # certificate validation. Disable TLS verification for this Node action
+        # only so development results remain available as GitHub Artifacts.
         env:
-          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
-          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
-          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
-          OBS_AK: ${{ secrets.OBS_AK }}
-          OBS_SK: ${{ secrets.OBS_SK }}
-          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
-          PERF_PROXY: ${{ secrets.PERF_PROXY }}
-          PYTHONPATH: ${{ runner.temp }}/boostkit-framework-deps
-          http_proxy: ${{ secrets.PERF_PROXY }}
-          https_proxy: ${{ secrets.PERF_PROXY }}
-          no_proxy: localhost,127.0.0.1,::1
-        run: >-
-          python3 .github/scripts/obs_transfer.py upload-result
-          --source '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --category '${{ matrix.category }}'
-          --software '${{ matrix.software }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --result-directory '${{ needs.prepare.outputs.result_directory }}'
+          NODE_TLS_REJECT_UNAUTHORIZED: "0"
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}
+          path: .perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}
+          if-no-files-found: error
+          retention-days: 30
 
   report:
     name: Generate development report
@@ -212,36 +194,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Install OBS transfer dependency
-        shell: bash
-        run: |
-          transfer_deps="${RUNNER_TEMP}/boostkit-obs-deps"
-          python3 -m pip install \
-            --disable-pip-version-check \
-            --no-input \
-            --no-cache-dir \
-            --target "${transfer_deps}" \
-            "esdk-obs-python"
-          echo "PYTHONPATH=${transfer_deps}" >> "${GITHUB_ENV}"
-      - name: Download complete task results from Huawei OBS
-        env:
-          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
-          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
-          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
-          OBS_AK: ${{ secrets.OBS_AK }}
-          OBS_SK: ${{ secrets.OBS_SK }}
-          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
-          EXECUTION_MATRIX: ${{ needs.prepare.outputs.matrix }}
-          RESULT_DIRECTORY: ${{ needs.prepare.outputs.result_directory }}
-        shell: bash
-        run: |
-          mkdir -p .perf-output
-          printf '%s\n' "${EXECUTION_MATRIX}" > .perf-output/execution-matrix.json
-          python3 .github/scripts/obs_transfer.py download-results \
-            --destination .perf-output/downloaded \
-            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
-            --result-directory "${RESULT_DIRECTORY}" \
-            --matrix .perf-output/execution-matrix.json
+      - name: Download task artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: .perf-output/downloaded
       - name: Generate single-run summary and cross-architecture comparison
         run: >-
           python3 framework/generate_comparison.py
@@ -250,16 +207,10 @@ jobs:
       - name: Publish report in workflow summary
         shell: bash
         run: cat .perf-output/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
-      - name: Upload development report to Huawei OBS
-        env:
-          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
-          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
-          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
-          OBS_AK: ${{ secrets.OBS_AK }}
-          OBS_SK: ${{ secrets.OBS_SK }}
-          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
-        run: >-
-          python3 .github/scripts/obs_transfer.py upload-report
-          --source .perf-output/report
-          --run-id '${{ github.run_id }}-${{ github.run_attempt }}'
-          --result-directory '${{ needs.prepare.outputs.result_directory }}'
+      - name: Upload development report
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-performance-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .perf-output/report
+          if-no-files-found: error
+          retention-days: 30
