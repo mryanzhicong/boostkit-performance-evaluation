@@ -104,6 +104,10 @@ jobs:
       PERF_GITHUB_DOWNLOAD_PROXY: ""
     steps:
       - uses: actions/checkout@v4
+        env:
+          http_proxy: ${{ secrets.PERF_PROXY }}
+          https_proxy: ${{ secrets.PERF_PROXY }}
+          no_proxy: localhost,127.0.0.1,::1
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
       - name: Install framework runtime dependencies from Huawei mirror
