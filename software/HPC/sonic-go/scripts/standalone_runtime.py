@@ -89,7 +89,7 @@ def finalize(output_dir: Path, version: str, architecture: str, status: int, fai
             raise RuntimeError("benchmark_sonic_go.json has no metrics")
         for result in raw_results.values():
             if not isinstance(result, dict):
-                raise RuntimeError("benchmark result is invalid")
+                raise TypeError("benchmark result is invalid")
             for field in ("source_name", "value", "unit", "direction", "group"):
                 if field not in result:
                     raise RuntimeError(f"benchmark result is missing {field}")
@@ -103,7 +103,9 @@ def finalize(output_dir: Path, version: str, architecture: str, status: int, fai
         "architecture": architecture,
         "source": "https://github.com/bytedance/sonic.git",
         "source_tag": f"v{version}",
+        "go_source": "https://gitcode.com/openeuler/golang.git",
         "go_version": os.environ.get("SONIC_GO_VERSION", "unknown"),
+        "toolchain_target": os.environ.get("SONIC_GO_TOOLCHAIN", "unknown"),
     }
     write_json(output_dir / "build_info.json", build)
     write_json(output_dir / "results.json", {"software": "sonic-go", "version": version, "architecture": architecture, "metrics": metrics})
