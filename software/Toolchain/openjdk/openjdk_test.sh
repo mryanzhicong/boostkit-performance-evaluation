@@ -504,7 +504,8 @@ run_openjdk_benchmarks() {
     log "running jtreg ${JTREG_VERSION}: ${JTREG_TEST_CASE}"
     if ! (
         cd "${SRC_DIR}"
-        "${JTREG_HOME}/bin/jtreg" \
+        JAVA_HOME="${JDK_HOME}" PATH="${JDK_HOME}/bin:${PATH}" \
+            "${JTREG_HOME}/bin/jtreg" \
             -jdk:"${JDK_HOME}" \
             -w:"${JTREG_WORK_DIR}" \
             -r:"${JTREG_REPORT_DIR}" \
