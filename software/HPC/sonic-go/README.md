@@ -12,7 +12,9 @@ Go 工具链，`start` 校验运行条件，`test` 执行 sonic 基准矩阵，`
 ## 依赖
 
 脚本自动检查并安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk、
-util-linux（taskset）与 Python 3。Go 模块通过 `https://goproxy.cn` 下载。
+util-linux（taskset）与 Python 3。Go 模块优先通过华为云镜像
+`https://repo.huaweicloud.com/repository/goproxy/` 下载；`goproxy.cn` 作为
+任意网络错误时的回退源。
 
 编译 Go 源码需要 bootstrap Go（自举用），获取顺序：
 
