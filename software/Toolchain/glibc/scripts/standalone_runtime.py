@@ -203,7 +203,17 @@ def extract_metrics(
             and ".results[" in source_field
             and ".timings[" in source_field
         )
-        if not (is_direct_official_field or is_official_timing_aggregate):
+        is_official_allocator_field = (
+            isinstance(source_field, str)
+            and source_field.startswith("functions.malloc.")
+            and source_field.rsplit(".", 1)[-1]
+            in ("time_per_iteration", "main_arena_st_allocs_0100_time")
+        )
+        if not (
+            is_direct_official_field
+            or is_official_timing_aggregate
+            or is_official_allocator_field
+        ):
             raise RuntimeError(
                 f"metric {metric_name} is not sourced from an official benchtest field"
             )
