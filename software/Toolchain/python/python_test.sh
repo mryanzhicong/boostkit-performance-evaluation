@@ -274,9 +274,10 @@ run_python_benchmarks() {
         cd "${BENCH_WORK_DIR}"
         export PIP_NO_CACHE_DIR=1
         export PIP_DISABLE_PIP_VERSION_CHECK=1
-        # pyperformance creates benchmark-specific virtual environments.  The
+        # pyperformance creates benchmark-specific virtual environments. The
         # 2to3 benchmark installs its bundled compatibility vendor there on
-        # Python 3.14, so it must inherit the same package source.
+        # Python 3.14, so it must inherit the package source and network
+        # proxy configuration from this process.
         export PIP_INDEX_URL="${PYPI_INDEX_URL}"
         export PIP_TRUSTED_HOST="${PYPI_TRUSTED_HOST}"
         "${PYTHON_BIN}" -m pip install --no-cache-dir \
@@ -286,7 +287,8 @@ run_python_benchmarks() {
         "${PYTHON_BIN}" -m pyperformance run \
             -b "${PYPERFORMANCE_BENCHMARKS}" \
             --warmup "${PYPERFORMANCE_WARMUP}" \
-            --inherit-environ PIP_INDEX_URL,PIP_TRUSTED_HOST \
+            --inherit-environ \
+                PIP_INDEX_URL,PIP_TRUSTED_HOST,http_proxy,https_proxy,no_proxy,all_proxy,HTTP_PROXY,HTTPS_PROXY,NO_PROXY,ALL_PROXY \
             -o "${RESULTS_DIR}/benchmark.json" || exit 50
     ) || {
         log_message "ERROR: official pyperformance run failed"
