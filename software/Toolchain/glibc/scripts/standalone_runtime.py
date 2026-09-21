@@ -194,7 +194,16 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate glibc benchmark: {metric_name}")
-        if result.get("source_field") not in ("mean", "duration", "results[0]"):
+        source_field = result.get("source_field")
+        is_direct_official_field = source_field in ("mean", "duration", "results[0]")
+        is_official_timing_aggregate = (
+            result.get("aggregation") == "arithmetic_mean"
+            and isinstance(source_field, str)
+            and source_field.startswith("functions.")
+            and ".results[" in source_field
+            and ".timings[" in source_field
+        )
+        if not (is_direct_official_field or is_official_timing_aggregate):
             raise RuntimeError(
                 f"metric {metric_name} is not sourced from an official benchtest field"
             )
