@@ -109,7 +109,7 @@ run_as_root() {
     fi
     if [[ "${EUID}" -eq 0 ]]; then
         "$@"
-    elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+    elif command -v sudo >/dev/null 2>&1; then
         sudo -n "$@"
     else
         log "ERROR: root privileges are required to install missing dependencies"
