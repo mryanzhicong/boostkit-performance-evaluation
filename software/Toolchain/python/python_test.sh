@@ -50,6 +50,8 @@ configure_runtime_paths() {
     }
     if [[ -z "${RESULTS_DIR}" ]]; then
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
+    elif [[ "${RESULTS_DIR}" != /* ]]; then
+        RESULTS_DIR="$(pwd -P)/${RESULTS_DIR}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/home/runner/boostkit-perf/python/local-${PERF_RUN_ID}"
