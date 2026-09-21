@@ -114,16 +114,21 @@ jtreg 压缩包解压至 `${PERF_WORK_DIR}/jtreg`，调用入口为：
 "${PERF_WORK_DIR}/jtreg/bin/jtreg"
 ```
 
-脚本在 OpenJDK 源码根目录执行以下完整命令。`-jdk` 确保测试使用本次源码构建的
-JDK；`-w` 和 `-r` 将 jtreg 工作文件和原始报告保存在结果目录。
+脚本在 OpenJDK 源码根目录执行以下完整命令。`-jdk` 和 `JAVA_HOME` 确保 jtreg
+启动器与测试均使用本次源码构建的 JDK；`-w` 和 `-r` 将 jtreg 工作文件和原始报告
+保存在结果目录。`JTREG_CONCURRENCY` 根据 `nproc` 自动取值，但最大为 JT Harness
+支持的 256。
 
 ```bash
 cd "${PERF_WORK_DIR}/openjdk-source"
+JTREG_CONCURRENCY="$(nproc)"
+(( JTREG_CONCURRENCY > 256 )) && JTREG_CONCURRENCY=256
+JAVA_HOME="${PERF_WORK_DIR}/jdk" PATH="${PERF_WORK_DIR}/jdk/bin:${PATH}" \
 "${PERF_WORK_DIR}/jtreg/bin/jtreg" \
   -jdk:"${PERF_WORK_DIR}/jdk" \
   -w:"${RESULTS_DIR}/jtreg-work" \
   -r:"${RESULTS_DIR}/jtreg-report" \
-  -va -ignore:quiet -jit -conc:auto -timeout:5 -tl:3590 \
+  -va -ignore:quiet -jit -conc:"${JTREG_CONCURRENCY}" -timeout:5 -tl:3590 \
   test/jdk/java/lang/String/StringRepeat.java
 ```
 

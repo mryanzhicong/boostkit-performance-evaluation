@@ -105,7 +105,7 @@ initialize_runtime() {
 
 install_dependencies() {
     local required header missing=0
-    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
+    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -488,7 +488,7 @@ start_openjdk_runtime() {
 }
 
 run_openjdk_benchmarks() {
-    local start_seconds elapsed_seconds
+    local start_seconds elapsed_seconds jtreg_concurrency
 
     if initialize_runtime; then
         :
@@ -500,8 +500,12 @@ run_openjdk_benchmarks() {
         return 40
     fi
     mkdir -p "${JTREG_WORK_DIR}" "${JTREG_REPORT_DIR}"
+    jtreg_concurrency="$(nproc)"
+    if (( jtreg_concurrency > 256 )); then
+        jtreg_concurrency=256
+    fi
     start_seconds="$(date +%s)"
-    log "running jtreg ${JTREG_VERSION}: ${JTREG_TEST_CASE}"
+    log "running jtreg ${JTREG_VERSION} with concurrency ${jtreg_concurrency}: ${JTREG_TEST_CASE}"
     if ! (
         cd "${SRC_DIR}"
         JAVA_HOME="${JDK_HOME}" PATH="${JDK_HOME}/bin:${PATH}" \
@@ -509,7 +513,7 @@ run_openjdk_benchmarks() {
             -jdk:"${JDK_HOME}" \
             -w:"${JTREG_WORK_DIR}" \
             -r:"${JTREG_REPORT_DIR}" \
-            -va -ignore:quiet -jit -conc:auto -timeout:5 -tl:3590 \
+            -va -ignore:quiet -jit -conc:"${jtreg_concurrency}" -timeout:5 -tl:3590 \
             "${JTREG_TEST_CASE}"
     ) 2>&1 | tee "${RESULTS_DIR}/jtreg-output.log"; then
         log "ERROR: jtreg test run failed"
