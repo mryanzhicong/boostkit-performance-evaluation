@@ -131,61 +131,23 @@ install_dependencies() {
     log "installing missing OpenJDK test dependencies"
     local package_manager_options=()
     [[ -z "${PERF_PROXY:-}" ]] || package_manager_options+=("--setopt=proxy=${PERF_PROXY}")
-    if command -v dnf >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        else
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install OpenJDK test dependencies"
+        return 30
+    fi
+    local install_command=(dnf)
+    if [[ "${EUID}" -ne 0 ]]; then
+        if ! command -v sudo >/dev/null 2>&1; then
             log "ERROR: root privileges are required to install OpenJDK test dependencies"
             return 30
         fi
-    elif command -v yum >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum "${package_manager_options[@]}" install -y curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        else
-            log "ERROR: root privileges are required to install OpenJDK test dependencies"
-            return 30
-        fi
-    elif command -v apt-get >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! apt-get update; then
-                log "ERROR: failed to update APT package metadata"
-                return 30
-            fi
-            if ! apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev libxrender-dev libxrandr-dev libxi-dev; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n apt-get update; then
-                log "ERROR: failed to update APT package metadata"
-                return 30
-            fi
-            if ! sudo -n apt-get install -y curl tar gzip coreutils python3 gawk findutils sed grep make g++ zip unzip libfreetype-dev libfontconfig1-dev libasound2-dev libcups2-dev libxtst-dev libxt-dev libxrender-dev libxrandr-dev libxi-dev; then
-                log "ERROR: failed to install OpenJDK test dependencies"
-                return 30
-            fi
-        else
-            log "ERROR: root privileges are required to install OpenJDK test dependencies"
-            return 30
-        fi
-    else
-        log "ERROR: unsupported package manager; cannot install OpenJDK test dependencies"
+        install_command=(sudo -n dnf)
+    fi
+    if ! "${install_command[@]}" "${package_manager_options[@]}" install -y \
+        curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ \
+        zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel \
+        libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
+        log "ERROR: failed to install OpenJDK test dependencies"
         return 30
     fi
     for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do

@@ -103,14 +103,14 @@ initialize_runtime() {
 }
 
 run_as_root() {
-    if [[ ( "$1" == dnf || "$1" == yum ) && -n "${PERF_PROXY:-}" ]]; then
+    if [[ "$1" == dnf && -n "${PERF_PROXY:-}" ]]; then
         set -- "$1" "--setopt=proxy=${PERF_PROXY}" "${@:2}"
     fi
     if [[ "${EUID}" -eq 0 ]]; then
         "$@"
         return
     fi
-    if ! command -v sudo >/dev/null 2>&1 || ! sudo -n true >/dev/null 2>&1; then
+    if ! command -v sudo >/dev/null 2>&1; then
         log "ERROR: root privileges are required to install missing dependencies"
         return 30
     fi
@@ -128,18 +128,11 @@ install_flink_dependencies() {
     done
     if [[ "${missing}" -ne 0 ]]; then
         log "installing missing Flink runtime dependencies"
-        if command -v dnf >/dev/null 2>&1; then
-            run_as_root dnf install -y curl tar gzip coreutils python3 java-17-openjdk-devel || return 30
-        elif command -v yum >/dev/null 2>&1; then
-            run_as_root yum install -y curl tar gzip coreutils python3 java-17-openjdk-devel || return 30
-        elif command -v apt-get >/dev/null 2>&1; then
-            run_as_root env DEBIAN_FRONTEND=noninteractive apt-get update || return 30
-            run_as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                curl tar gzip coreutils python3 openjdk-17-jdk || return 30
-        else
-            log "ERROR: no supported package manager is available"
+        if ! command -v dnf >/dev/null 2>&1; then
+            log "ERROR: dnf is required to install Flink dependencies"
             return 30
         fi
+        run_as_root dnf install -y curl tar gzip coreutils python3 java-17-openjdk-devel || return 30
     fi
     for command_name in curl sha512sum tar gzip install java javac jar python3; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then

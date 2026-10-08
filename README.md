@@ -126,13 +126,15 @@ Workflow 在生成矩阵时指定 `production` 或 `development` Profile，并�
 
 - 专用于性能测试的裸机；
 - 实际 CPU 架构与 Runner 标签一致；
-- 预装 Python 3.11+、pip、Git、编译器和软件清单要求的系统编译依赖；
+- 预装 Workflow 所需的 Git、Framework 所需的 Python 3.11+ 和 pip，以及软件脚本安装系统依赖所需的 `dnf`；
 - 能够访问 GitHub；软件源码和测试数据均在任务隔离目录中按固定版本下载；
 - 允许测试用户管理 `/home/runner/boostkit-perf` 下的全部内容和测试进程；
-- 允许测试用户免密且仅以 root 执行固定的 `LC_ALL=C lscpu`，用于读取物理机 DMI/SMBIOS 中的完整 CPU 型号；
-- 系统编译依赖在 Runner 注册前完成安装，测试使用注册时的固定宿主机环境；
+- 允许测试用户免密以 root 执行 `dnf install` 安装缺失的系统依赖，以及固定的 `LC_ALL=C lscpu` 读取物理机 DMI/SMBIOS 中的完整 CPU 型号；
+- 软件脚本检查运行和构建所需的系统依赖；缺失时必须通过 `dnf` 安装，非 root Runner 使用 `sudo -n dnf`，不得回退到 `yum` 或 `apt-get`；
 - 每次任务的全部运行目录（源码、构建、缓存、临时文件、安装前缀、服务日志和高 I/O
   数据）必须位于 `/home/runner/boostkit-perf/<软件名>/` 下，并由软件脚本显式声明和清理。
+
+正式和开发 Workflow 都把 `secrets.PERF_PROXY` 注入为 `PERF_PROXY`。软件脚本安装系统依赖时将该值作为 dnf 的 `--setopt=proxy=...` 参数传入，即使使用 `sudo -n dnf` 也不依赖 sudo 继承 `http_proxy`。独立运行脚本若需要代理，也必须提供 `PERF_PROXY`；仅设置 `http_proxy` 或 `https_proxy` 不保证 dnf 使用代理。
 
 CPU 型号通过下列命令读取 `lscpu` 的 `Model name` 字段：
 
@@ -140,19 +142,20 @@ CPU 型号通过下列命令读取 `lscpu` 的 `Model name` 字段：
 /usr/bin/sudo -n /usr/bin/env LC_ALL=C /usr/bin/lscpu
 ```
 
-在每台性能 Runner 上通过 `sudo visudo -f /etc/sudoers.d/perf-lscpu` 写入以下最小权限规则；示例中的 `runner` 应替换为实际 Actions 服务账户名：
+在每台性能 Runner 上通过 `sudo visudo -f /etc/sudoers.d/perf-runner` 写入以下规则；示例中的 `runner` 应替换为实际 Actions 服务账户名。若某软件另需挂载测试介质等特权操作，应另行配置对应命令：
 
 ```text
-runner ALL=(root) NOPASSWD: /usr/bin/env LC_ALL=C /usr/bin/lscpu
+runner ALL=(root) NOPASSWD: /usr/bin/dnf, /usr/bin/env LC_ALL=C /usr/bin/lscpu
 ```
 
 使用 Actions 服务账户验证配置：
 
 ```bash
 sudo -u runner /usr/bin/sudo -n /usr/bin/env LC_ALL=C /usr/bin/lscpu
+sudo -u runner /usr/bin/sudo -n /usr/bin/dnf --version
 ```
 
-该命令执行失败或 `Model name` 为空时，报告将 CPU 型号记录为 `unknown`。
+`lscpu` 命令执行失败或 `Model name` 为空时，报告将 CPU 型号记录为 `unknown`。
 
 ## Python 依赖
 

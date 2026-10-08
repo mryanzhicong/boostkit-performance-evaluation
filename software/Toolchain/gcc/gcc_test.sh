@@ -123,8 +123,6 @@ initialize_runtime() {
 
 install_dependencies() {
     local required missing=0
-    local rpm_spec_packages=(libnsl)
-    local apt_spec_packages=(libnsl1)
     for required in gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep \
         perl mount umount; do
         if ! command -v "${required}" >/dev/null 2>&1; then
@@ -141,75 +139,22 @@ install_dependencies() {
     log "installing missing GCC build dependencies"
     local package_manager_options=()
     [[ -z "${PERF_PROXY:-}" ]] || package_manager_options+=("--setopt=proxy=${PERF_PROXY}")
-    if command -v dnf >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! dnf "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
-                "${rpm_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n dnf "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
-                "${rpm_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        else
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install GCC build dependencies"
+        return 30
+    fi
+    local install_command=(dnf)
+    if [[ "${EUID}" -ne 0 ]]; then
+        if ! command -v sudo >/dev/null 2>&1; then
             log "ERROR: root privileges are required to install GCC build dependencies"
             return 30
         fi
-    elif command -v yum >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! yum "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
-                "${rpm_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n yum "${package_manager_options[@]}" install -y gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
-                gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux \
-                "${rpm_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        else
-            log "ERROR: root privileges are required to install GCC build dependencies"
-            return 30
-        fi
-    elif command -v apt-get >/dev/null 2>&1; then
-        if [[ "${EUID}" -eq 0 ]]; then
-            if ! env DEBIAN_FRONTEND=noninteractive apt-get update; then
-                log "ERROR: failed to update APT package metadata"
-                return 30
-            fi
-            if ! env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                build-essential gfortran tar xz-utils coreutils curl python3 gawk findutils grep \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
-                "${apt_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-            if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get update; then
-                log "ERROR: failed to update APT package metadata"
-                return 30
-            fi
-            if ! sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                build-essential gfortran tar xz-utils coreutils curl python3 gawk findutils grep \
-                libgmp-dev libmpfr-dev libmpc-dev bison flex perl util-linux \
-                "${apt_spec_packages[@]}"; then
-                log "ERROR: failed to install GCC build dependencies"
-                return 30
-            fi
-        else
-            log "ERROR: root privileges are required to install GCC build dependencies"
-            return 30
-        fi
-    else
-        log "ERROR: unsupported package manager; cannot install GCC dependencies"
+        install_command=(sudo -n dnf)
+    fi
+    if ! "${install_command[@]}" "${package_manager_options[@]}" install -y \
+        gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
+        gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux libnsl; then
+        log "ERROR: failed to install GCC build dependencies"
         return 30
     fi
 

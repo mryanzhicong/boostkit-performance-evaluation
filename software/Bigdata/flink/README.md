@@ -12,17 +12,10 @@
 |---|---|---|---|
 | Flink Standalone 发行包 | `flink-2.3.0-bin-scala_2.12.tgz` | `https://downloads.apache.org/flink/flink-2.3.0/flink-2.3.0-bin-scala_2.12.tgz` | `e5863767caeaa7c72e45fc62d45f7df9f435a1c83aed813ea550db39e9221194d148ea4a6c3bfb5604335974729c579d48c6c4c3eb43502e37310a0bf982462a` |
 
-二进制包与架构无关；同一个包可用于 x86_64 与 aarch64，实际 JVM 由各 Runner 上的 Java 决定。Flink 运行时要求 Java `11`、`17` 或 `21`。脚本会检查 `java`、`javac`、`jar`、`curl`、`tar`、`gzip`、`sha512sum` 和 Python 3；缺失时自动安装。RPM 系统安装：
+二进制包与架构无关；同一个包可用于 x86_64 与 aarch64，实际 JVM 由各 Runner 上的 Java 决定。Flink 运行时要求 Java `11`、`17` 或 `21`。脚本会检查 `java`、`javac`、`jar`、`curl`、`tar`、`gzip`、`sha512sum` 和 Python 3；缺失时通过 `dnf` 安装系统依赖：
 
 ```bash
 sudo dnf install -y curl tar gzip coreutils python3 java-17-openjdk-devel
-```
-
-Debian/Ubuntu 系统安装：
-
-```bash
-sudo apt-get update
-sudo apt-get install -y curl tar gzip coreutils python3 openjdk-17-jdk
 ```
 
 脚本不会将 Flink 安装到系统路径，也不会修改 Runner 已有的 Flink 服务。

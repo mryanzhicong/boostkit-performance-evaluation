@@ -44,7 +44,7 @@ tar -xzf go1.27.0.linux-amd64.tar.gz -C "${PERF_WORK_DIR}/go-install" --strip-co
 ```
 
 脚本检查 `git`、`curl`、`gcc`、`tar`、`gzip`、`sha256sum`、`awk`、`python3`、
-`perf`、`nproc`；缺失时通过 `dnf`、`yum` 或 `apt-get` 自动安装。Go 二进制位于
+`perf`、`nproc`；缺失时通过 `dnf` 自动安装。Go 二进制位于
 任务私有安装目录。
 
 ## 官方测试

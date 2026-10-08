@@ -191,7 +191,7 @@ install_oceanbase_dependencies() {
             log "ERROR: dnf install failed for ${packages[*]}"
             return 30
         fi
-    elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+    elif command -v sudo >/dev/null 2>&1; then
         if ! sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
             log "ERROR: sudo dnf install failed for ${packages[*]}"
             return 30

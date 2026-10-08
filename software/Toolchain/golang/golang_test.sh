@@ -91,14 +91,14 @@ initialize_runtime() {
 }
 
 run_as_root() {
-    if [[ ( "$1" == dnf || "$1" == yum ) && -n "${PERF_PROXY:-}" ]]; then
+    if [[ "$1" == dnf && -n "${PERF_PROXY:-}" ]]; then
         set -- "$1" "--setopt=proxy=${PERF_PROXY}" "${@:2}"
     fi
     if [[ "${EUID}" -eq 0 ]]; then
         "$@"
         return
     fi
-    if ! command -v sudo >/dev/null 2>&1 || ! sudo -n true >/dev/null 2>&1; then
+    if ! command -v sudo >/dev/null 2>&1; then
         log "ERROR: root privileges are required to install missing dependencies"
         return 30
     fi
@@ -115,20 +115,11 @@ install_dependencies() {
     fi
 
     log "installing missing Go runtime and official benchmark dependencies"
-    if command -v dnf >/dev/null 2>&1; then
-        run_as_root dnf install -y \
-            git curl gcc tar gzip coreutils gawk python3 perf
-    elif command -v yum >/dev/null 2>&1; then
-        run_as_root yum install -y \
-            git curl gcc tar gzip coreutils gawk python3 perf
-    elif command -v apt-get >/dev/null 2>&1; then
-        run_as_root env DEBIAN_FRONTEND=noninteractive apt-get update
-        run_as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git curl gcc tar gzip coreutils gawk python3 linux-perf
-    else
-        log "ERROR: unsupported package manager; cannot install Go dependencies"
+    if ! command -v dnf >/dev/null 2>&1; then
+        log "ERROR: dnf is required to install Go dependencies"
         return 30
     fi
+    run_as_root dnf install -y git curl gcc tar gzip coreutils gawk python3 perf || return 30
 
     for command_name in git curl gcc tar gzip sha256sum awk python3 perf nproc; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
