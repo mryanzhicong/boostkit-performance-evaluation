@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Normalize pyperformance's official pyperf JSON into per-benchmark metrics.
 
-pyperformance (the official Python performance suite) is executed with a fixed
-documented benchmark selection and emits pyperf JSON. This script extracts one
-median value per official benchmark, preserving the official benchmark name
+pyperformance (the official Python performance suite) emits pyperf JSON. This
+script extracts one median value per official benchmark, preserving its name
 verbatim.
 The median reproduces pyperf's own median: statistics.median over every
 recorded run value, with warmup values excluded.
@@ -151,25 +150,6 @@ def normalize_results(
     return results, runtime_context
 
 
-def validate_requested_benchmarks(results: dict[str, Any], requested: str) -> list[str]:
-    if not requested:
-        raise RuntimeError("requested benchmark selection is empty")
-    requested_list = [name for name in requested.split(",") if name]
-    if not requested_list:
-        raise RuntimeError("requested benchmark selection is empty")
-    missing = [name for name in requested_list if name not in results]
-    if missing:
-        raise RuntimeError(
-            "official output is missing requested benchmarks: " + ",".join(missing)
-        )
-    unexpected = [name for name in results if name not in requested_list]
-    if unexpected:
-        raise RuntimeError(
-            "official output has unexpected benchmarks: " + ",".join(unexpected)
-        )
-    return requested_list
-
-
 def main() -> int:
     if len(sys.argv) != 3:
         print(
@@ -182,13 +162,11 @@ def main() -> int:
     try:
         payload = load_official_benchmark(official_path)
         results, runtime_context = normalize_results(payload)
-        requested = validate_requested_benchmarks(
-            results, os.environ.get("PYPERFORMANCE_BENCHMARKS", "")
-        )
     except (RuntimeError, TypeError, ValueError) as exc:
         print(f"[python-parse] ERROR: {exc}", file=sys.stderr)
         return 1
 
+    benchmark_names = list(results)
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
     pyperformance_version = os.environ.get("PYPERFORMANCE_VERSION", "")
@@ -206,23 +184,22 @@ def main() -> int:
                 "-m",
                 "pyperformance",
                 "run",
-                "-b",
-                ",".join(requested),
                 "--warmup",
                 warmup,
                 "--inherit-environ",
-                "PIP_INDEX_URL,PIP_TRUSTED_HOST",
+                "PIP_INDEX_URL,PIP_TRUSTED_HOST,http_proxy,https_proxy,no_proxy,all_proxy,HTTP_PROXY,HTTPS_PROXY,NO_PROXY,ALL_PROXY",
                 "-o",
                 "benchmark.json",
             ],
             "pyperformance_version": pyperformance_version,
-            "benchmarks": requested,
+            "benchmark_group": "default",
+            "benchmarks": benchmark_names,
             "build_options": configure_options,
             "aggregation": "median",
             "official_suite": "pyperformance",
         },
         "metric_contract": {
-            "scope": "median of every selected official pyperformance benchmark",
+            "scope": "median of every completed default pyperformance benchmark",
             "source_field": "median",
             "normalized_unit": "s",
             "direction": "lower_is_better",

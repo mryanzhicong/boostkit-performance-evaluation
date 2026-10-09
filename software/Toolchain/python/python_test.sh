@@ -14,9 +14,6 @@ PYPI_TRUSTED_HOST="mirrors.huaweicloud.com"
 # Keep the benchmark runner and warmup policy identical on both architectures.
 PYPERFORMANCE_VERSION="1.13.0"
 PYPERFORMANCE_WARMUP="3"
-# Representative official selection used by the documented Python AutoJIT
-# comparison: source transformation plus startup with and without site.py.
-PYPERFORMANCE_BENCHMARKS="2to3,python_startup,python_startup_no_site"
 # Match the documented CPython performance-build configuration.
 CONFIGURE_OPTIONS="--enable-optimizations --with-lto"
 
@@ -271,7 +268,7 @@ run_python_benchmarks() {
     }
     mkdir -p "${BENCH_WORK_DIR}" "${RESULTS_DIR}"
     log_message "installing pyperformance ${PYPERFORMANCE_VERSION} into the private CPython"
-    log_message "running official pyperformance benchmarks: ${PYPERFORMANCE_BENCHMARKS}"
+    log_message "running the official pyperformance default benchmark suite"
     (
         cd "${BENCH_WORK_DIR}"
         export PIP_NO_CACHE_DIR=1
@@ -287,7 +284,6 @@ run_python_benchmarks() {
             --trusted-host "${PYPI_TRUSTED_HOST}" \
             "pyperformance==${PYPERFORMANCE_VERSION}" || exit 50
         "${PYTHON_BIN}" -m pyperformance run \
-            -b "${PYPERFORMANCE_BENCHMARKS}" \
             --warmup "${PYPERFORMANCE_WARMUP}" \
             --inherit-environ \
                 PIP_INDEX_URL,PIP_TRUSTED_HOST,http_proxy,https_proxy,no_proxy,all_proxy,HTTP_PROXY,HTTPS_PROXY,NO_PROXY,ALL_PROXY \
@@ -300,7 +296,7 @@ run_python_benchmarks() {
         log_message "ERROR: official pyperformance output is empty: ${RESULTS_DIR}/benchmark.json"
         return 50
     }
-    export SOFTWARE_VERSION EXPECTED_ARCH PYPERFORMANCE_BENCHMARKS PYPERFORMANCE_VERSION
+    export SOFTWARE_VERSION EXPECTED_ARCH PYPERFORMANCE_VERSION
     export PYPERFORMANCE_WARMUP CONFIGURE_OPTIONS
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark.json" \
