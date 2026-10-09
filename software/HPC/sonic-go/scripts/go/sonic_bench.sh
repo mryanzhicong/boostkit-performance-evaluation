@@ -1,43 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# sonic_bench.sh —— sonic 库 parser/encoder/decoder 基准测试（stage4 性能用例）
-# stage4-test/scripts/go/ 用例脚本，由 test.sh 驱动（参数以 --key value 传入）。
-#
-# 测试对象（3 类，环境变量控制测试模式，模式名仅用于结果标识）：
-#   encoder/decoder（6 种模式组合，两类共用同一张环境变量表）：
-#     DYN+JIT : SONIC_USE_SVE_WRAPGOC=1 SONIC_USE_SVE_LINKNAME=0 SONIC_ENCODER_USE_VM=""
-#     SVE+JIT : SONIC_USE_SVE_WRAPGOC=0 SONIC_USE_SVE_LINKNAME=1 SONIC_ENCODER_USE_VM=""
-#     NEON+JIT: SONIC_USE_SVE_WRAPGOC=0 SONIC_USE_SVE_LINKNAME=0 SONIC_ENCODER_USE_VM=""
-#     DYN+VM  : SONIC_USE_SVE_WRAPGOC=1 SONIC_USE_SVE_LINKNAME=0 SONIC_ENCODER_USE_VM=1
-#     SVE+VM  : SONIC_USE_SVE_WRAPGOC=0 SONIC_USE_SVE_LINKNAME=1 SONIC_ENCODER_USE_VM=1
-#     NEON+VM : SONIC_USE_SVE_WRAPGOC=0 SONIC_USE_SVE_LINKNAME=0 SONIC_ENCODER_USE_VM=1
-#     bench 包：encoder → ./encoder、decoder → ./decoder（公共 API 包，各 12 个
-#     Benchmark<Type>_{Generic,Binding,Parallel}_{Sonic,Sonic_Fast,StdLib}）；
-#     bench: -run=^$ -benchmem -benchtime=5s -bench "^(BenchmarkEncoder_.*)$"
-#            （decoder 同理，首字母大写由 sonic_type 生成）。
-#     注意：v1.15.2 中不存在 JsonLarge/JsonSmall 数据集，这两个包的基准固定
-#     用 TwitterJson（encoder|decoder/testdata_test.go）；跨库对比包
-#     external_jsonlib_test/benchmark_test 里也没有 Sonic 的 encoder/decoder 基准，
-#     故数据集维度以实际存在的基准为准。
-#   parser（3 种模式）：
-#     DYN: WRAPGOC=1 LINKNAME=0 / SVE: WRAPGOC=0 LINKNAME=1 / NEON: WRAPGOC=0 LINKNAME=0
-#     bench 包 ./internal/native（自带子基准 BenchmarkParseWithPadding/{Complex,
-#     Medium} 与 BenchmarkGetByPath）：-run=^$ -benchmem -benchtime=5s -bench=.
-#
-# 维度说明：SONIC_* 是运行时开关（internal/native/dispatch_arm64.go init、
-#   internal/encoder/vars/const.go，os.Getenv 读取），模式间编译产物相同、仅执行
-#   路径不同；goexperiment/goarm64/gcflags/ldflags 才是构建期维度。
-#   SVE/DYN/NEON 分派仅存在于 arm64（dispatch_arm64.go）；x86_64 上这些开关
-#   不被读取，各模式执行同一条 amd64 路径——双架构跑同一模式矩阵是为了指标
-#   集合可比，不代表 x86_64 上模式间存在实现差异。
-#   环境注入统一走 env 命令前缀且未传即显式置空（GOEXPERIMENT/GOARM64），脚本
-#   不受测试机这两项全局残留影响；GOFLAGS 继承全局环境（调用方按需设置）；
-#   SONIC_NO_ASYNC_GC=1 固定注入（关闭后台 GC 循环，降噪）。
+# sonic_bench.sh —— Sonic encoder、decoder、parser 默认模式基准。
+# 三类测试各执行一次。跨架构比较不强制选择 ARM 专有的 DYN/SVE/NEON 路径；
+# 清除外部 SONIC_* 模式开关，使两边均使用当前软件的默认分派。
+# GOEXPERIMENT/GOARM64 未传时显式置空；GOFLAGS 仍继承调用方环境。
 #
 # 每个模式执行前先 go clean -testcache（用户约定：不同测试之间清测试缓存）。
-# 固定注入 SONIC_NO_ASYNC_GC=1：关闭 sonic 部分测试包 TestMain 默认启动的后台
-#   runtime.GC() 循环 goroutine（持续消耗 CPU 干扰基准），与 sonic 官方跑法一致
-#   （internal/native/dispatch_test.go 自带的示例命令同样带此开关）。
+# 固定注入 SONIC_NO_ASYNC_GC=1，关闭测试包的后台 GC 循环以减少干扰。
 #
 # 用法：
 #   bash sonic_bench.sh --toolchain <target> [--sonic_dir <path>]
@@ -72,8 +41,8 @@
 #   原始输出逐模式落 $RESULTS/logs/<用例名>/sonic-bench-<subject>-<mode>.raw.log
 #   （<用例名>由 --result 文件名派生，同一 run 目录多个 sonic 用例互不覆写）。
 #
-# 说明：退出码恒为 0（脚本自身执行成功；各模式的成败与 go test 退出码由 JSON
-#   的 runs[].exit_code 表达，某模式失败继续其余模式）。
+# 说明：各测试的成败与 go test 退出码由 JSON 的 runs[].exit_code 表达；
+#   某测试失败后继续其余测试，最终由 parse_sonic_bench.py 严格校验。
 # =============================================================================
 set -euo pipefail
 
@@ -151,12 +120,11 @@ RUNS_TSV="$(mktemp)"; ROWS_TSV="$(mktemp)"
 trap 'rm -f "$RUNS_TSV" "$ROWS_TSV"' EXIT
 : > "$RUNS_TSV"; : > "$ROWS_TSV"
 
-# ---- 单模式执行：$1=subject $2=mode $3=WRAPGOC $4=LINKNAME $5=USE_VM
-#      $6=bench 正则（为空则 -bench=.）$7=包路径 ----
+# ---- 单项测试：$1=subject $2=bench 正则（为空则 -bench=.）$3=包路径 ----
 run_one() {
-  local subject="$1" mode="$2" wg="$3" ln="$4" vm="$5" bench_re="$6" pkg="$7"
+  local subject="$1" mode="default" bench_re="$2" pkg="$3"
   local raw_log="$RESULTS/logs/$RESULT_TAG/sonic-bench-${subject}-${mode}.raw.log"
-  echo "[sonic] ${subject} [${mode}]: WRAPGOC=${wg} LINKNAME=${ln} USE_VM=${vm} GOEXP=${GOEXPERIMENT_ARG:-<烘焙默认>} GOARM64=${GOARM64_ARG:-<烘焙默认>} pkg=${pkg}" >&2
+  echo "[sonic] ${subject} [${mode}]: GOEXP=${GOEXPERIMENT_ARG:-<烘焙默认>} GOARM64=${GOARM64_ARG:-<烘焙默认>} pkg=${pkg}" >&2
   # 用户约定：不同测试之间清测试缓存
   "$GO_BIN" clean -testcache
   local t0 t1 rc
@@ -177,11 +145,10 @@ run_one() {
     #   GOFLAGS 不在此列，继承全局环境（如需全局 flag 由调用方设置）
     #   GOTOOLCHAIN=local 禁止 go.mod 的 go/toolchain 版本触发自动下载官方工具链
     #   SONIC_NO_ASYNC_GC=1 固定关闭测试包 TestMain 的后台 GC 循环（降噪）
-    #   SONIC_USE_* 为 sonic 模式开关（运行时分派，见文件头注释）
-    run_pinned env \
+    #   清除外部模式开关，使用 Sonic 在当前架构上的默认实现
+    run_pinned env -u SONIC_USE_SVE_WRAPGOC -u SONIC_USE_SVE_LINKNAME -u SONIC_ENCODER_USE_VM \
       GOEXPERIMENT="$GOEXPERIMENT_ARG" GOARM64="$GOARM64_ARG"  \
       GOTOOLCHAIN=local SONIC_NO_ASYNC_GC=1 \
-      SONIC_USE_SVE_WRAPGOC="$wg" SONIC_USE_SVE_LINKNAME="$ln" SONIC_ENCODER_USE_VM="$vm" \
       "$GO_BIN" "${goargs[@]}"
   ) > "$raw_log" 2>&1
   rc=$?
@@ -205,24 +172,15 @@ run_one() {
 
 START="$(date +%s)"
 
-# ---- encoder / decoder：6 种模式组合（环境变量表见文件头注释）----
+# ---- encoder、decoder、parser：各跑一次默认分派 ----
 for subject in encoder decoder; do
   CAP="$(printf '%s' "${subject:0:1}" | tr 'a-z' 'A-Z')${subject:1}"
   BENCH_RE="^(Benchmark${CAP}_.*)\$"
   pkg="$ENCODER_PKG"
   if [[ "$subject" == "decoder" ]]; then pkg="$DECODER_PKG"; fi
-  for m in "DYN+JIT:1:0:" "SVE+JIT:0:1:" "NEON+JIT:0:0:" \
-           "DYN+VM:1:0:1"  "SVE+VM:0:1:1"  "NEON+VM:0:0:1"; do
-    IFS=: read -r name wg ln vm <<<"$m"
-    run_one "$subject" "$name" "$wg" "$ln" "$vm" "$BENCH_RE" "$pkg"
-  done
+  run_one "$subject" "$BENCH_RE" "$pkg"
 done
-
-# ---- parser：3 种模式（NEON=全 0，语义与 encoder 表的显式关闭一致）----
-for m in "DYN:1:0:" "SVE:0:1:" "NEON:0:0:"; do
-  IFS=: read -r name wg ln vm <<<"$m"
-  run_one "parser" "$name" "$wg" "$ln" "$vm" "" "$PARSER_PKG"
-done
+run_one "parser" "" "$PARSER_PKG"
 
 END="$(date +%s)"
 
@@ -241,7 +199,7 @@ cat > "$RESULT_JSON.partial" <<EOF
   "toolchain_target": "$TOOLCHAIN_TARGET",
   "toolchain_version": "$(json_escape "$TOOLCHAIN_VER")",
   "runner": "go test -bench (sonic parser/encoder/decoder)",
-  "test_cmd": "cd $SONIC_DIR && $(json_escape "$SWITCH_DESC")go test -run=^$ -benchmem -benchtime=$BENCHTIME （encoder × 6 模式 @ ${ENCODER_PKG} + decoder × 6 模式 @ ${DECODER_PKG} + parser × 3 模式 @ ${PARSER_PKG}；模式经 SONIC_USE_SVE_WRAPGOC/LINKNAME、SONIC_ENCODER_USE_VM 控制，SONIC_NO_ASYNC_GC=1 固定关闭后台 GC 循环）",
+  "test_cmd": "cd $SONIC_DIR && $(json_escape "$SWITCH_DESC")go test -run=^$ -benchmem -benchtime=$BENCHTIME （encoder @ ${ENCODER_PKG} + decoder @ ${DECODER_PKG} + parser @ ${PARSER_PKG}；均使用默认分派，SONIC_NO_ASYNC_GC=1 关闭后台 GC 循环）",
   "benchtime": "$BENCHTIME",
   "duration_sec": $((END - START)),
   "env": {"host": "$(hostname 2>/dev/null || echo unknown)", "cpu_bind": "$(cpu_bind_desc)",
