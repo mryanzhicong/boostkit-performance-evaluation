@@ -2,11 +2,10 @@ name: zstd
 category: HPC
 enabled: true
 versions:
-  - "1.5.6"
   - "1.5.7"
 test_tools:
-  fullbench:
-    version: "与被测软件版本一致"
+  lzbench:
+    version: "2.2"
 execution:
   type: shell-functions
   stages:
@@ -22,18 +21,30 @@ execution:
     stop:
       script: zstd_test.sh
       function: stop_zstd_runtime
-  timeout_minutes: 10
+  timeout_minutes: 30
 outputs:
-  primary_benchmark:
-    path: benchmark_fullbench.json
+  lzbench_output:
+    path: benchmark_lzbench.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_zstd.json
     stage: test
     format: json
     required: true
 metrics:
-  source: primary_benchmark
-  collection:
-    path: results
-    name_path: scenario
-    value_path: speed_mbs
-    unit: MB/s
-    direction: higher_is_better
+  source: benchmark_result
+  definitions:
+    compression_throughput:
+      path: results.compression_throughput.value
+      unit: MB/s
+      direction: higher_is_better
+    decompression_throughput:
+      path: results.decompression_throughput.value
+      unit: MB/s
+      direction: higher_is_better
+    compressed_size_ratio:
+      path: results.compressed_size_ratio.value
+      unit: "%"
+      direction: lower_is_better

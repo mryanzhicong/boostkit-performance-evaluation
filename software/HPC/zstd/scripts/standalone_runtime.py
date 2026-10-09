@@ -153,33 +153,40 @@ def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
     if benchmark.get("software") != "zstd":
-        raise RuntimeError("benchmark_fullbench.json has an invalid software identity")
+        raise RuntimeError("benchmark_zstd.json has an invalid software identity")
     if benchmark.get("version") != version or benchmark.get("architecture") != architecture:
-        raise RuntimeError("benchmark_fullbench.json identity differs from this run")
+        raise RuntimeError("benchmark_zstd.json identity differs from this run")
     results = benchmark.get("results")
     if not isinstance(results, dict):
-        raise RuntimeError("benchmark_fullbench.json is missing results")
+        raise RuntimeError("benchmark_zstd.json is missing results")
+    expected = {
+        "compression_throughput": ("Compress.", "MB/s", "higher_is_better"),
+        "decompression_throughput": ("Decompress.", "MB/s", "higher_is_better"),
+        "compressed_size_ratio": ("Ratio", "%", "lower_is_better"),
+    }
+    if set(results) != set(expected):
+        raise RuntimeError("benchmark_zstd.json must contain exactly the three lzbench metrics")
     metrics: dict[str, Any] = {}
     for result_key, result in results.items():
         if not isinstance(result, dict):
-            raise RuntimeError(f"fullbench result {result_key} must be an object")
-        metric_name = result.get("scenario")
-        if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"fullbench result {result_key} has an invalid scenario name")
-        if metric_name in metrics:
-            raise RuntimeError(f"duplicate fullbench scenario: {metric_name}")
-        value = result.get("speed_mbs")
+            raise RuntimeError(f"lzbench result {result_key} must be an object")
+        source_field, unit, direction = expected[result_key]
+        if result.get("source_metric") != source_field:
+            raise RuntimeError(f"metric {result_key} is not sourced from {source_field}")
+        if result.get("unit") != unit or result.get("direction") != direction:
+            raise RuntimeError(f"metric {result_key} has inconsistent units or direction")
+        value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise RuntimeError(f"metric {metric_name} is missing or is not numeric")
+            raise RuntimeError(f"metric {result_key} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
-            raise RuntimeError(f"metric {metric_name} must be positive and finite")
-        metrics[metric_name] = {
+            raise RuntimeError(f"metric {result_key} must be positive and finite")
+        metrics[result_key] = {
             "value": value,
-            "unit": "MB/s",
-            "direction": "higher_is_better",
+            "unit": unit,
+            "direction": direction,
         }
     if not metrics:
-        raise RuntimeError("benchmark_fullbench.json contains no metrics")
+        raise RuntimeError("benchmark_zstd.json contains no metrics")
     return metrics
 
 
@@ -254,14 +261,14 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark_path = output_dir / "benchmark_fullbench.json"
+    benchmark_path = output_dir / "benchmark_zstd.json"
     benchmark = load_json(benchmark_path)
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_fullbench.json is missing or invalid")
+                raise RuntimeError("benchmark_zstd.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except RuntimeError as exc:
             command_status = "failed"

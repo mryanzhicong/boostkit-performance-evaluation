@@ -2,15 +2,22 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.5.6}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.5.7}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 ZSTD_SOURCE_URL="${ZSTD_SOURCE_URL:-https://github.com/facebook/zstd.git}"
+LZBENCH_SOURCE_URL="${LZBENCH_SOURCE_URL:-https://github.com/inikep/lzbench.git}"
+LZBENCH_VERSION="v2.2"
+SILESIA_LOCAL_PATH="${SILESIA_LOCAL_PATH:-/home/runner/software/zstd/silesia.tar}"
+SILESIA_URL="https://wanos.co/assets/silesia.tar"
+SILESIA_SHA256="ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
 SOURCE_DIR=""
-FULLBENCH_BIN=""
+LZBENCH_DIR=""
+BENCHMARK_BIN=""
+SILESIA_FILE=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -46,7 +53,8 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     SOURCE_DIR="${PERF_WORK_DIR}/zstd-source"
-    FULLBENCH_BIN="${SOURCE_DIR}/tests/fullbench"
+    LZBENCH_DIR="${PERF_WORK_DIR}/lzbench-source"
+    BENCHMARK_BIN="${LZBENCH_DIR}/lzbench"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -59,11 +67,14 @@ initialize_runtime() {
 require_commands() {
     local command package
     local packages=() dnf_options=()
-    for command in git python3 make cc sed tee; do
+    for command in git python3 make cc c++ sed tee diff curl sha256sum; do
         command -v "${command}" >/dev/null 2>&1 && continue
         case "${command}" in
             cc) package="gcc" ;;
+            c++) package="gcc-c++" ;;
             tee) package="coreutils" ;;
+            diff) package="diffutils" ;;
+            sha256sum) package="coreutils" ;;
             *) package="${command}" ;;
         esac
         packages+=("${package}")
@@ -82,7 +93,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for command in git python3 make cc sed tee; do
+    for command in git python3 make cc c++ sed tee diff curl sha256sum; do
         command -v "${command}" >/dev/null 2>&1 || {
             log "ERROR: required command remains unavailable: ${command}"
             return 30
@@ -114,13 +125,18 @@ read_header_version() {
 build_zstd() {
     local tag actual_version
     initialize_runtime || return $?
+    [[ "${SOFTWARE_VERSION}" == "1.5.7" ]] || {
+        log "ERROR: this lzbench case supports only Zstd 1.5.7"
+        return 10
+    }
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" ]] || {
-        log "ERROR: source directory is not clean under ${PERF_WORK_DIR}"
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${LZBENCH_DIR}" ]] || {
+        log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
 
+    export GIT_TERMINAL_PROMPT=0
     tag="${SOFTWARE_VERSION}"
     [[ "${tag}" == v* ]] || tag="v${tag}"
     log "cloning Zstd ${tag} from ${ZSTD_SOURCE_URL}"
@@ -129,19 +145,28 @@ build_zstd() {
         return 30
     }
 
-    log "building the official tests/fullbench target"
-    (cd "${SOURCE_DIR}/tests" && make fullbench) || {
-        log "ERROR: failed to build the official fullbench target"
-        return 40
-    }
-    [[ -x "${FULLBENCH_BIN}" ]] || {
-        log "ERROR: official fullbench executable was not created"
-        return 40
-    }
-
     actual_version="$(read_header_version "${SOURCE_DIR}/lib/zstd.h")"
-    [[ -n "${actual_version}" ]] || {
-        log "ERROR: cannot read the built Zstd version"
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+        log "ERROR: source Zstd version ${actual_version} differs from ${SOFTWARE_VERSION}"
+        return 40
+    }
+    log "cloning lzbench ${LZBENCH_VERSION} from ${LZBENCH_SOURCE_URL}"
+    git clone --branch "${LZBENCH_VERSION}" --depth 1 \
+        "${LZBENCH_SOURCE_URL}" "${LZBENCH_DIR}" || {
+        log "ERROR: failed to clone lzbench ${LZBENCH_VERSION}"
+        return 30
+    }
+    diff -qr "${SOURCE_DIR}/lib" "${LZBENCH_DIR}/lz/zstd/lib" || {
+        log "ERROR: lzbench's Zstd sources differ from official ${SOFTWARE_VERSION}"
+        return 40
+    }
+    log "building lzbench with the verified official Zstd ${SOFTWARE_VERSION} sources"
+    make -C "${LZBENCH_DIR}" -j4 BUILD_STATIC=0 DONT_BUILD_DENSITY=1 || {
+        log "ERROR: failed to build lzbench"
+        return 40
+    }
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log "ERROR: lzbench executable was not created"
         return 40
     }
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
@@ -150,26 +175,55 @@ build_zstd() {
 
 start_zstd_runtime() {
     initialize_runtime || return $?
-    [[ -x "${FULLBENCH_BIN}" ]] || {
-        log "ERROR: official fullbench executable is unavailable"
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log "ERROR: lzbench executable is unavailable"
         return 40
     }
-    log "Zstd fullbench runtime is ready"
+    log "Zstd lzbench runtime is ready"
+}
+
+prepare_silesia_corpus() {
+    if [[ -e "${SILESIA_LOCAL_PATH}" ]]; then
+        [[ -r "${SILESIA_LOCAL_PATH}" ]] || {
+            log "ERROR: local Silesia corpus is unreadable: ${SILESIA_LOCAL_PATH}"
+            return 40
+        }
+        SILESIA_FILE="${SILESIA_LOCAL_PATH}"
+        log "using local Silesia corpus ${SILESIA_FILE}"
+    else
+        SILESIA_FILE="${PERF_WORK_DIR}/silesia.tar"
+        if [[ ! -f "${SILESIA_FILE}" ]]; then
+            log "downloading Silesia corpus from ${SILESIA_URL}"
+            curl -fL --retry 3 --connect-timeout 30 \
+                -o "${SILESIA_FILE}.part" "${SILESIA_URL}" || {
+                log "ERROR: failed to download the Silesia corpus"
+                return 40
+            }
+            mv "${SILESIA_FILE}.part" "${SILESIA_FILE}" || return 40
+        fi
+    fi
+    printf '%s  %s\n' "${SILESIA_SHA256}" "${SILESIA_FILE}" | sha256sum -c - || {
+        log "ERROR: Silesia corpus checksum mismatch"
+        return 40
+    }
 }
 
 run_zstd_benchmarks() {
     initialize_runtime || return $?
-    [[ -x "${FULLBENCH_BIN}" ]] || {
-        log "ERROR: official fullbench executable is unavailable"
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log "ERROR: lzbench executable is unavailable"
         return 40
     }
+    prepare_silesia_corpus || return 40
     export SOFTWARE_VERSION EXPECTED_ARCH
-    python3 "${SCRIPT_DIR}/scripts/run_fullbench.py" \
-        "${FULLBENCH_BIN}" "${RESULTS_DIR}/benchmark_fullbench.json" || return 50
+    python3 "${SCRIPT_DIR}/scripts/run_lzbench.py" \
+        "${BENCHMARK_BIN}" "${SILESIA_FILE}" \
+        "${RESULTS_DIR}/benchmark_lzbench.txt" \
+        "${RESULTS_DIR}/benchmark_zstd.json" || return 50
 }
 
 stop_zstd_runtime() {
-    log "Zstd fullbench has no background service to stop"
+    log "Zstd lzbench has no background service to stop"
 }
 
 standalone_runtime() {
@@ -296,7 +350,7 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build Zstd's official fullbench target and run its standalone performance evaluation.
+Build verified Zstd 1.5.7 sources in lzbench and run the documented benchmark.
 Results default to results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -306,7 +360,8 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, ZSTD_SOURCE_URL
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, ZSTD_SOURCE_URL,
+  LZBENCH_SOURCE_URL, SILESIA_LOCAL_PATH
 USAGE
 }
 
