@@ -3,6 +3,9 @@ category: Toolchain
 enabled: true
 versions:
   - "25.0.4.1"
+test_tools:
+  jtreg:
+    version: "8.3+1"
 execution:
   type: shell-functions
   stages:
@@ -19,10 +22,6 @@ execution:
       script: openjdk_test.sh
       function: stop_openjdk_runtime
   timeout_minutes: 240
-environment:
-  OPENJDK_OFFLINE_DIR: /home/runner/software/openjdk
-  JTREG_VERSION: "8.3+1"
-  JTREG_TEST_CASE: test/jdk/java/lang/String/StringRepeat.java
 outputs:
   jtreg_output:
     path: jtreg-output.log

@@ -9,8 +9,8 @@
 ## 构建与安装
 
 Zstd 从官方 GitHub 标签浅克隆，在任务隔离目录中构建，不安装系统级 Zstd。运行
-依赖 `git`、`python3`、`make`、C 编译器、`sed` 和 `tee`；当前脚本只校验这些
-命令是否存在，不自动安装缺失依赖。
+依赖 `git`、`python3`、`make`、C 编译器、`sed` 和 `tee`；缺少时脚本用
+`dnf` 安装并复查。设置 `PERF_PROXY` 时也会传给 dnf 的 `proxy` 选项。
 
 构建命令为：
 

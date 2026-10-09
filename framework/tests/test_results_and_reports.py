@@ -179,9 +179,6 @@ def test_normalizer_extracts_metric_from_declared_output_name(tmp_path: Path) ->
     atomic_write_json(output / "runtime_before.json", {"cpu_governor": "performance"})
     atomic_write_json(output / "runtime_after.json", {"cpu_governor": "performance"})
     case = {
-        "execution": {
-            "environment": {"ITERATIONS": 1},
-        },
         "outputs": {
             "result": {
                 "path": "results.json",

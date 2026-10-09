@@ -111,6 +111,18 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     for field in required:
         if field not in case:
             errors.append(f"missing required field: {field}")
+    unknown_fields = set(case) - set(required) - {
+        "test_tools", "environment", "version_overrides",
+        "architectures", "runner", "runner_label",
+    }
+    if unknown_fields:
+        errors.append(
+            "case contains unsupported fields: "
+            + ", ".join(sorted(str(field) for field in unknown_fields))
+        )
+    for field in ("environment", "version_overrides"):
+        if field in case:
+            errors.append(f"{field} is not supported; configure software defaults in its script")
 
     name = case.get("name")
     category = case.get("category")
@@ -178,6 +190,15 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
     if not isinstance(execution, dict):
         errors.append("execution must be a mapping")
     else:
+        unknown_fields = set(execution) - {
+            "type", "stages", "timeout_minutes", "interface", "entrypoint",
+            "expected_outputs", "environment",
+        }
+        if unknown_fields:
+            errors.append(
+                "execution contains unsupported fields: "
+                + ", ".join(sorted(str(field) for field in unknown_fields))
+            )
         if execution.get("type") != "shell-functions":
             errors.append("execution.type must be shell-functions")
         for legacy_field in ("interface", "entrypoint"):
@@ -248,8 +269,8 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
         timeout = execution.get("timeout_minutes")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
             errors.append("execution.timeout_minutes must be a positive integer")
-        if "environment" in execution and not isinstance(execution["environment"], dict):
-            errors.append("execution.environment must be a mapping")
+        if "environment" in execution:
+            errors.append("execution.environment is not supported; configure software defaults in its script")
 
     output_by_name: dict[str, dict[str, Any]] = {}
     output_paths: set[str] = set()

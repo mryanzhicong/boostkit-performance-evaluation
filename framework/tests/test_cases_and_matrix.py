@@ -85,7 +85,6 @@ def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> Non
                 for stage in ("build", "start", "test", "stop")
             },
             "timeout_minutes": 10,
-            "environment": {},
         },
         "outputs": {
             "result": {
@@ -111,6 +110,36 @@ def test_catalog_validates_explicit_stage_scripts_and_functions(tmp_path) -> Non
     case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     _case, errors = validate_case(case_path, tmp_path)
     assert errors == []
+
+    payload["test_tool"] = {"sample": {"version": "1.0"}}
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("case contains unsupported fields: test_tool" in error for error in errors)
+    del payload["test_tool"]
+
+    payload["execution"]["timeout_minute"] = 10
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("execution contains unsupported fields: timeout_minute" in error for error in errors)
+    del payload["execution"]["timeout_minute"]
+
+    payload["environment"] = {"ITERATIONS": 1}
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("environment is not supported" in error for error in errors)
+    del payload["environment"]
+
+    payload["version_overrides"] = {"1.0": {"environment": {"ITERATIONS": 1}}}
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("version_overrides is not supported" in error for error in errors)
+    del payload["version_overrides"]
+
+    payload["execution"]["environment"] = {"ITERATIONS": 1}
+    case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    _case, errors = validate_case(case_path, tmp_path)
+    assert any("execution.environment is not supported" in error for error in errors)
+    del payload["execution"]["environment"]
 
     del payload["execution"]["stages"]["stop"]
     case_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
@@ -167,7 +196,6 @@ def test_catalog_validates_structured_outputs(tmp_path) -> None:
                 for stage in ("build", "start", "test", "stop")
             },
             "timeout_minutes": 10,
-            "environment": {},
         },
         "outputs": {
             "result": {
@@ -383,12 +411,18 @@ def test_workflow_uses_default_pypi_on_ubuntu_and_huawei_on_runners() -> None:
         encoding="utf-8"
     )
     prepare_job, performance_and_report = workflow.split("  performance:", 1)
+    performance_job, report_job = performance_and_report.split("  report:", 1)
     assert "--index-url" not in prepare_job
     assert workflow.count("https://mirrors.huaweicloud.com/repository/pypi/simple") == 1
-    assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in performance_and_report
-    assert workflow.count('"PyYAML==6.0.2"') == 2
-    assert workflow.count("--target") == 2
-    assert workflow.count("--no-cache-dir") == 2
+    assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in performance_job
+    for job in (prepare_job, performance_job, report_job):
+        assert job.count("--target") == 1
+        assert job.count("--no-cache-dir") == 1
+    assert '"PyYAML==6.0.2"' in prepare_job
+    assert '"PyYAML==6.0.2"' in performance_job
+    assert '"PyYAML==6.0.2"' not in report_job
+    assert '"esdk-obs-python"' in performance_job
+    assert '"esdk-obs-python"' in report_job
     assert "Verify preinstalled framework runtime" not in workflow
     assert not (ROOT / "pyproject.toml").exists()
 

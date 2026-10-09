@@ -39,12 +39,6 @@ class StageTerminated(RuntimeError):
     """Raised when the runner asks an active stage to terminate."""
 
 
-def _stringify(value: object) -> str:
-    if isinstance(value, bool):
-        return "1" if value else "0"
-    return str(value)
-
-
 def _terminate_process_group(process: subprocess.Popen[str]) -> None:
     """Stop every process started by one stage, not only its shell parent."""
     if process.poll() is not None:
@@ -100,12 +94,6 @@ def build_environment(context: RunContext, case_venv: Path | None = None) -> dic
     if case_venv is not None:
         environment["VIRTUAL_ENV"] = str(case_venv)
         environment["PATH"] = f"{case_venv / 'bin'}:{environment.get('PATH', '')}"
-    for key, value in context.execution.get("environment", {}).items():
-        environment[str(key)] = _stringify(value)
-    override = context.case.get("version_overrides", {}).get(context.version, {})
-    for key, value in override.get("environment", {}).items():
-        environment[str(key)] = _stringify(value)
-    # Framework-reserved paths are assigned last so case data cannot redirect them.
     environment["PERF_ACTUAL_VERSION_FILE"] = str(actual_version_path(context))
     return environment
 

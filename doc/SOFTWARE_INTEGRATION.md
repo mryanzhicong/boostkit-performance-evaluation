@@ -1,124 +1,43 @@
-# 已有测试脚本接入指南
+# 软件测试接入指南
 
-本文只说明如何把已经存在的测试脚本适配成可独立执行、也可接入 BoostKit Performance Evaluation 的软件测试单元。现有脚本是接入起点，不自动视为正确标准；构建方法、性能命令、负载、指标和结果算法必须先经过评审，只有确认有效的部分才原样保留。
+新软件放在 `software/<category>/<software>/`。脚本须支持 Framework 分阶段调用和项目外独立运行，两种入口共用构建、测试和解析代码。
 
-测试脚本从零开发、负载选择、命令设计和指标算法设计后续单独维护在 `doc/TEST_SCRIPT_DEVELOPMENT.md`，不与本指南混在一起。
+文中的 `example`、`1.0.0`、下载地址、校验值和指标名均为示例。接入时须替换为核实过的真实值。
 
-## 适用前提
+## 1. 确定测试并编写软件 README
 
-开始接入前，应当已经具备可以在裸机上完成下列工作的脚本或命令：
+先确定两个架构都能获取的版本和正式测试命令，再写 `software/<category>/<software>/README.md`：
 
-- 获取指定版本源码并构建或安装到任务私有目录；
-- 启动软件并判断服务是否真正可用，或者为无服务软件准备测试运行时；
-- 执行正式性能测试并产生可解析结果；
-- 停止服务和释放软件私有资源。
+| 项目 | README 中要写的内容 |
+|---|---|
+| 软件版本与来源 | 源码 tag、提交或二进制包地址；离线包文件名与校验值。 |
+| 构建或安装 | 实际执行的命令、安装位置、读取产物版本的命令。 |
+| 测试工具 | 来源、版本、准备命令和最终 benchmark 命令。 |
+| 测试负载 | 数据集、请求或迭代数、并发、预热、预计内存、磁盘和运行时间。 |
+| 结果解析 | 原始输出文件、选取的原始字段、单位和优化方向。 |
 
-如果现有脚本缺少测试命令、不能产生稳定结果或指标含义尚未确定，应先完成评审。评审认定原性能测试核心不准确时，允许在接入中替换为官方、可复现且已确认的测试实现；不能为了形式上的“原脚本不动”继续使用错误负载或错误指标。
+如果并发度随机器核数变化，记录实际并发度，并在指标身份中保留这一差异。跨架构报告只配对同一测试项。
 
-### 测试来源和审批边界
+## 2. 注册软件并填写 `case.yaml`
 
-“已有”“官方”“经过评审”必须有可核对的来源，不能由执行适配的人员或工具自行宣告。构建方式、性能入口、负载参数、数据集、指标集合和派生算法按以下顺序确定：
+以 `HPC/example` 为例：
 
-1. 用户已经提供并明确确认的方案；
-2. 软件官方仓库当前目标版本中的 README、benchmark 程序、测试数据和结果格式；
-3. 用户明确指定并确认可以采用的第三方方案；
-4. 原有脚本中经过用户或项目维护者确认继续保留的实现。
+1. 在 `config/categories.yaml` 的 `HPC` 列表中追加 `- example`。
+2. 创建 `software/HPC/example/README.md`、`case.yaml` 和 `example_test.sh`。
+3. 将解析器等辅助程序放在 `software/HPC/example/scripts/`。
+4. 在清单中填写 `category: HPC`、`name: example`，与注册名和目录名保持一致。
 
-只有用户或项目维护者能够完成方案审批。执行适配的 AI、自动化工具或脚本不能把自己选择或新建的方案标记为“已评审”，也不能通过在注释、变量名或输出中写入 `official`、`reviewed` 等字样建立来源。
-
-下列情况必须停止接入并向用户说明缺少的决定，不得自行补齐：
-
-- 官方仓库没有明确的性能 benchmark，或者存在多个用途不同的 benchmark；
-- 原脚本的测试核心被判定不准确，但尚未确认替代命令；
-- 数据集、规模、并发、迭代时间、线程数或预热方式会实质影响结果，但没有确认值；
-- 原始输出没有给数值命名、单位或语义，无法建立逐字可追溯的指标；
-- 需要增加聚合值、比例、评分或其他派生指标，但公式和优化方向没有确认。
-
-`openeuler/openeuler-docker-images` 及其镜像、分支和复制目录只可用于理解历史示例，不是本项目允许采用的构建、测试、负载、解析或指标来源。除非用户在当前软件接入中重新明确批准，否则不得复制、改写或引用其中的实现。
-
-## 接入原则
-
-1. 先审查后保留。版本选择、构建参数、测试负载和指标中已经确认有效的部分保持不变；不准确、不稳定或不可复现的性能核心必须替换并记录差异。
-2. 独立执行和 Framework 必须共用同一套构建、运行时准备、性能测试和停止函数，禁止维护两套测试实现。
-3. 软件向 Framework 暴露 build、start、test、stop，并保留可独立执行的受保护主入口；独立入口负责本地环境采集、结果校验、报告和私有资源清理。
-4. 整个软件目录复制到其他机器后仍应能够完成单机测试，不得反向依赖项目根目录下的 Framework 文件。
-5. Framework 只按 `case.yaml` 的通用契约编排，不在 Workflow 或 Framework 中增加按软件名称判断的分支。
-6. 所有版本默认在 x86_64 和 aarch64 上执行，软件清单不维护架构或 Runner 标签。
-7. 报告指标必须逐字继承正式测试来源中的名称；适配层只负责提取和必要的格式转换，不负责发明、重命名或解释指标。
-8. 适配开始前必须确定测试来源和审批结论；不存在已确认方案时先停止并请求决定，不能以“先跑通”为由创建临时性能方案。
-
-现有参考：
-
-| 软件形态 | 参考目录 | 重点参考内容 |
-|---|---|---|
-| 有后台服务 | `software/Database/redis` | 服务就绪检查、PID 管理、测试前复验和幂等停止。 |
-| 无后台服务的库或工具 | `software/HPC/lz4` | 数据准备、基准入口校验和无服务收口。 |
-
-## 第一步：盘点现有脚本
-
-接入前先记录现有脚本各部分的职责和评审结论，不要不经判断地全部保留或全部重写：
-
-| 现有行为 | 目标阶段 | 适配要求 |
-|---|---|---|
-| 下载源码、选择版本、编译、安装、产物校验 | build | 保留已经确认的官方命令和必要参数；缺失的系统依赖通过 `dnf` 安装，被测软件的构建和安装产物进入任务私有目录，并从真实产物报告版本。 |
-| 启动服务、生成配置、准备数据集、等待就绪 | start | 服务型软件必须等待可用；无服务软件在此准备测试数据和运行时。 |
-| 执行性能命令、重复运行、聚合原始结果 | test | 保留已审核负载；未审核或已确认不准确的核心替换为官方、可复现方案。等待全部测试结束，并把必要结果交付到 `RESULTS_DIR`。 |
-| 关闭服务、等待退出、释放 socket/PID 等资源 | stop | 必须幂等，能够处理未启动、部分启动、已经退出和重复调用。 |
-
-盘点结果分为三类：
-
-- 确认保留：经过评审的官方构建方式、有效测试参数、已有结果解析和一键入口行为；
-- 必须适配：四阶段边界、私有路径、实际版本报告、结构化输出、source 安全和失败清理；
-- 允许替换：不准确的自定义性能程序、硬编码环境、固定机器阈值、静默忽略失败、被测软件的系统级安装和不可复现数据。
-
-如果原脚本是一个从构建一直执行到测试结束的单体入口，应按上述边界拆出四个可独立调用的入口，再由受保护的 `main()` 重新编排同一组函数。无法明确拆分服务生命周期的脚本不能直接接入。
-
-正式编码前还应记录测试工作量和资源上界，至少包括输入数据量、向量或记录维度、并发/线程数、迭代次数、预计内存峰值、预计磁盘占用和预计运行时间。涉及全量两两比较、笛卡尔积、大数组广播或按数据规模平方增长的实现，必须先证明默认规模在两种架构 Runner 上可运行；不能只依据小样本成功就采用为默认方案。
-
-## 第二步：注册软件并创建目录
-
-在 `config/categories.yaml` 的目标分类下登记软件。空分类保持空值，不写 `[]`：
-
-```yaml
-categories:
-  Database:
-    - redis
-    - example
-```
-
-该文件已配置 Git 内置 `union` 合并驱动。不同分支向同一分类追加不同软件时，合并会保留两项；仍须避免登记同名软件，并在合并后运行 `python3 framework/catalog.py validate`。
-
-目录结构：
-
-```text
-software/<category>/<software>/
-├── README.md              # 本软件的构建、测试、指标和清理说明
-├── case.yaml
-├── <software>_test.sh
-└── scripts/                 # 软件私有基准、独立环境采集和结果处理工具
-```
-
-注册时必须满足：
-
-- 软件名全局唯一，只能属于一个分类；
-- 注册名、软件目录名和 `case.yaml` 的 `name` 完全一致；
-- 分类名、上一级目录名和 `case.yaml` 的 `category` 完全一致；
-- 注册项与实际 `case.yaml` 双向一致；
-- 必须维护软件目录内的 `README.md`。它记录已确认的构建或安装方式、正式性能
-  命令、测试矩阵、纳入报告的指标、原始输出和清理边界；公共接入契约只维护在本文。
-- `<software>_test.sh` 直接执行时必须完成构建、运行时准备、测试、停止、必要信息采集、结果校验、报告生成和私有资源清理；被 Framework 加载时只能定义变量和函数。
-
-## 第三步：声明 `case.yaml`
-
-完整模板：
+固定指标的清单可按下例填写，所有脚本和函数名都须实际存在：
 
 ```yaml
 name: example
-category: Database
+category: HPC
 enabled: true
 versions:
   - "1.0.0"
-
+test_tools:
+  example_benchmark:
+    version: "1.0.0"
 execution:
   type: shell-functions
   stages:
@@ -127,168 +46,213 @@ execution:
       function: build_example
     start:
       script: example_test.sh
-      function: start_example_service
+      function: start_example
     test:
       script: example_test.sh
       function: run_example_benchmarks
     stop:
       script: example_test.sh
-      function: stop_example_service
+      function: stop_example
   timeout_minutes: 180
-
 outputs:
+  benchmark_raw:
+    path: benchmark_raw.txt
+    stage: test
+    format: text
+    required: true
   benchmark_result:
     path: benchmark.json
     stage: test
     format: json
     required: true
-
 metrics:
   source: benchmark_result
   definitions:
-    "<原始输出中的完整指标名>":
-      path: "<真实 JSON 数值路径>"
-      unit: "<原始单位或审核通过的统一单位>"
-      direction: "<higher_is_better、lower_is_better 或 neutral>"
+    throughput:
+      path: results.throughput
+      unit: ops/s
+      direction: higher_is_better
 ```
 
-模板中的尖括号是必须用真实证据替换的占位符，不能直接照抄，也不能由适配人员自行命名。指标证据和命名规则见下文“指标名称与来源约束”。
+上例要求 `benchmark.json` 至少包含 `{"results":{"throughput":123.4}}`，且数值来自正式测试输出。填写清单时逐项核对：
 
-### 身份和版本
+- `outputs.path` 相对于 `RESULTS_DIR`；必需文件由对应阶段写出且非空，JSON 根节点为对象。
+- `metrics.source` 指向必需的 JSON 输出；指标值为有限数值。
+- `direction` 填 `higher_is_better`、`lower_is_better` 或 `neutral`。
+- `test_tools` 填实际工具。版本固定时填确切版本；使用随软件构建的工具可填“与被测软件版本一致”；使用 `dnf` 或 `@latest` 动态安装的工具，应如实注明版本未固定及来源；来源也无法核实时填 `unknown`。
 
-| 字段 | 要求 |
-|---|---|
-| `name` | 非空软件名，等于目录名和注册名。 |
-| `category` | 使用 `config/categories.yaml` 中的分类，并等于目录分类。 |
-| `enabled` | 使用 YAML 布尔值；`true` 才进入矩阵。 |
-| `versions` | 非空且不重复的字符串列表；必须能与实际构建产物报告的版本逐字匹配。 |
+固定指标的实际案例：[Snappy 的 `case.yaml`](../software/HPC/snappy/case.yaml)。它用 `metrics.definitions` 将官方 benchmark 名称逐项映射到 JSON 数值路径。
 
-禁止在软件清单中声明 `architectures`、`runner` 或 `runner_label`。所有启用的软件默认展开到 x86_64 和 aarch64；正式和开发 Runner Profile 的标签只由 `config/defaults.yaml` 维护。
-
-### 四阶段入口
-
-`execution.type` 只能是 `shell-functions`。`execution.stages` 必须完整且只能包含 build、start、test、stop，每个阶段只能声明：
-
-- `script`：软件目录内已经存在的相对 `.sh` 路径，不能使用绝对路径或 `..`；
-- `function`：脚本被加载后能够通过 `declare -F` 找到的合法 Shell 函数名。
-
-四个阶段可以映射到同一个适配脚本，也可以映射到不同脚本。`timeout_minutes` 必须是正整数。
-
-阶段键是固定接口，函数名不是固定接口。函数名应体现软件和职责，例如 `start_example_service`，不要使用难以辨认的 `start`。
-
-### 输出声明
-
-`outputs` 的键是逻辑名称，必须以小写字母开头，只包含小写字母、数字和下划线。每个输出必须声明：
-
-| 字段 | 要求 |
-|---|---|
-| `path` | `RESULTS_DIR` 下的相对路径，不得为绝对路径、包含 `..` 或与其他输出重复。 |
-| `stage` | 实际产生文件的 build、start、test 或 stop 阶段。 |
-| `format` | `json`、`text` 或 `binary`；JSON 路径必须以 `.json` 结尾。 |
-| `required` | 明确写 `true` 或 `false`。 |
-
-阶段函数返回 0 后，Framework 会立即校验归属于该阶段的输出。必要文件必须存在且非空；JSON 必须合法且根节点为对象。可选文件不存在不会失败，但一旦存在也必须有效。
-
-下列文件由 Framework 在 workflow 模式生成，软件阶段函数不得重复声明或覆盖：
-
-- `build_info.json`；
-- `system_info.json`；
-- `runtime_before.json`、`runtime_after.json`；
-- `status.json`、`normalized_result.json`；
-- Markdown、JUnit、跨架构对比和永久历史。
-
-软件独立执行时可以在自己的持久化结果目录生成同名的单机信息和报告文件，但这些逻辑只能由受保护的独立主入口调用，不能在 Framework 的 build、start、test、stop 函数中重复执行。
-
-### 指标声明
-
-`metrics.source` 引用输出逻辑名称，不是文件路径。指标使用 `definitions` 或 `collection` 两种声明方式，二者只能选择一种。
-
-#### 指标名称与来源约束
-
-对外展示和跨架构对比使用的指标名称必须可从测试来源逐字追溯。这里的“测试来源”只包括：
-
-1. 正式性能命令的原始 stdout/stderr；
-2. 正式性能工具生成的原始结果文件；
-3. 软件官方文档明确给出的 benchmark、scenario、API、operation 或 metric 名称；
-4. 已有脚本真实输出且经过评审确认需要保留的名称。
-
-这里的“原始输出”必须由已确认的正式性能工具或正式测试入口独立产生。适配时新写的解析器、包装脚本或数据生成程序，即使先打印一个名称再解析回来，也不能把该名称变成新的指标来源；适配层自身的变量名、字典键、配置名、循环编号和日志文本同样不能作为来源证据。
-
-必须遵守以下规则：
-
-- `definitions` 的每个键必须使用来源中的完整原名，保留大小写、数字、下划线、斜杠和参数后缀；不得翻译、缩写、美化或换成自认为更易读的名称；
-- `collection.name_path` 指向的值必须是解析器从来源原样复制的名称；不得根据循环序号、代码变量或主观语义拼接新名称；
-- 官方输出为 `BM_ZFlatAll/1` 时，对外指标名必须是 `BM_ZFlatAll/1`，不能写成 `snappy_compress_throughput`、`compress_speed` 或其他自造别名；
-- 来源没有给某个数值命名时，该数值不能直接成为对外指标。应先确认官方语义或由测试方案评审明确名称，不允许适配过程中临时起名；
-- 不得把多个原始指标自行合并成“综合性能”“平均性能”等新指标，也不得自行计算比例、评分或推导指标；只有用户明确要求且公式、输入指标、单位和优化方向全部经过评审后才能增加派生指标；
-- 指标筛选必须以真实输出为依据并在接入评审时明确。稳定且数量固定的指标逐项写入 `definitions`；官方场景集合由程序决定时才使用 `collection`；
-- 同一指标在两个架构上必须使用相同的来源名称、提取规则、单位换算和优化方向，不能为不同架构建立别名。
-- 每个指标必须能够定位到具体来源证据：官方文件和入口、原始输出示例行或原始结果路径。只说明“含义类似”或“根据代码推测”不构成来源。
-
-适配层可以为机器解析创建 `results`、`parameters`、`runtime_context` 等 JSON 容器，也可以使用 `value`、`unit`、`source_name`、`source_field` 等技术字段，但必须满足：
-
-- `source_name` 通常保存来源中的完整原名，并作为最终对外指标名。若正式原始格式
-  明确以多个原始字段共同标识一个数值（例如包标签、benchmark 名称和单位），且任一
-  单独字段不足以唯一定位该数值，可以按文档化的固定顺序仅拼接这些原始字段作为机器
-  唯一键；不得翻译、缩写、增添语义词或混入适配层变量。所有组成字段必须同时原样
-  保留，以便逐项回溯原始输出；
-- 技术字段只能承载原值、单位换算值或来源信息，不能创造来源中不存在的性能概念；
-- 单位换算不得改变指标名称和语义，必须保留原始字段、原始单位以及确定性的换算关系；
-- `case.yaml` 的指标键或 `collection.name_path` 决定最终报告名称，不能使用适配层自造的描述字段替代 `source_name`。
-
-接入前必须从真实原始输出整理指标清单，至少逐项确认：原始名称、原始示例行或 JSON 路径、数值字段、原始单位、是否换算、最终单位、优化方向和是否纳入报告。任何一项无法确认都应停止指标接入，不能靠猜测补齐。
-
-固定指标使用 `definitions`，每个指标必须声明：
-
-- `path`：指标在 JSON 中的点路径；字段可以位于任意层级，不要求名为 `summary`；
-- `unit`：非空单位；
-- `direction`：`higher_is_better`、`lower_is_better` 或 `neutral`。
-
-`definitions` 的键是最终报告名称，因此还必须满足上面的来源约束；`path` 只是结构化结果中的取值位置，不能用它为自造名称提供依据。
-
-单个指标可以用自己的 `source` 覆盖默认来源。指标来源必须是 `required: true` 的 JSON 输出。指标值必须是有限数值；字符串、布尔值、`null`、NaN 和 Infinity 都会失败。
-
-同类指标数量由测试程序决定时使用 `collection`：
+测试项数量随工具输出变化时，将上例的 `metrics.definitions` 换成 `metrics.collection`。例如，对于 `{"results":{"case_a":{"value":123.4},"case_b":{"value":98.7}}}`：
 
 ```yaml
 metrics:
   source: benchmark_result
   collection:
     path: results
-    name_path: source_name
     value_path: value
-    unit_path: unit
-    direction_path: direction
+    unit: ops/s
+    direction: higher_is_better
 ```
 
-- `path` 指向一个非空 JSON 对象，对象中的每个成员都会生成一个指标；
-- `name_path` 指向成员内部的指标名称；省略时使用成员键名；
-- `value_path` 指向成员内部的数值；
-- `unit` 和 `direction` 应适用于集合中的全部成员；也可分别使用 `unit_path`、`direction_path` 从每个成员读取。每一项二选一，不能同时声明。
+动态指标清单按输出结构填写：
 
-Framework 会保持集合原有顺序，拒绝空集合、重复名称、缺失路径和非有限数值，并要求同一版本的两个架构产生完全一致的指标集合后才生成跨架构对比。Framework 只能校验结构和双架构一致性，不能判断名称是否确实来自官方输出；来源真实性必须通过永久保存的真实原始输出、严格运行时解析和人工评审共同保证。
+- `results` 为非空对象；对象键 `case_a`、`case_b` 是指标名。
+- 名称位于对象内部字段时，增加 `name_path`。
+- 按场景分表时，增加 `group_path`；二维表格参照 [MySQL 的 `case.yaml`](../software/Database/mysql/case.yaml)。
 
-## 第四步：把已有脚本暴露为四个函数
+动态指标的实际案例：[LZ4 的 `case.yaml`](../software/HPC/lz4/case.yaml)。它用 `metrics.collection` 提取测试项，并用 `group_path` 按执行命令分组。
 
-Framework 的调用链是：
+软件默认值和负载参数在脚本中维护。
 
-```text
-Workflow 传入阶段名
-  → Framework 读取 case.yaml
-  → source 对应 Shell 脚本
-  → 校验声明函数存在
-  → 调用该函数并等待正常退出
-  → 校验该阶段输出
+## 3. 在脚本中初始化必需变量
+
+Framework 每次调用阶段函数都会通过环境变量传入下列值。脚本须读取并保留传入值；独立运行时才按右列设置默认值。示例中的变量赋值用于兼容这两种运行方式。
+
+`SCRIPT_DIR` 由脚本位置计算，`SOFTWARE_NAME` 固定为注册名。
+
+| 变量 | Framework 自动传入值 | 独立运行默认值 |
+|---|---|---|
+| `SOFTWARE_VERSION` | 任务选择的版本 | 已在 `case.yaml.versions` 声明并验证的版本。 |
+| `EXPECTED_ARCH` | `x86_64` 或 `aarch64` | `uname -m` 的实际架构，并在构建前校验。 |
+| `PERF_RUN_ID` | 本次任务 ID | 唯一的 `local-<UTC时间>-<进程号>`。 |
+| `PERF_WORK_DIR` | `/home/runner/boostkit-perf/<software>/<version>/<architecture>/<run_id>/` | `/home/runner/boostkit-perf/<software>/` 下本次运行独占的子目录。 |
+| `RESULTS_DIR` | 仓库下 `.perf-output/<category>/<software>/<version>/<architecture>/<run_id>/` | `<脚本目录>/results/<version>/<run_id>/`，可由调用者指定。 |
+| `PERF_ACTUAL_VERSION_FILE` | `PERF_WORK_DIR/actual-version.txt` | `RESULTS_DIR/actual-version.txt`。 |
+| `TMPDIR` | `PERF_WORK_DIR/tmp` | `PERF_WORK_DIR` 下的私有临时目录。 |
+
+将以下初始化放在脚本中：
+
+- 将 `example` 改为当前软件的注册名。
+- 将 `1.0.0` 改为已验证的默认版本。
+- 在四个阶段函数中调用 `configure_runtime_paths`。
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOFTWARE_NAME="example"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.0.0}"
+EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
+PERF_RUN_ID="${PERF_RUN_ID:-}"
+PERF_WORK_DIR="${PERF_WORK_DIR:-}"
+RESULTS_DIR="${RESULTS_DIR:-}"
+PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
+
+configure_runtime_paths() {
+    if [[ -z "${PERF_RUN_ID}" ]]; then
+        PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+    fi
+    [[ "${PERF_RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || return 10
+    RESULTS_DIR="${RESULTS_DIR:-${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}}"
+    PERF_WORK_DIR="${PERF_WORK_DIR:-/home/runner/boostkit-perf/${SOFTWARE_NAME}/local-${PERF_RUN_ID}}"
+    PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-${RESULTS_DIR}/actual-version.txt}"
+    TMPDIR="${PERF_WORK_DIR}/tmp"
+    export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID PERF_WORK_DIR RESULTS_DIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR
+    mkdir -p "${PERF_WORK_DIR}" "${RESULTS_DIR}" "${TMPDIR}"
+}
 ```
 
-适配优先级如下：
+每个阶段在新的 Shell 进程中运行。文件放置规则如下：
 
-1. 原脚本已经有审核通过的独立函数：保留函数内部核心命令，只增加符合职责的公开函数名并在 `case.yaml` 映射。
-2. 原脚本通过参数分发阶段：可以保留分发入口，但必须额外暴露四个 source-safe 函数供 `case.yaml` 直接映射。
-3. 原脚本是单体流程：按 build、start、test、stop 边界拆分，由 `main()` 重新编排同一组函数。
-4. 原性能核心未通过评审：先替换构建、负载、解析和指标实现，再让独立入口与 Framework 共同调用替换后的唯一实现。
+| 内容 | 目录 |
+|---|---|
+| 跨阶段的构建产物、配置、PID 和数据 | `PERF_WORK_DIR`。下一阶段从文件重新读取。 |
+| 源码、安装、虚拟环境、缓存、高 I/O 数据、临时文件、服务 socket 和日志 | `PERF_WORK_DIR` 的子目录。 |
+| 清单声明的原始输出和结构化结果 | `RESULTS_DIR`。 |
 
-适配脚本被 `source` 时只能初始化变量和定义函数，不能自动执行。允许保留一个独立 `main()`，但必须使用 `BASH_SOURCE` 保护，确保 Framework 加载脚本时不会触发完整流程：
+## 4. 实现获取、依赖和四阶段
+
+安装缺失的系统依赖时：
+
+- root 用户运行 `dnf install`；非 root Runner 运行 `sudo -n dnf`。
+- 配置了 `PERF_PROXY` 时，向 dnf 传入 `--setopt=proxy=...`。
+
+例如：
+
+```bash
+require_commands() {
+    local packages=() dnf_options=()
+    command -v cc >/dev/null 2>&1 || packages+=(gcc)
+    command -v make >/dev/null 2>&1 || packages+=(make)
+    command -v curl >/dev/null 2>&1 || packages+=(curl)
+    if ! command -v sha256sum >/dev/null 2>&1 || \
+       ! command -v tee >/dev/null 2>&1; then
+        packages+=(coreutils)
+    fi
+    command -v python3 >/dev/null 2>&1 || packages+=(python3)
+    (( ${#packages[@]} > 0 )) || return 0
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    if [[ "$(id -u)" -eq 0 ]]; then
+        dnf "${dnf_options[@]}" install -y "${packages[@]}"
+    else
+        sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"
+    fi
+}
+```
+
+获取安装包时按以下顺序：
+
+1. 从 `/home/runner/software/<software>/` 读取预置离线包；该目录只作为输入。
+2. 离线包不存在时，将网络下载文件保存到 `PERF_WORK_DIR`。
+3. 按已核实的校验值验证，再在 `PERF_WORK_DIR` 中解包、构建和安装。
+
+例如：
+
+```bash
+EXAMPLE_RELEASE_URL="<official-release-base-url>"
+EXPECTED_SHA256="<verified-64-character-sha256>"
+archive_name="example-${SOFTWARE_VERSION}.tar.gz"
+archive="${PERF_WORK_DIR}/${archive_name}"
+if [[ -f "/home/runner/software/${SOFTWARE_NAME}/${archive_name}" ]]; then
+    cp "/home/runner/software/${SOFTWARE_NAME}/${archive_name}" "${archive}"
+else
+    curl -fSL --retry 3 -o "${archive}" "${EXAMPLE_RELEASE_URL}/${archive_name}"
+fi
+printf '%s  %s\n' "${EXPECTED_SHA256}" "${archive}" | sha256sum -c -
+```
+
+`EXAMPLE_RELEASE_URL` 和 `EXPECTED_SHA256` 须对应所选版本、架构的官方发布信息。源码仓库型软件在 `PERF_WORK_DIR` 克隆指定 tag 或提交，并核对实际提交。
+
+四个阶段各自重新计算本阶段使用的路径：
+
+| 函数 | 操作 | 必须留下的内容 |
+|---|---|---|
+| `build_example` | 初始化路径，校验架构，安装依赖，获取并校验版本，在 `PERF_WORK_DIR` 构建或安装。 | 从产物读取实际版本，写入 `PERF_ACTUAL_VERSION_FILE`。 |
+| `start_example` | 初始化路径；服务型软件启动并有界等待就绪，无服务软件准备数据或确认 benchmark 可执行。 | 服务 PID、socket 等放在私有目录。 |
+| `run_example_benchmarks` | 初始化路径，运行 README 中确定的正式命令并严格解析。 | `RESULTS_DIR/benchmark_raw.txt` 和 `RESULTS_DIR/benchmark.json`。 |
+| `stop_example` | 停止本软件启动的服务，核对进程退出；无服务软件安全收口。 | 重复调用也能成功收口。 |
+
+`build_example` 写版本的命令示例：
+
+```bash
+printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
+```
+
+例如 test 阶段调用已安装的 benchmark 与本目录解析器：
+
+```bash
+"${PERF_WORK_DIR}/install/bin/example-benchmark" --iterations 3 \
+    2>&1 | tee "${RESULTS_DIR}/benchmark_raw.txt" || return 50
+python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
+    "${RESULTS_DIR}/benchmark_raw.txt" "${RESULTS_DIR}/benchmark.json" || return 50
+```
+
+脚本启用 `set -o pipefail`，使 benchmark 失败能从上述管道返回非零。解析器须完成：
+
+- 校验指标齐全、唯一，且数值有效。
+- 将跨架构固定负载写入 JSON 的 `parameters`，机器相关值写入 `runtime_context`。
+- 保留原始指标名称、单位及必要换算的依据，使结果可追溯。
+
+脚本加载时只定义变量和函数。直接执行时，`main()` 须：
+
+1. 接受 `--version` 和 `--results-dir`。
+2. 按顺序调用同一组阶段函数。
+3. 在成功或失败后停止服务、校验结果，并清理本次创建的私有工作目录。
+
+入口形式如下。完整的独立运行收口可参照 [LZ4 脚本](../software/HPC/lz4/lz4_test.sh) 的 `main()` 和 `run_lz4_standalone()`。
 
 ```bash
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
@@ -296,302 +260,37 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 fi
 ```
 
-`main()` 应直接编排同一组 build、start、test、stop 函数，不能维护另一套构建或性能测试命令。软件阶段仍由 `case.yaml` 显式映射，Framework 不通过脚本参数分发阶段。
+独立入口保留 `RESULTS_DIR` 供检查，失败时返回非零退出码。复制到项目外后，仍使用该软件目录内的脚本和解析器完成测试。
 
-### 独立执行要求
+## 5. 校验并验收
 
-把单个软件目录复制到另一台符合依赖要求的机器后，下列命令必须能够运行，不需要项目根目录中的 `framework/`、`config/` 或 Workflow 文件：
-
-```bash
-./<software>_test.sh
-```
-
-独立入口必须：
-
-- 为本次运行创建唯一工作目录；源码、构建、缓存、临时文件、服务日志和数据目录均置于
-  `/home/runner/boostkit-perf/<软件名>/` 下，持久化结果目录与工作目录分离；
-- 在测试前采集系统身份和运行状态，在测试后再次采集可变运行状态；
-- 从真实构建产物记录软件版本；
-- 严格校验性能输出和指标，禁止空结果或非数值指标成功退出；
-- 生成机器可读结果、状态文件、执行日志和单机 Markdown 报告；
-- 无论成功失败都执行 stop，并只清理本次创建的工作目录和进程；
-- 不执行 Docker、系统缓存或其他不属于本次运行的全局清理。
-
-独立成功运行至少保留下列内容；软件正式基准文件按 `case.yaml.outputs` 追加：
-
-```text
-results/<version>/<run-id>/
-├── actual-version.txt
-├── <case.yaml 声明的正式输出>
-├── build_info.json
-├── system_info.json
-├── runtime_before.json
-├── runtime_after.json
-├── results.json
-├── status.json
-├── results.log
-└── report.md
-```
-
-独立模式的 `results.json` 和 `report.md` 必须从正式基准输出严格提取指标。指标名称、来源路径、单位和优化方向必须与 `case.yaml.metrics` 一致，并在首次真实运行时同时核对独立报告和 Framework 报告，防止两套声明漂移。失败运行也必须尽可能保留 `status.json`、执行日志、已采集环境和失败报告。
-
-Framework 模式仍由公共 prepare、finalize 和专用 Runner 清理负责权威结果、跨架构对比和历史保存。独立模式的本地辅助逻辑不能改变 `case.yaml` 声明的性能负载或指标语义。
-
-示意适配方式：
+先在仓库根目录执行静态检查。示例中的路径和名称须替换为当前软件：
 
 ```bash
-build_example() {
-    existing_build_entry
-    report_actual_version_from_built_artifact
-}
-
-start_example_service() {
-    existing_start_entry
-    wait_until_existing_service_is_ready
-}
-
-run_example_benchmarks() {
-    verify_existing_service_is_ready
-    existing_test_entry
-    convert_existing_result_if_required
-}
-
-stop_example_service() {
-    existing_stop_entry_if_running
-    verify_existing_service_has_stopped
-}
-```
-
-以上名称表示原脚本中的既有入口或适配动作，不是可直接复制执行的命令。
-
-### build 适配要求
-
-- 保留已经审核确认的源码版本选择、官方构建命令和必要参数；原构建会污染系统、复用未知安装或不能证明产物版本时必须整改；
-- 源码、构建树和安装前缀迁移到 `PERF_WORK_DIR`；
-- 校验原脚本预期的二进制、库或包确实生成；
-- 从实际产物读取版本，写入 `PERF_ACTUAL_VERSION_FILE`；
-- 版本文件必须是 UTF-8、非空、无首尾空格的单行值，并与当前 `SOFTWARE_VERSION` 完全一致；
-- 不允许直接把 `SOFTWARE_VERSION` 原样写入版本文件来绕过产物校验。
-
-### start 适配要求
-
-- 服务型软件沿用原启动命令，但配置、日志、PID、socket 和数据目录全部迁移到 `PERF_WORK_DIR`；
-- 启动后执行有界轮询，只有服务真正可响应时才返回 0；
-- 无服务软件把已有的数据下载、解包或运行时准备放在 start，并校验 test 所需入口已就绪；
-- start 是唯一允许后台服务跨阶段存活的入口。
-
-### test 适配要求
-
-- 在执行正式测试命令前复验服务或运行时状态；
-- 使用评审通过的测试命令、迭代次数、并发、数据规模和固定输入；原脚本中未通过评审的自定义基准或阈值不得因“最小改动”继续保留；
-- 等待原测试和聚合过程全部结束后再返回；
-- 在函数返回前生成 `case.yaml` 声明的必要输出；
-- 测试命令的 stdout/stderr 保持正常输出到终端；Framework 会原样捕获为对应架构目录下的 `raw-output.log`，并随成功结果永久保存，软件脚本不再重复实现通用日志归档；
-- 不在软件脚本中生成通用 Markdown、跨架构对比或永久历史。
-
-测试脚本不得捕获异常后仅记录错误并继续返回成功。任一正式 benchmark、解析或必要输出生成失败时，test 必须返回非零；禁止用空对象、错误字符串、0、上一次结果或部分成功结果代替失败项。
-
-### stop 适配要求
-
-- 沿用原停止方式并等待服务确实退出；
-- 能处理未启动、启动到一半、已经退出和重复调用；
-- PID 文件存在时校验 PID 合法，不能误杀无关进程；
-- stop 完成后确认端口、进程或其他软件资源已释放；
-- stop 不负责删除整个 `/home/runner/boostkit-perf`，全局删除由 Framework cleanup 完成。
-
-### Shell 失败传播要求
-
-阶段函数必须保留真实失败码。不要在 `!` 取反之后返回 `$?`，因为进入分支时 `$?` 已经是取反后的状态，可能把失败变成成功：
-
-```bash
-# 错误：some_command 失败后，该分支中的 $? 是 0。
-if ! some_command; then
-    return $?
-fi
-```
-
-需要记录错误时使用不带 `!` 的条件分支，在 `else` 中立即保存原命令状态，再明确返回；这种写法在启用 `set -e` 时也不会提前退出：
-
-```bash
-if some_command; then
-    :
-else
-    command_status=$?
-    printf '[example] some_command failed with status %s\n' "${command_status}" >&2
-    return "${command_status}"
-fi
-```
-
-也可以在不需要补充日志时直接使用 `some_command || return $?`。同一规则适用于命令替换、子 Shell、Python 包装程序和独立入口的阶段状态汇总；不得吞掉真实错误。
-
-## 第五步：使用 Framework 路径和环境变量
-
-| 变量 | 适配用途 |
-|---|---|
-| `SOFTWARE_VERSION` | 当前矩阵请求版本。 |
-| `EXPECTED_ARCH` | 当前期望架构：x86_64 或 aarch64。 |
-| `RESULTS_DIR` | 声明输出的交付目录。 |
-| `PERF_WORK_DIR` | 本次软件、版本、架构的隔离工作目录。 |
-| `PERF_RUN_ID` | 当前运行编号。 |
-| `PERF_PROCESS_TOKEN` | 子进程继承的隔离标识，供清理程序识别。 |
-| `PERF_ACTUAL_VERSION_FILE` | build 报告实际版本的 Framework 保留路径。 |
-| `TMPDIR` | 任务私有临时目录。 |
-| `PIP_CACHE_DIR` | 任务私有 pip 缓存目录。 |
-| `XDG_CACHE_HOME` | 任务私有通用缓存目录。 |
-| `CARGO_HOME` | 任务私有 Cargo 目录。 |
-| `CCACHE_DIR` | 任务私有 ccache 目录。 |
-
-缺失的系统依赖必须通过 `dnf install` 安装；非 root 用户使用 `sudo -n dnf`。需要代理时，从 `PERF_PROXY` 构造 dnf 命令行参数 `--setopt=proxy=...`，并在 `sudo -n dnf` 后传入该参数；不要依赖 sudo 继承 `http_proxy` 或 `https_proxy`。正式和开发 Workflow 均从 `secrets.PERF_PROXY` 注入此变量，独立执行时由调用者提供。`dnf` 不可用或安装失败应明确报错，不得回退到 `yum`、`apt-get` 或静默忽略。系统依赖安装与被测软件安装分开：源码、构建、被测软件的安装产物、服务数据、测试数据、PID、socket、下载和软件缓存全部放入 `PERF_WORK_DIR`；交付结果写入 `RESULTS_DIR`。不得通过系统级 pip 或系统目录下的 `make install` 安装被测软件。
-
-Workflow 模式下，CPU、OS、内核、Python、GCC、glibc、NUMA、内存和 CPU governor 由 Framework 统一采集，四阶段函数不得重复生成这些公共文件。CPU 型号的唯一采集入口是 `/usr/bin/sudo -n /usr/bin/env LC_ALL=C /usr/bin/lscpu`；性能 Runner 必须按根 README 配置该命令的最小 sudoers 权限。独立模式必须在软件目录内提供等价的本地采集能力，目标机器也必须满足同一权限前置条件；该能力只能由受保护的 `main()` 调用，不能依赖项目根目录中的 Framework 模块。
-
-## 第六步：适配已有结果
-
-如果原脚本已经生成合法 JSON，可以直接声明为 output，并用点路径提取指标。必须先核对 JSON 中的名称是否来自正式性能工具或已评审脚本；不能因为 JSON 已经存在就默认其中的自造名称有效。
-
-如果正式测试实现只生成文本：
-
-1. 保留正式性能命令和原始文本；
-2. 在 test 阶段末尾调用薄转换层，把原始结果严格转换为 JSON，并逐字保留原始指标名称；
-3. 转换失败、匹配数量异常或数值非法时直接失败，不能填 0 或复用旧结果；
-4. 单位不需要换算时保留原始数值和单位；确需统一单位时，同时记录原始数值、原始单位、换算值和换算规则；
-5. 将转换后的必要 JSON 作为指标来源，原始终端输出由 Framework 保存为 `raw-output.log`；测试程序另行生成的原始结果文件应声明为 output。
-
-推荐结果结构：
-
-```json
-{
-  "parameters": {
-    "iterations": 3,
-    "dataset_sha256": "固定数据集摘要"
-  },
-  "runtime_context": {
-    "resolved_worker_count": 64
-  },
-  "results": {
-    "<原始输出中的完整指标名>": {
-      "source_name": "<原始输出中的完整指标名>",
-      "source_field": "<原始数值字段名>",
-      "raw_value": 12345.6,
-      "raw_unit": "MB/s",
-      "value": 12345.6,
-      "unit": "MB/s"
-    }
-  }
-}
-```
-
-- `parameters` 记录两个架构必须一致的既有测试方案和固定输入；
-- CPU 核数推导值等机器相关信息放入 `runtime_context`；
-- 固定测试参数仍由原脚本维护，不在 `case.yaml` 再复制一份；
-- 两个架构的 `parameters` 不一致时，Framework 拒绝生成跨架构对比；
-- `results` 的成员键和 `source_name` 必须与原始指标名称完全一致；
-- `raw_value` 和 `raw_unit` 保存来源值，`value` 和 `unit` 保存 Framework 提取值；未换算时两组值相同；
-- 不要求已有合法 JSON 改造成这一推荐结构，但无论采用什么结构，最终指标名称都必须遵守来源约束。
-
-## 第七步：验证适配结果
-
-对 `case.yaml` 声明的全部 Shell 脚本执行语法检查，然后运行公共验证：
-
-```bash
-bash -n software/<category>/<software>/<declared-script>.sh
-
+bash -n software/HPC/example/example_test.sh
+python3 -m compileall -q software/HPC/example/scripts
 python3 framework/catalog.py validate
-
-python3 framework/catalog.py matrix \
-  --software <software> \
-  --version all \
-  --architecture all \
-  --pretty
-
-python3 -m pytest framework/tests
+python3 framework/catalog.py matrix --software example --version 1.0.0 --architecture all --pretty
 ```
 
-`framework/tests` 只验证公共 Framework，不追加按软件名称编写的构建、性能或解析用例。软件目录不保存人工构造的性能输出样例，也不为每个软件增加专属测试文件；解析正确性在首次真实运行中依据永久保存的原始输出完成验收。
+在专用 Runner 上依次验证：
 
-软件目录中的全部 Python 文件至少执行语法编译检查：
+1. 直接运行脚本，指定持久结果目录。
+2. 将完整软件目录复制到项目外，重跑独立入口。
+
+例如：
 
 ```bash
-python3 -m compileall -q software/<category>/<software>
+bash software/HPC/example/example_test.sh --version 1.0.0 \
+  --results-dir /home/runner/example-results/1.0.0
+cp -a software/HPC/example /home/runner/example-standalone-check
+bash /home/runner/example-standalone-check/example_test.sh --version 1.0.0 \
+  --results-dir /home/runner/example-results/standalone-check
 ```
 
-如项目已配置统一 Python 或 Shell 检查器，还必须对新增文件执行对应检查并修复全部错误，不能以“不影响运行”为由保留明显的未使用导入、不可达分支、错误异常处理或格式问题。
+随后分别在 x86_64、aarch64 上执行同版本正式任务，核对：
 
-矩阵中每个声明版本都应出现 x86_64 和 aarch64 两条记录。辅助 Python 转换程序还应执行语法检查；首次真实运行的解析验收必须确认：
-
-- 每个最终指标名称都能在原始输出或官方结果文件中找到完全相同的来源名称；
-- 解析前后的指标数量符合评审清单，不接受意外新增、遗漏或重复；
-- 原始数值和单位被正确保留；存在单位换算时，换算值和规则准确；
-- 未识别输出、格式变化、重复名称、空结果和非法数值都会失败，不会生成猜测名称或默认值。
-
-解析验收以 Actions Artifact 和 `performance-results` 分支中永久保存的真实原始输出为证据，不把性能输出复制回软件源码目录。缺少真实运行结果时只能完成静态检查，不能用人工数据或解析器生成的模拟文本代替最终验收。
-
-还必须验证软件目录自包含：把整个 `software/<category>/<software>` 复制到项目之外的临时位置，从复制后的目录直接执行入口，确认没有导入或调用项目根目录中的 `framework/`、`config/`、Workflow 或其他软件文件。成功和失败路径都要验证结果留存以及私有工作目录清理。
-
-Actions 手动验证顺序：
-
-1. 单软件、单版本、单架构；
-2. 同版本的另一个架构；
-3. `architecture=all`，确认参数和指标可以跨架构对比；
-4. 该软件的全部版本；
-5. 默认全量矩阵。
-
-首次接入验证不更新 Baseline。只有双架构结果经过人工确认后，才单独手动更新。
-
-## 常见适配问题
-
-| 现象 | 原因 | 处理方式 |
-|---|---|---|
-| 注册项或 `case.yaml` 缺失 | 注册表、分类、目录或名称不一致。 | 统一 `config/categories.yaml`、目录和清单身份。 |
-| 声明函数不存在 | 入口名不一致，或 source 脚本时函数未定义。 | 保证适配脚本只初始化变量和定义公开函数。 |
-| build 未报告实际版本 | 仍沿用原构建流程但没有接 Framework 版本接口。 | 从真实产物解析并写 `PERF_ACTUAL_VERSION_FILE`。 |
-| 请求版本与实际版本不同 | 标签、解析格式或版本前缀不一致。 | 修正版本选择或规范化解析，不要直接回写请求值。 |
-| 必要输出缺失或为空 | 原脚本仍写旧目录，或聚合尚未结束函数就退出。 | 把交付文件迁移到 `RESULTS_DIR` 并等待完成。 |
-| 指标路径不存在 | `case.yaml` 与实际 JSON 层级不一致。 | 以真实结果 JSON 为准修正点路径。 |
-| 报告中的指标名无法在原始输出中找到 | 适配时根据主观含义创建了别名或新字段。 | 删除自造名称，使用原始完整名称；来源本身未命名时先停止接入并完成评审。 |
-| 原始输出名称被缩写、翻译或美化 | 把报告可读性当成了重新命名的理由。 | 完整保留官方名称；解释性文字应放在文档或报告说明中，不能替换指标名。 |
-| 解析器产生来源中不存在的综合指标 | 适配层自行聚合、计算比例或评分。 | 默认删除派生指标；确有需求时先明确公式、输入、单位、方向并经过评审。 |
-| 指标不是有限数值 | 文本转换宽松，产生字符串、空值、NaN 或 Infinity。 | 严格解析并在异常时失败。 |
-| 注释声称方案已经评审，但没有审批记录 | 适配工具把自己的选择当成用户决定。 | 删除自我审批结论，回到用户确认或官方来源；存在选择时先停止并请求决定。 |
-| 包装脚本打印名称后再将其作为指标来源 | 把适配层自造输出误当成独立原始输出。 | 指标必须追溯到已确认的正式性能工具、官方结果或已审批原脚本。 |
-| 官方仓库没有唯一性能入口 | 为了完成接入自行编写负载或选择任一示例。 | 列出候选入口、用途和差异，等待用户或维护者确认后再实现。 |
-| Benchmark 报错但阶段仍显示成功 | 捕获异常后继续，或使用 `if ! command; then return $?; fi` 丢失失败码。 | 保留原始非零状态，停止聚合并让 test 失败。 |
-| 默认规模在 Runner 上耗尽内存 | 未评估算法复杂度、广播临时数组或全量比较峰值。 | 在确定默认参数前计算资源上界，并采用已审批且两种架构均可执行的实现。 |
-| 双架构参数不一致 | 把 CPU 数量等机器值写入 `parameters`。 | 机器相关解析值迁移到 `runtime_context`。 |
-| start 成功但 test 连接失败 | 原脚本启动后立即返回，没有就绪检查。 | 保留启动命令并增加有界就绪轮询。 |
-| stop 或 cleanup 失败 | 停止入口不幂等，或仍有进程引用工作目录。 | 修正 PID/进程管理并确认资源释放。 |
-| 直接执行脚本没有结果 | 脚本只定义四阶段函数，没有受保护的 `main()`。 | 增加 source-safe 主入口，并编排与 Framework 相同的四阶段函数。 |
-| 复制软件目录后不能运行 | 独立入口导入了项目根目录中的 Framework 文件。 | 把必要的采集、校验和单机报告能力放入软件自己的 `scripts/`，Framework 仅作为外部调用者。 |
-| 手动结果与 Workflow 不一致 | 独立入口和 `case.yaml` 调用了不同测试实现。 | 收敛为一套阶段函数和一套指标语义，两个入口共同调用。 |
-
-## 接入完成检查表
-
-- [ ] 已完成原脚本盘点，明确哪些保留、哪些为接口适配、哪些因不准确或不安全而替换；
-- [ ] 构建和性能测试核心已经评审，替换内容有明确原因，未盲目保留错误实现；
-- [ ] 测试来源符合审批优先级；所有“已评审”结论均来自用户或项目维护者，不是适配工具自我确认；
-- [ ] 官方入口缺失、多义或负载参数未确认时已停止并请求决定，没有自行新建临时性能方案；
-- [ ] 未使用 `openeuler/openeuler-docker-images` 或其复制实现作为未经批准的接入来源；
-- [ ] 软件在唯一分类中注册，注册名、目录、`name` 和 `category` 一致；
-- [ ] `case.yaml` 声明完整四阶段、正整数超时、必要输出和至少一个指标；
-- [ ] 清单不包含架构、Runner 标签或 Framework 保留输出；
-- [ ] 四个公开函数可被 source，并等待各自阶段真正完成；
-- [ ] 直接执行入口能够编排同一组四阶段函数，完整生成结果、日志、状态和单机报告；
-- [ ] 把软件目录复制到项目之外后仍可独立运行，不依赖根目录 Framework；
-- [ ] build 从真实产物报告与请求值一致的版本；
-- [ ] start 等待就绪，stop 对异常和重复调用保持幂等；
-- [ ] 所有运行资源迁移到 `PERF_WORK_DIR`，交付结果迁移到 `RESULTS_DIR`；
-- [ ] 原始结果已直接声明或通过薄转换层生成严格 JSON；
-- [ ] 测试命令的原始 stdout/stderr 会输出到终端，可由 Framework 完整保存为 `raw-output.log`；
-- [ ] 已基于真实原始输出形成指标清单，并确认原始名称、来源位置、数值、单位、换算和优化方向；
-- [ ] `definitions` 的键或 `collection.name_path` 结果与来源名称逐字一致，没有翻译、缩写、美化或自造别名；
-- [ ] 适配层没有自行增加综合指标、比例、评分或其他来源中不存在的性能概念；
-- [ ] 已使用首次真实运行的永久结果校验指标集合、原始名称、数值、单位及异常失败路径；
-- [ ] 真实输出由正式性能入口独立产生，不是适配层为建立指标来源而自行打印的文本；
-- [ ] 软件目录没有保存人工性能输出样例，也没有向 `framework/tests` 增加按软件名称编写的用例；
-- [ ] 已评估默认负载的时间、磁盘和内存上界，不存在未经证明可运行的平方级或大数组广播实现；
-- [ ] Shell 和 Python 失败均传播为非零退出，没有取反后返回 `$?`、吞异常或以部分结果冒充成功；
-- [ ] 固定输入写入 `parameters`，机器相关值写入 `runtime_context`；
-- [ ] 指标路径、单位、优化方向和数值类型与实际结果一致；
-- [ ] Shell、Catalog、矩阵、Framework 测试和分阶段 Actions 验证全部通过。
-- [ ] 软件目录内全部 Python 文件通过语法编译及项目已配置的代码质量检查。
-- [ ] 独立成功和失败路径都执行 stop，且只清理本次创建的私有工作目录和进程。
+- 两个架构的实际产物版本和完整原始输出。
+- `case.yaml` 声明的结果、指标单位、固定参数和实际并发度。
+- 双架构报告是否只对齐同一测试项。
+- 失败测试后的服务退出状态和私有工作目录清理结果。

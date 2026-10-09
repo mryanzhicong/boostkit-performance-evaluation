@@ -72,21 +72,51 @@ initialize_runtime() {
 }
 
 require_commands() {
-    local required missing=0
+    local required package
+    local packages=() dnf_options=()
     for required in git cmake make g++ python3 curl tar sed tee nproc; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required}"
-            missing=1
-        fi
+        command -v "${required}" >/dev/null 2>&1 && continue
+        case "${required}" in
+            g++) package="gcc-c++" ;;
+            tee) package="coreutils" ;;
+            nproc) package="coreutils" ;;
+            *) package="${required}" ;;
+        esac
+        packages+=("${package}")
     done
-    [[ "${missing}" -eq 0 ]]
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log_message "ERROR: dnf is required to install Folly build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log_message "installing missing Folly build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
+    fi
+    for required in git cmake make g++ python3 curl tar sed tee nproc; do
+        command -v "${required}" >/dev/null 2>&1 || {
+            log_message "ERROR: required command remains unavailable: ${required}"
+            return 30
+        }
+    done
 }
 
 check_system_dependencies() {
-    # Required development packages per CMake/folly-deps.cmake and the
-    # BUILD_BENCHMARKS code path of the official CMakeLists.txt.
-    local missing=0
-    # Boost >= 1.69.0 is REQUIRED.
+    local check header package
+    local packages=() dnf_options=()
+    local checks=(
+        "event2/event.h:libevent-devel"
+        "openssl/ssl.h:openssl-devel"
+        "fmt/format.h:fmt-devel"
+        "glog/logging.h:glog-devel"
+        "gtest/gtest.h:gtest-devel"
+        "gmock/gmock.h:gmock-devel"
+    )
     if ! printf '%s\n' \
         '#include <boost/version.hpp>' \
         '#if BOOST_VERSION < 106900' \
@@ -94,32 +124,44 @@ check_system_dependencies() {
         '#endif' \
         'int main(){return 0;}' \
         | g++ -x c++ -fsyntax-only - 2>/dev/null; then
-        log_message "ERROR: Boost >= 1.69 development headers are missing"
-        missing=1
+        packages+=(boost-devel)
     fi
-    local check library header compiler_output
-    local checks=(
-        "libevent:event2/event.h"
-        "openssl:openssl/ssl.h"
-        "fmt:fmt/format.h"
-        "glog:glog/logging.h"
-        "gtest:gtest/gtest.h"
-        "gmock:gmock/gmock.h"
-    )
     for check in "${checks[@]}"; do
-        library="${check%%:*}"
-        header="${check#*:}"
-        if ! compiler_output="$(printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
-            | g++ -x c++ -fsyntax-only - 2>&1)"; then
-            log_message "ERROR: development headers for ${library} are missing"
-            printf '%s\n' "${compiler_output}" >&2
-            missing=1
+        header="${check%%:*}"
+        package="${check#*:}"
+        if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
+            | g++ -x c++ -fsyntax-only - 2>/dev/null; then
+            packages+=("${package}")
         fi
     done
-    [[ "${missing}" -eq 0 ]] || {
-        log_message "ERROR: install the missing development packages before retrying"
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log_message "ERROR: dnf is required to install Folly development headers"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log_message "installing missing Folly development packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
+    fi
+    printf '%s\n' '#include <boost/version.hpp>' '#if BOOST_VERSION < 106900' \
+        '#error boost too old' '#endif' 'int main(){return 0;}' \
+        | g++ -x c++ -fsyntax-only - 2>/dev/null || {
+        log_message "ERROR: Boost >= 1.69 development headers remain unavailable"
         return 30
     }
+    for check in "${checks[@]}"; do
+        header="${check%%:*}"
+        printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
+            | g++ -x c++ -fsyntax-only - 2>/dev/null || {
+            log_message "ERROR: development header remains unavailable: ${header}"
+            return 30
+        }
+    done
 }
 
 check_architecture() {

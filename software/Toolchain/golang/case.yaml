@@ -4,6 +4,9 @@ enabled: true
 versions:
   - "1.26.7"
   - "1.27.0"
+test_tools:
+  bent:
+    version: "未固定（@latest）"
 execution:
   type: shell-functions
   stages:
@@ -20,9 +23,6 @@ execution:
       script: golang_test.sh
       function: stop_golang_runtime
   timeout_minutes: 720
-test_tools:
-  bent:
-    version: latest
 outputs:
   official_benchmark:
     path: benchmark_go_bench.txt

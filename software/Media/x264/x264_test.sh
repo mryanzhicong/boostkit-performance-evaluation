@@ -68,18 +68,44 @@ initialize_runtime() {
 }
 
 require_commands() {
-    local required missing=0
-    for required in git python3 make gcc sed tee; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log "ERROR: required command is missing: ${required}"
-            missing=1
-        fi
+    local required package
+    local packages=() dnf_options=()
+    for required in git python3 make gcc sed tee nproc; do
+        command -v "${required}" >/dev/null 2>&1 && continue
+        case "${required}" in
+            tee) package="coreutils" ;;
+            nproc) package="coreutils" ;;
+            *) package="${required}" ;;
+        esac
+        packages+=("${package}")
     done
     if [[ "$(normalize_arch "${EXPECTED_ARCH}")" == "x86_64" ]] && ! command -v nasm >/dev/null 2>&1; then
-        log "ERROR: nasm is required to build x264 on x86_64"
-        missing=1
+        packages+=(nasm)
     fi
-    [[ "${missing}" -eq 0 ]]
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log "ERROR: dnf is required to install x264 build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log "installing missing x264 build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
+    fi
+    for required in git python3 make gcc sed tee nproc; do
+        command -v "${required}" >/dev/null 2>&1 || {
+            log "ERROR: required command remains unavailable: ${required}"
+            return 30
+        }
+    done
+    if [[ "$(normalize_arch "${EXPECTED_ARCH}")" == "x86_64" ]] && ! command -v nasm >/dev/null 2>&1; then
+        log "ERROR: nasm remains unavailable"
+        return 30
+    fi
 }
 
 check_architecture() {

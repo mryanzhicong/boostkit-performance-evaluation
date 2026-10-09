@@ -30,9 +30,9 @@ EXPECTED_ARCH="${EXPECTED_ARCH/aarch64/aarch64}"
 EXPECTED_ARCH="${EXPECTED_ARCH/arm64/aarch64}"
 
 PERF_RUN_ID="${PERF_RUN_ID:-local-$(date +%Y%m%d-%H%M%S)}"
-RESULTS_DIR=""
+RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
-PERF_ACTUAL_VERSION_FILE=""
+PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 # OceanBase 运行/连接配置
 OB_HOST="127.0.0.1"
@@ -80,7 +80,9 @@ configure_runtime_paths() {
         STANDALONE_OWNS_WORK_DIR=1
     fi
 
-    PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
+        PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
+    fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
     OB_DEPLOY_HOME="${PERF_WORK_DIR}/oceanbase-demo"
     OBD_HOME="${PERF_WORK_DIR}/obd-meta"

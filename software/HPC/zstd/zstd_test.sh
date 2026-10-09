@@ -57,14 +57,37 @@ initialize_runtime() {
 }
 
 require_commands() {
-    local command missing=0
+    local command package
+    local packages=() dnf_options=()
     for command in git python3 make cc sed tee; do
-        if ! command -v "${command}" >/dev/null 2>&1; then
-            log "ERROR: required command is missing: ${command}"
-            missing=1
-        fi
+        command -v "${command}" >/dev/null 2>&1 && continue
+        case "${command}" in
+            cc) package="gcc" ;;
+            tee) package="coreutils" ;;
+            *) package="${command}" ;;
+        esac
+        packages+=("${package}")
     done
-    [[ "${missing}" -eq 0 ]]
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log "ERROR: dnf is required to install Zstd build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log "installing missing Zstd build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
+    fi
+    for command in git python3 make cc sed tee; do
+        command -v "${command}" >/dev/null 2>&1 || {
+            log "ERROR: required command remains unavailable: ${command}"
+            return 30
+        }
+    done
 }
 
 check_architecture() {

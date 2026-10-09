@@ -3,14 +3,11 @@ category: HPC
 enabled: true
 versions:
   - "35.1"
+test_tools:
+  protobuf-python:
+    version: "7.35.1"
 execution:
   type: shell-functions
-  environment:
-    NUM_MESSAGES: 200000
-    ITERATIONS: 5
-    MESSAGE_SIZE: 100
-    THREAD_COUNTS: 1,2,4,8
-    PROTOBUF_PYTHON_VERSION: 7.35.1
   stages:
     build:
       script: protobuf_test.sh

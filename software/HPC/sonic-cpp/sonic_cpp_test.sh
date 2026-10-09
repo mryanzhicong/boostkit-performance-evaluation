@@ -62,14 +62,37 @@ initialize_runtime() {
 }
 
 require_commands() {
-    local required missing=0
+    local required package
+    local packages=() dnf_options=()
     for required in git python3 cmake sed tee; do
-        if ! command -v "${required}" >/dev/null 2>&1; then
-            log "ERROR: required command is missing: ${required}"
-            missing=1
-        fi
+        command -v "${required}" >/dev/null 2>&1 && continue
+        case "${required}" in
+            sed) package="sed" ;;
+            tee) package="coreutils" ;;
+            *) package="${required}" ;;
+        esac
+        packages+=("${package}")
     done
-    [[ "${missing}" -eq 0 ]]
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log "ERROR: dnf is required to install Sonic-cpp build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log "installing missing Sonic-cpp build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
+    fi
+    for required in git python3 cmake sed tee; do
+        command -v "${required}" >/dev/null 2>&1 || {
+            log "ERROR: required command remains unavailable: ${required}"
+            return 30
+        }
+    done
 }
 
 check_architecture() {

@@ -39,7 +39,6 @@ def context_for(tmp_path: Path) -> RunContext:
             "type": "shell-functions",
             "stages": stages,
             "timeout_minutes": 1,
-            "environment": {"ITERATIONS": 1},
         },
         "outputs": {
             "result": {
@@ -55,7 +54,6 @@ def context_for(tmp_path: Path) -> RunContext:
                 "required": True,
             },
         },
-        "version_overrides": {"1.0": {"environment": {"BUILD_METHOD": "pip"}}},
     }
     return RunContext(
         root=tmp_path,
@@ -71,7 +69,7 @@ def context_for(tmp_path: Path) -> RunContext:
     )
 
 
-def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) -> None:
+def test_environment_contains_framework_context(tmp_path: Path) -> None:
     context = context_for(tmp_path)
     environment = build_environment(context)
     assert environment["EXPECTED_ARCH"] == "x86_64"
@@ -81,16 +79,13 @@ def test_environment_contains_architecture_and_case_overrides(tmp_path: Path) ->
         context.work_dir / "actual-version.txt"
     )
     assert environment["PERF_PROCESS_TOKEN"] == "boostkit-perf:unit-run:AI:sample:1.0:x86_64"
-    assert environment["ITERATIONS"] == "1"
-    assert environment["BUILD_METHOD"] == "pip"
 
 
-def test_framework_actual_version_path_cannot_be_overridden(tmp_path: Path) -> None:
+def test_framework_actual_version_path_overrides_inherited_environment(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("PERF_ACTUAL_VERSION_FILE", "/tmp/wrong")
     context = context_for(tmp_path)
-    context.case["execution"]["environment"]["PERF_ACTUAL_VERSION_FILE"] = "/tmp/wrong"
-    context.case["version_overrides"]["1.0"]["environment"][
-        "PERF_ACTUAL_VERSION_FILE"
-    ] = "/tmp/still-wrong"
     assert build_environment(context)["PERF_ACTUAL_VERSION_FILE"] == str(
         context.work_dir / "actual-version.txt"
     )

@@ -80,18 +80,30 @@ initialize_runtime() {
 
 
 require_build_commands() {
-    local missing_command=0
+    local packages=() dnf_options=()
     if ! command -v python3 >/dev/null 2>&1; then
-        log_message "ERROR: required command is missing: python3"
-        missing_command=1
+        packages+=(python3 python3-pip)
+    elif ! python3 -m pip --version >/dev/null 2>&1; then
+        packages+=(python3-pip)
     fi
-    if ! python3 -m pip --version >/dev/null 2>&1; then
-        log_message "ERROR: python3 pip module is unavailable"
-        missing_command=1
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log_message "ERROR: dnf is required to install ScaNN build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log_message "installing missing ScaNN build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
     fi
-    if [[ "${missing_command}" -ne 0 ]]; then
-        return 20
-    fi
+    command -v python3 >/dev/null 2>&1 && python3 -m pip --version >/dev/null 2>&1 || {
+        log_message "ERROR: python3 pip module remains unavailable"
+        return 30
+    }
 }
 
 

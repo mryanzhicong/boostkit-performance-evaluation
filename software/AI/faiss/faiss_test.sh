@@ -91,21 +91,47 @@ initialize_runtime() {
 
 
 require_build_commands() {
-    local required_command
-    local missing_command=0
+    local required_command package
+    local packages=() dnf_options=()
     for required_command in git python3 cmake make c++ swig find nproc sed tee; do
-        if ! command -v "${required_command}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is missing: ${required_command}"
-            missing_command=1
-        fi
+        command -v "${required_command}" >/dev/null 2>&1 && continue
+        case "${required_command}" in
+            c++) package="gcc-c++" ;;
+            find) package="findutils" ;;
+            nproc|tee) package="coreutils" ;;
+            *) package="${required_command}" ;;
+        esac
+        log_message "missing required command: ${required_command}"
+        packages+=("${package}")
     done
-    if ! python3 -m pip --version >/dev/null 2>&1; then
-        log_message "ERROR: python3 pip module is unavailable"
-        missing_command=1
+    if ! command -v python3 >/dev/null 2>&1 || \
+       ! python3 -m pip --version >/dev/null 2>&1; then
+        packages+=(python3-pip)
     fi
-    if [[ "${missing_command}" -ne 0 ]]; then
-        return 20
+    if ((${#packages[@]})); then
+        command -v dnf >/dev/null 2>&1 || {
+            log_message "ERROR: dnf is required to install Faiss build dependencies"
+            return 30
+        }
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        log_message "installing missing Faiss build packages: ${packages[*]}"
+        if [[ "$(id -u)" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            command -v sudo >/dev/null 2>&1 || return 30
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
     fi
+    for required_command in git python3 cmake make c++ swig find nproc sed tee; do
+        command -v "${required_command}" >/dev/null 2>&1 || {
+            log_message "ERROR: required command remains unavailable: ${required_command}"
+            return 30
+        }
+    done
+    python3 -m pip --version >/dev/null 2>&1 || {
+        log_message "ERROR: python3 pip module remains unavailable"
+        return 30
+    }
 }
 
 
