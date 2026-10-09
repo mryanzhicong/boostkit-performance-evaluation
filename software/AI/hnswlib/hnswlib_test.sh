@@ -9,17 +9,12 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 HNSWLIB_SOURCE_URL="${HNSWLIB_SOURCE_URL:-https://github.com/nmslib/hnswlib.git}"
-HNSWLIB_DATA_ROOT="${HNSWLIB_DATA_ROOT:-}"
-readonly NUMPY_VERSION="2.4.6"
-readonly SETUPTOOLS_VERSION="80.9.0"
-readonly PYBIND11_VERSION="2.13.6"
-readonly WHEEL_VERSION="0.45.1"
-readonly H5PY_VERSION="3.16.0"
+HNSWLIB_DATA_ROOT="${HNSWLIB_DATA_ROOT:-/home/runner/software/hnswlib/data}"
+readonly SRA_SOURCE_URL="https://atomgit.com/liuliuyiyidingding/sra_test.git"
+readonly SRA_REVISION="9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf"
 
 SOURCE_DIR=""
-INSTALL_DIR=""
-PYTHON_DEPENDENCY_DIR=""
-BENCHMARK_RUN_DIR=""
+SRA_DIR=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -34,6 +29,10 @@ log() {
 configure_runtime_paths() {
     local actual_architecture
 
+    if [[ "${SOFTWARE_VERSION}" != "0.8.0" ]]; then
+        log "ERROR: only hnswlib 0.8.0 is supported, requested ${SOFTWARE_VERSION}"
+        return 10
+    fi
     if [[ -z "${PERF_RUN_ID}" ]]; then
         PERF_RUN_ID="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     fi
@@ -68,16 +67,11 @@ configure_runtime_paths() {
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    if [[ -z "${HNSWLIB_DATA_ROOT}" ]]; then
-        HNSWLIB_DATA_ROOT="${PERF_WORK_DIR}/data"
-    fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
     XDG_CACHE_HOME="${PERF_WORK_DIR}/cache"
 
     SOURCE_DIR="${PERF_WORK_DIR}/hnswlib-source"
-    INSTALL_DIR="${PERF_WORK_DIR}/hnswlib-install"
-    PYTHON_DEPENDENCY_DIR="${PERF_WORK_DIR}/python-dependencies"
-    BENCHMARK_RUN_DIR="${PERF_WORK_DIR}/ann-benchmark-run"
+    SRA_DIR="${PERF_WORK_DIR}/sra-test"
 
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR HNSWLIB_DATA_ROOT
     export PERF_ACTUAL_VERSION_FILE TMPDIR XDG_CACHE_HOME
@@ -95,28 +89,22 @@ require_hnswlib_tools() {
     local command_name package
     local packages=()
 
-    for command_name in git g++ sed tee sha256sum python3; do
+    for command_name in git g++ make curl h5dump python3; do
         if command -v "${command_name}" >/dev/null 2>&1; then
             continue
         fi
         case "${command_name}" in
             git) package="git" ;;
             g++) package="gcc-c++" ;;
-            sed) package="sed" ;;
-            tee|sha256sum) package="coreutils" ;;
+            make) package="make" ;;
+            curl) package="curl" ;;
+            h5dump) package="hdf5" ;;
             python3) package="python3" ;;
         esac
         log "missing required hnswlib command: ${command_name}"
         packages+=("${package}")
     done
-    if ! python3 -m pip --version >/dev/null 2>&1; then
-        log "missing required hnswlib Python module: pip"
-        packages+=("python3-pip")
-    fi
-    if ! rpm -q python3-devel >/dev/null 2>&1; then
-        log "missing required hnswlib build package: python3-devel"
-        packages+=("python3-devel")
-    fi
+    [[ -f /usr/include/H5Cpp.h || -f /usr/include/hdf5/serial/H5Cpp.h ]] || packages+=(hdf5-devel)
     if [[ "${#packages[@]}" -eq 0 ]]; then
         return 0
     fi
@@ -136,59 +124,15 @@ require_hnswlib_tools() {
         log "ERROR: failed to install hnswlib prerequisites"
         return 30
     fi
-    for command_name in git g++ sed tee sha256sum python3; do
+    for command_name in git g++ make curl h5dump python3; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required hnswlib command remains unavailable: ${command_name}"
             return 30
         fi
     done
-    if ! python3 -m pip --version >/dev/null 2>&1 || ! rpm -q python3-devel >/dev/null 2>&1; then
-        log "ERROR: required hnswlib Python build dependencies remain unavailable"
+    if [[ ! -f /usr/include/H5Cpp.h && ! -f /usr/include/hdf5/serial/H5Cpp.h ]]; then
+        log "ERROR: HDF5 C++ development headers remain unavailable"
         return 30
-    fi
-}
-
-
-install_python_build_dependencies() {
-    local os_id
-    local pip_options
-    pip_options=(
-        --disable-pip-version-check
-        --no-input
-        --upgrade
-        --only-binary=:all:
-        --target "${PYTHON_DEPENDENCY_DIR}"
-    )
-    os_id="$(sed -n 's/^ID=//p' /etc/os-release 2>/dev/null | head -n 1)"
-    os_id="${os_id%\"}"
-    os_id="${os_id#\"}"
-    if [[ "${os_id}" != "ubuntu" ]]; then
-        pip_options+=(
-            --trusted-host mirrors.huaweicloud.com
-            --index-url https://mirrors.huaweicloud.com/repository/pypi/simple
-        )
-    fi
-    log "installing private Python build dependencies"
-    if ! python3 -m pip install "${pip_options[@]}" \
-        "numpy==${NUMPY_VERSION}" \
-        "setuptools==${SETUPTOOLS_VERSION}" \
-        "pybind11==${PYBIND11_VERSION}" \
-        "wheel==${WHEEL_VERSION}" \
-        "h5py==${H5PY_VERSION}"; then
-        log "ERROR: failed to install private Python build dependencies"
-        return 30
-    fi
-    PYTHONPATH="${PYTHON_DEPENDENCY_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
-    export PYTHONPATH
-}
-
-
-activate_hnswlib_runtime() {
-    PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}"
-    export PYTHONPATH
-    if ! python3 -c 'import hnswlib, numpy'; then
-        log "ERROR: built hnswlib Python module cannot be imported"
-        return 40
     fi
 }
 
@@ -196,17 +140,15 @@ activate_hnswlib_runtime() {
 build_hnswlib() {
     local source_tag
     local actual_tag
-    local actual_version
+    local config_file
 
     initialize_runtime || return $?
     require_hnswlib_tools || return $?
-    if [[ -e "${SOURCE_DIR}" || -e "${INSTALL_DIR}" || \
-          -e "${PYTHON_DEPENDENCY_DIR}" ]]; then
+    if [[ -e "${SOURCE_DIR}" || -e "${SRA_DIR}" ]]; then
         log "ERROR: build directory is not clean under ${PERF_WORK_DIR}"
         return 20
     fi
 
-    install_python_build_dependencies || return $?
     source_tag="${SOFTWARE_VERSION}"
     if [[ "${source_tag}" != v* ]]; then
         source_tag="v${source_tag}"
@@ -226,48 +168,53 @@ build_hnswlib() {
         log "ERROR: cloned source tag ${actual_tag}, expected ${source_tag}"
         return 30
     fi
-    log "building and installing hnswlib ${source_tag} in the private work area"
-    if ! PYTHONPATH="${PYTHON_DEPENDENCY_DIR}" python3 -m pip install \
-        --disable-pip-version-check \
-        --no-input \
-        --no-cache-dir \
-        --no-build-isolation \
-        --no-deps \
-        --target "${INSTALL_DIR}" \
-        "${SOURCE_DIR}"; then
-        log "ERROR: hnswlib source build failed"
+    if [[ ! -f "${SOURCE_DIR}/hnswlib/hnswlib.h" ]]; then
+        log "ERROR: hnswlib C++ header is unavailable"
         return 40
     fi
-    activate_hnswlib_runtime || return $?
-    actual_version="$(PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 -c '
-import importlib.metadata
-print(importlib.metadata.version("hnswlib"))
-')" || return 40
-    if [[ -z "${actual_version}" ]]; then
-        log "ERROR: cannot read the built hnswlib version"
+
+    log "fetching sra_test at ${SRA_REVISION}"
+    if ! git init -q "${SRA_DIR}" || \
+       ! git -C "${SRA_DIR}" remote add origin "${SRA_SOURCE_URL}" || \
+       ! git -C "${SRA_DIR}" fetch --depth 1 --filter=blob:none origin "${SRA_REVISION}" || \
+       ! git -C "${SRA_DIR}" sparse-checkout set scripts configs include src || \
+       ! git -C "${SRA_DIR}" checkout --detach FETCH_HEAD; then
+        log "ERROR: failed to fetch pinned sra_test source"
+        return 30
+    fi
+    if [[ "$(git -C "${SRA_DIR}" rev-parse HEAD)" != "${SRA_REVISION}" ]]; then
+        log "ERROR: sra_test revision mismatch"
         return 40
     fi
-    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
-        log "ERROR: built hnswlib reports ${actual_version}, requested ${SOFTWARE_VERSION}"
+    mkdir -p "${SRA_DIR}/build"
+    config_file="${SRA_DIR}/build/config_hnswlib.sh"
+    printf 'export HNSWLIB_INC=%q\nexport EXTRA_DEFINES=""\n' \
+        "${SOURCE_DIR}/hnswlib" > "${config_file}"
+    log "building original sra_test hnswlib_test"
+    if ! (cd "${SRA_DIR}" && printf '\n' | make hnswlib_test); then
+        log "ERROR: sra_test hnswlib_test build failed"
+        return 40
+    fi
+    if [[ ! -x "${SRA_DIR}/hnswlib_test" ]]; then
+        log "ERROR: built hnswlib_test is unavailable"
         return 40
     fi
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    if ! printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"; then
+    if ! printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}"; then
         log "ERROR: failed to record built hnswlib version"
         return 40
     fi
-    log "hnswlib ${actual_version} is ready for ANN-Benchmarks datasets"
+    log "hnswlib ${SOFTWARE_VERSION} sra_test benchmark is ready"
 }
 
 
 start_hnswlib_runtime() {
     initialize_runtime || return $?
-    activate_hnswlib_runtime || return $?
-    if ! mkdir -p "${BENCHMARK_RUN_DIR}"; then
-        log "ERROR: failed to create private ANN benchmark run directory"
+    if [[ ! -x "${SRA_DIR}/hnswlib_test" ]]; then
+        log "ERROR: sra_test hnswlib_test is unavailable"
         return 40
     fi
-    log "hnswlib ANN-Benchmarks runtime is ready"
+    log "sra_test hnswlib_test is ready"
 }
 
 
@@ -276,32 +223,30 @@ run_hnswlib_benchmarks() {
     local benchmark_status
 
     initialize_runtime || return $?
-    activate_hnswlib_runtime || return $?
     if [[ ! -f "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         log "ERROR: actual version file is missing"
         return 50
     fi
     actual_version="$(sed -n '1p' "${PERF_ACTUAL_VERSION_FILE}")" || return 50
-    if [[ -e "${RESULTS_DIR}/benchmark_hnswlib.json" ]]; then
+    if [[ -e "${RESULTS_DIR}/benchmark_sra.json" ]]; then
         log "ERROR: hnswlib benchmark result already exists"
         return 50
     fi
 
-    log "running hnswlib on five ANN-Benchmarks datasets"
-    if PYTHONPATH="${INSTALL_DIR}:${PYTHON_DEPENDENCY_DIR}" python3 \
-        "${SCRIPT_DIR}/scripts/run_ann_benchmark.py" \
-        --data-root "${HNSWLIB_DATA_ROOT}" \
-        --output "${RESULTS_DIR}/benchmark_hnswlib.json" \
-        --raw-output "${RESULTS_DIR}/hnswlib_ann_raw.log" \
+    log "running original sra_test hnswlib_test on five datasets"
+    if python3 "${SCRIPT_DIR}/scripts/run_sra_benchmark.py" \
+        --source "${SRA_DIR}" \
+        --data "${HNSWLIB_DATA_ROOT}" \
+        --results "${RESULTS_DIR}" \
         --version "${actual_version}" \
         --architecture "${EXPECTED_ARCH}"; then
         :
     else
         benchmark_status=$?
-        log "ERROR: hnswlib ANN-Benchmarks test failed with status ${benchmark_status}"
+        log "ERROR: sra_test hnswlib benchmark failed with status ${benchmark_status}"
         return "${benchmark_status}"
     fi
-    log "hnswlib benchmark results written to benchmark_hnswlib.json"
+    log "hnswlib benchmark results written to benchmark_sra.json"
 }
 
 
@@ -450,8 +395,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build hnswlib from the official source, run the five-dataset ANN-Benchmarks
-workload, collect environment information, validate results, generate a
+Build the original sra_test hnswlib C++ benchmark from official hnswlib headers,
+run five datasets, collect environment information, validate results, generate a
 report, and clean the private work area.
 
 Options:

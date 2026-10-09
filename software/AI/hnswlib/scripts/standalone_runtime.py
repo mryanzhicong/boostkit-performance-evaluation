@@ -14,43 +14,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# Final names preserve the expressions and variables used by the unchanged
-# official tests/python/speedtest.py summary line.
-METRICS: dict[str, tuple[str, str, str, str]] = {
-    "np.mean(times)": (
-        "speedtest",
-        "results.mean.value",
-        "seconds",
-        "lower_is_better",
-    ),
-    "np.median(times)": (
-        "speedtest",
-        "results.median.value",
-        "seconds",
-        "lower_is_better",
-    ),
-    "np.std(times)": (
-        "speedtest",
-        "results.std.value",
-        "seconds",
-        "lower_is_better",
-    ),
-    "construction_time": (
-        "speedtest",
-        "results.construction_time.value",
-        "seconds",
-        "lower_is_better",
-    ),
-    "recall": (
-        "speedtest",
-        "results.recall.value",
-        "ratio",
-        "higher_is_better",
-    ),
-}
-EXPECTED_METRIC_COUNT = len(METRICS)
-
-
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -87,15 +50,6 @@ def load_json(path: Path) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
-
-
-def nested_value(payload: dict[str, Any], dotted_path: str) -> Any:
-    current: Any = payload
-    for field in dotted_path.split("."):
-        if not isinstance(current, dict) or field not in current:
-            raise RuntimeError(f"required result path is missing: {dotted_path}")
-        current = current[field]
-    return current
 
 
 def os_pretty_name() -> str:
@@ -215,39 +169,36 @@ def validate_identity(
 
 
 def extract_metrics(
-    speedtest_benchmark: dict[str, Any],
+    benchmark: dict[str, Any],
     version: str,
     architecture: str,
 ) -> dict[str, Any]:
-    validate_identity(
-        speedtest_benchmark,
-        "benchmark_speedtest.json",
-        version,
-        architecture,
-    )
+    validate_identity(benchmark, "benchmark_sra.json", version, architecture)
+    results = benchmark.get("results")
+    if not isinstance(results, dict) or not results:
+        raise RuntimeError("benchmark_sra.json has no measurements")
     metrics: dict[str, Any] = {}
-    for metric_name, (_source, path, unit, direction) in METRICS.items():
-        value = nested_value(speedtest_benchmark, path)
+    for metric_name, item in results.items():
+        if not isinstance(item, dict) or item.get("source_name") != metric_name:
+            raise RuntimeError(f"invalid sra_test measurement: {metric_name}")
+        value = item.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise TypeError(f"metric {metric_name} is missing or is not numeric")
+            raise TypeError(f"metric {metric_name} must be numeric")
         if not math.isfinite(float(value)):
             raise RuntimeError(f"metric {metric_name} must be finite")
-        result_key = path.split(".")[1]
-        record = speedtest_benchmark.get("results", {}).get(result_key, {})
-        if record.get("source_name") != metric_name:
-            raise RuntimeError(
-                f"metric {metric_name} has an unexpected source_name: "
-                f"{record.get('source_name')!r}"
-            )
+        unit = item.get("unit")
+        direction = item.get("direction")
+        group = item.get("group")
+        if not isinstance(unit, str) or not unit or direction not in (
+            "higher_is_better", "lower_is_better", "neutral"
+        ) or not isinstance(group, str) or not group:
+            raise RuntimeError(f"metric {metric_name} has invalid metadata")
         metrics[metric_name] = {
             "value": value,
             "unit": unit,
             "direction": direction,
+            "group": group,
         }
-    if len(metrics) != EXPECTED_METRIC_COUNT:
-        raise RuntimeError(
-            f"expected {EXPECTED_METRIC_COUNT} metrics, found {len(metrics)}"
-        )
     return metrics
 
 
@@ -301,20 +252,21 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标",
-            "",
-            "| 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---:|---|---|",
-        ]
-    )
+    lines.extend(["", "## 性能指标", ""])
+    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {metric_name} | {metric['value']} | {metric['unit']} | "
-            f"{direction_label(metric['direction'])} |"
-        )
+        groups.setdefault(metric.get("group", "其他"), []).append((metric_name, metric))
+    for group, items in groups.items():
+        lines.extend([
+            f"### {group}", "", "| 指标 | 数值 | 单位 | 优化方向 |",
+            "|---|---:|---|---|",
+        ])
+        for metric_name, metric in items:
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | {direction_label(metric['direction'])} |"
+            )
+        lines.append("")
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
@@ -330,18 +282,14 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    speedtest_benchmark = load_json(output_dir / "benchmark_speedtest.json")
+    benchmark = load_json(output_dir / "benchmark_sra.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
-            if not speedtest_benchmark:
-                raise RuntimeError("benchmark_speedtest.json is missing or invalid")
-            metrics = extract_metrics(
-                speedtest_benchmark,
-                version,
-                architecture,
-            )
+            if not benchmark:
+                raise RuntimeError("benchmark_sra.json is missing or invalid")
+            metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
             failed_stage = failed_stage or "test"
@@ -361,7 +309,7 @@ def finalize(
         "runtime_before": load_json(output_dir / "runtime_before.json"),
         "runtime_after": load_json(output_dir / "runtime_after.json"),
         "parameters": {
-            "benchmark_speedtest.json": speedtest_benchmark.get("parameters", {}),
+            "benchmark_sra.json": benchmark.get("parameters", {}),
         },
         "metrics": metrics,
         "error": error or None,

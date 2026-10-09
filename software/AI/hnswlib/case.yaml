@@ -2,10 +2,10 @@ name: hnswlib
 category: AI
 enabled: true
 versions:
-  - "0.7.0"
   - "0.8.0"
-  - "0.9.0"
 test_tools:
+  sra_test:
+    version: "9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf"
   hnswlib:
     version: "与被测软件版本一致"
 execution:
@@ -23,20 +23,20 @@ execution:
     stop:
       script: hnswlib_test.sh
       function: stop_hnswlib_runtime
-  timeout_minutes: 60
+  timeout_minutes: 360
 outputs:
-  benchmark_hnswlib:
-    path: benchmark_hnswlib.json
+  benchmark_result:
+    path: benchmark_sra.json
     stage: test
     format: json
     required: true
-  benchmark_raw:
-    path: hnswlib_ann_raw.log
+  official_logs:
+    path: sra-test-logs
     stage: test
-    format: text
+    format: directory
     required: true
 metrics:
-  source: benchmark_hnswlib
+  source: benchmark_result
   collection:
     path: results
     name_path: source_name
