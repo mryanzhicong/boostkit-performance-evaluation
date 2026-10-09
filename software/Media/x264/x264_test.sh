@@ -2,25 +2,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-0.164.x}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-0.165.3223}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-# Use one immutable GitHub source for both architectures. The stable branch
-# commit below identifies itself as x264 0.164.x.
-X264_SOURCE_URL="https://github.com/mirror/x264.git"
-X264_SOURCE_REF="stable"
-X264_SOURCE_COMMIT="31e19f92f00c7003fa115047ce50978bc98c3a0d"
-YUV_WIDTH="${YUV_WIDTH:-1280}"
-YUV_HEIGHT="${YUV_HEIGHT:-720}"
-YUV_FRAMES="${YUV_FRAMES:-50}"
-ITERATIONS="${ITERATIONS:-1}"
-X264_VERSION_STRING=""
+X264_SOURCE_URL="https://code.videolan.org/videolan/x264.git"
+VIDEO_DIR="${VIDEO_DIR:-/home/runner/software/x264/video}"
 SOURCE_DIR=""
+BUILD_DIR=""
+INSTALL_DIR=""
 BENCHMARK_BIN=""
-YUV_FILE=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -55,11 +48,14 @@ configure_runtime_paths() {
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    SOURCE_DIR="${PERF_WORK_DIR}/x264-source"
-    BENCHMARK_BIN="${SOURCE_DIR}/x264"
-    YUV_FILE="${PERF_WORK_DIR}/test_${YUV_WIDTH}x${YUV_HEIGHT}.yuv"
+    SOURCE_DIR="${PERF_WORK_DIR}/x264"
+    BUILD_DIR="${SOURCE_DIR}/x264_build"
+    INSTALL_DIR="${SOURCE_DIR}/x264_install"
+    BENCHMARK_BIN="${INSTALL_DIR}/bin/x264"
+    LD_LIBRARY_PATH="${INSTALL_DIR}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    PATH="${INSTALL_DIR}/bin:${PATH}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE TMPDIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR LD_LIBRARY_PATH PATH
 }
 
 initialize_runtime() {
@@ -70,11 +66,12 @@ initialize_runtime() {
 require_commands() {
     local required package
     local packages=() dnf_options=()
-    for required in git python3 make gcc sed tee nproc; do
+    for required in git python3 make gcc sed tee nproc taskset bc; do
         command -v "${required}" >/dev/null 2>&1 && continue
         case "${required}" in
             tee) package="coreutils" ;;
             nproc) package="coreutils" ;;
+            taskset) package="util-linux" ;;
             *) package="${required}" ;;
         esac
         packages+=("${package}")
@@ -96,7 +93,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required in git python3 make gcc sed tee nproc; do
+    for required in git python3 make gcc sed tee nproc taskset bc; do
         command -v "${required}" >/dev/null 2>&1 || {
             log "ERROR: required command remains unavailable: ${required}"
             return 30
@@ -119,47 +116,43 @@ check_architecture() {
 }
 
 read_x264_version() {
-    local version_line
+    local version_line version_text
     if [[ -x "${BENCHMARK_BIN}" ]]; then
         version_line="$("${BENCHMARK_BIN}" --version 2>&1 | head -n 1)"
-        printf '%s\n' "${version_line#x264 }"
+        version_text="${version_line#x264 }"
+        printf '%s\n' "${version_text%% *}"
     else
         printf ''
     fi
 }
 
 build_x264() {
-    local actual_version source_commit
+    local actual_version
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" ]] || {
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${INSTALL_DIR}" ]] || {
         log "ERROR: source directory is not clean under ${PERF_WORK_DIR}"
         return 20
     }
 
     export GIT_TERMINAL_PROMPT=0
-    log "cloning x264 ${SOFTWARE_VERSION} from GitHub ${X264_SOURCE_REF}"
-    git clone --branch "${X264_SOURCE_REF}" --depth 1 \
-        "${X264_SOURCE_URL}" "${SOURCE_DIR}" || {
-        log "ERROR: failed to clone x264 source ref ${X264_SOURCE_REF} from GitHub"
-        return 30
-    }
-    source_commit="$(git -C "${SOURCE_DIR}" rev-parse HEAD)"
-    [[ "${source_commit}" == "${X264_SOURCE_COMMIT}" ]] || {
-        log "ERROR: GitHub ${X264_SOURCE_REF} resolved to ${source_commit}, expected ${X264_SOURCE_COMMIT}"
+    log "cloning x264 from ${X264_SOURCE_URL}"
+    (cd "${PERF_WORK_DIR}" && git clone "${X264_SOURCE_URL}") || {
+        log "ERROR: failed to clone x264 from ${X264_SOURCE_URL}"
         return 30
     }
 
-    log "building x264 with official configure + make"
+    log "building and installing x264 into ${INSTALL_DIR}"
+    mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"
     (
-        cd "${SOURCE_DIR}"
-        ./configure --enable-static --enable-pic || {
+        cd "${BUILD_DIR}"
+        ../configure --enable-shared --enable-pic --prefix="${INSTALL_DIR}" || {
             log "ERROR: x264 configure failed"
             exit 40
         }
-        make -j"$(nproc)" || {
-            log "ERROR: x264 make failed"
+        make -j"$(nproc)" && make install || {
+            log "ERROR: x264 make or install failed"
             exit 40
         }
     ) || return $?
@@ -175,21 +168,12 @@ build_x264() {
         return 40
     }
     [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log "ERROR: requested x264 ${SOFTWARE_VERSION}, but ${X264_SOURCE_REF} built ${actual_version}"
+        log "ERROR: requested x264 ${SOFTWARE_VERSION}, but built ${actual_version}"
         return 40
     }
-    X264_VERSION_STRING="${actual_version}"
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-
-    log "generating test YUV (${YUV_WIDTH}x${YUV_HEIGHT}, ${YUV_FRAMES} frames)"
-    python3 "${SCRIPT_DIR}/scripts/gen_yuv.py" \
-        "${YUV_WIDTH}" "${YUV_HEIGHT}" "${YUV_FRAMES}" "${YUV_FILE}" || return 40
-    [[ -s "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV generation failed"
-        return 40
-    }
-    log "x264 ${actual_version} official benchmark binary is ready"
+    log "x264 ${actual_version} private installation is ready"
 }
 
 start_x264_runtime() {
@@ -202,29 +186,53 @@ start_x264_runtime() {
         log "ERROR: x264 binary is not runnable"
         return 40
     }
-    [[ -f "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV is unavailable"
+    [[ -d "${VIDEO_DIR}" ]] || {
+        log "ERROR: reference videos are unavailable: ${VIDEO_DIR}"
         return 40
     }
+    python3 "${SCRIPT_DIR}/../collect_reference.py" \
+        --check-only --video-dir "${VIDEO_DIR}" || return 40
+    [[ ! -e "${PERF_WORK_DIR}/video" ]] || {
+        log "ERROR: reference video link already exists: ${PERF_WORK_DIR}/video"
+        return 40
+    }
+    ln -s "${VIDEO_DIR}" "${PERF_WORK_DIR}/video" || return 40
     log "x264 official benchmark runtime is ready"
 }
 
 run_x264_benchmarks() {
+    local machine_type="x86"
     initialize_runtime || return $?
     [[ -x "${BENCHMARK_BIN}" ]] || {
         log "ERROR: official x264 binary is unavailable"
         return 40
     }
-    [[ -f "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV is unavailable"
+    [[ -d "${VIDEO_DIR}" ]] || {
+        log "ERROR: reference videos are unavailable: ${VIDEO_DIR}"
         return 40
     }
-    export SOFTWARE_VERSION EXPECTED_ARCH X264_VERSION_STRING
-    python3 "${SCRIPT_DIR}/scripts/run_benchmark.py" \
-        "${BENCHMARK_BIN}" "${YUV_FILE}" "${YUV_WIDTH}" "${YUV_HEIGHT}" "${YUV_FRAMES}" \
-        "${RESULTS_DIR}/benchmark_encode.txt" \
-        "${RESULTS_DIR}/benchmark_x264.json" \
-        "${ITERATIONS}" || return 50
+    if [[ "$(normalize_arch "${EXPECTED_ARCH}")" == "aarch64" ]]; then
+        machine_type="920"
+    fi
+    export TEST_HOME="${PERF_WORK_DIR}"
+    (
+        cd "${TEST_HOME}"
+        unset THREADS_MODE
+        bash "${SCRIPT_DIR}/scripts/fps-encode-x264.sh" 8core "${machine_type}" 1
+    ) 2>&1 | tee "${RESULTS_DIR}/benchmark_encode.txt" || return 50
+    (
+        cd "${TEST_HOME}"
+        bash "${SCRIPT_DIR}/scripts/score-x264.sh"
+    ) 2>&1 | tee -a "${RESULTS_DIR}/benchmark_encode.txt" || return 50
+    cp "${TEST_HOME}/video_fps_summary_x264.csv" \
+        "${RESULTS_DIR}/video_fps_summary_x264.csv" || return 50
+    python3 "${SCRIPT_DIR}/../collect_reference.py" \
+        --encoder x264 --video-dir "${VIDEO_DIR}" --work-dir "${TEST_HOME}" \
+        --raw-output "${RESULTS_DIR}/benchmark_encode.txt" \
+        --summary "${RESULTS_DIR}/video_fps_summary_x264.csv" \
+        --normalized-output "${RESULTS_DIR}/benchmark_x264.json" \
+        --version "${SOFTWARE_VERSION}" \
+        --architecture "$(normalize_arch "${EXPECTED_ARCH}")" || return 50
 }
 
 stop_x264_runtime() {
@@ -365,8 +373,7 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, YUV_WIDTH,
-  YUV_HEIGHT, YUV_FRAMES, ITERATIONS
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, VIDEO_DIR
 USAGE
 }
 

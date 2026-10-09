@@ -172,10 +172,14 @@ def extract_metrics(
             raise RuntimeError(f"指标 {result_key} 缺失或不是数值")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"指标 {result_key} 必须为正且有限")
+        group = result.get("group")
+        if not isinstance(group, str) or not group:
+            raise RuntimeError(f"指标 {result_key} 缺少码率分组")
         metrics[result_key] = {
             "value": value,
             "unit": "fps",
             "direction": "higher_is_better",
+            "group": group,
         }
     if not metrics:
         raise RuntimeError("benchmark_x265.json 不包含任何指标")
@@ -223,18 +227,17 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend([
-        "",
-        "## 性能指标",
-        "",
-        "| 指标 | 数值 | 单位 | 优化方向 |",
-        "|---|---:|---|---|",
-    ])
+    lines.extend(["", "## 性能指标"])
+    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越大越好 |"
-        )
+        groups.setdefault(metric["group"], []).append((metric_name, metric))
+    for group, metrics in groups.items():
+        lines.extend(["", f"### {markdown_cell(group)}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
+        for metric_name, metric in metrics:
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | 越大越好 |"
+            )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")

@@ -2,7 +2,6 @@ name: x265
 category: Media
 enabled: true
 versions:
-  - "4.1"
   - "4.2"
 test_tools:
   x265:
@@ -22,7 +21,7 @@ execution:
     stop:
       script: x265_test.sh
       function: stop_x265_runtime
-  timeout_minutes: 180
+  timeout_minutes: 1350
 outputs:
   official_benchmark:
     path: benchmark_encode.txt
@@ -34,11 +33,17 @@ outputs:
     stage: test
     format: json
     required: true
+  reference_summary:
+    path: video_fps_summary_x265.csv
+    stage: test
+    format: text
+    required: true
 metrics:
   source: benchmark_result
   collection:
     path: results
     name_path: source_name
     value_path: value
+    group_path: group
     unit: fps
     direction: higher_is_better

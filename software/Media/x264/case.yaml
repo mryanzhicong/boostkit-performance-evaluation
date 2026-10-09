@@ -2,11 +2,10 @@ name: x264
 category: Media
 enabled: true
 versions:
-  - "0.164.x"
+  - "0.165.3223"
 test_tools:
   x264:
-    version: "0.164.x"
-    revision: 31e19f92f00c7003fa115047ce50978bc98c3a0d
+    version: "0.165.3223"
 execution:
   type: shell-functions
   stages:
@@ -22,7 +21,7 @@ execution:
     stop:
       script: x264_test.sh
       function: stop_x264_runtime
-  timeout_minutes: 120
+  timeout_minutes: 1350
 outputs:
   official_benchmark:
     path: benchmark_encode.txt
@@ -34,11 +33,17 @@ outputs:
     stage: test
     format: json
     required: true
+  reference_summary:
+    path: video_fps_summary_x264.csv
+    stage: test
+    format: text
+    required: true
 metrics:
   source: benchmark_result
   collection:
     path: results
     name_path: source_name
     value_path: value
+    group_path: group
     unit: fps
     direction: higher_is_better

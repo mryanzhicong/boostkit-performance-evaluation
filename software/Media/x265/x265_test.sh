@@ -8,20 +8,12 @@ PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-# x265's canonical upstream is the MulticoreWare Bitbucket repository, which is
-# the only source carrying the official 4.1/4.2 release tags (the github.com
-# videolan/x265 mirror is stale and stops at 3.4). The branch/tag overridden via
-# X265_SOURCE_URL must expose the version tags declared in case.yaml.
-X265_SOURCE_URL="${X265_SOURCE_URL:-https://bitbucket.org/multicoreware/x265_git.git}"
-YUV_WIDTH="${YUV_WIDTH:-1280}"
-YUV_HEIGHT="${YUV_HEIGHT:-720}"
-YUV_FRAMES="${YUV_FRAMES:-50}"
-ITERATIONS="${ITERATIONS:-1}"
-X265_VERSION_STRING=""
+X265_ARCHIVE_BASE_URL="https://bitbucket.org/multicoreware/x265_git/downloads"
+VIDEO_DIR="${VIDEO_DIR:-/home/runner/software/x265/video}"
 SOURCE_DIR=""
 BUILD_DIR=""
+INSTALL_DIR=""
 BENCHMARK_BIN=""
-YUV_FILE=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -56,12 +48,14 @@ configure_runtime_paths() {
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    SOURCE_DIR="${PERF_WORK_DIR}/x265-source"
-    BUILD_DIR="${PERF_WORK_DIR}/x265-build"
-    BENCHMARK_BIN="${BUILD_DIR}/x265"
-    YUV_FILE="${PERF_WORK_DIR}/test_${YUV_WIDTH}x${YUV_HEIGHT}.yuv"
+    SOURCE_DIR="${PERF_WORK_DIR}/x265_${SOFTWARE_VERSION}"
+    BUILD_DIR="${SOURCE_DIR}/x265_build"
+    INSTALL_DIR="${SOURCE_DIR}/x265_install"
+    BENCHMARK_BIN="${INSTALL_DIR}/bin/x265"
+    LD_LIBRARY_PATH="${INSTALL_DIR}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    PATH="${INSTALL_DIR}/bin:${PATH}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE TMPDIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR LD_LIBRARY_PATH PATH
 }
 
 initialize_runtime() {
@@ -72,12 +66,13 @@ initialize_runtime() {
 require_commands() {
     local required package
     local packages=() dnf_options=()
-    for required in git python3 make cmake gcc g++ sed tee nproc; do
+    for required in python3 make cmake gcc g++ sed tee nproc wget tar taskset bc; do
         command -v "${required}" >/dev/null 2>&1 && continue
         case "${required}" in
             g++) package="gcc-c++" ;;
             tee) package="coreutils" ;;
             nproc) package="coreutils" ;;
+            taskset) package="util-linux" ;;
             *) package="${required}" ;;
         esac
         packages+=("${package}")
@@ -99,7 +94,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required in git python3 make cmake gcc g++ sed tee nproc; do
+    for required in python3 make cmake gcc g++ sed tee nproc wget tar taskset bc; do
         command -v "${required}" >/dev/null 2>&1 || {
             log "ERROR: required command remains unavailable: ${required}"
             return 30
@@ -136,43 +131,51 @@ read_x265_version() {
 }
 
 build_x265() {
-    local actual_version
+    local actual_version archive_name
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" ]] || {
+    [[ ! -e "${SOURCE_DIR}" ]] || {
         log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
 
-    export GIT_TERMINAL_PROMPT=0
-    log "cloning x265 ${SOFTWARE_VERSION} from ${X265_SOURCE_URL}"
-    if ! git clone --branch "${SOFTWARE_VERSION}" --depth 1 \
-        "${X265_SOURCE_URL}" "${SOURCE_DIR}"; then
-        log "WARN: shallow clone failed, trying full clone + checkout"
-        if ! git clone "${X265_SOURCE_URL}" "${SOURCE_DIR}"; then
-            log "ERROR: failed to clone x265 ${SOFTWARE_VERSION}"
-            return 30
-        fi
-        (cd "${SOURCE_DIR}" && git checkout "${SOFTWARE_VERSION}") || {
-            log "ERROR: failed to checkout x265 ${SOFTWARE_VERSION}"
-            return 30
-        }
-    fi
+    [[ "${SOFTWARE_VERSION}" == "4.2" ]] || {
+        log "ERROR: the reference installation only defines x265 4.2"
+        return 10
+    }
+    archive_name="x265_${SOFTWARE_VERSION}.tar.gz"
+    log "downloading official x265 source archive ${archive_name}"
+    (
+        cd "${PERF_WORK_DIR}"
+        wget "${X265_ARCHIVE_BASE_URL}/${archive_name}" || exit 30
+        tar -zxvf "${archive_name}" || exit 30
+    ) || return $?
+    [[ -d "${SOURCE_DIR}/source" ]] || {
+        log "ERROR: x265 source directory was not extracted: ${SOURCE_DIR}"
+        return 30
+    }
 
-    log "building x265 with official cmake + make"
-    mkdir -p "${BUILD_DIR}"
+    log "building and installing x265 into ${INSTALL_DIR}"
+    mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"
     (
         cd "${BUILD_DIR}"
-        cmake -DCMAKE_BUILD_TYPE=Release \
-            -DENABLE_CLI=ON \
-            -DENABLE_SHARED=OFF \
-            "${SOURCE_DIR}/source" || {
+        cmake -S ../source/ -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_PIC=ON \
+            -DENABLE_ASSEMBLY=ON \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DCMAKE_C_FLAGS="-O3" \
+            -DCMAKE_CXX_FLAGS="-O3" \
+            -DHIGH_BIT_DEPTH=off \
+            -DENABLE_TESTS=on \
+            -DENABLE_SHARED=on \
+            -DENABLE_LIBNUMA=off \
+            -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" || {
             log "ERROR: x265 cmake configure failed"
             exit 40
         }
-        make -j"$(nproc)" || {
-            log "ERROR: x265 make failed"
+        make -j"$(nproc)" && make install || {
+            log "ERROR: x265 make or install failed"
             exit 40
         }
     ) || return $?
@@ -187,22 +190,14 @@ build_x265() {
         log "ERROR: cannot read the built x265 version"
         return 40
     }
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
+    [[ "${actual_version}" == "${SOFTWARE_VERSION}" || \
+       "${actual_version}" == "${SOFTWARE_VERSION}"+* ]] || {
         log "ERROR: built x265 version does not match ${SOFTWARE_VERSION}: ${actual_version}"
         return 40
     }
-    X265_VERSION_STRING="${actual_version}"
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-
-    log "generating test YUV (${YUV_WIDTH}x${YUV_HEIGHT}, ${YUV_FRAMES} frames)"
-    python3 "${SCRIPT_DIR}/scripts/gen_yuv.py" \
-        "${YUV_WIDTH}" "${YUV_HEIGHT}" "${YUV_FRAMES}" "${YUV_FILE}" || return 40
-    [[ -s "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV generation failed"
-        return 40
-    }
-    log "x265 ${actual_version} official benchmark binary is ready"
+    printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    log "x265 ${actual_version} private installation is ready"
 }
 
 start_x265_runtime() {
@@ -215,29 +210,52 @@ start_x265_runtime() {
         log "ERROR: x265 binary is not runnable"
         return 40
     }
-    [[ -f "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV is unavailable"
+    [[ -d "${VIDEO_DIR}" ]] || {
+        log "ERROR: reference videos are unavailable: ${VIDEO_DIR}"
         return 40
     }
+    python3 "${SCRIPT_DIR}/../collect_reference.py" \
+        --check-only --video-dir "${VIDEO_DIR}" || return 40
+    [[ ! -e "${PERF_WORK_DIR}/video" ]] || {
+        log "ERROR: reference video link already exists: ${PERF_WORK_DIR}/video"
+        return 40
+    }
+    ln -s "${VIDEO_DIR}" "${PERF_WORK_DIR}/video" || return 40
     log "x265 official benchmark runtime is ready"
 }
 
 run_x265_benchmarks() {
+    local machine_type="x86"
     initialize_runtime || return $?
     [[ -x "${BENCHMARK_BIN}" ]] || {
         log "ERROR: official x265 binary is unavailable"
         return 40
     }
-    [[ -f "${YUV_FILE}" ]] || {
-        log "ERROR: test YUV is unavailable"
+    [[ -d "${VIDEO_DIR}" ]] || {
+        log "ERROR: reference videos are unavailable: ${VIDEO_DIR}"
         return 40
     }
-    export SOFTWARE_VERSION EXPECTED_ARCH X265_VERSION_STRING
-    python3 "${SCRIPT_DIR}/scripts/run_benchmark.py" \
-        "${BENCHMARK_BIN}" "${YUV_FILE}" "${YUV_WIDTH}" "${YUV_HEIGHT}" "${YUV_FRAMES}" \
-        "${RESULTS_DIR}/benchmark_encode.txt" \
-        "${RESULTS_DIR}/benchmark_x265.json" \
-        "${ITERATIONS}" || return 50
+    if [[ "$(normalize_arch "${EXPECTED_ARCH}")" == "aarch64" ]]; then
+        machine_type="920"
+    fi
+    export TEST_HOME="${PERF_WORK_DIR}"
+    (
+        cd "${TEST_HOME}"
+        bash "${SCRIPT_DIR}/scripts/fps-encode-x265.sh" 8core "${machine_type}" 1
+    ) 2>&1 | tee "${RESULTS_DIR}/benchmark_encode.txt" || return 50
+    (
+        cd "${TEST_HOME}"
+        bash "${SCRIPT_DIR}/scripts/score-x265.sh"
+    ) 2>&1 | tee -a "${RESULTS_DIR}/benchmark_encode.txt" || return 50
+    cp "${TEST_HOME}/video_fps_summary_x265.csv" \
+        "${RESULTS_DIR}/video_fps_summary_x265.csv" || return 50
+    python3 "${SCRIPT_DIR}/../collect_reference.py" \
+        --encoder x265 --video-dir "${VIDEO_DIR}" --work-dir "${TEST_HOME}" \
+        --raw-output "${RESULTS_DIR}/benchmark_encode.txt" \
+        --summary "${RESULTS_DIR}/video_fps_summary_x265.csv" \
+        --normalized-output "${RESULTS_DIR}/benchmark_x265.json" \
+        --version "${SOFTWARE_VERSION}" \
+        --architecture "$(normalize_arch "${EXPECTED_ARCH}")" || return 50
 }
 
 stop_x265_runtime() {
@@ -379,8 +397,7 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, X265_SOURCE_URL,
-  YUV_WIDTH, YUV_HEIGHT, YUV_FRAMES, ITERATIONS
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, VIDEO_DIR
 USAGE
 }
 
