@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provide self-contained environment collection and reporting for openjdk."""
+"""Provide self-contained environment collection and reporting for BiSheng JDK."""
 
 from __future__ import annotations
 
@@ -137,12 +137,12 @@ def record_build_info(
     source_repo: str,
     source_tag: str,
     boot_jdk_home: str,
-    jtreg_version: str,
-    test_case: str,
+    jmh_version: str,
+    benchmark_name: str,
 ) -> None:
     actual_version = actual_version_file.read_text(encoding="utf-8").strip()
     if not actual_version:
-        raise RuntimeError("actual openjdk version is empty")
+        raise RuntimeError("actual BiSheng JDK version is empty")
     if not jdk_version_string:
         raise RuntimeError("source-built JDK version string is empty")
     atomic_write_json(
@@ -150,25 +150,26 @@ def record_build_info(
         {
             "recorded_at": timestamp(),
             "category": "Toolchain",
-            "software": "openjdk",
+            "software": "bishengjdk",
             "requested_version": requested_version,
             "actual_version": actual_version,
             "architecture": architecture,
             "run_id": run_id,
             "jdk_version_string": jdk_version_string,
-            "source": "official OpenJDK GA source archive",
+            "source": "BiSheng JDK 21 GA source archive",
             "source_url": source_url,
             "source_sha256": source_sha256,
-            "source_repository": f"https://github.com/openjdk/{source_repo}",
+            "source_repository": f"https://gitee.com/openeuler/{source_repo}",
             "source_tag": source_tag,
             "boot_jdk_home": boot_jdk_home,
-            "benchmark_suite": "OpenJDK jtreg single regression test",
-            "jtreg_version": jtreg_version,
-            "test_case": test_case,
+            "benchmark_suite": "BiSheng JDK FloatingScalarVectorAbsDiff JMH",
+            "jmh_version": jmh_version,
+            "benchmark_name": benchmark_name,
             "build_command": (
-                "bash configure --with-debug-level=release --prefix=<isolated jdk> "
-                "--disable-warnings-as-errors --disable-precompiled-headers; "
-                "make images; run the declared test case with jtreg"
+                "sh make/devkit/createJMHBundle.sh; "
+                "bash configure --with-debug-level=release --with-jmh=build/jmh/jars "
+                "--with-jvm-variants=server --prefix=<isolated jdk> "
+                "--disable-warnings-as-errors --disable-precompiled-headers; make images"
             ),
         },
     )
@@ -177,35 +178,35 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "openjdk":
-        raise RuntimeError("benchmark_openjdk.json has an invalid software identity")
+    if benchmark.get("software") != "bishengjdk":
+        raise RuntimeError("benchmark_bishengjdk.json has an invalid software identity")
     if (
         benchmark.get("version") != version
         or benchmark.get("architecture") != architecture
     ):
-        raise RuntimeError("benchmark_openjdk.json identity differs from this run")
+        raise RuntimeError("benchmark_bishengjdk.json identity differs from this run")
     results = benchmark.get("results")
     if not isinstance(results, dict) or not results:
-        raise RuntimeError("benchmark_openjdk.json is missing results")
+        raise RuntimeError("benchmark_bishengjdk.json is missing results")
     metrics: dict[str, Any] = {}
     for result_key, result in results.items():
         if not isinstance(result, dict):
-            raise TypeError(f"openjdk benchmark {result_key} must be an object")
+            raise TypeError(f"bishengjdk benchmark {result_key} must be an object")
         metric_name = result.get("source_name")
         if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError(f"openjdk benchmark {result_key} has no source_name")
+            raise RuntimeError(f"bishengjdk benchmark {result_key} has no source_name")
         if metric_name != result_key:
             raise RuntimeError(
-                f"openjdk benchmark key {result_key} differs from source_name {metric_name}"
+                f"bishengjdk benchmark key {result_key} differs from source_name {metric_name}"
             )
         if metric_name in metrics:
-            raise RuntimeError(f"duplicate openjdk benchmark: {metric_name}")
-        if result.get("source_field") != "external wall-clock elapsed seconds":
+            raise RuntimeError(f"duplicate bishengjdk benchmark: {metric_name}")
+        if result.get("source_field") != "primaryMetric.score":
             raise RuntimeError(
-                f"metric {metric_name} is not sourced from jtreg elapsed time"
+                f"metric {metric_name} is not sourced from JMH primaryMetric.score"
             )
-        if result.get("unit") != "s":
-            raise RuntimeError(f"metric {metric_name} is not expressed in s")
+        if result.get("unit") != "ns/op":
+            raise RuntimeError(f"metric {metric_name} is not expressed in ns/op")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
@@ -213,11 +214,11 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "s",
+            "unit": "ns/op",
             "direction": "lower_is_better",
         }
     if not metrics:
-        raise RuntimeError("benchmark_openjdk.json contains no metrics")
+        raise RuntimeError("benchmark_bishengjdk.json contains no metrics")
     return metrics
 
 
@@ -229,7 +230,7 @@ def markdown_cell(value: Any) -> str:
 
 def render_report(result: dict[str, Any]) -> str:
     lines = [
-        f"# openjdk {result['version']} 独立性能测试报告",
+        f"# 毕昇 JDK {result['version']} 独立性能测试报告",
         "",
         f"- Run ID：`{result['run_id']}`",
         f"- 架构：`{result['architecture']}`",
@@ -253,8 +254,8 @@ def render_report(result: dict[str, Any]) -> str:
         ("源码标签", "source_tag"),
         ("Boot JDK", "boot_jdk_home"),
         ("基准套件", "benchmark_suite"),
-        ("jtreg 版本", "jtreg_version"),
-        ("测试用例", "test_case"),
+        ("JMH 版本", "jmh_version"),
+        ("基准类", "benchmark_name"),
         ("构建方式", "build_command"),
         ("记录时间", "recorded_at"),
     ):
@@ -275,7 +276,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 性能指标（官方 jtreg 单个测试用例耗时，单位为秒）",
+            "## 性能指标（JMH 平均耗时，单位为 ns/op）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -301,13 +302,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "benchmark_openjdk.json")
+    benchmark = load_json(output_dir / "benchmark_bishengjdk.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_openjdk.json is missing or invalid")
+                raise RuntimeError("benchmark_bishengjdk.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
@@ -315,7 +316,7 @@ def finalize(
             error = str(exc)
     status = "passed" if command_status == cleanup_status == "passed" else "failed"
     result = {
-        "software": "openjdk",
+        "software": "bishengjdk",
         "category": "Toolchain",
         "version": version,
         "architecture": architecture,
@@ -335,7 +336,7 @@ def finalize(
     atomic_write_json(
         output_dir / "status.json",
         {
-            "software": "openjdk",
+            "software": "bishengjdk",
             "category": "Toolchain",
             "version": version,
             "architecture": architecture,
@@ -366,17 +367,17 @@ def parse_args() -> argparse.Namespace:
     build.add_argument(
         "--source-url",
         required=True,
-        help="GitHub download URL of the official OpenJDK GA source archive",
+        help="GitHub mirror download URL of the BiSheng JDK GA source archive",
     )
     build.add_argument(
         "--source-sha256",
         required=True,
-        help="SHA-256 checksum of the OpenJDK GA source archive used for this run",
+        help="SHA-256 checksum of the BiSheng JDK GA source archive used for this run",
     )
     build.add_argument(
         "--source-repo",
         required=True,
-        help="GitHub repository providing the OpenJDK GA source archive",
+        help="GitHub mirror repository providing the BiSheng JDK GA source archive",
     )
     build.add_argument(
         "--source-tag",
@@ -386,17 +387,17 @@ def parse_args() -> argparse.Namespace:
     build.add_argument(
         "--boot-jdk-home",
         required=True,
-        help="JDK used as the OpenJDK source-build boot JDK",
+        help="JDK used as the BiSheng JDK source-build boot JDK",
     )
     build.add_argument(
-        "--jtreg-version",
+        "--jmh-version",
         required=True,
-        help="jtreg version used for the OpenJDK regression test run",
+        help="JMH version used for the BiSheng JDK microbenchmark",
     )
     build.add_argument(
-        "--test-case",
+        "--benchmark",
         required=True,
-        help="OpenJDK jtreg test case path relative to the source tree",
+        help="BiSheng JDK JMH benchmark class",
     )
     final = subparsers.add_parser("finalize")
     final.add_argument("output_dir", type=Path)
@@ -430,8 +431,8 @@ def main() -> int:
             args.source_repo,
             args.source_tag,
             args.boot_jdk_home,
-            args.jtreg_version,
-            args.test_case,
+            args.jmh_version,
+            args.benchmark,
         )
         return 0
     return finalize(

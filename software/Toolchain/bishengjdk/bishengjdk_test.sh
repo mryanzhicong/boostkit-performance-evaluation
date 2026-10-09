@@ -2,38 +2,37 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-25.0.4.1}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-21.0.9}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-OPENJDK_SOURCE_BASE="${OPENJDK_SOURCE_BASE:-https://github.com/openjdk}"
-ADOPTIUM_RELEASE_BASE="${ADOPTIUM_RELEASE_BASE:-https://github.com/adoptium/temurin25-binaries/releases/download}"
-JTREG_DOWNLOAD_URL="${JTREG_DOWNLOAD_URL:-https://builds.shipilev.net/jtreg/jtreg-8.3%2B1.zip}"
-OPENJDK_OFFLINE_DIR="${OPENJDK_OFFLINE_DIR:-/home/runner/software/openjdk}"
-OPENJDK_BOOT_JDK_HOME="${OPENJDK_BOOT_JDK_HOME:-}"
-JTREG_VERSION="${JTREG_VERSION:-8.3+1}"
-JTREG_TEST_CASE="${JTREG_TEST_CASE:-test/jdk/java/lang/String/StringRepeat.java}"
+BISHENGJDK_SOURCE_BASE="${BISHENGJDK_SOURCE_BASE:-https://github.com/openeuler-mirror}"
+ADOPTIUM_RELEASE_BASE="${ADOPTIUM_RELEASE_BASE:-https://github.com/adoptium/temurin21-binaries/releases/download}"
+BISHENGJDK_MAVEN_MIRROR="${BISHENGJDK_MAVEN_MIRROR:-https://repo.maven.apache.org/maven2}"
+BISHENGJDK_OFFLINE_DIR="${BISHENGJDK_OFFLINE_DIR:-/home/runner/software/bishengjdk}"
+BISHENGJDK_BOOT_JDK_HOME="${BISHENGJDK_BOOT_JDK_HOME:-}"
+JMH_BENCHMARK="org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff"
+JMH_COUNT=1024
+JMH_VERSION="1.37"
 
 JDK_HOME=""
 SRC_DIR=""
 BOOT_JDK_HOME=""
-JTREG_HOME=""
-JTREG_WORK_DIR=""
-JTREG_REPORT_DIR=""
+BUILD_CONF=""
 JDK_VERSION_STRING=""
-OPENJDK_SOURCE_REPO=""
-OPENJDK_SOURCE_TAG=""
-OPENJDK_SOURCE_URL=""
-OPENJDK_SOURCE_SHA256=""
+BISHENGJDK_SOURCE_REPO=""
+BISHENGJDK_SOURCE_TAG=""
+BISHENGJDK_SOURCE_URL=""
+BISHENGJDK_SOURCE_SHA256=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
 STANDALONE_CLEANUP_DONE=0
 
 log() {
-    printf '[openjdk] %s\n' "$*"
+    printf '[bishengjdk] %s\n' "$*"
 }
 
 configure_runtime_paths() {
@@ -78,7 +77,7 @@ configure_runtime_paths() {
         RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
     fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
-        PERF_WORK_DIR="/home/runner/boostkit-perf/openjdk/local-${PERF_RUN_ID}"
+        PERF_WORK_DIR="/home/runner/boostkit-perf/bishengjdk/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
     fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
@@ -86,10 +85,8 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     JDK_HOME="${PERF_WORK_DIR}/jdk"
-    SRC_DIR="${PERF_WORK_DIR}/openjdk-source"
-    JTREG_HOME="${PERF_WORK_DIR}/jtreg"
-    JTREG_WORK_DIR="${RESULTS_DIR}/jtreg-work"
-    JTREG_REPORT_DIR="${RESULTS_DIR}/jtreg-report"
+    SRC_DIR="${PERF_WORK_DIR}/bishengjdk-source"
+    BUILD_CONF="linux-${EXPECTED_ARCH}-server-release"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -105,7 +102,7 @@ initialize_runtime() {
 
 install_dependencies() {
     local required header missing=0
-    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip nproc; do
+    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ find; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -128,29 +125,29 @@ install_dependencies() {
     if [[ "${missing}" -eq 0 ]]; then
         return 0
     fi
-    log "installing missing OpenJDK test dependencies"
+    log "installing missing BiSheng JDK build dependencies"
     local package_manager_options=()
     [[ -z "${PERF_PROXY:-}" ]] || package_manager_options+=("--setopt=proxy=${PERF_PROXY}")
     if ! command -v dnf >/dev/null 2>&1; then
-        log "ERROR: dnf is required to install OpenJDK test dependencies"
+        log "ERROR: dnf is required to install BiSheng JDK build dependencies"
         return 30
     fi
     local install_command=(dnf)
     if [[ "${EUID}" -ne 0 ]]; then
         if ! command -v sudo >/dev/null 2>&1; then
-            log "ERROR: root privileges are required to install OpenJDK test dependencies"
+            log "ERROR: root privileges are required to install BiSheng JDK build dependencies"
             return 30
         fi
         install_command=(sudo -n dnf)
     fi
     if ! "${install_command[@]}" "${package_manager_options[@]}" install -y \
         curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ \
-        zip unzip freetype-devel fontconfig-devel alsa-lib-devel cups-devel \
+        freetype-devel fontconfig-devel alsa-lib-devel cups-devel \
         libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
-        log "ERROR: failed to install OpenJDK test dependencies"
+        log "ERROR: failed to install BiSheng JDK build dependencies"
         return 30
     fi
-    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ zip unzip; do
+    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ find; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
             return 30
@@ -168,58 +165,62 @@ install_dependencies() {
         /usr/include/X11/extensions/XInput2.h \
         /usr/include/X11/Intrinsic.h; do
         if [[ ! -f "${header}" ]]; then
-            log "ERROR: required OpenJDK development header is still missing: ${header}"
+            log "ERROR: required BiSheng JDK development header is still missing: ${header}"
             return 30
         fi
     done
 }
 
-prepare_openjdk_source() {
+prepare_bishengjdk_source() {
     local archive_name archive_path local_archive_path top_dir
 
     case "${SOFTWARE_VERSION}" in
-        25.0.4.1)
-            OPENJDK_SOURCE_REPO="jdk25u"
-            OPENJDK_SOURCE_TAG="jdk-25.0.4.1-ga"
+        21.0.9)
+            BISHENGJDK_SOURCE_REPO="bishengjdk-21"
+            BISHENGJDK_SOURCE_TAG="jdk-21.0.9-ga-b011"
             ;;
         *)
-            log "ERROR: no OpenJDK source tag is declared for ${SOFTWARE_VERSION}"
+            log "ERROR: no BiSheng JDK source tag is declared for ${SOFTWARE_VERSION}"
             return 30
             ;;
     esac
-    archive_name="${OPENJDK_SOURCE_REPO}-${OPENJDK_SOURCE_TAG}.tar.gz"
-    local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
+    archive_name="${BISHENGJDK_SOURCE_REPO}-${BISHENGJDK_SOURCE_TAG}.tar.gz"
+    local_archive_path="${BISHENGJDK_OFFLINE_DIR}/${archive_name}"
     archive_path="${PERF_WORK_DIR}/${archive_name}"
-    OPENJDK_SOURCE_URL="${OPENJDK_SOURCE_BASE}/${OPENJDK_SOURCE_REPO}/archive/refs/tags/${OPENJDK_SOURCE_TAG}.tar.gz"
+    BISHENGJDK_SOURCE_URL="${BISHENGJDK_SOURCE_BASE}/${BISHENGJDK_SOURCE_REPO}/archive/refs/tags/${BISHENGJDK_SOURCE_TAG}.tar.gz"
     if [[ -f "${local_archive_path}" ]]; then
-        log "using local OpenJDK GA source archive ${local_archive_path}"
+        log "using local BiSheng JDK GA source archive ${local_archive_path}"
         if ! cp "${local_archive_path}" "${archive_path}"; then
-            log "ERROR: failed to copy local OpenJDK source archive"
+            log "ERROR: failed to copy local BiSheng JDK source archive"
             return 30
         fi
     else
-        log "downloading official OpenJDK GA source ${OPENJDK_SOURCE_TAG}"
-        if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" "${OPENJDK_SOURCE_URL}"; then
-            log "ERROR: failed to download OpenJDK GA source archive"
+        log "downloading BiSheng JDK GA source ${BISHENGJDK_SOURCE_TAG}"
+        if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" "${BISHENGJDK_SOURCE_URL}"; then
+            log "ERROR: failed to download BiSheng JDK GA source archive"
             return 30
         fi
     fi
-    OPENJDK_SOURCE_SHA256="$(sha256sum "${archive_path}" | awk '{print $1}')"
+    BISHENGJDK_SOURCE_SHA256="$(sha256sum "${archive_path}" | awk '{print $1}')"
     top_dir="$(tar -tzf "${archive_path}" | awk -F/ 'NR == 1 {print $1}')"
-    if [[ -z "${top_dir}" || "${top_dir}" != "${OPENJDK_SOURCE_REPO}-"* ]]; then
-        log "ERROR: OpenJDK source archive has an unexpected root directory: ${top_dir}"
+    if [[ -z "${top_dir}" || "${top_dir}" != "${BISHENGJDK_SOURCE_REPO}-"* ]]; then
+        log "ERROR: BiSheng JDK source archive has an unexpected root directory: ${top_dir}"
         return 30
     fi
     if ! tar -xzf "${archive_path}" -C "${PERF_WORK_DIR}"; then
-        log "ERROR: failed to extract the OpenJDK GA source archive"
+        log "ERROR: failed to extract the BiSheng JDK GA source archive"
         return 30
     fi
     if ! mv "${PERF_WORK_DIR}/${top_dir}" "${SRC_DIR}"; then
-        log "ERROR: failed to place the OpenJDK source tree"
+        log "ERROR: failed to place the BiSheng JDK source tree"
         return 30
     fi
     rm -f "${archive_path}"
-    log "OpenJDK GA source is ready: ${OPENJDK_SOURCE_TAG} (${OPENJDK_SOURCE_SHA256})"
+    if [[ ! -f "${SRC_DIR}/test/micro/org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java" ]]; then
+        log "ERROR: BiSheng JDK source is missing ${JMH_BENCHMARK}"
+        return 30
+    fi
+    log "BiSheng JDK GA source is ready: ${BISHENGJDK_SOURCE_TAG} (${BISHENGJDK_SOURCE_SHA256})"
 }
 
 prepare_boot_jdk() {
@@ -227,31 +228,31 @@ prepare_boot_jdk() {
     local local_archive_path top_dir version
 
     case "${SOFTWARE_VERSION}" in
-        25.0.4.1)
-            boot_jdk_version="25.0.4.1"
-            boot_jdk_release="jdk-25.0.4.1%2B1"
+        21.0.9)
+            boot_jdk_version="21.0.9"
+            boot_jdk_release="jdk-21.0.9%2B10"
             ;;
         *)
-            log "ERROR: no Temurin boot JDK is declared for OpenJDK ${SOFTWARE_VERSION}"
+            log "ERROR: no Temurin boot JDK is declared for BiSheng JDK ${SOFTWARE_VERSION}"
             return 30
             ;;
     esac
-    if [[ -n "${OPENJDK_BOOT_JDK_HOME}" ]]; then
-        BOOT_JDK_HOME="${OPENJDK_BOOT_JDK_HOME}"
+    if [[ -n "${BISHENGJDK_BOOT_JDK_HOME}" ]]; then
+        BOOT_JDK_HOME="${BISHENGJDK_BOOT_JDK_HOME}"
     else
         case "${EXPECTED_ARCH}" in
             x86_64)
-                archive_name="OpenJDK25U-jdk_x64_linux_hotspot_${boot_jdk_version}_1.tar.gz"
+                archive_name="OpenJDK21U-jdk_x64_linux_hotspot_${boot_jdk_version}_10.tar.gz"
                 ;;
             aarch64)
-                archive_name="OpenJDK25U-jdk_aarch64_linux_hotspot_${boot_jdk_version}_1.tar.gz"
+                archive_name="OpenJDK21U-jdk_aarch64_linux_hotspot_${boot_jdk_version}_10.tar.gz"
                 ;;
             *)
                 log "ERROR: unsupported architecture for Temurin boot JDK: ${EXPECTED_ARCH}"
                 return 30
                 ;;
         esac
-        local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
+        local_archive_path="${BISHENGJDK_OFFLINE_DIR}/${archive_name}"
         archive_path="${PERF_WORK_DIR}/${archive_name}"
         if [[ -f "${local_archive_path}" ]]; then
             log "using local Temurin boot JDK archive ${local_archive_path}"
@@ -295,7 +296,7 @@ prepare_boot_jdk() {
     log "using Temurin boot JDK ${version}: ${BOOT_JDK_HOME}"
 }
 
-build_openjdk_from_source() {
+build_bishengjdk_from_source() {
     local build_jdk version_line actual_version
 
     if prepare_boot_jdk; then
@@ -303,31 +304,46 @@ build_openjdk_from_source() {
     else
         return $?
     fi
-    log "configuring OpenJDK ${SOFTWARE_VERSION} GA source build"
+    if ! (
+        cd "${SRC_DIR}"
+        MAVEN_MIRROR="${BISHENGJDK_MAVEN_MIRROR}" sh make/devkit/createJMHBundle.sh
+    ); then
+        log "ERROR: failed to prepare the official JMH bundle"
+        return 30
+    fi
+    for jar in commons-math3-3.6.1 jopt-simple-5.0.4 jmh-core-1.37 jmh-generator-annprocess-1.37; do
+        if [[ ! -s "${SRC_DIR}/build/jmh/jars/${jar}.jar" ]]; then
+            log "ERROR: JMH dependency is missing: ${jar}.jar"
+            return 30
+        fi
+    done
+    log "configuring BiSheng JDK ${SOFTWARE_VERSION} GA source build with JMH"
     if ! (
         cd "${SRC_DIR}"
         bash configure \
             --with-debug-level=release \
             --with-boot-jdk="${BOOT_JDK_HOME}" \
+            --with-jmh=build/jmh/jars \
+            --with-jvm-variants=server \
             --prefix="${JDK_HOME}" \
             --disable-warnings-as-errors \
             --disable-precompiled-headers
     ); then
-        log "ERROR: OpenJDK configure failed"
+        log "ERROR: BiSheng JDK configure failed"
         return 40
     fi
-    log "building OpenJDK images from source"
+    log "building BiSheng JDK images from source"
     if ! make -C "${SRC_DIR}" images; then
-        log "ERROR: OpenJDK source build failed"
+        log "ERROR: BiSheng JDK source build failed"
         return 40
     fi
-    build_jdk="${SRC_DIR}/build/linux-${EXPECTED_ARCH}-server-release/images/jdk"
+    build_jdk="${SRC_DIR}/build/${BUILD_CONF}/images/jdk"
     if [[ ! -d "${build_jdk}" ]]; then
         log "ERROR: expected source build image is missing: ${build_jdk}"
         return 40
     fi
-    if ! mv "${build_jdk}" "${JDK_HOME}"; then
-        log "ERROR: failed to place the source-built JDK"
+    if ! ln -s "${build_jdk}" "${JDK_HOME}"; then
+        log "ERROR: failed to link the source-built JDK image"
         return 40
     fi
     if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JDK_HOME}/bin/javac" ]]; then
@@ -342,62 +358,16 @@ build_openjdk_from_source() {
     fi
     JDK_VERSION_STRING="${version_line}"
     # Framework uses this file to match the requested GA release.  The full
-    # source-build identifier (for example, 25.0.4.1-internal) remains in
+    # source-build identifier (for example, 21.0.9-internal) remains in
     # JDK_VERSION_STRING and is recorded in build_info.json.
     if ! printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}"; then
-        log "ERROR: failed to record the OpenJDK release version"
+        log "ERROR: failed to record the BiSheng JDK release version"
         return 40
     fi
-    log "source-built JDK is ready: ${JDK_VERSION_STRING}"
+    log "source-built BiSheng JDK is ready: ${JDK_VERSION_STRING}"
 }
 
-prepare_jtreg() {
-    local archive_name archive_path local_archive_path top_dir
-
-    if [[ "${JTREG_VERSION}" != "8.3+1" ]]; then
-        log "ERROR: only jtreg 8.3+1 is declared, got ${JTREG_VERSION}"
-        return 30
-    fi
-    archive_name="jtreg-8.3+1.zip"
-    archive_path="${PERF_WORK_DIR}/${archive_name}"
-    local_archive_path="${OPENJDK_OFFLINE_DIR}/${archive_name}"
-    if [[ -f "${local_archive_path}" ]]; then
-        log "using local jtreg archive ${local_archive_path}"
-        if ! cp "${local_archive_path}" "${archive_path}"; then
-            log "ERROR: failed to copy local jtreg archive"
-            return 30
-        fi
-    else
-        log "downloading jtreg ${JTREG_VERSION}"
-        if ! curl -fL --retry 3 --connect-timeout 30 -o "${archive_path}" "${JTREG_DOWNLOAD_URL}"; then
-            log "ERROR: failed to download jtreg ${JTREG_VERSION}"
-            return 30
-        fi
-    fi
-    top_dir="$(unzip -Z1 "${archive_path}" | awk -F/ 'NR == 1 {print $1}')"
-    if [[ -z "${top_dir}" ]]; then
-        log "ERROR: jtreg archive is empty"
-        return 30
-    fi
-    if ! unzip -q "${archive_path}" -d "${PERF_WORK_DIR}"; then
-        log "ERROR: failed to extract jtreg archive"
-        return 30
-    fi
-    if [[ "${PERF_WORK_DIR}/${top_dir}" != "${JTREG_HOME}" ]]; then
-        if ! mv "${PERF_WORK_DIR}/${top_dir}" "${JTREG_HOME}"; then
-            log "ERROR: failed to place jtreg"
-            return 30
-        fi
-    fi
-    rm -f "${archive_path}"
-    if [[ ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
-        log "ERROR: jtreg executable is missing: ${JTREG_HOME}/bin/jtreg"
-        return 30
-    fi
-    log "jtreg ${JTREG_VERSION} is ready at ${JTREG_HOME}"
-}
-
-build_openjdk() {
+build_bishengjdk() {
     if initialize_runtime; then
         :
     else
@@ -408,97 +378,89 @@ build_openjdk() {
     else
         return $?
     fi
-    if [[ -e "${JDK_HOME}" || -e "${SRC_DIR}" || -e "${PERF_WORK_DIR}/boot-jdk" || -e "${JTREG_HOME}" ]]; then
+    if [[ -e "${JDK_HOME}" || -e "${SRC_DIR}" || -e "${PERF_WORK_DIR}/boot-jdk" ]]; then
         log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     fi
-    if prepare_openjdk_source; then
+    if prepare_bishengjdk_source; then
         :
     else
         return $?
     fi
-    if build_openjdk_from_source; then
+    if build_bishengjdk_from_source; then
         :
     else
         return $?
     fi
-    if prepare_jtreg; then
-        :
-    else
-        return $?
-    fi
-    log "OpenJDK ${SOFTWARE_VERSION} benchmark runtime is built at ${PERF_WORK_DIR}"
+    log "BiSheng JDK ${SOFTWARE_VERSION} JMH runtime is built at ${PERF_WORK_DIR}"
 }
 
-start_openjdk_runtime() {
-    local test_root
+start_bishengjdk_runtime() {
     if initialize_runtime; then
         :
     else
         return $?
     fi
-    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
-        log "ERROR: source-built OpenJDK or jtreg is missing"
+    if [[ ! -x "${JDK_HOME}/bin/java" || \
+          ! -s "${SRC_DIR}/build/jmh/jars/jmh-core-${JMH_VERSION}.jar" ]]; then
+        log "ERROR: source-built BiSheng JDK or JMH bundle is missing"
         return 40
     fi
-    if [[ "${JTREG_TEST_CASE}" == /* || "${JTREG_TEST_CASE}" == *".."* || \
-          ! -f "${SRC_DIR}/${JTREG_TEST_CASE}" ]]; then
-        log "ERROR: declared jtreg test case is unavailable: ${JTREG_TEST_CASE}"
+    if [[ ! -f "${SRC_DIR}/test/micro/org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java" ]]; then
+        log "ERROR: JMH benchmark source is missing: ${JMH_BENCHMARK}"
         return 40
     fi
-    log "OpenJDK jtreg runtime is ready"
+    log "BiSheng JDK JMH runtime is ready"
 }
 
-run_openjdk_benchmarks() {
-    local start_seconds elapsed_seconds jtreg_concurrency
+run_bishengjdk_benchmarks() {
+    local result_root result_file
+    local -a result_files
 
     if initialize_runtime; then
         :
     else
         return $?
     fi
-    if [[ ! -x "${JDK_HOME}/bin/java" || ! -x "${JTREG_HOME}/bin/jtreg" ]]; then
-        log "ERROR: source-built OpenJDK or jtreg is missing"
+    if [[ ! -x "${JDK_HOME}/bin/java" || \
+          ! -s "${SRC_DIR}/build/jmh/jars/jmh-core-${JMH_VERSION}.jar" ]]; then
+        log "ERROR: source-built BiSheng JDK or JMH bundle is missing"
         return 40
     fi
-    mkdir -p "${JTREG_WORK_DIR}" "${JTREG_REPORT_DIR}"
-    jtreg_concurrency="$(nproc)"
-    if (( jtreg_concurrency > 256 )); then
-        jtreg_concurrency=256
-    fi
-    start_seconds="$(date +%s)"
-    log "running jtreg ${JTREG_VERSION} with concurrency ${jtreg_concurrency}: ${JTREG_TEST_CASE}"
+    result_root="${SRC_DIR}/build/${BUILD_CONF}/test-results"
+    log "running ${JMH_BENCHMARK} with JMH ${JMH_VERSION}; count=${JMH_COUNT}, threads=1, no CPU affinity"
     if ! (
         cd "${SRC_DIR}"
-        JAVA_HOME="${JDK_HOME}" PATH="${JDK_HOME}/bin:${PATH}" \
-            "${JTREG_HOME}/bin/jtreg" \
-            -jdk:"${JDK_HOME}" \
-            -w:"${JTREG_WORK_DIR}" \
-            -r:"${JTREG_REPORT_DIR}" \
-            -va -ignore:quiet -jit -conc:"${jtreg_concurrency}" -timeout:5 -tl:3590 \
-            "${JTREG_TEST_CASE}"
-    ) 2>&1 | tee "${RESULTS_DIR}/jtreg-output.log"; then
-        log "ERROR: jtreg test run failed"
+        make test CONF="${BUILD_CONF}" \
+            TEST="micro:${JMH_BENCHMARK}" \
+            MICRO="FORK=3;WARMUP_ITER=4;WARMUP_TIME=2;ITER=4;TIME=2;RESULTS_FORMAT=json;OPTIONS=-t 1 -p count=${JMH_COUNT}"
+    ) 2>&1 | tee "${RESULTS_DIR}/jmh-output.log"; then
+        log "ERROR: JMH test run failed"
         return 50
     fi
-    if [[ ! -s "${RESULTS_DIR}/jtreg-output.log" || ! -d "${JTREG_REPORT_DIR}" ]]; then
-        log "ERROR: jtreg output or report directory is missing"
+    if [[ ! -s "${RESULTS_DIR}/jmh-output.log" || ! -d "${result_root}" ]]; then
+        log "ERROR: JMH output or test-results directory is missing"
         return 50
     fi
-    elapsed_seconds="$(( $(date +%s) - start_seconds ))"
-    export SOFTWARE_VERSION EXPECTED_ARCH JTREG_VERSION JTREG_TEST_CASE
+    mapfile -d '' -t result_files < <(find "${result_root}" -type f -name jmh-result.json -print0)
+    if [[ "${#result_files[@]}" -ne 1 || ! -s "${result_files[0]:-}" ]]; then
+        log "ERROR: expected exactly one nonempty JMH JSON result under ${result_root}"
+        return 50
+    fi
+    result_file="${result_files[0]}"
+    cp "${result_file}" "${RESULTS_DIR}/jmh-result.json"
+    export SOFTWARE_VERSION EXPECTED_ARCH JMH_BENCHMARK JMH_COUNT JMH_VERSION BUILD_CONF
     if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${RESULTS_DIR}/jtreg-output.log" \
-        "${RESULTS_DIR}/benchmark_openjdk.json" \
-        "${elapsed_seconds}"; then
-        log "ERROR: failed to normalize jtreg results"
+        "${RESULTS_DIR}/jmh-result.json" \
+        "${RESULTS_DIR}/benchmark_bishengjdk.json"; then
+        log "ERROR: failed to normalize JMH results"
         return 50
     fi
-    log "jtreg results written to jtreg-output.log, jtreg-report, and benchmark_openjdk.json"
+    log "JMH results written to jmh-output.log, jmh-result.json, and benchmark_bishengjdk.json"
 }
 
-stop_openjdk_runtime() {
-    log "OpenJDK benchmark has no background service to stop"
+stop_bishengjdk_runtime() {
+    log "BiSheng JDK benchmark has no background service to stop"
 }
 
 standalone_runtime() {
@@ -514,8 +476,8 @@ cleanup_standalone_workdir() {
         log "external work directory was not removed: ${PERF_WORK_DIR}"
         return 0
     fi
-    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/openjdk/local-* || \
-          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/openjdk" ]]; then
+    if [[ "${PERF_WORK_DIR}" != /home/runner/boostkit-perf/bishengjdk/local-* || \
+          "${PERF_WORK_DIR}" == "/home/runner/boostkit-perf/bishengjdk" ]]; then
         log "ERROR: refusing to clean unexpected work directory: ${PERF_WORK_DIR}"
         return 70
     fi
@@ -531,14 +493,14 @@ cleanup_standalone_workdir() {
 emergency_standalone_cleanup() {
     set +e
     if [[ "${STANDALONE_STOP_DONE}" -ne 1 ]]; then
-        stop_openjdk_runtime
+        stop_bishengjdk_runtime
     fi
     if [[ "${STANDALONE_CLEANUP_DONE}" -ne 1 ]]; then
         cleanup_standalone_workdir
     fi
 }
 
-run_openjdk_standalone() {
+run_bishengjdk_standalone() {
     local stage_status=0 failed_stage="" cleanup_status="passed" finalize_status=0
     local command_status="passed"
 
@@ -565,7 +527,7 @@ run_openjdk_standalone() {
     fi
 
     if [[ "${stage_status}" -eq 0 ]]; then
-        if build_openjdk; then
+        if build_bishengjdk; then
             if standalone_runtime build-info \
                 "${RESULTS_DIR}/build_info.json" \
                 "${SOFTWARE_VERSION}" \
@@ -573,13 +535,13 @@ run_openjdk_standalone() {
                 "${EXPECTED_ARCH}" \
                 "${PERF_RUN_ID}" \
                 "${JDK_VERSION_STRING}" \
-                --source-url="${OPENJDK_SOURCE_URL}" \
-                --source-sha256="${OPENJDK_SOURCE_SHA256}" \
-                --source-repo="${OPENJDK_SOURCE_REPO}" \
-                --source-tag="${OPENJDK_SOURCE_TAG}" \
+                --source-url="${BISHENGJDK_SOURCE_URL}" \
+                --source-sha256="${BISHENGJDK_SOURCE_SHA256}" \
+                --source-repo="${BISHENGJDK_SOURCE_REPO}" \
+                --source-tag="${BISHENGJDK_SOURCE_TAG}" \
                 --boot-jdk-home="${BOOT_JDK_HOME}" \
-                --jtreg-version="${JTREG_VERSION}" \
-                --test-case="${JTREG_TEST_CASE}"; then
+                --jmh-version="${JMH_VERSION}" \
+                --benchmark="${JMH_BENCHMARK}"; then
                 :
             else
                 stage_status=$?
@@ -591,7 +553,7 @@ run_openjdk_standalone() {
         fi
     fi
     if [[ "${stage_status}" -eq 0 ]]; then
-        if start_openjdk_runtime; then
+        if start_bishengjdk_runtime; then
             :
         else
             stage_status=$?
@@ -599,7 +561,7 @@ run_openjdk_standalone() {
         fi
     fi
     if [[ "${stage_status}" -eq 0 ]]; then
-        if run_openjdk_benchmarks; then
+        if run_bishengjdk_benchmarks; then
             :
         else
             stage_status=$?
@@ -607,7 +569,7 @@ run_openjdk_standalone() {
         fi
     fi
 
-    if ! stop_openjdk_runtime; then
+    if ! stop_bishengjdk_runtime; then
         cleanup_status="failed"
     fi
     STANDALONE_STOP_DONE=1
@@ -648,20 +610,20 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build the official OpenJDK GA source archive and run the declared official
-jtreg regression test case with the source-built JDK. Results default to
+Build the BiSheng JDK 21 GA source archive and run its official JMH
+FloatingScalarVectorAbsDiff microbenchmark. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
-  --version VERSION       openjdk version (default: ${SOFTWARE_VERSION})
+  --version VERSION       BiSheng JDK version (default: ${SOFTWARE_VERSION})
   --results-dir DIR       Persistent result directory
   --keep-workdir          Keep the isolated work directory for debugging
   -h, --help              Show this help
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR,
-  OPENJDK_SOURCE_BASE, OPENJDK_OFFLINE_DIR, OPENJDK_BOOT_JDK_HOME,
-  ADOPTIUM_RELEASE_BASE, JTREG_DOWNLOAD_URL, JTREG_TEST_CASE
+  BISHENGJDK_SOURCE_BASE, BISHENGJDK_OFFLINE_DIR, BISHENGJDK_BOOT_JDK_HOME,
+  ADOPTIUM_RELEASE_BASE, BISHENGJDK_MAVEN_MIRROR
 USAGE
 }
 
@@ -712,7 +674,7 @@ main() {
     : > "${RESULTS_DIR}/results.log"
     local pipeline_status=0
     set +e
-    run_openjdk_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
+    run_bishengjdk_standalone 2>&1 | tee -a "${RESULTS_DIR}/results.log"
     pipeline_status="${PIPESTATUS[0]}"
     set -e
     log "standalone results: ${RESULTS_DIR}"
