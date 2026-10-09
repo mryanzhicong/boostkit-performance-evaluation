@@ -14,136 +14,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-METRIC_DEFINITIONS = (
-    (
-        "IndexFlatL2/qps",
-        "ann",
-        "results.IndexFlatL2.qps",
-        "queries/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexFlatL2/latency_per_query_us",
-        "ann",
-        "results.IndexFlatL2.latency_per_query_us",
-        "us",
-        "lower_is_better",
-    ),
-    (
-        "IndexFlatL2/recall_at_k",
-        "ann",
-        "results.IndexFlatL2.recall_at_k",
-        "ratio",
-        "higher_is_better",
-    ),
-    (
-        "IndexFlatL2/build_time_s",
-        "ann",
-        "results.IndexFlatL2.build_time_s",
-        "s",
-        "lower_is_better",
-    ),
-    (
-        "IndexIVFFlat/qps",
-        "ann",
-        "results.IndexIVFFlat.qps",
-        "queries/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexIVFFlat/latency_per_query_us",
-        "ann",
-        "results.IndexIVFFlat.latency_per_query_us",
-        "us",
-        "lower_is_better",
-    ),
-    (
-        "IndexIVFFlat/recall_at_k",
-        "ann",
-        "results.IndexIVFFlat.recall_at_k",
-        "ratio",
-        "higher_is_better",
-    ),
-    (
-        "IndexIVFFlat/build_time_s",
-        "ann",
-        "results.IndexIVFFlat.build_time_s",
-        "s",
-        "lower_is_better",
-    ),
-    (
-        "IndexHNSWFlat/qps",
-        "ann",
-        "results.IndexHNSWFlat.qps",
-        "queries/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexHNSWFlat/latency_per_query_us",
-        "ann",
-        "results.IndexHNSWFlat.latency_per_query_us",
-        "us",
-        "lower_is_better",
-    ),
-    (
-        "IndexHNSWFlat/recall_at_k",
-        "ann",
-        "results.IndexHNSWFlat.recall_at_k",
-        "ratio",
-        "higher_is_better",
-    ),
-    (
-        "IndexHNSWFlat/build_time_s",
-        "ann",
-        "results.IndexHNSWFlat.build_time_s",
-        "s",
-        "lower_is_better",
-    ),
-    (
-        "Kmeans/train/elapsed_s",
-        "micro",
-        "results.Kmeans.train.elapsed_s",
-        "s",
-        "lower_is_better",
-    ),
-    (
-        "IndexFlatL2/add/vectors_per_second",
-        "micro",
-        "results.IndexFlatL2.add.vectors_per_second",
-        "vectors/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexFlatL2/search/single/latency_us",
-        "micro",
-        "results.IndexFlatL2.search.single.latency_us",
-        "us",
-        "lower_is_better",
-    ),
-    (
-        "IndexFlatL2/search/batch/queries_per_second",
-        "micro",
-        "results.IndexFlatL2.search.batch.queries_per_second",
-        "queries/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexFlatL2/range_search/queries_per_second",
-        "micro",
-        "results.IndexFlatL2.range_search.queries_per_second",
-        "queries/s",
-        "higher_is_better",
-    ),
-    (
-        "IndexPQ/add/vectors_per_second",
-        "micro",
-        "results.IndexPQ.add.vectors_per_second",
-        "vectors/s",
-        "higher_is_better",
-    ),
-)
-
-
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -184,15 +54,6 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {}
     return payload
-
-
-def nested_value(payload: dict[str, Any], dotted_path: str) -> Any:
-    current: Any = payload
-    for field in dotted_path.split("."):
-        if not isinstance(current, dict) or field not in current:
-            raise RuntimeError(f"required result path is missing: {dotted_path}")
-        current = current[field]
-    return current
 
 
 def os_pretty_name() -> str:
@@ -314,25 +175,35 @@ def validate_identity(
 
 
 def extract_metrics(
-    ann_benchmark: dict[str, Any],
-    micro_benchmark: dict[str, Any],
+    benchmark: dict[str, Any],
     version: str,
     architecture: str,
 ) -> dict[str, Any]:
-    validate_identity(ann_benchmark, "benchmark_ann.json", version, architecture)
-    validate_identity(micro_benchmark, "benchmark_micro.json", version, architecture)
-    sources = {"ann": ann_benchmark, "micro": micro_benchmark}
+    validate_identity(benchmark, "benchmark_sra.json", version, architecture)
+    results = benchmark.get("results")
+    if not isinstance(results, dict) or not results:
+        raise RuntimeError("benchmark_sra.json has no measurements")
     metrics: dict[str, Any] = {}
-    for metric_name, source_name, path, unit, direction in METRIC_DEFINITIONS:
-        value = nested_value(sources[source_name], path)
+    for metric_name, item in results.items():
+        if not isinstance(item, dict) or item.get("source_name") != metric_name:
+            raise RuntimeError(f"invalid sra_test measurement: {metric_name}")
+        value = item.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} must be numeric")
         if not math.isfinite(float(value)):
             raise RuntimeError(f"metric {metric_name} must be finite")
+        unit = item.get("unit")
+        direction = item.get("direction")
+        group = item.get("group")
+        if not isinstance(unit, str) or not unit or direction not in (
+            "higher_is_better", "lower_is_better", "neutral"
+        ) or not isinstance(group, str) or not group:
+            raise RuntimeError(f"metric {metric_name} has invalid metadata")
         metrics[metric_name] = {
             "value": value,
             "unit": unit,
             "direction": direction,
+            "group": group,
         }
     return metrics
 
@@ -387,20 +258,21 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标",
-            "",
-            "| 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---:|---|---|",
-        ]
-    )
+    lines.extend(["", "## 性能指标", ""])
+    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | {direction_label(metric['direction'])} |"
-        )
+        groups.setdefault(metric.get("group", "其他"), []).append((metric_name, metric))
+    for group, items in groups.items():
+        lines.extend([
+            f"### {group}", "", "| 指标 | 数值 | 单位 | 优化方向 |",
+            "|---|---:|---|---|",
+        ])
+        for metric_name, metric in items:
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | {direction_label(metric['direction'])} |"
+            )
+        lines.append("")
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
@@ -416,22 +288,14 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    ann_benchmark = load_json(output_dir / "benchmark_ann.json")
-    micro_benchmark = load_json(output_dir / "benchmark_micro.json")
+    benchmark = load_json(output_dir / "benchmark_sra.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
-            if not ann_benchmark:
-                raise RuntimeError("benchmark_ann.json is missing or invalid")
-            if not micro_benchmark:
-                raise RuntimeError("benchmark_micro.json is missing or invalid")
-            metrics = extract_metrics(
-                ann_benchmark,
-                micro_benchmark,
-                version,
-                architecture,
-            )
+            if not benchmark:
+                raise RuntimeError("benchmark_sra.json is missing or invalid")
+            metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exception:
             command_status = "failed"
             failed_stage = failed_stage or "test"
@@ -451,8 +315,7 @@ def finalize(
         "runtime_before": load_json(output_dir / "runtime_before.json"),
         "runtime_after": load_json(output_dir / "runtime_after.json"),
         "parameters": {
-            "benchmark_ann.json": ann_benchmark.get("parameters", {}),
-            "benchmark_micro.json": micro_benchmark.get("parameters", {}),
+            "benchmark_sra.json": benchmark.get("parameters", {}),
         },
         "metrics": metrics,
         "error": error or None,
