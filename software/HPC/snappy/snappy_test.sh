@@ -9,9 +9,16 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 SNAPPY_SOURCE_URL="${SNAPPY_SOURCE_URL:-https://github.com/google/snappy.git}"
+LZBENCH_SOURCE_URL="${LZBENCH_SOURCE_URL:-https://github.com/inikep/lzbench.git}"
+LZBENCH_VERSION="v2.2"
+SILESIA_LOCAL_PATH="${SILESIA_LOCAL_PATH:-/home/runner/software/snappy/silesia.tar}"
+SILESIA_URL="https://wanos.co/assets/silesia.tar"
+SILESIA_SHA256="ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
 SOURCE_DIR=""
 BUILD_DIR=""
+LZBENCH_DIR=""
 BENCHMARK_BIN=""
+SILESIA_FILE=""
 STANDALONE_OWNS_WORK_DIR=0
 STANDALONE_KEEP_WORK_DIR=0
 STANDALONE_STOP_DONE=0
@@ -48,7 +55,8 @@ configure_runtime_paths() {
     fi
     SOURCE_DIR="${PERF_WORK_DIR}/snappy-source"
     BUILD_DIR="${SOURCE_DIR}/build"
-    BENCHMARK_BIN="${BUILD_DIR}/snappy_benchmark"
+    LZBENCH_DIR="${PERF_WORK_DIR}/lzbench-source"
+    BENCHMARK_BIN="${LZBENCH_DIR}/lzbench"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -62,7 +70,7 @@ require_commands() {
     local required package
     local packages=()
 
-    for required in git python3 cmake make c++ sed tee; do
+    for required in git python3 cmake make c++ sed tee cmp ldd curl sha256sum grep; do
         if command -v "${required}" >/dev/null 2>&1; then
             continue
         fi
@@ -74,6 +82,11 @@ require_commands() {
             c++) package="gcc-c++" ;;
             sed) package="sed" ;;
             tee) package="coreutils" ;;
+            cmp) package="diffutils" ;;
+            ldd) package="glibc-common" ;;
+            curl) package="curl" ;;
+            sha256sum) package="coreutils" ;;
+            grep) package="grep" ;;
         esac
         log "missing required Snappy build command: ${required}"
         packages+=("${package}")
@@ -100,7 +113,7 @@ require_commands() {
         return 30
     fi
 
-    for required in git python3 cmake make c++ sed tee; do
+    for required in git python3 cmake make c++ sed tee cmp ldd curl sha256sum grep; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required Snappy build command remains unavailable: ${required}"
             return 30
@@ -127,9 +140,13 @@ read_source_version() {
 build_snappy() {
     local actual_version
     initialize_runtime || return $?
+    [[ "${SOFTWARE_VERSION}" == "1.2.2" ]] || {
+        log "ERROR: this lzbench case supports only Snappy 1.2.2"
+        return 10
+    }
     check_architecture || return $?
     require_commands || return $?
-    [[ ! -e "${SOURCE_DIR}" && ! -e "${BUILD_DIR}" ]] || {
+    [[ ! -e "${SOURCE_DIR}" && ! -e "${LZBENCH_DIR}" ]] || {
         log "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     }
@@ -141,20 +158,20 @@ build_snappy() {
         log "ERROR: failed to clone Snappy ${SOFTWARE_VERSION}"
         return 30
     }
-    log "building Snappy with the commands documented in the official README"
+    log "building Google Snappy ${SOFTWARE_VERSION} as a private shared library"
     (
         cd "${SOURCE_DIR}"
-        git submodule update --init
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ../
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+            -DSNAPPY_BUILD_TESTS=OFF -DSNAPPY_BUILD_BENCHMARKS=OFF ../
         make
     ) || {
-        log "ERROR: failed to build Snappy with the official README commands"
+        log "ERROR: failed to build the private Snappy shared library"
         return 40
     }
-    [[ -x "${BENCHMARK_BIN}" ]] || {
-        log "ERROR: official snappy_benchmark executable was not created"
+    [[ -f "${BUILD_DIR}/libsnappy.so" ]] || {
+        log "ERROR: Snappy shared library was not created"
         return 40
     }
 
@@ -167,33 +184,85 @@ build_snappy() {
         log "ERROR: built Snappy ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
     }
+    log "cloning lzbench ${LZBENCH_VERSION} from ${LZBENCH_SOURCE_URL}"
+    git clone --branch "${LZBENCH_VERSION}" --depth 1 \
+        "${LZBENCH_SOURCE_URL}" "${LZBENCH_DIR}" || {
+        log "ERROR: failed to clone lzbench ${LZBENCH_VERSION}"
+        return 30
+    }
+    cmp "${SOURCE_DIR}/snappy.h" "${LZBENCH_DIR}/lz/snappy/snappy.h" || {
+        log "ERROR: lzbench's Snappy header differs from Google Snappy ${SOFTWARE_VERSION}"
+        return 40
+    }
+    log "building lzbench against this run's Snappy shared library"
+    make -C "${LZBENCH_DIR}" -j4 BUILD_STATIC=0 DONT_BUILD_DENSITY=1 \
+        SNAPPY_FILES= \
+        USER_LDFLAGS="-L${BUILD_DIR} -Wl,-rpath,${BUILD_DIR} -lsnappy" || {
+        log "ERROR: failed to build lzbench against Snappy ${SOFTWARE_VERSION}"
+        return 40
+    }
+    [[ -x "${BENCHMARK_BIN}" ]] || {
+        log "ERROR: lzbench executable was not created"
+        return 40
+    }
+    ldd "${BENCHMARK_BIN}" | grep -Fq "=> ${BUILD_DIR}/libsnappy.so.1 " || {
+        log "ERROR: lzbench is not linked to this run's Snappy shared library"
+        return 40
+    }
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+}
+
+prepare_silesia_corpus() {
+    if [[ -e "${SILESIA_LOCAL_PATH}" ]]; then
+        [[ -r "${SILESIA_LOCAL_PATH}" ]] || {
+            log "ERROR: local Silesia corpus is unreadable: ${SILESIA_LOCAL_PATH}"
+            return 40
+        }
+        SILESIA_FILE="${SILESIA_LOCAL_PATH}"
+        log "using local Silesia corpus ${SILESIA_FILE}"
+    else
+        SILESIA_FILE="${PERF_WORK_DIR}/silesia.tar"
+        if [[ ! -f "${SILESIA_FILE}" ]]; then
+            log "downloading Silesia corpus from ${SILESIA_URL}"
+            curl -fL --retry 3 --connect-timeout 30 \
+                -o "${SILESIA_FILE}.part" "${SILESIA_URL}" || {
+                log "ERROR: failed to download the Silesia corpus"
+                return 40
+            }
+            mv "${SILESIA_FILE}.part" "${SILESIA_FILE}" || return 40
+        fi
+    fi
+    printf '%s  %s\n' "${SILESIA_SHA256}" "${SILESIA_FILE}" | sha256sum -c - || {
+        log "ERROR: Silesia corpus checksum mismatch"
+        return 40
+    }
 }
 
 start_snappy_runtime() {
     initialize_runtime || return $?
     [[ -x "${BENCHMARK_BIN}" ]] || {
-        log "ERROR: official snappy_benchmark executable is unavailable"
+        log "ERROR: lzbench executable is unavailable"
         return 40
     }
-    [[ -d "${SOURCE_DIR}/testdata" ]] || {
-        log "ERROR: official Snappy testdata directory is unavailable"
+    ldd "${BENCHMARK_BIN}" | grep -Fq "=> ${BUILD_DIR}/libsnappy.so.1 " || {
+        log "ERROR: lzbench is not linked to this run's Snappy shared library"
         return 40
     }
-    log "Snappy official benchmark runtime is ready"
+    log "Snappy lzbench runtime is ready"
 }
 
 run_snappy_benchmarks() {
     initialize_runtime || return $?
     [[ -x "${BENCHMARK_BIN}" ]] || {
-        log "ERROR: official snappy_benchmark executable is unavailable"
+        log "ERROR: lzbench executable is unavailable"
         return 40
     }
+    prepare_silesia_corpus || return 40
     export SOFTWARE_VERSION EXPECTED_ARCH
     python3 "${SCRIPT_DIR}/scripts/run_benchmark.py" \
-        "${SOURCE_DIR}" \
-        "${RESULTS_DIR}/benchmark_google.txt" \
+        "${BENCHMARK_BIN}" "${SILESIA_FILE}" \
+        "${RESULTS_DIR}/benchmark_lzbench.txt" \
         "${RESULTS_DIR}/benchmark_snappy.json" || return 50
 }
 
@@ -325,7 +394,7 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run Snappy's official benchmark as a standalone performance evaluation.
+Build Google Snappy and run the documented lzbench benchmark as a standalone evaluation.
 Results default to results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -335,7 +404,8 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, SNAPPY_SOURCE_URL
+  SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, SNAPPY_SOURCE_URL,
+  LZBENCH_SOURCE_URL, SILESIA_LOCAL_PATH
 USAGE
 }
 

@@ -1,47 +1,52 @@
-# Snappy 性能测试说明
+# Snappy 1.2.2 测试说明
 
-本目录从 Google Snappy 官方仓库构建指定版本，并执行官方
-`./build/snappy_benchmark`。Framework 通过 `case.yaml` 调用 `snappy_test.sh` 的
-`build`、`start`、`test`、`stop` 四个阶段；直接执行脚本可完成相同流程。
+本用例在 x86_64 和 aarch64 上分别构建 Google Snappy 1.2.2，使用 lzbench 2.2
+执行 [BoostKit Snappy 快速入门](https://atomgit.com/boostkit/snappy/blob/master/docs/zh/quick_start.md#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E4%BD%BF%E7%94%A8lzbench%E8%BF%9B%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95)
+中的测试命令。两台机器使用同一版本、同一份 Silesia 数据和同一组参数。
 
-当前清单支持 `1.2.1`、`1.2.2`，默认版本为 `1.2.2`。
+## 构建和安装
 
-## 构建与安装
+脚本入口为 `snappy_test.sh`。它检查依赖命令，缺失时通过 `dnf` 安装；非 root
+用户使用 `sudo -n dnf`。源码和构建结果仅存于本次任务的
+`/home/runner/boostkit-perf/snappy/` 子目录，不安装到系统路径。
 
-Snappy 从官方 GitHub 标签浅克隆，在任务隔离目录中构建，不安装系统级 Snappy
-包。入口脚本会检查 `git`、`python3`、`cmake`、`make`、`c++` 等命令；缺失时通过
-`dnf` 自动安装对应包，非 root Runner 使用 `sudo -n dnf`。
-
-构建沿用官方 README 的步骤，并以 Release 配置生成 benchmark：
+核心构建命令如下；实际绝对路径由 Framework 为每次运行生成：
 
 ```bash
 git clone --branch 1.2.2 --depth 1 https://github.com/google/snappy.git snappy-source
-cd snappy-source
-git submodule update --init
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ../
-make
+cmake -S snappy-source -B snappy-source/build \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+  -DSNAPPY_BUILD_TESTS=OFF -DSNAPPY_BUILD_BENCHMARKS=OFF
+cmake --build snappy-source/build
+
+git clone --branch v2.2 --depth 1 https://github.com/inikep/lzbench.git lzbench-source
+make -C lzbench-source -j4 BUILD_STATIC=0 DONT_BUILD_DENSITY=1 \
+  SNAPPY_FILES= \
+  USER_LDFLAGS="-L<本次运行的 snappy-source/build> -Wl,-rpath,<本次运行的 snappy-source/build> -lsnappy"
 ```
 
-构建完成后必须存在 `build/snappy_benchmark`，并从 `CMakeLists.txt` 校验实际版本
-与请求版本一致。
+`SNAPPY_FILES=` 排除 lzbench 自带的 Snappy 实现；构建后检查 `ldd`，确保
+`lzbench` 连接的是本次构建的 Snappy 1.2.2。`DONT_BUILD_DENSITY=1` 只排除
+与本测试无关、构建时需要 Rust 依赖的 Density 编解码器。
 
-## 性能测试
+## 数据与测试
 
-Snappy 不启动后台服务。`start` 阶段只验证 `snappy_benchmark` 和仓库自带
-`testdata` 可用；`test` 阶段在源码目录运行官方默认命令：
+脚本优先读取 `/home/runner/software/snappy/silesia.tar`；文件不存在时，从
+`https://wanos.co/assets/silesia.tar` 下载到本次私有工作目录。使用前验证其
+SHA-256 为 `ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d`。
+校验失败则不运行测试。
+
+测试命令为：
 
 ```bash
-cd snappy-source
-./build/snappy_benchmark
+./lzbench -esnappy -b4 -t20u20 silesia.tar
 ```
 
-该命令的完整控制台输出保存为 `benchmark_google.txt`。解析器从每个
-`bytes_per_second=<值><单位>/s` 字段读取吞吐并统一换算为 MiB/s；没有修改官方
-benchmark 的运行参数。
+其中 `-esnappy` 选择 Snappy，`-b4` 使用 4 KiB 数据块，`-t20u20`
+分别给压缩和解压约 20 秒的测量时间。`start` 阶段验证工具；`test` 阶段
+准备数据并运行命令；`stop` 阶段无需停止后台服务。
 
-可脱离 Workflow 执行完整流程：
+可在仓库根目录独立运行完整流程：
 
 ```bash
 bash software/HPC/snappy/snappy_test.sh \
@@ -49,22 +54,16 @@ bash software/HPC/snappy/snappy_test.sh \
   --results-dir /home/runner/boostkit-perf/snappy/results/1.2.2
 ```
 
-## 指标
+## 指标与输出
 
-报告只保留下列四个官方核心场景的 `bytes_per_second`，名称保持官方 benchmark
-名称；所有指标单位为 MiB/s，越大越好。
+`benchmark_lzbench.txt` 保存完整原始输出，`benchmark_snappy.json` 保存解析后的
+数值及命令、数据校验值。报告列出：
 
-| 官方场景 | 含义 |
-|---|---|
-| `BM_ZFlatAll/1` | 平坦数据的压缩场景 1 |
-| `BM_ZFlatAll/2` | 平坦数据的压缩场景 2 |
-| `BM_UFlatMedley` | 平坦混合数据解压场景 |
-| `BM_UValidateMedley` | 带校验的混合数据解压场景 |
+| 指标 | lzbench 原始列 | 单位 | 优化方向 |
+|---|---|---|---|
+| 压缩吞吐 | `Compress.` | MB/s | 越大越好 |
+| 解压吞吐 | `Decompress.` | MB/s | 越大越好 |
+| 压缩后大小比例 | `Ratio` | % | 越小越好 |
 
-若官方输出缺少任一上述场景，测试直接失败，避免空指标或不完整指标进入报告。
-
-## 结果与清理
-
-必需产物为 `benchmark_google.txt`（官方原始输出）和 `benchmark_snappy.json`
-（四项结构化吞吐）。没有后台服务需要停止；任务结束时只删除本次运行创建的隔离
-工作目录，独立执行会额外保存环境、构建信息、日志与报告。
+只有完整的单行 Snappy 结果且运行参数与请求一致时才生成结构化指标。独立运行
+另会生成环境、构建、状态和报告文件；Framework 负责跨架构结果汇总。

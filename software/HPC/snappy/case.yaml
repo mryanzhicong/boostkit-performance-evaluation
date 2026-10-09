@@ -2,11 +2,10 @@ name: snappy
 category: HPC
 enabled: true
 versions:
-  - "1.2.1"
   - "1.2.2"
 test_tools:
-  snappy_benchmark:
-    version: "与被测软件版本一致"
+  lzbench:
+    version: "2.2"
 execution:
   type: shell-functions
   stages:
@@ -22,10 +21,10 @@ execution:
     stop:
       script: snappy_test.sh
       function: stop_snappy_runtime
-  timeout_minutes: 10
+  timeout_minutes: 30
 outputs:
-  official_benchmark:
-    path: benchmark_google.txt
+  lzbench_output:
+    path: benchmark_lzbench.txt
     stage: test
     format: text
     required: true
@@ -37,19 +36,15 @@ outputs:
 metrics:
   source: benchmark_result
   definitions:
-    "BM_ZFlatAll/1":
-      path: results.BM_ZFlatAll/1.throughput_mib_per_second
-      unit: MiB/s
+    compression_throughput:
+      path: results.compression_throughput.value
+      unit: MB/s
       direction: higher_is_better
-    "BM_ZFlatAll/2":
-      path: results.BM_ZFlatAll/2.throughput_mib_per_second
-      unit: MiB/s
+    decompression_throughput:
+      path: results.decompression_throughput.value
+      unit: MB/s
       direction: higher_is_better
-    BM_UFlatMedley:
-      path: results.BM_UFlatMedley.throughput_mib_per_second
-      unit: MiB/s
-      direction: higher_is_better
-    BM_UValidateMedley:
-      path: results.BM_UValidateMedley.throughput_mib_per_second
-      unit: MiB/s
-      direction: higher_is_better
+    compressed_size_ratio:
+      path: results.compressed_size_ratio.value
+      unit: "%"
+      direction: lower_is_better

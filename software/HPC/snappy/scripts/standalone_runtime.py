@@ -159,26 +159,32 @@ def extract_metrics(
     results = benchmark.get("results")
     if not isinstance(results, dict):
         raise RuntimeError("benchmark_snappy.json is missing results")
+    expected = {
+        "compression_throughput": ("Compress.", "MB/s", "higher_is_better"),
+        "decompression_throughput": ("Decompress.", "MB/s", "higher_is_better"),
+        "compressed_size_ratio": ("Ratio", "%", "lower_is_better"),
+    }
+    if set(results) != set(expected):
+        raise RuntimeError("benchmark_snappy.json must contain exactly the three lzbench metrics")
     metrics: dict[str, Any] = {}
     for result_key, result in results.items():
         if not isinstance(result, dict):
             raise RuntimeError(f"Snappy result {result_key} must be an object")
         metric_name = result_key
-        if metric_name in metrics:
-            raise RuntimeError(f"duplicate Snappy scenario: {metric_name}")
-        if result.get("source_metric") != "bytes_per_second":
-            raise RuntimeError(
-                f"metric {metric_name} is not sourced from bytes_per_second"
-            )
-        value = result.get("throughput_mib_per_second")
+        source_field, unit, direction = expected[metric_name]
+        if result.get("source_metric") != source_field:
+            raise RuntimeError(f"metric {metric_name} is not sourced from {source_field}")
+        if result.get("unit") != unit or result.get("direction") != direction:
+            raise RuntimeError(f"metric {metric_name} has inconsistent units or direction")
+        value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "MiB/s",
-            "direction": "higher_is_better",
+            "unit": unit,
+            "direction": direction,
         }
     if not metrics:
         raise RuntimeError("benchmark_snappy.json contains no metrics")
@@ -236,7 +242,8 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越大越好 |"
+            f"{metric['unit']} | "
+            f"{'越小越好' if metric['direction'] == 'lower_is_better' else '越大越好'} |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
