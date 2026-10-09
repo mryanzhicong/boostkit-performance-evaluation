@@ -77,6 +77,7 @@ def main() -> int:
     try:
         version = os.environ["SOFTWARE_VERSION"]
         architecture = os.environ["EXPECTED_ARCH"]
+        config_name = os.environ["SPEC_CONFIG_NAME"]
     except KeyError as exc:
         fail(f"missing environment variable: {exc}")
         return 1
@@ -108,18 +109,12 @@ def main() -> int:
         "parameters": {
             "command": [
                 "runcpu",
-                "--config=gcc.cfg",
-                "--rebuild",
-                f"--copies={copies}",
+                f"--config={config_name}",
+                "intrate",
                 "-n",
                 "1",
-                "-S",
-                "fastmath=0",
-                "-S",
-                "jemalloc=2mb",
-                "-S",
-                "hugepages=0",
-                "intrate",
+                "-C",
+                str(copies),
             ],
             "suite": "SPEC CPU2017 intrate",
             "copies": copies,

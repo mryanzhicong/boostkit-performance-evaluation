@@ -2,24 +2,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-16.2.0}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-14.4.0}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-GCC_SOURCE_BASE="${GCC_SOURCE_BASE:-https://ftp.gnu.org/gnu/gcc}"
+GCC_SOURCE_BASE="${GCC_SOURCE_BASE:-https://gcc.gnu.org/pub/gcc/releases}"
 GCC_OFFLINE_DIR="${GCC_OFFLINE_DIR:-/home/runner/software/gcc}"
 GCC_BENCHMARK_DATA_ROOT="${GCC_BENCHMARK_DATA_ROOT:-}"
 SPEC_CPU2017_ISO="${SPEC_CPU2017_ISO:-/home/runner/software/gcc/cpu2017-1.0.5.iso}"
-SPEC_CONFIG_NAME="gcc.cfg"
-# SPEC's 502.gcc_r workload compiles several large translation units in every
-# rate copy.  Eight concurrent copies keep the suite within the memory budget
-# of both dedicated runners while preserving an identical workload shape.
-SPEC_COPIES="${SPEC_COPIES:-8}"
-SPEC_FASTMATH=0
-SPEC_JEMALLOC=2mb
-SPEC_HUGEPAGES=0
+SPEC_CONFIG_NAME=""
+SPEC_COPIES=384
 
 SRC_DIR=""
 BUILD_DIR=""
@@ -32,6 +26,7 @@ GCC_SOURCE_SHA256=""
 BENCHMARK_DATA_DIR=""
 SPEC_MOUNT_DIR=""
 SPEC_DIR=""
+SPEC_OUTPUT_ROOT=""
 SPEC_RESULT_DIR=""
 SPEC_CONFIG_PATH=""
 ASLR_STATE_FILE=""
@@ -102,10 +97,14 @@ configure_runtime_paths() {
     GCC_BIN="${INSTALL_DIR}/bin/gcc"
     GXX_BIN="${INSTALL_DIR}/bin/g++"
     GFORTRAN_BIN="${INSTALL_DIR}/bin/gfortran"
-    BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT}"
+    BENCHMARK_DATA_DIR="${GCC_BENCHMARK_DATA_ROOT%/}/gcc-${PERF_RUN_ID}"
     SPEC_MOUNT_DIR="${BENCHMARK_DATA_DIR}/cpu2017-media"
     SPEC_DIR="${BENCHMARK_DATA_DIR}/cpu2017"
-    SPEC_RESULT_DIR="${SPEC_DIR}/result"
+    if [[ "${EXPECTED_ARCH}" == "x86_64" ]]; then
+        SPEC_CONFIG_NAME="spec-gcc-x86.cfg"
+    else
+        SPEC_CONFIG_NAME="spec-gcc-aarch64.cfg"
+    fi
     SPEC_CONFIG_PATH="${SPEC_DIR}/config/${SPEC_CONFIG_NAME}"
     ASLR_STATE_FILE="${BENCHMARK_DATA_DIR}/randomize_va_space.before"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
@@ -123,8 +122,10 @@ initialize_runtime() {
 
 install_dependencies() {
     local required missing=0
-    for required in gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep \
-        perl mount umount; do
+    local required_commands=(gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep perl mount umount numactl)
+    local packages=(gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep
+        gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux libnsl numactl)
+    for required in "${required_commands[@]}"; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -151,15 +152,12 @@ install_dependencies() {
         fi
         install_command=(sudo -n dnf)
     fi
-    if ! "${install_command[@]}" "${package_manager_options[@]}" install -y \
-        gcc gcc-c++ gcc-gfortran make tar xz coreutils curl python3 grep \
-        gawk findutils gmp-devel mpfr-devel libmpc-devel bison flex perl util-linux libnsl; then
+    if ! "${install_command[@]}" "${package_manager_options[@]}" install -y "${packages[@]}"; then
         log "ERROR: failed to install GCC build dependencies"
         return 30
     fi
 
-    for required in gcc g++ gfortran make tar xz sha256sum curl python3 awk date sort nproc grep \
-        perl mount umount; do
+    for required in "${required_commands[@]}"; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
             return 30
@@ -180,11 +178,8 @@ prepare_gcc_source() {
     local tarball offline_tarball actual_sha256 source_root
 
     case "${SOFTWARE_VERSION}" in
-        15.3.0)
-            GCC_SOURCE_SHA256="fa59c1beef8995f27c4d71c1df227587189315d3e6faff1bb4306e61b0c530eb"
-            ;;
-        16.2.0)
-            GCC_SOURCE_SHA256="e6738e29597f733270731aa90600f37ffdc045079dfc27ec7e8192cc81085c3e"
+        14.4.0)
+            GCC_SOURCE_SHA256="752b6f567beac83159c77a7680b1316bdd784738bff9a9d070112c09da90f6d9"
             ;;
         *)
             log "ERROR: unsupported GCC version: ${SOFTWARE_VERSION}"
@@ -338,7 +333,7 @@ start_gcc_runtime() {
 preserve_spec_build_logs() {
     local build_log relative_path destination
 
-    if [[ ! -d "${SPEC_DIR}/benchspec/CPU" ]]; then
+    if [[ ! -d "${SPEC_OUTPUT_ROOT}/benchspec/CPU" ]]; then
         return
     fi
     while IFS= read -r -d '' build_log; do
@@ -349,11 +344,11 @@ preserve_spec_build_logs() {
             log "ERROR: failed to preserve SPEC build log: ${build_log}"
             return 50
         fi
-    done < <(find "${SPEC_DIR}/benchspec/CPU" -type f -name 'make*.out' -print0)
+    done < <(find "${SPEC_OUTPUT_ROOT}/benchspec/CPU" -type f -name 'make*.out' -print0)
 }
 
 run_gcc_benchmarks() {
-    local actual_version template
+    local actual_version config_source spec_label spec_group
 
     if initialize_runtime; then
         :
@@ -373,7 +368,21 @@ run_gcc_benchmarks() {
         log "ERROR: built GCC reports ${actual_version}, requested ${SOFTWARE_VERSION}"
         return 40
     fi
-    mkdir -p "${RESULTS_DIR}" "${BENCHMARK_DATA_DIR}" "${SPEC_MOUNT_DIR}"
+    if [[ -L "${BENCHMARK_DATA_DIR}" ]]; then
+        log "ERROR: GCC benchmark data directory must not be a symlink: ${BENCHMARK_DATA_DIR}"
+        return 50
+    fi
+    if [[ -e "${BENCHMARK_DATA_DIR}" ]]; then
+        if [[ ! -f "${BENCHMARK_DATA_DIR}/.gcc-run-id" ]] || \
+            [[ "$(<"${BENCHMARK_DATA_DIR}/.gcc-run-id")" != "${PERF_RUN_ID}" ]]; then
+            log "ERROR: GCC benchmark data directory belongs to another run: ${BENCHMARK_DATA_DIR}"
+            return 50
+        fi
+    else
+        mkdir -p "${BENCHMARK_DATA_DIR}"
+        printf '%s\n' "${PERF_RUN_ID}" > "${BENCHMARK_DATA_DIR}/.gcc-run-id"
+    fi
+    mkdir -p "${RESULTS_DIR}" "${SPEC_MOUNT_DIR}"
     if [[ "${EUID}" -eq 0 ]]; then
         if ! mount -o loop,ro "${SPEC_CPU2017_ISO}" "${SPEC_MOUNT_DIR}"; then
             log "ERROR: failed to mount the SPEC CPU2017 ISO"
@@ -394,35 +403,32 @@ run_gcc_benchmarks() {
         log "ERROR: SPEC CPU2017 installation is incomplete"
         return 50
     fi
-    case "${EXPECTED_ARCH}" in
-        x86_64)
-            template="${SPEC_DIR}/config/Example-gcc-linux-x86.cfg"
-            ;;
-        aarch64)
-            template="${SPEC_DIR}/config/Example-gcc-linux-aarch64.cfg"
-            ;;
-    esac
-    if [[ ! -f "${template}" ]]; then
-        log "ERROR: SPEC CPU2017 GCC configuration template is missing: ${template}"
+    config_source="${SCRIPT_DIR}/scripts/${SPEC_CONFIG_NAME}"
+    if [[ ! -f "${config_source}" ]]; then
+        log "ERROR: SPEC CPU2017 GCC configuration is missing: ${config_source}"
         return 50
     fi
     if ! sed \
-        -e "s|^%   define  gcc_dir.*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
-        -e 's/^ignore_errors[[:space:]]*=.*/ignore_errors        = 0/' \
-        -e '/^   CXX[[:space:]]*=.*-std=c++03[[:space:]]*%{model}[[:space:]]*$/ s/[[:space:]]*$/ -fpermissive/' \
-        -e '/^[[:space:]]*EXTRA_COPTIMIZE[[:space:]]*=.*-fgnu89-inline[[:space:]]*$/ s/[[:space:]]*$/ -fcommon/' \
-        "${template}" > "${SPEC_CONFIG_PATH}"; then
-        log "ERROR: failed to create the SPEC CPU2017 GCC configuration"
+        -e "s|^%   define  gcc_dir[[:space:]].*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
+        "${config_source}" > "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: failed to place the SPEC CPU2017 GCC configuration"
         return 50
     fi
-    if ! grep -Eq '^   CXX[[:space:]]*=.*-fpermissive([[:space:]]|$)' "${SPEC_CONFIG_PATH}" || \
-        ! grep -Eq '^[[:space:]]*EXTRA_COPTIMIZE[[:space:]]*=.*-fcommon([[:space:]]|$)' "${SPEC_CONFIG_PATH}"; then
-        log "ERROR: SPEC CPU2017 GCC compatibility flags were not added to the generated configuration"
+    if ! grep -Fxq "%   define  gcc_dir        ${INSTALL_DIR}" "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: SPEC CPU2017 GCC compiler path was not updated"
         return 50
     fi
-    if ! printf '\n# Fixed workload settings passed by runcpu.\n%%define fastmath %s\n%%define jemalloc %s\n%%define hugepages %s\nnotes010 = Requested runcpu settings: fastmath=%%{fastmath}, jemalloc=%%{jemalloc}, hugepages=%%{hugepages}\n' \
-        "${SPEC_FASTMATH}" "${SPEC_JEMALLOC}" "${SPEC_HUGEPAGES}" >> "${SPEC_CONFIG_PATH}"; then
-        log "ERROR: failed to record the SPEC CPU2017 workload settings"
+    spec_label="$(awk '$1 == "%" && $2 == "define" && $3 == "label" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
+    spec_group="$(awk '$1 == "%" && $2 == "define" && $3 == "group" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
+    if [[ ! "${spec_label}" =~ ^[A-Za-z0-9._-]+$ || ! "${spec_group}" =~ ^[A-Za-z0-9._-]+$ ]] || \
+        ! grep -Fqx 'output_root          = %{top}/result/%{group}/%{label}' "${SPEC_CONFIG_PATH}"; then
+        log "ERROR: unsupported SPEC CPU2017 output_root configuration"
+        return 50
+    fi
+    SPEC_OUTPUT_ROOT="${SPEC_DIR}/result/${spec_group}/${spec_label}"
+    SPEC_RESULT_DIR="${SPEC_OUTPUT_ROOT}/result"
+    if ! cp "${SPEC_CONFIG_PATH}" "${RESULTS_DIR}/${SPEC_CONFIG_NAME}"; then
+        log "ERROR: failed to preserve the SPEC CPU2017 GCC configuration"
         return 50
     fi
     if ! cat /proc/sys/kernel/randomize_va_space > "${ASLR_STATE_FILE}"; then
@@ -444,11 +450,7 @@ run_gcc_benchmarks() {
     if ! (
         cd "${SPEC_DIR}"
         source ./shrc
-        runcpu --config="${SPEC_CONFIG_NAME}" --rebuild --copies="${SPEC_COPIES}" -n 1 \
-            -S fastmath="${SPEC_FASTMATH}" \
-            -S jemalloc="${SPEC_JEMALLOC}" \
-            -S hugepages="${SPEC_HUGEPAGES}" \
-            intrate
+        runcpu --config="${SPEC_CONFIG_NAME}" intrate -n 1 -C "${SPEC_COPIES}"
     ) 2>&1 | tee "${RESULTS_DIR}/raw-output.log"; then
         preserve_spec_build_logs || return $?
         log "ERROR: SPEC CPU2017 intrate failed"
@@ -473,7 +475,7 @@ run_gcc_benchmarks() {
         log "ERROR: failed to preserve SPEC CPU2017 result files"
         return 50
     fi
-    export SOFTWARE_VERSION EXPECTED_ARCH GCC_VERSION_STRING SPEC_COPIES
+    export SOFTWARE_VERSION EXPECTED_ARCH GCC_VERSION_STRING SPEC_COPIES SPEC_CONFIG_NAME
     if ! python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/spec-results" \
         "${RESULTS_DIR}/benchmark_gcc.json"; then
@@ -516,9 +518,12 @@ stop_gcc_runtime() {
             cleanup_failed=1
         fi
     fi
-    if [[ -d "${BENCHMARK_DATA_DIR}" ]]; then
-        if [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT}" ]]; then
-            log "ERROR: refusing to clean unexpected GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
+    if [[ -e "${BENCHMARK_DATA_DIR}" || -L "${BENCHMARK_DATA_DIR}" ]]; then
+        if [[ -L "${BENCHMARK_DATA_DIR}" || ! -d "${BENCHMARK_DATA_DIR}" ]] || \
+            [[ "${BENCHMARK_DATA_DIR}" != "${GCC_BENCHMARK_DATA_ROOT%/}/gcc-${PERF_RUN_ID}" ]] || \
+            [[ ! -f "${BENCHMARK_DATA_DIR}/.gcc-run-id" ]] || \
+            [[ "$(<"${BENCHMARK_DATA_DIR}/.gcc-run-id")" != "${PERF_RUN_ID}" ]]; then
+            log "ERROR: refusing to clean unverified GCC benchmark data directory: ${BENCHMARK_DATA_DIR}"
             cleanup_failed=1
         fi
         if [[ "${cleanup_failed}" -eq 0 ]] && ! rm -rf -- "${BENCHMARK_DATA_DIR}"; then
