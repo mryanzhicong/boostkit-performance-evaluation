@@ -1,0 +1,509 @@
+{
+  "software": "faiss",
+  "category": "AI",
+  "version": "1.14.3",
+  "architecture": "x86_64",
+  "run_id": "38043065570-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-10-10T10:00:17Z",
+    "category": "AI",
+    "software": "faiss",
+    "requested_version": "1.14.3",
+    "actual_version": "1.14.3",
+    "architecture": "x86_64",
+    "run_id": "38043065570-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "sra_test_revision": "9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf",
+      "algorithms": [
+        "hnsw"
+      ],
+      "datasets": {
+        "sift-128-euclidean": {
+          "sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+          "bytes": 525128288
+        },
+        "glove-100-angular": {
+          "sha256": "544af1d5e84e112cd4749571dcfd8ca109818a572f850af75a3a09e093a953c4",
+          "bytes": 485413888
+        },
+        "deep-image-96-angular": {
+          "sha256": "a0a44dfe80c58e63860862eeea2d34e62cff958dc3aec14fd65263d1d3c751f8",
+          "bytes": 3848008288
+        },
+        "fashion-mnist-784-euclidean": {
+          "sha256": "7f24e5122b71346346686a6ea80e08d9145b9c020f9f2db4c4c799dfcfc96a07",
+          "bytes": 227528288
+        },
+        "gist-960-euclidean": {
+          "sha256": "8e95831936bfdbfa0a56086942e2cf98cd703517c67f985914183eb4cdbf026a",
+          "bytes": 3844648288
+        }
+      },
+      "configurations": {
+        "hnsw/sift-128-euclidean": {
+          "k_f": "16",
+          "efs": "120",
+          "efc": "500",
+          "metric": "L2",
+          "nloop": "5",
+          "num_threads": "32",
+          "top_k": "10",
+          "batch_mode": "false",
+          "batch_size": "100",
+          "save_or_load": "save"
+        },
+        "hnsw/glove-100-angular": {
+          "k_f": "54",
+          "efs": "520",
+          "efc": "600",
+          "metric": "IP",
+          "nloop": "5",
+          "num_threads": "32",
+          "top_k": "10",
+          "batch_mode": "false",
+          "batch_size": "100",
+          "save_or_load": "save"
+        },
+        "hnsw/deep-image-96-angular": {
+          "k_f": "32",
+          "efs": "164",
+          "efc": "450",
+          "metric": "IP",
+          "nloop": "5",
+          "num_threads": "32",
+          "top_k": "10",
+          "batch_mode": "false",
+          "batch_size": "100",
+          "save_or_load": "save"
+        },
+        "hnsw/fashion-mnist-784-euclidean": {
+          "k_f": "18",
+          "efs": "30",
+          "efc": "300",
+          "metric": "L2",
+          "nloop": "5",
+          "num_threads": "32",
+          "top_k": "10",
+          "batch_mode": "false",
+          "batch_size": "100",
+          "save_or_load": "save"
+        },
+        "hnsw/gist-960-euclidean": {
+          "k_f": "58",
+          "efs": "360",
+          "efc": "500",
+          "metric": "L2",
+          "nloop": "5",
+          "num_threads": "32",
+          "top_k": "10",
+          "batch_mode": "false",
+          "batch_size": "100",
+          "save_or_load": "save"
+        }
+      },
+      "pin_threads": false
+    }
+  },
+  "parameter_signature": "9928133d05e48a1eebd38e4ecb973eaa9891958cdda10e6592e267816c0f72c1",
+  "test_tools": {
+    "sra_test": {
+      "version": "9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf"
+    },
+    "faiss": {
+      "version": "与被测软件版本一致"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-10-10T09:54:59Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.x86_64",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-10-10T09:55:00Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 42761965568 769568559104   137797632  2259238912 767800471552\nSwap:     4294963200  4223455232    71507968",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-10-10T11:02:08Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 194260185088 341916901376   133857280 279319261184 616302252032\nSwap:     4294963200  4060934144   234029056",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "benchmark_result": {
+      "benchmark": "sra_test_faiss_same_nq",
+      "software": "faiss",
+      "version": "1.14.3",
+      "architecture": "x86_64",
+      "parameters": {
+        "sra_test_revision": "9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf",
+        "algorithms": [
+          "hnsw"
+        ],
+        "datasets": {
+          "sift-128-euclidean": {
+            "sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+            "bytes": 525128288
+          },
+          "glove-100-angular": {
+            "sha256": "544af1d5e84e112cd4749571dcfd8ca109818a572f850af75a3a09e093a953c4",
+            "bytes": 485413888
+          },
+          "deep-image-96-angular": {
+            "sha256": "a0a44dfe80c58e63860862eeea2d34e62cff958dc3aec14fd65263d1d3c751f8",
+            "bytes": 3848008288
+          },
+          "fashion-mnist-784-euclidean": {
+            "sha256": "7f24e5122b71346346686a6ea80e08d9145b9c020f9f2db4c4c799dfcfc96a07",
+            "bytes": 227528288
+          },
+          "gist-960-euclidean": {
+            "sha256": "8e95831936bfdbfa0a56086942e2cf98cd703517c67f985914183eb4cdbf026a",
+            "bytes": 3844648288
+          }
+        },
+        "configurations": {
+          "hnsw/sift-128-euclidean": {
+            "k_f": "16",
+            "efs": "120",
+            "efc": "500",
+            "metric": "L2",
+            "nloop": "5",
+            "num_threads": "32",
+            "top_k": "10",
+            "batch_mode": "false",
+            "batch_size": "100",
+            "save_or_load": "save"
+          },
+          "hnsw/glove-100-angular": {
+            "k_f": "54",
+            "efs": "520",
+            "efc": "600",
+            "metric": "IP",
+            "nloop": "5",
+            "num_threads": "32",
+            "top_k": "10",
+            "batch_mode": "false",
+            "batch_size": "100",
+            "save_or_load": "save"
+          },
+          "hnsw/deep-image-96-angular": {
+            "k_f": "32",
+            "efs": "164",
+            "efc": "450",
+            "metric": "IP",
+            "nloop": "5",
+            "num_threads": "32",
+            "top_k": "10",
+            "batch_mode": "false",
+            "batch_size": "100",
+            "save_or_load": "save"
+          },
+          "hnsw/fashion-mnist-784-euclidean": {
+            "k_f": "18",
+            "efs": "30",
+            "efc": "300",
+            "metric": "L2",
+            "nloop": "5",
+            "num_threads": "32",
+            "top_k": "10",
+            "batch_mode": "false",
+            "batch_size": "100",
+            "save_or_load": "save"
+          },
+          "hnsw/gist-960-euclidean": {
+            "k_f": "58",
+            "efs": "360",
+            "efc": "500",
+            "metric": "L2",
+            "nloop": "5",
+            "num_threads": "32",
+            "top_k": "10",
+            "batch_mode": "false",
+            "batch_size": "100",
+            "save_or_load": "save"
+          }
+        },
+        "pin_threads": false
+      },
+      "results": {
+        "hnsw/sift-128-euclidean/build_time_s": {
+          "source_name": "hnsw/sift-128-euclidean/build_time_s",
+          "group": "sift-128-euclidean",
+          "value": 22.0817,
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "hnsw/sift-128-euclidean/recall": {
+          "source_name": "hnsw/sift-128-euclidean/recall",
+          "group": "sift-128-euclidean",
+          "value": 0.99135,
+          "unit": "ratio",
+          "direction": "higher_is_better"
+        },
+        "hnsw/sift-128-euclidean/qps_wall": {
+          "source_name": "hnsw/sift-128-euclidean/qps_wall",
+          "group": "sift-128-euclidean",
+          "value": 35061.9,
+          "unit": "queries/s",
+          "direction": "higher_is_better"
+        },
+        "hnsw/sift-128-euclidean/qps_avg_thread": {
+          "source_name": "hnsw/sift-128-euclidean/qps_avg_thread",
+          "group": "sift-128-euclidean",
+          "value": 39498.7,
+          "unit": "queries/s",
+          "direction": "neutral"
+        },
+        "hnsw/glove-100-angular/build_time_s": {
+          "source_name": "hnsw/glove-100-angular/build_time_s",
+          "group": "glove-100-angular",
+          "value": 86.9358,
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "hnsw/glove-100-angular/recall": {
+          "source_name": "hnsw/glove-100-angular/recall",
+          "group": "glove-100-angular",
+          "value": 0.99083,
+          "unit": "ratio",
+          "direction": "higher_is_better"
+        },
+        "hnsw/glove-100-angular/qps_wall": {
+          "source_name": "hnsw/glove-100-angular/qps_wall",
+          "group": "glove-100-angular",
+          "value": 5367.63,
+          "unit": "queries/s",
+          "direction": "higher_is_better"
+        },
+        "hnsw/glove-100-angular/qps_avg_thread": {
+          "source_name": "hnsw/glove-100-angular/qps_avg_thread",
+          "group": "glove-100-angular",
+          "value": 5081.87,
+          "unit": "queries/s",
+          "direction": "neutral"
+        },
+        "hnsw/deep-image-96-angular/build_time_s": {
+          "source_name": "hnsw/deep-image-96-angular/build_time_s",
+          "group": "deep-image-96-angular",
+          "value": 221.316,
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "hnsw/deep-image-96-angular/recall": {
+          "source_name": "hnsw/deep-image-96-angular/recall",
+          "group": "deep-image-96-angular",
+          "value": 0.99089,
+          "unit": "ratio",
+          "direction": "higher_is_better"
+        },
+        "hnsw/deep-image-96-angular/qps_wall": {
+          "source_name": "hnsw/deep-image-96-angular/qps_wall",
+          "group": "deep-image-96-angular",
+          "value": 30209.5,
+          "unit": "queries/s",
+          "direction": "higher_is_better"
+        },
+        "hnsw/deep-image-96-angular/qps_avg_thread": {
+          "source_name": "hnsw/deep-image-96-angular/qps_avg_thread",
+          "group": "deep-image-96-angular",
+          "value": 29458.2,
+          "unit": "queries/s",
+          "direction": "neutral"
+        },
+        "hnsw/fashion-mnist-784-euclidean/build_time_s": {
+          "source_name": "hnsw/fashion-mnist-784-euclidean/build_time_s",
+          "group": "fashion-mnist-784-euclidean",
+          "value": 1.59961,
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "hnsw/fashion-mnist-784-euclidean/recall": {
+          "source_name": "hnsw/fashion-mnist-784-euclidean/recall",
+          "group": "fashion-mnist-784-euclidean",
+          "value": 0.99195,
+          "unit": "ratio",
+          "direction": "higher_is_better"
+        },
+        "hnsw/fashion-mnist-784-euclidean/qps_wall": {
+          "source_name": "hnsw/fashion-mnist-784-euclidean/qps_wall",
+          "group": "fashion-mnist-784-euclidean",
+          "value": 119810.0,
+          "unit": "queries/s",
+          "direction": "higher_is_better"
+        },
+        "hnsw/fashion-mnist-784-euclidean/qps_avg_thread": {
+          "source_name": "hnsw/fashion-mnist-784-euclidean/qps_avg_thread",
+          "group": "fashion-mnist-784-euclidean",
+          "value": 134565.0,
+          "unit": "queries/s",
+          "direction": "neutral"
+        },
+        "hnsw/gist-960-euclidean/build_time_s": {
+          "source_name": "hnsw/gist-960-euclidean/build_time_s",
+          "group": "gist-960-euclidean",
+          "value": 187.915,
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "hnsw/gist-960-euclidean/recall": {
+          "source_name": "hnsw/gist-960-euclidean/recall",
+          "group": "gist-960-euclidean",
+          "value": 0.9905,
+          "unit": "ratio",
+          "direction": "higher_is_better"
+        },
+        "hnsw/gist-960-euclidean/qps_wall": {
+          "source_name": "hnsw/gist-960-euclidean/qps_wall",
+          "group": "gist-960-euclidean",
+          "value": 3375.32,
+          "unit": "queries/s",
+          "direction": "higher_is_better"
+        },
+        "hnsw/gist-960-euclidean/qps_avg_thread": {
+          "source_name": "hnsw/gist-960-euclidean/qps_avg_thread",
+          "group": "gist-960-euclidean",
+          "value": 3759.65,
+          "unit": "queries/s",
+          "direction": "neutral"
+        }
+      }
+    },
+    "official_logs": {
+      "path": "sra-test-logs",
+      "file_count": 5
+    }
+  },
+  "metrics": {
+    "hnsw/sift-128-euclidean/build_time_s": {
+      "value": 22.0817,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sift-128-euclidean"
+    },
+    "hnsw/sift-128-euclidean/recall": {
+      "value": 0.99135,
+      "unit": "ratio",
+      "direction": "higher_is_better",
+      "group": "sift-128-euclidean"
+    },
+    "hnsw/sift-128-euclidean/qps_wall": {
+      "value": 35061.9,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "group": "sift-128-euclidean"
+    },
+    "hnsw/sift-128-euclidean/qps_avg_thread": {
+      "value": 39498.7,
+      "unit": "queries/s",
+      "direction": "neutral",
+      "group": "sift-128-euclidean"
+    },
+    "hnsw/glove-100-angular/build_time_s": {
+      "value": 86.9358,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "glove-100-angular"
+    },
+    "hnsw/glove-100-angular/recall": {
+      "value": 0.99083,
+      "unit": "ratio",
+      "direction": "higher_is_better",
+      "group": "glove-100-angular"
+    },
+    "hnsw/glove-100-angular/qps_wall": {
+      "value": 5367.63,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "group": "glove-100-angular"
+    },
+    "hnsw/glove-100-angular/qps_avg_thread": {
+      "value": 5081.87,
+      "unit": "queries/s",
+      "direction": "neutral",
+      "group": "glove-100-angular"
+    },
+    "hnsw/deep-image-96-angular/build_time_s": {
+      "value": 221.316,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "deep-image-96-angular"
+    },
+    "hnsw/deep-image-96-angular/recall": {
+      "value": 0.99089,
+      "unit": "ratio",
+      "direction": "higher_is_better",
+      "group": "deep-image-96-angular"
+    },
+    "hnsw/deep-image-96-angular/qps_wall": {
+      "value": 30209.5,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "group": "deep-image-96-angular"
+    },
+    "hnsw/deep-image-96-angular/qps_avg_thread": {
+      "value": 29458.2,
+      "unit": "queries/s",
+      "direction": "neutral",
+      "group": "deep-image-96-angular"
+    },
+    "hnsw/fashion-mnist-784-euclidean/build_time_s": {
+      "value": 1.59961,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "fashion-mnist-784-euclidean"
+    },
+    "hnsw/fashion-mnist-784-euclidean/recall": {
+      "value": 0.99195,
+      "unit": "ratio",
+      "direction": "higher_is_better",
+      "group": "fashion-mnist-784-euclidean"
+    },
+    "hnsw/fashion-mnist-784-euclidean/qps_wall": {
+      "value": 119810.0,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "group": "fashion-mnist-784-euclidean"
+    },
+    "hnsw/fashion-mnist-784-euclidean/qps_avg_thread": {
+      "value": 134565.0,
+      "unit": "queries/s",
+      "direction": "neutral",
+      "group": "fashion-mnist-784-euclidean"
+    },
+    "hnsw/gist-960-euclidean/build_time_s": {
+      "value": 187.915,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "gist-960-euclidean"
+    },
+    "hnsw/gist-960-euclidean/recall": {
+      "value": 0.9905,
+      "unit": "ratio",
+      "direction": "higher_is_better",
+      "group": "gist-960-euclidean"
+    },
+    "hnsw/gist-960-euclidean/qps_wall": {
+      "value": 3375.32,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "group": "gist-960-euclidean"
+    },
+    "hnsw/gist-960-euclidean/qps_avg_thread": {
+      "value": 3759.65,
+      "unit": "queries/s",
+      "direction": "neutral",
+      "group": "gist-960-euclidean"
+    }
+  }
+}
