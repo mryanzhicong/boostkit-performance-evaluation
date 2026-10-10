@@ -2,10 +2,12 @@ name: protobuf
 category: HPC
 enabled: true
 versions:
-  - "35.1"
+  - "33.0"
 test_tools:
-  protobuf-python:
-    version: "7.35.1"
+  AccLibBenchmark/protobuf-benchmark:
+    version: "01d083c6633babb2fb1307d93f596f10dda36778"
+  google-benchmark:
+    version: "1.8.3"
 execution:
   type: shell-functions
   stages:
@@ -23,26 +25,37 @@ execution:
       function: stop_protobuf_runtime
   timeout_minutes: 120
 outputs:
-  serialization_benchmark:
-    path: benchmark_ann.json
+  benchmark_source_diff:
+    path: benchmark_source.diff
+    stage: build
+    format: text
+    required: true
+  fixture_hashes:
+    path: fixture_sha256.txt
+    stage: test
+    format: text
+    required: true
+  raw_benchmark:
+    path: benchmark_google.json
     stage: test
     format: json
     required: true
-  micro_benchmark:
-    path: micro_benchmark.json
+  benchmark_cases:
+    path: benchmark_cases.txt
     stage: test
-    format: json
+    format: text
     required: true
-  aggregate_result:
-    path: aggregate_results.json
+  benchmark_result:
+    path: benchmark_protobuf.json
     stage: test
     format: json
     required: true
 metrics:
-  source: aggregate_result
+  source: benchmark_result
   collection:
-    path: metrics
+    path: results
     name_path: source_name
+    group_path: group
     value_path: value
     unit_path: unit
     direction_path: direction

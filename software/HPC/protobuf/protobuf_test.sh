@@ -2,23 +2,30 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-35.1}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-33.0}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 PROTOBUF_SOURCE_URL="${PROTOBUF_SOURCE_URL:-https://github.com/protocolbuffers/protobuf.git}"
-PROTOBUF_PYTHON_VERSION="${PROTOBUF_PYTHON_VERSION:-7.35.1}"
-NUM_MESSAGES="${NUM_MESSAGES:-200000}"
-ITERATIONS="${ITERATIONS:-5}"
-MESSAGE_SIZE="${MESSAGE_SIZE:-100}"
-THREAD_COUNTS="${THREAD_COUNTS:-1,2,4,8}"
+BENCHMARK_SOURCE_URL="https://gitcode.com/boostkit/AccLibBenchmark.git"
+BENCHMARK_SOURCE_REVISION="01d083c6633babb2fb1307d93f596f10dda36778"
+GOOGLE_BENCHMARK_URL="https://github.com/google/benchmark.git"
+GOOGLE_BENCHMARK_VERSION="v1.8.3"
 
 SOURCE_DIR=""
 BUILD_DIR=""
 INSTALL_DIR=""
 PROTOC_BIN=""
+BENCHMARK_REPO_DIR=""
+BENCHMARK_SOURCE_DIR=""
+BENCHMARK_BUILD_DIR=""
+BENCHMARK_BIN=""
+FIXTURE_DUMP_BIN=""
+GOOGLE_BENCHMARK_SOURCE_DIR=""
+GOOGLE_BENCHMARK_BUILD_DIR=""
+GOOGLE_BENCHMARK_INSTALL_DIR=""
 CXX_BINARY="${CXX:-g++}"
 CXX_VERSION=""
 STANDALONE_OWNS_WORK_DIR=0
@@ -60,6 +67,14 @@ configure_runtime_paths() {
     BUILD_DIR="${PERF_WORK_DIR}/build"
     INSTALL_DIR="${PERF_WORK_DIR}/install"
     PROTOC_BIN="${INSTALL_DIR}/bin/protoc"
+    BENCHMARK_REPO_DIR="${PERF_WORK_DIR}/AccLibBenchmark"
+    BENCHMARK_SOURCE_DIR="${BENCHMARK_REPO_DIR}/protobuf-benchmark"
+    BENCHMARK_BUILD_DIR="${PERF_WORK_DIR}/benchmark-build"
+    BENCHMARK_BIN="${BENCHMARK_BUILD_DIR}/bm"
+    FIXTURE_DUMP_BIN="${BENCHMARK_BUILD_DIR}/protobuf_fixture_dump"
+    GOOGLE_BENCHMARK_SOURCE_DIR="${PERF_WORK_DIR}/google-benchmark-source"
+    GOOGLE_BENCHMARK_BUILD_DIR="${PERF_WORK_DIR}/google-benchmark-build"
+    GOOGLE_BENCHMARK_INSTALL_DIR="${PERF_WORK_DIR}/google-benchmark-install"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE
 }
@@ -73,10 +88,10 @@ initialize_runtime() {
 require_build_commands() {
     local required_command package
     local packages=() dnf_options=()
-    for required_command in git cmake make nproc python3 "${CXX_BINARY}"; do
+    for required_command in git cmake make nproc sha256sum cmp python3 "${CXX_BINARY}"; do
         command -v "${required_command}" >/dev/null 2>&1 && continue
         case "${required_command}" in
-            nproc) package="coreutils" ;;
+            nproc|sha256sum|cmp) package="coreutils" ;;
             g++|c++) package="gcc-c++" ;;
             clang++) package="clang" ;;
             /*)
@@ -87,9 +102,6 @@ require_build_commands() {
         esac
         packages+=("${package}")
     done
-    if ! command -v python3 >/dev/null 2>&1 || ! python3 -m pip --version >/dev/null 2>&1; then
-        packages+=(python3-pip)
-    fi
     if ((${#packages[@]})); then
         command -v dnf >/dev/null 2>&1 || {
             log_message "ERROR: dnf is required to install Protobuf build dependencies"
@@ -104,16 +116,12 @@ require_build_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required_command in git cmake make nproc python3 "${CXX_BINARY}"; do
+    for required_command in git cmake make nproc sha256sum cmp python3 "${CXX_BINARY}"; do
         command -v "${required_command}" >/dev/null 2>&1 || {
             log_message "ERROR: required command remains unavailable: ${required_command}"
             return 30
         }
     done
-    python3 -m pip --version >/dev/null 2>&1 || {
-        log_message "ERROR: python3 pip module remains unavailable"
-        return 30
-    }
 }
 
 check_architecture() {
@@ -126,32 +134,43 @@ check_architecture() {
     fi
 }
 
-pip_index_options() {
-    local operating_system_id
-    operating_system_id="$(sed -n 's/^ID=//p' /etc/os-release 2>/dev/null | head -n 1)"
-    operating_system_id="${operating_system_id%\"}"
-    operating_system_id="${operating_system_id#\"}"
-    if [[ "${operating_system_id,,}" != "ubuntu" ]]; then
-        printf '%s\n' '--trusted-host' 'mirrors.huaweicloud.com' \
-            '--index-url' 'https://mirrors.huaweicloud.com/repository/pypi/simple'
+prepare_benchmark_source() {
+    local local_source="${PROTOBUF_BENCHMARK_REPO:-/home/runner/software/protobuf/AccLibBenchmark}"
+    if [[ -d "${local_source}/.git" ]]; then
+        log_message "using local AccLibBenchmark repository ${local_source}"
+        git clone --quiet --no-checkout "${local_source}" "${BENCHMARK_REPO_DIR}" || return 40
+    else
+        log_message "cloning AccLibBenchmark from ${BENCHMARK_SOURCE_URL}"
+        GIT_TERMINAL_PROMPT=0 git clone --quiet --no-checkout \
+            "${BENCHMARK_SOURCE_URL}" "${BENCHMARK_REPO_DIR}" || return 40
     fi
+    git -C "${BENCHMARK_REPO_DIR}" checkout --quiet --detach \
+        "${BENCHMARK_SOURCE_REVISION}" || return 40
+    [[ -f "${BENCHMARK_SOURCE_DIR}/benchmark_main.cpp" ]] || {
+        log_message "ERROR: pinned protobuf-benchmark source is missing"
+        return 40
+    }
+    python3 "${SCRIPT_DIR}/scripts/fix_fixtures.py" \
+        "${BENCHMARK_SOURCE_DIR}/benchmark_common.h" || return 40
+    git -C "${BENCHMARK_REPO_DIR}" diff -- protobuf-benchmark/benchmark_common.h \
+        > "${RESULTS_DIR}/benchmark_source.diff"
+    [[ -s "${RESULTS_DIR}/benchmark_source.diff" ]] || {
+        log_message "ERROR: fixed-fixture source diff is empty"
+        return 40
+    }
 }
 
-install_private_python_runtime() {
-    local -a pip_options=()
-    while IFS= read -r option; do
-        pip_options+=("${option}")
-    done < <(pip_index_options)
-    log_message "installing Python runtime into the task-private virtual environment"
-    if ! python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-        "${pip_options[@]}" "protobuf==${PROTOBUF_PYTHON_VERSION}"; then
-        log_message "ERROR: failed to install the Python dependency required by the upstream benchmarks"
-        return 30
-    fi
-    if ! python3 -c "import google.protobuf; assert google.protobuf.__version__ == '${PROTOBUF_PYTHON_VERSION}', google.protobuf.__version__; print(google.protobuf.__version__)"; then
-        log_message "ERROR: task-private protobuf Python runtime version is not ${PROTOBUF_PYTHON_VERSION}"
-        return 40
-    fi
+build_google_benchmark() {
+    log_message "building Google Benchmark ${GOOGLE_BENCHMARK_VERSION}"
+    GIT_TERMINAL_PROMPT=0 git clone --quiet --depth 1 \
+        --branch "${GOOGLE_BENCHMARK_VERSION}" \
+        "${GOOGLE_BENCHMARK_URL}" "${GOOGLE_BENCHMARK_SOURCE_DIR}" || return 40
+    cmake -S "${GOOGLE_BENCHMARK_SOURCE_DIR}" -B "${GOOGLE_BENCHMARK_BUILD_DIR}" \
+        -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_INSTALL_PREFIX="${GOOGLE_BENCHMARK_INSTALL_DIR}" || return 40
+    cmake --build "${GOOGLE_BENCHMARK_BUILD_DIR}" --parallel "$(nproc)" || return 40
+    cmake --install "${GOOGLE_BENCHMARK_BUILD_DIR}" || return 40
 }
 
 clone_protobuf_source() {
@@ -191,10 +210,15 @@ build_protobuf() {
     initialize_runtime || return $?
     check_architecture || return $?
     require_build_commands || return $?
-    if [[ -e "${SOURCE_DIR}" || -e "${BUILD_DIR}" || -e "${INSTALL_DIR}" ]]; then
+    if [[ -e "${SOURCE_DIR}" || -e "${BUILD_DIR}" || -e "${INSTALL_DIR}" ||
+          -e "${BENCHMARK_REPO_DIR}" || -e "${GOOGLE_BENCHMARK_SOURCE_DIR}" ]]; then
         log_message "ERROR: build directories are not clean under ${PERF_WORK_DIR}"
         return 20
     fi
+    prepare_benchmark_source || {
+        log_message "ERROR: failed to prepare the pinned AccLibBenchmark source"
+        return 40
+    }
     clone_protobuf_source || return $?
     CXX_VERSION="$("${CXX_BINARY}" --version | head -n 1)"
     log_message "building protobuf with the upstream CMake Release configuration"
@@ -219,8 +243,24 @@ build_protobuf() {
         return 40
     fi
     record_actual_version || return $?
-    install_private_python_runtime || return $?
-    log_message "protobuf ${SOFTWARE_VERSION} CMake build is ready"
+    build_google_benchmark || {
+        log_message "ERROR: failed to build Google Benchmark"
+        return 40
+    }
+    log_message "building the original protobuf-benchmark C++ cases"
+    if ! cmake -S "${SCRIPT_DIR}/scripts/benchmark_project" -B "${BENCHMARK_BUILD_DIR}" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBENCHMARK_SOURCE_DIR="${BENCHMARK_SOURCE_DIR}" \
+        -DCMAKE_PREFIX_PATH="${INSTALL_DIR};${GOOGLE_BENCHMARK_INSTALL_DIR}"; then
+        log_message "ERROR: protobuf-benchmark CMake configuration failed"
+        return 40
+    fi
+    if ! cmake --build "${BENCHMARK_BUILD_DIR}" --parallel "$(nproc)"; then
+        log_message "ERROR: protobuf-benchmark C++ build failed"
+        return 40
+    fi
+    [[ -x "${BENCHMARK_BIN}" && -x "${FIXTURE_DUMP_BIN}" ]] || return 40
+    log_message "protobuf ${SOFTWARE_VERSION} and fixed-fixture C++ benchmark are ready"
 }
 
 start_protobuf_runtime() {
@@ -229,8 +269,12 @@ start_protobuf_runtime() {
         log_message "ERROR: private protoc is unavailable: ${PROTOC_BIN}"
         return 40
     fi
-    if ! python3 -c 'import google.protobuf'; then
-        log_message "ERROR: task-private protobuf Python runtime is unavailable"
+    if [[ ! -x "${BENCHMARK_BIN}" ]]; then
+        log_message "ERROR: original protobuf-benchmark binary is unavailable"
+        return 40
+    fi
+    if [[ ! -x "${FIXTURE_DUMP_BIN}" ]]; then
+        log_message "ERROR: protobuf fixture generator is unavailable"
         return 40
     fi
     log_message "protobuf runtime is ready"
@@ -242,30 +286,55 @@ run_protobuf_benchmarks() {
         log_message "ERROR: private protoc is unavailable: ${PROTOC_BIN}"
         return 40
     fi
-    export PATH="${INSTALL_DIR}/bin:${PATH}"
-    export PROTOC_BIN
-    log_message "running the upstream serialization benchmark"
-    if ! python3 "${SCRIPT_DIR}/scripts/benchmark_ann.py" \
-        --output "${RESULTS_DIR}/benchmark_ann.json" \
-        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}" \
-        --message-size "${MESSAGE_SIZE}"; then
-        log_message "ERROR: upstream serialization benchmark failed"
+    if [[ ! -x "${BENCHMARK_BIN}" ]]; then
+        log_message "ERROR: original protobuf-benchmark binary is unavailable"
+        return 40
+    fi
+    if [[ ! -x "${FIXTURE_DUMP_BIN}" ]]; then
+        log_message "ERROR: protobuf fixture generator is unavailable"
+        return 40
+    fi
+    local fixture_dir="${PERF_WORK_DIR}/fixtures"
+    local repeat_dir="${PERF_WORK_DIR}/fixtures-repeat"
+    mkdir -p "${fixture_dir}" "${repeat_dir}"
+    "${FIXTURE_DUMP_BIN}" "${fixture_dir}" || return 50
+    "${FIXTURE_DUMP_BIN}" "${repeat_dir}" || return 50
+    (cd "${fixture_dir}" && LC_ALL=C sha256sum -- *.pb) \
+        > "${RESULTS_DIR}/fixture_sha256.txt"
+    (cd "${repeat_dir}" && LC_ALL=C sha256sum -- *.pb) \
+        > "${RESULTS_DIR}/fixture_sha256_repeat.txt"
+    if [[ "$(wc -l < "${RESULTS_DIR}/fixture_sha256.txt")" -ne 84 ]] ||
+       ! cmp -s "${RESULTS_DIR}/fixture_sha256.txt" "${RESULTS_DIR}/fixture_sha256_repeat.txt"; then
+        log_message "ERROR: expected 84 reproducible Protobuf fixtures"
         return 50
     fi
-    log_message "running the upstream micro benchmark"
-    if ! python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
-        --output "${RESULTS_DIR}/micro_benchmark.json" \
-        --num-messages "${NUM_MESSAGES}" --iterations "${ITERATIONS}" \
-        --thread-counts "${THREAD_COUNTS}"; then
-        log_message "ERROR: upstream micro benchmark failed"
+    rm -f -- "${RESULTS_DIR}/fixture_sha256_repeat.txt"
+    log_message "verified 84 reproducible fixture hashes; compare fixture_sha256.txt across architectures"
+    local cases_file="${RESULTS_DIR}/benchmark_cases.txt"
+    if ! "${BENCHMARK_BIN}" --benchmark_list_tests=true > "${cases_file}"; then
+        log_message "ERROR: could not list original protobuf-benchmark cases"
         return 50
     fi
-    if ! python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
-        --results-dir "${RESULTS_DIR}" --output "${RESULTS_DIR}/aggregate_results.json"; then
-        log_message "ERROR: upstream result aggregation failed"
+    if [[ "$(wc -l < "${cases_file}")" -ne 168 ]]; then
+        log_message "ERROR: expected 168 original protobuf-benchmark cases"
         return 50
     fi
-    log_message "upstream protobuf benchmark outputs are ready"
+    log_message "running all 168 original C++ cases (1s minimum, 5 repetitions)"
+    if ! "${BENCHMARK_BIN}" --benchmark_min_time=1s \
+        --benchmark_repetitions=5 --benchmark_display_aggregates_only=true \
+        --benchmark_out="${RESULTS_DIR}/benchmark_google.json" \
+        --benchmark_out_format=json \
+        2>&1 | tee "${RESULTS_DIR}/benchmark_google.log"; then
+        log_message "ERROR: original protobuf-benchmark execution failed"
+        return 50
+    fi
+    if ! python3 "${SCRIPT_DIR}/scripts/parse_google_benchmark.py" \
+        "${RESULTS_DIR}/benchmark_google.json" "${cases_file}" \
+        "${RESULTS_DIR}/benchmark_protobuf.json"; then
+        log_message "ERROR: failed to normalize Google Benchmark results"
+        return 50
+    fi
+    log_message "original protobuf-benchmark results are ready"
 }
 
 stop_protobuf_runtime() {
@@ -336,7 +405,7 @@ run_protobuf_standalone() {
 usage() {
     printf '%s\n' \
         "Usage: $(basename "$0") [--version VERSION] [--results-dir DIR] [--keep-workdir]" \
-        "Build Protobuf with the upstream CMake Release flow, then run its upstream Python benchmarks."
+        "Build Protobuf and run the pinned AccLibBenchmark C++ serialization cases."
 }
 
 main() {

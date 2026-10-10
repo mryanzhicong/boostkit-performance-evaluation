@@ -163,19 +163,20 @@ def record_build_info(
 def extract_metrics(
     benchmark: dict[str, Any], version: str, architecture: str
 ) -> dict[str, Any]:
-    if benchmark.get("software") != "protobuf" or benchmark.get("version") != version:
-        raise RuntimeError("aggregate_results.json identity differs from this run")
-    raw_metrics = benchmark.get("metrics")
+    if benchmark.get("source") != "AccLibBenchmark/protobuf-benchmark":
+        raise RuntimeError("benchmark_protobuf.json has an unexpected source")
+    raw_metrics = benchmark.get("results")
     if not isinstance(raw_metrics, dict) or not raw_metrics:
-        raise RuntimeError("aggregate_results.json is missing validated metrics")
+        raise RuntimeError("benchmark_protobuf.json is missing validated results")
     metrics: dict[str, Any] = {}
     for metric_name, metric in raw_metrics.items():
         if not isinstance(metric_name, str) or not metric_name:
-            raise TypeError("aggregate_results.json has an invalid metric name")
+            raise TypeError("benchmark_protobuf.json has an invalid case name")
         if not isinstance(metric, dict):
             raise TypeError(f"metric {metric_name} must be an object")
-        if metric.get("source_name") != metric_name:
-            raise RuntimeError(f"metric {metric_name} source name does not match its key")
+        source_name = f"{metric_name}/cpu_time_median"
+        if metric.get("source_name") != source_name:
+            raise RuntimeError(f"metric {metric_name} source name does not match its case")
         value = metric.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
@@ -183,17 +184,21 @@ def extract_metrics(
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         unit = metric.get("unit")
         direction = metric.get("direction")
+        group = metric.get("group")
         if not isinstance(unit, str) or not unit:
             raise TypeError(f"metric {metric_name} has no unit")
         if direction not in {"higher_is_better", "lower_is_better", "neutral"}:
             raise RuntimeError(f"metric {metric_name} has an invalid direction")
-        metrics[metric_name] = {
+        if not isinstance(group, str) or not group:
+            raise RuntimeError(f"metric {metric_name} has no presentation group")
+        metrics[source_name] = {
             "value": value,
             "unit": unit,
             "direction": direction,
+            "group": group,
         }
     if not metrics:
-        raise RuntimeError("aggregate_results.json contains no metrics")
+        raise RuntimeError("benchmark_protobuf.json contains no metrics")
     return metrics
 
 
@@ -241,21 +246,19 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标（固定场景的原始字段）",
-            "",
-            "| 指标 | 数值 | 单位 | 优化方向 |",
-            "|---|---:|---|---|",
-        ]
-    )
+    lines.extend(["", "## 性能指标（CPU 耗时中位数）", ""])
+    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | "
-            f"{'越大越好' if metric['direction'] == 'higher_is_better' else '越小越好'} |"
-        )
+        groups.setdefault(metric["group"], []).append((metric_name, metric))
+    for group, entries in groups.items():
+        lines.extend([f"### {group}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
+        for metric_name, metric in entries:
+            lines.append(
+                f"| {markdown_cell(metric_name)} | {metric['value']} | "
+                f"{metric['unit']} | "
+                f"{'越大越好' if metric['direction'] == 'higher_is_better' else '越小越好'} |"
+            )
+        lines.append("")
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
@@ -271,13 +274,13 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark = load_json(output_dir / "aggregate_results.json")
+    benchmark = load_json(output_dir / "benchmark_protobuf.json")
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("aggregate_results.json is missing or invalid")
+                raise RuntimeError("benchmark_protobuf.json is missing or invalid")
             metrics = extract_metrics(benchmark, version, architecture)
         except (RuntimeError, TypeError) as exc:
             command_status = "failed"
