@@ -97,11 +97,12 @@ def main() -> int:
         "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "command": command, "lzbench_version": "2.2", "lz4_version": "1.9.4",
+            "command": ["lzbench", *command[1:-1], "silesia.tar"],
+            "lzbench_version": "2.2", "lz4_version": "1.9.4",
             "block_size_kib": 4, "compression_seconds": 20,
             "decompression_seconds": 20, "dataset_sha256": actual_sha256,
         },
-        "runtime_context": {"input_size_bytes": corpus.stat().st_size},
+        "runtime_context": {"command": command, "input_size_bytes": corpus.stat().st_size},
         "results": results,
     }
     normalized_output.parent.mkdir(parents=True, exist_ok=True)
