@@ -1,0 +1,138 @@
+{
+  "software": "snappy",
+  "category": "HPC",
+  "version": "1.2.2",
+  "architecture": "x86_64",
+  "run_id": "38042780834-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-10-10T09:50:47Z",
+    "category": "HPC",
+    "software": "snappy",
+    "requested_version": "1.2.2",
+    "actual_version": "1.2.2",
+    "architecture": "x86_64",
+    "run_id": "38042780834-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "lzbench",
+        "-esnappy",
+        "-b4",
+        "-t20u20",
+        "silesia.tar"
+      ],
+      "lzbench_version": "2.2",
+      "snappy_version": "1.2.2",
+      "block_size_kib": 4,
+      "compression_seconds": 20,
+      "decompression_seconds": 20,
+      "dataset_sha256": "ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
+    }
+  },
+  "parameter_signature": "9bf2c14f8348b5b736a5eb025edf5752c1c6156408d643efe99a24d5c897d9da",
+  "test_tools": {
+    "lzbench": {
+      "version": "2.2"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-10-10T09:49:55Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.x86_64",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-10-10T09:49:55Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 35346608128 555135647744   129523712 224721006592 775215828992\nSwap:     4294963200  4239204352    55758848",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-10-10T09:52:16Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 35172016128 553799671808   131375104 226237259776 775390420992\nSwap:     4294963200  4236931072    58032128",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "lzbench_output": {
+      "path": "benchmark_lzbench.txt",
+      "size": 9334
+    },
+    "benchmark_result": {
+      "benchmark": "snappy_lzbench",
+      "software": "snappy",
+      "version": "1.2.2",
+      "architecture": "x86_64",
+      "timestamp": "2026-10-10T09:52:16Z",
+      "parameters": {
+        "command": [
+          "lzbench",
+          "-esnappy",
+          "-b4",
+          "-t20u20",
+          "silesia.tar"
+        ],
+        "lzbench_version": "2.2",
+        "snappy_version": "1.2.2",
+        "block_size_kib": 4,
+        "compression_seconds": 20,
+        "decompression_seconds": 20,
+        "dataset_sha256": "ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
+      },
+      "runtime_context": {
+        "command": [
+          "/home/runner/boostkit-perf/snappy/1.2.2/x86_64/38042780834-1/lzbench-source/lzbench",
+          "-esnappy",
+          "-b4",
+          "-t20u20",
+          "/home/runner/boostkit-perf/snappy/1.2.2/x86_64/38042780834-1/silesia.tar"
+        ],
+        "input_size_bytes": 211948544
+      },
+      "results": {
+        "compression_throughput": {
+          "source_metric": "Compress.",
+          "value": 894.0,
+          "unit": "MB/s",
+          "direction": "higher_is_better"
+        },
+        "decompression_throughput": {
+          "source_metric": "Decompress.",
+          "value": 836.0,
+          "unit": "MB/s",
+          "direction": "higher_is_better"
+        },
+        "compressed_size_ratio": {
+          "source_metric": "Ratio",
+          "value": 57.64,
+          "unit": "%",
+          "direction": "lower_is_better"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "compression_throughput": {
+      "value": 894.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "decompression_throughput": {
+      "value": 836.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "compressed_size_ratio": {
+      "value": 57.64,
+      "unit": "%",
+      "direction": "lower_is_better"
+    }
+  }
+}
