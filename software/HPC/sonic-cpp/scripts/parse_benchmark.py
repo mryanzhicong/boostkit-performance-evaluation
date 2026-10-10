@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize sonic-cpp's official Google Benchmark JSON into per-scenario metrics.
-
-The official benchmark binary (benchmark/main.cpp) is executed with the
-parameters used by the official CI benchmark workflow and emits Google
-Benchmark JSON. This script extracts one median cpu_time value per official
-scenario and preserves the official scenario name verbatim (e.g.
-"twitter/Decode_SonicDyn").
-"""
+"""Normalize Sonic scenarios from sonic-cpp's official Google Benchmark JSON."""
 
 from __future__ import annotations
 
@@ -38,33 +31,32 @@ def load_official_benchmark(path: Path) -> dict[str, Any]:
     return payload
 
 
-def select_median_runs(payload: dict[str, Any]) -> list[dict[str, Any]]:
+def select_sonic_runs(payload: dict[str, Any]) -> list[dict[str, Any]]:
     benchmarks = payload.get("benchmarks")
     if not isinstance(benchmarks, list) or not benchmarks:
         raise RuntimeError("official benchmark JSON has no benchmark entries")
-    medians = []
+    selected = []
     for entry in benchmarks:
         if not isinstance(entry, dict):
             raise TypeError("official benchmark entry is not an object")
-        if entry.get("run_type") != "aggregate":
+        if entry.get("run_type") == "aggregate":
             continue
-        if entry.get("aggregate_name") != "median":
-            continue
-        medians.append(entry)
-    if not medians:
-        raise RuntimeError("official benchmark JSON has no median aggregate rows")
-    return medians
+        name = scenario_name(entry)
+        if "Sonic" not in name:
+            raise RuntimeError(f"unexpected non-Sonic benchmark scenario: {name}")
+        selected.append(entry)
+    if not selected:
+        raise RuntimeError("official benchmark JSON has no Sonic measurement rows")
+    return selected
 
 
 def scenario_name(entry: dict[str, Any]) -> str:
     name = entry.get("run_name")
     if isinstance(name, str) and name:
         return name
-    # Fall back to stripping the aggregate suffix from the display name.
     display = entry.get("name")
     if not isinstance(display, str) or not display:
         raise RuntimeError("official benchmark entry is missing a scenario name")
-    display = display.removesuffix("_median")
     return display
 
 
@@ -83,7 +75,7 @@ def to_nanoseconds(entry: dict[str, Any], name: str) -> tuple[float, float, str]
 
 def normalize_results(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     results: dict[str, dict[str, Any]] = {}
-    for entry in select_median_runs(payload):
+    for entry in select_sonic_runs(payload):
         name = scenario_name(entry)
         if name in results:
             raise RuntimeError(
@@ -140,7 +132,7 @@ def main() -> int:
 
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
-    repetitions = os.environ.get("BENCHMARK_REPETITIONS", "")
+    min_time = os.environ.get("BENCHMARK_MIN_TIME", "3s")
     normalized = {
         "benchmark": "sonic_cpp_official_benchmark",
         "software": "sonic-cpp",
@@ -151,21 +143,18 @@ def main() -> int:
             "command": [
                 "build/benchmark/bench",
                 "--benchmark_out_format=json",
-                "--benchmark_repetitions=" + repetitions,
-                "--benchmark_report_aggregates_only=true",
+                "--benchmark_filter=Sonic",
+                "--benchmark_min_time=" + min_time,
             ],
-            "benchmark_repetitions": int(repetitions) if repetitions else 0,
-            "report_aggregates_only": True,
-            "benchmark_filter": None,
-            "aggregation": "median",
+            "benchmark_filter": "Sonic",
+            "benchmark_min_time": min_time,
             "official_entry": "benchmark/main.cpp",
         },
         "metric_contract": {
-            "scope": "median cpu_time of every official benchmark scenario",
+            "scope": "cpu_time of each selected Sonic benchmark scenario",
             "source_field": "cpu_time",
             "normalized_unit": "ns",
             "direction": "lower_is_better",
-            "aggregation": "median",
         },
         "runtime_context": build_runtime_context(payload),
         "results": results,

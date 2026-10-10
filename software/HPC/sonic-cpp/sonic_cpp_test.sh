@@ -2,15 +2,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.0.2}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-69deb02}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 SONIC_CPP_SOURCE_URL="${SONIC_CPP_SOURCE_URL:-https://github.com/bytedance/sonic-cpp.git}"
-# Repetitions used by the official CI benchmark workflow (repetitions=5).
-BENCHMARK_REPETITIONS="5"
+SONIC_CPP_REVISION="69deb02c099361139dd387eb6c7034a4836ce9b3"
+BENCHMARK_MIN_TIME="3s"
 
 SOURCE_DIR=""
 BUILD_DIR=""
@@ -64,11 +64,11 @@ initialize_runtime() {
 require_commands() {
     local required package
     local packages=() dnf_options=()
-    for required in git python3 cmake sed tee; do
+    for required in git python3 cmake make c++ tee; do
         command -v "${required}" >/dev/null 2>&1 && continue
         case "${required}" in
-            sed) package="sed" ;;
             tee) package="coreutils" ;;
+            c++) package="gcc-c++" ;;
             *) package="${required}" ;;
         esac
         packages+=("${package}")
@@ -87,7 +87,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required in git python3 cmake sed tee; do
+    for required in git python3 cmake make c++ tee; do
         command -v "${required}" >/dev/null 2>&1 || {
             log "ERROR: required command remains unavailable: ${required}"
             return 30
@@ -111,43 +111,28 @@ prepare_sonic_cpp_source() {
         return 30
     }
     export GIT_TERMINAL_PROMPT=0
-    log "cloning sonic-cpp v${SOFTWARE_VERSION} from ${SONIC_CPP_SOURCE_URL}"
-    git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
-        "${SONIC_CPP_SOURCE_URL}" "${SOURCE_DIR}" || {
-        log "ERROR: failed to clone sonic-cpp v${SOFTWARE_VERSION}"
+    [[ "${SOFTWARE_VERSION}" == "69deb02" ]] || {
+        log "ERROR: supported sonic-cpp source revision is 69deb02, got ${SOFTWARE_VERSION}"
+        return 10
+    }
+    log "cloning sonic-cpp from ${SONIC_CPP_SOURCE_URL}"
+    git clone "${SONIC_CPP_SOURCE_URL}" "${SOURCE_DIR}" &&
+        git -C "${SOURCE_DIR}" checkout --detach "${SONIC_CPP_REVISION}" || {
+        log "ERROR: failed to check out sonic-cpp revision ${SOFTWARE_VERSION}"
         return 30
     }
 }
 
 report_actual_version() {
-    # sonic-cpp is header-only and has no --version binary; the cloned source
-    # tag is the authoritative version evidence.
-    local actual_version
-    actual_version="$(git -C "${SOURCE_DIR}" describe --tags --exact-match 2>/dev/null || true)"
-    [[ "${actual_version}" == "v${SOFTWARE_VERSION}" ]] || {
-        log "ERROR: cloned source tag '${actual_version}' does not match v${SOFTWARE_VERSION}"
+    local actual_revision
+    actual_revision="$(git -C "${SOURCE_DIR}" rev-parse HEAD)" || return 40
+    [[ "${actual_revision}" == "${SONIC_CPP_REVISION}" ]] || {
+        log "ERROR: cloned source revision '${actual_revision}' does not match ${SONIC_CPP_REVISION}"
         return 40
     }
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version#v}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-}
-
-repair_gflags_source_reference() {
-    local external_cmake_file="${SOURCE_DIR}/cmake/external.cmake"
-
-    [[ -f "${external_cmake_file}" ]] || {
-        log "ERROR: Sonic CMake dependency file is missing: ${external_cmake_file}"
-        return 40
-    }
-    # Sonic v1.0.2 requests gflags' retired master branch.  Keep the upstream
-    # CMake build path intact while selecting the repository's current branch.
-    if ! sed -i \
-        '\|GIT_REPOSITORY https://github.com/gflags/gflags.git|,\|GIT_SHALLOW TRUE| s/GIT_TAG  master/GIT_TAG  main/' \
-        "${external_cmake_file}"; then
-        log "ERROR: failed to update Sonic's stale gflags branch reference"
-        return 40
-    fi
-    log "using gflags main because the v1.0.2 master reference is retired"
+    printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    log "verified source commit: ${actual_revision}"
 }
 
 build_sonic_cpp() {
@@ -160,7 +145,6 @@ build_sonic_cpp() {
     }
     prepare_sonic_cpp_source || return $?
     report_actual_version || return $?
-    repair_gflags_source_reference || return $?
 
     log "building official CMake benchmark target: bench"
     (
@@ -193,22 +177,19 @@ run_sonic_cpp_benchmarks() {
         return 40
     }
     log "running official CMake benchmark (benchmark/main.cpp)"
-    # Uses Google Benchmark repetitions=5,
-    # report_aggregates_only=true) but omits its --benchmark_filter=Sonic so the
-    # full official scenario matrix (all libraries / all testdata files) is kept.
     (
         # The binary loads testdata/ relative to the working directory.
         cd "${SOURCE_DIR}"
         "${BENCHMARK_BIN}" \
             "--benchmark_out_format=json" \
             "--benchmark_out=${RESULTS_DIR}/benchmark.json" \
-            "--benchmark_repetitions=${BENCHMARK_REPETITIONS}" \
-            "--benchmark_report_aggregates_only=true"
+            "--benchmark_filter=Sonic" \
+            "--benchmark_min_time=${BENCHMARK_MIN_TIME}"
     ) || {
         log "ERROR: official sonic-cpp benchmark failed"
         return 50
     }
-    export SOFTWARE_VERSION EXPECTED_ARCH BENCHMARK_REPETITIONS
+    export SOFTWARE_VERSION EXPECTED_ARCH BENCHMARK_MIN_TIME
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
         "${RESULTS_DIR}/benchmark.json" \
         "${RESULTS_DIR}/benchmark_sonic_cpp.json" || {
@@ -353,7 +334,7 @@ standalone performance evaluation. Results default to
 results/<version>/<run-id>/ inside this directory.
 
 Options:
-  --version VERSION       sonic-cpp version (default: ${SOFTWARE_VERSION})
+  --version VERSION       sonic-cpp source revision (fixed: ${SOFTWARE_VERSION})
   --results-dir DIR       Persistent result directory
   --keep-workdir          Keep the isolated work directory for debugging
   -h, --help              Show this help
