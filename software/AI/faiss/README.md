@@ -34,7 +34,7 @@ make ivfrabitqfs_test
 
 脚本用现有系统仓库的 `dnf` 安装缺少的通用构建包；要求 CMake ≥ 3.24、支持 C++20 和 OpenMP 的 `g++`。不会添加软件仓库。
 
-- `x86_64`：使用 Intel oneMKL。先检查 `MKLROOT` 和已有安装；若缺失，优先读取 `/home/runner/software/faiss/intel-onemkl-2026.1.0.237_offline.sh`，否则从 Intel 官方地址下载相同的完整离线安装包。以普通用户静默安装到本次任务的 `PERF_WORK_DIR/oneapi`，再检查 `mkl.h`、`libmkl_intel_lp64.so`、`libmkl_gnu_thread.so`、`libmkl_core.so`。不通过 `dnf` 安装 Intel RPM。
+- `x86_64`：使用 Intel oneMKL。先检查 `MKLROOT` 和已有安装；若缺失，优先读取 `/home/runner/software/faiss/intel-onemkl-2026.1.0.237_offline.sh`，否则从 Intel 官方地址下载相同的完整离线安装包。以普通用户静默安装到本次任务的 `PERF_WORK_DIR/oneapi`，并使用独立安装实例避免与机器上同版本的安装冲突；随后检查 `mkl.h`、`libmkl_intel_lp64.so`、`libmkl_gnu_thread.so`、`libmkl_core.so`。不通过 `dnf` 安装 Intel RPM。
 - `aarch64`：使用系统 OpenBLAS；缺少时从现有系统仓库安装 `openblas-devel`，并通过 `pkg-config` 读取编译和链接参数。
 
 构建前会实际编译、链接并运行数学库探针；配置 Faiss 后检查其链接命令是否使用该架构指定的数学库。Faiss 和测试程序均不安装到系统目录。x86_64 的私有 oneMKL 安装随本次任务的工作目录一起清理。

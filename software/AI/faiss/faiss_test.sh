@@ -194,7 +194,7 @@ locate_mkl() {
 
 
 prepare_math_library() {
-    local installer
+    local installer instance_id
     local openblas_flags=()
     if [[ "$(normalize_architecture "${EXPECTED_ARCH}")" == "aarch64" ]]; then
         if ! command -v pkg-config >/dev/null 2>&1; then
@@ -233,9 +233,10 @@ prepare_math_library() {
         else
             log_message "using local Intel oneMKL offline installer ${installer}"
         fi
-        log_message "installing Intel oneMKL into private work directory"
+        instance_id="faiss-${PERF_RUN_ID//[^a-zA-Z0-9]/-}"
+        log_message "installing Intel oneMKL into private work directory (instance ${instance_id})"
         if ! sh "${installer}" -a --silent --eula accept \
-            --install-dir "${PERF_WORK_DIR}/oneapi"; then
+            --install-dir="${PERF_WORK_DIR}/oneapi" --instance="${instance_id}"; then
             log_message "ERROR: Intel oneMKL offline installation failed"
             return 30
         fi
