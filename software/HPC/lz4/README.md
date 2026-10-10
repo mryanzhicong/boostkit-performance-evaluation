@@ -1,73 +1,62 @@
-# LZ4 性能测试说明
+# LZ4 1.9.4 测试说明
 
-本目录从 LZ4 官方仓库构建 `tests/fullbench`，以固定提交的 Silesia Corpus 构造
-`silesia.tar`，并运行四条明确的压缩/解压命令。Framework 通过 `case.yaml` 调用
-`lz4_test.sh` 的四阶段接口；直接执行入口脚本会走同一流程。
+本用例在 x86_64 和 aarch64 上使用同一份 Silesia 数据、同一组 lzbench 参数，
+测试 LZ4 1.9.4 的默认压缩与解压性能。Framework 依次调用
+`lz4_test.sh` 的 `build`、`start`、`test`、`stop` 函数。
 
-当前清单支持 `1.9.3`、`1.10.0`，独立运行的默认版本为 `1.10.0`。
+## 构建和安装
 
-## 构建与安装
-
-LZ4 从官方 GitHub 标签浅克隆，在任务隔离目录中构建，不安装系统级 LZ4。脚本会
-检查 `git`、`python3`、`make`、C 编译器、`sed` 和 `tee`；缺失时通过 `dnf` 自动
-安装对应依赖，非 root Runner 使用 `sudo -n dnf`。
-
-构建使用官方 fullbench 目标：
+脚本缺少依赖时通过 `dnf` 安装；非 root 用户使用 `sudo -n dnf`。源码和构建
+结果只存于本次运行的 `/home/runner/boostkit-perf/lz4/` 子目录，不安装到系统路径。
 
 ```bash
-git clone --branch v1.10.0 --depth 1 https://github.com/lz4/lz4.git lz4-source
-cd lz4-source
-make -C tests fullbench
+git clone --branch v1.9.4 --depth 1 https://github.com/lz4/lz4.git lz4-source
+make -C lz4-source/lib -j4
+
+git clone --branch v2.2 --depth 1 https://github.com/inikep/lzbench.git lzbench-source
+make -C lzbench-source -j4 BUILD_STATIC=0 DONT_BUILD_DENSITY=1 \
+  LZ4_FILES= \
+  USER_LDFLAGS="-L<本次运行的 lz4-source/lib> -Wl,-rpath,<本次运行的 lz4-source/lib> -llz4"
 ```
 
-构建后必须存在 `tests/fullbench`，版本从 `lib/lz4.h` 读取并与请求版本校验。
+`LZ4_FILES=` 排除 lzbench 自带的 LZ4 1.10.0；构建后检查 `ldd`，确保
+`lzbench` 加载本次构建的 `liblz4.so.1.9.4`。lzbench v2.2 的编解码器名称
+原本硬编码为 `lz4 1.10.0`，脚本只把私有构建里的这一处显示文字改为
+`lz4 1.9.4`，不修改压缩算法或测试参数。`DONT_BUILD_DENSITY=1` 只跳过
+与本测试无关的 Rust Density 编解码器。
 
-## 测试数据与性能测试
+## 数据与测试
 
-`start` 阶段从 GitHub 仓库
-`https://github.com/MiloszKrajewski/SilesiaCorpus.git` 获取固定提交
-`3f3fa2cdbbb3795c903b74e774acb309e1360337`，验证 12 个原始成员的尺寸和 MD5，
-按固定顺序打包为 `silesia.tar`。生成后的 tar SHA-256 也写入结果，保证两种架构
-使用相同输入。
+脚本优先读取 `/home/runner/software/lz4/silesia.tar`；若不存在，则从
+`https://wanos.co/assets/silesia.tar` 下载到本次私有工作目录。测试前核验
+SHA-256：`ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d`。
 
-`test` 阶段执行以下四条命令。`--no-prompt` 禁用交互，`-i3` 表示每项至少循环
-3 秒；`-B4` 是 64 KiB 块，`-B7` 是 4 MiB 块：
+测试命令沿用 [lzbench 使用示例](https://atomgit.com/boostkit/snappy/blob/master/docs/zh/quick_start.md#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E4%BD%BF%E7%94%A8lzbench%E8%BF%9B%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95)
+的块大小、时长和数据集，只将编解码器选项换为 LZ4：
 
 ```bash
-./tests/fullbench --no-prompt -i3 -B4 -c1 silesia.tar
-./tests/fullbench --no-prompt -i3 -B4 -d4 silesia.tar
-./tests/fullbench --no-prompt -i3 -B7 -c1 silesia.tar
-./tests/fullbench --no-prompt -i3 -B7 -d4 silesia.tar
+./lzbench -elz4 -b4 -t20u20 silesia.tar
 ```
 
-其中 `-c1` 对应 `LZ4_compress_default`，`-d4` 对应 `LZ4_decompress_safe`。四条命令
-各自的完整原始输出保存在 `benchmark_fullbench.json` 相应结果的 `raw_output` 字段。
-
-可脱离 Workflow 执行完整流程：
+`-b4` 指定 4 KiB 数据块；`-t20u20` 分别给压缩和解压约 20 秒测量时间。
+LZ4 不启动后台服务。可在仓库根目录独立运行完整流程：
 
 ```bash
 bash software/HPC/lz4/lz4_test.sh \
-  --version 1.10.0 \
-  --results-dir /home/runner/boostkit-perf/lz4/results/1.10.0
+  --version 1.9.4 \
+  --results-dir /home/runner/boostkit-perf/lz4/results/1.9.4
 ```
 
-## 指标
+## 指标与输出
 
-报告按上述四条命令分组，每组仅提取对应官方函数行的 `MB/s` 速度，不对四组求
-平均或综合评分。所有指标越大越好。
+`benchmark_lzbench.txt` 保存完整原始输出，`benchmark_lz4.json` 保存解析后的
+数值、实际命令和数据校验值。报告只列出这一条命令的三项结果：
 
-| 命令分组 | 选取的官方行 | 单位 |
-|---|---|---:|
-| `-B4 -c1` | `1-LZ4_compress_default` | MB/s |
-| `-B4 -d4` | `4-LZ4_decompress_safe` | MB/s |
-| `-B7 -c1` | `1-LZ4_compress_default` | MB/s |
-| `-B7 -d4` | `4-LZ4_decompress_safe` | MB/s |
+| 指标 | lzbench 原始列 | 单位 | 优化方向 |
+|---|---|---|---|
+| 压缩吞吐 | `Compress.` | MB/s | 越大越好 |
+| 解压吞吐 | `Decompress.` | MB/s | 越大越好 |
+| 压缩后大小比例 | `Ratio` | % | 越小越好 |
 
-压缩场景还原样记录输入大小、压缩后大小和压缩百分比；这些是结果上下文，不作为
-跨架构性能指标。任一命令未产生唯一且正数的目标速度时测试失败。
-
-## 结果与清理
-
-必需产物为 `benchmark_fullbench.json`，包含四组结构化结果、每组原始输出以及
-Silesia 数据校验信息。没有后台服务需要停止；任务结束只删除本次运行的源码、
-数据集和工作目录。
+只有完整的 LZ4 1.9.4 结果且运行参数一致时才生成结构化指标。独立运行
+另会生成环境、构建、状态和报告文件；Framework 负责跨架构结果汇总。

@@ -149,28 +149,43 @@ def record_build_info(
     })
 
 
-def extract_metrics(benchmark: dict[str, Any]) -> dict[str, Any]:
-    if benchmark.get("benchmark") != "lz4_fullbench":
-        raise RuntimeError("benchmark_fullbench.json has an invalid benchmark name")
+def extract_metrics(
+    benchmark: dict[str, Any], version: str, architecture: str
+) -> dict[str, Any]:
+    if benchmark.get("benchmark") != "lz4_lzbench":
+        raise RuntimeError("benchmark_lz4.json has an invalid benchmark name")
+    if benchmark.get("software") != "lz4":
+        raise RuntimeError("benchmark_lz4.json has an invalid software identity")
+    if benchmark.get("version") != version or benchmark.get("architecture") != architecture:
+        raise RuntimeError("benchmark_lz4.json identity differs from this run")
     results = benchmark.get("results")
     if not isinstance(results, dict):
-        raise RuntimeError("benchmark_fullbench.json is missing results")
+        raise RuntimeError("benchmark_lz4.json is missing results")
+    expected = {
+        "compression_throughput": ("Compress.", "MB/s", "higher_is_better"),
+        "decompression_throughput": ("Decompress.", "MB/s", "higher_is_better"),
+        "compressed_size_ratio": ("Ratio", "%", "lower_is_better"),
+    }
+    if set(results) != set(expected):
+        raise RuntimeError("benchmark_lz4.json must contain exactly the three lzbench metrics")
     metrics: dict[str, Any] = {}
     for metric_name, result in results.items():
-        if not isinstance(metric_name, str) or not metric_name:
-            raise RuntimeError("benchmark_fullbench.json contains an invalid metric name")
         if not isinstance(result, dict):
             raise RuntimeError(f"metric {metric_name} is not an object")
-        value = result.get("speed_mbs") if isinstance(result, dict) else None
+        source_field, unit, direction = expected[metric_name]
+        if result.get("source_metric") != source_field:
+            raise RuntimeError(f"metric {metric_name} is not sourced from {source_field}")
+        if result.get("unit") != unit or result.get("direction") != direction:
+            raise RuntimeError(f"metric {metric_name} has inconsistent units or direction")
+        value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise RuntimeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value <= 0:
             raise RuntimeError(f"metric {metric_name} must be positive and finite")
         metrics[metric_name] = {
             "value": value,
-            "unit": "MB/s",
-            "direction": "higher_is_better",
-            "group": result.get("command_display"),
+            "unit": unit,
+            "direction": direction,
         }
     return metrics
 
@@ -216,18 +231,10 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(["", "## 性能指标"])
-    metric_groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+    lines.extend(["", "## 性能指标", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
     for metric_name, metric in result.get("metrics", {}).items():
-        group = metric.get("group") or "未分组"
-        metric_groups.setdefault(str(group), []).append((metric_name, metric))
-    for group, metrics in metric_groups.items():
-        lines.extend(["", f"### `{group}`", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
-        for metric_name, metric in metrics:
-            direction = "越大越好" if metric["direction"] == "higher_is_better" else metric["direction"]
-            lines.append(
-                f"| {metric_name} | {metric['value']} | {metric['unit']} | {direction} |"
-            )
+        direction = "越小越好" if metric["direction"] == "lower_is_better" else "越大越好"
+        lines.append(f"| {metric_name} | {metric['value']} | {metric['unit']} | {direction} |")
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")
@@ -243,15 +250,15 @@ def finalize(
     cleanup_status: str,
     failed_stage: str | None,
 ) -> int:
-    benchmark_path = output_dir / "benchmark_fullbench.json"
+    benchmark_path = output_dir / "benchmark_lz4.json"
     benchmark = load_json(benchmark_path)
     error = ""
     metrics: dict[str, Any] = {}
     if command_status == "passed":
         try:
             if not benchmark:
-                raise RuntimeError("benchmark_fullbench.json is missing or invalid")
-            metrics = extract_metrics(benchmark)
+                raise RuntimeError("benchmark_lz4.json is missing or invalid")
+            metrics = extract_metrics(benchmark, version, architecture)
         except RuntimeError as exc:
             command_status = "failed"
             failed_stage = failed_stage or "test"
