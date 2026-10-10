@@ -9,24 +9,20 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 BRPC_SOURCE_URL="${BRPC_SOURCE_URL:-https://github.com/apache/brpc.git}"
-# Load parameters of the official benchmark_http client
-# (docs/cn/benchmark_http.md; defaults of example/http_c++/benchmark_http.cpp).
-BENCHMARK_HTTP_THREAD_NUM="${BENCHMARK_HTTP_THREAD_NUM:-50}"
-BENCHMARK_HTTP_DURATION_S="${BENCHMARK_HTTP_DURATION_S:-60}"
-BENCHMARK_HTTP_WARMUP_S="${BENCHMARK_HTTP_WARMUP_S:-5}"
-HTTP_SERVER_PORT="${HTTP_SERVER_PORT:-18010}"
-BENCHMARK_DUMMY_PORT="${BENCHMARK_DUMMY_PORT:-18888}"
+RDMA_SERVER_PORT=8003
+RDMA_CLIENT_DUMMY_PORT=8001
+BRPC_ATTACHMENT_SIZES=(0 1024 4096 8192 102400 204800 1048576 8388608)
+BRPC_REPETITIONS=5
 
 SOURCE_DIR=""
 BUILD_DIR=""
 EXAMPLE_DIR=""
 SERVICE_DIR=""
-HTTP_SERVER_BIN=""
-BENCHMARK_HTTP_BIN=""
+RDMA_SERVER_BIN=""
+RDMA_CLIENT_BIN=""
 SERVER_LOG_FILE=""
 CLIENT_LOG_FILE=""
 SERVER_PID_FILE=""
-CLIENT_PID_FILE=""
 COMPILER_BINARY=""
 COMPILER_VERSION_STRING=""
 STANDALONE_OWNS_WORK_DIR=0
@@ -63,19 +59,15 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     SOURCE_DIR="${PERF_WORK_DIR}/brpc-source"
-    # The official example cmake discovers the brpc library by searching for
-    # */output/include inside the source tree, so the library build directory
-    # must stay inside the cloned source tree (the official getting_started.md
-    # layout). Everything still lives under PERF_WORK_DIR.
+    # The upstream example discovers */output/include inside the source tree.
     BUILD_DIR="${SOURCE_DIR}/build"
-    EXAMPLE_DIR="${SOURCE_DIR}/example/http_c++"
+    EXAMPLE_DIR="${SOURCE_DIR}/example/rdma_performance"
     SERVICE_DIR="${PERF_WORK_DIR}/service"
-    HTTP_SERVER_BIN="${EXAMPLE_DIR}/build/http_server"
-    BENCHMARK_HTTP_BIN="${EXAMPLE_DIR}/build/benchmark_http"
-    SERVER_LOG_FILE="${SERVICE_DIR}/http_server.log"
-    CLIENT_LOG_FILE="${SERVICE_DIR}/benchmark_http.log"
-    SERVER_PID_FILE="${SERVICE_DIR}/http_server.pid"
-    CLIENT_PID_FILE="${SERVICE_DIR}/benchmark_http.pid"
+    RDMA_SERVER_BIN="${EXAMPLE_DIR}/build/server"
+    RDMA_CLIENT_BIN="${EXAMPLE_DIR}/build/client"
+    SERVER_LOG_FILE="${SERVICE_DIR}/server.log"
+    CLIENT_LOG_FILE="${RESULTS_DIR}/benchmark_client.log"
+    SERVER_PID_FILE="${SERVICE_DIR}/server.pid"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
@@ -96,7 +88,7 @@ require_brpc_dependencies() {
     local required package library header
     local packages=()
 
-    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
+    for required in git cmake make gcc g++ protoc python3 curl sed grep install tee nproc; do
         if command -v "${required}" >/dev/null 2>&1; then
             continue
         fi
@@ -109,7 +101,6 @@ require_brpc_dependencies() {
             protoc) package="protobuf-compiler" ;;
             python3) package="python3" ;;
             curl) package="curl" ;;
-            tar) package="tar" ;;
             sed) package="sed" ;;
             grep) package="grep" ;;
             install|tee|nproc) package="coreutils" ;;
@@ -120,13 +111,13 @@ require_brpc_dependencies() {
 
     # BRPC links against these system libraries.  Test the headers instead of
     # assuming that a package name proves the compiler can use the library.
-    for library in openssl gflags leveldb protobuf gperftools; do
+    for library in openssl gflags leveldb protobuf rdma; do
         case "${library}" in
             openssl) header="openssl/ssl.h"; package="openssl-devel" ;;
             gflags) header="gflags/gflags.h"; package="gflags-devel" ;;
             leveldb) header="leveldb/db.h"; package="leveldb-devel" ;;
             protobuf) header="google/protobuf/message.h"; package="protobuf-devel" ;;
-            gperftools) header="gperftools/profiler.h"; package="gperftools-devel" ;;
+            rdma) header="infiniband/verbs.h"; package="rdma-core-devel" ;;
         esac
         if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>/dev/null; then
@@ -155,19 +146,19 @@ require_brpc_dependencies() {
         return 30
     fi
 
-    for required in git cmake make gcc g++ protoc python3 curl tar sed grep install tee nproc; do
+    for required in git cmake make gcc g++ protoc python3 curl sed grep install tee nproc; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required BRPC build command remains unavailable: ${required}"
             return 30
         fi
     done
-    for library in openssl gflags leveldb protobuf gperftools; do
+    for library in openssl gflags leveldb protobuf rdma; do
         case "${library}" in
             openssl) header="openssl/ssl.h" ;;
             gflags) header="gflags/gflags.h" ;;
             leveldb) header="leveldb/db.h" ;;
             protobuf) header="google/protobuf/message.h" ;;
-            gperftools) header="gperftools/profiler.h" ;;
+            rdma) header="infiniband/verbs.h" ;;
         esac
         if ! printf '#include <%s>\nint main(){return 0;}\n' "${header}" \
             | g++ -x c++ -fsyntax-only - 2>/dev/null; then
@@ -177,43 +168,44 @@ require_brpc_dependencies() {
     done
 }
 
-configure_http_example_for_modern_protobuf() {
-    # BRPC 1.17 enables C++17 for Protobuf newer than 4.21 in its main CMake
-    # project.  The independently configured http_c++ example still pins
-    # C++11, which cannot compile against current Protobuf/Abseil headers.
+configure_rdma_example_for_modern_protobuf() {
+    # The example CMake is configured separately from the upstream library.
+    # Only its private build file is adjusted; server.cpp/client.cpp stay intact.
     local example_cmake_file="${EXAMPLE_DIR}/CMakeLists.txt"
-    local absl_cmake_file="${EXAMPLE_DIR}/brpc_http_example_absl.cmake"
+    local absl_cmake_file="${EXAMPLE_DIR}/brpc_rdma_example_absl.cmake"
     [[ -f "${example_cmake_file}" ]] || {
-        log_message "ERROR: official HTTP example CMake file is missing: ${example_cmake_file}"
+        log_message "ERROR: official RDMA performance example CMake file is missing: ${example_cmake_file}"
         return 40
     }
     sed -i 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 17)/' \
         "${example_cmake_file}" || {
-        log_message "ERROR: could not enable C++17 for the official HTTP example"
+        log_message "ERROR: could not enable C++17 for the official performance example"
         return 40
     }
     grep -Fq 'set(CMAKE_CXX_STANDARD 17)' "${example_cmake_file}" || {
-        log_message "ERROR: the official HTTP example C++11 setting was not found"
+        log_message "ERROR: the official example C++11 setting was not found"
         return 40
     }
 
-    install -m 0644 "${SCRIPT_DIR}/http_example_absl.cmake" "${absl_cmake_file}" || {
-        log_message "ERROR: could not provide the Abseil dependencies for the official HTTP example"
+    install -m 0644 "${SCRIPT_DIR}/rdma_example_absl.cmake" "${absl_cmake_file}" || {
+        log_message "ERROR: could not provide the Abseil dependencies for the official example"
         return 40
     }
     sed -i \
-        -e '/^[[:space:]]*include_directories(${OPENSSL_INCLUDE_DIR})[[:space:]]*$/a\include(${CMAKE_CURRENT_LIST_DIR}/brpc_http_example_absl.cmake)' \
-        -e '/^[[:space:]]*${PROTOBUF_LIBRARIES}[[:space:]]*$/a\    ${BRPC_HTTP_EXAMPLE_ABSL_TARGETS}' \
+        -e '/^include(FindProtobuf)$/a\include(${CMAKE_CURRENT_LIST_DIR}/brpc_rdma_example_absl.cmake)' \
+        -e '/^[[:space:]]*${PROTOBUF_LIBRARIES}[[:space:]]*$/a\    ${BRPC_RDMA_EXAMPLE_ABSL_TARGETS}' \
+        -e '/^[[:space:]]*${THRIFT_LIB}[[:space:]]*$/a\    ${RDMA_LIB}\n    z' \
         "${example_cmake_file}" || {
-        log_message "ERROR: could not link Abseil for the official HTTP example"
+        log_message "ERROR: could not link the official example dependencies"
         return 40
     }
-    grep -Fq 'include(${CMAKE_CURRENT_LIST_DIR}/brpc_http_example_absl.cmake)' "${example_cmake_file}" \
-        && grep -Fq '${BRPC_HTTP_EXAMPLE_ABSL_TARGETS}' "${example_cmake_file}" || {
-        log_message "ERROR: the official HTTP example did not include the Abseil dependencies"
+    grep -Fq 'include(${CMAKE_CURRENT_LIST_DIR}/brpc_rdma_example_absl.cmake)' "${example_cmake_file}" \
+        && grep -Fq '${BRPC_RDMA_EXAMPLE_ABSL_TARGETS}' "${example_cmake_file}" \
+        && grep -Fq '    ${RDMA_LIB}' "${example_cmake_file}" || {
+        log_message "ERROR: official example dependency configuration is incomplete"
         return 40
     }
-    log_message "configured the official HTTP example for current Protobuf and Abseil"
+    log_message "configured the official performance example for current Protobuf and Abseil"
 }
 
 build_brpc() {
@@ -251,13 +243,14 @@ build_brpc() {
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
 
-    configure_http_example_for_modern_protobuf || return $?
+    configure_rdma_example_for_modern_protobuf || return $?
 
     log_message "building the official brpc library with cmake (Release)"
     mkdir -p "${BUILD_DIR}"
     cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DWITH_DEBUG_SYMBOLS=OFF \
+        -DWITH_RDMA=ON \
         -DBUILD_BRPC_TOOLS=OFF || {
         log_message "ERROR: cmake configure of the brpc library failed"
         return 40
@@ -271,29 +264,29 @@ build_brpc() {
         return 40
     }
 
-    # The example cmake auto-discovers the sibling build/output directory, so
-    # configure example/http_c++ as its own project from the source root.
-    log_message "building official example binaries: benchmark_http and http_server"
+    # RDMA support is a compile-time requirement of this upstream example;
+    # --use_rdma=false on both processes keeps the measured transport TCP.
+    log_message "building official example/rdma_performance server and client"
     mkdir -p "${EXAMPLE_DIR}/build"
     cmake -S "${EXAMPLE_DIR}" -B "${EXAMPLE_DIR}/build" \
         -DCMAKE_BUILD_TYPE=Release || {
-        log_message "ERROR: cmake configure of example/http_c++ failed"
+        log_message "ERROR: cmake configure of example/rdma_performance failed"
         return 40
     }
     cmake --build "${EXAMPLE_DIR}/build" -j "$(nproc)" \
-        --target benchmark_http --target http_server || {
-        log_message "ERROR: cmake build of benchmark_http/http_server failed"
+        --target client --target server || {
+        log_message "ERROR: cmake build of rdma_performance client/server failed"
         return 40
     }
-    [[ -x "${HTTP_SERVER_BIN}" ]] || {
-        log_message "ERROR: official http_server binary was not produced: ${HTTP_SERVER_BIN}"
+    [[ -x "${RDMA_SERVER_BIN}" ]] || {
+        log_message "ERROR: official server binary was not produced: ${RDMA_SERVER_BIN}"
         return 40
     }
-    [[ -x "${BENCHMARK_HTTP_BIN}" ]] || {
-        log_message "ERROR: official benchmark_http binary was not produced: ${BENCHMARK_HTTP_BIN}"
+    [[ -x "${RDMA_CLIENT_BIN}" ]] || {
+        log_message "ERROR: official client binary was not produced: ${RDMA_CLIENT_BIN}"
         return 40
     }
-    log_message "brpc ${SOFTWARE_VERSION} official benchmark artifacts are ready"
+    log_message "brpc ${SOFTWARE_VERSION} official TCP performance example is ready"
 }
 
 port_is_free() {
@@ -347,145 +340,111 @@ start_brpc_service() {
     local server_pid attempt
 
     initialize_runtime || return $?
-    [[ -x "${HTTP_SERVER_BIN}" ]] || {
-        log_message "ERROR: official http_server binary is unavailable: ${HTTP_SERVER_BIN}"
+    [[ -x "${RDMA_SERVER_BIN}" ]] || {
+        log_message "ERROR: official performance server is unavailable: ${RDMA_SERVER_BIN}"
         return 40
     }
     [[ -e "${SERVICE_DIR}" ]] || mkdir -p "${SERVICE_DIR}"
     if process_is_alive "$(read_pid_file "${SERVER_PID_FILE}")"; then
-        log_message "official http_server is already running"
+        log_message "official performance server is already running"
         return 0
     fi
-    port_is_free "${HTTP_SERVER_PORT}" || {
-        log_message "ERROR: port ${HTTP_SERVER_PORT} is already in use"
+    port_is_free "${RDMA_SERVER_PORT}" || {
+        log_message "ERROR: port ${RDMA_SERVER_PORT} is already in use"
         return 20
     }
-    # The official example enables SSL with the repository's cert.pem/key.pem
-    # (http_server.cpp always sets ssl options); plain HTTP requests are still
-    # served, so benchmark_http keeps using plain HTTP against /HttpService/Echo.
-    log_message "starting official example http_server on 127.0.0.1:${HTTP_SERVER_PORT}"
-    nohup "${HTTP_SERVER_BIN}" \
-        -port "${HTTP_SERVER_PORT}" \
-        -certificate "${EXAMPLE_DIR}/cert.pem" \
-        -private_key "${EXAMPLE_DIR}/key.pem" \
+    log_message "starting original performance server on port ${RDMA_SERVER_PORT} (TCP)"
+    nohup "${RDMA_SERVER_BIN}" \
+        --use_rdma=false \
+        --port="${RDMA_SERVER_PORT}" \
+        --bthread_concurrency=32 \
         >"${SERVER_LOG_FILE}" 2>&1 &
     server_pid=$!
     printf '%s\n' "${server_pid}" > "${SERVER_PID_FILE}"
     for ((attempt = 0; attempt < 60; attempt += 1)); do
-        if curl -fsS -o /dev/null "http://127.0.0.1:${HTTP_SERVER_PORT}/status" 2>/dev/null; then
+        if ! process_is_alive "${server_pid}"; then
+            break
+        fi
+        if curl --noproxy '*' -fsS --max-time 1 -o /dev/null \
+            "http://127.0.0.1:${RDMA_SERVER_PORT}/status" 2>/dev/null; then
             break
         fi
         sleep 1
     done
-    if ! curl -fsS -o /dev/null "http://127.0.0.1:${HTTP_SERVER_PORT}/status"; then
-        terminate_process_gracefully "${server_pid}" "official http_server" || true
-        log_message "ERROR: official http_server did not become ready on port ${HTTP_SERVER_PORT}"
+    if ! process_is_alive "${server_pid}" ||
+       ! curl --noproxy '*' -fsS --max-time 2 -o /dev/null \
+           "http://127.0.0.1:${RDMA_SERVER_PORT}/status"; then
+        terminate_process_gracefully "${server_pid}" "official performance server" || true
+        log_message "ERROR: official performance server did not become ready; see ${SERVER_LOG_FILE}"
         return 40
     fi
-    log_message "official http_server is ready (pid ${server_pid})"
+    log_message "official performance server is ready (pid ${server_pid})"
 }
 
-run_brpc_benchmark_http() {
-    local warmup_pid client_pid server_pid
+run_brpc_rdma_performance() {
+    local server_pid attachment_size repetition
 
     initialize_runtime || return $?
-    [[ -x "${BENCHMARK_HTTP_BIN}" ]] || {
-        log_message "ERROR: official benchmark_http binary is unavailable: ${BENCHMARK_HTTP_BIN}"
+    [[ -x "${RDMA_CLIENT_BIN}" ]] || {
+        log_message "ERROR: official performance client is unavailable: ${RDMA_CLIENT_BIN}"
         return 40
     }
     server_pid="$(read_pid_file "${SERVER_PID_FILE}")"
     process_is_alive "${server_pid}" || {
-        log_message "ERROR: official http_server (pid ${server_pid:-unknown}) is not running"
+        log_message "ERROR: official performance server (pid ${server_pid:-unknown}) is not running"
         return 40
     }
-    curl -fsS -o /dev/null "http://127.0.0.1:${HTTP_SERVER_PORT}/status" || {
-        log_message "ERROR: official http_server is not responding on port ${HTTP_SERVER_PORT}"
+    curl --noproxy '*' -fsS --max-time 2 -o /dev/null \
+        "http://127.0.0.1:${RDMA_SERVER_PORT}/status" || {
+        log_message "ERROR: official performance server is not responding"
         return 40
     }
-    port_is_free "${BENCHMARK_DUMMY_PORT}" || {
-        log_message "ERROR: dummy port ${BENCHMARK_DUMMY_PORT} is already in use"
+    port_is_free "${RDMA_CLIENT_DUMMY_PORT}" || {
+        log_message "ERROR: client dummy port ${RDMA_CLIENT_DUMMY_PORT} is already in use"
         return 20
     }
-    log_message "warming up official benchmark_http for ${BENCHMARK_HTTP_WARMUP_S}s; warmup metrics will be discarded"
-    nohup "${BENCHMARK_HTTP_BIN}" \
-        -thread_num "${BENCHMARK_HTTP_THREAD_NUM}" \
-        -url "127.0.0.1:${HTTP_SERVER_PORT}/HttpService/Echo" \
-        -dummy_port "${BENCHMARK_DUMMY_PORT}" \
-        >"${CLIENT_LOG_FILE}" 2>&1 &
-    warmup_pid=$!
-    printf '%s\n' "${warmup_pid}" > "${CLIENT_PID_FILE}"
-
-    sleep "${BENCHMARK_HTTP_WARMUP_S}"
-    process_is_alive "${warmup_pid}" || {
-        log_message "ERROR: official benchmark_http exited during warmup"
-        return 50
-    }
-
-    terminate_process_gracefully "${warmup_pid}" "warmup benchmark_http" || return $?
-    rm -f "${CLIENT_PID_FILE}"
-    port_is_free "${BENCHMARK_DUMMY_PORT}" || {
-        log_message "ERROR: warmup benchmark_http did not release dummy port ${BENCHMARK_DUMMY_PORT}"
-        return 50
-    }
-
-    log_message "running measured official benchmark_http: ${BENCHMARK_HTTP_THREAD_NUM} threads for ${BENCHMARK_HTTP_DURATION_S}s"
-    nohup "${BENCHMARK_HTTP_BIN}" \
-        -thread_num "${BENCHMARK_HTTP_THREAD_NUM}" \
-        -url "127.0.0.1:${HTTP_SERVER_PORT}/HttpService/Echo" \
-        -dummy_port "${BENCHMARK_DUMMY_PORT}" \
-        >"${CLIENT_LOG_FILE}" 2>&1 &
-    client_pid=$!
-    printf '%s\n' "${client_pid}" > "${CLIENT_PID_FILE}"
-
-    sleep "${BENCHMARK_HTTP_DURATION_S}"
-    process_is_alive "${client_pid}" || {
-        log_message "ERROR: official benchmark_http exited before the duration elapsed"
-        return 50
-    }
-
-    # The client exposes its bvar counters (client_qps, client_latency_*)
-    # through the dummy server; dump them verbatim as the raw result source.
-    curl -fsS "http://127.0.0.1:${BENCHMARK_DUMMY_PORT}/vars/client_*" \
-        -o "${RESULTS_DIR}/bvar_vars.txt" || {
-        terminate_process_gracefully "${client_pid}" "official benchmark_http" || true
-        log_message "ERROR: failed to dump client bvar values from the dummy server"
-        return 50
-    }
-    terminate_process_gracefully "${client_pid}" "official benchmark_http" || return $?
-    rm -f "${CLIENT_PID_FILE}"
-
-    grep -Eq '^client_qps[[:space:]]+:[[:space:]]+[0-9]+' "${RESULTS_DIR}/bvar_vars.txt" || {
-        log_message "ERROR: bvar dump is missing client_qps"
-        return 50
-    }
-    export SOFTWARE_VERSION EXPECTED_ARCH BENCHMARK_HTTP_THREAD_NUM
-    export BENCHMARK_HTTP_DURATION_S BENCHMARK_HTTP_WARMUP_S HTTP_SERVER_PORT
+    : > "${CLIENT_LOG_FILE}"
+    for attachment_size in "${BRPC_ATTACHMENT_SIZES[@]}"; do
+        for ((repetition = 1; repetition <= BRPC_REPETITIONS; repetition += 1)); do
+            log_message "running TCP baidu_std echo: ${attachment_size}B, repetition ${repetition}/${BRPC_REPETITIONS} (20s)"
+            if ! "${RDMA_CLIENT_BIN}" \
+                --use_rdma=false \
+                --protocol=baidu_std \
+                --connection_type=single \
+                --servers="127.0.0.1:${RDMA_SERVER_PORT}" \
+                --thread_num=32 \
+                --queue_depth=32 \
+                --bthread_concurrency=160 \
+                --attachment_size="${attachment_size}" \
+                --echo_attachment=true \
+                --test_seconds=20 2>&1 | tee -a "${CLIENT_LOG_FILE}"; then
+                log_message "ERROR: original performance client failed for ${attachment_size}B, repetition ${repetition}"
+                return 50
+            fi
+        done
+    done
+    export SOFTWARE_VERSION EXPECTED_ARCH
     python3 "${SCRIPT_DIR}/scripts/parse_benchmark.py" \
-        "${RESULTS_DIR}/bvar_vars.txt" \
+        "${CLIENT_LOG_FILE}" \
         "${RESULTS_DIR}/benchmark_brpc.json" || {
-        log_message "ERROR: failed to normalize official bvar benchmark results"
+        log_message "ERROR: failed to normalize official client results"
         return 50
     }
-    log_message "brpc benchmark results written to bvar_vars.txt and benchmark_brpc.json"
+    log_message "brpc benchmark results written to benchmark_client.log and benchmark_brpc.json"
 }
 
 stop_brpc_service() {
     configure_runtime_paths || return $?
-    local stop_status=0 client_pid server_pid
-    client_pid="$(read_pid_file "${CLIENT_PID_FILE}")"
-    if process_is_alive "${client_pid}"; then
-        terminate_process_gracefully "${client_pid}" "official benchmark_http" || stop_status=1
-    fi
-    rm -f "${CLIENT_PID_FILE}"
+    local stop_status=0 server_pid
     server_pid="$(read_pid_file "${SERVER_PID_FILE}")"
     if process_is_alive "${server_pid}"; then
-        terminate_process_gracefully "${server_pid}" "official http_server" || stop_status=1
+        terminate_process_gracefully "${server_pid}" "official performance server" || stop_status=1
     fi
     rm -f "${SERVER_PID_FILE}"
-    if [[ -n "${server_pid}" ]] && port_is_free "${HTTP_SERVER_PORT}"; then
-        log_message "official http_server has stopped"
+    if [[ -n "${server_pid}" ]] && port_is_free "${RDMA_SERVER_PORT}"; then
+        log_message "official performance server has stopped"
     elif [[ -n "${server_pid}" ]]; then
-        log_message "ERROR: port ${HTTP_SERVER_PORT} is still occupied after stop"
+        log_message "ERROR: port ${RDMA_SERVER_PORT} is still occupied after stop"
         stop_status=1
     else
         log_message "brpc benchmark has no running service to stop"
@@ -574,7 +533,7 @@ run_brpc_standalone() {
         fi
     fi
     if [[ "${stage_status}" -eq 0 ]]; then
-        if run_brpc_benchmark_http; then
+        if run_brpc_rdma_performance; then
             :
         else
             stage_status=$?
@@ -619,8 +578,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run brpc's official benchmark_http (example/http_c++) against the
-official example http_server as a standalone performance evaluation. Results
+Build and run brpc's official example/rdma_performance client/server over TCP.
+Results
 default to results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -631,8 +590,7 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, RESULTS_DIR, PERF_WORK_DIR, BRPC_SOURCE_URL,
-  BENCHMARK_HTTP_THREAD_NUM, BENCHMARK_HTTP_DURATION_S, BENCHMARK_HTTP_WARMUP_S,
-  HTTP_SERVER_PORT, BENCHMARK_DUMMY_PORT
+  PERF_PROXY
 USAGE
 }
 

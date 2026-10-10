@@ -1,9 +1,8 @@
-# The BRPC 1.17 standalone http_c++ example predates the Abseil dependency
-# introduced by recent Protobuf releases.  Keep this list aligned with the
-# Protobuf dependency targets in BRPC's top-level CMakeLists.txt.
+# The upstream rdma_performance example needs Protobuf's Abseil link targets
+# when the system Protobuf is newer than 4.21. Keep the C++ sources unchanged.
 if(Protobuf_VERSION GREATER 4.21)
     find_package(absl REQUIRED CONFIG)
-    set(BRPC_HTTP_EXAMPLE_ABSL_TARGETS
+    set(BRPC_RDMA_EXAMPLE_ABSL_TARGETS
         absl::absl_check
         absl::absl_log
         absl::algorithm

@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize brpc's official benchmark_http bvar output into named metrics.
-
-The official benchmark client (example/http_c++/benchmark_http.cpp) exposes a
-bvar::LatencyRecorder named "client"; its counters (client_qps,
-client_latency, client_latency_80/90/99/999/9999, client_max_latency,
-client_count) are dumped verbatim from the client's dummy server endpoint
-/vars/client_*. This script extracts the scalar values and preserves the
-official bvar names verbatim.
-"""
+"""Normalize the upstream rdma_performance TCP client's eight message sizes."""
 
 from __future__ import annotations
 
@@ -18,126 +10,125 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-# Official bvar names emitted by bvar::LatencyRecorder("client") with the
-# default bvar_latency_p1/p2/p3 percentiles (80/90/99). Each entry maps the
-# verbatim bvar name to its official unit and optimization direction.
-METRIC_CONTRACT: dict[str, tuple[str, str]] = {
-    "client_qps": ("requests/s", "higher_is_better"),
-    "client_count": ("requests", "higher_is_better"),
-    "client_latency": ("us", "lower_is_better"),
-    "client_max_latency": ("us", "lower_is_better"),
-    "client_latency_80": ("us", "lower_is_better"),
-    "client_latency_90": ("us", "lower_is_better"),
-    "client_latency_99": ("us", "lower_is_better"),
-    "client_latency_999": ("us", "lower_is_better"),
-    "client_latency_9999": ("us", "lower_is_better"),
+ATTACHMENT_SIZES = (0, 1024, 4096, 8192, 102400, 204800, 1048576, 8388608)
+REPETITIONS = 5
+NUMBER = r"([0-9]+(?:\.[0-9]+)?)"
+SCENARIO = re.compile(
+    r"\[Threads:\s*32,\s*Depth:\s*32,\s*Attachment:\s*(\d+)B,\s*"
+    r"RDMA:\s*no,\s*Echo:\s*yes\]"
+)
+SUMMARY_FIELDS = {
+    "avg_latency": (r"Avg-Latency:\s*" + NUMBER, "us", "lower_is_better"),
+    "p90_latency": (r"90th-Latency:\s*" + NUMBER, "us", "lower_is_better"),
+    "p99_latency": (r"99th-Latency:\s*" + NUMBER, "us", "lower_is_better"),
+    "p999_latency": (r"99\.9th-Latency:\s*" + NUMBER, "us", "lower_is_better"),
+    "throughput": (r"Throughput:\s*" + NUMBER + r"MB/s", "MB/s", "higher_is_better"),
+    "qps": (r"QPS:\s*" + NUMBER + r"k(?:\s|,|$)", "requests/s", "higher_is_better"),
 }
 
 
-def parse_bvar_dump(path: Path) -> dict[str, float]:
-    values: dict[str, float] = {}
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except OSError as exc:
-        raise RuntimeError(f"cannot read bvar dump: {exc}") from exc
-    for line in lines:
-        match = re.fullmatch(r"(\S+)\s+:\s+(.+)", line)
-        if match is None:
-            continue
-        name, raw_value = match.groups()
-        if not name.startswith("client_"):
-            continue
-        try:
-            value = float(raw_value)
-        except ValueError:
-            # Series variables (client_latency_cdf, client_latency_percentiles)
-            # have no single scalar value and are not reportable metrics.
-            continue
+def parse_summary(line: str, attachment_size: int) -> dict[str, float]:
+    values = {}
+    for name, (pattern, _, _) in SUMMARY_FIELDS.items():
+        matches = re.findall(pattern, line)
+        if len(matches) != 1:
+            raise ValueError(f"missing or ambiguous official client field: {name}")
+        value = float(matches[0])
         if not math.isfinite(value) or value < 0:
-            raise RuntimeError(f"bvar {name} has an invalid scalar value: {raw_value}")
+            raise ValueError(f"invalid official client field: {name}={value}")
         values[name] = value
-    if not values:
-        raise RuntimeError("bvar dump contains no scalar client_* values")
+    # Upstream prints QPS using integer division in thousands of requests/s.
+    # Large attachments can therefore show 0k. Its throughput is calculated
+    # from completed request-attachment bytes and retains fractional precision.
+    if attachment_size:
+        values["qps"] = values["throughput"] * 1048576 / attachment_size
+    else:
+        values["qps"] *= 1000
+    if values["qps"] <= 0:
+        raise ValueError(f"the {attachment_size}B scenario has no measurable QPS")
     return values
 
 
-def normalize_results(values: dict[str, float]) -> dict[str, dict[str, Any]]:
-    missing = sorted(set(METRIC_CONTRACT) - set(values))
-    if missing:
-        raise RuntimeError(f"official bvar dump is missing metrics: {missing}")
-    results: dict[str, dict[str, Any]] = {}
-    for name, (unit, direction) in METRIC_CONTRACT.items():
-        results[name] = {
-            "source_name": name,
-            "source_field": "bvar",
-            "raw_value": values[name],
-            "raw_unit": unit,
-            "value": values[name],
-            "unit": unit,
-            "direction": direction,
-        }
+def parse_client_log(text: str) -> dict[str, dict[str, object]]:
+    if "RPC call failed:" in text:
+        raise ValueError("the official client reported a failed RPC")
+    scenarios: dict[int, list[dict[str, float]]] = {size: [] for size in ATTACHMENT_SIZES}
+    current_size = None
+    for line in text.splitlines():
+        match = SCENARIO.search(line)
+        if match:
+            current_size = int(match.group(1))
+            if current_size not in scenarios:
+                raise ValueError(f"unexpected attachment size: {current_size}B")
+            continue
+        if "Avg-Latency:" not in line:
+            continue
+        if current_size is None:
+            raise ValueError("client summary has no preceding TCP echo scenario")
+        scenarios[current_size].append(parse_summary(line, current_size))
+        current_size = None
+
+    results: dict[str, dict[str, object]] = {}
+    for attachment_size, repetitions in scenarios.items():
+        if len(repetitions) != REPETITIONS:
+            raise ValueError(
+                f"{attachment_size}B requires {REPETITIONS} client summaries, found {len(repetitions)}"
+            )
+        group = f"{attachment_size}B attachment"
+        for name, (_, unit, direction) in SUMMARY_FIELDS.items():
+            samples = [repetition[name] for repetition in repetitions]
+            key = f"attachment_{attachment_size}B_{name}"
+            results[key] = {
+                "source_name": key,
+                "source_field": "client_stdout.Throughput" if name == "qps" and attachment_size else "client_stdout",
+                "group": group,
+                "attachment_size": attachment_size,
+                "measurement": name,
+                "samples": samples,
+                "repetitions": REPETITIONS,
+                "value": sum(samples) / REPETITIONS,
+                "unit": unit,
+                "direction": direction,
+            }
     return results
 
 
 def main() -> int:
     if len(sys.argv) != 3:
-        print(
-            "usage: parse_benchmark.py BVAR_DUMP_TEXT NORMALIZED_OUTPUT",
-            file=sys.stderr,
-        )
+        print("usage: parse_benchmark.py CLIENT_LOG OUTPUT_JSON", file=sys.stderr)
         return 1
-    bvar_path, normalized_output = Path(sys.argv[1]), Path(sys.argv[2])
-
     try:
-        values = parse_bvar_dump(bvar_path)
-        results = normalize_results(values)
-    except (RuntimeError, TypeError, ValueError) as exc:
+        results = parse_client_log(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         print(f"[brpc-parse] ERROR: {exc}", file=sys.stderr)
         return 1
-
-    version = os.environ["SOFTWARE_VERSION"]
-    architecture = os.environ["EXPECTED_ARCH"]
-    thread_num = os.environ.get("BENCHMARK_HTTP_THREAD_NUM", "50")
-    duration_s = os.environ.get("BENCHMARK_HTTP_DURATION_S", "60")
-    warmup_s = os.environ.get("BENCHMARK_HTTP_WARMUP_S", "5")
-    server_port = os.environ.get("HTTP_SERVER_PORT", "18010")
-    normalized = {
-        "benchmark": "brpc_official_benchmark_http",
+    output = {
+        "benchmark": "brpc_upstream_rdma_performance_tcp",
         "software": "brpc",
-        "version": version,
-        "architecture": architecture,
+        "version": os.environ["SOFTWARE_VERSION"],
+        "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
-            "official_entry": "example/http_c++/benchmark_http.cpp",
-            "official_server": "example/http_c++/http_server.cpp",
-            "url": f"127.0.0.1:{server_port}/HttpService/Echo",
-            "protocol": "http",
-            "thread_num": int(thread_num),
-            "duration_s": int(duration_s),
-            "warmup_s": int(warmup_s),
-            "metric_source": "/vars/client_* of the benchmark_http dummy server",
-        },
-        "metric_contract": {
-            "scope": "scalar client_* bvar values of the official LatencyRecorder",
-            "source_field": "bvar",
-            "direction_by_metric": {
-                name: direction for name, (_, direction) in METRIC_CONTRACT.items()
-            },
-            "unit_by_metric": {
-                name: unit for name, (unit, _) in METRIC_CONTRACT.items()
-            },
+            "official_entry": "example/rdma_performance/client.cpp",
+            "official_server": "example/rdma_performance/server.cpp",
+            "transport": "TCP (--use_rdma=false)",
+            "protocol": "baidu_std",
+            "connection_type": "single",
+            "server": "127.0.0.1:8003",
+            "server_bthread_concurrency": 32,
+            "client_threads": 32,
+            "queue_depth": 32,
+            "client_bthread_concurrency": 160,
+            "attachment_sizes": list(ATTACHMENT_SIZES),
+            "repetitions": REPETITIONS,
+            "echo_attachment": True,
+            "test_seconds_per_run": 20,
         },
         "results": results,
     }
-
-    normalized_output.parent.mkdir(parents=True, exist_ok=True)
-    normalized_output.write_text(
-        json.dumps(normalized, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    print(f"[brpc-parse] normalized {len(results)} official bvar metrics")
+    Path(sys.argv[2]).write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    print(f"[brpc-parse] normalized {len(results)} measurements from eight sizes")
     return 0
 
 

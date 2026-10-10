@@ -14,18 +14,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# Official bvar metric names, verbatim from the benchmark_http LatencyRecorder
-# dump (/vars/client_*). Units and directions match case.yaml definitions.
+from parse_benchmark import ATTACHMENT_SIZES, REPETITIONS
+
 EXPECTED_METRICS: dict[str, tuple[str, str]] = {
-    "client_qps": ("requests/s", "higher_is_better"),
-    "client_count": ("requests", "higher_is_better"),
-    "client_latency": ("us", "lower_is_better"),
-    "client_max_latency": ("us", "lower_is_better"),
-    "client_latency_80": ("us", "lower_is_better"),
-    "client_latency_90": ("us", "lower_is_better"),
-    "client_latency_99": ("us", "lower_is_better"),
-    "client_latency_999": ("us", "lower_is_better"),
-    "client_latency_9999": ("us", "lower_is_better"),
+    "avg_latency": ("us", "lower_is_better"),
+    "p90_latency": ("us", "lower_is_better"),
+    "p99_latency": ("us", "lower_is_better"),
+    "p999_latency": ("us", "lower_is_better"),
+    "throughput": ("MB/s", "higher_is_better"),
+    "qps": ("requests/s", "higher_is_better"),
 }
 
 
@@ -199,28 +196,49 @@ def extract_metrics(
             )
         if metric_name in metrics:
             raise RuntimeError(f"duplicate brpc metric: {metric_name}")
-        if metric_name not in EXPECTED_METRICS:
-            raise RuntimeError(
-                f"brpc metric {metric_name} is not an official bvar name"
-            )
-        expected_unit, expected_direction = EXPECTED_METRICS[metric_name]
+        attachment_size = result.get("attachment_size")
+        measurement = result.get("measurement")
+        if attachment_size not in ATTACHMENT_SIZES or measurement not in EXPECTED_METRICS:
+            raise RuntimeError(f"brpc metric {metric_name} has an invalid scenario or field")
+        if metric_name != f"attachment_{attachment_size}B_{measurement}":
+            raise RuntimeError(f"brpc metric {metric_name} has an invalid scenario name")
+        if result.get("group") != f"{attachment_size}B attachment":
+            raise RuntimeError(f"brpc metric {metric_name} has an invalid group")
+        samples = result.get("samples")
+        if not isinstance(samples, list) or len(samples) != REPETITIONS:
+            raise RuntimeError(f"brpc metric {metric_name} requires {REPETITIONS} samples")
+        if any(isinstance(sample, bool) or not isinstance(sample, (int, float)) or
+               not math.isfinite(float(sample)) or sample < 0 for sample in samples):
+            raise RuntimeError(f"brpc metric {metric_name} has invalid samples")
+        if result.get("repetitions") != REPETITIONS:
+            raise RuntimeError(f"brpc metric {metric_name} has an invalid repetition count")
+        expected_unit, expected_direction = EXPECTED_METRICS[measurement]
         if result.get("unit") != expected_unit:
             raise RuntimeError(f"metric {metric_name} has an unexpected unit")
         if result.get("direction") != expected_direction:
             raise RuntimeError(f"metric {metric_name} has an unexpected direction")
-        if result.get("source_field") != "bvar":
-            raise RuntimeError(f"metric {metric_name} is not sourced from bvar")
+        expected_source = "client_stdout.Throughput" if measurement == "qps" and attachment_size else "client_stdout"
+        if result.get("source_field") != expected_source:
+            raise RuntimeError(f"metric {metric_name} is not sourced from client stdout")
         value = result.get("value")
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"metric {metric_name} is missing or is not numeric")
         if not math.isfinite(float(value)) or value < 0:
             raise RuntimeError(f"metric {metric_name} must be finite and non-negative")
+        if not math.isclose(float(value), sum(samples) / REPETITIONS, rel_tol=1e-10):
+            raise RuntimeError(f"metric {metric_name} is not the mean of its samples")
         metrics[metric_name] = {
             "value": value,
             "unit": expected_unit,
             "direction": expected_direction,
+            "group": result["group"],
         }
-    missing = sorted(set(EXPECTED_METRICS) - set(metrics))
+    expected = {
+        f"attachment_{size}B_{measurement}"
+        for size in ATTACHMENT_SIZES
+        for measurement in EXPECTED_METRICS
+    }
+    missing = sorted(expected - set(metrics))
     if missing:
         raise RuntimeError(f"benchmark_brpc.json is missing metrics: {missing}")
     return metrics
@@ -273,20 +291,22 @@ def render_report(result: dict[str, Any]) -> str:
         ("NUMA", "numa"),
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
-    lines.extend(
-        [
-            "",
-            "## 性能指标（官方 bvar 逐字名称）",
-            "",
+    lines.extend(["", "## 性能指标（5 次平均）", ""])
+    metrics = result.get("metrics", {})
+    for size in ATTACHMENT_SIZES:
+        lines.extend([
+            f"### {size}B attachment", "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
-        ]
-    )
-    for metric_name, metric in result.get("metrics", {}).items():
-        lines.append(
-            f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | {direction_label(metric['direction'])} |"
-        )
+        ])
+        for measurement in EXPECTED_METRICS:
+            metric = metrics.get(f"attachment_{size}B_{measurement}")
+            if metric:
+                lines.append(
+                    f"| {measurement} | {metric['value']} | {metric['unit']} | "
+                    f"{direction_label(metric['direction'])} |"
+                )
+        lines.append("")
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")

@@ -4,7 +4,7 @@ enabled: true
 versions:
   - "1.17.0"
 test_tools:
-  benchmark_http:
+  example/rdma_performance:
     version: "1.17.0"
 execution:
   type: shell-functions
@@ -17,14 +17,14 @@ execution:
       function: start_brpc_service
     test:
       script: brpc_test.sh
-      function: run_brpc_benchmark_http
+      function: run_brpc_rdma_performance
     stop:
       script: brpc_test.sh
       function: stop_brpc_service
   timeout_minutes: 240
 outputs:
-  bvar_dump:
-    path: bvar_vars.txt
+  client_log:
+    path: benchmark_client.log
     stage: test
     format: text
     required: true
@@ -35,40 +35,10 @@ outputs:
     required: true
 metrics:
   source: benchmark_result
-  definitions:
-    "client_qps":
-      path: results.client_qps.value
-      unit: requests/s
-      direction: higher_is_better
-    "client_count":
-      path: results.client_count.value
-      unit: requests
-      direction: higher_is_better
-    "client_latency":
-      path: results.client_latency.value
-      unit: us
-      direction: lower_is_better
-    "client_max_latency":
-      path: results.client_max_latency.value
-      unit: us
-      direction: lower_is_better
-    "client_latency_80":
-      path: results.client_latency_80.value
-      unit: us
-      direction: lower_is_better
-    "client_latency_90":
-      path: results.client_latency_90.value
-      unit: us
-      direction: lower_is_better
-    "client_latency_99":
-      path: results.client_latency_99.value
-      unit: us
-      direction: lower_is_better
-    "client_latency_999":
-      path: results.client_latency_999.value
-      unit: us
-      direction: lower_is_better
-    "client_latency_9999":
-      path: results.client_latency_9999.value
-      unit: us
-      direction: lower_is_better
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
