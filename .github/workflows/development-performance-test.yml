@@ -24,6 +24,10 @@ on:
 permissions:
   contents: read
 
+env:
+  PERF_DIRECT_NETWORK: "true"
+  SONIC_GO_PROXY: direct
+
 concurrency:
   group: dedicated-development-performance-runners
   cancel-in-progress: false
@@ -82,15 +86,11 @@ jobs:
       PERF_WORK_ROOT: /home/runner/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
-      PERF_PROXY: ${{ secrets.PERF_PROXY }}
-      # x86_64 development runners access GitHub directly; domestic aarch64
-      # development runners use the internal GitHub download proxy.
-      PERF_GITHUB_DOWNLOAD_PROXY: ${{ matrix.arch == 'aarch64' && 'https://gh-proxy.test.osinfra.cn' || '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Global cleanup before performance test
         run: bash framework/cleanup_environment.sh --before
-      - name: Install framework runtime dependencies from Huawei mirror
+      - name: Install framework runtime dependencies from PyPI
         shell: bash
         run: |
           framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
@@ -98,8 +98,6 @@ jobs:
             --disable-pip-version-check \
             --no-input \
             --no-cache-dir \
-            --trusted-host mirrors.huaweicloud.com \
-            -i https://mirrors.huaweicloud.com/repository/pypi/simple \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
@@ -172,11 +170,6 @@ jobs:
           --outcome '${{ steps.post_cleanup.outcome }}'
       - name: Upload raw and normalized result
         if: always()
-        # The TLS-intercepting proxy on the dedicated runners breaks Node's
-        # certificate validation. Disable TLS verification for this Node action
-        # only so development results remain available as GitHub Artifacts.
-        env:
-          NODE_TLS_REJECT_UNAUTHORIZED: "0"
         uses: actions/upload-artifact@v4
         with:
           name: development-result-${{ matrix.category }}-${{ matrix.software }}-${{ matrix.version }}-${{ matrix.arch }}

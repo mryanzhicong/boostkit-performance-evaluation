@@ -22,7 +22,7 @@ bash software/HPC/sonic-go/sonic_go_test.sh --version 1.15.2
 
 ## 源码、依赖与构建
 
-脚本检查并通过系统 `dnf` 安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk、util-linux（`taskset`）和 Python 3。Go 模块默认经华为云镜像下载，网络错误时回退到 `goproxy.cn`。
+脚本检查并通过系统 `dnf` 安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk、util-linux（`taskset`）和 Python 3。Go 模块默认经华为云镜像下载，网络错误时回退到 `goproxy.cn`；开发工作流设置 `SONIC_GO_PROXY=direct`，从模块源码仓库直连获取。
 
 编译 Go 源码需要一个自举用 Go。脚本优先使用 `PATH` 中已有的 `go`；否则优先读取 `/home/runner/software/golang/go1.27.0.linux-<arch>.tar.gz`，没有离线包时从 `https://go.dev/dl` 下载，并校验 SHA-256。自举 Go 只安装在本次任务的 `${PERF_WORK_DIR}/bootstrap-go`。
 

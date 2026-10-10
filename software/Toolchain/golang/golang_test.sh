@@ -141,7 +141,11 @@ configure_go_environment() {
     export GOTOOLCHAIN=local
     export GOENV=off
     export GOWORK=off
-    export GOPROXY="https://goproxy.cn"
+    if [[ "${PERF_DIRECT_NETWORK:-}" == "true" ]]; then
+        export GOPROXY=direct
+    else
+        export GOPROXY="https://goproxy.cn"
+    fi
     export GOSUMDB="${GOSUMDB:-sum.golang.org}"
     unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOAMD64
 }

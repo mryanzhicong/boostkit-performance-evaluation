@@ -81,7 +81,7 @@ bent -N 15
 
 报告保留 Bent 原始 benchmark 名称和原始单位；Bent 未产生任何指标时，结果规范化直接失败。
 
-两个架构的模块下载均使用 Go 模块代理 `https://goproxy.cn`，不回退直连。
+正式测试的模块下载使用 `https://goproxy.cn`。开发工作流设置 `PERF_DIRECT_NETWORK=true`，使用 `GOPROXY=direct` 直连模块源码仓库。
 
 可脱离 Workflow 执行完整流程：
 
