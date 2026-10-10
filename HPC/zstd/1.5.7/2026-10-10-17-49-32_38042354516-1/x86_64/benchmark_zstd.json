@@ -1,0 +1,53 @@
+{
+  "benchmark": "zstd_lzbench",
+  "software": "zstd",
+  "version": "1.5.7",
+  "architecture": "x86_64",
+  "timestamp": "2026-10-10T09:47:57Z",
+  "parameters": {
+    "command": [
+      "lzbench",
+      "-ezstd,5",
+      "-b4",
+      "-t20u20",
+      "silesia.tar"
+    ],
+    "lzbench_version": "2.2",
+    "zstd_version": "1.5.7",
+    "compression_level": 5,
+    "block_size_kib": 4,
+    "compression_seconds": 20,
+    "decompression_seconds": 20,
+    "dataset_sha256": "ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
+  },
+  "runtime_context": {
+    "command": [
+      "/home/runner/boostkit-perf/zstd/1.5.7/x86_64/38042354516-1/lzbench-source/lzbench",
+      "-ezstd,5",
+      "-b4",
+      "-t20u20",
+      "/home/runner/boostkit-perf/zstd/1.5.7/x86_64/38042354516-1/silesia.tar"
+    ],
+    "input_size_bytes": 211948544
+  },
+  "results": {
+    "compression_throughput": {
+      "source_metric": "Compress.",
+      "value": 109.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "decompression_throughput": {
+      "source_metric": "Decompress.",
+      "value": 814.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "compressed_size_ratio": {
+      "source_metric": "Ratio",
+      "value": 41.41,
+      "unit": "%",
+      "direction": "lower_is_better"
+    }
+  }
+}

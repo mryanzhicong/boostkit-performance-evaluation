@@ -1,0 +1,140 @@
+{
+  "software": "zstd",
+  "category": "HPC",
+  "version": "1.5.7",
+  "architecture": "x86_64",
+  "run_id": "38042354516-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-10-10T09:44:07Z",
+    "category": "HPC",
+    "software": "zstd",
+    "requested_version": "1.5.7",
+    "actual_version": "1.5.7",
+    "architecture": "x86_64",
+    "run_id": "38042354516-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "command": [
+        "lzbench",
+        "-ezstd,5",
+        "-b4",
+        "-t20u20",
+        "silesia.tar"
+      ],
+      "lzbench_version": "2.2",
+      "zstd_version": "1.5.7",
+      "compression_level": 5,
+      "block_size_kib": 4,
+      "compression_seconds": 20,
+      "decompression_seconds": 20,
+      "dataset_sha256": "ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
+    }
+  },
+  "parameter_signature": "f3fb54e4f4dd2b368bda4b5e4806f22d7eb86345435f5032ffe615d40e957c90",
+  "test_tools": {
+    "lzbench": {
+      "version": "2.2"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-10-10T09:42:40Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.x86_64",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": ""
+  },
+  "runtime_before": {
+    "collected_at": "2026-10-10T09:42:40Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 199706292224 266371563520   129912832 349363335168 610856144896\nSwap:     4294963200  4293558272     1404928",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-10-10T09:47:57Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 35928293376 554243792896   130658304 225030537216 774634143744\nSwap:     4294963200  4240752640    54210560",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "lzbench_output": {
+      "path": "benchmark_lzbench.txt",
+      "size": 4888
+    },
+    "benchmark_result": {
+      "benchmark": "zstd_lzbench",
+      "software": "zstd",
+      "version": "1.5.7",
+      "architecture": "x86_64",
+      "timestamp": "2026-10-10T09:47:57Z",
+      "parameters": {
+        "command": [
+          "lzbench",
+          "-ezstd,5",
+          "-b4",
+          "-t20u20",
+          "silesia.tar"
+        ],
+        "lzbench_version": "2.2",
+        "zstd_version": "1.5.7",
+        "compression_level": 5,
+        "block_size_kib": 4,
+        "compression_seconds": 20,
+        "decompression_seconds": 20,
+        "dataset_sha256": "ea122ed051dc7a6c58d2bb56bb05b34d9f1537c4dc9e71519142e2ca8cd6338d"
+      },
+      "runtime_context": {
+        "command": [
+          "/home/runner/boostkit-perf/zstd/1.5.7/x86_64/38042354516-1/lzbench-source/lzbench",
+          "-ezstd,5",
+          "-b4",
+          "-t20u20",
+          "/home/runner/boostkit-perf/zstd/1.5.7/x86_64/38042354516-1/silesia.tar"
+        ],
+        "input_size_bytes": 211948544
+      },
+      "results": {
+        "compression_throughput": {
+          "source_metric": "Compress.",
+          "value": 109.0,
+          "unit": "MB/s",
+          "direction": "higher_is_better"
+        },
+        "decompression_throughput": {
+          "source_metric": "Decompress.",
+          "value": 814.0,
+          "unit": "MB/s",
+          "direction": "higher_is_better"
+        },
+        "compressed_size_ratio": {
+          "source_metric": "Ratio",
+          "value": 41.41,
+          "unit": "%",
+          "direction": "lower_is_better"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "compression_throughput": {
+      "value": 109.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "decompression_throughput": {
+      "value": 814.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "compressed_size_ratio": {
+      "value": 41.41,
+      "unit": "%",
+      "direction": "lower_is_better"
+    }
+  }
+}
