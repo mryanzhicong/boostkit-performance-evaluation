@@ -1,0 +1,86 @@
+{
+  "benchmark": "redis_single_instance_set_get_throughput",
+  "software": "redis",
+  "version": "7.0.15",
+  "architecture": "x86_64",
+  "timestamp": "2026-10-12T13:06:33Z",
+  "parameters": {
+    "client_host": "127.0.0.1",
+    "operations": [
+      "SET",
+      "GET"
+    ],
+    "requests": 10000000,
+    "client_counts": [
+      40,
+      60,
+      80
+    ],
+    "payload_bytes": 3,
+    "keyspace_length": 10000000,
+    "threads": 20,
+    "metric_source": "<operation>: <value> requests per second"
+  },
+  "results": {
+    "clients_40_set": {
+      "source_name": "40 clients SET: requests per second",
+      "source_field": "SET: <value> requests per second",
+      "group": "40 clients",
+      "clients": 40,
+      "operation": "SET",
+      "value": 155458.14,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "clients_40_get": {
+      "source_name": "40 clients GET: requests per second",
+      "source_field": "GET: <value> requests per second",
+      "group": "40 clients",
+      "clients": 40,
+      "operation": "GET",
+      "value": 162543.48,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "clients_60_set": {
+      "source_name": "60 clients SET: requests per second",
+      "source_field": "SET: <value> requests per second",
+      "group": "60 clients",
+      "clients": 60,
+      "operation": "SET",
+      "value": 159288.94,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "clients_60_get": {
+      "source_name": "60 clients GET: requests per second",
+      "source_field": "GET: <value> requests per second",
+      "group": "60 clients",
+      "clients": 60,
+      "operation": "GET",
+      "value": 167844.38,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "clients_80_set": {
+      "source_name": "80 clients SET: requests per second",
+      "source_field": "SET: <value> requests per second",
+      "group": "80 clients",
+      "clients": 80,
+      "operation": "SET",
+      "value": 155409.81,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "clients_80_get": {
+      "source_name": "80 clients GET: requests per second",
+      "source_field": "GET: <value> requests per second",
+      "group": "80 clients",
+      "clients": 80,
+      "operation": "GET",
+      "value": 163684.88,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
