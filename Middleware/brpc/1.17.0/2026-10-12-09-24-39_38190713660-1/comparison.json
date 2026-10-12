@@ -1,0 +1,513 @@
+{
+  "category": "Middleware",
+  "software": "brpc",
+  "version": "1.17.0",
+  "parameter_signature": "db83a6b0bff826c6b3c82a4ce175fadbb7c4a5fe6123f4c888d800516f044776",
+  "test_tools": {
+    "example/rdma_performance": {
+      "version": "1.17.0"
+    }
+  },
+  "environments": {
+    "x86_64": {
+      "build_info": {
+        "recorded_at": "2026-10-12T01:09:20Z",
+        "category": "Middleware",
+        "software": "brpc",
+        "requested_version": "1.17.0",
+        "actual_version": "1.17.0",
+        "architecture": "x86_64",
+        "run_id": "38190713660-1"
+      },
+      "system_info": {
+        "collected_at": "2026-10-12T01:08:20Z",
+        "architecture": "x86_64",
+        "platform": "openEuler 24.03 (LTS-SP3)",
+        "kernel": "6.6.0-132.0.0.111.oe2403sp3.x86_64",
+        "cpu_model": "AMD EPYC 9654 96-Core Processor",
+        "cpu_count": 384,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": ""
+      },
+      "runtime_before": {
+        "collected_at": "2026-10-12T01:08:20Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 53171699712 754916651008   348016640  6741032960 757390737408\nSwap:     4294963200  3492610048   802353152",
+        "cpu_governor": "performance"
+      },
+      "runtime_after": {
+        "collected_at": "2026-10-12T01:22:46Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 51768532992 400888688640   138313728 362425991168 758793904128\nSwap:     4294963200  3481382912   813580288",
+        "cpu_governor": "performance"
+      }
+    },
+    "aarch64": {
+      "build_info": {
+        "recorded_at": "2026-10-12T01:09:20Z",
+        "category": "Middleware",
+        "software": "brpc",
+        "requested_version": "1.17.0",
+        "actual_version": "1.17.0",
+        "architecture": "aarch64",
+        "run_id": "38190713660-1"
+      },
+      "system_info": {
+        "collected_at": "2026-10-12T01:08:37Z",
+        "architecture": "aarch64",
+        "platform": "openEuler 24.03 (LTS-SP4)",
+        "kernel": "6.6.0-159.4.14.168.oe2403sp4.aarch64",
+        "cpu_model": "-",
+        "cpu_count": 384,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 574945 MB\nnode 0 free: 344577 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 580594 MB\nnode 1 free: 419395 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 580594 MB\nnode 2 free: 431717 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 482782 MB\nnode 3 free: 329952 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+      },
+      "runtime_before": {
+        "collected_at": "2026-10-12T01:08:37Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     2326702432256 57272647680 1599752032256   274235392 680020897792 2269429784576\nSwap:              0           0           0",
+        "cpu_governor": "performance"
+      },
+      "runtime_after": {
+        "collected_at": "2026-10-12T01:22:46Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     2326702432256 56902557696 1599547494400   276615168 680600698880 2269799874560\nSwap:              0           0           0",
+        "cpu_governor": "performance"
+      }
+    }
+  },
+  "metrics": {
+    "attachment_0B_avg_latency": {
+      "x86_64": 1970.0,
+      "aarch64": 2211.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1223,
+      "relative_performance": 0.891,
+      "group": "0B attachment"
+    },
+    "attachment_0B_p90_latency": {
+      "x86_64": 2219.4,
+      "aarch64": 2427.8,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0939,
+      "relative_performance": 0.9142,
+      "group": "0B attachment"
+    },
+    "attachment_0B_p99_latency": {
+      "x86_64": 2648.2,
+      "aarch64": 2586.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9765,
+      "relative_performance": 1.0241,
+      "group": "0B attachment"
+    },
+    "attachment_0B_p999_latency": {
+      "x86_64": 3281.0,
+      "aarch64": 2677.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8159,
+      "relative_performance": 1.2256,
+      "group": "0B attachment"
+    },
+    "attachment_0B_throughput": {
+      "x86_64": 0.0,
+      "aarch64": 0.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": null,
+      "relative_performance": null,
+      "group": "0B attachment"
+    },
+    "attachment_0B_qps": {
+      "x86_64": 534200.0,
+      "aarch64": 494000.0,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 0.9247,
+      "relative_performance": 0.9247,
+      "group": "0B attachment"
+    },
+    "attachment_1024B_avg_latency": {
+      "x86_64": 5169.8,
+      "aarch64": 3018.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5839,
+      "relative_performance": 1.7128,
+      "group": "1024B attachment"
+    },
+    "attachment_1024B_p90_latency": {
+      "x86_64": 6801.2,
+      "aarch64": 3198.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.4703,
+      "relative_performance": 2.1264,
+      "group": "1024B attachment"
+    },
+    "attachment_1024B_p99_latency": {
+      "x86_64": 8852.4,
+      "aarch64": 3358.8,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3794,
+      "relative_performance": 2.6356,
+      "group": "1024B attachment"
+    },
+    "attachment_1024B_p999_latency": {
+      "x86_64": 12484.8,
+      "aarch64": 4124.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3303,
+      "relative_performance": 3.0272,
+      "group": "1024B attachment"
+    },
+    "attachment_1024B_throughput": {
+      "x86_64": 214.7386,
+      "aarch64": 331.1928,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.5423,
+      "relative_performance": 1.5423,
+      "group": "1024B attachment"
+    },
+    "attachment_1024B_qps": {
+      "x86_64": 219892.3264,
+      "aarch64": 339141.4272,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.5423,
+      "relative_performance": 1.5423,
+      "group": "1024B attachment"
+    },
+    "attachment_4096B_avg_latency": {
+      "x86_64": 6370.4,
+      "aarch64": 4777.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7499,
+      "relative_performance": 1.3336,
+      "group": "4096B attachment"
+    },
+    "attachment_4096B_p90_latency": {
+      "x86_64": 7271.6,
+      "aarch64": 5146.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7077,
+      "relative_performance": 1.4131,
+      "group": "4096B attachment"
+    },
+    "attachment_4096B_p99_latency": {
+      "x86_64": 9004.8,
+      "aarch64": 5321.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5909,
+      "relative_performance": 1.6923,
+      "group": "4096B attachment"
+    },
+    "attachment_4096B_p999_latency": {
+      "x86_64": 10260.2,
+      "aarch64": 5670.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5527,
+      "relative_performance": 1.8094,
+      "group": "4096B attachment"
+    },
+    "attachment_4096B_throughput": {
+      "x86_64": 638.5572,
+      "aarch64": 844.0514000000001,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.3218,
+      "relative_performance": 1.3218,
+      "group": "4096B attachment"
+    },
+    "attachment_4096B_qps": {
+      "x86_64": 163470.6432,
+      "aarch64": 216077.15840000001,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.3218,
+      "relative_performance": 1.3218,
+      "group": "4096B attachment"
+    },
+    "attachment_8192B_avg_latency": {
+      "x86_64": 9557.2,
+      "aarch64": 6021.6,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6301,
+      "relative_performance": 1.5872,
+      "group": "8192B attachment"
+    },
+    "attachment_8192B_p90_latency": {
+      "x86_64": 11188.2,
+      "aarch64": 6853.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6125,
+      "relative_performance": 1.6326,
+      "group": "8192B attachment"
+    },
+    "attachment_8192B_p99_latency": {
+      "x86_64": 13777.8,
+      "aarch64": 7144.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5185,
+      "relative_performance": 1.9285,
+      "group": "8192B attachment"
+    },
+    "attachment_8192B_p999_latency": {
+      "x86_64": 15187.2,
+      "aarch64": 7708.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5076,
+      "relative_performance": 1.9702,
+      "group": "8192B attachment"
+    },
+    "attachment_8192B_throughput": {
+      "x86_64": 857.1938,
+      "aarch64": 1309.17,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.5273,
+      "relative_performance": 1.5273,
+      "group": "8192B attachment"
+    },
+    "attachment_8192B_qps": {
+      "x86_64": 109720.8064,
+      "aarch64": 167573.76,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.5273,
+      "relative_performance": 1.5273,
+      "group": "8192B attachment"
+    },
+    "attachment_102400B_avg_latency": {
+      "x86_64": 27681.6,
+      "aarch64": 16388.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.592,
+      "relative_performance": 1.6891,
+      "group": "102400B attachment"
+    },
+    "attachment_102400B_p90_latency": {
+      "x86_64": 34416.8,
+      "aarch64": 18435.6,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5357,
+      "relative_performance": 1.8669,
+      "group": "102400B attachment"
+    },
+    "attachment_102400B_p99_latency": {
+      "x86_64": 41582.8,
+      "aarch64": 18711.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.45,
+      "relative_performance": 2.2223,
+      "group": "102400B attachment"
+    },
+    "attachment_102400B_p999_latency": {
+      "x86_64": 49543.0,
+      "aarch64": 19161.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3868,
+      "relative_performance": 2.5856,
+      "group": "102400B attachment"
+    },
+    "attachment_102400B_throughput": {
+      "x86_64": 1096.106,
+      "aarch64": 1954.898,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.7835,
+      "relative_performance": 1.7835,
+      "group": "102400B attachment"
+    },
+    "attachment_102400B_qps": {
+      "x86_64": 11224.12544,
+      "aarch64": 20018.15552,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.7835,
+      "relative_performance": 1.7835,
+      "group": "102400B attachment"
+    },
+    "attachment_204800B_avg_latency": {
+      "x86_64": 29656.6,
+      "aarch64": 16663.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5619,
+      "relative_performance": 1.7798,
+      "group": "204800B attachment"
+    },
+    "attachment_204800B_p90_latency": {
+      "x86_64": 36808.2,
+      "aarch64": 18843.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5119,
+      "relative_performance": 1.9534,
+      "group": "204800B attachment"
+    },
+    "attachment_204800B_p99_latency": {
+      "x86_64": 44800.6,
+      "aarch64": 19617.8,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.4379,
+      "relative_performance": 2.2837,
+      "group": "204800B attachment"
+    },
+    "attachment_204800B_p999_latency": {
+      "x86_64": 52953.4,
+      "aarch64": 19925.8,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3763,
+      "relative_performance": 2.6575,
+      "group": "204800B attachment"
+    },
+    "attachment_204800B_throughput": {
+      "x86_64": 1080.462,
+      "aarch64": 1835.768,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.6991,
+      "relative_performance": 1.6991,
+      "group": "204800B attachment"
+    },
+    "attachment_204800B_qps": {
+      "x86_64": 5531.96544,
+      "aarch64": 9399.132160000001,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.6991,
+      "relative_performance": 1.6991,
+      "group": "204800B attachment"
+    },
+    "attachment_1048576B_avg_latency": {
+      "x86_64": 22744.4,
+      "aarch64": 15634.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6874,
+      "relative_performance": 1.4548,
+      "group": "1048576B attachment"
+    },
+    "attachment_1048576B_p90_latency": {
+      "x86_64": 25937.2,
+      "aarch64": 16882.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6509,
+      "relative_performance": 1.5364,
+      "group": "1048576B attachment"
+    },
+    "attachment_1048576B_p99_latency": {
+      "x86_64": 30239.6,
+      "aarch64": 17885.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5915,
+      "relative_performance": 1.6907,
+      "group": "1048576B attachment"
+    },
+    "attachment_1048576B_p999_latency": {
+      "x86_64": 32768.0,
+      "aarch64": 19808.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6045,
+      "relative_performance": 1.6543,
+      "group": "1048576B attachment"
+    },
+    "attachment_1048576B_throughput": {
+      "x86_64": 1362.0359999999998,
+      "aarch64": 2029.7920000000001,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.4903,
+      "relative_performance": 1.4903,
+      "group": "1048576B attachment"
+    },
+    "attachment_1048576B_qps": {
+      "x86_64": 1362.0359999999998,
+      "aarch64": 2029.7920000000001,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.4903,
+      "relative_performance": 1.4903,
+      "group": "1048576B attachment"
+    },
+    "attachment_8388608B_avg_latency": {
+      "x86_64": 26876.8,
+      "aarch64": 16161.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.6013,
+      "relative_performance": 1.663,
+      "group": "8388608B attachment"
+    },
+    "attachment_8388608B_p90_latency": {
+      "x86_64": 42894.8,
+      "aarch64": 19592.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.4567,
+      "relative_performance": 2.1894,
+      "group": "8388608B attachment"
+    },
+    "attachment_8388608B_p99_latency": {
+      "x86_64": 66896.0,
+      "aarch64": 24868.4,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3717,
+      "relative_performance": 2.69,
+      "group": "8388608B attachment"
+    },
+    "attachment_8388608B_p999_latency": {
+      "x86_64": 81952.4,
+      "aarch64": 31769.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.3877,
+      "relative_performance": 2.5796,
+      "group": "8388608B attachment"
+    },
+    "attachment_8388608B_throughput": {
+      "x86_64": 1143.8152000000002,
+      "aarch64": 1904.9779999999998,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.6655,
+      "relative_performance": 1.6655,
+      "group": "8388608B attachment"
+    },
+    "attachment_8388608B_qps": {
+      "x86_64": 142.97690000000003,
+      "aarch64": 238.12224999999998,
+      "unit": "requests/s",
+      "direction": "higher_is_better",
+      "raw_ratio": 1.6655,
+      "relative_performance": 1.6655,
+      "group": "8388608B attachment"
+    }
+  }
+}
