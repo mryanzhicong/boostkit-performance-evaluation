@@ -1,0 +1,212 @@
+diff --git a/protobuf-benchmark/benchmark_common.h b/protobuf-benchmark/benchmark_common.h
+index 6be5db0..6f3a584 100644
+--- a/protobuf-benchmark/benchmark_common.h
++++ b/protobuf-benchmark/benchmark_common.h
+@@ -95,9 +95,14 @@ inline pb::test::BytesData makeBytesData(std::size_t size) {
+ }
+ 
+ // Generate integer uniformly distributed by varint byte count
+-inline std::uint64_t genIntRandomUniformBytes(std::uint8_t maxByteNum) {
+-    static std::random_device rd;
+-    static std::mt19937 engine(rd());
++inline std::mt19937 fixtureEngine(std::uint32_t type, std::size_t count) {
++    std::seed_seq seed{0x50424658U, type, static_cast<std::uint32_t>(count),
++                       static_cast<std::uint32_t>(count >> 32)};
++    return std::mt19937(seed);
++}
++
++inline std::uint64_t genIntRandomUniformBytes(std::mt19937 &engine,
++                                               std::uint8_t maxByteNum) {
+ 
+     std::uniform_int_distribution<int> byteDist(1, maxByteNum);
+     int selectedBytes = byteDist(engine);
+@@ -119,8 +124,9 @@ inline std::uint64_t genIntRandomUniformBytes(std::uint8_t maxByteNum) {
+ 
+ inline pb::test::ScalarInt32 genScalarInt32(std::size_t count) {
+     pb::test::ScalarInt32 data;
++    auto engine = fixtureEngine(1, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<int32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int32_t>::max()))));
+     }
+     return data;
+@@ -128,8 +134,9 @@ inline pb::test::ScalarInt32 genScalarInt32(std::size_t count) {
+ 
+ inline pb::test::ScalarUInt32 genScalarUInt32(std::size_t count) {
+     pb::test::ScalarUInt32 data;
++    auto engine = fixtureEngine(2, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<uint32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<uint32_t>::max()))));
+     }
+     return data;
+@@ -137,8 +144,9 @@ inline pb::test::ScalarUInt32 genScalarUInt32(std::size_t count) {
+ 
+ inline pb::test::ScalarSInt32 genScalarSInt32(std::size_t count) {
+     pb::test::ScalarSInt32 data;
++    auto engine = fixtureEngine(3, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<int32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int32_t>::max()))));
+     }
+     return data;
+@@ -146,8 +154,9 @@ inline pb::test::ScalarSInt32 genScalarSInt32(std::size_t count) {
+ 
+ inline pb::test::ScalarInt64 genScalarInt64(std::size_t count) {
+     pb::test::ScalarInt64 data;
++    auto engine = fixtureEngine(4, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(10);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 10);
+         data.add_numbers(static_cast<int64_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int64_t>::max()))));
+     }
+     return data;
+@@ -155,16 +164,18 @@ inline pb::test::ScalarInt64 genScalarInt64(std::size_t count) {
+ 
+ inline pb::test::ScalarUInt64 genScalarUInt64(std::size_t count) {
+     pb::test::ScalarUInt64 data;
++    auto engine = fixtureEngine(5, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        data.add_numbers(genIntRandomUniformBytes(10));
++        data.add_numbers(genIntRandomUniformBytes(engine, 10));
+     }
+     return data;
+ }
+ 
+ inline pb::test::ScalarSInt64 genScalarSInt64(std::size_t count) {
+     pb::test::ScalarSInt64 data;
++    auto engine = fixtureEngine(6, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(10);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 10);
+         data.add_numbers(static_cast<int64_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int64_t>::max()))));
+     }
+     return data;
+@@ -172,8 +183,7 @@ inline pb::test::ScalarSInt64 genScalarSInt64(std::size_t count) {
+ 
+ inline pb::test::ScalarBool genScalarBool(std::size_t count) {
+     pb::test::ScalarBool data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(7, count);
+     std::uniform_int_distribution<int> dist(0, 1);
+     for (std::size_t i = 0; i < count; ++i) {
+         data.add_values(dist(gen) == 1);
+@@ -183,8 +193,7 @@ inline pb::test::ScalarBool genScalarBool(std::size_t count) {
+ 
+ inline pb::test::ScalarEnum genScalarEnum(std::size_t count) {
+     pb::test::ScalarEnum data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(8, count);
+     std::uniform_int_distribution<int> dist(0, 4);
+     for (std::size_t i = 0; i < count; ++i) {
+         data.add_values(static_cast<pb::test::TestEnum>(dist(gen)));
+@@ -194,8 +203,7 @@ inline pb::test::ScalarEnum genScalarEnum(std::size_t count) {
+ 
+ inline pb::test::ScalarDouble genScalarDouble(std::size_t count) {
+     pb::test::ScalarDouble data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(9, count);
+     std::uniform_real_distribution<double> dist(
+         std::numeric_limits<double>::lowest(),
+         std::numeric_limits<double>::max()
+@@ -208,8 +216,7 @@ inline pb::test::ScalarDouble genScalarDouble(std::size_t count) {
+ 
+ inline pb::test::ScalarFloat genScalarFloat(std::size_t count) {
+     pb::test::ScalarFloat data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(10, count);
+     std::uniform_real_distribution<float> dist(
+         std::numeric_limits<float>::lowest(),
+         std::numeric_limits<float>::max()
+@@ -223,8 +230,9 @@ inline pb::test::ScalarFloat genScalarFloat(std::size_t count) {
+ // Repeated type generators (packed=true)
+ inline pb::test::RepeatedInt32 genRepeatedInt32(std::size_t count) {
+     pb::test::RepeatedInt32 data;
++    auto engine = fixtureEngine(11, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<int32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int32_t>::max()))));
+     }
+     return data;
+@@ -232,8 +240,9 @@ inline pb::test::RepeatedInt32 genRepeatedInt32(std::size_t count) {
+ 
+ inline pb::test::RepeatedUInt32 genRepeatedUInt32(std::size_t count) {
+     pb::test::RepeatedUInt32 data;
++    auto engine = fixtureEngine(12, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<uint32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<uint32_t>::max()))));
+     }
+     return data;
+@@ -241,8 +250,9 @@ inline pb::test::RepeatedUInt32 genRepeatedUInt32(std::size_t count) {
+ 
+ inline pb::test::RepeatedSInt32 genRepeatedSInt32(std::size_t count) {
+     pb::test::RepeatedSInt32 data;
++    auto engine = fixtureEngine(13, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(5);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 5);
+         data.add_numbers(static_cast<int32_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int32_t>::max()))));
+     }
+     return data;
+@@ -250,8 +260,9 @@ inline pb::test::RepeatedSInt32 genRepeatedSInt32(std::size_t count) {
+ 
+ inline pb::test::RepeatedInt64 genRepeatedInt64(std::size_t count) {
+     pb::test::RepeatedInt64 data;
++    auto engine = fixtureEngine(14, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(10);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 10);
+         data.add_numbers(static_cast<int64_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int64_t>::max()))));
+     }
+     return data;
+@@ -259,16 +270,18 @@ inline pb::test::RepeatedInt64 genRepeatedInt64(std::size_t count) {
+ 
+ inline pb::test::RepeatedUInt64 genRepeatedUInt64(std::size_t count) {
+     pb::test::RepeatedUInt64 data;
++    auto engine = fixtureEngine(15, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        data.add_numbers(genIntRandomUniformBytes(10));
++        data.add_numbers(genIntRandomUniformBytes(engine, 10));
+     }
+     return data;
+ }
+ 
+ inline pb::test::RepeatedSInt64 genRepeatedSInt64(std::size_t count) {
+     pb::test::RepeatedSInt64 data;
++    auto engine = fixtureEngine(16, count);
+     for (std::size_t i = 0; i < count; ++i) {
+-        std::uint64_t n = genIntRandomUniformBytes(10);
++        std::uint64_t n = genIntRandomUniformBytes(engine, 10);
+         data.add_numbers(static_cast<int64_t>(std::min(n, static_cast<std::uint64_t>(std::numeric_limits<int64_t>::max()))));
+     }
+     return data;
+@@ -276,8 +289,7 @@ inline pb::test::RepeatedSInt64 genRepeatedSInt64(std::size_t count) {
+ 
+ inline pb::test::RepeatedDouble genRepeatedDouble(std::size_t count) {
+     pb::test::RepeatedDouble data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(17, count);
+     std::uniform_real_distribution<double> dist(
+         std::numeric_limits<double>::lowest(),
+         std::numeric_limits<double>::max()
+@@ -290,8 +302,7 @@ inline pb::test::RepeatedDouble genRepeatedDouble(std::size_t count) {
+ 
+ inline pb::test::RepeatedFloat genRepeatedFloat(std::size_t count) {
+     pb::test::RepeatedFloat data;
+-    std::random_device rd;
+-    std::mt19937 gen(rd());
++    auto gen = fixtureEngine(18, count);
+     std::uniform_real_distribution<float> dist(
+         std::numeric_limits<float>::lowest(),
+         std::numeric_limits<float>::max()

@@ -1,0 +1,1596 @@
+{
+  "category": "HPC",
+  "software": "protobuf",
+  "version": "33.0",
+  "parameter_signature": "202252d6c0364236b6b3aca3eeb4ef9b27245867ae26cc33a26cf726ae02abf0",
+  "test_tools": {
+    "AccLibBenchmark/protobuf-benchmark": {
+      "version": "01d083c6633babb2fb1307d93f596f10dda36778"
+    },
+    "google-benchmark": {
+      "version": "1.8.3"
+    }
+  },
+  "environments": {
+    "x86_64": {
+      "build_info": {
+        "recorded_at": "2026-10-12T02:59:25Z",
+        "category": "HPC",
+        "software": "protobuf",
+        "requested_version": "33.0",
+        "actual_version": "33.0",
+        "architecture": "x86_64",
+        "run_id": "38197866142-1"
+      },
+      "system_info": {
+        "collected_at": "2026-10-12T02:57:55Z",
+        "architecture": "x86_64",
+        "platform": "openEuler 24.03 (LTS-SP3)",
+        "kernel": "6.6.0-132.0.0.111.oe2403sp3.x86_64",
+        "cpu_model": "AMD EPYC 9654 96-Core Processor",
+        "cpu_count": 384,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": ""
+      },
+      "runtime_before": {
+        "collected_at": "2026-10-12T02:57:55Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 47904985088 512985702400   129179648 254329851904 762657452032\nSwap:     4294963200  4270665728    24297472",
+        "cpu_governor": "performance"
+      },
+      "runtime_after": {
+        "collected_at": "2026-10-12T03:20:18Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     810562437120 47689097216 512732667904   131194880 254809546752 762873339904\nSwap:     4294963200  4264603648    30359552",
+        "cpu_governor": "performance"
+      }
+    },
+    "aarch64": {
+      "build_info": {
+        "recorded_at": "2026-10-12T02:59:36Z",
+        "category": "HPC",
+        "software": "protobuf",
+        "requested_version": "33.0",
+        "actual_version": "33.0",
+        "architecture": "aarch64",
+        "run_id": "38197866142-1"
+      },
+      "system_info": {
+        "collected_at": "2026-10-12T02:58:16Z",
+        "architecture": "aarch64",
+        "platform": "openEuler 24.03 (LTS-SP4)",
+        "kernel": "6.6.0-159.4.14.168.oe2403sp4.aarch64",
+        "cpu_model": "-",
+        "cpu_count": 384,
+        "python_version": "3.11.6",
+        "gcc_version": "12.3.1",
+        "glibc_version": "glibc 2.38",
+        "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 574945 MB\nnode 0 free: 341616 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 580594 MB\nnode 1 free: 419406 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 580594 MB\nnode 2 free: 431745 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 482782 MB\nnode 3 free: 329993 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+      },
+      "runtime_before": {
+        "collected_at": "2026-10-12T02:58:16Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     2326702432256 57151279104 1596731285504   282583040 683172941824 2269551153152\nSwap:              0           0           0",
+        "cpu_governor": "performance"
+      },
+      "runtime_after": {
+        "collected_at": "2026-10-12T03:20:23Z",
+        "memory": "total        used        free      shared  buff/cache   available\nMem:     2326702432256 57200209920 1596303253504   285143040 683561156608 2269502222336\nSwap:              0           0           0",
+        "cpu_governor": "performance"
+      }
+    }
+  },
+  "metrics": {
+    "BM_Serialize_Scalar_Bool/10/cpu_time_median": {
+      "x86_64": 12.730802415389249,
+      "aarch64": 17.858066799310073,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4027,
+      "relative_performance": 0.7129,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Bool/100/cpu_time_median": {
+      "x86_64": 62.30242941506076,
+      "aarch64": 128.07887591492988,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.0558,
+      "relative_performance": 0.4864,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Bool/1000/cpu_time_median": {
+      "x86_64": 555.90264165955,
+      "aarch64": 1168.965821643078,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1028,
+      "relative_performance": 0.4756,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Bool/10000/cpu_time_median": {
+      "x86_64": 5440.39465851169,
+      "aarch64": 11562.724360032822,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1253,
+      "relative_performance": 0.4705,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Double/10/cpu_time_median": {
+      "x86_64": 15.521614178759508,
+      "aarch64": 14.791213010165682,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9529,
+      "relative_performance": 1.0494,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Double/100/cpu_time_median": {
+      "x86_64": 113.5037447118371,
+      "aarch64": 95.3531215234873,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8401,
+      "relative_performance": 1.1904,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Double/1000/cpu_time_median": {
+      "x86_64": 1095.4090240505752,
+      "aarch64": 783.2879783342876,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7151,
+      "relative_performance": 1.3985,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Double/10000/cpu_time_median": {
+      "x86_64": 10847.674747505976,
+      "aarch64": 7763.0318449424885,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7156,
+      "relative_performance": 1.3974,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Enum/10/cpu_time_median": {
+      "x86_64": 32.579116166205914,
+      "aarch64": 32.51474350880832,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.998,
+      "relative_performance": 1.002,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Enum/100/cpu_time_median": {
+      "x86_64": 261.9391635165149,
+      "aarch64": 257.80688032574955,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9842,
+      "relative_performance": 1.016,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Enum/1000/cpu_time_median": {
+      "x86_64": 2420.9168850888705,
+      "aarch64": 2524.7534111532614,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0429,
+      "relative_performance": 0.9589,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Enum/10000/cpu_time_median": {
+      "x86_64": 25511.756107789275,
+      "aarch64": 24865.10512110313,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9747,
+      "relative_performance": 1.026,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Float/10/cpu_time_median": {
+      "x86_64": 15.528044353264333,
+      "aarch64": 14.869848439385992,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9576,
+      "relative_performance": 1.0443,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Float/100/cpu_time_median": {
+      "x86_64": 113.50297374229858,
+      "aarch64": 89.28414782526265,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7866,
+      "relative_performance": 1.2713,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Float/1000/cpu_time_median": {
+      "x86_64": 1095.297066453881,
+      "aarch64": 783.1360831943115,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.715,
+      "relative_performance": 1.3986,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Float/10000/cpu_time_median": {
+      "x86_64": 10846.354666522831,
+      "aarch64": 7725.69528069564,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7123,
+      "relative_performance": 1.4039,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int32/10/cpu_time_median": {
+      "x86_64": 39.58685943654013,
+      "aarch64": 43.31269193676581,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0941,
+      "relative_performance": 0.914,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int32/100/cpu_time_median": {
+      "x86_64": 346.58716764593464,
+      "aarch64": 388.08586471584863,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1197,
+      "relative_performance": 0.8931,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int32/1000/cpu_time_median": {
+      "x86_64": 3487.1021685503165,
+      "aarch64": 4135.589736425167,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.186,
+      "relative_performance": 0.8432,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int32/10000/cpu_time_median": {
+      "x86_64": 36036.95293845204,
+      "aarch64": 88145.24623853201,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.446,
+      "relative_performance": 0.4088,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int64/10/cpu_time_median": {
+      "x86_64": 39.80427505810899,
+      "aarch64": 44.170023078214406,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1097,
+      "relative_performance": 0.9012,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int64/100/cpu_time_median": {
+      "x86_64": 419.6560146257696,
+      "aarch64": 511.55059328338075,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.219,
+      "relative_performance": 0.8204,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int64/1000/cpu_time_median": {
+      "x86_64": 4199.526010298544,
+      "aarch64": 5380.447444223939,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2812,
+      "relative_performance": 0.7805,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_Int64/10000/cpu_time_median": {
+      "x86_64": 42826.360692334,
+      "aarch64": 101816.45289624447,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.3774,
+      "relative_performance": 0.4206,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt32/10/cpu_time_median": {
+      "x86_64": 44.29390472641847,
+      "aarch64": 39.012780593697386,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8808,
+      "relative_performance": 1.1354,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt32/100/cpu_time_median": {
+      "x86_64": 407.1195164244171,
+      "aarch64": 303.5775543290438,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7457,
+      "relative_performance": 1.3411,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt32/1000/cpu_time_median": {
+      "x86_64": 4423.831226761075,
+      "aarch64": 3527.7854498376278,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7975,
+      "relative_performance": 1.254,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt32/10000/cpu_time_median": {
+      "x86_64": 45136.89083939897,
+      "aarch64": 89947.70583806667,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.9928,
+      "relative_performance": 0.5018,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt64/10/cpu_time_median": {
+      "x86_64": 53.09349190239119,
+      "aarch64": 63.19500204046087,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1903,
+      "relative_performance": 0.8402,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt64/100/cpu_time_median": {
+      "x86_64": 485.65146410175095,
+      "aarch64": 570.1955470233436,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1741,
+      "relative_performance": 0.8517,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt64/1000/cpu_time_median": {
+      "x86_64": 4860.579503931422,
+      "aarch64": 6173.716205544133,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2702,
+      "relative_performance": 0.7873,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_SInt64/10000/cpu_time_median": {
+      "x86_64": 48698.207095511345,
+      "aarch64": 121668.54583484854,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.4984,
+      "relative_performance": 0.4003,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt32/10/cpu_time_median": {
+      "x86_64": 37.80986832501881,
+      "aarch64": 32.46879585605707,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8587,
+      "relative_performance": 1.1645,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt32/100/cpu_time_median": {
+      "x86_64": 318.87454892679983,
+      "aarch64": 252.39077478674045,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.7915,
+      "relative_performance": 1.2634,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt32/1000/cpu_time_median": {
+      "x86_64": 3620.74600392486,
+      "aarch64": 2986.5704853607604,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8248,
+      "relative_performance": 1.2123,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt32/10000/cpu_time_median": {
+      "x86_64": 36716.711456229415,
+      "aarch64": 67837.91168304178,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.8476,
+      "relative_performance": 0.5412,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt64/10/cpu_time_median": {
+      "x86_64": 51.41597668666759,
+      "aarch64": 51.74535662680582,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0064,
+      "relative_performance": 0.9936,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt64/100/cpu_time_median": {
+      "x86_64": 463.1694899117606,
+      "aarch64": 526.7302572468097,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1372,
+      "relative_performance": 0.8793,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt64/1000/cpu_time_median": {
+      "x86_64": 5177.100213180108,
+      "aarch64": 5659.001651477133,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0931,
+      "relative_performance": 0.9148,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Scalar_UInt64/10000/cpu_time_median": {
+      "x86_64": 51224.05058009751,
+      "aarch64": 121276.17660571756,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.3676,
+      "relative_performance": 0.4224,
+      "group": "序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Bool/10/cpu_time_median": {
+      "x86_64": 58.314168267418104,
+      "aarch64": 70.46374730567092,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2083,
+      "relative_performance": 0.8276,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Bool/100/cpu_time_median": {
+      "x86_64": 217.2813953333487,
+      "aarch64": 352.14473161253306,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.6207,
+      "relative_performance": 0.617,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Bool/1000/cpu_time_median": {
+      "x86_64": 1502.3405605085848,
+      "aarch64": 3172.25023439239,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1115,
+      "relative_performance": 0.4736,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Bool/10000/cpu_time_median": {
+      "x86_64": 14093.152839439219,
+      "aarch64": 30114.16121349986,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1368,
+      "relative_performance": 0.468,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Double/10/cpu_time_median": {
+      "x86_64": 72.25869045883226,
+      "aarch64": 83.47932055413916,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1553,
+      "relative_performance": 0.8656,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Double/100/cpu_time_median": {
+      "x86_64": 201.5764047557181,
+      "aarch64": 429.26790900552743,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1296,
+      "relative_performance": 0.4696,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Double/1000/cpu_time_median": {
+      "x86_64": 1320.2322536156494,
+      "aarch64": 3394.9868833592836,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.5715,
+      "relative_performance": 0.3889,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Double/10000/cpu_time_median": {
+      "x86_64": 13347.022975827089,
+      "aarch64": 35283.771808997284,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.6436,
+      "relative_performance": 0.3783,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Enum/10/cpu_time_median": {
+      "x86_64": 60.23366956555907,
+      "aarch64": 65.58691405056707,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0889,
+      "relative_performance": 0.9184,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Enum/100/cpu_time_median": {
+      "x86_64": 211.79791638848207,
+      "aarch64": 424.67772299280944,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.0051,
+      "relative_performance": 0.4987,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Enum/1000/cpu_time_median": {
+      "x86_64": 1311.467428604642,
+      "aarch64": 3657.1438507165053,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.7886,
+      "relative_performance": 0.3586,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Enum/10000/cpu_time_median": {
+      "x86_64": 12276.709940997212,
+      "aarch64": 32255.86174987336,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.6274,
+      "relative_performance": 0.3806,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Float/10/cpu_time_median": {
+      "x86_64": 52.336614669140765,
+      "aarch64": 66.82048290624486,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2767,
+      "relative_performance": 0.7832,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Float/100/cpu_time_median": {
+      "x86_64": 174.5817704318639,
+      "aarch64": 425.5978774547815,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.4378,
+      "relative_performance": 0.4102,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Float/1000/cpu_time_median": {
+      "x86_64": 1114.1861847475857,
+      "aarch64": 3658.5343675549443,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 3.2836,
+      "relative_performance": 0.3045,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Float/10000/cpu_time_median": {
+      "x86_64": 10590.230706847069,
+      "aarch64": 35452.38757133599,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 3.3477,
+      "relative_performance": 0.2987,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int32/10/cpu_time_median": {
+      "x86_64": 67.69643902313894,
+      "aarch64": 79.44778231914742,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1736,
+      "relative_performance": 0.8521,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int32/100/cpu_time_median": {
+      "x86_64": 281.4166458565572,
+      "aarch64": 422.72322870659116,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5021,
+      "relative_performance": 0.6657,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int32/1000/cpu_time_median": {
+      "x86_64": 2510.73247065524,
+      "aarch64": 3471.0992261787173,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3825,
+      "relative_performance": 0.7233,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int32/10000/cpu_time_median": {
+      "x86_64": 24476.730688460248,
+      "aarch64": 44250.70804082862,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.8079,
+      "relative_performance": 0.5531,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int64/10/cpu_time_median": {
+      "x86_64": 81.54142366712352,
+      "aarch64": 98.83841956253968,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2121,
+      "relative_performance": 0.825,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int64/100/cpu_time_median": {
+      "x86_64": 373.61692894179396,
+      "aarch64": 560.2964626043886,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4997,
+      "relative_performance": 0.6668,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int64/1000/cpu_time_median": {
+      "x86_64": 3178.262684109637,
+      "aarch64": 4888.5778808904,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5381,
+      "relative_performance": 0.6501,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_Int64/10000/cpu_time_median": {
+      "x86_64": 32066.777759992714,
+      "aarch64": 74599.3799195873,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.3264,
+      "relative_performance": 0.4299,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt32/10/cpu_time_median": {
+      "x86_64": 65.29657308153983,
+      "aarch64": 76.61758616040632,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1734,
+      "relative_performance": 0.8522,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt32/100/cpu_time_median": {
+      "x86_64": 319.457257480275,
+      "aarch64": 451.82662552110827,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4144,
+      "relative_performance": 0.707,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt32/1000/cpu_time_median": {
+      "x86_64": 2625.8198636623333,
+      "aarch64": 3758.9841107675834,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4315,
+      "relative_performance": 0.6985,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt32/10000/cpu_time_median": {
+      "x86_64": 27766.224773186328,
+      "aarch64": 50793.11769841557,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.8293,
+      "relative_performance": 0.5467,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt64/10/cpu_time_median": {
+      "x86_64": 83.65244482581883,
+      "aarch64": 112.97739760215784,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3506,
+      "relative_performance": 0.7404,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt64/100/cpu_time_median": {
+      "x86_64": 372.28148470578407,
+      "aarch64": 613.5726247647451,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.6481,
+      "relative_performance": 0.6067,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt64/1000/cpu_time_median": {
+      "x86_64": 3051.2541898649447,
+      "aarch64": 5441.934114317136,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.7835,
+      "relative_performance": 0.5607,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_SInt64/10000/cpu_time_median": {
+      "x86_64": 29963.27692472407,
+      "aarch64": 81350.89617221968,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.715,
+      "relative_performance": 0.3683,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt32/10/cpu_time_median": {
+      "x86_64": 63.74255051891661,
+      "aarch64": 75.43385813302334,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1834,
+      "relative_performance": 0.845,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt32/100/cpu_time_median": {
+      "x86_64": 282.30968812238274,
+      "aarch64": 414.25770371075026,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4674,
+      "relative_performance": 0.6815,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt32/1000/cpu_time_median": {
+      "x86_64": 2495.2839257593328,
+      "aarch64": 3384.3531094331415,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3563,
+      "relative_performance": 0.7373,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt32/10000/cpu_time_median": {
+      "x86_64": 24420.336170658327,
+      "aarch64": 46498.44175297453,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.9041,
+      "relative_performance": 0.5252,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt64/10/cpu_time_median": {
+      "x86_64": 87.1754710780835,
+      "aarch64": 113.17702249407961,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2983,
+      "relative_performance": 0.7703,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt64/100/cpu_time_median": {
+      "x86_64": 376.83390489230175,
+      "aarch64": 573.7812379798563,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5226,
+      "relative_performance": 0.6568,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt64/1000/cpu_time_median": {
+      "x86_64": 3300.4718344865605,
+      "aarch64": 5085.058349443496,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5407,
+      "relative_performance": 0.6491,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Deserialize_Scalar_UInt64/10000/cpu_time_median": {
+      "x86_64": 32522.609497025056,
+      "aarch64": 72218.54105736804,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.2206,
+      "relative_performance": 0.4503,
+      "group": "反序列化 / Scalar（非 packed）"
+    },
+    "BM_Serialize_Repeated_Double/10/cpu_time_median": {
+      "x86_64": 10.292970688887142,
+      "aarch64": 9.235626380074136,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8973,
+      "relative_performance": 1.1145,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Double/100/cpu_time_median": {
+      "x86_64": 16.803404526583467,
+      "aarch64": 17.92983490124735,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.067,
+      "relative_performance": 0.9372,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Double/1000/cpu_time_median": {
+      "x86_64": 87.10188294831264,
+      "aarch64": 90.56156493348469,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0397,
+      "relative_performance": 0.9618,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Double/10000/cpu_time_median": {
+      "x86_64": 1417.1168299046033,
+      "aarch64": 1220.1988333066354,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.861,
+      "relative_performance": 1.1614,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Float/10/cpu_time_median": {
+      "x86_64": 10.5638098182478,
+      "aarch64": 8.657036685548196,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8195,
+      "relative_performance": 1.2203,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Float/100/cpu_time_median": {
+      "x86_64": 12.917665137451367,
+      "aarch64": 11.896236033750094,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9209,
+      "relative_performance": 1.0859,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Float/1000/cpu_time_median": {
+      "x86_64": 49.69510324900162,
+      "aarch64": 44.70508858996754,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8996,
+      "relative_performance": 1.1116,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Float/10000/cpu_time_median": {
+      "x86_64": 724.0970214879504,
+      "aarch64": 339.30583065860776,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.4686,
+      "relative_performance": 2.1341,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int32/10/cpu_time_median": {
+      "x86_64": 33.34097384260901,
+      "aarch64": 35.21864243754525,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0563,
+      "relative_performance": 0.9467,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int32/100/cpu_time_median": {
+      "x86_64": 313.12737597392135,
+      "aarch64": 362.9229339720437,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.159,
+      "relative_performance": 0.8628,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int32/1000/cpu_time_median": {
+      "x86_64": 3543.327486485141,
+      "aarch64": 4083.6394536818875,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1525,
+      "relative_performance": 0.8677,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int32/10000/cpu_time_median": {
+      "x86_64": 36425.25079414448,
+      "aarch64": 61761.02202735578,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.6956,
+      "relative_performance": 0.5898,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int64/10/cpu_time_median": {
+      "x86_64": 47.159034568265895,
+      "aarch64": 60.98006676273126,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2931,
+      "relative_performance": 0.7734,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int64/100/cpu_time_median": {
+      "x86_64": 359.082796082213,
+      "aarch64": 507.56131501623713,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.4135,
+      "relative_performance": 0.7075,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int64/1000/cpu_time_median": {
+      "x86_64": 4092.489738170606,
+      "aarch64": 5465.840177065344,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3356,
+      "relative_performance": 0.7487,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_Int64/10000/cpu_time_median": {
+      "x86_64": 41232.97182349776,
+      "aarch64": 81902.25389418077,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.9863,
+      "relative_performance": 0.5034,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt32/10/cpu_time_median": {
+      "x86_64": 43.43663619639812,
+      "aarch64": 41.3613717511853,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9522,
+      "relative_performance": 1.0502,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt32/100/cpu_time_median": {
+      "x86_64": 336.59858980868876,
+      "aarch64": 295.55024327623397,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.878,
+      "relative_performance": 1.1389,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt32/1000/cpu_time_median": {
+      "x86_64": 3869.741170161719,
+      "aarch64": 3664.3426926169573,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9469,
+      "relative_performance": 1.0561,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt32/10000/cpu_time_median": {
+      "x86_64": 38297.988865788604,
+      "aarch64": 59197.715219064754,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5457,
+      "relative_performance": 0.647,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt64/10/cpu_time_median": {
+      "x86_64": 53.75834583480516,
+      "aarch64": 66.85767105130121,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2437,
+      "relative_performance": 0.8041,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt64/100/cpu_time_median": {
+      "x86_64": 469.3211760579024,
+      "aarch64": 633.8959402991763,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3507,
+      "relative_performance": 0.7404,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt64/1000/cpu_time_median": {
+      "x86_64": 4743.633497205431,
+      "aarch64": 6179.933288115393,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3028,
+      "relative_performance": 0.7676,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_SInt64/10000/cpu_time_median": {
+      "x86_64": 47804.11243295473,
+      "aarch64": 99223.85620914707,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.0756,
+      "relative_performance": 0.4818,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt32/10/cpu_time_median": {
+      "x86_64": 33.87513443712681,
+      "aarch64": 31.549008838055254,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9313,
+      "relative_performance": 1.0737,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt32/100/cpu_time_median": {
+      "x86_64": 296.2234127725062,
+      "aarch64": 263.23640353313465,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8886,
+      "relative_performance": 1.1253,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt32/1000/cpu_time_median": {
+      "x86_64": 3390.659181028648,
+      "aarch64": 2881.51952690083,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8498,
+      "relative_performance": 1.1767,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt32/10000/cpu_time_median": {
+      "x86_64": 34420.38423151051,
+      "aarch64": 46673.24655227309,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.356,
+      "relative_performance": 0.7375,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt64/10/cpu_time_median": {
+      "x86_64": 41.008772757404365,
+      "aarch64": 48.183183994746265,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1749,
+      "relative_performance": 0.8511,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt64/100/cpu_time_median": {
+      "x86_64": 384.87106172237395,
+      "aarch64": 538.6990856811658,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3997,
+      "relative_performance": 0.7144,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt64/1000/cpu_time_median": {
+      "x86_64": 4236.362570243617,
+      "aarch64": 5388.953158846734,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2721,
+      "relative_performance": 0.7861,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Repeated_UInt64/10000/cpu_time_median": {
+      "x86_64": 41683.67215532847,
+      "aarch64": 91515.43453305462,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 2.1955,
+      "relative_performance": 0.4555,
+      "group": "序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Double/10/cpu_time_median": {
+      "x86_64": 28.17929512755131,
+      "aarch64": 31.976846997152357,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1348,
+      "relative_performance": 0.8812,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Double/100/cpu_time_median": {
+      "x86_64": 35.12388808317133,
+      "aarch64": 46.8683106489362,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3344,
+      "relative_performance": 0.7494,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Double/1000/cpu_time_median": {
+      "x86_64": 115.15504727150437,
+      "aarch64": 129.10179856034736,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1211,
+      "relative_performance": 0.892,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Double/10000/cpu_time_median": {
+      "x86_64": 1453.5831042922287,
+      "aarch64": 1119.2750942004639,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.77,
+      "relative_performance": 1.2987,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Float/10/cpu_time_median": {
+      "x86_64": 27.365944913556866,
+      "aarch64": 31.23825041441805,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1415,
+      "relative_performance": 0.876,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Float/100/cpu_time_median": {
+      "x86_64": 30.10973489511689,
+      "aarch64": 39.46661396872103,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3108,
+      "relative_performance": 0.7629,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Float/1000/cpu_time_median": {
+      "x86_64": 75.72701403321469,
+      "aarch64": 80.49152019589387,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0629,
+      "relative_performance": 0.9408,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Float/10000/cpu_time_median": {
+      "x86_64": 759.2753212408709,
+      "aarch64": 394.28700778639296,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.5193,
+      "relative_performance": 1.9257,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int32/10/cpu_time_median": {
+      "x86_64": 63.077038196323535,
+      "aarch64": 76.63395672955399,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2149,
+      "relative_performance": 0.8231,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int32/100/cpu_time_median": {
+      "x86_64": 285.2882988998803,
+      "aarch64": 432.92000181767423,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5175,
+      "relative_performance": 0.659,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int32/1000/cpu_time_median": {
+      "x86_64": 2896.091156707272,
+      "aarch64": 3816.6312190030935,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3179,
+      "relative_performance": 0.7588,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int32/10000/cpu_time_median": {
+      "x86_64": 29753.80087968982,
+      "aarch64": 58550.01843710103,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.9678,
+      "relative_performance": 0.5082,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int64/10/cpu_time_median": {
+      "x86_64": 77.980200431885,
+      "aarch64": 102.04476515930024,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3086,
+      "relative_performance": 0.7642,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int64/100/cpu_time_median": {
+      "x86_64": 407.2545626239596,
+      "aarch64": 546.825489172588,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3427,
+      "relative_performance": 0.7448,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int64/1000/cpu_time_median": {
+      "x86_64": 4322.2463487381465,
+      "aarch64": 5289.159963440696,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2237,
+      "relative_performance": 0.8172,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_Int64/10000/cpu_time_median": {
+      "x86_64": 43554.694457412195,
+      "aarch64": 72106.35144867636,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.6555,
+      "relative_performance": 0.604,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt32/10/cpu_time_median": {
+      "x86_64": 67.20615479659492,
+      "aarch64": 87.44222926894697,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3011,
+      "relative_performance": 0.7686,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt32/100/cpu_time_median": {
+      "x86_64": 285.67208574456197,
+      "aarch64": 446.8179446033377,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5641,
+      "relative_performance": 0.6393,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt32/1000/cpu_time_median": {
+      "x86_64": 3335.8397766375906,
+      "aarch64": 4517.578273068913,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3543,
+      "relative_performance": 0.7384,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt32/10000/cpu_time_median": {
+      "x86_64": 31830.10457367779,
+      "aarch64": 57912.58529705917,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.8194,
+      "relative_performance": 0.5496,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt64/10/cpu_time_median": {
+      "x86_64": 82.0925831624184,
+      "aarch64": 105.64511463624592,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2869,
+      "relative_performance": 0.7771,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt64/100/cpu_time_median": {
+      "x86_64": 469.23781780229876,
+      "aarch64": 651.221231618833,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3878,
+      "relative_performance": 0.7206,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt64/1000/cpu_time_median": {
+      "x86_64": 4640.334032336113,
+      "aarch64": 5905.3553160241745,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2726,
+      "relative_performance": 0.7858,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_SInt64/10000/cpu_time_median": {
+      "x86_64": 46818.77938716688,
+      "aarch64": 80600.72874736937,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.7215,
+      "relative_performance": 0.5809,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt32/10/cpu_time_median": {
+      "x86_64": 65.03329332770764,
+      "aarch64": 73.58180796483165,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1314,
+      "relative_performance": 0.8838,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt32/100/cpu_time_median": {
+      "x86_64": 294.8451180334301,
+      "aarch64": 447.4628955805359,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5176,
+      "relative_performance": 0.6589,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt32/1000/cpu_time_median": {
+      "x86_64": 3025.1553835288023,
+      "aarch64": 3825.4490427198725,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2645,
+      "relative_performance": 0.7908,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt32/10000/cpu_time_median": {
+      "x86_64": 29877.501621577398,
+      "aarch64": 55313.68239673301,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.8513,
+      "relative_performance": 0.5401,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt64/10/cpu_time_median": {
+      "x86_64": 83.6405613406426,
+      "aarch64": 108.9165618169587,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3022,
+      "relative_performance": 0.7679,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt64/100/cpu_time_median": {
+      "x86_64": 432.64358268245576,
+      "aarch64": 583.1134031389747,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3478,
+      "relative_performance": 0.742,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt64/1000/cpu_time_median": {
+      "x86_64": 4382.062668227094,
+      "aarch64": 5277.532752491181,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2043,
+      "relative_performance": 0.8303,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Deserialize_Repeated_UInt64/10000/cpu_time_median": {
+      "x86_64": 44852.53943890859,
+      "aarch64": 71345.92190772964,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.5907,
+      "relative_performance": 0.6287,
+      "group": "反序列化 / Repeated（packed）"
+    },
+    "BM_Serialize_Bytes/10/cpu_time_median": {
+      "x86_64": 10.834853580672254,
+      "aarch64": 10.782198891487528,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9951,
+      "relative_performance": 1.0049,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_Bytes/100/cpu_time_median": {
+      "x86_64": 11.376544996407345,
+      "aarch64": 11.16733003173606,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9816,
+      "relative_performance": 1.0187,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_Bytes/1000/cpu_time_median": {
+      "x86_64": 20.37298280842831,
+      "aarch64": 22.25510439051314,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0924,
+      "relative_performance": 0.9154,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_Bytes/10000/cpu_time_median": {
+      "x86_64": 108.27022994519953,
+      "aarch64": 103.0104392726781,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9514,
+      "relative_performance": 1.0511,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_ASCII/10/cpu_time_median": {
+      "x86_64": 15.440598568402969,
+      "aarch64": 13.470350851228178,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.8724,
+      "relative_performance": 1.1463,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_ASCII/100/cpu_time_median": {
+      "x86_64": 18.42185277419368,
+      "aarch64": 19.261589097128148,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0456,
+      "relative_performance": 0.9564,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_ASCII/1000/cpu_time_median": {
+      "x86_64": 75.14357000415232,
+      "aarch64": 88.36967493133392,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.176,
+      "relative_performance": 0.8503,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_ASCII/10000/cpu_time_median": {
+      "x86_64": 635.2673826255109,
+      "aarch64": 633.9024155280515,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9979,
+      "relative_performance": 1.0022,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_Chinese/10/cpu_time_median": {
+      "x86_64": 17.60967853709346,
+      "aarch64": 17.958612075359582,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0198,
+      "relative_performance": 0.9806,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_Chinese/100/cpu_time_median": {
+      "x86_64": 29.588674799549715,
+      "aarch64": 30.581204585610337,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0335,
+      "relative_performance": 0.9675,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_Chinese/1000/cpu_time_median": {
+      "x86_64": 178.0475670283737,
+      "aarch64": 194.31372299018057,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0914,
+      "relative_performance": 0.9163,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Serialize_String_Chinese/10000/cpu_time_median": {
+      "x86_64": 1646.1563197584178,
+      "aarch64": 1799.2931707951975,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.093,
+      "relative_performance": 0.9149,
+      "group": "序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_Bytes/10/cpu_time_median": {
+      "x86_64": 38.47571286339389,
+      "aarch64": 37.598094720680486,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9772,
+      "relative_performance": 1.0233,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_Bytes/100/cpu_time_median": {
+      "x86_64": 47.15359066548778,
+      "aarch64": 50.33645282659944,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0675,
+      "relative_performance": 0.9368,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_Bytes/1000/cpu_time_median": {
+      "x86_64": 52.655009614237656,
+      "aarch64": 65.22093526759993,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2386,
+      "relative_performance": 0.8073,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_Bytes/10000/cpu_time_median": {
+      "x86_64": 234.25719362032603,
+      "aarch64": 235.74829177598235,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0064,
+      "relative_performance": 0.9937,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_ASCII/10/cpu_time_median": {
+      "x86_64": 43.356336925572855,
+      "aarch64": 40.8121607771127,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9413,
+      "relative_performance": 1.0623,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_ASCII/100/cpu_time_median": {
+      "x86_64": 55.96474633394462,
+      "aarch64": 64.50744454917084,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1526,
+      "relative_performance": 0.8676,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_ASCII/1000/cpu_time_median": {
+      "x86_64": 110.54830403096229,
+      "aarch64": 145.9378211458229,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.3201,
+      "relative_performance": 0.7575,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_ASCII/10000/cpu_time_median": {
+      "x86_64": 790.8865353495446,
+      "aarch64": 772.94429520556,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9773,
+      "relative_performance": 1.0232,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_Chinese/10/cpu_time_median": {
+      "x86_64": 46.704383425785174,
+      "aarch64": 46.54168289458786,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 0.9965,
+      "relative_performance": 1.0035,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_Chinese/100/cpu_time_median": {
+      "x86_64": 63.54322524315966,
+      "aarch64": 78.52381291197108,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.2358,
+      "relative_performance": 0.8092,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_Chinese/1000/cpu_time_median": {
+      "x86_64": 219.29941785297547,
+      "aarch64": 249.32938358442038,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.1369,
+      "relative_performance": 0.8796,
+      "group": "反序列化 / String 与 Bytes"
+    },
+    "BM_Deserialize_String_Chinese/10000/cpu_time_median": {
+      "x86_64": 1783.351909791547,
+      "aarch64": 1938.202040028164,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "raw_ratio": 1.0868,
+      "relative_performance": 0.9201,
+      "group": "反序列化 / String 与 Bytes"
+    }
+  }
+}
