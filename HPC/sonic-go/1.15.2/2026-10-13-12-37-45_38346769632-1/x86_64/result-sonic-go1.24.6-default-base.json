@@ -1,0 +1,271 @@
+{
+  "cell_id": "sonic-bench-tc-default",
+  "date": "2026-10-13",
+  "type": "bent",
+  "toolchain_id": "tc-default",
+  "toolchain_target": "go1.24.6-default",
+  "toolchain_version": "go version go1.24.6 linux/amd64",
+  "runner": "go test -bench (sonic parser/encoder/decoder)",
+  "test_cmd": "cd /home/runner/boostkit-perf/sonic-go/1.15.2/x86_64/38346769632-1/objects/go/src/sonic && go test -run=^$ -benchmem -benchtime=5s （encoder @ ./encoder + decoder @ ./decoder + parser @ ./internal/native；均使用默认分派，SONIC_NO_ASYNC_GC=1 关闭后台 GC 循环）",
+  "benchtime": "5s",
+  "duration_sec": 209,
+  "env": {
+    "host": "server1",
+    "cpu_bind": "taskset:0-383",
+    "goexperiment": "",
+    "goarm64": "",
+    "gcflags": "",
+    "ldflags": "",
+    "sonic_no_async_gc": "1",
+    "gocache": "/home/runner/boostkit-perf/sonic-go/1.15.2/x86_64/38346769632-1/objects/go/bin/go1.24.6-default/.cache/go-build",
+    "sonic_dir": "/home/runner/boostkit-perf/sonic-go/1.15.2/x86_64/38346769632-1/objects/go/src/sonic",
+    "encoder_pkg": "./encoder",
+    "decoder_pkg": "./decoder",
+    "parser_pkg": "./internal/native"
+  },
+  "runs": [
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "exit_code": 0,
+      "bench_count": 12,
+      "duration_sec": 98,
+      "raw_log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/sonic-go/1.15.2/x86_64/38346769632-1/logs/sonic-go1.24.6-default-base/sonic-bench-encoder-default.raw.log"
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "exit_code": 0,
+      "bench_count": 12,
+      "duration_sec": 111,
+      "raw_log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/sonic-go/1.15.2/x86_64/38346769632-1/logs/sonic-go1.24.6-default-base/sonic-bench-decoder-default.raw.log"
+    },
+    {
+      "subject": "parser",
+      "mode": "default",
+      "exit_code": 0,
+      "bench_count": 0,
+      "duration_sec": 0,
+      "raw_log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/HPC/sonic-go/1.15.2/x86_64/38346769632-1/logs/sonic-go1.24.6-default-base/sonic-bench-parser-default.raw.log"
+    }
+  ],
+  "results": [
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Generic_Sonic",
+      "iterations": 210721,
+      "ns_per_op": 28812.0,
+      "bytes_per_op": 13614,
+      "allocs_per_op": 40
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Generic_Sonic_Fast",
+      "iterations": 283790,
+      "ns_per_op": 20387.0,
+      "bytes_per_op": 13552,
+      "allocs_per_op": 40
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Generic_StdLib",
+      "iterations": 79392,
+      "ns_per_op": 75135.0,
+      "bytes_per_op": 33192,
+      "allocs_per_op": 653
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Binding_Sonic",
+      "iterations": 806235,
+      "ns_per_op": 7136.0,
+      "bytes_per_op": 9880,
+      "allocs_per_op": 2
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Binding_Sonic_Fast",
+      "iterations": 888709,
+      "ns_per_op": 6591.0,
+      "bytes_per_op": 9851,
+      "allocs_per_op": 2
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Binding_StdLib",
+      "iterations": 464252,
+      "ns_per_op": 12745.0,
+      "bytes_per_op": 9552,
+      "allocs_per_op": 1
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Generic_Sonic",
+      "iterations": 2057068,
+      "ns_per_op": 3154.0,
+      "bytes_per_op": 15261,
+      "allocs_per_op": 40
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Generic_Sonic_Fast",
+      "iterations": 2112469,
+      "ns_per_op": 2984.0,
+      "bytes_per_op": 14706,
+      "allocs_per_op": 40
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Generic_StdLib",
+      "iterations": 613654,
+      "ns_per_op": 19589.0,
+      "bytes_per_op": 32932,
+      "allocs_per_op": 653
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Binding_Sonic",
+      "iterations": 4130676,
+      "ns_per_op": 1588.0,
+      "bytes_per_op": 10943,
+      "allocs_per_op": 2
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Binding_Sonic_Fast",
+      "iterations": 3386062,
+      "ns_per_op": 1598.0,
+      "bytes_per_op": 10782,
+      "allocs_per_op": 2
+    },
+    {
+      "subject": "encoder",
+      "mode": "default",
+      "benchmark": "BenchmarkEncoder_Parallel_Binding_StdLib",
+      "iterations": 3139132,
+      "ns_per_op": 1900.0,
+      "bytes_per_op": 9478,
+      "allocs_per_op": 1
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Generic_Sonic",
+      "iterations": 93217,
+      "ns_per_op": 65260.0,
+      "bytes_per_op": 55837,
+      "allocs_per_op": 747
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Generic_Sonic_Fast",
+      "iterations": 115695,
+      "ns_per_op": 51242.0,
+      "bytes_per_op": 47976,
+      "allocs_per_op": 337
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Generic_StdLib",
+      "iterations": 49270,
+      "ns_per_op": 122448.0,
+      "bytes_per_op": 49466,
+      "allocs_per_op": 795
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Binding_Sonic",
+      "iterations": 272118,
+      "ns_per_op": 21771.0,
+      "bytes_per_op": 9710,
+      "allocs_per_op": 127
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Binding_Sonic_Fast",
+      "iterations": 329764,
+      "ns_per_op": 18117.0,
+      "bytes_per_op": 6647,
+      "allocs_per_op": 24
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Binding_StdLib",
+      "iterations": 60541,
+      "ns_per_op": 98788.0,
+      "bytes_per_op": 11416,
+      "allocs_per_op": 160
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Generic_Sonic",
+      "iterations": 266988,
+      "ns_per_op": 27454.0,
+      "bytes_per_op": 55686,
+      "allocs_per_op": 747
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Generic_Sonic_Fast",
+      "iterations": 601447,
+      "ns_per_op": 24446.0,
+      "bytes_per_op": 47968,
+      "allocs_per_op": 337
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Generic_StdLib",
+      "iterations": 590192,
+      "ns_per_op": 34950.0,
+      "bytes_per_op": 49467,
+      "allocs_per_op": 795
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Binding_Sonic",
+      "iterations": 1422775,
+      "ns_per_op": 4361.0,
+      "bytes_per_op": 9968,
+      "allocs_per_op": 127
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Binding_Sonic_Fast",
+      "iterations": 2537538,
+      "ns_per_op": 2382.0,
+      "bytes_per_op": 6916,
+      "allocs_per_op": 24
+    },
+    {
+      "subject": "decoder",
+      "mode": "default",
+      "benchmark": "BenchmarkDecoder_Parallel_Binding_StdLib",
+      "iterations": 1000000,
+      "ns_per_op": 7574.0,
+      "bytes_per_op": 11416,
+      "allocs_per_op": 160
+    }
+  ],
+  "exit_code": 0
+}
