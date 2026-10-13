@@ -239,6 +239,44 @@ verify_go_toolchain() {
     fi
 }
 
+download_sonic_modules() {
+    local module
+    local -a modules=()
+
+    mapfile -t modules < <(python3 - "${SOURCE_DIR}" <<'PYEOF'
+import sys
+from pathlib import Path
+
+source_dir = Path(sys.argv[1])
+modules = set()
+for sums_file in source_dir.rglob("go.sum"):
+    for line in sums_file.read_text(encoding="utf-8").splitlines():
+        name, version, _checksum = line.split()
+        if not version.endswith("/go.mod"):
+            modules.add(f"{name}@{version}")
+for module in sorted(modules):
+    print(module)
+PYEOF
+    )
+    if [[ "${#modules[@]}" -eq 0 ]]; then
+        log "ERROR: Sonic source contains no go.sum module checksums"
+        return 40
+    fi
+    log "downloading ${#modules[@]} checked Go module versions one at a time"
+    for module in "${modules[@]}"; do
+        log "downloading ${module}"
+        if ! (cd "${SOURCE_DIR}" && "${GO_BIN}" mod download "${module}"); then
+            log "ERROR: failed to download Go module ${module} through the configured proxy"
+            return 40
+        fi
+    done
+    log "verifying complete Sonic Go workspace dependency graph"
+    if ! (cd "${SOURCE_DIR}" && "${GO_BIN}" mod download); then
+        log "ERROR: failed to download the complete Sonic Go dependency graph"
+        return 40
+    fi
+}
+
 build_sonic_go() {
     local actual_version go_src_commit
 
@@ -294,11 +332,7 @@ build_sonic_go() {
         log "ERROR: checked-out Sonic tag ${actual_version:-unknown} does not match v${SOFTWARE_VERSION}"
         return 40
     fi
-    log "downloading Sonic's declared Go module dependencies"
-    if ! (
-        cd "${SOURCE_DIR}"
-        "${GO_BIN}" mod download
-    ); then
+    if ! download_sonic_modules; then
         log "ERROR: failed to prepare the Sonic benchmark packages"
         return 40
     fi
