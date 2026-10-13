@@ -99,11 +99,17 @@ require_build_commands() {
 }
 
 prepare_folly_source() {
+    local tag_commit head_commit
     [[ ! -e "${SOURCE_DIR}" ]] || { log_message "ERROR: existing source directory: ${SOURCE_DIR}"; return 40; }
     log_message "cloning upstream Folly v${SOFTWARE_VERSION}"
     with_network_proxy git clone --branch "v${SOFTWARE_VERSION}" --depth 1 \
         "${FOLLY_SOURCE_URL}" "${SOURCE_DIR}" || return 40
-    [[ "$(git -C "${SOURCE_DIR}" describe --tags --exact-match)" == "v${SOFTWARE_VERSION}" ]] || return 40
+    tag_commit="$(git -C "${SOURCE_DIR}" rev-parse "refs/tags/v${SOFTWARE_VERSION}^{commit}")" || return 40
+    head_commit="$(git -C "${SOURCE_DIR}" rev-parse HEAD)" || return 40
+    if [[ "${tag_commit}" != "${head_commit}" ]]; then
+        log_message "ERROR: Folly v${SOFTWARE_VERSION} tag does not match the checked-out commit"
+        return 40
+    fi
     printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}"
 }
 
