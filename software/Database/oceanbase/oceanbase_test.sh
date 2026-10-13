@@ -90,7 +90,7 @@ configure_runtime_paths() {
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
     TMPDIR="${PERF_WORK_DIR}/tmp"
-    OB_DEPLOY_HOME="${PERF_WORK_DIR}/oceanbase-demo"
+    OB_DEPLOY_HOME="${PERF_WORK_DIR}/ob"
     OBD_HOME="${PERF_WORK_DIR}/obd-meta"
     OB_ROOT_PASSWORD_FILE="${PERF_WORK_DIR}/ob-root-password"
     OB_PACKAGE_DIR="${PERF_WORK_DIR}/packages"
@@ -170,8 +170,15 @@ compute_oceanbase_ports() {
 }
 
 initialize_runtime() {
+    local daemon_socket socket_bytes
     configure_runtime_paths || return $?
     compute_oceanbase_ports || return $?
+    daemon_socket="${OB_DEPLOY_HOME}/oceanbase-ce/run/daemon.sock"
+    socket_bytes="$(LC_ALL=C printf '%s' "${daemon_socket}" | wc -c)"
+    if (( socket_bytes >= 108 )); then
+        log "ERROR: obshell Unix socket path is ${socket_bytes} bytes (maximum 107): ${daemon_socket}"
+        return 20
+    fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
@@ -425,7 +432,7 @@ run_oceanbase_benchmarks() {
 # ---------------------------------------------------------------------------
 stop_oceanbase_service() {
     initialize_runtime || return $?
-    if [[ "${OB_DEPLOY_HOME}" != "${PERF_WORK_DIR}/oceanbase-demo" ||
+    if [[ "${OB_DEPLOY_HOME}" != "${PERF_WORK_DIR}/ob" ||
           "${PERF_WORK_DIR}" == / || -z "${PERF_WORK_DIR}" ]]; then
         log "ERROR: refusing to clean unexpected OceanBase deployment path: ${OB_DEPLOY_HOME}"
         return 70

@@ -31,6 +31,10 @@ Framework 提供本次任务的 `PERF_WORK_DIR`、`RESULTS_DIR`、`PERF_RUN_ID` 
 权限为 `0600` 的随机 `root@sys` 密码文件；连接时读取该文件，不把密码写入
 Sysbench 命令或结果文件。
 
+OBD 的 `--home_path` 为 `${PERF_WORK_DIR}/ob`。脚本在部署前检查
+`${PERF_WORK_DIR}/ob/oceanbase-ce/run/daemon.sock` 的字节长度，确保 obshell
+的 Unix socket 路径不超过 107 字节。
+
 openEuler 上 OBD 可能自动选择 el7 镜像。脚本明确从 OceanBase 官方 el8 仓库
 用 `dnf download` 下载两个固定版本的 RPM，然后以 `obd mirror clone` 导入本次
 任务的私有 `OBD_HOME`，并禁用该私有 OBD 镜像的远端源：
