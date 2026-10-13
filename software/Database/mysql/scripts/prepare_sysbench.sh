@@ -23,8 +23,11 @@ sysbench_source_directory="${work_directory}/sysbench-1.0.20"
 sysbench_repository="https://github.com/akopytov/sysbench.git"
 sysbench_ref="1.0.20"
 sysbench_commit="ebf1c90"
+luajit_repository="https://github.com/LuaJIT/LuaJIT.git"
+luajit_commit="c6ffc141a8762b41703f9287d63d93622a13dd8f"
+luajit_source_directory="${work_directory}/luajit-${luajit_commit}"
 
-for command_name in git make gcc autoreconf libtoolize pkg-config; do
+for command_name in git make gcc autoreconf libtoolize pkg-config tar; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then
         printf '[mysql] ERROR: Sysbench prerequisite is missing: %s\n' \
             "${command_name}" >&2
@@ -49,7 +52,41 @@ if [[ "${actual_commit}" != "${sysbench_commit}" ]]; then
     exit 30
 fi
 
-printf '[mysql] building official Sysbench %s\n' "${sysbench_ref}"
+printf '[mysql] fetching LuaJIT v2.1 commit %s\n' "${luajit_commit}"
+if [[ ! -d "${luajit_source_directory}/.git" ]]; then
+    git init -q "${luajit_source_directory}"
+    git -C "${luajit_source_directory}" remote add origin "${luajit_repository}"
+fi
+git -C "${luajit_source_directory}" fetch --quiet --depth 1 origin "${luajit_commit}"
+git -C "${luajit_source_directory}" checkout --quiet --detach FETCH_HEAD
+actual_commit="$(git -C "${luajit_source_directory}" rev-parse HEAD)"
+if [[ "${actual_commit}" != "${luajit_commit}" ]]; then
+    printf '[mysql] ERROR: LuaJIT resolved to %s, expected %s\n' \
+        "${actual_commit}" "${luajit_commit}" >&2
+    exit 30
+fi
+
+vendored_luajit="${sysbench_source_directory}/third_party/luajit/luajit"
+if [[ ! -d "${vendored_luajit}" ]]; then
+    printf '[mysql] ERROR: Sysbench bundled LuaJIT directory is missing: %s\n' \
+        "${vendored_luajit}" >&2
+    exit 30
+fi
+mv -- "${vendored_luajit}" "${vendored_luajit}-bak"
+mkdir -p "${vendored_luajit}"
+git -C "${luajit_source_directory}" archive --format=tar HEAD |
+    tar -xf - -C "${vendored_luajit}"
+
+sysbench_c="${sysbench_source_directory}/src/sysbench.c"
+if [[ "$(grep -c '^#define THREAD_INIT_TIMEOUT 30$' "${sysbench_c}")" -ne 1 ]]; then
+    printf '%s\n' '[mysql] ERROR: expected one upstream THREAD_INIT_TIMEOUT definition' >&2
+    exit 30
+fi
+sed -i 's/^#define THREAD_INIT_TIMEOUT 30$/#define THREAD_INIT_TIMEOUT 300/' "${sysbench_c}"
+printf '%s\n' '[mysql] using pinned LuaJIT v2.1 and a 300-second thread initialization timeout'
+
+printf '[mysql] building upstream Sysbench %s with the private LuaJIT and timeout changes\n' \
+    "${sysbench_ref}"
 (
     cd "${sysbench_source_directory}"
     ./autogen.sh

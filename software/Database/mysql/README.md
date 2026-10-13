@@ -10,6 +10,7 @@ Framework 按 `build`、`start`、`test`、`stop` 调用脚本中的阶段函数
 |---|---|---|
 | MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
 | Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
+| LuaJIT | [上游 LuaJIT](https://github.com/LuaJIT/LuaJIT) v2.1，固定提交 `c6ffc141a8762b41703f9287d63d93622a13dd8f` | `${PERF_WORK_DIR}/sysbench-tools/luajit-<提交>`；编译前复制到 Sysbench 私有源码目录 |
 
 Sysbench 在私有目录编译，不安装到系统目录。脚本以 `src/lua/` 中的绝对路径
 调用 OLTP 用例，并设置 `LUA_PATH` 供用例加载同目录的 `oltp_common.lua`；
@@ -106,15 +107,33 @@ MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQLADMIN_BIN}" \
 
 ## Sysbench 构建
 
-Sysbench 从上游固定标签克隆、核对提交，再在本次任务目录编译：
+Sysbench 从上游固定标签克隆、核对提交。构建前以固定提交的 LuaJIT v2.1
+替换 Sysbench 自带的 LuaJIT，并将 `src/sysbench.c` 的
+`THREAD_INIT_TIMEOUT` 从 30 秒改为 300 秒。两种架构使用相同源码和修改，
+都只在本次任务的私有目录编译：
 
 ```bash
 git clone --depth 1 --branch 1.0.20 https://github.com/akopytov/sysbench.git sysbench-1.0.20
+git init -q luajit-v2.1
+git -C luajit-v2.1 remote add origin https://github.com/LuaJIT/LuaJIT.git
+git -C luajit-v2.1 fetch --depth 1 origin c6ffc141a8762b41703f9287d63d93622a13dd8f
+git -C luajit-v2.1 checkout --detach FETCH_HEAD
+mv sysbench-1.0.20/third_party/luajit/luajit sysbench-1.0.20/third_party/luajit/luajit-bak
+mkdir sysbench-1.0.20/third_party/luajit/luajit
+git -C luajit-v2.1 archive --format=tar HEAD |
+  tar -xf - -C sysbench-1.0.20/third_party/luajit/luajit
+sed -i 's/^#define THREAD_INIT_TIMEOUT 30$/#define THREAD_INIT_TIMEOUT 300/' \
+  sysbench-1.0.20/src/sysbench.c
 cd sysbench-1.0.20
 ./autogen.sh
 PATH="<本次任务的 MySQL bin 目录>:$PATH" ./configure --with-mysql
 make -j"$(getconf _NPROCESSORS_ONLN)"
 ```
+
+脚本会核对两份源码提交和超时定义，并直接调用私有的 `src/sysbench`；
+不运行 `make install`，也不改 `/etc/profile`。资料中的
+`ulimit -SHn 1000000000` 需要相应的系统硬限制，且现有崩溃日志没有显示
+文件描述符耗尽，因此不将其作为此用例的系统配置。
 
 缺失的系统运行和编译依赖由脚本使用 `dnf` 安装；普通 Runner 用户使用
 `sudo -n dnf install -y <缺失的包>`，例如 `libaio-devel`、`openssl-devel`、
