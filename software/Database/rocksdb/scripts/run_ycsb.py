@@ -42,7 +42,6 @@ def run_phase(distribution: Path, action: str, workload: str, threads: int,
         "-p", f"operationcount={OPERATIONS}",
         "-p", f"fieldlength={FIELD_LENGTH}",
         "-p", f"fieldcount={FIELD_COUNT}",
-        "-p", "rocksdb.cfs=default", "-p", "table=default",
         "-threads", str(threads),
     ]
     print(f"[rocksdb-ycsb] {phase}: {shlex.join(command)}", flush=True)
@@ -64,10 +63,10 @@ def run_phase(distribution: Path, action: str, workload: str, threads: int,
         return_code = process.wait()
     if return_code:
         raise RuntimeError(f"{phase} exited with code {return_code}")
-    if len(values) != 1 or not math.isfinite(values[0]) or values[0] <= 0:
-        raise RuntimeError(f"{phase} must produce exactly one positive YCSB throughput")
     if errors:
         raise RuntimeError(f"{phase} reported {errors} failed YCSB operations")
+    if len(values) != 1 or not math.isfinite(values[0]) or values[0] <= 0:
+        raise RuntimeError(f"{phase} must produce exactly one positive YCSB throughput")
     return values[0]
 
 

@@ -72,9 +72,11 @@ RocksDB 6.26.1 JNI JAR，而不是其 POM 默认的 RocksDB 6.2.2。
 ```bash
 -s -p rocksdb.dir="$WORK/data/workload_data" \
   -p recordcount=100000000 -p operationcount=100000000 \
-  -p fieldlength=256 -p fieldcount=1 \
-  -p rocksdb.cfs=default -p table=default
+  -p fieldlength=256 -p fieldcount=1
 ```
+
+YCSB 使用默认表名 `usertable`，由 RocksDB binding 创建同名列族；不将表名设为
+`default`，因为 RocksDB 已有该默认列族。
 
 没有设置 `target`，即不限制 YCSB 请求速率。A、C 顺序运行，与文档物理机脚本一致；
 两架构使用同一命令参数。此流程执行数亿次操作并复制大规模数据库，可能运行数小时；

@@ -50,6 +50,8 @@ class RunYcsbTest(unittest.TestCase):
             self.assertTrue(all(row["value"] == 200.5 for row in payload["results"].values()))
             self.assertEqual(raw.read_text().count("=== formal "), 2)
             self.assertNotIn("rocksdb.optionsfile=", raw.read_text())
+            self.assertNotIn("table=default", raw.read_text())
+            self.assertNotIn("rocksdb.cfs=default", raw.read_text())
             self.assertTrue((work / "data" / "warmup_workload_data" / "record").is_file())
 
 
