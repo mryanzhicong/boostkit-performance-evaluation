@@ -1,0 +1,70 @@
+{
+  "benchmark": "glibc_2.31_string_benchtests",
+  "software": "glibc",
+  "version": "2.31",
+  "architecture": "aarch64",
+  "timestamp": "2026-10-13T00:40:20Z",
+  "parameters": {
+    "build_targets": [
+      "bench-timing-type",
+      "bench-memcpy",
+      "bench-memcmp"
+    ],
+    "run_commands": [
+      "bench-memcpy",
+      "bench-memcmp"
+    ],
+    "timing_backend": "clock_gettime(CLOCK_MONOTONIC)",
+    "benchtest_patch": "scripts/glibc-2.31-benchtests.patch",
+    "selected_lengths": [
+      2048,
+      4096
+    ]
+  },
+  "results": {
+    "memcpy.length=2048.align1=0.align2=0": {
+      "source_name": "memcpy.length=2048.align1=0.align2=0",
+      "source_field": "functions.memcpy.results[44].timings[1]",
+      "source_file": "bench-memcpy.out",
+      "implementation": "memcpy",
+      "group": "memcpy",
+      "raw_value": 31.9312,
+      "raw_unit": "ns",
+      "value": 31.9312,
+      "unit": "ns"
+    },
+    "memcpy.length=4096.align1=0.align2=0": {
+      "source_name": "memcpy.length=4096.align1=0.align2=0",
+      "source_field": "functions.memcpy.results[48].timings[1]",
+      "source_file": "bench-memcpy.out",
+      "implementation": "memcpy",
+      "group": "memcpy",
+      "raw_value": 62.6855,
+      "raw_unit": "ns",
+      "value": 62.6855,
+      "unit": "ns"
+    },
+    "memcmp.length=2048.align1=0.align2=0.expected_result=0": {
+      "source_name": "memcmp.length=2048.align1=0.align2=0.expected_result=0",
+      "source_field": "functions.memcmp.results[135].timings[0]",
+      "source_file": "bench-memcmp.out",
+      "implementation": "memcmp",
+      "group": "memcmp",
+      "raw_value": 53.58,
+      "raw_unit": "ns",
+      "value": 53.58,
+      "unit": "ns"
+    },
+    "memcmp.length=4096.align1=0.align2=0.expected_result=0": {
+      "source_name": "memcmp.length=4096.align1=0.align2=0.expected_result=0",
+      "source_field": "functions.memcmp.results[142].timings[0]",
+      "source_file": "bench-memcmp.out",
+      "implementation": "memcmp",
+      "group": "memcmp",
+      "raw_value": 103.791,
+      "raw_unit": "ns",
+      "value": 103.791,
+      "unit": "ns"
+    }
+  }
+}
