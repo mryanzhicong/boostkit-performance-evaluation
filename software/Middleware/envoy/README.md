@@ -1,21 +1,21 @@
 # Envoy 性能测试
 
-本目录适配官方 [envoyproxy/envoy](https://github.com/envoyproxy/envoy) 的单机开箱性能测试。当前固定测试 Envoy `1.39.1`，安装和性能测试均在 Runner 裸机的本次任务隔离目录中进行。
+本目录适配官方 [envoyproxy/envoy](https://github.com/envoyproxy/envoy) 的单机开箱性能测试。当前固定测试 Envoy `1.38.6`，安装和性能测试均在 Runner 裸机的本次任务隔离目录中进行。
 
 ## 构建与安装
 
-脚本自动安装缺失的基础命令。Envoy `1.39.1` 与 k6 `2.2.0` 均使用官方 GitHub Release 资产，按固定 SHA-256 校验后保存到本次任务的私有目录。
+脚本自动安装缺失的基础命令。Envoy `1.38.6` 与 k6 `2.2.0` 均使用官方 GitHub Release 资产，按固定 SHA-256 校验后保存到本次任务的私有目录。
 
 可预先将官方发布文件放入 Runner，脚本优先使用这些离线文件：
 
 ```bash
-/home/runner/software/envoy/envoy-1.39.1-linux-x86_64
-/home/runner/software/envoy/envoy-1.39.1-linux-aarch_64
+/home/runner/software/envoy/envoy-1.38.6-linux-x86_64
+/home/runner/software/envoy/envoy-1.38.6-linux-aarch_64
 /home/runner/software/envoy/k6-v2.2.0-linux-amd64.tar.gz
 /home/runner/software/envoy/k6-v2.2.0-linux-arm64.tar.gz
 ```
 
-对应离线文件不存在时，脚本从 [Envoy v1.39.1 Release](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1) 和 [k6 v2.2.0 Release](https://github.com/grafana/k6/releases/tag/v2.2.0) 下载相同文件；配置 `PERF_GITHUB_DOWNLOAD_PROXY` 时下载地址自动经该代理访问。安装后的 Envoy 位于本次任务私有的 `envoy-install/envoy`，脚本执行 `envoy --version` 校验请求版本，随后记录 `actual-version.txt`。
+对应离线文件不存在时，脚本从 [Envoy v1.38.6 Release](https://github.com/envoyproxy/envoy/releases/tag/v1.38.6) 和 [k6 v2.2.0 Release](https://github.com/grafana/k6/releases/tag/v2.2.0) 下载相同文件；配置 `PERF_GITHUB_DOWNLOAD_PROXY` 时下载地址自动经该代理访问。安装后的 Envoy 位于本次任务私有的 `envoy-install/envoy`，脚本执行 `envoy --version` 校验请求版本，随后记录 `actual-version.txt`。
 
 ## 服务启动
 
@@ -54,11 +54,11 @@ k6 对 `https://127.0.0.1:19000/` 和 `https://127.0.0.1:19001/` 分别执行压
 
 ```bash
 cd software/Middleware/envoy
-bash envoy_test.sh --version 1.39.1
+bash envoy_test.sh --version 1.38.6
 ```
 
-默认结果目录为 `results/1.39.1/<run-id>/`。如需保留构建目录排障：
+默认结果目录为 `results/1.38.6/<run-id>/`。如需保留构建目录排障：
 
 ```bash
-bash envoy_test.sh --version 1.39.1 --keep-workdir
+bash envoy_test.sh --version 1.38.6 --keep-workdir
 ```

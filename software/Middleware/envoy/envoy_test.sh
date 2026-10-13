@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.39.1}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.38.6}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
@@ -177,12 +177,12 @@ install_release_artifacts() {
     case "${EXPECTED_ARCH}" in
         x86_64)
             envoy_asset="envoy-${SOFTWARE_VERSION}-linux-x86_64"
-            envoy_sha256="002c6e1c69ed0fa0ea381887247cadadfaec9481375fa8d8d2b1731eeabf40b8"
+            envoy_sha256="9b68557ccb2ef587c0374bfca75b01966ca3c6b59d96663fd7557b496e0c7ad1"
             k6_sha256="b5a8003c86f35f5cd5ceef1490312c48e587696c94d998cefc6d7b3b4cb1597d"
             ;;
         aarch64)
             envoy_asset="envoy-${SOFTWARE_VERSION}-linux-aarch_64"
-            envoy_sha256="8565ad0af4b1d1d3c986e5165c027add3073579182f398dd7f4d728d25e9ec62"
+            envoy_sha256="e90eff416e94eaa8b5812196d17918635e8dc0b0e12d11ef7e0fee2c0a6bdca7"
             k6_sha256="4ecd64cadcc792402d16293836115480419c4447c032858f564852d98f1bf54c"
             ;;
     esac
