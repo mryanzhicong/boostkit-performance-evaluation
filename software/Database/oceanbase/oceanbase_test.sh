@@ -215,6 +215,56 @@ check_proxy_ready() {
     proxy_mysql -N -e 'SELECT 1' >/dev/null 2>&1
 }
 
+redact_diagnostic() {
+    local root_password=""
+    local -a filters=()
+    if [[ -s "${OB_ROOT_PASSWORD_FILE}" ]]; then
+        root_password="$(< "${OB_ROOT_PASSWORD_FILE}")"
+        filters+=(-e "s/${root_password}/[REDACTED]/g")
+    fi
+    filters+=(
+        -e "s/-p'[^']*'/-p'[REDACTED]'/g"
+        -e 's/([Pp]assword[[:space:]]*[:=][[:space:]]*)[^[:space:]]+/\1[REDACTED]/g'
+    )
+    sed -E "${filters[@]}"
+}
+
+collect_deployment_diagnostics() {
+    local deploy_log="$1" trace_id log_file
+    local trace_output="${PERF_WORK_DIR}/obd-trace.log"
+    local obshell_output="${RESULTS_DIR}/obshell-diagnostic.log"
+
+    trace_id="$(grep -oE 'Trace ID: [0-9a-f-]{36}' "${deploy_log}" | tail -n 1 | cut -d ' ' -f 3 || true)"
+    if [[ -n "${trace_id}" ]]; then
+        if obd display-trace "${trace_id}" > "${trace_output}" 2>&1; then
+            tail -n 1000 "${trace_output}" | redact_diagnostic > "${RESULTS_DIR}/obd-trace.log"
+        else
+            tail -n 1000 "${trace_output}" | redact_diagnostic > "${RESULTS_DIR}/obd-trace.log"
+            log "WARN: obd display-trace failed for ${trace_id}; partial output was saved"
+        fi
+    else
+        log 'WARN: no OBD trace ID found in deployment output'
+    fi
+
+    : > "${obshell_output}"
+    while IFS= read -r -d '' log_file; do
+        printf '\n== %s ==\n' "${log_file#"${OB_DEPLOY_HOME}/"}" >> "${obshell_output}"
+        tail -n 300 "${log_file}" | redact_diagnostic >> "${obshell_output}"
+    done < <(find "${OB_DEPLOY_HOME}" -type f -path '*/log_obshell/*' -name '*.log' -print0 2>/dev/null)
+    [[ -s "${obshell_output}" ]] || rm -f -- "${obshell_output}"
+    log "deployment diagnostics saved under ${RESULTS_DIR}"
+}
+
+capture_proxy_connection_error() {
+    local connection_output="${RESULTS_DIR}/obproxy-connection-error.log"
+    if proxy_mysql -N -e 'SELECT 1' > "${PERF_WORK_DIR}/proxy-check.log" 2>&1; then
+        return 0
+    fi
+    redact_diagnostic < "${PERF_WORK_DIR}/proxy-check.log" > "${connection_output}"
+    log "OBProxy connection error: $(tr '\n' ' ' < "${connection_output}")"
+    return 1
+}
+
 # ---------------------------------------------------------------------------
 # 依赖安装
 # ---------------------------------------------------------------------------
@@ -308,7 +358,7 @@ prepare_sysbench() {
 # 阶段 1：build - 部署 OceanBase observer
 # ---------------------------------------------------------------------------
 build_oceanbase() {
-    local runner_architecture actual_version proxy_info attempt
+    local runner_architecture actual_version proxy_info attempt deploy_log
 
     initialize_runtime || return $?
     runner_architecture="$(uname -m)"
@@ -331,6 +381,7 @@ build_oceanbase() {
     if [[ ! -s "${OB_ROOT_PASSWORD_FILE}" ]]; then
         (umask 077; openssl rand -hex 24 > "${OB_ROOT_PASSWORD_FILE}") || return 40
     fi
+    deploy_log="${PERF_WORK_DIR}/obd-deploy.log"
     if ! obd demo -c oceanbase-ce,obproxy-ce -A \
             "--oceanbase-ce.version=${SOFTWARE_VERSION}" \
             "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
@@ -339,7 +390,8 @@ build_oceanbase() {
             "--oceanbase-ce.rpc_port=${OB_RPC_PORT}" \
             "--obproxy-ce.listen_port=${OB_PROXY_PORT}" \
             "--obproxy-ce.prometheus_listen_port=${OB_PROXY_METRICS_PORT}" \
-            "--home_path=${OB_DEPLOY_HOME}"; then
+            "--home_path=${OB_DEPLOY_HOME}" 2>&1 | tee "${deploy_log}"; then
+        collect_deployment_diagnostics "${deploy_log}"
         log "ERROR: obd demo deployment failed"
         return 40
     fi
@@ -368,6 +420,8 @@ build_oceanbase() {
         sleep 3
     done
     if ! check_proxy_ready; then
+        capture_proxy_connection_error || true
+        collect_deployment_diagnostics "${deploy_log}"
         log "ERROR: test tenant is not reachable through OBProxy on ${OB_HOST}:${OB_PROXY_PORT}"
         return 40
     fi

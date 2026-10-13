@@ -126,6 +126,10 @@ Lua 脚本取自同一份上游源码，并通过 `LUA_PATH` 加载其 `oltp_com
 `cleanup`、`prepare`、`run` 的原始日志，`results.json` 保存结构化指标和
 相同的工作负载参数。
 
+部署失败时，脚本会在 stop 清理前把 `obd-trace.log` 和
+`obshell-diagnostic.log` 保存到结果目录；OBProxy 租户连接失败时还会保存
+`obproxy-connection-error.log`。诊断日志中的密码会被遮盖。
+
 ## 独立执行
 
 ```bash
