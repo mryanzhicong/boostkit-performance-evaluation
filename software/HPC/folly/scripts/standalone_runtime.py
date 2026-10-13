@@ -197,7 +197,7 @@ def extract_metrics(
         direction = result.get("direction")
         if not isinstance(unit, str) or not unit:
             raise RuntimeError(f"metric {metric_name} has no unit")
-        if direction != "lower_is_better":
+        if direction not in {"lower_is_better", "higher_is_better", "neutral"}:
             raise RuntimeError(f"metric {metric_name} has an invalid direction")
         metrics[metric_name] = {
             "value": value,
@@ -213,6 +213,14 @@ def markdown_cell(value: Any) -> str:
     if value is None or value == "":
         return "N/A"
     return str(value).replace("|", "\\|").replace("\r\n", "<br>").replace("\n", "<br>")
+
+
+def direction_label(direction: str) -> str:
+    return {
+        "higher_is_better": "越大越好",
+        "lower_is_better": "越小越好",
+        "neutral": "参考值",
+    }[direction]
 
 
 def render_report(result: dict[str, Any]) -> str:
@@ -255,7 +263,7 @@ def render_report(result: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            f"## 性能指标（官方场景逐字名称，共 {len(result.get('metrics', {}))} 个）",
+            f"## 性能指标（AccLibBenchmark 场景，共 {len(result.get('metrics', {}))} 个）",
             "",
             "| 指标 | 数值 | 单位 | 优化方向 |",
             "|---|---:|---|---|",
@@ -264,7 +272,7 @@ def render_report(result: dict[str, Any]) -> str:
     for metric_name, metric in result.get("metrics", {}).items():
         lines.append(
             f"| {markdown_cell(metric_name)} | {metric['value']} | "
-            f"{metric['unit']} | 越小越好 |"
+            f"{metric['unit']} | {direction_label(metric['direction'])} |"
         )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
