@@ -65,7 +65,7 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 构建阶段的命令形态如下；实际端口和路径由本次任务计算：
 
 ```bash
-obd demo -c oceanbase-ce,obproxy-ce -A \
+obd demo -c oceanbase-ce,obproxy-ce \
   --oceanbase-ce.version=4.2.5.6 \
   --oceanbase-ce.root_password=<本次任务生成的随机密码> \
   --obproxy-ce.version=4.3.6.1 \
@@ -76,10 +76,17 @@ obd demo -c oceanbase-ce,obproxy-ce -A \
   --home_path=<本次任务的部署目录>
 ```
 
-`-A` 创建使用可用资源的 MySQL 模式 `test` 租户。部署后，脚本通过 observer
-直接连接检查 `SELECT version()`，并通过 OBProxy 使用 `root@test#demo`
-检查租户和代理版本。正式测试只连接 OBProxy，不直连 observer。单机部署命令
-依据 [OBD 官方 `demo` 说明](https://en.oceanbase.com/docs/community-obd-en-10000000001957770)。
+部署后，脚本先通过 observer 直接连接检查 `SELECT version()`，再执行：
+
+```bash
+obd cluster tenant create demo -n test
+```
+
+该命令使用剩余可用资源创建 MySQL 模式 `test` 租户。脚本从系统租户查询
+`DBA_OB_TENANTS` 确认租户已创建，再通过 OBProxy 使用 `root@test#demo`
+检查租户和代理版本。正式测试只连接 OBProxy，不直连 observer。部署与建租户命令
+分别依据 [OBD `demo` 说明](https://en.oceanbase.com/docs/community-obd-en-10000000002136401)
+和 [OBD 租户创建说明](https://www.oceanbase.com/docs/common-obd-cn-1000000006717719)。
 
 ## 测试流程
 

@@ -358,7 +358,7 @@ prepare_sysbench() {
 # 阶段 1：build - 部署 OceanBase observer
 # ---------------------------------------------------------------------------
 build_oceanbase() {
-    local runner_architecture actual_version proxy_info attempt deploy_log
+    local runner_architecture actual_version proxy_info attempt deploy_log tenant_log tenant_count
 
     initialize_runtime || return $?
     runner_architecture="$(uname -m)"
@@ -382,7 +382,7 @@ build_oceanbase() {
         (umask 077; openssl rand -hex 24 > "${OB_ROOT_PASSWORD_FILE}") || return 40
     fi
     deploy_log="${PERF_WORK_DIR}/obd-deploy.log"
-    if ! obd demo -c oceanbase-ce,obproxy-ce -A \
+    if ! obd demo -c oceanbase-ce,obproxy-ce \
             "--oceanbase-ce.version=${SOFTWARE_VERSION}" \
             "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
             "--obproxy-ce.version=${OB_PROXY_VERSION}" \
@@ -390,7 +390,7 @@ build_oceanbase() {
             "--oceanbase-ce.rpc_port=${OB_RPC_PORT}" \
             "--obproxy-ce.listen_port=${OB_PROXY_PORT}" \
             "--obproxy-ce.prometheus_listen_port=${OB_PROXY_METRICS_PORT}" \
-            "--home_path=${OB_DEPLOY_HOME}" 2>&1 | tee "${deploy_log}"; then
+            "--home_path=${OB_DEPLOY_HOME}" 2>&1 | tee "${deploy_log}" | redact_diagnostic; then
         collect_deployment_diagnostics "${deploy_log}"
         log "ERROR: obd demo deployment failed"
         return 40
@@ -413,6 +413,19 @@ build_oceanbase() {
     actual_version="$(printf '%s' "${actual_version}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
     if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
         log "ERROR: deployed observer reports ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
+        return 40
+    fi
+    log 'creating MySQL-mode test tenant with the remaining cluster resources'
+    tenant_log="${PERF_WORK_DIR}/tenant-create.log"
+    if ! obd cluster tenant create demo -n test 2>&1 | tee "${tenant_log}" | redact_diagnostic; then
+        redact_diagnostic < "${tenant_log}" > "${RESULTS_DIR}/tenant-create.log"
+        log 'ERROR: OBD could not create the test tenant'
+        return 40
+    fi
+    tenant_count="$(ob_mysql -N -s -e \
+        "SELECT COUNT(*) FROM oceanbase.DBA_OB_TENANTS WHERE TENANT_NAME = 'test' AND TENANT_TYPE = 'USER' AND COMPATIBILITY_MODE = 'MYSQL'" 2>/dev/null || true)"
+    if [[ "${tenant_count}" != 1 ]]; then
+        log "ERROR: expected one MySQL-mode test tenant, found ${tenant_count:-unknown}"
         return 40
     fi
     for attempt in {1..60}; do
