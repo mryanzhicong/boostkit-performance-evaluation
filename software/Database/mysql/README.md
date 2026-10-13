@@ -128,17 +128,13 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 `--no-defaults`，不应用参考配置中的 230G buffer pool 等特定硬件调优参数。
 
 1. 初始化私有实例并建库 `sbtest`。
-2. 在独立的 `sbtest_preflight` 库用 64 张各 1 行的小表运行
-   `oltp_read_write`：先用 256 线程准备数据，再依次用 256、128 线程预检，
-   每次最多执行 1 个事务，以提前检查客户端线程初始化；随后删除预检库。
-   预检日志保存为 `sysbench_preflight.log`，不计入性能指标。
-3. 运行 Sysbench `oltp_read_write prepare`：64 张表，每张 10,000,000 行，
+2. 运行 Sysbench `oltp_read_write prepare`：64 张表，每张 10,000,000 行，
    256 个准备线程。
-4. 停止 MySQL，在私有目录复制一份已准备的数据快照，再按正式配置重启。
-5. 按顺序测试 `read_only`、`read_write`、`write_only`。每个场景先用
+3. 停止 MySQL，在私有目录复制一份已准备的数据快照，再按正式配置重启。
+4. 按顺序测试 `read_only`、`read_write`、`write_only`。每个场景先用
    `oltp_read_only`、64 线程预热 300 秒，再运行一轮正式测试。读写场景开始前
    重启服务；只写场景开始前从准备数据快照恢复，然后重启服务。
-6. 每个场景按 256、128、32、1 线程的顺序测试，每次持续 120 秒，记录每秒进度
+5. 每个场景按 256、128、32、1 线程的顺序测试，每次持续 120 秒，记录每秒进度
    和完整 Sysbench 汇总。只有进入
    只写场景时恢复准备数据快照。
 

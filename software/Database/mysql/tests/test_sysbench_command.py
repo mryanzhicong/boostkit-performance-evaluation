@@ -44,48 +44,6 @@ def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
     assert "ARG=--tables=64" in completed.stdout
 
 
-def test_preflight_uses_small_isolated_database_before_full_prepare(tmp_path: Path) -> None:
-    script = Path(__file__).resolve().parents[1] / "mysql_test.sh"
-    fake_sysbench = tmp_path / "sysbench"
-    fake_sysbench.write_text('#!/bin/sh\nprintf "ARG=%s\\n" "$@"\n', encoding="utf-8")
-    fake_sysbench.chmod(0o755)
-    fake_mysql = tmp_path / "mysql"
-    fake_mysql.write_text('#!/bin/sh\nprintf "SQL=%s\\n" "$@"\n', encoding="utf-8")
-    fake_mysql.chmod(0o755)
-    environment = os.environ | {
-        "TEST_SCRIPT": str(script),
-        "TEST_SYSBENCH": str(fake_sysbench),
-        "TEST_MYSQL": str(fake_mysql),
-        "TEST_RESULTS_DIR": str(tmp_path),
-    }
-    completed = subprocess.run(
-        [
-            "bash", "-c",
-            'source "$TEST_SCRIPT"; SYSBENCH_BIN="$TEST_SYSBENCH"; '
-            'SYSBENCH_LUA_DIR="$TEST_RESULTS_DIR/lua"; MYSQL_BIN="$TEST_MYSQL"; '
-            'MYSQL_HOST=127.0.0.1; MYSQL_PORT=3307; MYSQL_DB_USER=root; '
-            'MYSQL_PASSWORD=test-password; RESULTS_DIR="$TEST_RESULTS_DIR"; '
-            'run_sysbench_preflight',
-        ],
-        env=environment,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert "SQL=CREATE DATABASE sbtest_preflight" in completed.stdout
-    assert "SQL=DROP DATABASE sbtest_preflight" in completed.stdout
-    assert completed.stdout.count("ARG=--mysql-db=sbtest_preflight") == 3
-    assert completed.stdout.count("ARG=--table_size=1") == 3
-    assert completed.stdout.count("ARG=--tables=64") == 3
-    assert completed.stdout.count("ARG=--threads=256") == 2
-    assert completed.stdout.count("ARG=--threads=128") == 1
-    assert completed.stdout.count("ARG=--events=1") == 2
-    assert completed.stdout.count("ARG=--time=30") == 2
-    assert "ARG=prepare" in completed.stdout
-    assert completed.stdout.count("ARG=run") == 2
-    assert completed.stdout.index("ARG=--threads=256") < completed.stdout.index("ARG=--threads=128")
-
-
 def test_formal_sysbench_runs_highest_thread_count_first() -> None:
     script = Path(__file__).resolve().parents[1] / "mysql_test.sh"
     assert "threads_for_scenario=(256 128 32 1)" in script.read_text(encoding="utf-8")

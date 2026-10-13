@@ -509,44 +509,6 @@ run_sysbench() {
     fi
 }
 
-run_sysbench_preflight() {
-    local threads
-    local preflight_output="${RESULTS_DIR}/sysbench_preflight.log"
-    local -a command=(
-        "${SYSBENCH_BIN}" --db-driver=mysql
-        "--mysql-host=${MYSQL_HOST}" "--mysql-port=${MYSQL_PORT}"
-        "--mysql-user=${MYSQL_DB_USER}" "--mysql-password=${MYSQL_PASSWORD}"
-        --mysql-db=sbtest_preflight --table_size=1 --tables=64
-        --percentile=95 --report-interval=1
-    )
-    local -a args
-
-    MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
-        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" \
-        -e 'CREATE DATABASE sbtest_preflight' || return 50
-    args=("${command[@]}" --threads=256
-          "${SYSBENCH_LUA_DIR}/oltp_read_write.lua" prepare)
-    log 'preflighting Sysbench read/write initialization: prepare'
-    if ! LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" "${args[@]}" 2>&1 \
-        | tee -a "${preflight_output}"; then
-        log 'ERROR: Sysbench preflight prepare failed'
-        return 50
-    fi
-    for threads in 256 128; do
-        args=("${command[@]}" "--threads=${threads}" --events=1 --time=30
-              "${SYSBENCH_LUA_DIR}/oltp_read_write.lua" run)
-        log "preflighting Sysbench ${threads}-thread read/write initialization"
-        if ! LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" "${args[@]}" 2>&1 \
-            | tee -a "${preflight_output}"; then
-            log "ERROR: Sysbench ${threads}-thread preflight failed"
-            return 50
-        fi
-    done
-    MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
-        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" \
-        -e 'DROP DATABASE sbtest_preflight' || return 50
-}
-
 run_mysql_benchmarks() {
     local scenario threads snapshot_bytes available_bytes
     local -a threads_for_scenario
@@ -569,7 +531,6 @@ run_mysql_benchmarks() {
     mkdir -p "${runs_dir}"
     : > "${raw_output}"
 
-    run_sysbench_preflight || return 50
     MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
         "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" \
         -e 'CREATE DATABASE IF NOT EXISTS sbtest' || return 50
