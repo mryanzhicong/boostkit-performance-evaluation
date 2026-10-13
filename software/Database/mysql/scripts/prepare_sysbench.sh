@@ -19,10 +19,10 @@ fi
 
 work_directory="${1%/}"
 mysql_config="${2}"
-sysbench_source_directory="${work_directory}/sysbench-1.0.17"
+sysbench_source_directory="${work_directory}/sysbench-1.0.20"
 sysbench_repository="https://github.com/akopytov/sysbench.git"
-sysbench_ref="1.0.17"
-sysbench_commit="d634bce"
+sysbench_ref="1.0.20"
+sysbench_commit="ebf1c90"
 
 for command_name in git make gcc autoreconf libtoolize pkg-config; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then

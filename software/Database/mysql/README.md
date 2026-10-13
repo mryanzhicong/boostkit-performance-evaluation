@@ -9,7 +9,7 @@ Framework 按 `build`、`start`、`test`、`stop` 调用脚本中的阶段函数
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
 | MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
-| Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.17，提交 `d634bce` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.17` |
+| Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
 
 Sysbench 在私有目录编译，不安装到系统目录。脚本以 `src/lua/` 中的绝对路径
 调用 OLTP 用例，并设置 `LUA_PATH` 供用例加载同目录的 `oltp_common.lua`；
@@ -109,8 +109,8 @@ MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQLADMIN_BIN}" \
 Sysbench 从上游固定标签克隆、核对提交，再在本次任务目录编译：
 
 ```bash
-git clone --depth 1 --branch 1.0.17 https://github.com/akopytov/sysbench.git sysbench-1.0.17
-cd sysbench-1.0.17
+git clone --depth 1 --branch 1.0.20 https://github.com/akopytov/sysbench.git sysbench-1.0.20
+cd sysbench-1.0.20
 ./autogen.sh
 PATH="<本次任务的 MySQL bin 目录>:$PATH" ./configure --with-mysql
 make -j"$(getconf _NPROCESSORS_ONLN)"
@@ -128,17 +128,22 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 `--no-defaults`，不应用参考配置中的 230G buffer pool 等特定硬件调优参数。
 
 1. 初始化私有实例并建库 `sbtest`。
-2. 运行 Sysbench `oltp_read_write prepare`：64 张表，每张 10,000,000 行，
+2. 在独立的 `sbtest_preflight` 库用 64 张各 1 行的小表运行
+   `oltp_read_write`：先用 256 线程准备数据，再依次用 256、128 线程预检，
+   每次最多执行 1 个事务，以提前检查客户端线程初始化；随后删除预检库。
+   预检日志保存为 `sysbench_preflight.log`，不计入性能指标。
+3. 运行 Sysbench `oltp_read_write prepare`：64 张表，每张 10,000,000 行，
    256 个准备线程。
-3. 停止 MySQL，在私有目录复制一份已准备的数据快照，再按正式配置重启。
-4. 按顺序测试 `read_only`、`read_write`、`write_only`。每个场景先用
+4. 停止 MySQL，在私有目录复制一份已准备的数据快照，再按正式配置重启。
+5. 按顺序测试 `read_only`、`read_write`、`write_only`。每个场景先用
    `oltp_read_only`、64 线程预热 300 秒，再运行一轮正式测试。读写场景开始前
    重启服务；只写场景开始前从准备数据快照恢复，然后重启服务。
-5. 每次正式测试持续 120 秒，记录每秒进度和完整 Sysbench 汇总。只有进入
+6. 每个场景按 256、128、32、1 线程的顺序测试，每次持续 120 秒，记录每秒进度
+   和完整 Sysbench 汇总。只有进入
    只写场景时恢复准备数据快照。
 
 命令形态如下，`<连接参数>` 是本任务生成的主机、端口、账号和密码；
-`SYSBENCH_LUA_DIR` 为 `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.17/src/lua`：
+`SYSBENCH_LUA_DIR` 为 `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/lua`：
 
 ```bash
 LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" \
@@ -161,9 +166,9 @@ LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" \
 
 | 场景 | 线程数（一轮） |
 |---|---|
-| `read_only` | 1、32、128、256 |
-| `read_write` | 1、32、128、256 |
-| `write_only` | 1、32、128、256 |
+| `read_only` | 256、128、32、1 |
+| `read_write` | 256、128、32、1 |
+| `write_only` | 256、128、32、1 |
 
 合计 12 次正式运行，仅正式计时约 24 分钟；三次预热另需 15 分钟，
 准备、复制数据和服务重启还会增加时间。64 × 1000 万行及快照需要大量磁盘
