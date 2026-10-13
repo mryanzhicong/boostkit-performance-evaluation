@@ -1,198 +1,156 @@
 #!/usr/bin/env python3
-"""通过 sysbench 对 OceanBase 执行 OLTP 基准测试（point_select/read_write/read_only/write_only）。"""
+"""Run stock OceanBase Sysbench workloads through the local OBProxy."""
 
-import subprocess
-import re
-import sys
-import os
+from __future__ import annotations
+
+import argparse
 import json
+import math
+import os
+import re
+import shlex
+import subprocess
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
-WORKLOADS = ["oltp_point_select", "oltp_read_write", "oltp_read_only", "oltp_write_only"]
-THREAD_LEVELS = [1, 4, 16, 32]
-
-TPS_RE = re.compile(r"transactions:\s+\d+\s+\(([\d.]+)\s+per sec\.\)")
-QPS_RE = re.compile(r"queries:\s+\d+\s+\(([\d.]+)\s+per sec\.\)")
-AVG_LAT_RE = re.compile(r"avg:\s+([\d.]+)")
-P95_LAT_RE = re.compile(r"95th percentile:\s+([\d.]+)")
-
-
-def resolve_arch():
-    arch = os.environ.get("EXPECTED_ARCH") or "x86_64"
-    if arch == "amd64":
-        return "x86_64"
-    if arch == "arm64":
-        return "aarch64"
-    return arch
+WORKLOADS = ("read_only", "insert", "read_write", "write_only")
+THREADS = (1, 64, 256)
+TABLE_SIZE = 500000
+DURATION_SECONDS = 300
+PAUSE_SECONDS = 60
+IGNORED_ERRORS = "1062,6002,6001,4012,1213,1020,1205,4038,6004"
+FIELD_DEFS = {
+    "tps": (r"transactions:\s+\d+\s+\(([\d.]+) per sec\.\)", "transactions/s", "higher_is_better"),
+    "qps": (r"queries:\s+\d+\s+\(([\d.]+) per sec\.\)", "queries/s", "higher_is_better"),
+    "avg_latency_ms": (r"^\s*avg:\s+([\d.]+)\s*$", "ms", "lower_is_better"),
+    "p95_latency_ms": (r"^\s*95th percentile:\s+([\d.]+)\s*$", "ms", "lower_is_better"),
+}
 
 
-def check_observer(host, port, user, password):
-    cmd = ["mysql", f"-h{host}", f"-P{port}", f"-u{user}"]
-    if password:
-        cmd.append(f"-p{password}")
-    cmd.extend(["-e", "SELECT 1"])
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-    return result.returncode == 0
+def parse_summary(text: str, workload: str, threads: int) -> dict[str, float]:
+    values: dict[str, float] = {}
+    for field, (pattern, _, _) in FIELD_DEFS.items():
+        matches = re.findall(pattern, text, re.MULTILINE)
+        if len(matches) != 1:
+            raise ValueError(f"{workload}/{threads}: expected one {field} field, found {len(matches)}")
+        value = float(matches[0])
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{workload}/{threads}: invalid {field}={value}")
+        values[field] = value
+    return values
 
 
-def create_database(host, port, user, password, db_name):
-    cmd = ["mysql", f"-h{host}", f"-P{port}", f"-u{user}"]
-    if password:
-        cmd.append(f"-p{password}")
-    cmd.extend(["-e", f"CREATE DATABASE IF NOT EXISTS {db_name}"])
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-    return result.returncode == 0
+def run_command(command: list[str], raw, output_path: Path, label: str) -> str:
+    print(f"[oceanbase-benchmark] {label}", flush=True)
+    print(f"[oceanbase-benchmark] {shlex.join(command)}", flush=True)
+    lines: list[str] = []
+    header = f"# {label}: {shlex.join(command)}\n"
+    with output_path.open("w", encoding="utf-8") as case_log:
+        raw.write(header)
+        case_log.write(header)
+        raw.flush()
+        with subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, bufsize=1,
+            env={**os.environ, "LUA_PATH": f"{os.environ['SYSBENCH_LUA_DIR']}/?.lua;;"},
+        ) as process:
+            assert process.stdout is not None
+            for line in process.stdout:
+                print(line, end="", flush=True)
+                raw.write(line)
+                raw.flush()
+                case_log.write(line)
+                lines.append(line)
+            exit_code = process.wait()
+    if exit_code:
+        raise RuntimeError(f"{label}: Sysbench exited with code {exit_code}")
+    return "".join(lines)
 
 
-def sysbench_prepare(host, port, user, password, db_name, tables, table_size):
-    reset_cmd = ["mysql", f"-h{host}", f"-P{port}", f"-u{user}"]
-    if password:
-        reset_cmd.append(f"-p{password}")
-    reset_cmd.extend(["-e", f"DROP DATABASE IF EXISTS `{db_name}`; CREATE DATABASE `{db_name}`; SET GLOBAL ob_query_timeout=100000000; SET GLOBAL ob_trx_timeout=200000000"])
-    subprocess.run(reset_cmd, capture_output=True, text=True, timeout=60)
-    cmd = [
-        "sysbench", WORKLOADS[0],
-        f"--db-driver=mysql",
-        f"--mysql-host={host}",
-        f"--mysql-port={port}",
-        f"--mysql-user={user}",
-        f"--mysql-password={password}",
-        f"--mysql-db={db_name}",
-        f"--tables={tables}",
-        f"--table-size={table_size}",
-        f"--db-ps-mode=disable",
-        "prepare",
-    ]
-    print(f"[BENCHMARK_OB] Preparing data: {tables} tables x {table_size} rows...")
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-    if result.returncode != 0:
-        print(f"[BENCHMARK_OB] sysbench prepare failed: {(result.stderr or result.stdout)[:500]}")
-        return False
-    print("[BENCHMARK_OB] Data prepared.")
-    return True
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", required=True)
+    parser.add_argument("--port", type=int, required=True)
+    parser.add_argument("--user", required=True)
+    parser.add_argument("--database", required=True)
+    parser.add_argument("--results-dir", type=Path, required=True)
+    args = parser.parse_args()
+    args.results_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir = args.results_dir / "sysbench-runs"
+    runs_dir.mkdir(exist_ok=True)
+    lua_dir = Path(os.environ["SYSBENCH_LUA_DIR"])
+    results: dict[str, dict] = {}
 
+    try:
+        with (args.results_dir / "sysbench_raw.log").open("w", encoding="utf-8") as raw:
+            for workload in WORKLOADS:
+                script = lua_dir / f"oltp_{workload}.lua"
+                if not script.is_file():
+                    raise RuntimeError(f"missing official Sysbench workload: {script}")
+                for threads in THREADS:
+                    common = [
+                        os.environ["SYSBENCH_BIN"], "--db-driver=mysql", f"--mysql-host={args.host}",
+                        f"--mysql-port={args.port}", f"--mysql-user={args.user}",
+                        f"--mysql-db={args.database}", "--db-ps-mode=disable",
+                        f"--threads={threads}", f"--table_size={TABLE_SIZE}",
+                    ]
+                    label = f"{workload}-threads{threads}"
+                    for action in ("cleanup", "prepare", "run"):
+                        command = common.copy()
+                        if action == "run":
+                            command.extend([
+                                "--report-interval=1", f"--mysql-ignore-errors={IGNORED_ERRORS}",
+                                f"--time={DURATION_SECONDS}", "--max-requests=0",
+                                "--rand-type=uniform",
+                            ])
+                        command.extend((str(script), action))
+                        output = run_command(
+                            command, raw, runs_dir / f"{label}-{action}.log", f"{label}: {action}"
+                        )
+                        if action == "run":
+                            measurements = parse_summary(output, workload, threads)
+                            for field, value in measurements.items():
+                                _, unit, direction = FIELD_DEFS[field]
+                                name = f"{workload} :: threads={threads} :: {field}"
+                                results[name] = {
+                                    "source_name": name, "source_field": field,
+                                    "group": workload, "value": value,
+                                    "unit": unit, "direction": direction,
+                                }
+                    if not (workload == WORKLOADS[-1] and threads == THREADS[-1]):
+                        print(f"[oceanbase-benchmark] resting {PAUSE_SECONDS} seconds", flush=True)
+                        subprocess.run(["sleep", str(PAUSE_SECONDS)], check=True)
+    except (OSError, RuntimeError, ValueError) as exc:
+        print(f"[oceanbase-benchmark] ERROR: {exc}", file=sys.stderr)
+        return 1
 
-def sysbench_run(host, port, user, password, db_name, workload, threads, tables, table_size, time_sec=60):
-    cmd = [
-        "sysbench", workload,
-        f"--db-driver=mysql",
-        f"--mysql-host={host}",
-        f"--mysql-port={port}",
-        f"--mysql-user={user}",
-        f"--mysql-password={password}",
-        f"--mysql-db={db_name}",
-        f"--tables={tables}",
-        f"--table-size={table_size}",
-        f"--threads={threads}",
-        f"--time={time_sec}",
-        f"--db-ps-mode=disable",
-        f"--report-interval=1",
-        "run",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=time_sec + 120)
-    text = result.stdout + "\n" + result.stderr
-
-    tps_m = TPS_RE.search(text)
-    qps_m = QPS_RE.search(text)
-    avg_m = AVG_LAT_RE.search(text)
-    p95_m = P95_LAT_RE.search(text)
-
-    tps = float(tps_m.group(1)) if tps_m else 0.0
-    qps = float(qps_m.group(1)) if qps_m else 0.0
-    avg_lat = float(avg_m.group(1)) if avg_m else 0.0
-    p95 = float(p95_m.group(1)) if p95_m else 0.0
-
-    if tps == 0 and qps == 0:
-        print(f"[BENCHMARK_OB][DEBUG] {workload} t={threads} parse failed. Raw output (last 1500):")
-        print(text[-1500:])
-
-    return {
-        "tps": round(tps, 2),
-        "qps": round(qps, 2),
-        "avg_latency_ms": round(avg_lat, 2),
-        "p95_latency_ms": round(p95, 2),
-    }
-
-
-def main():
-    if len(sys.argv) < 9:
-        print("Usage: benchmark_ob.py <output_file> <host> <port> <user> <password> <db_name> <tables> <table_size> [iterations] [time_sec]")
-        sys.exit(1)
-    output_file = sys.argv[1]
-    host = sys.argv[2]
-    port = sys.argv[3]
-    user = sys.argv[4]
-    password = sys.argv[5]
-    db_name = sys.argv[6]
-    tables = int(sys.argv[7])
-    table_size = int(sys.argv[8])
-    iterations = int(sys.argv[9]) if len(sys.argv) >= 10 else 1
-    time_sec = int(sys.argv[10]) if len(sys.argv) >= 11 else 60
-
-    version_str = os.environ.get("SOFTWARE_VERSION", "5.0.1.0")
-    arch = resolve_arch()
-
-    print(f"[BENCHMARK_OB] Checking observer at {host}:{port}...")
-    if not check_observer(host, port, user, password):
-        print(f"[BENCHMARK_OB] Cannot connect to OceanBase at {host}:{port}. Is observer running?")
-        sys.exit(1)
-
-    print(f"[BENCHMARK_OB] Creating database {db_name}...")
-    if not create_database(host, port, user, password, db_name):
-        print("[BENCHMARK_OB] Failed to create database")
-        sys.exit(1)
-
-    if not sysbench_prepare(host, port, user, password, db_name, tables, table_size):
-        print("[BENCHMARK_OB] sysbench prepare failed, aborting")
-        sys.exit(1)
-
-    results_summary = {}
-    for wl in WORKLOADS:
-        wl_results = {}
-        for threads in THREAD_LEVELS:
-            label = f"threads_{threads}"
-            print(f"[BENCHMARK_OB] Running {wl} @ threads={threads}...")
-            runs = []
-            for _ in range(iterations):
-                r = sysbench_run(host, port, user, password, db_name, wl, threads, tables, table_size, time_sec)
-                runs.append(r)
-            avg_tps = round(sum(r["tps"] for r in runs) / len(runs), 2)
-            avg_qps = round(sum(r["qps"] for r in runs) / len(runs), 2)
-            avg_lat = round(sum(r["avg_latency_ms"] for r in runs) / len(runs), 2)
-            avg_p95 = round(sum(r["p95_latency_ms"] for r in runs) / len(runs), 2)
-            wl_results[label] = {"tps": avg_tps, "qps": avg_qps, "avg_latency_ms": avg_lat, "p95_latency_ms": avg_p95}
-            print(f"  tps={avg_tps}, qps={avg_qps}, p95={avg_p95}ms")
-        results_summary[wl] = wl_results
-
-    out = {
-        "benchmark": "oltp",
-        "description": f"OceanBase OLTP benchmark via sysbench ({tables} tables x {table_size} rows, {time_sec}s per test) on {arch}",
-        "reference": "https://github.com/oceanbase/oceanbase",
-        "software": "oceanbase",
-        "version": version_str,
-        "architecture": arch,
+    expected_count = len(WORKLOADS) * len(THREADS) * len(FIELD_DEFS)
+    if len(results) != expected_count:
+        print(f"[oceanbase-benchmark] ERROR: collected {len(results)}/{expected_count} metrics", file=sys.stderr)
+        return 1
+    payload = {
+        "benchmark": "oceanbase_sysbench_via_obproxy", "software": "oceanbase",
+        "version": os.environ["SOFTWARE_VERSION"],
+        "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "performance_metrics": {
-            "tps": {"unit": "trans/sec", "description": "Transactions per second"},
-            "qps": {"unit": "queries/sec", "description": "Queries per second"},
-            "avg_latency_ms": {"unit": "ms", "description": "Average latency per transaction"},
-            "p95_latency_ms": {"unit": "ms", "description": "95th percentile latency"},
-        },
         "parameters": {
-            "workloads": WORKLOADS,
-            "thread_levels": THREAD_LEVELS,
-            "tables": tables,
-            "table_size": table_size,
-            "time_per_test": time_sec,
-            "iterations": iterations,
-            "connection": f"{user}@{host}:{port}/{db_name}",
+            "connection": "obproxy", "proxy_version": os.environ["OB_PROXY_VERSION"],
+            "tenant": "test", "database": args.database,
+            "workloads": list(WORKLOADS), "threads": list(THREADS),
+            "table_size": TABLE_SIZE, "duration_seconds": DURATION_SECONDS,
+            "pause_seconds": PAUSE_SECONDS, "iterations": 1,
+            "db_ps_mode": "disable", "rand_type": "uniform",
+            "mysql_ignore_errors": IGNORED_ERRORS,
         },
-        "results_summary": results_summary,
+        "results": results,
     }
-    with open(output_file, "w") as f:
-        json.dump(out, f, indent=2)
-    print(f"[BENCHMARK_OB] Output written to {output_file} ({len(results_summary)} workloads)")
+    (args.results_dir / "results.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"[oceanbase-benchmark] collected {len(results)} metrics", flush=True)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

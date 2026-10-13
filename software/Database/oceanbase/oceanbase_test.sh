@@ -3,18 +3,18 @@
 # oceanbase_test.sh - OceanBase 性能评估适配脚本（openEuler BoostKit 性能评估框架）。
 #
 # 实现四个阶段的 shell 函数，供框架（command_adapter）按阶段调用：
-#   build_oceanbase         构建/部署环境与 OceanBase 组件（obd demo 部署 observer）
-#   start_oceanbase_service 启动/确认 OceanBase observer 服务可用
-#   run_oceanbase_benchmarks 执行性能基准测试并聚合结果
-#   stop_oceanbase_service  停止并销毁 OceanBase 测试集群、清理资源
+#   build_oceanbase         准备 Sysbench，部署 observer 和 OBProxy
+#   start_oceanbase_service 确认 observer 和 OBProxy 服务可用
+#   run_oceanbase_benchmarks 通过 OBProxy 执行 Sysbench 基准测试
+#   stop_oceanbase_service  停止本次任务的 OceanBase 集群
 #
 # 同时支持脱离项目根目录的独立执行（source 本文件不会运行任何内容）：
-#   ./oceanbase_test.sh [--version 5.0.1.0] [--results-dir DIR] [--keep-workdir]
+#   ./oceanbase_test.sh [--version 4.2.5.6] [--results-dir DIR] [--keep-workdir]
 #
 # 部署说明：OceanBase 属于“部署服务型”软件（区别于源码编译型，如 RocksDB），
 # build 阶段使用 OceanBase Deployer（obd）的 demo 命令在任务私有目录内部署单机
 # 演示集群，并通过独立端口与独立 OBD_HOME 保证任务隔离；start/test 阶段通过
-# mysql 协议连接 observer 执行 sysbench OLTP 与微基准测试。
+# mysql 协议经 OBProxy 连接 test 租户执行 Sysbench OLTP 测试。
 
 set -euo pipefail
 
@@ -22,7 +22,7 @@ set -euo pipefail
 # 公共变量（可被框架环境变量覆盖）
 # ---------------------------------------------------------------------------
 SOFTWARE_NAME="${SOFTWARE_NAME:-oceanbase}"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-5.0.1.0}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-4.2.5.6}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 EXPECTED_ARCH="${EXPECTED_ARCH/x86_64/x86_64}"
 EXPECTED_ARCH="${EXPECTED_ARCH/amd64/x86_64}"
@@ -38,19 +38,25 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 OB_HOST="127.0.0.1"
 OB_PORT="${OB_PORT:-}"
 OB_RPC_PORT="${OB_RPC_PORT:-}"
-OB_USER="${OB_USER:-root}"
-OB_PASSWORD="${OB_PASSWORD:-}"
-OB_DB="${OB_DB:-sbtest}"
+OB_PROXY_PORT="${OB_PROXY_PORT:-}"
+OB_PROXY_METRICS_PORT="${OB_PROXY_METRICS_PORT:-}"
+OB_DB="obtest"
+OB_PROXY_VERSION="4.3.6.1"
+OBD_VERSION="4.6.0"
+OBSERVER_RPM_RELEASE="106000022025082510"
+OBPROXY_RPM_RELEASE="2"
+OB_USER="root@test#demo"
 
 # 基准测试参数
-TABLES="${TABLES:-4}"
-TABLE_SIZE="${TABLE_SIZE:-10000}"
-TIME_PER_TEST="${TIME_PER_TEST:-60}"
-ITERATIONS="${ITERATIONS:-1}"
+SYSBENCH_VERSION="1.0.20"
 
 # 部署相关路径
 OB_DEPLOY_HOME=""
 OBD_HOME=""
+OB_ROOT_PASSWORD_FILE=""
+OB_PACKAGE_DIR=""
+SYSBENCH_BIN=""
+SYSBENCH_LUA_DIR=""
 
 # 独立执行状态标记
 STANDALONE_OWNS_WORK_DIR=0
@@ -86,12 +92,50 @@ configure_runtime_paths() {
     TMPDIR="${PERF_WORK_DIR}/tmp"
     OB_DEPLOY_HOME="${PERF_WORK_DIR}/oceanbase-demo"
     OBD_HOME="${PERF_WORK_DIR}/obd-meta"
+    OB_ROOT_PASSWORD_FILE="${PERF_WORK_DIR}/ob-root-password"
+    OB_PACKAGE_DIR="${PERF_WORK_DIR}/packages"
+    SYSBENCH_BIN="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/sysbench"
+    SYSBENCH_LUA_DIR="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/lua"
 
-    export SOFTWARE_NAME
-    export SOFTWARE_VERSION
-    export EXPECTED_ARCH
-    export OBD_HOME
-    export TMPDIR
+    export SOFTWARE_NAME SOFTWARE_VERSION EXPECTED_ARCH OB_PROXY_VERSION OBD_HOME TMPDIR
+    export SYSBENCH_BIN SYSBENCH_LUA_DIR
+}
+
+prepare_oceanbase_packages() {
+    local architecture observer_rpm proxy_rpm
+    local -a dnf_options=() oceanbase_repo=()
+
+    architecture="$(uname -m)"
+    observer_rpm="${OB_PACKAGE_DIR}/oceanbase-ce-${SOFTWARE_VERSION}-${OBSERVER_RPM_RELEASE}.el8.${architecture}.rpm"
+    proxy_rpm="${OB_PACKAGE_DIR}/obproxy-ce-${OB_PROXY_VERSION}-${OBPROXY_RPM_RELEASE}.el8.${architecture}.rpm"
+    mkdir -p "${OB_PACKAGE_DIR}"
+    if [[ ! -s "${observer_rpm}" || ! -s "${proxy_rpm}" ]]; then
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        if ! dnf download --help >/dev/null 2>&1; then
+            log 'installing dnf-plugins-core for verified RPM downloads'
+            if [[ "${EUID}" -eq 0 ]]; then
+                dnf "${dnf_options[@]}" install -y dnf-plugins-core || return 30
+            else
+                sudo -n dnf "${dnf_options[@]}" install -y dnf-plugins-core || return 30
+            fi
+        fi
+        oceanbase_repo=(
+            "--repofrompath=oceanbase-official,https://mirrors.oceanbase.com/community/stable/el/8/${architecture}/"
+            --disablerepo='*' --enablerepo=oceanbase-official
+        )
+        log "downloading official OceanBase ${SOFTWARE_VERSION} and OBProxy ${OB_PROXY_VERSION} RPMs"
+        dnf "${dnf_options[@]}" "${oceanbase_repo[@]}" download \
+            "--destdir=${OB_PACKAGE_DIR}" \
+            "oceanbase-ce-${SOFTWARE_VERSION}-${OBSERVER_RPM_RELEASE}.el8" \
+            "obproxy-ce-${OB_PROXY_VERSION}-${OBPROXY_RPM_RELEASE}.el8" || return 30
+    fi
+    if [[ ! -s "${observer_rpm}" || ! -s "${proxy_rpm}" ]]; then
+        log 'ERROR: expected OceanBase or OBProxy RPM is missing after download'
+        return 30
+    fi
+    obd mirror clone "${observer_rpm}" -f || return 30
+    obd mirror clone "${proxy_rpm}" -f || return 30
+    obd mirror disable remote || return 30
 }
 
 compute_oceanbase_ports() {
@@ -105,11 +149,23 @@ compute_oceanbase_ports() {
         fi
     fi
     if [[ -z "${OB_RPC_PORT}" ]]; then
-        OB_RPC_PORT="$((OB_PORT + 20000))"
+        OB_RPC_PORT="$((OB_PORT + 10000))"
         if (( OB_RPC_PORT < 1024 || OB_RPC_PORT > 65535 )); then
             log "ERROR: derived invalid rpc port ${OB_RPC_PORT}"
             return 20
         fi
+    fi
+    if [[ -z "${OB_PROXY_PORT}" ]]; then
+        OB_PROXY_PORT="$((OB_PORT + 20000))"
+    fi
+    if [[ -z "${OB_PROXY_METRICS_PORT}" ]]; then
+        OB_PROXY_METRICS_PORT="$((OB_PROXY_PORT + 1))"
+    fi
+    if (( OB_PROXY_PORT < 1024 || OB_PROXY_METRICS_PORT > 65535 ||
+          OB_PORT == OB_RPC_PORT || OB_PORT == OB_PROXY_PORT ||
+          OB_RPC_PORT == OB_PROXY_PORT )); then
+        log "ERROR: invalid or overlapping OceanBase/OBProxy ports"
+        return 20
     fi
 }
 
@@ -123,12 +179,19 @@ initialize_runtime() {
 # 数据库操作辅助函数
 # ---------------------------------------------------------------------------
 ob_mysql() {
-    local args
-    args=("mysql" "-h${OB_HOST}" "-P${OB_PORT}" "-u${OB_USER}")
-    if [[ -n "${OB_PASSWORD}" ]]; then
-        args+=("-p${OB_PASSWORD}")
-    fi
-    "${args[@]}" "$@"
+    [[ -s "${OB_ROOT_PASSWORD_FILE}" ]] || return 1
+    MYSQL_PWD="$(< "${OB_ROOT_PASSWORD_FILE}")" \
+        mysql --protocol=tcp "-h${OB_HOST}" "-P${OB_PORT}" -uroot@sys "$@"
+}
+
+proxy_mysql() {
+    mysql --protocol=tcp "-h${OB_HOST}" "-P${OB_PROXY_PORT}" "-u${OB_USER}" "$@"
+}
+
+proxy_sys_mysql() {
+    [[ -s "${OB_ROOT_PASSWORD_FILE}" ]] || return 1
+    MYSQL_PWD="$(< "${OB_ROOT_PASSWORD_FILE}")" \
+        mysql --protocol=tcp "-h${OB_HOST}" "-P${OB_PROXY_PORT}" -uroot@sys#demo "$@"
 }
 
 check_observer_ready() {
@@ -141,74 +204,104 @@ query_observer_version() {
     printf '%s' "${value}" | tr -d '\r\n\t'
 }
 
+check_proxy_ready() {
+    proxy_mysql -N -e 'SELECT 1' >/dev/null 2>&1
+}
+
 # ---------------------------------------------------------------------------
 # 依赖安装
 # ---------------------------------------------------------------------------
-write_oceanbase_repo() {
-    local repo_file="/etc/yum.repos.d/oceanbase.repo" arch
-    if [[ -f "${repo_file}" ]]; then
-        return 0
+install_oceanbase_dependencies() {
+    local command_name package actual_version
+    local -a packages=() dnf_options=() oceanbase_repo=()
+
+    for command_name in python3 mysql git make gcc openssl autoreconf automake libtoolize pkg-config mysql_config; do
+        command -v "${command_name}" >/dev/null 2>&1 && continue
+        case "${command_name}" in
+            mysql) package=mariadb ;;
+            autoreconf) package=autoconf ;;
+            automake) package=automake ;;
+            libtoolize) package=libtool ;;
+            pkg-config) package=pkgconf-pkg-config ;;
+            mysql_config) package=mariadb-connector-c-devel ;;
+            *) package="${command_name}" ;;
+        esac
+        packages+=("${package}")
+    done
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    if [[ "${#packages[@]}" -gt 0 ]]; then
+        log "installing missing test dependencies: ${packages[*]}"
+        if [[ "${EUID}" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        else
+            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
+        fi
     fi
-    arch="$(uname -m)"
-    if [[ "$(id -u)" -eq 0 ]]; then
-        printf '[oceanbase]\nname=OceanBase Community el8\nbaseurl=https://mirrors.oceanbase.com/community/stable/el/8/%s/\nenabled=1\ngpgcheck=0\n' \
-            "${arch}" > "${repo_file}"
-    elif command -v sudo >/dev/null 2>&1; then
-        printf '[oceanbase]\nname=OceanBase Community el8\nbaseurl=https://mirrors.oceanbase.com/community/stable/el/8/%s/\nenabled=1\ngpgcheck=0\n' \
-            "${arch}" | sudo tee "${repo_file}" >/dev/null
-    else
-        return 1
+    actual_version="$(obd --version 2>/dev/null || true)"
+    if [[ "${actual_version}" != *"${OBD_VERSION}"* ]]; then
+        oceanbase_repo=(
+            "--repofrompath=oceanbase-official,https://mirrors.oceanbase.com/community/stable/el/8/$(uname -m)/"
+            --setopt=oceanbase-official.gpgcheck=0
+        )
+        log "installing OceanBase Deployer ${OBD_VERSION} from the official repository without changing system repo files"
+        if [[ "${EUID}" -eq 0 ]]; then
+            dnf "${dnf_options[@]}" "${oceanbase_repo[@]}" install -y ob-deploy-4.6.0-16.el8 || return 30
+        else
+            sudo -n dnf "${dnf_options[@]}" "${oceanbase_repo[@]}" install -y ob-deploy-4.6.0-16.el8 || return 30
+        fi
     fi
+    actual_version="$(obd --version 2>/dev/null || true)"
+    [[ "${actual_version}" == *"${OBD_VERSION}"* ]] || {
+        log "ERROR: expected obd ${OBD_VERSION}, found ${actual_version:-unavailable}"
+        return 30
+    }
 }
 
-install_oceanbase_dependencies() {
-    local packages=() package
+prepare_sysbench() {
+    local source_dir="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20"
+    local actual_version actual_commit
 
-    for package in python3 curl; do
-        command -v "${package}" >/dev/null 2>&1 || packages+=("${package}")
-    done
-
-    if ! command -v obd >/dev/null 2>&1; then
-        if ! rpm -q ob-deploy >/dev/null 2>&1; then
-            write_oceanbase_repo || {
-                log "ERROR: cannot configure the OceanBase package repository"
-                return 30
-            }
-            packages+=("ob-deploy")
-        fi
+    if [[ -x "${SYSBENCH_BIN}" ]]; then
+        actual_version="$("${SYSBENCH_BIN}" --version 2>&1)"
+        [[ "${actual_version}" == "sysbench ${SYSBENCH_VERSION}"* ]] && return 0
     fi
-
-    command -v mysql >/dev/null 2>&1 || packages+=("mysql")
-    command -v sysbench >/dev/null 2>&1 || packages+=("sysbench")
-
-    if [[ "${#packages[@]}" -eq 0 ]]; then
-        return 0
-    fi
-
-    local dnf_options=()
-    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
-    log "installing missing OceanBase test dependencies: ${packages[*]}"
-    if [[ "$(id -u)" -eq 0 ]]; then
-        if ! dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
-            log "ERROR: dnf install failed for ${packages[*]}"
-            return 30
-        fi
-    elif command -v sudo >/dev/null 2>&1; then
-        if ! sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}"; then
-            log "ERROR: sudo dnf install failed for ${packages[*]}"
-            return 30
-        fi
+    mkdir -p "$(dirname "${source_dir}")"
+    if [[ -e "${source_dir}" ]]; then
+        log "reusing private Sysbench source directory: ${source_dir}"
     else
-        log "ERROR: cannot install required OceanBase dependencies without root/sudo"
+        log "cloning upstream Sysbench ${SYSBENCH_VERSION} into the private work directory"
+        git clone --quiet --depth 1 --branch "${SYSBENCH_VERSION}" \
+            https://github.com/akopytov/sysbench.git "${source_dir}" || return 30
+    fi
+    actual_commit="$(git -C "${source_dir}" rev-parse --short=7 HEAD 2>/dev/null || true)"
+    if [[ "${actual_commit}" != ebf1c90 ]]; then
+        log "ERROR: Sysbench tag resolved to ${actual_commit}, expected ebf1c90"
         return 30
     fi
+    (
+        cd "${source_dir}"
+        ./autogen.sh
+        ./configure --with-mysql
+        make -j"$(getconf _NPROCESSORS_ONLN)"
+    ) || return 30
+    actual_version="$("${SYSBENCH_BIN}" --version 2>&1)"
+    if [[ "${actual_version}" != "sysbench ${SYSBENCH_VERSION}"* ]]; then
+        log "ERROR: expected Sysbench ${SYSBENCH_VERSION}, found ${actual_version}"
+        return 30
+    fi
+    for actual_commit in read_only insert read_write write_only; do
+        [[ -f "${SYSBENCH_LUA_DIR}/oltp_${actual_commit}.lua" ]] || {
+            log "ERROR: missing Sysbench workload script: oltp_${actual_commit}.lua"
+            return 30
+        }
+    done
 }
 
 # ---------------------------------------------------------------------------
 # 阶段 1：build - 部署 OceanBase observer
 # ---------------------------------------------------------------------------
 build_oceanbase() {
-    local runner_architecture actual_version attempt
+    local runner_architecture actual_version proxy_info attempt
 
     initialize_runtime || return $?
     runner_architecture="$(uname -m)"
@@ -217,19 +310,28 @@ build_oceanbase() {
         return 20
     fi
     install_oceanbase_dependencies || return $?
+    prepare_sysbench || return $?
+    prepare_oceanbase_packages || return $?
 
-    if check_observer_ready; then
-        log "ERROR: an OceanBase observer is already reachable on the task port ${OB_HOST}:${OB_PORT}"
-        log "ERROR: refusing to benchmark a pre-existing service"
+    if (echo > "/dev/tcp/${OB_HOST}/${OB_PORT}") 2>/dev/null ||
+       (echo > "/dev/tcp/${OB_HOST}/${OB_PROXY_PORT}") 2>/dev/null; then
+        log "ERROR: an observer or proxy port is already in use; refusing to touch a pre-existing service"
         return 20
     fi
 
-    log "deploying OceanBase ${SOFTWARE_VERSION} observer via obd demo (task-private)"
+    log "deploying upstream OceanBase ${SOFTWARE_VERSION} with OBProxy ${OB_PROXY_VERSION} via private obd demo"
     mkdir -p "${OBD_HOME}" "${OB_DEPLOY_HOME}"
-    if ! obd demo -c oceanbase-ce \
+    if [[ ! -s "${OB_ROOT_PASSWORD_FILE}" ]]; then
+        (umask 077; openssl rand -hex 24 > "${OB_ROOT_PASSWORD_FILE}") || return 40
+    fi
+    if ! obd demo -c oceanbase-ce,obproxy-ce -A \
             "--oceanbase-ce.version=${SOFTWARE_VERSION}" \
+            "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
+            "--obproxy-ce.version=${OB_PROXY_VERSION}" \
             "--oceanbase-ce.mysql_port=${OB_PORT}" \
             "--oceanbase-ce.rpc_port=${OB_RPC_PORT}" \
+            "--obproxy-ce.listen_port=${OB_PROXY_PORT}" \
+            "--obproxy-ce.prometheus_listen_port=${OB_PROXY_METRICS_PORT}" \
             "--home_path=${OB_DEPLOY_HOME}"; then
         log "ERROR: obd demo deployment failed"
         return 40
@@ -254,10 +356,23 @@ build_oceanbase() {
         log "ERROR: deployed observer reports ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
         return 40
     fi
+    for attempt in {1..60}; do
+        check_proxy_ready && break
+        sleep 3
+    done
+    if ! check_proxy_ready; then
+        log "ERROR: test tenant is not reachable through OBProxy on ${OB_HOST}:${OB_PROXY_PORT}"
+        return 40
+    fi
+    proxy_info="$(proxy_sys_mysql -N -e 'SHOW PROXYINFO BINARY' 2>/dev/null || true)"
+    if [[ "${proxy_info}" != *"${OB_PROXY_VERSION%.*}"* ]]; then
+        log "ERROR: cannot verify OBProxy ${OB_PROXY_VERSION} from SHOW PROXYINFO BINARY"
+        return 40
+    fi
 
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
-    log "OceanBase ${actual_version} observer deployed"
+    log "OceanBase ${actual_version} and OBProxy ${OB_PROXY_VERSION} deployed"
 }
 
 # ---------------------------------------------------------------------------
@@ -269,7 +384,11 @@ start_oceanbase_service() {
         log "ERROR: OceanBase observer is not reachable on ${OB_HOST}:${OB_PORT}"
         return 40
     fi
-    log "OceanBase observer already running on ${OB_HOST}:${OB_PORT}"
+    if ! check_proxy_ready; then
+        log "ERROR: OBProxy test tenant is not reachable on ${OB_HOST}:${OB_PROXY_PORT}"
+        return 40
+    fi
+    log "OceanBase observer and OBProxy are ready on ${OB_HOST}:${OB_PROXY_PORT}"
     return 0
 }
 
@@ -278,33 +397,27 @@ start_oceanbase_service() {
 # ---------------------------------------------------------------------------
 run_oceanbase_benchmarks() {
     initialize_runtime || return $?
-    if ! check_observer_ready; then
-        log "ERROR: OceanBase observer is not reachable on ${OB_HOST}:${OB_PORT}"
-        return 40
+    if ! check_proxy_ready; then
+        log "ERROR: OBProxy test tenant is not reachable on ${OB_HOST}:${OB_PROXY_PORT}"
+        return 50
     fi
-
-    mkdir -p "${RESULTS_DIR}"
-
-    log "running OLTP benchmark (sysbench)"
+    if [[ ! -x "${SYSBENCH_BIN}" || ! -f "${SYSBENCH_LUA_DIR}/oltp_insert.lua" ]]; then
+        log 'ERROR: private Sysbench 1.0.20 build is missing'
+        return 50
+    fi
+    if ! proxy_mysql -e "CREATE DATABASE IF NOT EXISTS ${OB_DB}"; then
+        log "ERROR: could not create benchmark database ${OB_DB} in test tenant"
+        return 50
+    fi
+    log 'running selected Sysbench matrix through OBProxy: 4 workloads x 3 thread levels'
     python3 "${SCRIPT_DIR}/scripts/benchmark_ob.py" \
-        "${RESULTS_DIR}/benchmark_ob.json" \
-        "${OB_HOST}" "${OB_PORT}" "${OB_USER}" "${OB_PASSWORD}" "${OB_DB}" \
-        "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" \
-        || { log "ERROR: OLTP benchmark failed"; return 40; }
-
-    log "running micro benchmark (thread/table scaling)"
-    python3 "${SCRIPT_DIR}/scripts/micro_benchmark.py" \
-        "${RESULTS_DIR}/micro_benchmark.json" \
-        "${OB_HOST}" "${OB_PORT}" "${OB_USER}" "${OB_PASSWORD}" \
-        "${TABLES}" "${TABLE_SIZE}" "${ITERATIONS}" "${TIME_PER_TEST}" \
-        || { log "ERROR: micro benchmark failed"; return 40; }
-
-    log "aggregating benchmark results"
-    python3 "${SCRIPT_DIR}/scripts/aggregate_results.py" \
-        "${RESULTS_DIR}" "${RESULTS_DIR}/results.json" \
-        || { log "ERROR: results aggregation failed"; return 40; }
-
-    log "benchmarks completed; results written to ${RESULTS_DIR}"
+        --host "${OB_HOST}" --port "${OB_PROXY_PORT}" \
+        --user "${OB_USER}" --database "${OB_DB}" \
+        --results-dir "${RESULTS_DIR}" || {
+        log 'ERROR: OceanBase Sysbench benchmark failed'
+        return 50
+    }
+    log "Sysbench results written to ${RESULTS_DIR}"
 }
 
 # ---------------------------------------------------------------------------
@@ -312,15 +425,25 @@ run_oceanbase_benchmarks() {
 # ---------------------------------------------------------------------------
 stop_oceanbase_service() {
     initialize_runtime || return $?
+    if [[ "${OB_DEPLOY_HOME}" != "${PERF_WORK_DIR}/oceanbase-demo" ||
+          "${PERF_WORK_DIR}" == / || -z "${PERF_WORK_DIR}" ]]; then
+        log "ERROR: refusing to clean unexpected OceanBase deployment path: ${OB_DEPLOY_HOME}"
+        return 70
+    fi
     if command -v obd >/dev/null 2>&1; then
         export OBD_HOME
-        if ! obd cluster destroy demo -f; then
+        if ! obd cluster destroy demo -f --confirm; then
             log "WARN: obd cluster destroy reported an error; continuing with cleanup"
+        fi
+        if obd cluster list 2>/dev/null |
+            grep -Eq '^\|[[:space:]]*demo[[:space:]]*\|.*\|[[:space:]]*configured[[:space:]]*\|'; then
+            obd cluster prune-config demo --confirm ||
+                log "WARN: failed to prune the configured-only demo record"
         fi
     else
         log "obd unavailable; skipping cluster teardown"
     fi
-    rm -rf "${OB_DEPLOY_HOME}"
+    rm -rf -- "${OB_DEPLOY_HOME}"
     log "OceanBase observer removed from ${OB_DEPLOY_HOME}"
 }
 

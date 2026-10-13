@@ -1,88 +1,135 @@
-# OceanBase 性能测试说明
+# OceanBase 4.2.5.6 开箱性能测试
 
-本目录基于 OceanBase 官方社区版部署单机演示集群，并使用 `sysbench` 执行 OLTP
-基准测试与微基准测试。OceanBase 属于“部署服务型”软件（区别于源码编译型），
-Framework 的四阶段分别是：部署 observer（`obd demo`）、确认服务可用、执行
-`sysbench` 基准、销毁测试集群并清理资源。直接执行 `oceanbase_test.sh` 也复用相同
-阶段，并额外生成单架构报告。
+本用例在同一台 Runner 上部署上游社区版 OceanBase 4.2.5.6 和 OBProxy
+4.3.6.1，通过 OBProxy 运行 Sysbench 1.0.20。x86_64 与 aarch64 使用相同软件
+版本、命令和测试矩阵。结果包含代理开销。
 
-部署由 [OceanBase Deployer（obd）](https://github.com/oceanbase/obd) 的 `demo`
-命令完成，通过任务私有 `OBD_HOME`、部署路径与独立端口保证各运行之间相互隔离，
-不会连接或复用已有的 observer。
+测试场景与参数参考用户提供的《OB applysrv线程优化insert性能提升5
+_20260910》：`read_only`、`insert`、`read_write`、`write_only`，每个场景
+从参考文档的并发档位中选取 1、64、256 线程，每档 300 秒。测试使用上游发布
+包，不应用文档中的 `log_apply_thread_factor` 优化补丁，也不修改系统内核、
+BIOS、swap、SELinux 或防火墙。
 
-## 部署（build）
+## 安装与部署
 
-`build_oceanbase` 阶段安装依赖（OceanBase 软件源、`ob-dploy`、`mysql` 客户端、
-`sysbench`）后，在任务私有目录部署指定版本的 observer：
+| 组件 | 来源 | 安装方式 |
+|---|---|---|
+| OceanBase 4.2.5.6 | OceanBase 官方社区仓库的 el8 RPM | 导入本次任务的私有 OBD 镜像，`demo` 单节点部署 |
+| OBProxy 4.3.6.1 | OceanBase 官方社区仓库的 el8 RPM | 导入同一 OBD 镜像并部署 |
+| Sysbench 1.0.20 | [上游 Sysbench](https://github.com/akopytov/sysbench) 标签 `1.0.20`、提交 `ebf1c90` | 在本次任务的私有目录编译，不安装到系统目录 |
+| OBD 4.6.0 | OceanBase 官方社区仓库 | 缺失时使用临时 `dnf --repofrompath` 安装 `ob-deploy-4.6.0-16.el8` |
+
+基础命令 `python3`、`mysql`、Sysbench 编译依赖缺失时由脚本使用 `dnf` 安装。安装
+`ob-deploy` 时只在本次 `dnf` 命令中指定官方仓库，不写系统 repo 文件；配置了
+`PERF_PROXY` 时，该命令通过 `--setopt=proxy=...` 使用代理。Sysbench 源码固定
+为 `1.0.20`，编译前校验提交，编译后校验可执行程序的版本。
+
+Framework 提供本次任务的 `PERF_WORK_DIR`、`RESULTS_DIR`、`PERF_RUN_ID` 等
+变量。数据、OBD 元数据和临时文件都保存在 `/home/runner/boostkit-perf/oceanbase/`
+下的本次任务私有目录，不写入 `/tmp`。脚本根据运行 ID 生成端口，并使用私有
+`OBD_HOME`，避免连接或销毁已有的 OceanBase 集群。脚本在本次任务目录生成
+权限为 `0600` 的随机 `root@sys` 密码文件；连接时读取该文件，不把密码写入
+Sysbench 命令或结果文件。
+
+openEuler 上 OBD 可能自动选择 el7 镜像。脚本明确从 OceanBase 官方 el8 仓库
+用 `dnf download` 下载两个固定版本的 RPM，然后以 `obd mirror clone` 导入本次
+任务的私有 `OBD_HOME`，并禁用该私有 OBD 镜像的远端源：
 
 ```bash
-obd demo -c oceanbase-ce \
-  --oceanbase-ce.version="${SOFTWARE_VERSION}" \
-  --oceanbase-ce.mysql_port="${OB_PORT}" \
-  --oceanbase-ce.rpc_port="${OB_RPC_PORT}" \
-  --home_path="${OB_DEPLOY_HOME}"
+dnf --repofrompath=oceanbase-official,https://mirrors.oceanbase.com/community/stable/el/8/<架构>/ \
+  --disablerepo='*' --enablerepo=oceanbase-official download \
+  --destdir="${PERF_WORK_DIR}/packages" \
+  oceanbase-ce-4.2.5.6-106000022025082510.el8 \
+  obproxy-ce-4.3.6.1-2.el8
+obd mirror clone "${PERF_WORK_DIR}/packages/oceanbase-ce-4.2.5.6-106000022025082510.el8.<架构>.rpm" -f
+obd mirror clone "${PERF_WORK_DIR}/packages/obproxy-ce-4.3.6.1-2.el8.<架构>.rpm" -f
+obd mirror disable remote
 ```
 
-部署完成后脚本通过 mysql 协议恒等 `SELECT 1` 探测观察进程就绪，并通过
-`SELECT version()` 读取实际版本，必须与请求版本完全一致，否则构建失败。缺失依赖
-由脚本通过 `dnf` 或 `sudo -n dnf` 自动安装。
+Sysbench 在部署 OceanBase 前构建，实际命令为：
 
-observer 数据与日志位于任务工作目录（默认 `/home/runner/boostkit-perf/oceanbase/local-<运行 ID>`）
-而非系统目录，`stop` 阶段只销毁本运行创建的 `demo` 集群并删除该精确目录。
+```bash
+git clone --depth 1 --branch 1.0.20 \
+  https://github.com/akopytov/sysbench.git \
+  "${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20"
+cd "${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20"
+./autogen.sh
+./configure --with-mysql
+make -j"$(getconf _NPROCESSORS_ONLN)"
+```
 
-## 服务启动（start）
+构建阶段的命令形态如下；实际端口和路径由本次任务计算：
 
-`start_oceanbase_service` 阶段通过 `mysql` 协议确认 `${OB_HOST}:${OB_PORT}` 上的
-observer 已就绪并可执行 `SELECT 1`；不可达则失败。
+```bash
+obd demo -c oceanbase-ce,obproxy-ce -A \
+  --oceanbase-ce.version=4.2.5.6 \
+  --oceanbase-ce.root_password=<本次任务生成的随机密码> \
+  --obproxy-ce.version=4.3.6.1 \
+  --oceanbase-ce.mysql_port=<observer SQL 端口> \
+  --oceanbase-ce.rpc_port=<observer RPC 端口> \
+  --obproxy-ce.listen_port=<OBProxy SQL 端口> \
+  --obproxy-ce.prometheus_listen_port=<OBProxy 监控端口> \
+  --home_path=<本次任务的部署目录>
+```
 
-## 性能测试（test）
+`-A` 创建使用可用资源的 MySQL 模式 `test` 租户。部署后，脚本通过 observer
+直接连接检查 `SELECT version()`，并通过 OBProxy 使用 `root@test#demo`
+检查租户和代理版本。正式测试只连接 OBProxy，不直连 observer。单机部署命令
+依据 [OBD 官方 `demo` 说明](https://en.oceanbase.com/docs/community-obd-en-10000000001957770)。
 
-`run_oceanbase_benchmarks` 阶段在 observer 就绪后依次执行：
+## 测试流程
 
-1. **OLTP 基准**（`benchmark_ob.py`）：4 个 workload × 4 个线程级别，通过
-   `sysbench` 执行 `oltp_point_select`、`oltp_read_write`、`oltp_read_only`、
-   `oltp_write_only`，线程级别为 1/4/16/32。
-2. **微基准**（`micro_benchmark.py`）：`oltp_point_select` 的线程扩展
-   （1/4/8/16/32/64）与表数量扩展（1/4/10）。
-3. **结果聚合**（`aggregate_results.py`）：读取前两步 JSON，产出 Framework 可消费
-   的 `results.json`。
+脚本先在 `test` 租户创建 `obtest` 数据库。每个场景、每个并发档位依次运行
+Sysbench 原版 Lua 脚本的 `cleanup`、`prepare`、`run`，再等待 60 秒，然后
+进入下一档。每次 `prepare` 创建一张 500,000 行的表；不复用上一档的数据。
+命令形态为：
 
-每个 workload/线程组合运行 `iterations` 次，对 `tps`、`qps`、`avg_latency_ms`、
-`p95_latency_ms` 取平均。非正值或非有限的指标会被跳过；若最终没有任何有效指标，
-测试失败。默认参数为 `tables=4`、`table_size=10000`、`time_per_test=60`、
-`iterations=1`，不绑定 CPU。
+```bash
+"${SYSBENCH_BIN}" --db-driver=mysql --mysql-host=127.0.0.1 \
+  --mysql-port=<OBProxy SQL 端口> --mysql-user='root@test#demo' \
+  --mysql-db=obtest --db-ps-mode=disable \
+  --threads=<并发档位> --table_size=500000 \
+  "${SYSBENCH_LUA_DIR}/oltp_<场景>.lua" cleanup
 
-## 指标
+"${SYSBENCH_BIN}" <相同连接和场景参数> \
+  "${SYSBENCH_LUA_DIR}/oltp_<场景>.lua" prepare
 
-指标聚合自 OLTP 与微基准原始输出，形成以下结构化指标（最多 82 项；非正值会被
-跳过），不做评分或跨场景比例聚合：
+"${SYSBENCH_BIN}" <相同连接和场景参数> --report-interval=1 \
+  --mysql-ignore-errors=1062,6002,6001,4012,1213,1020,1205,4038,6004 \
+  --time=300 --max-requests=0 --rand-type=uniform \
+  "${SYSBENCH_LUA_DIR}/oltp_<场景>.lua" run
+```
 
-| 来源 | 指标 | 单位 | 优化方向 |
-|---|---|---|---|
-| OLTP（4 负载 × 4 线程） | `<workload>: threads_<n> tps` | trans/sec | 越大越好 |
-| OLTP | `<workload>: threads_<n> qps` | queries/sec | 越大越好 |
-| OLTP | `<workload>: threads_<n> avg_latency_ms` | ms | 越小越好 |
-| OLTP | `<workload>: threads_<n> p95_latency_ms` | ms | 越小越好 |
-| 微基准（线程扩展） | `thread_scaling: threads_<n> {qps,p95_latency_ms}` | queries/sec / ms | 越大越好 / 越小越好 |
-| 微基准（表数量扩展） | `table_count_sweep: tables_<n> {qps,p95_latency_ms}` | queries/sec / ms | 越大越好 / 越小越好 |
+Lua 脚本取自同一份上游源码，并通过 `LUA_PATH` 加载其 `oltp_common.lua`。
+四个场景共 12 次正式运行，仅计时阶段约 60 分钟；场景间 11 次等待再增加
+11 分钟，部署、数据准备和清理另计。当前用例超时上限为 600 分钟。
 
-`benchmark_ob.json` 与 `micro_benchmark.json` 保存结构化原始结果及负载参数；
-`results.json` 保存严格校验后的结构化指标。
+## 指标与产物
+
+每次运行从 Sysbench 正式汇总中严格提取以下字段；任一档缺失、非有限或非
+正值时测试失败，不生成不完整的跨架构对比。
+
+| 指标 | Sysbench 来源 | 方向 |
+|---|---|---|
+| TPS | `transactions: ... (X per sec.)` | 越大越好 |
+| QPS | `queries: ... (X per sec.)` | 越大越好 |
+| 平均延迟 | `Latency (ms)` 下的 `avg` | 越小越好 |
+| P95 延迟 | `Latency (ms)` 下的 `95th percentile` | 越小越好 |
+
+共 12 × 4 = 48 个指标。报告按 `read_only`、`insert`、`read_write`、
+`write_only` 场景分表，指标名包含线程数，不把不同并发度混合比较。
+`sysbench_raw.log` 保存控制台输出，`sysbench-runs/` 保存每次
+`cleanup`、`prepare`、`run` 的原始日志，`results.json` 保存结构化指标和
+相同的工作负载参数。
 
 ## 独立执行
 
 ```bash
 bash software/Database/oceanbase/oceanbase_test.sh \
-  --version 5.0.1.0 \
-  --results-dir /home/runner/boostkit-perf/oceanbase/results/5.0.1.0
+  --version 4.2.5.6 \
+  --results-dir /home/runner/boostkit-perf/oceanbase/results/4.2.5.6
 ```
 
-独立执行依次完成环境采集、部署、服务就绪确认、基准测试、集群销毁、资源清理、
-结果校验和报告生成。默认会销毁 `demo` 集群并清理其自行创建的
-`/home/runner/boostkit-perf/oceanbase/local-*` 目录；需要保留该目录排查部署问题时，追加
-`--keep-workdir`。
-
-## 清理（stop）
-
-`stop_oceanbase_service` 阶段执行 `obd cluster destroy demo -f` 销毁本运行创建的
-演示集群，并删除部署目录，不格式化磁盘或影响其他 OceanBase 实例。
+独立运行和 Framework 均按 build、start、test、stop 执行。stop 阶段只销毁
+本次任务私有 `OBD_HOME` 内的 `demo` 集群。独立运行默认清理自身创建的工作
+目录；排查部署问题时可使用 `--keep-workdir`。

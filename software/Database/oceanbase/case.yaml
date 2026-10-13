@@ -2,10 +2,12 @@ name: oceanbase
 category: Database
 enabled: true
 versions:
-  - "5.0.1.0"
+  - "4.2.5.6"
 test_tools:
   sysbench:
-    version: "未固定（dnf）"
+    version: "1.0.20"
+  obproxy:
+    version: "4.3.6.1"
 execution:
   type: shell-functions
   stages:
@@ -23,23 +25,18 @@ execution:
       function: stop_oceanbase_service
   timeout_minutes: 600
 outputs:
-  oltp_benchmark_result:
-    path: benchmark_ob.json
+  raw_benchmark_output:
+    path: sysbench_raw.log
     stage: test
-    format: json
+    format: text
     required: true
-  micro_benchmark_result:
-    path: micro_benchmark.json
-    stage: test
-    format: json
-    required: true
-  aggregate_result:
+  benchmark_result:
     path: results.json
     stage: test
     format: json
     required: true
 metrics:
-  source: aggregate_result
+  source: benchmark_result
   collection:
     path: results
     name_path: source_name
