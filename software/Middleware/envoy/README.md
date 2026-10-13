@@ -44,7 +44,7 @@ k6 对 `https://127.0.0.1:19000/` 和 `https://127.0.0.1:19001/` 分别执行压
 | HTTPS direct response | Envoy TLS listener 直接返回 200，不访问 upstream | `http_reqs.count`、`http_reqs.rate`、`http_req_duration.avg`、`http_req_duration.p(95)` |
 | HTTPS reverse proxy | Envoy TLS listener 转发到本地 Envoy backend | `http_reqs.count`、`http_reqs.rate`、`http_req_duration.avg`、`http_req_duration.p(95)` |
 
-吞吐和请求总数越大越好，平均延迟和 P95 延迟越小越好。`http_req_failed.rate` 必须为零，否则测试直接失败。报告按上述两个场景分别生成表格。原始 k6 控制台输出保存为 `benchmark_envoy_raw.log`，每个场景的官方 summary JSON 也随结果一并保存。
+吞吐和请求总数越大越好，平均延迟和 P95 延迟越小越好。`http_req_failed.rate` 必须为零，否则测试直接失败。报告按上述两个场景分别生成表格。原始 k6 控制台输出保存为 `benchmark_envoy_raw.log`，每个场景的官方 summary JSON 也随结果一并保存。失败请求的状态码、错误码及错误信息最多记录每个虚拟用户的前三次；停止服务时将 `envoy-direct.log`、`envoy-proxy.log`、`envoy-backend.log` 复制到结果目录，便于排查。
 
 ## 结果与清理
 

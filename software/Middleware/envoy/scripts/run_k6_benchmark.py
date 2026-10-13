@@ -22,6 +22,8 @@ SCENARIOS = (
 
 SCRIPT = """import http from 'k6/http';
 
+let loggedFailures = 0;
+
 export const options = {
   insecureSkipTLSVerify: true,
   noConnectionReuse: true,
@@ -29,7 +31,13 @@ export const options = {
 };
 
 export default function () {
-  http.get(__ENV.ENVOY_TARGET);
+  const response = http.get(__ENV.ENVOY_TARGET);
+  if (response.status < 200 || response.status >= 400) {
+    if (loggedFailures < 3) {
+      console.error(`[envoy-k6] failed request: status=${response.status} error_code=${response.error_code || 0} error=${response.error || ''} vu=${__VU} iteration=${__ITER}`);
+      loggedFailures++;
+    }
+  }
 }
 """
 
