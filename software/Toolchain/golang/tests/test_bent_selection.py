@@ -59,18 +59,25 @@ def sample_output(*, omit: str | None = None) -> list[str]:
 def test_parse_all_twenty_original_ns_per_op_metrics() -> None:
     results, context = parser.parse_output(sample_output())
     assert len(results) == 20
-    assert context["bent_measurements"] == 20
+    assert context["bent_measurements"] == 20 * parser.REPEATS
     assert context["source_gomaxprocs"] == ["12"]
     for name, metric in results.items():
         assert name.endswith("BenchmarkExample-12 :: ns/op")
-        assert metric["value"] == 1
-        assert metric["samples"] == 1
+        assert metric["value"] == 8
+        assert metric["samples"] == 15
         assert metric["direction"] == "lower_is_better"
 
 
 def test_missing_repeat_fails_instead_of_silently_dropping_metric() -> None:
-    with pytest.raises(RuntimeError, match="1 ns/op samples"):
+    with pytest.raises(RuntimeError, match="15 ns/op samples"):
         parser.parse_output(sample_output(omit=parser.expected_shortnames()[0]))
+
+
+def test_extra_repeat_fails_instead_of_changing_the_median() -> None:
+    lines = sample_output()
+    lines.append("BenchmarkExample-12  100  999 ns/op")
+    with pytest.raises(RuntimeError, match="15 ns/op samples"):
+        parser.parse_output(lines)
 
 
 @pytest.mark.parametrize(
@@ -103,6 +110,7 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     bent.write_text(
         "#!/bin/sh\n"
         "if [ \"$1\" = -I ]; then exit 0; fi\n"
+        'printf "%s\\n" "$@" > "$FAKE_BENT_ARGS"\n'
         "mkdir -p bench\n"
         "printf 'shortname: uuid-New\\ntoolchain: Baseline\\npkg: github.com/google/uuid\\nBenchmarkNew-12  100  8 ns/op\\n' > bench/20261014.Baseline.stdout\n",
         encoding="utf-8",
@@ -130,6 +138,7 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
          str(runtime), str(gopath), str(go), str(results), str(go_root)],
         env=os.environ | {
             "FAKE_GO_SOURCE_DIR": str(module_source),
+            "FAKE_BENT_ARGS": str(tmp_path / "bent-args"),
             "BENT_MODULE_CACHE_DIR": str(offline_cache.parent.parent),
         },
         capture_output=True,
@@ -141,6 +150,10 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     assert "GOMAXPROCS=" in (results / "configurations.toml").read_text()
     assert (runtime / "go-mod-cache/cache/download/cached.info").read_text() == "cached"
     assert "copied local Bent module cache" in completed.stdout
+    assert (tmp_path / "bent-args").read_text(encoding="utf-8").splitlines() == [
+        "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "15",
+        "-L", ".bent-stamps.log",
+    ]
 
 
 def test_missing_local_bent_cache_uses_network_fallback(tmp_path: Path) -> None:

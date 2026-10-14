@@ -7,6 +7,7 @@ import json
 import math
 import os
 import re
+import statistics
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,7 +17,7 @@ BENCHMARK_LINE = re.compile(r"^(Benchmark\S+)\s+(\d+)\s+(.+)$")
 MEASUREMENT = re.compile(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+(\S+)")
 TAG_LINE = re.compile(r"^(pkg|shortname|toolchain):\s*(.+)$")
 CONFIG_NAME = re.compile(r'^\s*Name = "([^"]+)"\s*$', re.MULTILINE)
-REPEATS = 1
+REPEATS = 15
 BENT_MODULE_VERSION = "v0.0.0-20261009192853-4a545adeb0d5"
 
 
@@ -69,7 +70,7 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
     for shortname in sorted(expected):
         package, benchmark = identities[shortname]
         name = f"{shortname} :: {benchmark} :: ns/op"
-        value = samples[shortname][0]
+        value = statistics.median(samples[shortname])
         results[name] = {
             "source_name": name,
             "source_shortname": shortname,
@@ -122,7 +123,7 @@ def main() -> int:
         "parameters": {
             "components": {
                 "install": ["go", "install", f"golang.org/x/benchmarks/cmd/bent@{BENT_MODULE_VERSION}"],
-                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "1", "-L", ".bent-stamps.log"],
+                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", str(REPEATS), "-L", ".bent-stamps.log"],
             },
             "suite": "golang.org/x/benchmarks/cmd/bent",
             "configuration_files": ["suites.toml", "benchmarks.toml", "configurations.toml"],
@@ -133,12 +134,12 @@ def main() -> int:
             },
             "benchmark_count": 20,
             "repetitions": REPEATS,
-            "aggregation": "single measurement",
+            "aggregation": "median of 15 ns/op measurements",
         },
         "metric_contract": {
             "scope": "the 20 selected Bent benchmark ns/op measurements",
             "identity": "official Bent shortname + original benchmark name (including concurrency suffix) + ns/op",
-            "aggregation": "single original ns/op measurement",
+            "aggregation": "median of 15 original ns/op measurements",
         },
         "runtime_context": context,
         "results": results,

@@ -317,10 +317,10 @@ run_official_bent_benchmarks() {
         log "ERROR: cannot preserve the selected Bent configurations"
         return 50
     fi
-    log "running selected upstream Bent benchmarks: bent -B benchmarks.toml -C configurations.toml -N 1"
+    log "running selected upstream Bent benchmarks: bent -B benchmarks.toml -C configurations.toml -N 15"
     if ! (
         cd "${bent_dir}"
-        "${bent_binary}" -B benchmarks.toml -C configurations.toml -N 1 -L .bent-stamps.log
+        "${bent_binary}" -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log
     ); then
         return 50
     fi

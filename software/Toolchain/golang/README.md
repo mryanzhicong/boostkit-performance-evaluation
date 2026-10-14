@@ -24,7 +24,7 @@ tar -xzf bent-go1.26.9-modules.tar.gz -C /home/runner/software/golang/bent-modul
 ```bash
 go install golang.org/x/benchmarks/cmd/bent@v0.0.0-20261009192853-4a545adeb0d5
 bent -I
-bent -B benchmarks.toml -C configurations.toml -N 1 -L .bent-stamps.log
+bent -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log
 ```
 
 `bent -I` 在私有工作目录初始化工具文件。脚本随后把 [benchmarks.toml](scripts/benchmarks.toml) 和 [suites.toml](scripts/suites.toml) 复制到该目录；它们固定了附件列出的 20 个基准名称、筛选正则、15 个第三方 suite 及其版本。MinIO 的发布标签固定为同一提交的 Go 伪版本，使其可从离线缓存解析。`configurations.toml` 由脚本生成：
@@ -36,20 +36,20 @@ bent -B benchmarks.toml -C configurations.toml -N 1 -L .bent-stamps.log
   Root = "<本次任务的 go-install 目录>"
 ```
 
-`-N 1` 表示每项先运行 1 轮。测试不绑核；两个架构各用自己的 `nproc`，原始 benchmark 名称中的并发度后缀保留。若后缀不同，不会改名强行对齐。
+`-N 15` 表示每项运行 15 轮。测试不绑核；两个架构各用自己的 `nproc`，原始 benchmark 名称中的并发度后缀保留。若后缀不同，不会改名强行对齐。
 
 缓存不完整时，正式测试优先通过华为云 Go 模块镜像补齐，失败时回退到 `goproxy.cn`；开发工作流设置 `PERF_DIRECT_NETWORK=true`，补齐时使用 `GOPROXY=direct`。本地核验仅在缓存副本中运行，离线 Bent 阶段使用该缓存的 `file://` Go 代理。Bent 不开启详细命令回显，避免把代理认证信息写入测试日志。
 
 ## 指标与结果
 
-Bent 原生 `bench/<runstamp>.Baseline.stdout` 保存为 `benchmark_go_bench.txt`。脚本对 20 项逐一检查：每项必须有恰好 1 条正数 `ns/op` 原始测量，直接作为报告值；缺项、多项或出现不同源 benchmark 时测试失败。指标名称包含 Bent 的原始 shortname、原始 benchmark 名称（含并发后缀）和 `ns/op`，数值越低越好。
+Bent 原生 `bench/<runstamp>.Baseline.stdout` 保存为 `benchmark_go_bench.txt`。脚本对 20 项逐一检查：每项必须有恰好 15 条正数 `ns/op` 原始测量，取中位数作为报告值；缺项、多项或出现不同源 benchmark 时测试失败。指标名称包含 Bent 的原始 shortname、原始 benchmark 名称（含并发后缀）和 `ns/op`，数值越低越好。
 
 结果目录保存：
 
 | 文件 | 内容 |
 |---|---|
 | `bent-run.log` | Bent 安装与运行的控制台日志。 |
-| `benchmark_go_bench.txt` | Bent 原始 `.stdout`，包含每项 1 轮测量。 |
+| `benchmark_go_bench.txt` | Bent 原始 `.stdout`，包含每项 15 轮测量。 |
 | `benchmark_golang.json` | 20 项 `ns/op` 中位数及原始名称。 |
 | `benchmarks.toml`、`suites.toml`、`configurations.toml` | 本次实际使用的配置副本。 |
 
