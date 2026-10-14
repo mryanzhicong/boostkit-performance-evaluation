@@ -73,9 +73,10 @@ def prefetch(go: str, suites_file: Path, work_dir: Path) -> None:
             continue
         for line in sums_file.read_text(encoding="utf-8").splitlines():
             fields = line.split()
-            if len(fields) != 3 or fields[1].endswith("/go.mod"):
+            if len(fields) != 3:
                 continue
-            dependency = f"{fields[0]}@{fields[1]}"
+            version = fields[1].removesuffix("/go.mod")
+            dependency = f"{fields[0]}@{version}"
             if dependency not in seen:
                 seen.add(dependency)
                 download(go, work_dir, dependency)

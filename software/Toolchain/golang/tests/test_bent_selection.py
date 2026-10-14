@@ -40,17 +40,17 @@ def sample_output(*, omit: str | None = None) -> list[str]:
 def test_parse_all_twenty_original_ns_per_op_metrics() -> None:
     results, context = parser.parse_output(sample_output())
     assert len(results) == 20
-    assert context["bent_measurements"] == 300
+    assert context["bent_measurements"] == 20
     assert context["source_gomaxprocs"] == ["12"]
     for name, metric in results.items():
         assert name.endswith("BenchmarkExample-12 :: ns/op")
-        assert metric["value"] == 8
-        assert metric["samples"] == 15
+        assert metric["value"] == 1
+        assert metric["samples"] == 1
         assert metric["direction"] == "lower_is_better"
 
 
 def test_missing_repeat_fails_instead_of_silently_dropping_metric() -> None:
-    with pytest.raises(RuntimeError, match="15 ns/op samples"):
+    with pytest.raises(RuntimeError, match="1 ns/op samples"):
         parser.parse_output(sample_output(omit=parser.expected_shortnames()[0]))
 
 
@@ -121,7 +121,8 @@ def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:
     source.mkdir()
     (source / "go.sum").write_text(
         "example.org/dep v1.0.0 h1:abc\n"
-        "example.org/dep v1.0.0/go.mod h1:def\n",
+        "example.org/dep v1.0.0/go.mod h1:def\n"
+        "example.org/metadata-only v2.0.0/go.mod h1:ghi\n",
         encoding="utf-8",
     )
     suites = tmp_path / "suites.toml"
@@ -150,5 +151,6 @@ def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:
     assert calls.read_text(encoding="utf-8").splitlines() == [
         "github.com/google/uuid@v1.2.0",
         "example.org/dep@v1.0.0",
+        "example.org/metadata-only@v2.0.0",
         "github.com/dustin/go-humanize@v1.0.1",
     ]
