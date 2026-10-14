@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize output from the official Bent benchmark command.
-
-The Go benchmark format records one benchmark name followed by one or more
-``value unit`` pairs. A metric is identified by the exact benchmark name, its
-official package tag, and its original unit. This adapter creates no workload
-name, metric name, or derived score.
-"""
+"""Validate and normalize the 20 selected Bent ns/op benchmarks."""
 
 from __future__ import annotations
 
@@ -19,119 +13,108 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-BENCHMARK_LINE = re.compile(
-    r"^(?P<name>Benchmark\S+)\s+(?P<iterations>\d+)\s+(?P<values>.+)$"
-)
-MEASUREMENT = re.compile(
-    r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+(?P<unit>\S+)"
-)
-TAG_LINE = re.compile(r"^(?P<key>pkg|shortname|toolchain|pgo):\s*(?P<value>.+)$")
+BENCHMARK_LINE = re.compile(r"^(Benchmark\S+)\s+(\d+)\s+(.+)$")
+MEASUREMENT = re.compile(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+(\S+)")
+TAG_LINE = re.compile(r"^(pkg|shortname|toolchain):\s*(.+)$")
+CONFIG_NAME = re.compile(r'^\s*Name = "([^"]+)"\s*$', re.MULTILINE)
+REPEATS = 15
 
 
-def fail(message: str) -> None:
-    print(f"[golang-parse] ERROR: {message}", file=sys.stderr)
-
-
-def direction_for_unit(unit: str) -> str:
-    """Return the direction inherent in the original Go benchmark unit."""
-    if unit.endswith(("/s", "/sec")):
-        return "higher_is_better"
-    return "lower_is_better"
-
-
-def metric_name(package: str, benchmark: str, unit: str) -> str:
-    """Return the complete official benchmark measurement identity."""
-    return f"{package} :: {benchmark} :: {unit}"
+def expected_shortnames() -> list[str]:
+    names = CONFIG_NAME.findall(Path(__file__).with_name("benchmarks.toml").read_text(encoding="utf-8"))
+    if len(names) != 20 or len(set(names)) != 20:
+        raise RuntimeError("selected Bent configuration must contain 20 unique benchmarks")
+    return names
 
 
 def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
-    samples: dict[tuple[str, str, str], list[float]] = {}
+    expected = set(expected_shortnames())
+    samples: dict[str, list[float]] = {name: [] for name in expected}
+    identities: dict[str, tuple[str, str]] = {}
     tags: dict[str, str] = {}
-    suites: set[str] = set()
-    bent_measurements = 0
 
     for line in lines:
-        tag_match = TAG_LINE.match(line)
-        if tag_match is not None:
-            tags[tag_match.group("key")] = tag_match.group("value").strip()
+        tag = TAG_LINE.match(line)
+        if tag:
+            tags[tag.group(1)] = tag.group(2).strip()
             continue
-
-        line_match = BENCHMARK_LINE.match(line)
-        if line_match is None:
+        match = BENCHMARK_LINE.match(line)
+        if not match:
             continue
-
-        benchmark = line_match.group("name")
-        package = tags.get("pkg", "")
+        shortname = tags.get("shortname")
+        package = tags.get("pkg")
+        if shortname not in expected:
+            raise RuntimeError(f"unexpected Bent benchmark shortname: {shortname!r}")
         if not package:
-            raise RuntimeError(f"benchmark {benchmark} has no preceding official pkg tag")
-        measurements = list(MEASUREMENT.finditer(line_match.group("values")))
-        if not measurements:
-            raise RuntimeError(f"benchmark {benchmark} has no value/unit measurements")
-        suites.add(tags.get("shortname", package))
+            raise RuntimeError(f"benchmark {shortname} has no official pkg tag")
+        if tags.get("toolchain") != "Baseline":
+            raise RuntimeError(f"benchmark {shortname} was not run with Baseline")
+        benchmark = match.group(1)
+        ns_values = [
+            float(value) for value, unit in MEASUREMENT.findall(match.group(3)) if unit == "ns/op"
+        ]
+        if len(ns_values) != 1 or not math.isfinite(ns_values[0]) or ns_values[0] <= 0:
+            raise RuntimeError(f"benchmark {shortname} has no single positive ns/op value")
+        identity = (package, benchmark)
+        if shortname in identities and identities[shortname] != identity:
+            raise RuntimeError(f"benchmark {shortname} produced multiple source identities")
+        identities[shortname] = identity
+        samples[shortname].append(ns_values[0])
 
-        for measurement in measurements:
-            value = float(measurement.group("value"))
-            unit = measurement.group("unit")
-            if not math.isfinite(value) or value < 0:
-                raise RuntimeError(f"benchmark {benchmark} has invalid {unit} value: {value}")
-            key = (package, benchmark, unit)
-            samples.setdefault(key, []).append(value)
-            bent_measurements += 1
-
-    if not samples:
-        raise RuntimeError("selected official Go benchmark output contains no measurements")
-    if bent_measurements == 0:
-        raise RuntimeError("official Bent benchmark produced no measurements")
+    wrong_counts = {name: len(values) for name, values in samples.items() if len(values) != REPEATS}
+    if wrong_counts:
+        raise RuntimeError(f"Bent benchmarks must each produce {REPEATS} ns/op samples: {wrong_counts}")
 
     results: dict[str, dict[str, Any]] = {}
-    for (package, benchmark, unit), values in sorted(samples.items()):
-        name = metric_name(package, benchmark, unit)
-        if name in results:
-            raise RuntimeError(f"duplicate official benchmark measurement: {name}")
-        value = statistics.median(values)
+    for shortname in sorted(expected):
+        package, benchmark = identities[shortname]
+        name = f"{shortname} :: {benchmark} :: ns/op"
+        value = statistics.median(samples[shortname])
         results[name] = {
             "source_name": name,
+            "source_shortname": shortname,
             "source_benchmark": benchmark,
             "source_package": package,
-            "source_field": unit,
+            "source_field": "ns/op",
             "raw_value": value,
-            "raw_unit": unit,
+            "raw_unit": "ns/op",
             "value": value,
-            "unit": unit,
-            "direction": direction_for_unit(unit),
-            "samples": len(values),
-            "group": package,
+            "unit": "ns/op",
+            "direction": "lower_is_better",
+            "samples": REPEATS,
+            "group": shortname.split("-", 1)[0],
         }
 
+    concurrency = sorted({
+        match.group(1)
+        for _, benchmark in identities.values()
+        if (match := re.search(r"-(\d+)$", benchmark))
+    })
     return results, {
-        "packages": sorted({key[0] for key in samples}),
-        "suites": sorted(suites),
-        "bent_measurements": bent_measurements,
+        "packages": sorted({package for package, _ in identities.values()}),
+        "benchmarks": sorted(expected),
+        "bent_measurements": sum(map(len, samples.values())),
+        "source_gomaxprocs": concurrency,
     }
 
 
 def main() -> int:
     if len(sys.argv) != 3:
-        print("usage: parse_benchmark.py RAW_OUTPUT NORMALIZED_OUTPUT", file=sys.stderr)
+        print("usage: parse_benchmark.py RAW_STDOUT NORMALIZED_OUTPUT", file=sys.stderr)
         return 1
     raw_path, output_path = Path(sys.argv[1]), Path(sys.argv[2])
     try:
         version = os.environ["SOFTWARE_VERSION"]
         architecture = os.environ["EXPECTED_ARCH"]
-    except KeyError as exc:
-        fail(f"missing environment variable: {exc}")
-        return 1
-
-    try:
         results, context = parse_output(
             raw_path.read_text(encoding="utf-8", errors="replace").splitlines()
         )
-    except (OSError, RuntimeError, ValueError) as exc:
-        fail(str(exc))
+    except (KeyError, OSError, RuntimeError, ValueError) as exc:
+        print(f"[golang-parse] ERROR: {exc}", file=sys.stderr)
         return 1
 
     payload = {
-        "benchmark": "golang_official_bent",
+        "benchmark": "golang_selected_bent_20",
         "software": "golang",
         "version": version,
         "architecture": architecture,
@@ -139,34 +122,30 @@ def main() -> int:
         "parameters": {
             "components": {
                 "install": ["go", "install", "golang.org/x/benchmarks/cmd/bent@latest"],
-                "run": ["bent", "-N", "15"],
+                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "15", "-L", ".bent-stamps.log", "-v"],
             },
             "suite": "golang.org/x/benchmarks/cmd/bent",
-            "configuration_files": [
-                "suites.toml",
-                "benchmarks-100.toml",
-                "configurations.toml",
-            ],
+            "configuration_files": ["suites.toml", "benchmarks.toml", "configurations.toml"],
             "configuration": {
                 "name": "Baseline",
                 "run_environment": ["GOGC=100", "GOMAXPROCS=$(nproc)"],
+                "cpu_affinity": "none",
             },
+            "benchmark_count": 20,
+            "repetitions": REPEATS,
             "aggregation": "median",
         },
         "metric_contract": {
-            "scope": "every value/unit pair emitted by the official Bent benchmark command",
-            "identity": "official pkg tag + benchmark name + original unit",
-            "aggregation": "median of repeated official measurements",
+            "scope": "the 20 selected Bent benchmark ns/op measurements",
+            "identity": "official Bent shortname + original benchmark name (including concurrency suffix) + ns/op",
+            "aggregation": "median of 15 original ns/op measurements",
         },
         "runtime_context": context,
         "results": results,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    print(f"[golang-parse] normalized {len(results)} official benchmark measurements")
+    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"[golang-parse] normalized {len(results)} selected Bent ns/op metrics")
     return 0
 
 

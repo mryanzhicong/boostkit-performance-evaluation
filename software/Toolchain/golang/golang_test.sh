@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.27.0}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.26.7}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
@@ -107,7 +107,7 @@ run_as_root() {
 
 install_dependencies() {
     local missing=0 command_name
-    for command_name in git curl gcc tar gzip sha256sum awk python3 perf nproc; do
+    for command_name in git curl gcc tar gzip sha256sum awk python3 nproc; do
         command -v "${command_name}" >/dev/null 2>&1 || missing=1
     done
     if [[ "${missing}" -eq 0 ]]; then
@@ -119,9 +119,9 @@ install_dependencies() {
         log "ERROR: dnf is required to install Go dependencies"
         return 30
     fi
-    run_as_root dnf install -y git curl gcc tar gzip coreutils gawk python3 perf || return 30
+    run_as_root dnf install -y git curl gcc tar gzip coreutils gawk python3 || return 30
 
-    for command_name in git curl gcc tar gzip sha256sum awk python3 perf nproc; do
+    for command_name in git curl gcc tar gzip sha256sum awk python3 nproc; do
         if ! command -v "${command_name}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${command_name}"
             return 30
@@ -147,7 +147,7 @@ configure_go_environment() {
         export GOPROXY="https://goproxy.cn"
     fi
     export GOSUMDB="${GOSUMDB:-sum.golang.org}"
-    unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOAMD64
+    unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOARM64 GOAMD64 GOEXPERIMENT
 }
 
 copy_or_download_go_archive() {
@@ -160,12 +160,6 @@ copy_or_download_go_archive() {
             ;;
         1.26.7:arm64)
             expected="5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37"
-            ;;
-        1.27.0:amd64)
-            expected="675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685"
-            ;;
-        1.27.0:arm64)
-            expected="51798d2c42d0e1c6ed7fd9f48728b4193abac9e8aad6dbac2fe96a81f5909bda"
             ;;
         *)
             log "ERROR: no verified Go binary release is declared for ${SOFTWARE_VERSION} on ${GO_ARCH}"
@@ -246,7 +240,8 @@ start_golang_runtime() {
 }
 
 run_official_bent_benchmarks() {
-    local bent_dir bent_module_dirs bent_module_dir bent_binary processor_count
+    local bent_dir bent_binary processor_count
+    local -a stdout_files
 
     bent_dir="${GO_RUNTIME_DIR}/bent"
     rm -rf -- "${bent_dir}"
@@ -258,16 +253,8 @@ run_official_bent_benchmarks() {
         log "ERROR: go install did not create Bent: ${bent_binary}"
         return 50
     fi
-    shopt -s nullglob
-    bent_module_dirs=("${GOMODCACHE}"/golang.org/x/benchmarks@*/cmd/bent)
-    shopt -u nullglob
-    if [[ "${#bent_module_dirs[@]}" -ne 1 ]]; then
-        log "ERROR: expected one installed Bent module directory, found ${#bent_module_dirs[@]}"
-        return 50
-    fi
-    bent_module_dir="${bent_module_dirs[0]}"
-    # Bent prepares its own scripts and Dockerfile with -I.  The test itself
-    # remains the official command requested for this case: bent -N 15.
+    # Bent prepares its own scripts and Dockerfile with -I.  Replace its
+    # default workload with the selected, version-pinned guide workload.
     if ! (
         cd "${bent_dir}"
         "${bent_binary}" -I
@@ -275,9 +262,9 @@ run_official_bent_benchmarks() {
         log "ERROR: Bent initialization failed"
         return 50
     fi
-    if ! cp "${bent_module_dir}/configs/suites.toml" "${bent_dir}/suites.toml" || \
-       ! cp "${bent_module_dir}/configs/benchmarks-100.toml" "${bent_dir}/benchmarks-100.toml"; then
-        log "ERROR: Bent module is missing its official suite or benchmarks-100 configuration"
+    if ! cp "${SCRIPT_DIR}/scripts/suites.toml" "${bent_dir}/suites.toml" || \
+       ! cp "${SCRIPT_DIR}/scripts/benchmarks.toml" "${bent_dir}/benchmarks.toml"; then
+        log "ERROR: cannot prepare the selected Bent benchmark configuration"
         return 50
     fi
     processor_count="$(nproc)"
@@ -290,21 +277,40 @@ run_official_bent_benchmarks() {
         log "ERROR: cannot write Bent Baseline configuration"
         return 50
     fi
-    log "running official Bent benchmark suite: bent -N 15"
-    (
+    if ! cp "${bent_dir}/suites.toml" "${RESULTS_DIR}/suites.toml" || \
+       ! cp "${bent_dir}/benchmarks.toml" "${RESULTS_DIR}/benchmarks.toml" || \
+       ! cp "${bent_dir}/configurations.toml" "${RESULTS_DIR}/configurations.toml"; then
+        log "ERROR: cannot preserve the selected Bent configurations"
+        return 50
+    fi
+    log "running selected upstream Bent benchmarks: bent -B benchmarks.toml -C configurations.toml -N 15"
+    if ! (
         cd "${bent_dir}"
-        "${bent_binary}" -N 15
-    )
+        "${bent_binary}" -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log -v
+    ); then
+        return 50
+    fi
+    shopt -s nullglob
+    stdout_files=("${bent_dir}"/bench/*.Baseline.stdout)
+    shopt -u nullglob
+    if [[ "${#stdout_files[@]}" -ne 1 || ! -s "${stdout_files[0]:-}" ]]; then
+        log "ERROR: expected exactly one nonempty Baseline Bent stdout file, found ${#stdout_files[@]}"
+        return 50
+    fi
+    if ! cp "${stdout_files[0]}" "${RESULTS_DIR}/benchmark_go_bench.txt"; then
+        log "ERROR: cannot preserve Bent's original benchmark stdout"
+        return 50
+    fi
 }
 
 run_golang_benchmarks() {
     initialize_runtime || return $?
     configure_go_environment
     verify_golang_binary || return $?
-    log "running official Bent benchmark suite"
+    log "running 20 selected Bent benchmarks with upstream Go ${SOFTWARE_VERSION}"
     if ! (
         run_official_bent_benchmarks
-    ) 2>&1 | tee "${RESULTS_DIR}/benchmark_go_bench.txt"; then
+    ) 2>&1 | tee "${RESULTS_DIR}/bent-run.log"; then
         log "ERROR: official Bent benchmark failed"
         return 50
     fi
@@ -450,8 +456,8 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Install the official precompiled Go release and run the official
-golang.org/x/benchmarks/cmd/bench suite.
+Install the official precompiled Go release and run the selected
+golang.org/x/benchmarks/cmd/bent suite.
 
 Options:
   --version VERSION       Go version (default: ${SOFTWARE_VERSION})

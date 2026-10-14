@@ -3,7 +3,6 @@ category: Toolchain
 enabled: true
 versions:
   - "1.26.7"
-  - "1.27.0"
 test_tools:
   bent:
     version: "未固定（@latest）"
@@ -24,6 +23,11 @@ execution:
       function: stop_golang_runtime
   timeout_minutes: 720
 outputs:
+  bent_console:
+    path: bent-run.log
+    stage: test
+    format: text
+    required: true
   official_benchmark:
     path: benchmark_go_bench.txt
     stage: test
