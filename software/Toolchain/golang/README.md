@@ -8,12 +8,21 @@
 
 脚本检查 `git`、`curl`、`gcc`、`tar`、`gzip`、`sha256sum`、`awk`、`python3` 和 `nproc`；缺失时通过 `dnf` 安装。Go 的模块缓存、编译缓存、GOPATH 和临时文件位于 `${PERF_WORK_DIR}/runtime`，不使用 Runner 的系统 Go 测量性能。
 
+如需复用预下载的 Bent 模块，在每台 Runner 上把 `bent-go1.26.9-modules.tar.gz` 解压到固定目录：
+
+```bash
+mkdir -p /home/runner/software/golang/bent-modules
+tar -xzf bent-go1.26.9-modules.tar.gz -C /home/runner/software/golang/bent-modules
+```
+
+解压后应存在 `/home/runner/software/golang/bent-modules/cache/download`，且运行测试的 `runner` 用户可读取。测试脚本会先复制该目录到本次私有 Go 模块缓存，再安装 Bent 和运行基准；缓存缺失的模块仍按下述 `GOPROXY` 配置下载。若不放预下载缓存，测试直接走网络。可用 `BENT_MODULE_CACHE_DIR` 指定其他已解压的目录，其下仍须是 `cache/download`。
+
 ## 测试
 
 `test` 阶段使用本次安装的 Go 执行：
 
 ```bash
-go install golang.org/x/benchmarks/cmd/bent@latest
+go install golang.org/x/benchmarks/cmd/bent@v0.0.0-20261009192853-4a545adeb0d5
 bent -I
 bent -B benchmarks.toml -C configurations.toml -N 1 -L .bent-stamps.log
 ```

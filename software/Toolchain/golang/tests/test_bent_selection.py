@@ -28,6 +28,15 @@ def test_selected_benchmarks_resolve_to_pinned_suites() -> None:
     assert all(suite["Version"].startswith("@") for suite in suites)
 
 
+def test_bent_version_matches_case_and_installer() -> None:
+    version = parser.BENT_MODULE_VERSION
+    assert version == "v0.0.0-20261009192853-4a545adeb0d5"
+    assert f'"golang.org/x/benchmarks/cmd/bent@${{BENT_MODULE_VERSION}}"' in (
+        CASE_DIR / "golang_test.sh"
+    ).read_text(encoding="utf-8")
+    assert f'version: "{version}"' in (CASE_DIR / "case.yaml").read_text(encoding="utf-8")
+
+
 def sample_output(*, omit: str | None = None) -> list[str]:
     lines = []
     for shortname in parser.expected_shortnames():
@@ -93,6 +102,9 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     go.parent.mkdir(parents=True)
     module_source = tmp_path / "module-source"
     module_source.mkdir()
+    offline_cache = tmp_path / "offline-cache" / "cache" / "download"
+    offline_cache.mkdir(parents=True)
+    (offline_cache / "cached.info").write_text("cached", encoding="utf-8")
     go.write_text(
         '#!/bin/sh\nprintf \'{"Dir":"%s"}\\n\' "$FAKE_GO_SOURCE_DIR"\n',
         encoding="utf-8",
@@ -106,7 +118,10 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     completed = subprocess.run(
         ["bash", "-c", command, "bash", str(CASE_DIR / "golang_test.sh"),
          str(runtime), str(gopath), str(go), str(results), str(go_root)],
-        env=os.environ | {"FAKE_GO_SOURCE_DIR": str(module_source)},
+        env=os.environ | {
+            "FAKE_GO_SOURCE_DIR": str(module_source),
+            "BENT_MODULE_CACHE_DIR": str(offline_cache.parent.parent),
+        },
         capture_output=True,
         text=True,
         check=False,
@@ -114,6 +129,24 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert (results / "benchmark_go_bench.txt").read_text().startswith("shortname: uuid-New")
     assert "GOMAXPROCS=" in (results / "configurations.toml").read_text()
+    assert (runtime / "go-mod-cache/cache/download/cached.info").read_text() == "cached"
+    assert "copied local Bent module cache" in completed.stdout
+
+
+def test_missing_local_bent_cache_uses_network_fallback(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    missing_cache = tmp_path / "missing-cache"
+    completed = subprocess.run(
+        ["bash", "-c", 'source "$1"; GO_RUNTIME_DIR="$2"; copy_bent_module_cache',
+         "bash", str(CASE_DIR / "golang_test.sh"), str(runtime)],
+        env=os.environ | {"BENT_MODULE_CACHE_DIR": str(missing_cache)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "missing modules will use GOPROXY" in completed.stdout
+    assert not (runtime / "go-mod-cache").exists()
 
 
 def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:

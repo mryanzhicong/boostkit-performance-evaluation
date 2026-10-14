@@ -11,7 +11,9 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
+BENT_MODULE_CACHE_DIR="${BENT_MODULE_CACHE_DIR:-${GO_OFFLINE_DIR}/bent-modules}"
 GO_RUNTIME_ROOT="${GO_RUNTIME_ROOT:-}"
+BENT_MODULE_VERSION="v0.0.0-20261009192853-4a545adeb0d5"
 
 GO_INSTALL_DIR=""
 GO_BIN=""
@@ -150,6 +152,26 @@ configure_go_environment() {
     unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOARM64 GOAMD64 GOEXPERIMENT
 }
 
+copy_bent_module_cache() {
+    local source="${BENT_MODULE_CACHE_DIR}/cache/download"
+    local destination="${GO_RUNTIME_DIR}/go-mod-cache/cache/download"
+
+    if [[ ! -e "${source}" ]]; then
+        log "local Bent module cache is unavailable; missing modules will use GOPROXY"
+        return 0
+    fi
+    if [[ ! -d "${source}" ]]; then
+        log "ERROR: local Bent module cache is not a directory: ${source}"
+        return 50
+    fi
+    mkdir -p "${destination}" || return 50
+    if ! cp -a "${source}/." "${destination}/"; then
+        log "ERROR: failed to copy local Bent module cache from ${source}"
+        return 50
+    fi
+    log "copied local Bent module cache from ${source}; missing modules will use GOPROXY"
+}
+
 copy_or_download_go_archive() {
     local filename="$1" archive="$2" expected actual
     local offline_archive="${GO_OFFLINE_DIR}/${filename}"
@@ -246,8 +268,9 @@ run_official_bent_benchmarks() {
     bent_dir="${GO_RUNTIME_DIR}/bent"
     rm -rf -- "${bent_dir}"
     mkdir -p "${bent_dir}" || return 50
+    copy_bent_module_cache || return 50
     log "installing official Bent with go install"
-    "${GO_BIN}" install golang.org/x/benchmarks/cmd/bent@latest || return 50
+    "${GO_BIN}" install "golang.org/x/benchmarks/cmd/bent@${BENT_MODULE_VERSION}" || return 50
     bent_binary="${GOPATH}/bin/bent"
     if [[ ! -x "${bent_binary}" ]]; then
         log "ERROR: go install did not create Bent: ${bent_binary}"

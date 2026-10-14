@@ -17,6 +17,7 @@ MEASUREMENT = re.compile(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+(\S
 TAG_LINE = re.compile(r"^(pkg|shortname|toolchain):\s*(.+)$")
 CONFIG_NAME = re.compile(r'^\s*Name = "([^"]+)"\s*$', re.MULTILINE)
 REPEATS = 1
+BENT_MODULE_VERSION = "v0.0.0-20261009192853-4a545adeb0d5"
 
 
 def expected_shortnames() -> list[str]:
@@ -120,7 +121,7 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "components": {
-                "install": ["go", "install", "golang.org/x/benchmarks/cmd/bent@latest"],
+                "install": ["go", "install", f"golang.org/x/benchmarks/cmd/bent@{BENT_MODULE_VERSION}"],
                 "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "1", "-L", ".bent-stamps.log"],
             },
             "suite": "golang.org/x/benchmarks/cmd/bent",
