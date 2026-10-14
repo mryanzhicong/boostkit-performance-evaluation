@@ -90,6 +90,28 @@ def test_sys_tenant_memory_is_increased_and_verified(tmp_path: Path) -> None:
     assert "sys tenant memory quota is 1073741824" in rejected.stdout
 
 
+def test_test_tenant_memory_is_fixed_and_checked_before_creation(tmp_path: Path) -> None:
+    script = SCRIPT.read_text(encoding="utf-8")
+    assert '"--memory-size=${OB_TEST_TENANT_MEMORY}"' in script
+    assert "check_test_tenant_memory || return $?" in script
+
+    available = run_shell(
+        tmp_path,
+        "ob_mysql() { printf '42949672960\\n'; }; check_test_tenant_memory",
+        {},
+    )
+    assert available.returncode == 0, available.stdout + available.stderr
+    assert "32G test tenant" in available.stdout
+
+    insufficient = run_shell(
+        tmp_path / "insufficient",
+        "ob_mysql() { printf '33285996544\\n'; }; check_test_tenant_memory",
+        {},
+    )
+    assert insufficient.returncode == 40
+    assert "observer has only 33285996544 available bytes" in insufficient.stdout
+
+
 def test_service_logs_survive_stop_and_are_redacted(tmp_path: Path) -> None:
     work = tmp_path / "work"
     results = tmp_path / "results"

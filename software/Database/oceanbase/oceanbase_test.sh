@@ -49,6 +49,7 @@ OB_USER="root@test#demo"
 OB_MEMORY_LIMIT="64G"
 OB_SYSTEM_MEMORY="8G"
 OB_SYS_TENANT_MEMORY="16G"
+OB_TEST_TENANT_MEMORY="32G"
 OB_PROXY_MEMORY_LIMIT="8G"
 
 # 基准测试参数
@@ -232,6 +233,28 @@ configure_sys_tenant_memory() {
         log "ERROR: sys tenant memory quota is ${memory_bytes:-unknown} bytes, expected 17179869184"
         return 40
     fi
+}
+
+check_test_tenant_memory() {
+    local available_bytes required_bytes
+
+    available_bytes="$(ob_mysql -N -s -e \
+        "SELECT MIN(MEM_CAPACITY - MEM_ASSIGNED) FROM oceanbase.GV\$OB_SERVERS WHERE SVR_IP = '${OB_HOST}'" \
+        2>/dev/null)" || {
+        log 'ERROR: could not query observer memory available for the test tenant'
+        return 40
+    }
+    available_bytes="$(printf '%s' "${available_bytes}" | tr -d '\r\n\t')"
+    if [[ ! "${available_bytes}" =~ ^[0-9]+$ ]]; then
+        log "ERROR: invalid observer memory availability: ${available_bytes:-unknown}"
+        return 40
+    fi
+    required_bytes=$(( ${OB_TEST_TENANT_MEMORY%G} * 1024 * 1024 * 1024 ))
+    if (( available_bytes < required_bytes )); then
+        log "ERROR: test tenant needs ${OB_TEST_TENANT_MEMORY}, observer has only ${available_bytes} available bytes"
+        return 40
+    fi
+    log "observer has ${available_bytes} bytes available for the ${OB_TEST_TENANT_MEMORY} test tenant"
 }
 
 check_proxy_ready() {
@@ -473,9 +496,11 @@ build_oceanbase() {
         return 40
     fi
     configure_sys_tenant_memory || return $?
-    log 'creating MySQL-mode test tenant with the remaining cluster resources'
+    check_test_tenant_memory || return $?
+    log "creating MySQL-mode test tenant with ${OB_TEST_TENANT_MEMORY} memory"
     tenant_log="${PERF_WORK_DIR}/tenant-create.log"
-    if ! obd cluster tenant create demo -n test 2>&1 | tee "${tenant_log}" | redact_diagnostic; then
+    if ! obd cluster tenant create demo -n test \
+            "--memory-size=${OB_TEST_TENANT_MEMORY}" 2>&1 | tee "${tenant_log}" | redact_diagnostic; then
         redact_diagnostic < "${tenant_log}" > "${RESULTS_DIR}/tenant-create.log"
         log 'ERROR: OBD could not create the test tenant'
         return 40
