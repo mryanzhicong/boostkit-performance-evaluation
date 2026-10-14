@@ -46,6 +46,10 @@ OBD_VERSION="4.6.0"
 OBSERVER_RPM_RELEASE="106000022025082510"
 OBPROXY_RPM_RELEASE="2"
 OB_USER="root@test#demo"
+OB_MEMORY_LIMIT="64G"
+OB_SYSTEM_MEMORY="8G"
+OB_SYS_TENANT_MEMORY="16G"
+OB_PROXY_MEMORY_LIMIT="8G"
 
 # 基准测试参数
 SYSBENCH_VERSION="1.0.20"
@@ -209,6 +213,25 @@ query_observer_version() {
     local value
     value="$(ob_mysql -N -s -e "SELECT version()" 2>/dev/null || true)"
     printf '%s' "${value}" | tr -d '\r\n\t'
+}
+
+configure_sys_tenant_memory() {
+    local memory_bytes
+
+    log "setting sys tenant memory to ${OB_SYS_TENANT_MEMORY}"
+    if ! ob_mysql -e "ALTER RESOURCE UNIT sys_unit_config MEMORY_SIZE='${OB_SYS_TENANT_MEMORY}'"; then
+        log 'ERROR: could not increase the sys tenant memory quota'
+        return 40
+    fi
+    memory_bytes="$(ob_mysql -N -s -e \
+        "SELECT MEMORY_SIZE FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE NAME = 'sys_unit_config'" 2>/dev/null)" || {
+        log 'ERROR: could not verify the sys tenant memory quota'
+        return 40
+    }
+    if [[ "${memory_bytes}" != "$((16 * 1024 * 1024 * 1024))" ]]; then
+        log "ERROR: sys tenant memory quota is ${memory_bytes:-unknown} bytes, expected 17179869184"
+        return 40
+    fi
 }
 
 check_proxy_ready() {
@@ -416,7 +439,10 @@ build_oceanbase() {
     if ! obd demo -c oceanbase-ce,obproxy-ce \
             "--oceanbase-ce.version=${SOFTWARE_VERSION}" \
             "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
+            "--oceanbase-ce.memory_limit=${OB_MEMORY_LIMIT}" \
+            "--oceanbase-ce.system_memory=${OB_SYSTEM_MEMORY}" \
             "--obproxy-ce.version=${OB_PROXY_VERSION}" \
+            "--obproxy-ce.proxy_mem_limited=${OB_PROXY_MEMORY_LIMIT}" \
             "--oceanbase-ce.mysql_port=${OB_PORT}" \
             "--oceanbase-ce.rpc_port=${OB_RPC_PORT}" \
             "--obproxy-ce.listen_port=${OB_PROXY_PORT}" \
@@ -446,6 +472,7 @@ build_oceanbase() {
         log "ERROR: deployed observer reports ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
         return 40
     fi
+    configure_sys_tenant_memory || return $?
     log 'creating MySQL-mode test tenant with the remaining cluster resources'
     tenant_log="${PERF_WORK_DIR}/tenant-create.log"
     if ! obd cluster tenant create demo -n test 2>&1 | tee "${tenant_log}" | redact_diagnostic; then

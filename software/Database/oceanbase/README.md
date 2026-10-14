@@ -35,6 +35,13 @@ OBD 的 `--home_path` 为 `${PERF_WORK_DIR}/ob`。脚本在部署前检查
 `${PERF_WORK_DIR}/ob/oceanbase-ce/run/daemon.sock` 的字节长度，确保 obshell
 的 Unix socket 路径不超过 107 字节。
 
+两架构使用相同的资源额度：observer 上限 64 GiB、系统预留 8 GiB、
+`sys` 租户 16 GiB、OBProxy 上限 8 GiB。OBD `demo` 默认的 1 GiB `sys`
+租户额度不足以承受本用例的数据准备；这里明确的是运行所需容量，
+不是应用优化参数。部署后、创建 `test` 租户前，脚本执行
+`ALTER RESOURCE UNIT sys_unit_config MEMORY_SIZE='16G'`，并查询
+`DBA_OB_UNIT_CONFIGS` 验证结果；验证失败则不开始测试。
+
 openEuler 上 OBD 可能自动选择 el7 镜像。脚本明确从 OceanBase 官方 el8 仓库
 用 `dnf download` 下载两个固定版本的 RPM，然后以 `obd mirror clone` 导入本次
 任务的私有 `OBD_HOME`，并禁用该私有 OBD 镜像的远端源：
@@ -68,7 +75,10 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 obd demo -c oceanbase-ce,obproxy-ce \
   --oceanbase-ce.version=4.2.5.6 \
   --oceanbase-ce.root_password=<本次任务生成的随机密码> \
+  --oceanbase-ce.memory_limit=64G \
+  --oceanbase-ce.system_memory=8G \
   --obproxy-ce.version=4.3.6.1 \
+  --obproxy-ce.proxy_mem_limited=8G \
   --oceanbase-ce.mysql_port=<observer SQL 端口> \
   --oceanbase-ce.rpc_port=<observer RPC 端口> \
   --obproxy-ce.listen_port=<OBProxy SQL 端口> \

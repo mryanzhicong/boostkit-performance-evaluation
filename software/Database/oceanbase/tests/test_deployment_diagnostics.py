@@ -13,7 +13,7 @@ TRACE_ID = "3695df80-c6d8-11f1-8e0c-20fadb934f02"
 
 def run_shell(tmp_path: Path, command: str, helpers: dict[str, str]) -> subprocess.CompletedProcess[str]:
     bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
+    bin_dir.mkdir(parents=True, exist_ok=True)
     for name, script in helpers.items():
         binary = bin_dir / name
         binary.write_text(f"#!/bin/sh\n{script}\n", encoding="utf-8")
@@ -68,6 +68,26 @@ def test_proxy_connection_error_is_not_discarded(tmp_path: Path) -> None:
     message = (results / "obproxy-connection-error.log").read_text(encoding="utf-8")
     assert "ERROR 1045" in message
     assert "secret123" not in message + result.stdout
+
+
+def test_sys_tenant_memory_is_increased_and_verified(tmp_path: Path) -> None:
+    result = run_shell(
+        tmp_path,
+        "ob_mysql() { case \"$*\" in *ALTER*) return 0 ;; *SELECT*) printf '17179869184\\n' ;; esac; }; "
+        "configure_sys_tenant_memory",
+        {},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "setting sys tenant memory to 16G" in result.stdout
+
+    rejected = run_shell(
+        tmp_path / "rejected",
+        "ob_mysql() { case \"$*\" in *ALTER*) return 0 ;; *SELECT*) printf '1073741824\\n' ;; esac; }; "
+        "configure_sys_tenant_memory",
+        {},
+    )
+    assert rejected.returncode == 40
+    assert "sys tenant memory quota is 1073741824" in rejected.stdout
 
 
 def test_service_logs_survive_stop_and_are_redacted(tmp_path: Path) -> None:
