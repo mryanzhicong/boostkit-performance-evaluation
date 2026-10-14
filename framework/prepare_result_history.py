@@ -68,8 +68,13 @@ def prepare(
     repository: str,
     source_commit: str,
     workflow_url: str,
+    variant: str = "base",
     update_baseline: bool = False,
 ) -> list[Path]:
+    if variant not in {"base", "optimized"}:
+        raise ValueError(f"invalid build variant: {variant}")
+    if variant == "optimized" and update_baseline:
+        raise ValueError("optimized results cannot update the base baseline.json")
     normalized_paths = sorted(input_root.rglob("normalized_result.json"))
     if not normalized_paths:
         raise ValueError("no normalized_result.json files were downloaded")
@@ -79,6 +84,7 @@ def prepare(
         "# Performance result history\n\n"
         "This branch is maintained by the manually triggered performance workflow.\n"
         "Result directories use UTC+8 time: YYYY-MM-DD-HH-MM-SS_RUN_ID-ATTEMPT.\n"
+        "Optimized runs are stored in an optimized/ directory below the version.\n"
         "Each architecture keeps its normalized data, report, declared outputs, "
         "and original test-stage stdout/stderr in raw-output.log. Other stage logs "
         "remain in GitHub Actions artifacts.\n",
@@ -98,11 +104,24 @@ def prepare(
                 f"permanent history requires passed test and cleanup: "
                 f"{software} {version} {architecture}"
             )
+        build_variant = result.get("parameters", {}).get("build_variant", {})
+        recorded_variant = (
+            build_variant.get("variant") if isinstance(build_variant, dict) else None
+        )
+        if (variant == "optimized" and recorded_variant != "optimized") or (
+            recorded_variant is not None and recorded_variant != variant
+        ):
+            raise ValueError(
+                f"result build variant does not match requested {variant}: "
+                f"{software} {version} {architecture}"
+            )
         grouped[(category, software, version)].append((result, normalized_path.parent))
 
     prepared: list[Path] = []
     for (category, software, version), entries in sorted(grouped.items()):
-        run_root = output_root / category / software / version / result_directory
+        version_root = output_root / category / software / version
+        variant_root = version_root / "optimized" if variant == "optimized" else version_root
+        run_root = variant_root / result_directory
         architecture_dirs: dict[str, Path] = {}
         parameter_signatures: set[str] = set()
         result_summaries: list[dict] = []
@@ -136,6 +155,7 @@ def prepare(
             "category": category,
             "software": software,
             "version": version,
+            "variant": variant,
             "run_id": run_id,
             "created_at": created_at_text,
             "repository": repository,
@@ -183,6 +203,7 @@ def main() -> int:
     parser.add_argument("--repository", required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--workflow-url", required=True)
+    parser.add_argument("--variant", choices=("base", "optimized"), default="base")
     parser.add_argument("--update-baseline", action="store_true")
     args = parser.parse_args()
     paths = prepare(
@@ -193,6 +214,7 @@ def main() -> int:
         repository=args.repository,
         source_commit=args.source_commit,
         workflow_url=args.workflow_url,
+        variant=args.variant,
         update_baseline=args.update_baseline,
     )
     print(json.dumps([str(path) for path in paths], ensure_ascii=False))

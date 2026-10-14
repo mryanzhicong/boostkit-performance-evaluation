@@ -41,7 +41,7 @@ while IFS= read -r -d '' MANIFEST; do
         printf '[history] immutable run already exists: %s\n' "${RELATIVE_DIRECTORY}" >&2
         exit 3
     fi
-done < <(find "${SOURCE_DIR}" -mindepth 5 -maxdepth 5 -type f -name manifest.json -print0)
+done < <(find "${SOURCE_DIR}" -mindepth 5 -maxdepth 6 -type f -name manifest.json -print0)
 [[ "${MANIFEST_COUNT}" -gt 0 ]] || {
     printf '[history] no run manifest found in source directory\n' >&2
     exit 2

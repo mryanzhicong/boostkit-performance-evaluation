@@ -1,5 +1,5 @@
 name: Development performance evaluation
-run-name: "Development performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})"
+run-name: "Development performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}"
 
 on:
   workflow_dispatch:
@@ -20,6 +20,12 @@ on:
         default: all
         type: choice
         options: [all, x86_64, aarch64]
+      variant:
+        description: "Build variant"
+        required: true
+        default: base
+        type: choice
+        options: [base, optimized]
 
 permissions:
   contents: read
@@ -57,6 +63,7 @@ jobs:
           INPUT_SOFTWARE: ${{ inputs.software }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ARCHITECTURE: ${{ inputs.architecture }}
+          INPUT_VARIANT: ${{ inputs.variant }}
           INPUT_RUNNER_PROFILE: development
         shell: bash
         run: |
@@ -65,6 +72,9 @@ jobs:
             --version "${INPUT_VERSION}" \
             --architecture "${INPUT_ARCHITECTURE}" \
             --runner-profile "${INPUT_RUNNER_PROFILE}")"
+          if [[ "${INPUT_VARIANT}" == optimized ]]; then
+            python3 -c 'import json, pathlib, sys; entries=json.loads(sys.argv[1])["include"]; missing=[entry["software"] for entry in entries if not (pathlib.Path(entry["case_path"]).parent / "scripts/builders/optimized.sh").is_file()]; sys.exit("optimized build is unavailable for: " + ", ".join(sorted(set(missing))) if missing else 0)' "${matrix}"
+          fi
           echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
           echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
           echo '```json' >> "${GITHUB_STEP_SUMMARY}"
@@ -72,7 +82,7 @@ jobs:
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
   performance:
-    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})
+    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}
     needs: prepare
     strategy:
       fail-fast: false
@@ -85,6 +95,7 @@ jobs:
       PERF_DEDICATED_RUNNER: "true"
       PERF_WORK_ROOT: /home/runner/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      PERF_VARIANT: ${{ inputs.variant }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
     steps:
       - uses: actions/checkout@v4

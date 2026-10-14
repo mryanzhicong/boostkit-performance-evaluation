@@ -1,5 +1,5 @@
 name: Manual performance evaluation
-run-name: "Performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})"
+run-name: "Performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}"
 
 on:
   workflow_dispatch:
@@ -20,6 +20,12 @@ on:
         default: all
         type: choice
         options: [all, x86_64, aarch64]
+      variant:
+        description: "Build variant"
+        required: true
+        default: base
+        type: choice
+        options: [base, optimized]
       update_baseline:
         description: "Update baseline.json; requires successful x86_64 and aarch64 results"
         required: true
@@ -54,6 +60,11 @@ jobs:
         run: |
           echo "::error::update_baseline requires architecture=all"
           exit 2
+      - name: Reject optimized baseline updates
+        if: inputs.update_baseline && inputs.variant == 'optimized'
+        run: |
+          echo '::error::optimized results cannot update the base baseline.json'
+          exit 2
       - name: Install framework runtime dependencies from PyPI
         shell: bash
         run: |
@@ -71,6 +82,7 @@ jobs:
           INPUT_SOFTWARE: ${{ inputs.software }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ARCHITECTURE: ${{ inputs.architecture }}
+          INPUT_VARIANT: ${{ inputs.variant }}
           INPUT_RUNNER_PROFILE: production
         shell: bash
         run: |
@@ -79,6 +91,9 @@ jobs:
             --version "${INPUT_VERSION}" \
             --architecture "${INPUT_ARCHITECTURE}" \
             --runner-profile "${INPUT_RUNNER_PROFILE}")"
+          if [[ "${INPUT_VARIANT}" == optimized ]]; then
+            python3 -c 'import json, pathlib, sys; entries=json.loads(sys.argv[1])["include"]; missing=[entry["software"] for entry in entries if not (pathlib.Path(entry["case_path"]).parent / "scripts/builders/optimized.sh").is_file()]; sys.exit("optimized build is unavailable for: " + ", ".join(sorted(set(missing))) if missing else 0)' "${matrix}"
+          fi
           echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
           echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
           echo '```json' >> "${GITHUB_STEP_SUMMARY}"
@@ -86,7 +101,7 @@ jobs:
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
   performance:
-    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})
+    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}
     needs: prepare
     strategy:
       fail-fast: false
@@ -99,6 +114,7 @@ jobs:
       PERF_DEDICATED_RUNNER: "true"
       PERF_WORK_ROOT: /home/runner/boostkit-perf
       PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      PERF_VARIANT: ${{ inputs.variant }}
       PERF_SKIP_SYSTEM_PACKAGES: "true"
       PERF_PROXY: ${{ secrets.PERF_PROXY }}
       PERF_GITHUB_DOWNLOAD_PROXY: ""
@@ -214,6 +230,7 @@ jobs:
           --version '${{ matrix.version }}'
           --architecture '${{ matrix.arch }}'
           --result-directory '${{ needs.prepare.outputs.result_directory }}'
+          --variant '${{ inputs.variant }}'
 
   report:
     name: Generate consolidated report
@@ -254,6 +271,7 @@ jobs:
             --destination .perf-output/downloaded \
             --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
             --result-directory "${RESULT_DIRECTORY}" \
+            --variant '${{ inputs.variant }}' \
             --matrix .perf-output/execution-matrix.json
       - name: Generate single-run summary and cross-architecture comparison
         run: >-
@@ -276,14 +294,20 @@ jobs:
           --source .perf-output/report
           --run-id '${{ github.run_id }}-${{ github.run_attempt }}'
           --result-directory '${{ needs.prepare.outputs.result_directory }}'
+          --variant '${{ inputs.variant }}'
       - name: Prepare permanent result history
         if: needs.performance.result == 'success'
         env:
           UPDATE_BASELINE: ${{ inputs.update_baseline }}
+          INPUT_VARIANT: ${{ inputs.variant }}
         shell: bash
         run: |
           baseline_args=()
           if [[ "${UPDATE_BASELINE}" == "true" ]]; then
+            if [[ "${INPUT_VARIANT}" == optimized ]]; then
+              echo '::error::optimized results cannot update the base baseline.json'
+              exit 2
+            fi
             baseline_args+=(--update-baseline)
           fi
           python3 framework/prepare_result_history.py \
@@ -294,6 +318,7 @@ jobs:
             --repository '${{ github.repository }}' \
             --source-commit '${{ github.sha }}' \
             --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            --variant '${{ inputs.variant }}' \
             "${baseline_args[@]}"
       - name: Publish permanent results branch
         if: needs.performance.result == 'success'

@@ -359,9 +359,12 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(encoding="utf-8")
     assert (
         'run-name: "Performance evaluation - ${{ inputs.software }} '
-        '${{ inputs.version }} (${{ inputs.architecture }})"'
+        '${{ inputs.version }} (${{ inputs.architecture }})'
+        "${{ inputs.variant == 'optimized' && ' - optimized' || '' }}\""
     ) in workflow
     assert "matrix.runner_label" in workflow
+    assert "options: [base, optimized]" in workflow
+    assert "PERF_VARIANT: ${{ inputs.variant }}" in workflow
     assert all(label not in workflow for label in configured_runner_labels().values())
     assert "--runner-profile \"${INPUT_RUNNER_PROFILE}\"" in workflow
     assert "INPUT_RUNNER_PROFILE: production" in workflow
@@ -394,6 +397,8 @@ def test_development_workflow_uses_development_runner_profile() -> None:
         encoding="utf-8"
     )
     assert "matrix.runner_label" in workflow
+    assert "options: [base, optimized]" in workflow
+    assert "PERF_VARIANT: ${{ inputs.variant }}" in workflow
     assert "INPUT_RUNNER_PROFILE: development" in workflow
     assert "--runner-profile \"${INPUT_RUNNER_PROFILE}\"" in workflow
     assert all(

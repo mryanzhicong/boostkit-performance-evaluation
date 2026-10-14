@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: python_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_python
     start:
-      script: python_test.sh
+      script: scripts/stages/start.sh
       function: start_python_runtime
     test:
-      script: python_test.sh
+      script: scripts/stages/test.sh
       function: run_python_benchmarks
     stop:
-      script: python_test.sh
+      script: scripts/stages/stop.sh
       function: stop_python_runtime
   timeout_minutes: 360
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   official_benchmark:
     path: benchmark.json
     stage: test

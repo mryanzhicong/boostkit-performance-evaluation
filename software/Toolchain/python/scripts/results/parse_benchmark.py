@@ -169,6 +169,9 @@ def main() -> int:
     benchmark_names = list(results)
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
+    variant = os.environ.get("PERF_VARIANT", "base")
+    if variant not in {"base", "optimized"}:
+        raise ValueError(f"invalid build variant: {variant}")
     pyperformance_version = os.environ.get("PYPERFORMANCE_VERSION", "")
     warmup = os.environ.get("PYPERFORMANCE_WARMUP", "")
     configure_options = os.environ.get("CONFIGURE_OPTIONS", "").split()
@@ -177,8 +180,10 @@ def main() -> int:
         "software": "python",
         "version": version,
         "architecture": architecture,
+        "variant": variant,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": variant,
             "command": [
                 "<built-python>",
                 "-m",

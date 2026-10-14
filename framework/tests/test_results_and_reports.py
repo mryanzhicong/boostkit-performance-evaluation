@@ -946,6 +946,34 @@ def test_baseline_update_rejects_a_single_architecture(tmp_path: Path) -> None:
         )
 
 
+def test_optimized_history_is_separate_and_cannot_update_base_baseline(tmp_path: Path) -> None:
+    import pytest
+
+    input_root = tmp_path / "artifacts"
+    result = normalized_result("aarch64", 120, 10)
+    result.update({"run_id": "12345-1", "cleanup_status": "passed"})
+    result["parameters"]["build_variant"] = {"variant": "optimized"}
+    atomic_write_json(input_root / "arm" / "normalized_result.json", result)
+    report_dir = tmp_path / "report"
+    generate(input_root, report_dir)
+    prepared = prepare(
+        input_root, report_dir, tmp_path / "permanent",
+        run_id="12345-1", repository="owner/repo", source_commit="abc123",
+        workflow_url="https://github.example/actions/runs/12345", variant="optimized",
+    )
+    assert len(prepared) == 1
+    assert prepared[0].parent == tmp_path / "permanent/AI/sample/1.0/optimized"
+    assert (prepared[0] / "aarch64/normalized_result.json").is_file()
+    assert not (tmp_path / "permanent/AI/sample/1.0/baseline.json").exists()
+    with pytest.raises(ValueError, match="cannot update the base"):
+        prepare(
+            input_root, report_dir, tmp_path / "other",
+            run_id="12345-1", repository="owner/repo", source_commit="abc123",
+            workflow_url="https://github.example/actions/runs/12345",
+            variant="optimized", update_baseline=True,
+        )
+
+
 def test_permanent_history_rejects_failed_cleanup(tmp_path: Path) -> None:
     input_root = tmp_path / "artifacts"
     result = normalized_result("aarch64", 120, 10)
@@ -997,6 +1025,9 @@ def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) 
     result_path.mkdir(parents=True)
     (source / "README.md").write_text("# Results\n", encoding="utf-8")
     (result_path / "manifest.json").write_text("{}\n", encoding="utf-8")
+    optimized_path = source / "Database" / "sample" / "1.0.0" / "optimized" / "67890-1"
+    optimized_path.mkdir(parents=True)
+    (optimized_path / "manifest.json").write_text("{}\n", encoding="utf-8")
     publisher = Path(__file__).resolve().parents[1] / "publish_result_history.sh"
     environment = os.environ.copy()
     environment.update({
@@ -1020,6 +1051,7 @@ def test_result_history_publisher_creates_an_independent_branch(tmp_path: Path) 
         text=True,
     ).stdout.splitlines()
     assert "Database/sample/1.0.0/12345-1/manifest.json" in tree
+    assert "Database/sample/1.0.0/optimized/67890-1/manifest.json" in tree
     assert "README.md" in tree
     assert "main-only.txt" not in tree
     duplicate = subprocess.run(

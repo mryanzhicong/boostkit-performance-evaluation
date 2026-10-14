@@ -133,6 +133,26 @@ def object_key(prefix: str, *parts: str) -> str:
     return "/".join((prefix, *safe_parts))
 
 
+def result_key(
+    prefix: str, category: str, software: str, version: str,
+    result_directory: str, architecture: str, variant: str,
+) -> str:
+    if variant not in {"base", "optimized"}:
+        fail(f"invalid build variant: {variant}")
+    variant_parts = ("optimized",) if variant == "optimized" else ()
+    return object_key(
+        prefix, category, software, version, *variant_parts,
+        result_directory, architecture,
+    )
+
+
+def report_key(prefix: str, result_directory: str, variant: str) -> str:
+    if variant not in {"base", "optimized"}:
+        fail(f"invalid build variant: {variant}")
+    variant_parts = ("optimized",) if variant == "optimized" else ()
+    return object_key(prefix, "reports", *variant_parts, result_directory)
+
+
 def upload_file(
     obs_client: Any,
     bucket: str,
@@ -269,16 +289,12 @@ def upload_directory(args: argparse.Namespace) -> None:
         fail(f"result directory does not exist: {source}")
     obs_client, bucket, prefix = client()
     if args.kind == "result":
-        base_key = object_key(
-            prefix,
-            args.category,
-            args.software,
-            args.version,
-            args.result_directory,
-            args.architecture,
+        base_key = result_key(
+            prefix, args.category, args.software, args.version,
+            args.result_directory, args.architecture, args.variant,
         )
     else:
-        base_key = object_key(prefix, "reports", args.result_directory)
+        base_key = report_key(prefix, args.result_directory, args.variant)
     files = [path for path in sorted(source.rglob("*")) if path.is_file()]
     if not files:
         fail(f"result directory contains no files: {source}")
@@ -303,6 +319,7 @@ def upload_directory(args: argparse.Namespace) -> None:
         "kind": args.kind,
         "run_id": args.run_id,
         "result_directory": args.result_directory,
+        "variant": args.variant,
         "files": manifest_files,
     }
     if args.kind == "result":
@@ -384,8 +401,9 @@ def download_results(args: argparse.Namespace) -> None:
         software = identity["software"]
         version = identity["version"]
         architecture = identity["arch"]
-        base_key = object_key(
-            prefix, category, software, version, args.result_directory, architecture
+        base_key = result_key(
+            prefix, category, software, version,
+            args.result_directory, architecture, args.variant,
         )
         manifest_key = f"{base_key}/{MANIFEST_NAME}"
         manifest = load_manifest(obs_client, bucket, manifest_key)
@@ -397,7 +415,9 @@ def download_results(args: argparse.Namespace) -> None:
             "version": manifest_value(manifest, "version"),
             "arch": manifest_value(manifest, "architecture"),
         }
-        if manifest_identity != identity or manifest.get("result_directory") != args.result_directory:
+        if (manifest_identity != identity
+                or manifest.get("result_directory") != args.result_directory
+                or manifest.get("variant", "base") != args.variant):
             fail(f"OBS manifest identity does not match the execution matrix: {manifest_key}")
         files = manifest.get("files")
         if not isinstance(files, list) or not files:
@@ -454,17 +474,20 @@ def parser() -> argparse.ArgumentParser:
     upload.add_argument("--version", required=True)
     upload.add_argument("--architecture", required=True)
     upload.add_argument("--result-directory", required=True)
+    upload.add_argument("--variant", choices=("base", "optimized"), default="base")
     upload.set_defaults(kind="result")
     upload.set_defaults(handler=upload_directory)
     upload_report = subparsers.add_parser("upload-report", help="upload the consolidated report")
     upload_report.add_argument("--source", required=True)
     upload_report.add_argument("--run-id", required=True)
     upload_report.add_argument("--result-directory", required=True)
+    upload_report.add_argument("--variant", choices=("base", "optimized"), default="base")
     upload_report.set_defaults(kind="report", handler=upload_directory)
     download = subparsers.add_parser("download-results", help="download all results in the execution matrix")
     download.add_argument("--destination", required=True)
     download.add_argument("--run-id", required=True)
     download.add_argument("--result-directory", required=True)
+    download.add_argument("--variant", choices=("base", "optimized"), default="base")
     download.add_argument("--matrix", required=True)
     download.set_defaults(handler=download_results)
     return argument_parser
