@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.26.7}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-1.26.9}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
@@ -155,11 +155,11 @@ copy_or_download_go_archive() {
     local offline_archive="${GO_OFFLINE_DIR}/${filename}"
 
     case "${SOFTWARE_VERSION}:${GO_ARCH}" in
-        1.26.7:amd64)
-            expected="ffb5f8de10c62550dfddab66b36b57030721e0a44a3218e9e1181d7b59f121ca"
+        1.26.9:amd64)
+            expected="42d158b4d8f7b61ac0a830567c940a86098fb7aac52e467a5ebec03ef5cc2f8d"
             ;;
-        1.26.7:arm64)
-            expected="5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37"
+        1.26.9:arm64)
+            expected="4a97373d49fcacdcf3694fea368a500b00ee3e963974f3e7514132717632f052"
             ;;
         *)
             log "ERROR: no verified Go binary release is declared for ${SOFTWARE_VERSION} on ${GO_ARCH}"

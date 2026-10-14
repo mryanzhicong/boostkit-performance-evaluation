@@ -1,10 +1,10 @@
-# Go 1.26.7 性能测试
+# Go 1.26.9 性能测试
 
-本用例比较上游官方 Go 1.26.7 在 x86_64 与 aarch64 上的开箱性能。测试工具是 Go 项目的 [Bent](https://pkg.go.dev/golang.org/x/benchmarks/cmd/bent)；基准清单取自《Go基准测试集及测试方法》的 20 项、15 个 suite。只运行一个 `Baseline` 配置，不构建或测试 `goservicesopt`，也不启用该文档的 `feat` 编译开关。
+本用例比较上游官方 Go 1.26.9 在 x86_64 与 aarch64 上的开箱性能。测试工具是 Go 项目的 [Bent](https://pkg.go.dev/golang.org/x/benchmarks/cmd/bent)；基准清单取自《Go基准测试集及测试方法》的 20 项、15 个 suite。只运行一个 `Baseline` 配置，不构建或测试 `goservicesopt`，也不启用该文档的 `feat` 编译开关。
 
 ## 安装
 
-`build` 阶段优先读取 `/home/runner/software/golang/go1.26.7.linux-<amd64|arm64>.tar.gz`；若不存在，则从 `https://go.dev/dl/` 下载相同文件。下载包和离线包均以脚本内声明的官方 SHA-256 校验，解压到本次任务的 `${PERF_WORK_DIR}/go-install`，然后检查 `go version` 与架构。
+`build` 阶段优先读取 `/home/runner/software/golang/go1.26.9.linux-<amd64|arm64>.tar.gz`；若不存在，则从 `https://go.dev/dl/` 下载相同文件。下载包和离线包均以脚本内声明的官方 SHA-256 校验，解压到本次任务的 `${PERF_WORK_DIR}/go-install`，然后检查 `go version` 与架构。
 
 脚本检查 `git`、`curl`、`gcc`、`tar`、`gzip`、`sha256sum`、`awk`、`python3` 和 `nproc`；缺失时通过 `dnf` 安装。Go 的模块缓存、编译缓存、GOPATH 和临时文件位于 `${PERF_WORK_DIR}/runtime`，不使用 Runner 的系统 Go 测量性能。
 
@@ -48,6 +48,6 @@ Framework 依次调用 `build`、`start`、`test`、`stop`；`stop` 删除本次
 
 ```bash
 bash software/Toolchain/golang/golang_test.sh \
-  --version 1.26.7 \
-  --results-dir /home/runner/boostkit-perf/golang/results/1.26.7
+  --version 1.26.9 \
+  --results-dir /home/runner/boostkit-perf/golang/results/1.26.9
 ```
