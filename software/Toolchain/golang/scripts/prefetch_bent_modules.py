@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Prefetch the pinned Bent suites and their go.sum modules sequentially."""
+"""Validate the local Bent cache; download missing modules only when needed."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import tomllib
+import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -31,7 +35,7 @@ MODULE_PATHS = {
 
 
 def download(go: str, work_dir: Path, module: str) -> Path:
-    print(f"[golang] prefetching {module}", flush=True)
+    print(f"[golang] downloading missing module {module}", flush=True)
     completed = subprocess.run(
         [go, "mod", "download", "-json", module],
         cwd=work_dir,
@@ -54,9 +58,101 @@ def download(go: str, work_dir: Path, module: str) -> Path:
     return directory
 
 
-def prefetch(go: str, suites_file: Path, work_dir: Path) -> None:
+def cached_zip(module_cache: Path | None, module: str) -> Path | None:
+    if module_cache is None:
+        return None
+    path, version = module.rsplit("@", 1)
+    escaped = "".join(f"!{character.lower()}" if character.isupper() else character for character in path)
+    base = module_cache / "cache" / "download" / escaped / "@v" / version
+    if all(
+        Path(f"{base}{extension}").is_file() and Path(f"{base}{extension}").stat().st_size > 0
+        for extension in (".zip", ".ziphash", ".mod", ".info")
+    ):
+        return Path(f"{base}.zip")
+    return None
+
+
+def suite_dependencies(module: str, archive: Path) -> list[str]:
+    with zipfile.ZipFile(archive) as bundle:
+        try:
+            contents = bundle.read(f"{module}/go.sum").decode("utf-8")
+        except KeyError:
+            return []
+    return dependencies_from_sums(contents)
+
+
+def dependencies_from_sums(contents: str) -> list[str]:
+    dependencies: list[str] = []
+    for line in contents.splitlines():
+        fields = line.split()
+        if len(fields) == 3:
+            dependencies.append(f"{fields[0]}@{fields[1].removesuffix('/go.mod')}")
+    return dependencies
+
+
+def offline_suites_resolve(
+    go: str, suites: list[dict], work_dir: Path, module_cache: Path, bent_version: str | None
+) -> bool:
+    """Exercise Bent's go-get requests without allowing a network connection."""
+    proxy = (module_cache / "cache" / "download").resolve().as_uri()
+    environment = os.environ | {"GOPROXY": proxy, "GOSUMDB": "off"}
+    with tempfile.TemporaryDirectory(prefix="bent-cache-check-", dir=work_dir) as temporary:
+        if bent_version:
+            environment["GOBIN"] = str(Path(temporary) / "bin")
+            completed = subprocess.run(
+                [go, "install", f"golang.org/x/benchmarks/cmd/bent@{bent_version}"],
+                cwd=temporary,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if completed.returncode:
+                print(f"[golang] local Bent installation is unavailable: {completed.stderr.strip()}", flush=True)
+                return False
+        def resolve_suite(suite: dict) -> tuple[str, str | None]:
+            directory = Path(temporary) / suite["Name"]
+            directory.mkdir()
+            (directory / "go.mod").write_text("module build\n\ngo 1.25\n", encoding="utf-8")
+            completed = subprocess.run(
+                [go, "get", "-t", "-v", suite["Repo"] + suite["Version"]],
+                cwd=directory,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if completed.returncode:
+                errors = completed.stderr.strip().splitlines()
+                return suite["Name"], errors[-1] if errors else f"go get exited {completed.returncode}"
+            return suite["Name"], None
+
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(suites)))) as workers:
+            results = list(workers.map(resolve_suite, suites))
+        for name, error in results:
+            if error is not None:
+                print(f"[golang] local cache is incomplete for {name}: {error}", flush=True)
+                return False
+    return True
+
+
+def prefetch(
+    go: str, suites_file: Path, work_dir: Path, module_cache: Path | None = None,
+    bent_version: str | None = None,
+) -> None:
     suites = tomllib.loads(suites_file.read_text(encoding="utf-8"))["Suites"]
+    if module_cache is not None and offline_suites_resolve(
+        go, suites, work_dir, module_cache, bent_version
+    ):
+        print(
+            f"[golang] Bent and all {len(suites)} suites resolve from local cache; no downloads needed",
+            flush=True,
+        )
+        return
     seen: set[str] = set()
+    dependencies: list[str] = []
+    cached_count = 0
+    downloaded_count = 0
     for suite in suites:
         name = suite["Name"]
         if name not in MODULE_PATHS:
@@ -67,20 +163,50 @@ def prefetch(go: str, suites_file: Path, work_dir: Path) -> None:
         if module in seen:
             continue
         seen.add(module)
-        source_dir = download(go, work_dir, module)
-        sums_file = source_dir / "go.sum"
-        if not sums_file.is_file():
-            continue
-        for line in sums_file.read_text(encoding="utf-8").splitlines():
-            fields = line.split()
-            if len(fields) != 3:
-                continue
-            version = fields[1].removesuffix("/go.mod")
-            dependency = f"{fields[0]}@{version}"
-            if dependency not in seen:
-                seen.add(dependency)
-                download(go, work_dir, dependency)
-    print(f"[golang] prefetched {len(seen)} Bent module versions one at a time", flush=True)
+        archive = cached_zip(module_cache, module)
+        if archive is not None:
+            dependencies.extend(suite_dependencies(module, archive))
+            cached_count += 1
+        else:
+            source_dir = download(go, work_dir, module)
+            sums_file = source_dir / "go.sum"
+            if sums_file.is_file():
+                dependencies.extend(dependencies_from_sums(sums_file.read_text(encoding="utf-8")))
+            downloaded_count += 1
+
+    if bent_version:
+        module = f"golang.org/x/benchmarks@{bent_version}"
+        archive = cached_zip(module_cache, module)
+        if archive is not None:
+            dependencies.extend(suite_dependencies(module, archive))
+            cached_count += 1
+        else:
+            source_dir = download(go, work_dir, module)
+            sums_file = source_dir / "go.sum"
+            if sums_file.is_file():
+                dependencies.extend(dependencies_from_sums(sums_file.read_text(encoding="utf-8")))
+            downloaded_count += 1
+        seen.add(module)
+
+    dependencies = [module for module in dict.fromkeys(dependencies) if module not in seen]
+    with ThreadPoolExecutor(max_workers=min(16, max(1, len(dependencies)))) as workers:
+        archives = list(workers.map(lambda module: cached_zip(module_cache, module), dependencies))
+    for module, archive in zip(dependencies, archives):
+        seen.add(module)
+        if archive is not None:
+            cached_count += 1
+        else:
+            download(go, work_dir, module)
+            downloaded_count += 1
+    print(
+        f"[golang] prepared {len(seen)} Bent module versions: "
+        f"{cached_count} from local cache, {downloaded_count} downloaded sequentially",
+        flush=True,
+    )
+    if module_cache is not None and not offline_suites_resolve(
+        go, suites, work_dir, module_cache, bent_version
+    ):
+        raise RuntimeError("Bent modules remain unavailable in the local cache after downloading")
 
 
 def main() -> int:
@@ -88,10 +214,12 @@ def main() -> int:
     arguments.add_argument("--go", required=True)
     arguments.add_argument("--suites", type=Path, required=True)
     arguments.add_argument("--work-dir", type=Path, required=True)
+    arguments.add_argument("--module-cache", type=Path)
+    arguments.add_argument("--bent-version")
     args = arguments.parse_args()
     try:
-        prefetch(args.go, args.suites, args.work_dir)
-    except (OSError, KeyError, RuntimeError, tomllib.TOMLDecodeError) as error:
+        prefetch(args.go, args.suites, args.work_dir, args.module_cache, args.bent_version)
+    except (OSError, KeyError, RuntimeError, tomllib.TOMLDecodeError, zipfile.BadZipFile) as error:
         print(f"[golang] ERROR: {error}", file=sys.stderr)
         return 1
     return 0

@@ -165,7 +165,7 @@ copy_bent_module_cache() {
         return 50
     fi
     mkdir -p "${destination}" || return 50
-    if ! cp -a "${source}/." "${destination}/"; then
+    if ! cp -R "${source}/." "${destination}/"; then
         log "ERROR: failed to copy local Bent module cache from ${source}"
         return 50
     fi
@@ -262,13 +262,24 @@ start_golang_runtime() {
 }
 
 run_official_bent_benchmarks() {
-    local bent_dir bent_binary processor_count
+    local bent_dir bent_binary module_cache processor_count
     local -a stdout_files
 
     bent_dir="${GO_RUNTIME_DIR}/bent"
+    module_cache="${GOMODCACHE:-${GO_RUNTIME_DIR}/go-mod-cache}"
     rm -rf -- "${bent_dir}"
     mkdir -p "${bent_dir}" || return 50
     copy_bent_module_cache || return 50
+    if ! python3 "${SCRIPT_DIR}/scripts/prefetch_bent_modules.py" \
+        --go "${GO_BIN}" --suites "${SCRIPT_DIR}/scripts/suites.toml" --work-dir "${bent_dir}" \
+        --module-cache "${module_cache}" --bent-version "${BENT_MODULE_VERSION}"; then
+        log "ERROR: failed to prepare Bent modules"
+        return 50
+    fi
+    # The cache was checked with Bent's actual go-get requests.  Use it as a
+    # file proxy so tag/deprecation lookups cannot unexpectedly hit the network.
+    export GOPROXY="file://${module_cache}/cache/download"
+    export GOSUMDB=off
     log "installing official Bent with go install"
     "${GO_BIN}" install "golang.org/x/benchmarks/cmd/bent@${BENT_MODULE_VERSION}" || return 50
     bent_binary="${GOPATH}/bin/bent"
@@ -304,11 +315,6 @@ run_official_bent_benchmarks() {
        ! cp "${bent_dir}/benchmarks.toml" "${RESULTS_DIR}/benchmarks.toml" || \
        ! cp "${bent_dir}/configurations.toml" "${RESULTS_DIR}/configurations.toml"; then
         log "ERROR: cannot preserve the selected Bent configurations"
-        return 50
-    fi
-    if ! python3 "${SCRIPT_DIR}/scripts/prefetch_bent_modules.py" \
-        --go "${GO_BIN}" --suites "${bent_dir}/suites.toml" --work-dir "${bent_dir}"; then
-        log "ERROR: failed to prefetch Bent modules one at a time"
         return 50
     fi
     log "running selected upstream Bent benchmarks: bent -B benchmarks.toml -C configurations.toml -N 1"

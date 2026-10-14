@@ -6,6 +6,7 @@ import importlib.util
 import os
 import subprocess
 import tomllib
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,12 @@ SPEC = importlib.util.spec_from_file_location("golang_bent_parser", SCRIPT_DIR /
 assert SPEC is not None and SPEC.loader is not None
 parser = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(parser)
+PREFETCH_SPEC = importlib.util.spec_from_file_location(
+    "golang_bent_prefetch", SCRIPT_DIR / "prefetch_bent_modules.py"
+)
+assert PREFETCH_SPEC is not None and PREFETCH_SPEC.loader is not None
+prefetch = importlib.util.module_from_spec(PREFETCH_SPEC)
+PREFETCH_SPEC.loader.exec_module(prefetch)
 
 
 def test_selected_benchmarks_resolve_to_pinned_suites() -> None:
@@ -26,6 +33,9 @@ def test_selected_benchmarks_resolve_to_pinned_suites() -> None:
     assert len(suites) == 15
     assert {benchmark["Suite"] for benchmark in benchmarks} == {suite["Name"] for suite in suites}
     assert all(suite["Version"].startswith("@") for suite in suites)
+    assert next(suite for suite in suites if suite["Name"] == "minio")["Version"] == (
+        "@v0.0.0-20251015172955-9e49d5e7a648"
+    )
 
 
 def test_bent_version_matches_case_and_installer() -> None:
@@ -149,7 +159,7 @@ def test_missing_local_bent_cache_uses_network_fallback(tmp_path: Path) -> None:
     assert not (runtime / "go-mod-cache").exists()
 
 
-def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:
+def test_missing_bent_modules_are_downloaded_one_at_a_time(tmp_path: Path) -> None:
     source = tmp_path / "module-source"
     source.mkdir()
     (source / "go.sum").write_text(
@@ -183,7 +193,57 @@ def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert calls.read_text(encoding="utf-8").splitlines() == [
         "github.com/google/uuid@v1.2.0",
+        "github.com/dustin/go-humanize@v1.0.1",
         "example.org/dep@v1.0.0",
         "example.org/metadata-only@v2.0.0",
-        "github.com/dustin/go-humanize@v1.0.1",
     ]
+
+
+def test_offline_resolved_suites_skip_go_module_downloads(tmp_path: Path) -> None:
+    suites = tmp_path / "suites.toml"
+    suites.write_text(
+        '[[Suites]]\nName = "uuid"\nRepo = "github.com/google/uuid/"\nVersion = "@v1.2.0"\n',
+        encoding="utf-8",
+    )
+    module_cache = tmp_path / "module-cache"
+    cache_root = module_cache / "cache/download"
+    for module, version in (("github.com/google/uuid", "v1.2.0"),
+                            ("example.org/cached", "v1.0.0")):
+        base = cache_root / module / "@v" / version
+        base.parent.mkdir(parents=True)
+        with zipfile.ZipFile(f"{base}.zip", "w") as archive:
+            contents = "example.org/cached v1.0.0 h1:abc\nexample.org/missing v2.0.0 h1:def\n"
+            archive.writestr(f"{module}@{version}/go.sum", contents)
+        for suffix in (".ziphash", ".mod", ".info"):
+            Path(f"{base}{suffix}").write_text("cached", encoding="utf-8")
+
+    source = tmp_path / "module-source"
+    source.mkdir()
+    calls = tmp_path / "calls"
+    fake_go = tmp_path / "go"
+    fake_go.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "$4" >> "$FAKE_GO_CALLS"\n'
+        'printf \'{"Dir":"%s"}\\n\' "$FAKE_GO_SOURCE_DIR"\n',
+        encoding="utf-8",
+    )
+    fake_go.chmod(0o755)
+    completed = subprocess.run(
+        ["python3", str(SCRIPT_DIR / "prefetch_bent_modules.py"),
+         "--go", str(fake_go), "--suites", str(suites), "--work-dir", str(tmp_path),
+         "--module-cache", str(module_cache)],
+        env=os.environ | {"FAKE_GO_SOURCE_DIR": str(source), "FAKE_GO_CALLS": str(calls)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert calls.read_text(encoding="utf-8").splitlines() == ["github.com/google/uuid/@v1.2.0"]
+    assert "Bent and all 1 suites resolve from local cache; no downloads needed" in completed.stdout
+
+
+def test_cached_module_path_uses_go_uppercase_escaping(tmp_path: Path) -> None:
+    base = tmp_path / "cache/download/github.com/!i!b!m/sarama/@v/v1.60.0"
+    base.parent.mkdir(parents=True)
+    for suffix in (".zip", ".ziphash", ".mod", ".info"):
+        Path(f"{base}{suffix}").write_text("cached", encoding="utf-8")
+    assert prefetch.cached_zip(tmp_path, "github.com/IBM/sarama@v1.60.0") == Path(f"{base}.zip")
