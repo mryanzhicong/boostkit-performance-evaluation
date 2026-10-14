@@ -33,6 +33,7 @@
 ```bash
 cmake -S "$WORK/folly-source" -B "$WORK/folly-build" \
   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF \
+  -DCMAKE_LIBRARY_ARCHITECTURE="$(gcc -dumpmachine)" \
   -DCMAKE_INSTALL_PREFIX="$WORK/install/folly"
 cmake --build "$WORK/folly-build" --parallel "$(nproc)" # 脚本最多使用 32 路并行
 cmake --install "$WORK/folly-build"
@@ -40,6 +41,9 @@ cmake --install "$WORK/folly-build"
 # Fizz、Wangle、fbthrift 也分别 cmake 配置、构建、安装到 $WORK/install/<组件>。
 # 通过 CMAKE_PREFIX_PATH 关联刚安装的上游库。
 ```
+
+Folly 此版本在 CMake 未识别出目标架构时默认启用 x86 SSE 源文件；显式传入
+GCC 的目标架构可让 aarch64 构建跳过这些文件，无需修改上游源码。
 
 然后将测试工程复制到 `$WORK/fbthrift_folly_benchmark`，用本次构建的
 `$WORK/install/fbthrift/bin/thrift1 --gen mstch_cpp2 press.thrift` 生成协议代码，
@@ -70,14 +74,17 @@ cmake --build "$WORK/fbthrift_folly_benchmark/build" --parallel 32 \
 
 当前仓库的原始 `run.py` 实际定义 **14 种数据设置 × 4 种连接设置 × 2 种队列深度
 = 112 个场景**；每个场景 90 秒，场景间隔 5 秒，纯测试约 2 小时 57 分钟，
-另加源码构建时间。脚本不接受缺失字段、非正数、客户端非零退出或 RPC 失败。
+另加源码构建时间。脚本不接受缺失字段、无成功请求或客户端非零退出；
+出现 RPC 失败时保留该场景，并记录成功率和失败请求数。
 
-每个场景从原始 `press_client` 输出保留六项指标，按数据设置分组展示：
+每个场景从原始 `press_client` 输出保留八项指标，按数据设置分组展示：
 
 | 指标 | 单位 | 方向 |
 |---|---|---|
 | Throughput | MB/s | 越大越好 |
 | QPS | ops/s | 越大越好 |
+| 成功率 | % | 越大越好 |
+| 失败请求数 | requests | 参考值，不计算相对性能 |
 | 平均延迟 | µs | 越小越好 |
 | P99 延迟 | µs | 越小越好 |
 | 客户端 CPU 使用率 | % | 参考值，不计算相对性能 |

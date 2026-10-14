@@ -21,6 +21,8 @@ NUMERIC_FIELDS = (
     ("Throughput", "MB/s", "higher_is_better"),
     ("latencyAvg", "us", "lower_is_better"),
     ("latencyP99", "us", "lower_is_better"),
+    ("Success Rate", "%", "higher_is_better"),
+    ("Failed Requests", "requests", "neutral"),
     ("Client CPU (%)", "%", "neutral"),
     ("Server CPU (%)", "%", "neutral"),
 )
@@ -67,12 +69,18 @@ def measurement_rows(output: str, original) -> dict[str, float]:
     qps = re.search(r"\bQPS:\s*([0-9]+(?:\.[0-9]+)?)\b", output)
     if not success or not fail or not qps:
         raise RuntimeError("press_client omitted Success, Fail or QPS")
-    if int(success.group(1)) <= 0 or int(fail.group(1)) != 0:
-        raise RuntimeError(
-            f"press_client had Success={success.group(1)}, Fail={fail.group(1)}"
-        )
-    values = {"QPS": float(qps.group(1))}
+    succeeded = int(success.group(1))
+    failed = int(fail.group(1))
+    if succeeded <= 0:
+        raise RuntimeError(f"press_client had no successful requests (Fail={failed})")
+    values = {
+        "QPS": float(qps.group(1)),
+        "Success Rate": succeeded / (succeeded + failed) * 100,
+        "Failed Requests": failed,
+    }
     for field, unit, _direction in NUMERIC_FIELDS:
+        if field in values:
+            continue
         raw = parsed.get(field, "N/A")
         if field == "Throughput" and raw.endswith("MB/s"):
             raw = raw[:-4]
@@ -125,13 +133,20 @@ def run(original, run_py: Path, binary: Path, port: int, result_path: Path,
         if completed.returncode:
             raise RuntimeError(f"{scenario}: press_client exited with {completed.returncode}; see {log_path}")
         values = measurement_rows(output, original)
+        if values["Failed Requests"]:
+            print(f"[folly-acclib] WARNING: {scenario}: "
+                  f"{int(values['Failed Requests'])} RPC failures; see {log_path}", flush=True)
         for field, unit, direction in (*NUMERIC_FIELDS,
                                        ("QPS", "ops/s", "higher_is_better")):
             name = f"{scenario} / {field}"
             if name in results:
                 raise RuntimeError(f"duplicate AccLibBenchmark metric: {name}")
+            source_field = {
+                "Success Rate": "Success, Fail",
+                "Failed Requests": "Fail",
+            }.get(field, field)
             results[name] = {
-                "source_name": name, "source_field": field, "group": data_type,
+                "source_name": name, "source_field": source_field, "group": data_type,
                 "value": values[field], "unit": unit, "direction": direction,
             }
         # Preserve every completed scenario even if a later one fails.

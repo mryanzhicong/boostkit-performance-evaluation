@@ -92,7 +92,12 @@ export CMAKE_PREFIX_PATH="${install_root}/fbthrift:${install_root}/wangle:${inst
 export LD_LIBRARY_PATH="${install_root}/fbthrift/lib:${install_root}/fbthrift/lib64:${install_root}/wangle/lib:${install_root}/wangle/lib64:${install_root}/fizz/lib:${install_root}/fizz/lib64:${install_root}/folly/lib:${install_root}/folly/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 fast_float_args=()
 [[ ! -d "${fast_float_dir}/include" ]] || fast_float_args=(-DFASTFLOAT_INCLUDE_DIR="${fast_float_dir}/include")
-build_install folly "${folly_source}" "${fast_float_args[@]}"
+# Folly v2022.11.14.00 assumes x86_64 when CMake leaves this value empty.
+# Supply the compiler target so its upstream CMake excludes x86 SIMD sources on ARM.
+folly_target_arch="$(gcc -dumpmachine)"
+[[ -n "${folly_target_arch}" ]] || { echo '[folly] ERROR: GCC target architecture is empty' >&2; exit 40; }
+build_install folly "${folly_source}" \
+    -DCMAKE_LIBRARY_ARCHITECTURE="${folly_target_arch}" "${fast_float_args[@]}"
 folly_cmake_dir="$(cmake_package_dir "${install_root}/folly" folly)"
 
 clone_tag https://github.com/facebookincubator/fizz.git "${work_dir}/fizz-source"

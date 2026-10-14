@@ -56,23 +56,33 @@ class AccLibAdapterTest(unittest.TestCase):
             MODULE.run(original, run_py, binary, 41000, result_path,
                        result_path.parent / "press_client_raw", "2022.11.14.00", "x86_64")
             payload = json.loads(result_path.read_text(encoding="utf-8"))
-            self.assertEqual(len(payload["results"]), 6)
+            self.assertEqual(len(payload["results"]), 8)
             self.assertEqual(payload["parameters"]["cases"], 1)
             self.assertNotIn("port", payload["parameters"])
             self.assertEqual(payload["runtime_context"]["port"], 41000)
             self.assertTrue(all("binary payload / payload=256B" in name
                                 for name in payload["results"]))
+            rate = next(value for name, value in payload["results"].items()
+                        if name.endswith(" / Success Rate"))
+            self.assertEqual(rate["value"], 100.0)
+            self.assertEqual(rate["source_field"], "Success, Fail")
 
-    def test_failed_rpc_is_rejected(self):
+    def test_failed_rpc_is_recorded_as_success_rate(self):
         original = SimpleNamespace(parse_output=lambda _output: {
             "Throughput": "2.50MB/s", "latencyAvg": "11.00", "latencyP99": "20.00",
             "Server CPU (%)": "4.00", "Client CPU (%)": "5.00",
         })
-        with self.assertRaisesRegex(RuntimeError, "Fail=1"):
-            MODULE.measurement_rows(
-                "Success: 10\nFail: 1\nQPS: 10.00\nThroughput: 2.50MB/s\n"
-                "Latency (us): avg=11.00 p99=20.00\n", original
-            )
+        values = MODULE.measurement_rows(
+            "Success: 10\nFail: 1\nQPS: 10.00\nThroughput: 2.50MB/s\n"
+            "Latency (us): avg=11.00 p99=20.00\n", original
+        )
+        self.assertEqual(values["Failed Requests"], 1)
+        self.assertAlmostEqual(values["Success Rate"], 10 / 11 * 100)
+
+    def test_no_successful_rpc_is_rejected(self):
+        original = SimpleNamespace(parse_output=lambda _output: {})
+        with self.assertRaisesRegex(RuntimeError, "no successful requests"):
+            MODULE.measurement_rows("Success: 0\nFail: 1\nQPS: 0.00\n", original)
 
 
 if __name__ == "__main__":
