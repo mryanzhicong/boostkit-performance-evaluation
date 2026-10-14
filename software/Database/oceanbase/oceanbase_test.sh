@@ -48,6 +48,7 @@ OBPROXY_RPM_RELEASE="2"
 OB_USER="root@test#demo"
 OB_MEMORY_LIMIT="64G"
 OB_SYSTEM_MEMORY="8G"
+OB_DATAFILE_SIZE="512G"
 OB_LOG_DISK_SIZE="128G"
 OB_SYS_TENANT_MEMORY="16G"
 OB_TEST_TENANT_MEMORY="32G"
@@ -269,13 +270,35 @@ check_deployment_disk_space() {
         log "ERROR: invalid free disk space at ${PERF_WORK_DIR}: ${available_bytes:-unknown}"
         return 40
     fi
-    # Leave room for the data file and deployment files alongside the log disk.
-    required_bytes=$(( (${OB_LOG_DISK_SIZE%G} + 16) * 1024 * 1024 * 1024 ))
+    # Both fixed-size files share the private deployment filesystem.
+    required_bytes=$(( (${OB_DATAFILE_SIZE%G} + ${OB_LOG_DISK_SIZE%G} + 32) * 1024 * 1024 * 1024 ))
     if (( available_bytes < required_bytes )); then
-        log "ERROR: ${PERF_WORK_DIR} has ${available_bytes} free bytes; deployment needs at least ${required_bytes} bytes for the ${OB_LOG_DISK_SIZE} log disk and other files"
+        log "ERROR: ${PERF_WORK_DIR} has ${available_bytes} free bytes; deployment needs at least ${required_bytes} bytes for the ${OB_DATAFILE_SIZE} data file, ${OB_LOG_DISK_SIZE} log disk and other files"
         return 40
     fi
     log "deployment filesystem has ${available_bytes} free bytes"
+}
+
+check_observer_data_disk() {
+    local capacity_bytes required_bytes
+
+    capacity_bytes="$(ob_mysql -N -s -e \
+        "SELECT MIN(DATA_DISK_CAPACITY) FROM oceanbase.GV\$OB_SERVERS WHERE SVR_IP = '${OB_HOST}'" \
+        2>/dev/null)" || {
+        log 'ERROR: could not query observer data disk capacity'
+        return 40
+    }
+    capacity_bytes="$(printf '%s' "${capacity_bytes}" | tr -d '\r\n\t')"
+    if [[ ! "${capacity_bytes}" =~ ^[0-9]+$ ]]; then
+        log "ERROR: invalid observer data disk capacity: ${capacity_bytes:-unknown}"
+        return 40
+    fi
+    required_bytes=$(( ${OB_DATAFILE_SIZE%G} * 1024 * 1024 * 1024 ))
+    if (( capacity_bytes < required_bytes )); then
+        log "ERROR: observer data disk capacity is ${capacity_bytes} bytes, expected at least ${required_bytes} bytes"
+        return 40
+    fi
+    log "observer data disk capacity is ${capacity_bytes} bytes (expected at least ${required_bytes})"
 }
 
 check_test_tenant_log_disk() {
@@ -509,6 +532,7 @@ build_oceanbase() {
             "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
             "--oceanbase-ce.memory_limit=${OB_MEMORY_LIMIT}" \
             "--oceanbase-ce.system_memory=${OB_SYSTEM_MEMORY}" \
+            "--oceanbase-ce.datafile_size=${OB_DATAFILE_SIZE}" \
             "--oceanbase-ce.log_disk_size=${OB_LOG_DISK_SIZE}" \
             "--obproxy-ce.version=${OB_PROXY_VERSION}" \
             "--obproxy-ce.proxy_mem_limited=${OB_PROXY_MEMORY_LIMIT}" \
@@ -541,6 +565,7 @@ build_oceanbase() {
         log "ERROR: deployed observer reports ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
         return 40
     fi
+    check_observer_data_disk || return $?
     configure_sys_tenant_memory || return $?
     check_test_tenant_memory || return $?
     check_test_tenant_log_disk || return $?

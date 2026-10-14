@@ -43,6 +43,10 @@ OBD 的 `--home_path` 为 `${PERF_WORK_DIR}/ob`。脚本在部署前检查
 `DBA_OB_UNIT_CONFIGS` 验证，再从 `GV$OB_SERVERS` 核对剩余内存至少
 32 GiB。容量不足时直接失败，不让 OBD 自动申请超出容量的租户。
 
+参考文档在 2.9T NVMe 上固定配置 `datafile_size: 2000G`、
+`log_disk_size: 500G`。本用例沿用固定容量方式，但按两台 Runner 的磁盘空间
+统一设为 512G 数据文件和 128G 日志盘；不启用测试期间的自动扩容。
+
 openEuler 上 OBD 可能自动选择 el7 镜像。脚本明确从 OceanBase 官方 el8 仓库
 用 `dnf download` 下载两个固定版本的 RPM，然后以 `obd mirror clone` 导入本次
 任务的私有 `OBD_HOME`，并禁用该私有 OBD 镜像的远端源：
@@ -78,6 +82,7 @@ obd demo -c oceanbase-ce,obproxy-ce \
   --oceanbase-ce.root_password=<本次任务生成的随机密码> \
   --oceanbase-ce.memory_limit=64G \
   --oceanbase-ce.system_memory=8G \
+  --oceanbase-ce.datafile_size=512G \
   --oceanbase-ce.log_disk_size=128G \
   --obproxy-ce.version=4.3.6.1 \
   --obproxy-ce.proxy_mem_limited=8G \
@@ -95,8 +100,10 @@ obd cluster tenant create demo -n test --memory-size=32G
 ```
 
 日志盘固定为 128G：32G 测试租户默认需要 96G 日志盘配额，系统租户还占用一部分。
-部署前脚本要求工作目录所在文件系统至少有 144G 可用空间（128G 日志盘，另为数据文件和部署文件预留 16G）；
-部署后从 `GV$OB_SERVERS` 核实日志盘剩余配额至少 96G，不足时立即停止，不进入建租户步骤。
+部署前脚本要求工作目录所在文件系统至少有 672G 可用空间（512G 数据文件、
+128G 日志盘，以及 32G 其他文件余量）；部署后从 `GV$OB_SERVERS` 核实
+数据盘容量至少 512G、日志盘剩余配额至少 96G。任何一项不足都立即停止，
+不进入建租户和长时间性能测试。
 
 该命令以固定内存额度创建 MySQL 模式 `test` 租户。脚本从系统租户查询
 `DBA_OB_TENANTS` 确认租户已创建，再通过 OBProxy 使用 `root@test#demo`
