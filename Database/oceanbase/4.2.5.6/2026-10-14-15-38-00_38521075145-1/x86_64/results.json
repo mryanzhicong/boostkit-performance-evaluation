@@ -1,0 +1,417 @@
+{
+  "benchmark": "oceanbase_sysbench_via_obproxy",
+  "software": "oceanbase",
+  "version": "4.2.5.6",
+  "architecture": "x86_64",
+  "timestamp": "2026-10-14T07:29:18Z",
+  "parameters": {
+    "connection": "obproxy",
+    "proxy_version": "4.3.6.1",
+    "tenant": "test",
+    "database": "obtest",
+    "workloads": [
+      "read_only",
+      "insert",
+      "read_write",
+      "write_only"
+    ],
+    "threads": [
+      1,
+      64,
+      256
+    ],
+    "table_size": 500000,
+    "duration_seconds": 300,
+    "pause_seconds": 60,
+    "iterations": 1,
+    "db_ps_mode": "disable",
+    "rand_type": "uniform",
+    "mysql_ignore_errors": "1062,6002,6001,4012,1213,1020,1205,4038,6004"
+  },
+  "results": {
+    "read_only :: threads=1 :: tps": {
+      "source_name": "read_only :: threads=1 :: tps",
+      "source_field": "tps",
+      "group": "read_only",
+      "value": 652.78,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=1 :: qps": {
+      "source_name": "read_only :: threads=1 :: qps",
+      "source_field": "qps",
+      "group": "read_only",
+      "value": 10444.43,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=1 :: avg_latency_ms": {
+      "source_name": "read_only :: threads=1 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_only",
+      "value": 1.53,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_only :: threads=1 :: p95_latency_ms": {
+      "source_name": "read_only :: threads=1 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_only",
+      "value": 1.67,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_only :: threads=64 :: tps": {
+      "source_name": "read_only :: threads=64 :: tps",
+      "source_field": "tps",
+      "group": "read_only",
+      "value": 27893.97,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=64 :: qps": {
+      "source_name": "read_only :: threads=64 :: qps",
+      "source_field": "qps",
+      "group": "read_only",
+      "value": 446303.45,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=64 :: avg_latency_ms": {
+      "source_name": "read_only :: threads=64 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_only",
+      "value": 2.29,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_only :: threads=64 :: p95_latency_ms": {
+      "source_name": "read_only :: threads=64 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_only",
+      "value": 2.52,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_only :: threads=256 :: tps": {
+      "source_name": "read_only :: threads=256 :: tps",
+      "source_field": "tps",
+      "group": "read_only",
+      "value": 40882.3,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=256 :: qps": {
+      "source_name": "read_only :: threads=256 :: qps",
+      "source_field": "qps",
+      "group": "read_only",
+      "value": 654116.75,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_only :: threads=256 :: avg_latency_ms": {
+      "source_name": "read_only :: threads=256 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_only",
+      "value": 6.26,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_only :: threads=256 :: p95_latency_ms": {
+      "source_name": "read_only :: threads=256 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_only",
+      "value": 8.28,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=1 :: tps": {
+      "source_name": "insert :: threads=1 :: tps",
+      "source_field": "tps",
+      "group": "insert",
+      "value": 3969.81,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=1 :: qps": {
+      "source_name": "insert :: threads=1 :: qps",
+      "source_field": "qps",
+      "group": "insert",
+      "value": 3969.81,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=1 :: avg_latency_ms": {
+      "source_name": "insert :: threads=1 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "insert",
+      "value": 0.25,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=1 :: p95_latency_ms": {
+      "source_name": "insert :: threads=1 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "insert",
+      "value": 0.38,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=64 :: tps": {
+      "source_name": "insert :: threads=64 :: tps",
+      "source_field": "tps",
+      "group": "insert",
+      "value": 112568.92,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=64 :: qps": {
+      "source_name": "insert :: threads=64 :: qps",
+      "source_field": "qps",
+      "group": "insert",
+      "value": 112568.92,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=64 :: avg_latency_ms": {
+      "source_name": "insert :: threads=64 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "insert",
+      "value": 0.57,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=64 :: p95_latency_ms": {
+      "source_name": "insert :: threads=64 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "insert",
+      "value": 1.08,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=256 :: tps": {
+      "source_name": "insert :: threads=256 :: tps",
+      "source_field": "tps",
+      "group": "insert",
+      "value": 157184.43,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=256 :: qps": {
+      "source_name": "insert :: threads=256 :: qps",
+      "source_field": "qps",
+      "group": "insert",
+      "value": 157184.43,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "insert :: threads=256 :: avg_latency_ms": {
+      "source_name": "insert :: threads=256 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "insert",
+      "value": 1.62,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "insert :: threads=256 :: p95_latency_ms": {
+      "source_name": "insert :: threads=256 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "insert",
+      "value": 2.18,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=1 :: tps": {
+      "source_name": "read_write :: threads=1 :: tps",
+      "source_field": "tps",
+      "group": "read_write",
+      "value": 313.82,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=1 :: qps": {
+      "source_name": "read_write :: threads=1 :: qps",
+      "source_field": "qps",
+      "group": "read_write",
+      "value": 6276.34,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=1 :: avg_latency_ms": {
+      "source_name": "read_write :: threads=1 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_write",
+      "value": 3.19,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=1 :: p95_latency_ms": {
+      "source_name": "read_write :: threads=1 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_write",
+      "value": 4.25,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=64 :: tps": {
+      "source_name": "read_write :: threads=64 :: tps",
+      "source_field": "tps",
+      "group": "read_write",
+      "value": 16104.23,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=64 :: qps": {
+      "source_name": "read_write :: threads=64 :: qps",
+      "source_field": "qps",
+      "group": "read_write",
+      "value": 322084.69,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=64 :: avg_latency_ms": {
+      "source_name": "read_write :: threads=64 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_write",
+      "value": 3.97,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=64 :: p95_latency_ms": {
+      "source_name": "read_write :: threads=64 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_write",
+      "value": 4.82,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=256 :: tps": {
+      "source_name": "read_write :: threads=256 :: tps",
+      "source_field": "tps",
+      "group": "read_write",
+      "value": 27446.92,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=256 :: qps": {
+      "source_name": "read_write :: threads=256 :: qps",
+      "source_field": "qps",
+      "group": "read_write",
+      "value": 548938.31,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "read_write :: threads=256 :: avg_latency_ms": {
+      "source_name": "read_write :: threads=256 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "read_write",
+      "value": 9.32,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "read_write :: threads=256 :: p95_latency_ms": {
+      "source_name": "read_write :: threads=256 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "read_write",
+      "value": 12.08,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=1 :: tps": {
+      "source_name": "write_only :: threads=1 :: tps",
+      "source_field": "tps",
+      "group": "write_only",
+      "value": 961.66,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=1 :: qps": {
+      "source_name": "write_only :: threads=1 :: qps",
+      "source_field": "qps",
+      "group": "write_only",
+      "value": 5769.95,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=1 :: avg_latency_ms": {
+      "source_name": "write_only :: threads=1 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "write_only",
+      "value": 1.04,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=1 :: p95_latency_ms": {
+      "source_name": "write_only :: threads=1 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "write_only",
+      "value": 1.34,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=64 :: tps": {
+      "source_name": "write_only :: threads=64 :: tps",
+      "source_field": "tps",
+      "group": "write_only",
+      "value": 52968.4,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=64 :: qps": {
+      "source_name": "write_only :: threads=64 :: qps",
+      "source_field": "qps",
+      "group": "write_only",
+      "value": 317810.43,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=64 :: avg_latency_ms": {
+      "source_name": "write_only :: threads=64 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "write_only",
+      "value": 1.21,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=64 :: p95_latency_ms": {
+      "source_name": "write_only :: threads=64 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "write_only",
+      "value": 1.5,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=256 :: tps": {
+      "source_name": "write_only :: threads=256 :: tps",
+      "source_field": "tps",
+      "group": "write_only",
+      "value": 91928.36,
+      "unit": "transactions/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=256 :: qps": {
+      "source_name": "write_only :: threads=256 :: qps",
+      "source_field": "qps",
+      "group": "write_only",
+      "value": 551570.15,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "write_only :: threads=256 :: avg_latency_ms": {
+      "source_name": "write_only :: threads=256 :: avg_latency_ms",
+      "source_field": "avg_latency_ms",
+      "group": "write_only",
+      "value": 2.78,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    },
+    "write_only :: threads=256 :: p95_latency_ms": {
+      "source_name": "write_only :: threads=256 :: p95_latency_ms",
+      "source_field": "p95_latency_ms",
+      "group": "write_only",
+      "value": 4.03,
+      "unit": "ms",
+      "direction": "lower_is_better"
+    }
+  }
+}
