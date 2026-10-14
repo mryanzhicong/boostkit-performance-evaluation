@@ -91,7 +91,7 @@ JMH 参数和完整方法名对齐，但 CPU 调度由各自系统决定。
 | 输出 | 内容 |
 |---|---|
 | `jmh-output.log` | `make test` 的原始控制台输出。 |
-| `jmh-result.json` | JMH 原始 JSON，保留 Score、误差和运行参数。 |
+| `jmh-result.json` | JMH 原始 JSON 数组，保留 Score、误差和运行参数；由测试脚本逐项校验。 |
 | `benchmark_bishengjdk.json` | 四项规范化指标及实际测试命令。 |
 
 ## 独立执行

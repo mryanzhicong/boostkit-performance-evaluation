@@ -7,6 +7,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import yaml
+
 
 CASE_DIR = Path(__file__).resolve().parents[1]
 BENCHMARK_PATH = Path("org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java")
@@ -16,6 +18,14 @@ METHODS = (
     "testScalarAbsDiffFloat",
     "testScalarAbsDiffDouble",
 )
+
+
+def test_official_jmh_array_is_declared_as_raw_text() -> None:
+    case = yaml.safe_load((CASE_DIR / "case.yaml").read_text(encoding="utf-8"))
+    raw_output = case["outputs"]["jmh_raw_result"]
+    assert raw_output["path"] == "jmh-result.json"
+    assert raw_output["format"] == "text"
+    assert case["outputs"]["jmh_result"]["format"] == "json"
 
 
 def test_private_microbenchmark_source_is_passed_to_make(tmp_path: Path) -> None:
