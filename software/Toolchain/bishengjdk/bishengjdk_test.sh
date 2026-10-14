@@ -19,6 +19,7 @@ JMH_VERSION="1.37"
 
 JDK_HOME=""
 SRC_DIR=""
+JMH_SOURCE_DIR=""
 BOOT_JDK_HOME=""
 BUILD_CONF=""
 JDK_VERSION_STRING=""
@@ -86,6 +87,7 @@ configure_runtime_paths() {
     fi
     JDK_HOME="${PERF_WORK_DIR}/jdk"
     SRC_DIR="${PERF_WORK_DIR}/bishengjdk-source"
+    JMH_SOURCE_DIR="${PERF_WORK_DIR}/jmh-source"
     BUILD_CONF="linux-${EXPECTED_ARCH}-server-release"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
@@ -102,7 +104,7 @@ initialize_runtime() {
 
 install_dependencies() {
     local required header missing=0
-    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ find; do
+    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -147,7 +149,7 @@ install_dependencies() {
         log "ERROR: failed to install BiSheng JDK build dependencies"
         return 30
     fi
-    for required in curl tar sha256sum python3 awk sed grep tee make gcc g++ find; do
+    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log "ERROR: required command is still missing after installation: ${required}"
             return 30
@@ -414,7 +416,7 @@ start_bishengjdk_runtime() {
 }
 
 run_bishengjdk_benchmarks() {
-    local result_root result_file
+    local result_root result_file benchmark_source benchmark_copy
     local -a result_files
 
     if initialize_runtime; then
@@ -427,11 +429,24 @@ run_bishengjdk_benchmarks() {
         log "ERROR: source-built BiSheng JDK or JMH bundle is missing"
         return 40
     fi
+    benchmark_source="${SRC_DIR}/test/micro/org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java"
+    benchmark_copy="${JMH_SOURCE_DIR}/org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java"
+    if [[ ! -f "${benchmark_source}" ]]; then
+        log "ERROR: official JMH benchmark source is missing: ${benchmark_source}"
+        return 50
+    fi
+    mkdir -p "$(dirname "${benchmark_copy}")"
+    if ! cp -- "${benchmark_source}" "${benchmark_copy}" || ! cmp -s -- "${benchmark_source}" "${benchmark_copy}"; then
+        log 'ERROR: failed to stage an unchanged copy of the official JMH benchmark'
+        return 50
+    fi
     result_root="${SRC_DIR}/build/${BUILD_CONF}/test-results"
     log "running ${JMH_BENCHMARK} with JMH ${JMH_VERSION}; count=${JMH_COUNT}, threads=1, no CPU affinity"
     if ! (
         cd "${SRC_DIR}"
+        printf '[bishengjdk] compiling only the official benchmark from %s\n' "${JMH_SOURCE_DIR}"
         make test CONF="${BUILD_CONF}" \
+            MICROBENCHMARK_SRC="${JMH_SOURCE_DIR}" \
             TEST="micro:${JMH_BENCHMARK}" \
             MICRO="FORK=3;WARMUP_ITER=4;WARMUP_TIME=2;ITER=4;TIME=2;RESULTS_FORMAT=json;OPTIONS=-t 1 -p count=${JMH_COUNT}"
     ) 2>&1 | tee "${RESULTS_DIR}/jmh-output.log"; then

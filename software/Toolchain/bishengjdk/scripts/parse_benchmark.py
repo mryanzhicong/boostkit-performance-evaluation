@@ -91,7 +91,8 @@ def main() -> int:
                 "measurement_seconds": 2,
                 "cpu_affinity": "none",
                 "command": [
-                    "make", "test", f"CONF={os.environ['BUILD_CONF']}",
+                    "make", "test", "CONF=<architecture-specific-release-config>",
+                    "MICROBENCHMARK_SRC=<private-copy-of-official-class>",
                     f"TEST=micro:{benchmark}",
                     f"MICRO=FORK=3;WARMUP_ITER=4;WARMUP_TIME=2;ITER=4;TIME=2;"
                     f"RESULTS_FORMAT=json;OPTIONS=-t 1 -p count={count}",

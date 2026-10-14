@@ -57,11 +57,15 @@ make images
 
 源码中必须存在
 `test/micro/org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java`。
-脚本在源码根目录执行以下命令；`CONF` 按实际架构取对应的构建配置名：
+脚本先将上游的 `FloatingScalarVectorAbsDiff.java` 原样复制到本次任务的
+`${PERF_WORK_DIR}/jmh-source/org/openjdk/bench/vm/compiler/`。这只是 JMH
+编译输入的私有副本，不修改上游源码或被测 JDK。随后在源码根目录执行；
+`CONF` 按实际架构取对应的构建配置名：
 
 ```bash
 cd "${PERF_WORK_DIR}/bishengjdk-source"
 make test CONF="${CONF}" \
+  MICROBENCHMARK_SRC="${PERF_WORK_DIR}/jmh-source" \
   TEST="micro:org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff" \
   MICRO="FORK=3;WARMUP_ITER=4;WARMUP_TIME=2;ITER=4;TIME=2;RESULTS_FORMAT=json;OPTIONS=-t 1 -p count=1024"
 ```
