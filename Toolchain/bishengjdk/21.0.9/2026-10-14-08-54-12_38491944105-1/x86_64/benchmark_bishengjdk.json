@@ -1,0 +1,83 @@
+{
+  "benchmark": "bishengjdk_floating_scalar_vector_abs_diff",
+  "software": "bishengjdk",
+  "version": "21.0.9",
+  "architecture": "x86_64",
+  "timestamp": "2026-10-14T00:51:25Z",
+  "parameters": {
+    "source_repository": "https://gitee.com/openeuler/bishengjdk-21",
+    "benchmark_class": "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff",
+    "jmh_version": "1.37",
+    "count": 1024,
+    "threads": 1,
+    "forks": 3,
+    "warmup_iterations": 4,
+    "warmup_seconds": 2,
+    "measurement_iterations": 4,
+    "measurement_seconds": 2,
+    "cpu_affinity": "none",
+    "command": [
+      "make",
+      "test",
+      "CONF=<architecture-specific-release-config>",
+      "MICROBENCHMARK_SRC=<private-copy-of-official-class>",
+      "TEST=micro:org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff",
+      "MICRO=FORK=3;WARMUP_ITER=4;WARMUP_TIME=2;ITER=4;TIME=2;RESULTS_FORMAT=json;OPTIONS=-t 1 -p count=1024"
+    ]
+  },
+  "metric_contract": {
+    "source_field": "primaryMetric.score",
+    "unit": "ns/op",
+    "direction": "lower_is_better"
+  },
+  "results": {
+    "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testScalarAbsDiffDouble": {
+      "source_name": "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testScalarAbsDiffDouble",
+      "source_field": "primaryMetric.score",
+      "value": 2227.3030658490875,
+      "unit": "ns/op",
+      "source_file": "jmh-result.json",
+      "score_error": 0.2495930608339945,
+      "params": {
+        "count": "1024",
+        "seed": "316731"
+      }
+    },
+    "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testScalarAbsDiffFloat": {
+      "source_name": "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testScalarAbsDiffFloat",
+      "source_field": "primaryMetric.score",
+      "value": 2197.1120557109116,
+      "unit": "ns/op",
+      "source_file": "jmh-result.json",
+      "score_error": 0.4458852033847849,
+      "params": {
+        "count": "1024",
+        "seed": "316731"
+      }
+    },
+    "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testVectorAbsDiffDouble": {
+      "source_name": "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testVectorAbsDiffDouble",
+      "source_field": "primaryMetric.score",
+      "value": 168.22273513775718,
+      "unit": "ns/op",
+      "source_file": "jmh-result.json",
+      "score_error": 12.60118256299063,
+      "params": {
+        "count": "1024",
+        "seed": "316731"
+      }
+    },
+    "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testVectorAbsDiffFloat": {
+      "source_name": "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff.testVectorAbsDiffFloat",
+      "source_field": "primaryMetric.score",
+      "value": 88.65858397099193,
+      "unit": "ns/op",
+      "source_file": "jmh-result.json",
+      "score_error": 1.0775790643746117,
+      "params": {
+        "count": "1024",
+        "seed": "316731"
+      }
+    }
+  }
+}
