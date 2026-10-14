@@ -15,10 +15,12 @@
 ```bash
 go install golang.org/x/benchmarks/cmd/bent@latest
 bent -I
-bent -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log -v
+bent -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log
 ```
 
 `bent -I` 在私有工作目录初始化工具文件。脚本随后把 [benchmarks.toml](scripts/benchmarks.toml) 和 [suites.toml](scripts/suites.toml) 复制到该目录；它们固定了附件列出的 20 个基准名称、筛选正则、15 个第三方 suite 及其版本。`configurations.toml` 由脚本生成：
+
+正式测试优先通过华为云 Go 模块镜像下载，失败时回退到 `goproxy.cn`。运行 Bent 前，脚本按 `suites.toml` 中的版本逐个下载模块，并按各模块的 `go.sum` 逐个预下载依赖；下载失败立即终止，不进入耗时的基准测试。开发测试仍使用直连。Bent 不开启详细命令回显，避免把代理认证信息写入测试日志。
 
 ```toml
 [[Configurations]]
@@ -29,7 +31,7 @@ bent -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log -v
 
 `-N 15` 表示每项重复 15 轮。测试不绑核；两个架构各用自己的 `nproc`，原始 benchmark 名称中的并发度后缀保留。若后缀不同，不会改名强行对齐。
 
-正式工作流通过 `https://goproxy.cn` 获取 Go 模块；开发工作流设置 `PERF_DIRECT_NETWORK=true`，由脚本改用 `GOPROXY=direct`。
+开发工作流设置 `PERF_DIRECT_NETWORK=true`，由脚本改用 `GOPROXY=direct`。
 
 ## 指标与结果
 

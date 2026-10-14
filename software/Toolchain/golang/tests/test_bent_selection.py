@@ -54,6 +54,26 @@ def test_missing_repeat_fails_instead_of_silently_dropping_metric() -> None:
         parser.parse_output(sample_output(omit=parser.expected_shortnames()[0]))
 
 
+@pytest.mark.parametrize(
+    ("direct_network", "expected_proxy"),
+    [
+        ("false", "https://repo.huaweicloud.com/repository/goproxy/|https://goproxy.cn"),
+        ("true", "direct"),
+    ],
+)
+def test_go_module_proxy_selection(direct_network: str, expected_proxy: str) -> None:
+    completed = subprocess.run(
+        ["bash", "-c", 'source "$1"; configure_go_environment; printf "%s" "$GOPROXY"',
+         "bash", str(CASE_DIR / "golang_test.sh")],
+        env=os.environ | {"PERF_DIRECT_NETWORK": direct_network},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout == expected_proxy
+
+
 def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) -> None:
     runtime = tmp_path / "runtime"
     gopath = tmp_path / "gopath"
@@ -71,7 +91,12 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     bent.chmod(0o755)
     go = go_root / "bin/go"
     go.parent.mkdir(parents=True)
-    go.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    module_source = tmp_path / "module-source"
+    module_source.mkdir()
+    go.write_text(
+        '#!/bin/sh\nprintf \'{"Dir":"%s"}\\n\' "$FAKE_GO_SOURCE_DIR"\n',
+        encoding="utf-8",
+    )
     go.chmod(0o755)
     results.mkdir()
     command = (
@@ -81,7 +106,7 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     completed = subprocess.run(
         ["bash", "-c", command, "bash", str(CASE_DIR / "golang_test.sh"),
          str(runtime), str(gopath), str(go), str(results), str(go_root)],
-        env=os.environ.copy(),
+        env=os.environ | {"FAKE_GO_SOURCE_DIR": str(module_source)},
         capture_output=True,
         text=True,
         check=False,
@@ -89,3 +114,41 @@ def test_bent_runner_preserves_original_stdout_before_cleanup(tmp_path: Path) ->
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert (results / "benchmark_go_bench.txt").read_text().startswith("shortname: uuid-New")
     assert "GOMAXPROCS=" in (results / "configurations.toml").read_text()
+
+
+def test_bent_modules_are_prefetched_one_at_a_time(tmp_path: Path) -> None:
+    source = tmp_path / "module-source"
+    source.mkdir()
+    (source / "go.sum").write_text(
+        "example.org/dep v1.0.0 h1:abc\n"
+        "example.org/dep v1.0.0/go.mod h1:def\n",
+        encoding="utf-8",
+    )
+    suites = tmp_path / "suites.toml"
+    suites.write_text(
+        '[[Suites]]\nName = "uuid"\nRepo = "github.com/google/uuid/"\nVersion = "@v1.2.0"\n'
+        '[[Suites]]\nName = "dustin_humanize"\nRepo = "github.com/dustin/go-humanize"\nVersion = "@v1.0.1"\n',
+        encoding="utf-8",
+    )
+    calls = tmp_path / "calls"
+    fake_go = tmp_path / "go"
+    fake_go.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "$4" >> "$FAKE_GO_CALLS"\n'
+        'printf \'{"Dir":"%s"}\\n\' "$FAKE_GO_SOURCE_DIR"\n',
+        encoding="utf-8",
+    )
+    fake_go.chmod(0o755)
+    completed = subprocess.run(
+        ["python3", str(SCRIPT_DIR / "prefetch_bent_modules.py"),
+         "--go", str(fake_go), "--suites", str(suites), "--work-dir", str(tmp_path)],
+        env=os.environ | {"FAKE_GO_SOURCE_DIR": str(source), "FAKE_GO_CALLS": str(calls)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert calls.read_text(encoding="utf-8").splitlines() == [
+        "github.com/google/uuid@v1.2.0",
+        "example.org/dep@v1.0.0",
+        "github.com/dustin/go-humanize@v1.0.1",
+    ]

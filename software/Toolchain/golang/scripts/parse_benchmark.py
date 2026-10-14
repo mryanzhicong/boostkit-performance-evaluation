@@ -122,7 +122,7 @@ def main() -> int:
         "parameters": {
             "components": {
                 "install": ["go", "install", "golang.org/x/benchmarks/cmd/bent@latest"],
-                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "15", "-L", ".bent-stamps.log", "-v"],
+                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", "15", "-L", ".bent-stamps.log"],
             },
             "suite": "golang.org/x/benchmarks/cmd/bent",
             "configuration_files": ["suites.toml", "benchmarks.toml", "configurations.toml"],

@@ -144,7 +144,7 @@ configure_go_environment() {
     if [[ "${PERF_DIRECT_NETWORK:-}" == "true" ]]; then
         export GOPROXY=direct
     else
-        export GOPROXY="https://goproxy.cn"
+        export GOPROXY="https://repo.huaweicloud.com/repository/goproxy/|https://goproxy.cn"
     fi
     export GOSUMDB="${GOSUMDB:-sum.golang.org}"
     unset GOFLAGS GO111MODULE GOOS GOARCH GOARM GOARM64 GOAMD64 GOEXPERIMENT
@@ -283,10 +283,15 @@ run_official_bent_benchmarks() {
         log "ERROR: cannot preserve the selected Bent configurations"
         return 50
     fi
+    if ! python3 "${SCRIPT_DIR}/scripts/prefetch_bent_modules.py" \
+        --go "${GO_BIN}" --suites "${bent_dir}/suites.toml" --work-dir "${bent_dir}"; then
+        log "ERROR: failed to prefetch Bent modules one at a time"
+        return 50
+    fi
     log "running selected upstream Bent benchmarks: bent -B benchmarks.toml -C configurations.toml -N 15"
     if ! (
         cd "${bent_dir}"
-        "${bent_binary}" -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log -v
+        "${bent_binary}" -B benchmarks.toml -C configurations.toml -N 15 -L .bent-stamps.log
     ); then
         return 50
     fi
