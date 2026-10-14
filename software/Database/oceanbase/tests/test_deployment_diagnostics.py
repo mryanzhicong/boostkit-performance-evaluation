@@ -112,6 +112,53 @@ def test_test_tenant_memory_is_fixed_and_checked_before_creation(tmp_path: Path)
     assert "observer has only 33285996544 available bytes" in insufficient.stdout
 
 
+def test_log_disk_is_sized_and_checked_before_tenant_creation(tmp_path: Path) -> None:
+    script = SCRIPT.read_text(encoding="utf-8")
+    assert 'OB_LOG_DISK_SIZE="128G"' in script
+    assert '"--oceanbase-ce.log_disk_size=${OB_LOG_DISK_SIZE}"' in script
+    assert script.index("check_test_tenant_log_disk || return $?") < script.index(
+        'obd cluster tenant create demo -n test'
+    )
+
+    available = run_shell(
+        tmp_path,
+        "ob_mysql() { printf '132070244352\\n'; }; check_test_tenant_log_disk",
+        {},
+    )
+    assert available.returncode == 0, available.stdout + available.stderr
+    assert "needs 103079215104" in available.stdout
+
+    insufficient = run_shell(
+        tmp_path / "insufficient-log-disk",
+        "ob_mysql() { printf '9663676416\\n'; }; check_test_tenant_log_disk",
+        {},
+    )
+    assert insufficient.returncode == 40
+    assert "observer has only 9663676416 available bytes" in insufficient.stdout
+
+
+def test_deployment_checks_filesystem_before_installing(tmp_path: Path) -> None:
+    script = SCRIPT.read_text(encoding="utf-8")
+    assert script.index("check_deployment_disk_space || return $?") < script.index(
+        "install_oceanbase_dependencies || return $?"
+    )
+
+    available = run_shell(
+        tmp_path,
+        "check_deployment_disk_space",
+        {"df": "printf 'Avail\\n536870912000\\n'"},
+    )
+    assert available.returncode == 0, available.stdout + available.stderr
+
+    insufficient = run_shell(
+        tmp_path / "insufficient-physical-disk",
+        "check_deployment_disk_space",
+        {"df": "printf 'Avail\\n107374182400\\n'"},
+    )
+    assert insufficient.returncode == 40
+    assert "deployment needs at least 154618822656 bytes" in insufficient.stdout
+
+
 def test_service_logs_survive_stop_and_are_redacted(tmp_path: Path) -> None:
     work = tmp_path / "work"
     results = tmp_path / "results"

@@ -78,6 +78,7 @@ obd demo -c oceanbase-ce,obproxy-ce \
   --oceanbase-ce.root_password=<本次任务生成的随机密码> \
   --oceanbase-ce.memory_limit=64G \
   --oceanbase-ce.system_memory=8G \
+  --oceanbase-ce.log_disk_size=128G \
   --obproxy-ce.version=4.3.6.1 \
   --obproxy-ce.proxy_mem_limited=8G \
   --oceanbase-ce.mysql_port=<observer SQL 端口> \
@@ -92,6 +93,10 @@ obd demo -c oceanbase-ce,obproxy-ce \
 ```bash
 obd cluster tenant create demo -n test --memory-size=32G
 ```
+
+日志盘固定为 128G：32G 测试租户默认需要 96G 日志盘配额，系统租户还占用一部分。
+部署前脚本要求工作目录所在文件系统至少有 144G 可用空间（128G 日志盘，另为数据文件和部署文件预留 16G）；
+部署后从 `GV$OB_SERVERS` 核实日志盘剩余配额至少 96G，不足时立即停止，不进入建租户步骤。
 
 该命令以固定内存额度创建 MySQL 模式 `test` 租户。脚本从系统租户查询
 `DBA_OB_TENANTS` 确认租户已创建，再通过 OBProxy 使用 `root@test#demo`

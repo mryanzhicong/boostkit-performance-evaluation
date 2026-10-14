@@ -48,6 +48,7 @@ OBPROXY_RPM_RELEASE="2"
 OB_USER="root@test#demo"
 OB_MEMORY_LIMIT="64G"
 OB_SYSTEM_MEMORY="8G"
+OB_LOG_DISK_SIZE="128G"
 OB_SYS_TENANT_MEMORY="16G"
 OB_TEST_TENANT_MEMORY="32G"
 OB_PROXY_MEMORY_LIMIT="8G"
@@ -257,6 +258,49 @@ check_test_tenant_memory() {
     log "observer has ${available_bytes} bytes available for the ${OB_TEST_TENANT_MEMORY} test tenant"
 }
 
+check_deployment_disk_space() {
+    local available_bytes required_bytes
+
+    available_bytes="$(df -B1 --output=avail -- "${PERF_WORK_DIR}" | awk 'NR == 2 { print $1 }')" || {
+        log "ERROR: could not check free disk space at ${PERF_WORK_DIR}"
+        return 40
+    }
+    if [[ ! "${available_bytes}" =~ ^[0-9]+$ ]]; then
+        log "ERROR: invalid free disk space at ${PERF_WORK_DIR}: ${available_bytes:-unknown}"
+        return 40
+    fi
+    # Leave room for the data file and deployment files alongside the log disk.
+    required_bytes=$(( (${OB_LOG_DISK_SIZE%G} + 16) * 1024 * 1024 * 1024 ))
+    if (( available_bytes < required_bytes )); then
+        log "ERROR: ${PERF_WORK_DIR} has ${available_bytes} free bytes; deployment needs at least ${required_bytes} bytes for the ${OB_LOG_DISK_SIZE} log disk and other files"
+        return 40
+    fi
+    log "deployment filesystem has ${available_bytes} free bytes"
+}
+
+check_test_tenant_log_disk() {
+    local available_bytes required_bytes
+
+    available_bytes="$(ob_mysql -N -s -e \
+        "SELECT MIN(LOG_DISK_CAPACITY - LOG_DISK_ASSIGNED) FROM oceanbase.GV\$OB_SERVERS WHERE SVR_IP = '${OB_HOST}'" \
+        2>/dev/null)" || {
+        log 'ERROR: could not query observer log disk available for the test tenant'
+        return 40
+    }
+    available_bytes="$(printf '%s' "${available_bytes}" | tr -d '\r\n\t')"
+    if [[ ! "${available_bytes}" =~ ^[0-9]+$ ]]; then
+        log "ERROR: invalid observer log disk availability: ${available_bytes:-unknown}"
+        return 40
+    fi
+    # OceanBase defaults a tenant's log disk quota to three times its memory.
+    required_bytes=$(( ${OB_TEST_TENANT_MEMORY%G} * 3 * 1024 * 1024 * 1024 ))
+    if (( available_bytes < required_bytes )); then
+        log "ERROR: test tenant needs ${required_bytes} log disk bytes, observer has only ${available_bytes} available bytes"
+        return 40
+    fi
+    log "observer has ${available_bytes} log disk bytes available for the test tenant (needs ${required_bytes})"
+}
+
 check_proxy_ready() {
     proxy_mysql -N -e 'SELECT 1' >/dev/null 2>&1
 }
@@ -443,6 +487,7 @@ build_oceanbase() {
         log "ERROR: expected architecture ${EXPECTED_ARCH}, runner is ${runner_architecture}"
         return 20
     fi
+    check_deployment_disk_space || return $?
     install_oceanbase_dependencies || return $?
     prepare_sysbench || return $?
     prepare_oceanbase_packages || return $?
@@ -464,6 +509,7 @@ build_oceanbase() {
             "--oceanbase-ce.root_password=$(< "${OB_ROOT_PASSWORD_FILE}")" \
             "--oceanbase-ce.memory_limit=${OB_MEMORY_LIMIT}" \
             "--oceanbase-ce.system_memory=${OB_SYSTEM_MEMORY}" \
+            "--oceanbase-ce.log_disk_size=${OB_LOG_DISK_SIZE}" \
             "--obproxy-ce.version=${OB_PROXY_VERSION}" \
             "--obproxy-ce.proxy_mem_limited=${OB_PROXY_MEMORY_LIMIT}" \
             "--oceanbase-ce.mysql_port=${OB_PORT}" \
@@ -497,6 +543,7 @@ build_oceanbase() {
     fi
     configure_sys_tenant_memory || return $?
     check_test_tenant_memory || return $?
+    check_test_tenant_log_disk || return $?
     log "creating MySQL-mode test tenant with ${OB_TEST_TENANT_MEMORY} memory"
     tenant_log="${PERF_WORK_DIR}/tenant-create.log"
     if ! obd cluster tenant create demo -n test \
