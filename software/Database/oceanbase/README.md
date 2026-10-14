@@ -112,6 +112,7 @@ Sysbench 原版 Lua 脚本的 `cleanup`、`prepare`、`run`，再等待 60 秒�
 ```
 
 Lua 脚本取自同一份上游源码，并通过 `LUA_PATH` 加载其 `oltp_common.lua`。
+任一阶段即使退出码为 0，只要输出含 `FATAL:`，测试也会立即失败并保留该阶段原始日志。
 四个场景共 12 次正式运行，仅计时阶段约 60 分钟；场景间 11 次等待再增加
 11 分钟，部署、数据准备和清理另计。当前用例超时上限为 600 分钟。
 
@@ -135,7 +136,9 @@ Lua 脚本取自同一份上游源码，并通过 `LUA_PATH` 加载其 `oltp_com
 
 部署失败时，脚本会在 stop 清理前把 `obd-trace.log` 和
 `obshell-diagnostic.log` 保存到结果目录；OBProxy 租户连接失败时还会保存
-`obproxy-connection-error.log`。诊断日志中的密码会被遮盖。
+`obproxy-connection-error.log`。每次 stop 都会在销毁部署前保存 observer 和
+OBProxy 服务日志的末尾 300 行到 `oceanbase-ce-diagnostic.log`、
+`obproxy-ce-diagnostic.log`。诊断日志中的密码会被遮盖。
 
 ## 独立执行
 

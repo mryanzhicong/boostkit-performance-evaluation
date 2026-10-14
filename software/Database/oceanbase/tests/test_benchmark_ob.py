@@ -50,6 +50,23 @@ def test_summary_requires_all_positive_official_fields() -> None:
         MODULE.parse_summary(SUMMARY.replace("transactions:", "other:"), "insert", 256)
 
 
+def test_sysbench_fatal_output_fails_even_with_zero_exit_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("SYSBENCH_LUA_DIR", str(tmp_path))
+    sysbench = tmp_path / "sysbench"
+    sysbench.write_text(
+        "#!/bin/sh\nprintf '%s\\n' 'FATAL: error 2013: handshake failed'\nexit 0\n",
+        encoding="utf-8",
+    )
+    sysbench.chmod(0o755)
+    output = tmp_path / "prepare.log"
+    with (tmp_path / "raw.log").open("w", encoding="utf-8") as raw:
+        with pytest.raises(RuntimeError, match="Sysbench reported FATAL: error 2013"):
+            MODULE.run_command([str(sysbench)], raw, output, "read_only-threads64: prepare")
+    assert "FATAL: error 2013" in output.read_text(encoding="utf-8")
+
+
 def test_output_preserves_workload_and_thread_names(tmp_path: Path, monkeypatch) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()

@@ -68,3 +68,28 @@ def test_proxy_connection_error_is_not_discarded(tmp_path: Path) -> None:
     message = (results / "obproxy-connection-error.log").read_text(encoding="utf-8")
     assert "ERROR 1045" in message
     assert "secret123" not in message + result.stdout
+
+
+def test_service_logs_survive_stop_and_are_redacted(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    results = tmp_path / "results"
+    results.mkdir()
+    (work / "ob-root-password").parent.mkdir(parents=True)
+    (work / "ob-root-password").write_text("secret123", encoding="utf-8")
+    observer = work / "ob" / "oceanbase-ce" / "log" / "observer.log.wf"
+    proxy = work / "ob" / "obproxy-ce" / "run" / "log_obproxy" / "obproxy.log"
+    for path, message in ((observer, "observer connection rejected"),
+                          (proxy, "proxy handshake failed")):
+        path.parent.mkdir(parents=True)
+        path.write_text(f"{message} password=secret123\n", encoding="utf-8")
+    result = run_shell(
+        tmp_path, "stop_oceanbase_service",
+        {"obd": f'rm -rf -- "{work / "ob"}"'},
+    )
+    assert result.returncode == 0, result.stderr
+    assert not (work / "ob").exists()
+    observer_log = (results / "oceanbase-ce-diagnostic.log").read_text(encoding="utf-8")
+    proxy_log = (results / "obproxy-ce-diagnostic.log").read_text(encoding="utf-8")
+    assert "observer connection rejected" in observer_log
+    assert "proxy handshake failed" in proxy_log
+    assert "secret123" not in observer_log + proxy_log

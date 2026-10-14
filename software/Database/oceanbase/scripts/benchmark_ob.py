@@ -65,6 +65,9 @@ def run_command(command: list[str], raw, output_path: Path, label: str) -> str:
             exit_code = process.wait()
     if exit_code:
         raise RuntimeError(f"{label}: Sysbench exited with code {exit_code}")
+    fatal = next((line.strip() for line in lines if line.lstrip().startswith("FATAL:")), None)
+    if fatal:
+        raise RuntimeError(f"{label}: Sysbench reported {fatal}")
     return "".join(lines)
 
 

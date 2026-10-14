@@ -255,6 +255,37 @@ collect_deployment_diagnostics() {
     log "deployment diagnostics saved under ${RESULTS_DIR}"
 }
 
+collect_service_diagnostics() {
+    local service source output log_file relative count
+    for service in oceanbase-ce obproxy-ce; do
+        source="${OB_DEPLOY_HOME}/${service}"
+        [[ -d "${source}" ]] || continue
+        output="${RESULTS_DIR}/${service}-diagnostic.log"
+        : > "${output}"
+        count=0
+        while IFS= read -r -d '' log_file; do
+            relative="${log_file#"${source}/"}"
+            case "/${relative}" in
+                */log/*|*/logs/*|*/log_obproxy/*|*/log_obshell/*) ;;
+                *) continue ;;
+            esac
+            case "${relative}" in
+                *.gz|*.zip|*.zst|*.lz4) continue ;;
+                *.log|*.log.*|*.wf|*.trace|*.trace.*) ;;
+                *) continue ;;
+            esac
+            printf '\n== %s ==\n' "${relative}" >> "${output}"
+            tail -n 300 "${log_file}" | redact_diagnostic >> "${output}" || return 1
+            count=$((count + 1))
+        done < <(find "${source}" -type f -print0 2>/dev/null)
+        if (( count == 0 )); then
+            rm -f -- "${output}"
+        else
+            log "saved ${count} ${service} service logs to ${output}"
+        fi
+    done
+}
+
 capture_proxy_connection_error() {
     local connection_output="${RESULTS_DIR}/obproxy-connection-error.log"
     if proxy_mysql -N -e 'SELECT 1' > "${PERF_WORK_DIR}/proxy-check.log" 2>&1; then
@@ -504,6 +535,7 @@ stop_oceanbase_service() {
         log "ERROR: refusing to clean unexpected OceanBase deployment path: ${OB_DEPLOY_HOME}"
         return 70
     fi
+    collect_service_diagnostics || log 'WARN: could not save all observer/OBProxy service logs'
     if command -v obd >/dev/null 2>&1; then
         export OBD_HOME
         if ! obd cluster destroy demo -f --confirm; then
