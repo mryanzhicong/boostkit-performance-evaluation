@@ -7,7 +7,7 @@ CPython 开箱性能对比。CinderX 插件不参与测试。软件入口为
 `python_test.sh`，Framework 通过 `case.yaml` 调用其 `build`、`start`、`test`
 和 `stop` 四个阶段；直接执行该脚本也使用同一套阶段函数。
 
-当前清单仅声明 CPython `3.14.7`。新增版本时，必须确认 CPython 官方标签存在，
+当前清单仅声明 CPython `3.14.3`。新增版本时，必须确认 CPython 官方标签存在，
 并保持两种架构使用相同的 CPython 版本、构建选项和 pyperformance 版本。
 
 ## 构建与安装
@@ -28,7 +28,7 @@ Python，也不向系统路径安装 Python。
 构建命令如下，安装前缀由每次任务运行时生成：
 
 ```bash
-git clone --branch v3.14.7 --depth 1 https://github.com/python/cpython.git cpython-source
+git clone --branch v3.14.3 --depth 1 https://github.com/python/cpython.git cpython-source
 cd cpython-source
 ./configure \
   --prefix="${PERF_WORK_DIR}/cpython-install" \
@@ -61,7 +61,7 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
 
 | 组件 | 固定来源 |
 |---|---|
-| CPython | `https://github.com/python/cpython.git`，标签 `v3.14.7` |
+| CPython | `https://github.com/python/cpython.git`，标签 `v3.14.3` |
 | pyperformance | `1.13.0`，通过华为云 PyPI 安装 |
 
 正式流程如下：
@@ -98,8 +98,8 @@ Python 性能测试不启动后台服务。`start` 阶段仅检查本次任务�
 
 ```bash
 bash software/Toolchain/python/python_test.sh \
-  --version 3.14.7 \
-  --results-dir /home/runner/boostkit-perf/python/results/3.14.7
+  --version 3.14.3 \
+  --results-dir /home/runner/boostkit-perf/python/results/3.14.3
 ```
 
 ## 指标

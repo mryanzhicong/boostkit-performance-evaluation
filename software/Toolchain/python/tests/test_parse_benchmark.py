@@ -33,7 +33,7 @@ def test_normalizes_all_official_benchmarks_without_a_fixed_name_list(tmp_path):
     )
     environment = {
         **os.environ,
-        "SOFTWARE_VERSION": "3.14.7",
+        "SOFTWARE_VERSION": "3.14.3",
         "EXPECTED_ARCH": "x86_64",
         "PYPERFORMANCE_VERSION": "1.13.0",
         "PYPERFORMANCE_WARMUP": "3",
