@@ -1,0 +1,35 @@
+name: hyperscan
+category: HPC
+enabled: true
+versions:
+  - "5.4.2.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: hyperscan_test.sh
+      function: build_hyperscan
+    start:
+      script: hyperscan_test.sh
+      function: start_hyperscan_runtime
+    test:
+      script: hyperscan_test.sh
+      function: run_hyperscan_benchmarks
+    stop:
+      script: hyperscan_test.sh
+      function: stop_hyperscan_runtime
+  timeout_minutes: 120
+outputs:
+  primary_benchmark:
+    path: benchmark_hsbench.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: primary_benchmark
+  collection:
+    path: results
+    value_path: value
+    group_path: mode
+    unit: Mbit/s
+    direction: higher_is_better
