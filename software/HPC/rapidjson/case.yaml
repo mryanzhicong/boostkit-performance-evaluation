@@ -1,0 +1,35 @@
+name: rapidjson
+category: HPC
+enabled: true
+versions:
+  - "1.1.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: rapidjson_test.sh
+      function: build_rapidjson
+    start:
+      script: rapidjson_test.sh
+      function: start_rapidjson_runtime
+    test:
+      script: rapidjson_test.sh
+      function: run_rapidjson_benchmarks
+    stop:
+      script: rapidjson_test.sh
+      function: stop_rapidjson_runtime
+  timeout_minutes: 30
+outputs:
+  primary_benchmark:
+    path: benchmark_perftest.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: primary_benchmark
+  collection:
+    path: results
+    value_path: median_ms
+    group_path: command_display
+    unit: ms
+    direction: lower_is_better
