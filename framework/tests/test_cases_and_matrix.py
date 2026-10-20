@@ -393,9 +393,20 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
 
 
 def test_development_workflow_uses_development_runner_profile() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "development-performance-test.yml").read_text(
+    workflow_path = ROOT / ".github" / "workflows" / "development-performance-test.yml"
+    workflow = workflow_path.read_text(
         encoding="utf-8"
     )
+    inputs = yaml.load(workflow, Loader=yaml.BaseLoader)["on"]["workflow_dispatch"]["inputs"]
+    software_input = inputs["software"]
+    cases, errors = validate_catalog(ROOT)
+    assert errors == []
+    enabled_software = {case["name"] for _path, case in cases if case["enabled"]}
+    assert software_input["type"] == "choice"
+    assert len(software_input["options"]) == len(set(software_input["options"]))
+    assert set(software_input["options"]) == enabled_software
+    assert software_input["default"] == "python"
+    assert inputs["version"]["default"] == "all"
     assert "matrix.runner_label" in workflow
     assert "options: [base, optimized]" in workflow
     assert "PERF_VARIANT: ${{ inputs.variant }}" in workflow

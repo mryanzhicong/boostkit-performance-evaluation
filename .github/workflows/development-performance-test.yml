@@ -5,14 +5,42 @@ on:
   workflow_dispatch:
     inputs:
       software:
-        description: "Software name, comma-separated names, or all"
+        description: "Software to evaluate"
         required: true
-        default: kubernetes
-        type: string
+        default: python
+        type: choice
+        options:
+          - bishengjdk
+          - brpc
+          - envoy
+          - faiss
+          - flink
+          - folly
+          - gcc
+          - glibc
+          - golang
+          - hnswlib
+          - kubernetes
+          - lz4
+          - mysql
+          - oceanbase
+          - openviking
+          - protobuf
+          - python
+          - pytorch
+          - redis
+          - rocksdb
+          - scann
+          - snappy
+          - sonic-cpp
+          - sonic-go
+          - x264
+          - x265
+          - zstd
       version:
-        description: "Version, comma-separated versions, or all"
+        description: "Version, comma-separated versions, or all declared versions of the selected software"
         required: true
-        default: 1.37.0
+        default: all
         type: string
       architecture:
         description: "Target architecture; all runs both architectures"
