@@ -357,6 +357,13 @@ def test_unknown_runner_profile_is_rejected() -> None:
 
 def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(encoding="utf-8")
+    development_workflow = (
+        ROOT / ".github" / "workflows" / "development-performance-test.yml"
+    ).read_text(encoding="utf-8")
+    inputs = yaml.load(workflow, Loader=yaml.BaseLoader)["on"]["workflow_dispatch"]["inputs"]
+    development_inputs = yaml.load(development_workflow, Loader=yaml.BaseLoader)["on"]["workflow_dispatch"]["inputs"]
+    assert inputs["software"] == development_inputs["software"]
+    assert inputs["version"] == development_inputs["version"]
     assert (
         'run-name: "Performance evaluation - ${{ inputs.software }} '
         '${{ inputs.version }} (${{ inputs.architecture }})'
