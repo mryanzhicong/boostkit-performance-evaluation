@@ -1,8 +1,14 @@
 # LZ4 1.9.4 测试说明
 
 本用例在 x86_64 和 aarch64 上使用同一份 Silesia 数据、同一组 lzbench 参数，
-测试 LZ4 1.9.4 的默认压缩与解压性能。Framework 依次调用
-`lz4_test.sh` 的 `build`、`start`、`test`、`stop` 函数。
+测试 LZ4 1.9.4 的默认压缩与解压性能。Framework 根据 `case.yaml` 调用
+`scripts/builders/dispatch.sh` 构建，再调用 `scripts/stages/` 中的启动、测试和停止函数。
+
+基础版完整构建位于 `scripts/builders/base.sh`，默认使用该版本。`optimized` 构建
+入口位于 `scripts/builders/optimized.sh`，目前留空并在构建阶段明确失败，不会回退
+基础版。独立运行可传 `--variant base|optimized`；基础版结果路径不变，调优版结果
+位于版本目录下的 `optimized/`。两种模式共用测试命令，结果处理脚本位于
+`scripts/results/`。
 
 ## 构建和安装
 

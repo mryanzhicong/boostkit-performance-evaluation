@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: zstd_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_zstd
     start:
-      script: zstd_test.sh
+      script: scripts/stages/start.sh
       function: start_zstd_runtime
     test:
-      script: zstd_test.sh
+      script: scripts/stages/test.sh
       function: run_zstd_benchmarks
     stop:
-      script: zstd_test.sh
+      script: scripts/stages/stop.sh
       function: stop_zstd_runtime
   timeout_minutes: 30
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   lzbench_output:
     path: benchmark_lzbench.txt
     stage: test

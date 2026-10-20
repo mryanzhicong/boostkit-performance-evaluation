@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: snappy_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_snappy
     start:
-      script: snappy_test.sh
+      script: scripts/stages/start.sh
       function: start_snappy_runtime
     test:
-      script: snappy_test.sh
+      script: scripts/stages/test.sh
       function: run_snappy_benchmarks
     stop:
-      script: snappy_test.sh
+      script: scripts/stages/stop.sh
       function: stop_snappy_runtime
   timeout_minutes: 30
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   lzbench_output:
     path: benchmark_lzbench.txt
     stage: test

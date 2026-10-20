@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from run_lzbench import parse_lzbench
+from results.run_lzbench import parse_lzbench
 
 
 class LzbenchParserTests(unittest.TestCase):

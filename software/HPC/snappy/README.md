@@ -4,6 +4,14 @@
 执行 [BoostKit Snappy 快速入门](https://atomgit.com/boostkit/snappy/blob/master/docs/zh/quick_start.md#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E4%BD%BF%E7%94%A8lzbench%E8%BF%9B%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95)
 中的测试命令。两台机器使用同一版本、同一份 Silesia 数据和同一组参数。
 
+Framework 根据 `case.yaml` 调用 `scripts/builders/dispatch.sh` 构建，再调用
+`scripts/stages/` 中的启动、测试和停止函数。基础版完整构建位于
+`scripts/builders/base.sh`，默认使用该版本。`optimized` 构建入口位于
+`scripts/builders/optimized.sh`，目前留空并在构建阶段明确失败，不会回退基础版。
+独立运行可传 `--variant base|optimized`；基础版结果路径不变，调优版结果位于版本
+目录下的 `optimized/`。两种模式共用测试命令，结果处理脚本位于
+`scripts/results/`。
+
 ## 构建和安装
 
 脚本入口为 `snappy_test.sh`。它检查依赖命令，缺失时通过 `dnf` 安装；非 root

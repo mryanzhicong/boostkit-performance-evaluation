@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: lz4_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_lz4
     start:
-      script: lz4_test.sh
+      script: scripts/stages/start.sh
       function: start_lz4_runtime
     test:
-      script: lz4_test.sh
+      script: scripts/stages/test.sh
       function: run_lz4_benchmarks
     stop:
-      script: lz4_test.sh
+      script: scripts/stages/stop.sh
       function: stop_lz4_runtime
   timeout_minutes: 30
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   lzbench_output:
     path: benchmark_lzbench.txt
     stage: test
