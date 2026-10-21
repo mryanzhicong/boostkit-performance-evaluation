@@ -2,6 +2,14 @@
 
 本目录适配官方 [envoyproxy/envoy](https://github.com/envoyproxy/envoy) 的单机开箱性能测试。当前固定测试 Envoy `1.38.6`，安装和性能测试均在 Runner 裸机的本次任务隔离目录中进行。
 
+软件入口为 `envoy_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 安装官方 Release 资产；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定，结果解析位于 `scripts/results/`。
+
 ## 构建与安装
 
 脚本自动安装缺失的基础命令。Envoy `1.38.6` 与 k6 `2.2.0` 均使用官方 GitHub Release 资产，按固定 SHA-256 校验后保存到本次任务的私有目录。
@@ -54,10 +62,10 @@ k6 对 `https://127.0.0.1:19000/` 和 `https://127.0.0.1:19001/` 分别执行压
 
 ```bash
 cd software/Middleware/envoy
-bash envoy_test.sh --version 1.38.6
+bash envoy_test.sh --version 1.38.6 --variant base
 ```
 
-默认结果目录为 `results/1.38.6/<run-id>/`。如需保留构建目录排障：
+默认结果目录为 `results/1.38.6/<run-id>/`（调优版位于该版本下的 `optimized/` 子目录）。独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；目前调优版只验证入口与明确失败行为，不执行性能测试。正式工作流中基础版的 OBS 与 `performance-results` 路径不变；调优版归档到 `Middleware/envoy/1.38.6/optimized/<时间戳_Run ID>/`，且不会更新基础版的 `baseline.json`。如需保留构建目录排障：
 
 ```bash
 bash envoy_test.sh --version 1.38.6 --keep-workdir

@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: envoy_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_envoy
     start:
-      script: envoy_test.sh
+      script: scripts/stages/start.sh
       function: start_envoy_runtime
     test:
-      script: envoy_test.sh
+      script: scripts/stages/test.sh
       function: run_envoy_benchmarks
     stop:
-      script: envoy_test.sh
+      script: scripts/stages/stop.sh
       function: stop_envoy_runtime
   timeout_minutes: 720
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   raw_benchmark_output:
     path: benchmark_envoy_raw.log
     stage: test
