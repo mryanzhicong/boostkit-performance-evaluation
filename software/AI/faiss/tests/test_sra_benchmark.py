@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "run_sra_benchmark.py"
+MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "results" / "run_sra_benchmark.py"
 SPEC = importlib.util.spec_from_file_location("run_sra_benchmark", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
