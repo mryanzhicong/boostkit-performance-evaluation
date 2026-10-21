@@ -105,8 +105,10 @@ def main() -> int:
         "software": "gcc",
         "version": version,
         "architecture": architecture,
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": os.environ.get("PERF_VARIANT", "base"),
             "suite": "SPEC CPU2017 intrate",
             "copies": copies,
             "iterations": 1,

@@ -4,8 +4,14 @@
 GCC 运行 SPEC CPU2017 1.0.5 的整数吞吐量套件 `intrate`。两侧使用各自的完整 SPEC
 配置文件，执行相同的 384 副本、1 次迭代测试。
 
-入口是 `gcc_test.sh`。Framework 根据 `case.yaml` 依次调用 `build`、`start`、
-`test`、`stop` 阶段；也可直接运行脚本完成同一流程。
+入口是 `gcc_test.sh`。Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。
+直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 完整构建；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定，结果解析位于 `scripts/results/`。
 
 ## 运行前准备
 
@@ -117,8 +123,12 @@ Runner 必须允许使用这些 CPU 编号，否则测试会失败。
 ```bash
 bash software/Toolchain/gcc/gcc_test.sh \
   --version 14.4.0 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/gcc/results/14.4.0
 ```
 
-`--keep-workdir` 可保留 GCC 源码、构建和安装目录供排查；SPEC 数据目录仍由 `stop`
-阶段清理。
+可用 `--keep-workdir` 保留 GCC 源码、构建和安装目录供排查；SPEC 数据目录仍由 `stop`
+阶段清理。独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时
+调优版结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到 `Toolchain/gcc/14.4.0/optimized/<时间戳_Run ID>/`，
+且不会更新基础版的 `baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。

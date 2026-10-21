@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: gcc_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_gcc
     start:
-      script: gcc_test.sh
+      script: scripts/stages/start.sh
       function: start_gcc_runtime
     test:
-      script: gcc_test.sh
+      script: scripts/stages/test.sh
       function: run_gcc_benchmarks
     stop:
-      script: gcc_test.sh
+      script: scripts/stages/stop.sh
       function: stop_gcc_runtime
   timeout_minutes: 1440
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   official_benchmark:
     path: raw-output.log
     stage: test
