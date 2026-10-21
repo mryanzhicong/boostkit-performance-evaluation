@@ -3,7 +3,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 install_dependencies() {
     local required header missing=0
-    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find; do
+    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find autoconf zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             missing=1
         fi
@@ -43,12 +43,13 @@ install_dependencies() {
     fi
     if ! "${install_command[@]}" "${package_manager_options[@]}" install -y \
         curl tar gzip coreutils python3 gawk findutils sed grep make gcc gcc-c++ \
+        autoconf zip unzip \
         freetype-devel fontconfig-devel alsa-lib-devel cups-devel \
         libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel; then
         log_message "ERROR: failed to install BiSheng JDK build dependencies"
         return 30
     fi
-    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find; do
+    for required in curl tar sha256sum cmp python3 awk sed grep tee make gcc g++ find autoconf zip unzip; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required command is still missing after installation: ${required}"
             return 30
