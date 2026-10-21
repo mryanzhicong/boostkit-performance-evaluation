@@ -153,9 +153,13 @@ def main() -> int:
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "benchmark": "bytedance_sonic_go_test_bench",
             "command": str(payload.get("test_cmd", "")),
+            # parameters feed the framework's cross-architecture comparison and
+            # must stay identical between x86_64 and aarch64. test_cmd embeds
+            # the architecture-specific work directory (cd $SONIC_DIR && ...)
+            # and therefore stays out of parameters; the full command is kept
+            # verbatim in the top-level "command" field above.
             "parameters": {
                 "variant": variant,
-                "command": str(payload.get("test_cmd", "")),
                 "toolchain_target": os.environ.get("SONIC_GO_TOOLCHAIN", ""),
                 "go_source_version": os.environ.get("SONIC_GO_VERSION", ""),
             },

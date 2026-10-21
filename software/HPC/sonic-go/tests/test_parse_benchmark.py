@@ -12,14 +12,18 @@ PARSER = (
 CASE_DIR = Path(__file__).resolve().parents[1]
 
 
-def run_parser(tmp_path: Path, payload: dict) -> subprocess.CompletedProcess[str]:
-    raw = tmp_path / "result.json"
-    normalized = tmp_path / "benchmark_sonic_go.json"
+def run_parser(
+    tmp_path: Path,
+    payload: dict,
+    architecture: str = "x86_64",
+) -> subprocess.CompletedProcess[str]:
+    raw = tmp_path / f"result-{architecture}.json"
+    normalized = tmp_path / f"benchmark_sonic_go-{architecture}.json"
     raw.write_text(json.dumps(payload), encoding="utf-8")
     environment = {
         **os.environ,
         "SOFTWARE_VERSION": "1.15.2",
-        "EXPECTED_ARCH": "x86_64",
+        "EXPECTED_ARCH": architecture,
         "PERF_VARIANT": "base",
         "SONIC_GO_TOOLCHAIN": "go1.24.6-default",
         "SONIC_GO_VERSION": "1.24.6",
@@ -70,7 +74,7 @@ def test_normalizes_official_bench_rows_with_verbatim_names(tmp_path):
     completed = run_parser(tmp_path, official_payload())
     assert completed.returncode == 0, completed.stderr
     result = json.loads(
-        (tmp_path / "benchmark_sonic_go.json").read_text(encoding="utf-8")
+        (tmp_path / "benchmark_sonic_go-x86_64.json").read_text(encoding="utf-8")
     )
     encoder_ns = "encoder :: default :: BenchmarkEncoder_Marshal :: ns/op"
     assert next(iter(result["results"])).startswith("encoder :: default ::")
@@ -93,6 +97,31 @@ def test_failed_run_exit_codes_fail_the_parse(tmp_path):
     completed = run_parser(tmp_path, payload)
     assert completed.returncode == 1
     assert "sonic benchmark runs failed" in completed.stderr
+
+
+def test_parameters_stay_identical_across_architectures(tmp_path):
+    # Regression: the framework compares resolved workload parameters between
+    # x86_64 and aarch64 and rejects the comparison when they differ. The
+    # official test_cmd embeds the architecture-specific work directory
+    # (cd $SONIC_DIR && ...), so it must never leak into parameters.
+    parameters = {}
+    for architecture in ("x86_64", "aarch64"):
+        payload = official_payload()
+        payload["test_cmd"] = (
+            f"cd /home/runner/boostkit-perf/sonic-go/1.15.2/{architecture}/1/"
+            "objects/go/src/sonic && go test -run='^$' -benchmem -benchtime=5s"
+            " ./encoder"
+        )
+        completed = run_parser(tmp_path, payload, architecture=architecture)
+        assert completed.returncode == 0, completed.stderr
+        normalized = json.loads(
+            (tmp_path / f"benchmark_sonic_go-{architecture}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert "boostkit-perf" not in json.dumps(normalized["parameters"])
+        parameters[architecture] = normalized["parameters"]
+    assert parameters["x86_64"] == parameters["aarch64"]
 
 
 def test_optimized_build_fails_without_running_base_build(tmp_path):
