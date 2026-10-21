@@ -132,14 +132,19 @@ def main() -> int:
 
     version = os.environ["SOFTWARE_VERSION"]
     architecture = os.environ["EXPECTED_ARCH"]
+    variant = os.environ.get("PERF_VARIANT", "base")
+    if variant not in {"base", "optimized"}:
+        raise ValueError(f"invalid build variant: {variant}")
     min_time = os.environ.get("BENCHMARK_MIN_TIME", "3s")
     normalized = {
         "benchmark": "sonic_cpp_official_benchmark",
         "software": "sonic-cpp",
         "version": version,
         "architecture": architecture,
+        "variant": variant,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": variant,
             "command": [
                 "build/benchmark/bench",
                 "--benchmark_out_format=json",
