@@ -12,19 +12,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: hnswlib_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_hnswlib
     start:
-      script: hnswlib_test.sh
+      script: scripts/stages/start.sh
       function: start_hnswlib_runtime
     test:
-      script: hnswlib_test.sh
+      script: scripts/stages/test.sh
       function: run_hnswlib_benchmarks
     stop:
-      script: hnswlib_test.sh
+      script: scripts/stages/stop.sh
       function: stop_hnswlib_runtime
   timeout_minutes: 360
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   benchmark_result:
     path: benchmark_sra.json
     stage: test

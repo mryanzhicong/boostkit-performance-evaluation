@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_sra_benchmark.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "results" / "run_sra_benchmark.py"
 SPEC = importlib.util.spec_from_file_location("hnswlib_sra_benchmark", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 BENCHMARK = importlib.util.module_from_spec(SPEC)
@@ -22,7 +22,7 @@ RUNTIME_SPEC.loader.exec_module(RUNTIME)
 
 
 def test_only_hnswlib_080_is_accepted(tmp_path: Path) -> None:
-    script = SCRIPT.parents[1] / "hnswlib_test.sh"
+    script = Path(__file__).resolve().parents[1] / "hnswlib_test.sh"
     completed = subprocess.run(
         ["bash", str(script), "--version", "0.9.0", "--results-dir", str(tmp_path)],
         capture_output=True,

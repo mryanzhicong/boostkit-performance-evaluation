@@ -2,7 +2,9 @@
 
 被测软件：[nmslib/hnswlib](https://github.com/nmslib/hnswlib)，固定版本 `0.8.0`。
 
-测试框架地址：[sra_test](https://atomgit.com/liuliuyiyidingding/sra_test)，固定提交 `9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf`。脚本入口是 `hnswlib_test.sh`，Workflow 阶段定义见 `case.yaml`。
+测试框架地址：[sra_test](https://atomgit.com/liuliuyiyidingding/sra_test)，固定提交 `9a941bc3fb72c1e0d8dc48e6deb7df33e3e23abf`。
+
+Framework 根据 `case.yaml` 调用 `scripts/builders/dispatch.sh` 构建，再调用 `scripts/stages/` 中的启动、测试和停止函数。基础版完整构建位于 `scripts/builders/base.sh`；调优版入口 `scripts/builders/optimized.sh` 目前留空，选择后会明确失败，不会回退基础版。两种模式共用测试和 `scripts/results/` 中的结果处理脚本。独立运行入口是 `hnswlib_test.sh`，支持 `--variant base|optimized`；基础版默认结果目录不变，调优版默认写入版本目录下的 `optimized/`。
 
 ## 构建
 
