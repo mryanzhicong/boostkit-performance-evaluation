@@ -123,13 +123,19 @@ def main() -> int:
     except (OSError, ValueError) as exc:
         print(f"[brpc-parse] ERROR: {exc}", file=sys.stderr)
         return 1
+    variant = os.environ.get("PERF_VARIANT", "base")
+    if variant not in {"base", "optimized"}:
+        print(f"[brpc-parse] ERROR: invalid build variant: {variant}", file=sys.stderr)
+        return 1
     output = {
         "benchmark": "brpc_upstream_rdma_performance_tcp",
         "software": "brpc",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": variant,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": variant,
             "official_entry": "example/rdma_performance/client.cpp",
             "official_server": "example/rdma_performance/server.cpp",
             "transport": "TCP (--use_rdma=false)",

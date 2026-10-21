@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: brpc_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_brpc
     start:
-      script: brpc_test.sh
+      script: scripts/stages/start.sh
       function: start_brpc_service
     test:
-      script: brpc_test.sh
+      script: scripts/stages/test.sh
       function: run_brpc_rdma_performance
     stop:
-      script: brpc_test.sh
+      script: scripts/stages/stop.sh
       function: stop_brpc_service
   timeout_minutes: 240
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   client_log:
     path: benchmark_client.log
     stage: test

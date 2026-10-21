@@ -1,6 +1,13 @@
 # brpc 1.17.0 性能测试
 
-测试入口为 `brpc_test.sh`；Framework 的构建、启动、测试和停止阶段见 `case.yaml`。两架构均构建 [Apache brpc 1.17.0 原版源码](https://github.com/apache/brpc/tree/1.17.0)，运行其 `example/rdma_performance` 的原版 `server.cpp`、`client.cpp`，不修改待测 C++ 源码。
+软件入口为 `brpc_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。直接执行入口脚本也使用这些阶段函数。两架构均构建 [Apache brpc 1.17.0 原版源码](https://github.com/apache/brpc/tree/1.17.0)，运行其 `example/rdma_performance` 的原版 `server.cpp`、`client.cpp`，不修改待测 C++ 源码。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 完整构建；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定与服务进程管理辅助函数，
+结果解析位于 `scripts/results/`。
 
 ## 构建与安装
 
@@ -62,9 +69,16 @@ cmake --build brpc-source/example/rdma_performance/build -j "$(nproc)" \
 
 ```bash
 bash software/Middleware/brpc/brpc_test.sh \
-  --version 1.17.0 \
+  --version 1.17.0 --variant base \
   --results-dir /home/runner/boostkit-perf/brpc/results/1.17.0
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`。两种模式应使用不同的 `--results-dir`；不指定时，基础版保留现有结果路径，调优版位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，不执行性能测试。
+
+正式工作流中基础版的 OBS 与 `performance-results` 路径不变；调优版归档到
+`Middleware/brpc/1.17.0/optimized/<时间戳_Run ID>/`。两种模式的测试负载和
+指标解析共用，构建阶段保存 `build_variant.json` 以标识实际选择。调优版不会
+更新基础版的 `baseline.json`。
 
 ## 指标与结果
 
