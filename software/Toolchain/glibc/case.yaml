@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: glibc_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_glibc
     start:
-      script: glibc_test.sh
+      script: scripts/stages/start.sh
       function: start_glibc_runtime
     test:
-      script: glibc_test.sh
+      script: scripts/stages/test.sh
       function: run_glibc_benchmarks
     stop:
-      script: glibc_test.sh
+      script: scripts/stages/stop.sh
       function: stop_glibc_runtime
   timeout_minutes: 1440
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   official_benchmark:
     path: benchmark_bench.txt
     stage: test

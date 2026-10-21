@@ -2,6 +2,14 @@
 
 本用例从 [GNU glibc 2.31 官方发布包](https://ftp.gnu.org/gnu/glibc/glibc-2.31.tar.xz)构建 glibc，在任务私有目录安装并测试。只执行 `memcpy`、`memcmp` 两个官方 benchtest 程序，不替换系统 glibc，不使用 `LD_PRELOAD`，也不绑核。
 
+软件入口为 `glibc_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 完整构建；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定，结果解析位于 `scripts/results/`。
+
 ## 源码、构建与安装
 
 脚本优先读取 `/home/runner/software/glibc/glibc-2.31.tar.xz`；不存在时从 GNU 官方地址下载。两种来源均校验官方发布包的 SHA-256：
@@ -56,7 +64,14 @@ cd "$PERF_WORK_DIR/glibc-build"
 ```bash
 bash software/Toolchain/glibc/glibc_test.sh \
   --version 2.31 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/glibc/results/2.31
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Toolchain/glibc/2.31/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
 
 结果目录还包含 `benchmark_bench.txt`、`benchmark_glibc.json` 和阶段信息；Framework 从 `benchmark_glibc.json` 读取与两架构同名的四项指标，生成跨架构报告。

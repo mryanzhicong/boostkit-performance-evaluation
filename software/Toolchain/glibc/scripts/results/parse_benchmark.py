@@ -108,8 +108,10 @@ def main() -> int:
         "software": "glibc",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": os.environ.get("PERF_VARIANT", "base"),
             "build_targets": ["bench-timing-type", "bench-memcpy", "bench-memcmp"],
             "run_commands": ["bench-memcpy", "bench-memcmp"],
             "timing_backend": "clock_gettime(CLOCK_MONOTONIC)",

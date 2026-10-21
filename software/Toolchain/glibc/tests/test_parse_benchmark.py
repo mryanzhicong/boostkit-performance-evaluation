@@ -7,14 +7,15 @@ from pathlib import Path
 import pytest
 
 
+RESULTS_DIR = Path(__file__).resolve().parents[1] / "scripts" / "results"
 SPEC = importlib.util.spec_from_file_location(
-    "glibc_parse_benchmark", Path(__file__).with_name("parse_benchmark.py")
+    "glibc_parse_benchmark", RESULTS_DIR / "parse_benchmark.py"
 )
 assert SPEC is not None and SPEC.loader is not None
 PARSER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PARSER)
 RUNTIME_SPEC = importlib.util.spec_from_file_location(
-    "glibc_standalone_runtime", Path(__file__).with_name("standalone_runtime.py")
+    "glibc_standalone_runtime", RESULTS_DIR / "standalone_runtime.py"
 )
 assert RUNTIME_SPEC is not None and RUNTIME_SPEC.loader is not None
 RUNTIME = importlib.util.module_from_spec(RUNTIME_SPEC)
