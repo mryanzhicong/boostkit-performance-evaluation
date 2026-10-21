@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import zipfile
@@ -366,6 +367,26 @@ def test_cached_module_path_uses_go_uppercase_escaping(tmp_path: Path) -> None:
     assert prefetch.cached_zip(tmp_path, "github.com/IBM/sarama@v1.60.0") == Path(
         f"{base}.zip"
     )
+
+
+def test_stage_scripts_do_not_depend_on_builder_only_functions() -> None:
+    """Framework stages run standalone; they must not call builder-only helpers."""
+    builder_functions: set[str] = set()
+    for builder in sorted((SCRIPT_DIR / "builders").glob("*.sh")):
+        builder_functions.update(
+            re.findall(
+                r"^([a-z_]+)\(\)", builder.read_text(encoding="utf-8"), re.MULTILINE
+            )
+        )
+    assert builder_functions
+    for stage in sorted((SCRIPT_DIR / "stages").glob("*.sh")):
+        content = stage.read_text(encoding="utf-8")
+        referenced = {
+            name for name in builder_functions if re.search(rf"\b{name}\b", content)
+        }
+        assert not referenced, (
+            f"{stage.name} references builder-only functions: {referenced}"
+        )
 
 
 def test_optimized_build_fails_without_running_base_build(tmp_path: Path) -> None:

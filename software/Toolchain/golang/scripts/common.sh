@@ -107,6 +107,21 @@ initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}"
 }
 
+verify_golang_binary() {
+    local actual_version actual_arch
+    if [[ ! -x "${GO_BIN}" ]]; then
+        log_message "ERROR: installed Go binary is missing: ${GO_BIN}"
+        return 40
+    fi
+    actual_version="$("${GO_BIN}" version | awk '{print $3}' | sed 's/^go//')" || return 40
+    actual_arch="$("${GO_BIN}" env GOARCH)" || return 40
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" || "${actual_arch}" != "${GO_ARCH}" ]]; then
+        log_message "ERROR: installed Go is ${actual_version}/${actual_arch}, expected ${SOFTWARE_VERSION}/${GO_ARCH}"
+        return 40
+    fi
+    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
+}
+
 configure_go_environment() {
     export GOROOT="${GO_INSTALL_DIR}"
     # Bent invokes the Go command by its basename while it prepares each
