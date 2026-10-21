@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: golang_test.sh
-      function: install_golang_binary
+      script: scripts/builders/dispatch.sh
+      function: build_golang
     start:
-      script: golang_test.sh
+      script: scripts/stages/start.sh
       function: start_golang_runtime
     test:
-      script: golang_test.sh
+      script: scripts/stages/test.sh
       function: run_golang_benchmarks
     stop:
-      script: golang_test.sh
+      script: scripts/stages/stop.sh
       function: stop_golang_runtime
   timeout_minutes: 720
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   bent_console:
     path: bent-run.log
     stage: test

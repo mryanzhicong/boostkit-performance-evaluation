@@ -53,10 +53,23 @@ Bent 原生 `bench/<runstamp>.Baseline.stdout` 保存为 `benchmark_go_bench.txt
 | `benchmark_golang.json` | 20 项 `ns/op` 中位数及原始名称。 |
 | `benchmarks.toml`、`suites.toml`、`configurations.toml` | 本次实际使用的配置副本。 |
 
-Framework 依次调用 `build`、`start`、`test`、`stop`；`stop` 删除本次私有 Go 运行目录。也可在目标机器独立执行：
+Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。直接执行入口脚本
+`golang_test.sh` 也使用这些阶段函数。正式与开发工作流提供 `base`、`optimized`
+下拉选项，默认 `base`。基础版调用 `scripts/builders/base.sh` 安装官方预编译 Go；
+调优版入口位于 `scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建
+阶段明确失败，不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定和 Go 环境变量，结果解析位于
+`scripts/results/`。`stop` 删除本次私有 Go 运行目录。也可在目标机器独立执行：
 
 ```bash
 bash software/Toolchain/golang/golang_test.sh \
   --version 1.26.9 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/golang/results/1.26.9
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Toolchain/golang/1.26.9/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。

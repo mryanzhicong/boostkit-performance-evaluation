@@ -22,9 +22,15 @@ BENT_MODULE_VERSION = "v0.0.0-20261009192853-4a545adeb0d5"
 
 
 def expected_shortnames() -> list[str]:
-    names = CONFIG_NAME.findall(Path(__file__).with_name("benchmarks.toml").read_text(encoding="utf-8"))
+    names = CONFIG_NAME.findall(
+        (Path(__file__).resolve().parent.parent / "benchmarks.toml").read_text(
+            encoding="utf-8"
+        )
+    )
     if len(names) != 20 or len(set(names)) != 20:
-        raise RuntimeError("selected Bent configuration must contain 20 unique benchmarks")
+        raise RuntimeError(
+            "selected Bent configuration must contain 20 unique benchmarks"
+        )
     return names
 
 
@@ -52,19 +58,29 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
             raise RuntimeError(f"benchmark {shortname} was not run with Baseline")
         benchmark = match.group(1)
         ns_values = [
-            float(value) for value, unit in MEASUREMENT.findall(match.group(3)) if unit == "ns/op"
+            float(value)
+            for value, unit in MEASUREMENT.findall(match.group(3))
+            if unit == "ns/op"
         ]
         if len(ns_values) != 1 or not math.isfinite(ns_values[0]) or ns_values[0] <= 0:
-            raise RuntimeError(f"benchmark {shortname} has no single positive ns/op value")
+            raise RuntimeError(
+                f"benchmark {shortname} has no single positive ns/op value"
+            )
         identity = (package, benchmark)
         if shortname in identities and identities[shortname] != identity:
-            raise RuntimeError(f"benchmark {shortname} produced multiple source identities")
+            raise RuntimeError(
+                f"benchmark {shortname} produced multiple source identities"
+            )
         identities[shortname] = identity
         samples[shortname].append(ns_values[0])
 
-    wrong_counts = {name: len(values) for name, values in samples.items() if len(values) != REPEATS}
+    wrong_counts = {
+        name: len(values) for name, values in samples.items() if len(values) != REPEATS
+    }
     if wrong_counts:
-        raise RuntimeError(f"Bent benchmarks must each produce {REPEATS} ns/op samples: {wrong_counts}")
+        raise RuntimeError(
+            f"Bent benchmarks must each produce {REPEATS} ns/op samples: {wrong_counts}"
+        )
 
     results: dict[str, dict[str, Any]] = {}
     for shortname in sorted(expected):
@@ -86,11 +102,13 @@ def parse_output(lines: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str,
             "group": shortname.split("-", 1)[0],
         }
 
-    concurrency = sorted({
-        match.group(1)
-        for _, benchmark in identities.values()
-        if (match := re.search(r"-(\d+)$", benchmark))
-    })
+    concurrency = sorted(
+        {
+            match.group(1)
+            for _, benchmark in identities.values()
+            if (match := re.search(r"-(\d+)$", benchmark))
+        }
+    )
     return results, {
         "packages": sorted({package for package, _ in identities.values()}),
         "benchmarks": sorted(expected),
@@ -119,14 +137,34 @@ def main() -> int:
         "software": "golang",
         "version": version,
         "architecture": architecture,
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": os.environ.get("PERF_VARIANT", "base"),
             "components": {
-                "install": ["go", "install", f"golang.org/x/benchmarks/cmd/bent@{BENT_MODULE_VERSION}"],
-                "run": ["bent", "-B", "benchmarks.toml", "-C", "configurations.toml", "-N", str(REPEATS), "-L", ".bent-stamps.log"],
+                "install": [
+                    "go",
+                    "install",
+                    f"golang.org/x/benchmarks/cmd/bent@{BENT_MODULE_VERSION}",
+                ],
+                "run": [
+                    "bent",
+                    "-B",
+                    "benchmarks.toml",
+                    "-C",
+                    "configurations.toml",
+                    "-N",
+                    str(REPEATS),
+                    "-L",
+                    ".bent-stamps.log",
+                ],
             },
             "suite": "golang.org/x/benchmarks/cmd/bent",
-            "configuration_files": ["suites.toml", "benchmarks.toml", "configurations.toml"],
+            "configuration_files": [
+                "suites.toml",
+                "benchmarks.toml",
+                "configurations.toml",
+            ],
             "configuration": {
                 "name": "Baseline",
                 "run_environment": ["GOGC=100", "GOMAXPROCS=$(nproc)"],
@@ -145,7 +183,9 @@ def main() -> int:
         "results": results,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    output_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(f"[golang-parse] normalized {len(results)} selected Bent ns/op metrics")
     return 0
 
