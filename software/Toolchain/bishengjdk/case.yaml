@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: bishengjdk_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_bishengjdk
     start:
-      script: bishengjdk_test.sh
+      script: scripts/stages/start.sh
       function: start_bishengjdk_runtime
     test:
-      script: bishengjdk_test.sh
+      script: scripts/stages/test.sh
       function: run_bishengjdk_benchmarks
     stop:
-      script: bishengjdk_test.sh
+      script: scripts/stages/stop.sh
       function: stop_bishengjdk_runtime
   timeout_minutes: 240
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   jmh_output:
     path: jmh-output.log
     stage: test

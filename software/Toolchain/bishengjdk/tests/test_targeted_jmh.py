@@ -9,7 +9,6 @@ from pathlib import Path
 
 import yaml
 
-
 CASE_DIR = Path(__file__).resolve().parents[1]
 BENCHMARK_PATH = Path("org/openjdk/bench/vm/compiler/FloatingScalarVectorAbsDiff.java")
 METHODS = (
@@ -47,7 +46,13 @@ def test_private_microbenchmark_source_is_passed_to_make(tmp_path: Path) -> None
     jmh.write_text("jar", encoding="utf-8")
     capture = tmp_path / "make-arguments.txt"
     result = subprocess.run(
-        ["bash", "-c", 'source "$1"; run_bishengjdk_benchmarks', "bash", str(CASE_DIR / "bishengjdk_test.sh")],
+        [
+            "bash",
+            "-c",
+            'source "$1"; run_bishengjdk_benchmarks',
+            "bash",
+            str(CASE_DIR / "scripts/stages/test.sh"),
+        ],
         env={
             **os.environ,
             "PATH": f"{fake_bin}:{os.environ['PATH']}",
@@ -67,30 +72,43 @@ def test_private_microbenchmark_source_is_passed_to_make(tmp_path: Path) -> None
     arguments = capture.read_text(encoding="utf-8").splitlines()
     assert "test" in arguments
     assert f"MICROBENCHMARK_SRC={work / 'jmh-source'}" in arguments
-    assert "TEST=micro:org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff" in arguments
+    assert (
+        "TEST=micro:org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff"
+        in arguments
+    )
 
 
 def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> None:
     benchmark = "org.openjdk.bench.vm.compiler.FloatingScalarVectorAbsDiff"
     raw = tmp_path / "jmh-result.json"
-    raw.write_text(json.dumps([
-        {
-            "benchmark": f"{benchmark}.{method}",
-            "mode": "avgt",
-            "threads": 1,
-            "forks": 3,
-            "warmupIterations": 4,
-            "measurementIterations": 4,
-            "params": {"count": "1024"},
-            "primaryMetric": {"scoreUnit": "ns/op", "score": 10.0},
-        }
-        for method in METHODS
-    ]), encoding="utf-8")
+    raw.write_text(
+        json.dumps(
+            [
+                {
+                    "benchmark": f"{benchmark}.{method}",
+                    "mode": "avgt",
+                    "threads": 1,
+                    "forks": 3,
+                    "warmupIterations": 4,
+                    "measurementIterations": 4,
+                    "params": {"count": "1024"},
+                    "primaryMetric": {"scoreUnit": "ns/op", "score": 10.0},
+                }
+                for method in METHODS
+            ]
+        ),
+        encoding="utf-8",
+    )
     parameters = []
     for architecture in ("x86_64", "aarch64"):
         output = tmp_path / f"benchmark-{architecture}.json"
         result = subprocess.run(
-            ["python3", str(CASE_DIR / "scripts/parse_benchmark.py"), str(raw), str(output)],
+            [
+                "python3",
+                str(CASE_DIR / "scripts/results/parse_benchmark.py"),
+                str(raw),
+                str(output),
+            ],
             env={
                 **os.environ,
                 "JMH_BENCHMARK": benchmark,
@@ -107,3 +125,33 @@ def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> Non
         assert result.returncode == 0, result.stderr
         parameters.append(json.loads(output.read_text(encoding="utf-8"))["parameters"])
     assert parameters[0] == parameters[1]
+
+
+def test_optimized_build_fails_without_running_base_build(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1"; build_bishengjdk',
+            "bash",
+            str(CASE_DIR / "scripts/builders/dispatch.sh"),
+        ],
+        env={**os.environ, "PERF_VARIANT": "optimized", "PERF_WORK_DIR": str(tmp_path)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 30
+    assert "optimized bishengjdk build is not implemented" in result.stdout
+    assert not (tmp_path / "bishengjdk-source").exists()
+
+
+def test_standalone_variant_option_rejects_unknown_values() -> None:
+    result = subprocess.run(
+        ["bash", str(CASE_DIR / "bishengjdk_test.sh"), "--variant", "invalid"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 10
+    assert "invalid build variant" in result.stdout

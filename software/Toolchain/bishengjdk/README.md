@@ -4,8 +4,13 @@
 `FloatingScalarVectorAbsDiff` JMH 微基准，报告四个方法的平均耗时
 （`ns/op`，越低越好）。测试不绑核或绑定 NUMA 内存。
 
-`case.yaml` 依次调用 `bishengjdk_test.sh` 的 `build`、`start`、`test`、`stop`
-阶段；独立运行使用同一套构建和测试函数。
+软件入口为 `bishengjdk_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本。直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 完整构建；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径约定，结果解析位于 `scripts/results/`。
 
 ## 文件、来源和目录
 
@@ -97,7 +102,7 @@ JMH 参数和完整方法名对齐，但 CPU 调度由各自系统决定。
 ## 独立执行
 
 ```bash
-bash software/Toolchain/bishengjdk/bishengjdk_test.sh --version 21.0.9
+bash software/Toolchain/bishengjdk/bishengjdk_test.sh --version 21.0.9 --variant base
 ```
 
-可用 `--results-dir <目录>` 指定持久结果目录，或用 `--keep-workdir` 保留构建树。
+可用 `--results-dir <目录>` 指定持久结果目录，或用 `--keep-workdir` 保留构建树。独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，不执行性能测试；正式工作流中调优版归档到 `Toolchain/bishengjdk/21.0.9/optimized/<时间戳_Run ID>/`，且不会更新基础版的 `baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
