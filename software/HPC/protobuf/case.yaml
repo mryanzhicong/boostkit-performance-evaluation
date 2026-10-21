@@ -12,19 +12,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: protobuf_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_protobuf
     start:
-      script: protobuf_test.sh
+      script: scripts/stages/start.sh
       function: start_protobuf_runtime
     test:
-      script: protobuf_test.sh
+      script: scripts/stages/test.sh
       function: run_protobuf_benchmarks
     stop:
-      script: protobuf_test.sh
+      script: scripts/stages/stop.sh
       function: stop_protobuf_runtime
   timeout_minutes: 120
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   benchmark_source_diff:
     path: benchmark_source.diff
     stage: build

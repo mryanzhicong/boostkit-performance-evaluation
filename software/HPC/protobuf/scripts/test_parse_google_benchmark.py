@@ -2,10 +2,12 @@
 
 import json
 import itertools
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "results"))
 from parse_google_benchmark import GROUPS, normalize
 from standalone_runtime import extract_metrics, render_report
 
