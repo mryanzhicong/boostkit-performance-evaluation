@@ -8,8 +8,8 @@
 
 | 工作流 | 用途 | 当前默认输入 | 结果去向 |
 |---|---|---|---|
-| [Manual performance evaluation](.github/workflows/performance-test.yml) | 正式测试 | `sonic-go`、`1.15.2`、`all` 架构 | 完整结果上传华为 OBS；精简历史写入 `performance-results` 分支 |
-| [Development performance evaluation](.github/workflows/development-performance-test.yml) | 开发验证 | `kubernetes`、`1.37.0`、`all` 架构 | 结果与汇总报告保存为 Actions Artifact，保留 30 天；不写正式历史或基线 |
+| [Manual performance evaluation](.github/workflows/performance-test.yml) | 正式测试 | `python`、`all` 版本、`all` 架构 | 完整结果上传华为 OBS；精简历史写入 `performance-results` 分支 |
+| [Development performance evaluation](.github/workflows/development-performance-test.yml) | 开发验证 | `python`、`all` 版本、`all` 架构 | 结果与汇总报告保存为 Actions Artifact，保留 30 天；不写正式历史或基线 |
 
 `software` 和 `version` 可填写单项、逗号分隔的多项或 `all`；`architecture` 可选 `x86_64`、`aarch64` 或 `all`。若要运行全部已注册软件和版本，需显式将 `software`、`version` 都设为 `all`。正式工作流的 `update_baseline` 默认关闭；启用时必须运行双架构，且两个架构及清理均成功后才会更新基线。
 
