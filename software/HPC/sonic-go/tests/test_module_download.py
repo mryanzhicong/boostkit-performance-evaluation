@@ -4,14 +4,15 @@ import os
 import subprocess
 from pathlib import Path
 
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "builders" / "base.sh"
 
-SCRIPT = Path(__file__).resolve().parents[1] / "sonic_go_test.sh"
 
-
-def run_download(tmp_path: Path, fail_module: str = "") -> subprocess.CompletedProcess[str]:
+def run_download(
+    tmp_path: Path, fail_module: str = ""
+) -> subprocess.CompletedProcess[str]:
     fake_go = tmp_path / "go"
     fake_go.write_text(
-        '#!/bin/sh\n'
+        "#!/bin/sh\n"
         'printf "%s %s %s\\n" "$1" "$2" "${3:-}" >> "$CALLS_FILE"\n'
         'if [ -n "$FAIL_MODULE" ] && [ "${3:-}" = "$FAIL_MODULE" ]; then exit 1; fi\n',
         encoding="utf-8",
@@ -39,13 +40,17 @@ def run_download(tmp_path: Path, fail_module: str = "") -> subprocess.CompletedP
     }
     return subprocess.run(
         [
-            "bash", "-c",
-            'source "$SONIC_SCRIPT"; SOURCE_DIR="$SOURCE_DIR_TEST"; '
-            'GO_BIN="$GO_BIN_TEST"; download_sonic_modules',
+            "bash",
+            "-c",
+            (
+                'source "$SONIC_SCRIPT"; SOURCE_DIR="$SOURCE_DIR_TEST"; '
+                'GO_BIN="$GO_BIN_TEST"; download_sonic_modules'
+            ),
         ],
         env=environment,
         capture_output=True,
         text=True,
+        check=False,
     )
 
 

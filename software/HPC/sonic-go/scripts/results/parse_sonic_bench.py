@@ -142,13 +142,23 @@ def main() -> int:
         }
         rendered_env["benchtime"] = payload.get("benchtime", "")
         rendered_env["toolchain_version"] = payload.get("toolchain_version", "")
+        variant = os.environ.get("PERF_VARIANT", "base")
+        if variant not in {"base", "optimized"}:
+            raise ValueError(f"invalid build variant: {variant}")
         normalized = {
             "software": "sonic-go",
             "version": os.environ.get("SOFTWARE_VERSION", ""),
             "architecture": os.environ.get("EXPECTED_ARCH", ""),
+            "variant": variant,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "benchmark": "bytedance_sonic_go_test_bench",
             "command": str(payload.get("test_cmd", "")),
+            "parameters": {
+                "variant": variant,
+                "command": str(payload.get("test_cmd", "")),
+                "toolchain_target": os.environ.get("SONIC_GO_TOOLCHAIN", ""),
+                "go_source_version": os.environ.get("SONIC_GO_VERSION", ""),
+            },
             "environment": rendered_env,
             "results": metrics,
         }

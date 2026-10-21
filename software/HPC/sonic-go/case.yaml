@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: sonic_go_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_sonic_go
     start:
-      script: sonic_go_test.sh
+      script: scripts/stages/start.sh
       function: start_sonic_go_runtime
     test:
-      script: sonic_go_test.sh
+      script: scripts/stages/test.sh
       function: run_sonic_go_benchmarks
     stop:
-      script: sonic_go_test.sh
+      script: scripts/stages/stop.sh
       function: stop_sonic_go_runtime
   timeout_minutes: 180
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   official_benchmark:
     path: benchmark_sonic_go.txt
     stage: test

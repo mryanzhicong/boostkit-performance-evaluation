@@ -109,7 +109,7 @@ def finalize(output_dir: Path, version: str, architecture: str, status: int, fai
     }
     write_json(output_dir / "build_info.json", build)
     write_json(output_dir / "results.json", {"software": "sonic-go", "version": version, "architecture": architecture, "metrics": metrics})
-    write_json(output_dir / "status.json", {"status": "passed" if status == 0 else "failed", "failed_stage": failed_stage or None, "cleanup": cleanup})
+    write_json(output_dir / "status.json", {"status": "passed" if status == 0 and cleanup == "passed" else "failed", "failed_stage": failed_stage or None, "cleanup": cleanup})
 
     report = [f"# Sonic Go {version} ({architecture})", "", "## 构建信息", "", markdown_table([
         ("请求软件版本", version), ("实际软件版本", actual_version), ("构建信息记录时间", build["timestamp"]),
