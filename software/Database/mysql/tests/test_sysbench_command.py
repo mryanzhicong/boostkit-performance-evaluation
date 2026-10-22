@@ -6,9 +6,12 @@ from pathlib import Path
 
 import pytest
 
+CASE_DIR = Path(__file__).resolve().parents[1]
+COMMON = CASE_DIR / "scripts" / "common.sh"
+TEST_SH = CASE_DIR / "scripts" / "stages" / "test.sh"
+
 
 def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
-    script = Path(__file__).resolve().parents[1] / "mysql_test.sh"
     fake_sysbench = tmp_path / "sysbench"
     fake_sysbench.write_text(
         '#!/bin/sh\nprintf "LUA_PATH=%s\\n" "$LUA_PATH"\n'
@@ -19,7 +22,7 @@ def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
     lua_directory = tmp_path / "src" / "lua"
     results = tmp_path / "results"
     environment = os.environ | {
-        "TEST_SCRIPT": str(script),
+        "TEST_SCRIPT": str(COMMON),
         "TEST_BIN": str(fake_sysbench),
         "TEST_LUA_DIR": str(lua_directory),
         "TEST_RESULTS_DIR": str(results),
@@ -45,13 +48,11 @@ def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
 
 
 def test_formal_sysbench_runs_highest_thread_count_first() -> None:
-    script = Path(__file__).resolve().parents[1] / "mysql_test.sh"
-    assert "threads_for_scenario=(256 128 32 1)" in script.read_text(encoding="utf-8")
+    assert "threads_for_scenario=(256 128 32 1)" in TEST_SH.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("mode", ["prepare", "benchmark"])
 def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, mode: str) -> None:
-    script = Path(__file__).resolve().parents[1] / "mysql_test.sh"
     fake_mysqld = tmp_path / "mysqld"
     fake_mysqld.write_text('#!/bin/sh\nprintf "ARG=%s\\n" "$@"\n', encoding="utf-8")
     fake_mysqld.chmod(0o755)
@@ -62,7 +63,7 @@ def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, m
     fake_mysqladmin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     fake_mysqladmin.chmod(0o755)
     environment = os.environ | {
-        "TEST_SCRIPT": str(script),
+        "TEST_SCRIPT": str(COMMON),
         "TEST_MYSQLD": str(fake_mysqld),
         "TEST_MYSQL": str(fake_mysql),
         "TEST_MYSQLADMIN": str(fake_mysqladmin),

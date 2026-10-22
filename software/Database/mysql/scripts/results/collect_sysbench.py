@@ -77,7 +77,16 @@ def main() -> int:
         "software": "mysql",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "parameters": {
+            "variant": os.environ.get("PERF_VARIANT", "base"),
+            "client": "sysbench 1.0.20 (ebf1c90) with upstream oltp lua workloads",
+            "database": "sbtest (64 tables, 10000000 rows)",
+            "scenarios": ["read_only", "read_write", "write_only"],
+            "threads": [256, 128, 32, 1],
+            "measurement_seconds": 120,
+        },
         "results": results,
     }, indent=2) + "\n", encoding="utf-8")
     print(f"[mysql] normalized {len(results)} Sysbench measurements")

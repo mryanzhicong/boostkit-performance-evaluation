@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "collect_sysbench.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "results" / "collect_sysbench.py"
 SPEC = importlib.util.spec_from_file_location("collect_sysbench", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

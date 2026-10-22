@@ -1,8 +1,16 @@
 # MySQL 8.0.43 性能测试
 
 本用例在 x86_64、aarch64 上部署 Oracle MySQL 官方 Linux Generic 二进制包，
-使用同一套单机 Sysbench OLTP 参数进行开箱对比。入口为 `mysql_test.sh`；
-Framework 按 `build`、`start`、`test`、`stop` 调用脚本中的阶段函数。
+使用同一套单机 Sysbench OLTP 参数进行开箱对比。软件入口为 `mysql_test.sh`；
+Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本，直接执行入口
+脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 部署官方二进制包；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径、端口派发和服务管理函数，Sysbench
+客户端构建脚本在 `scripts/prepare_sysbench.sh`，结果解析位于 `scripts/results/`。
 
 ## 软件与测试工具
 
@@ -210,8 +218,15 @@ TPS、QPS、P95 latency。`sysbench_raw.log` 保存完整控制台输出，
 ```bash
 bash software/Database/mysql/mysql_test.sh \
   --version 8.0.43 \
+  --variant base \
   --results-dir /home/runner/mysql-results/8.0.43
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Database/mysql/8.0.43/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
 
 `stop` 阶段正常关闭本任务的 MySQL，并清理其私有数据目录。独立运行时默认
 清理整个私有工作目录；如需排错，可加 `--keep-workdir`。
