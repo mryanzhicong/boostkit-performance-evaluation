@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
-SCRIPT = Path(__file__).with_name("run_acclib.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "results" / "run_acclib.py"
 SPEC = importlib.util.spec_from_file_location("folly_acclib_adapter", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

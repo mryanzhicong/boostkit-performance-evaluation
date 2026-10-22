@@ -3,7 +3,17 @@
 本用例在 x86_64 和 aarch64 上分别构建上游原版 Folly，并用私有
 `AccLibBenchmark/fbthrift_folly_benchmark` 的 `press_server`、`press_client`
 做单机 RPC 性能对比。测试工具测量的是由 Folly、Fizz、Wangle、fbthrift
-共同实现的 RPC 链路，**不是 Folly 单个函数的微基准**。
+共同实现的 RPC 链路，**不是 Folly 单个函数的微基准**。软件入口为
+`folly_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止
+脚本，直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 构建上游原版 Folly 栈与 AccLibBenchmark；调优版
+入口位于 `scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建
+阶段明确失败，不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/`
+下的脚本；`scripts/common.sh` 提供阶段间一致的私有路径与服务路径派生，
+栈构建辅助脚本在 `scripts/build_acclib_stack.sh` 与 `scripts/prepare_acclib.py`，
+RPC 矩阵执行与结果解析位于 `scripts/results/`。
 
 ## 测试工具与源码
 
@@ -100,5 +110,15 @@ cmake --build "$WORK/fbthrift_folly_benchmark/build" --parallel 32 \
 ```bash
 bash software/HPC/folly/folly_test.sh \
   --version 2022.11.14.00 \
+  --variant base \
   --results-dir /home/runner/folly-results
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`HPC/folly/2022.11.14.00/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
+
+`stop` 阶段停止本次任务私有的 `press_server`；独立运行默认清理自身创建的
+私有工作目录，排查问题时可使用 `--keep-workdir`。

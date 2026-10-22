@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "folly_test.sh"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "builders" / "base.sh"
 
 
 def git(*args: str, cwd: Path) -> None:

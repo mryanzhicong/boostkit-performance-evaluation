@@ -8,6 +8,7 @@ import itertools
 import hashlib
 import json
 import math
+import os
 import re
 import shlex
 import subprocess
@@ -168,6 +169,7 @@ def run(original, run_py: Path, binary: Path, port: int, result_path: Path,
     }
     result_path.write_text(json.dumps({
         "software": "folly", "version": version, "architecture": architecture,
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "benchmark": "AccLibBenchmark/fbthrift_folly_benchmark",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {

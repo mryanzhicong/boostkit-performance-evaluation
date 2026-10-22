@@ -12,19 +12,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: folly_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_folly
     start:
-      script: folly_test.sh
+      script: scripts/stages/start.sh
       function: start_folly_runtime
     test:
-      script: folly_test.sh
+      script: scripts/stages/test.sh
       function: run_folly_benchmarks
     stop:
-      script: folly_test.sh
+      script: scripts/stages/stop.sh
       function: stop_folly_runtime
   timeout_minutes: 720
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   benchmark_result:
     path: benchmark_folly.json
     stage: test
