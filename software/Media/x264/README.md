@@ -2,6 +2,14 @@
 
 测试版本为 `0.165.3223`。入口是 `x264_test.sh`，四阶段函数由 `case.yaml` 声明。测试场景参考[开箱测试方案](https://atomgit.com/weixin_51237760/tasks/tree/main/2026/0924-x264%E3%80%81x265%E5%BC%80%E7%AE%B1)。
 
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 从上游仓库克隆并编译；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本；
+`scripts/common.sh` 提供阶段间一致的私有路径与运行时初始化，独立运行环境收集
+位于 `scripts/results/`。未修改的参考脚本 `fps-encode-x264.sh`、`score-x264.sh`
+保留在 `scripts/` 原位，由 Media 级测试锁定逐字节原版。
+
 ## 构建与安装
 
 脚本按参考资料从 [VideoLAN x264 官方仓库](https://code.videolan.org/videolan/x264)克隆源码，不指定分支或提交。缺少构建命令时用 `dnf` 安装，x86_64 还需要 NASM；`PERF_PROXY` 非空时作为 dnf 代理。
@@ -67,5 +75,15 @@ taskset -c <本路 CPU 列表> "$INSTALL_DIR/bin/x264" \
 
 ```bash
 bash software/Media/x264/x264_test.sh --version 0.165.3223 \
+  --variant base \
   --results-dir /home/runner/x264-results
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Media/x264/0.165.3223/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
+
+`stop` 阶段无后台服务需要停止；独立运行默认清理自身创建的私有工作目录，
+排查问题时可使用 `--keep-workdir`。

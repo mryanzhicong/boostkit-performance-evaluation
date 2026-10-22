@@ -8,6 +8,7 @@ import csv
 import hashlib
 import json
 import math
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -185,6 +186,7 @@ def main() -> int:
             "software": args.encoder,
             "version": args.version,
             "architecture": args.architecture,
+            "variant": os.environ.get("PERF_VARIANT", "base"),
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "parameters": {
                 "videos": videos,

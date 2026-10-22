@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: x264_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_x264
     start:
-      script: x264_test.sh
+      script: scripts/stages/start.sh
       function: start_x264_runtime
     test:
-      script: x264_test.sh
+      script: scripts/stages/test.sh
       function: run_x264_benchmarks
     stop:
-      script: x264_test.sh
+      script: scripts/stages/stop.sh
       function: stop_x264_runtime
   timeout_minutes: 1350
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   official_benchmark:
     path: benchmark_encode.txt
     stage: test
