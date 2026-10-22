@@ -136,6 +136,7 @@ def main() -> int:
         "benchmark": "oceanbase_sysbench_via_obproxy", "software": "oceanbase",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "connection": "obproxy", "proxy_version": os.environ["OB_PROXY_VERSION"],

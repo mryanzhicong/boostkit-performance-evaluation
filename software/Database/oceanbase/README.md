@@ -2,7 +2,17 @@
 
 本用例在同一台 Runner 上部署上游社区版 OceanBase 4.2.5.6 和 OBProxy
 4.3.6.1，通过 OBProxy 运行 Sysbench 1.0.20。x86_64 与 aarch64 使用相同软件
-版本、命令和测试矩阵。结果包含代理开销。
+版本、命令和测试矩阵。结果包含代理开销。软件入口为 `oceanbase_test.sh`；
+Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本，直接执行
+入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 下载官方 RPM 并以私有 OBD `demo` 部署单机集群；
+调优版入口位于 `scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在
+构建阶段明确失败，不会退回基础版。启动、测试和停止阶段共用
+`scripts/stages/` 下的脚本；`scripts/common.sh` 提供阶段间一致的私有路径、
+端口派发、数据库连接与日志遮盖函数（跨阶段共用），基准执行与结果解析位于
+`scripts/results/`。
 
 测试场景与参数参考用户提供的《OB applysrv线程优化insert性能提升5
 _20260910》：`read_only`、`insert`、`read_write`、`write_only`，每个场景
@@ -168,8 +178,15 @@ OBProxy 服务日志的末尾 300 行到 `oceanbase-ce-diagnostic.log`、
 ```bash
 bash software/Database/oceanbase/oceanbase_test.sh \
   --version 4.2.5.6 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/oceanbase/results/4.2.5.6
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Database/oceanbase/4.2.5.6/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
 
 独立运行和 Framework 均按 build、start、test、stop 执行。stop 阶段只销毁
 本次任务私有 `OBD_HOME` 内的 `demo` 集群。独立运行默认清理自身创建的工作

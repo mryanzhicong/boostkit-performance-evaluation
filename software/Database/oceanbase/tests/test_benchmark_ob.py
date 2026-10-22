@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts/benchmark_ob.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/results/benchmark_ob.py"
 SPEC = importlib.util.spec_from_file_location("oceanbase_benchmark", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)

@@ -7,7 +7,10 @@ import subprocess
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "oceanbase_test.sh"
+CASE_DIR = Path(__file__).resolve().parents[1]
+SCRIPT = CASE_DIR / "oceanbase_test.sh"
+COMMON = CASE_DIR / "scripts" / "common.sh"
+BASE = CASE_DIR / "scripts" / "builders" / "base.sh"
 TRACE_ID = "3695df80-c6d8-11f1-8e0c-20fadb934f02"
 
 
@@ -19,7 +22,9 @@ def run_shell(tmp_path: Path, command: str, helpers: dict[str, str]) -> subproce
         binary.write_text(f"#!/bin/sh\n{script}\n", encoding="utf-8")
         binary.chmod(0o755)
     return subprocess.run(
-        ["bash", "-c", f'source "$1"; configure_runtime_paths; {command}', "bash", str(SCRIPT)],
+        ["bash", "-c",
+         f'source "$1"; source "$2"; configure_runtime_paths; {command}',
+         "bash", str(SCRIPT), str(BASE)],
         env={**os.environ, "PERF_WORK_DIR": str(tmp_path / "work"),
              "RESULTS_DIR": str(tmp_path / "results"),
              "PATH": f"{bin_dir}:{os.environ['PATH']}"},
@@ -91,9 +96,9 @@ def test_sys_tenant_memory_is_increased_and_verified(tmp_path: Path) -> None:
 
 
 def test_test_tenant_memory_is_fixed_and_checked_before_creation(tmp_path: Path) -> None:
-    script = SCRIPT.read_text(encoding="utf-8")
-    assert '"--memory-size=${OB_TEST_TENANT_MEMORY}"' in script
-    assert "check_test_tenant_memory || return $?" in script
+    base_script = BASE.read_text(encoding="utf-8")
+    assert '"--memory-size=${OB_TEST_TENANT_MEMORY}"' in base_script
+    assert "check_test_tenant_memory || return $?" in base_script
 
     available = run_shell(
         tmp_path,
@@ -113,10 +118,11 @@ def test_test_tenant_memory_is_fixed_and_checked_before_creation(tmp_path: Path)
 
 
 def test_log_disk_is_sized_and_checked_before_tenant_creation(tmp_path: Path) -> None:
-    script = SCRIPT.read_text(encoding="utf-8")
-    assert 'OB_LOG_DISK_SIZE="128G"' in script
-    assert '"--oceanbase-ce.log_disk_size=${OB_LOG_DISK_SIZE}"' in script
-    assert script.index("check_test_tenant_log_disk || return $?") < script.index(
+    common_script = COMMON.read_text(encoding="utf-8")
+    base_script = BASE.read_text(encoding="utf-8")
+    assert 'OB_LOG_DISK_SIZE="128G"' in common_script
+    assert '"--oceanbase-ce.log_disk_size=${OB_LOG_DISK_SIZE}"' in base_script
+    assert base_script.index("check_test_tenant_log_disk || return $?") < base_script.index(
         'obd cluster tenant create demo -n test'
     )
 
@@ -138,10 +144,11 @@ def test_log_disk_is_sized_and_checked_before_tenant_creation(tmp_path: Path) ->
 
 
 def test_data_file_is_sized_and_verified_before_tenant_creation(tmp_path: Path) -> None:
-    script = SCRIPT.read_text(encoding="utf-8")
-    assert 'OB_DATAFILE_SIZE="512G"' in script
-    assert '"--oceanbase-ce.datafile_size=${OB_DATAFILE_SIZE}"' in script
-    assert script.index("check_observer_data_disk || return $?") < script.index(
+    common_script = COMMON.read_text(encoding="utf-8")
+    base_script = BASE.read_text(encoding="utf-8")
+    assert 'OB_DATAFILE_SIZE="512G"' in common_script
+    assert '"--oceanbase-ce.datafile_size=${OB_DATAFILE_SIZE}"' in base_script
+    assert base_script.index("check_observer_data_disk || return $?") < base_script.index(
         'obd cluster tenant create demo -n test'
     )
 
@@ -163,8 +170,8 @@ def test_data_file_is_sized_and_verified_before_tenant_creation(tmp_path: Path) 
 
 
 def test_deployment_checks_filesystem_before_installing(tmp_path: Path) -> None:
-    script = SCRIPT.read_text(encoding="utf-8")
-    assert script.index("check_deployment_disk_space || return $?") < script.index(
+    base_script = BASE.read_text(encoding="utf-8")
+    assert base_script.index("check_deployment_disk_space || return $?") < base_script.index(
         "install_oceanbase_dependencies || return $?"
     )
 
