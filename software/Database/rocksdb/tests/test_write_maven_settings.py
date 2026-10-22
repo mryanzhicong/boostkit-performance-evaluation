@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-SCRIPT = Path(__file__).with_name("write_maven_settings.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "write_maven_settings.py"
 SPEC = importlib.util.spec_from_file_location("rocksdb_write_maven_settings", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

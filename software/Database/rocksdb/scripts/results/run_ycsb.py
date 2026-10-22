@@ -125,6 +125,7 @@ def main() -> int:
         "benchmark": "ycsb_rocksdb_physical_single_instance",
         "software": "rocksdb", "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
             "ycsb_revision": YCSB_REVISION, "workloads": list(WORKLOADS),

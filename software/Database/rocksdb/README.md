@@ -3,6 +3,16 @@
 本用例比较上游原版 RocksDB 6.26.1 在 x86_64 和 aarch64 上的单机开箱性能。
 测试方法参考《930RocksDB版本需求验收报告》的物理机单实例流程：YCSB 加载数据、
 只读预热，然后运行 workload A、C。RocksDB 是进程内嵌入式库，不启动服务端。
+软件入口为 `rocksdb_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、
+测试和停止脚本，直接执行入口脚本也使用这些阶段函数。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 构建上游原版 RocksDB JNI 与原版 YCSB 绑定；调优版
+入口位于 `scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段
+明确失败，不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的
+脚本，`scripts/common.sh` 提供阶段间一致的私有路径、数据目录和 JDK 11 加载，
+Maven 私有配置脚本在 `scripts/write_maven_settings.py`，YCSB 执行与结果解析
+位于 `scripts/results/`。
 
 测试不打 RocksDB 优化补丁，不改 YCSB 源码，不使用文档的 `dbsnappy*.ini`、
 Docker、绑核、NUMA 绑定、`drop_caches` 或系统参数调优。没有传入
@@ -94,5 +104,15 @@ YCSB 使用默认表名 `usertable`，由 RocksDB binding 创建同名列族；�
 ```bash
 bash software/Database/rocksdb/rocksdb_test.sh \
   --version 6.26.1 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/rocksdb/results/6.26.1
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Database/rocksdb/6.26.1/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
+
+`stop` 阶段仅删除本次任务的私有数据目录；独立运行时默认清理整个私有工作
+目录，如需排错，可加 `--keep-workdir`。

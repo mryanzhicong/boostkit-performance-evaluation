@@ -11,19 +11,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: rocksdb_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_rocksdb
     start:
-      script: rocksdb_test.sh
+      script: scripts/stages/start.sh
       function: prepare_rocksdb_benchmark_data
     test:
-      script: rocksdb_test.sh
+      script: scripts/stages/test.sh
       function: run_rocksdb_benchmarks
     stop:
-      script: rocksdb_test.sh
+      script: scripts/stages/stop.sh
       function: cleanup_rocksdb_benchmark_data
   timeout_minutes: 1440
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   ycsb_raw_output:
     path: ycsb_raw.log
     stage: test

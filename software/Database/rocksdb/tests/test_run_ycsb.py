@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 
-SCRIPT = Path(__file__).with_name("run_ycsb.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "results" / "run_ycsb.py"
 SPEC = importlib.util.spec_from_file_location("rocksdb_run_ycsb", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
