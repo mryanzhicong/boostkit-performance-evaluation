@@ -10,19 +10,24 @@ execution:
   type: shell-functions
   stages:
     build:
-      script: redis_test.sh
+      script: scripts/builders/dispatch.sh
       function: build_redis
     start:
-      script: redis_test.sh
+      script: scripts/stages/start.sh
       function: start_redis_service
     test:
-      script: redis_test.sh
+      script: scripts/stages/test.sh
       function: run_redis_benchmarks
     stop:
-      script: redis_test.sh
+      script: scripts/stages/stop.sh
       function: stop_redis_service
   timeout_minutes: 600
 outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
   redis_benchmark_raw_output:
     path: redis_benchmark_raw.log
     stage: test

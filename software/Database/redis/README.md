@@ -2,8 +2,15 @@
 
 本目录从 Redis 官方仓库构建指定版本，启动一个任务私有 Redis 实例，使用
 Redis 自带的 `redis-benchmark` 测试 40、60、80 三档并发下的 SET/GET 吞吐量。
-Framework 通过 `case.yaml` 调用 `redis_test.sh` 的 `build`、`start`、`test`、
-`stop` 四个阶段；直接执行入口脚本会使用同一套构建、测试、信息收集和清理流程。
+软件入口为 `redis_test.sh`；Framework 通过 `case.yaml` 分别调用构建、启动、
+测试和停止脚本，直接执行入口脚本也使用同一套构建、测试、信息收集和清理流程。
+
+正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
+`scripts/builders/base.sh` 完整构建；调优版入口位于
+`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
+不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
+`scripts/common.sh` 提供阶段间一致的私有路径与端口派生约定，基准执行与结果
+规范化位于 `scripts/results/`。
 
 当前测试版本为 `7.0.15`，独立入口也默认使用该版本。
 
@@ -114,8 +121,15 @@ GET 吞吐摘要、吞吐为非正数，或命令执行失败，测试都直接�
 ```bash
 bash software/Database/redis/redis_test.sh \
   --version 7.0.15 \
+  --variant base \
   --results-dir /home/runner/boostkit-perf/redis/results/7.0.15
 ```
+
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
+结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
+不执行性能测试；正式工作流中调优版归档到
+`Database/redis/7.0.15/optimized/<时间戳_Run ID>/`，且不会更新基础版的
+`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
 
 独立执行会依次完成环境采集、构建、启动、测试、停止、结果校验和单架构报告生成。
 结果目录至少包含：

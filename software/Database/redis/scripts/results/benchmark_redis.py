@@ -194,8 +194,10 @@ def main() -> int:
         "software": "redis",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": os.environ.get("PERF_VARIANT", "base"),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {
+            "variant": os.environ.get("PERF_VARIANT", "base"),
             "client_host": "127.0.0.1",
             "operations": list(OPERATIONS),
             "requests": REQUEST_COUNT,

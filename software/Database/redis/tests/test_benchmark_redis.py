@@ -2,9 +2,13 @@
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+
+RESULTS_DIR = Path(__file__).resolve().parents[1] / "scripts" / "results"
+sys.path.insert(0, str(RESULTS_DIR))
 
 import benchmark_redis as benchmark_module
 from benchmark_redis import CLIENT_COUNTS, benchmark_command, parse_throughput_results
