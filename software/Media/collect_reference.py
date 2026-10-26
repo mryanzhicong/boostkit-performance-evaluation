@@ -188,8 +188,6 @@ def main() -> int:
     parser.add_argument("--architecture", choices=("x86_64", "aarch64"))
     args = parser.parse_args()
     try:
-        if args.allow_video_subset and args.encoder != "x264":
-            raise ValueError("video subset mode is available only for x264")
         videos = inspect_videos(
             args.video_dir,
             hash_files=not args.check_only,

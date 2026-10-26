@@ -27,7 +27,8 @@ run_x265_benchmarks() {
     cp "${TEST_HOME}/video_fps_summary_x265.csv" \
         "${RESULTS_DIR}/video_fps_summary_x265.csv" || return 50
     python3 "${SCRIPT_DIR}/../collect_reference.py" \
-        --encoder x265 --video-dir "${VIDEO_DIR}" --work-dir "${TEST_HOME}" \
+        --encoder x265 --allow-video-subset \
+        --video-dir "${VIDEO_DIR}" --work-dir "${TEST_HOME}" \
         --raw-output "${RESULTS_DIR}/benchmark_encode.txt" \
         --summary "${RESULTS_DIR}/video_fps_summary_x265.csv" \
         --normalized-output "${RESULTS_DIR}/benchmark_x265.json" \

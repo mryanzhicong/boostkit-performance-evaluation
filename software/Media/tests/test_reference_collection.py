@@ -126,3 +126,27 @@ def test_video_subset_rejects_empty_or_unknown_inputs(
     (tmp_path / "unknown.yuv").write_bytes(b"123456")
     with pytest.raises(ValueError, match="extra=.*unknown"):
         reference.inspect_videos(tmp_path, allow_subset=True)
+
+
+@pytest.mark.parametrize("encoder", ("x264", "x265"))
+def test_both_encoders_accept_three_video_subset_at_stage_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, encoder: str
+) -> None:
+    monkeypatch.setattr(reference, "VIDEO_NAMES", ("one", "two", "three", "four"))
+    monkeypatch.setattr(reference, "FRAME_BYTES", 6)
+    for name in ("one", "two", "three"):
+        (tmp_path / f"{name}.yuv").write_bytes(b"123456")
+    monkeypatch.setattr(
+        reference.sys,
+        "argv",
+        [
+            "collect_reference.py",
+            "--check-only",
+            "--encoder",
+            encoder,
+            "--allow-video-subset",
+            "--video-dir",
+            str(tmp_path),
+        ],
+    )
+    assert reference.main() == 0

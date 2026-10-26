@@ -40,13 +40,17 @@ x265 --version
 
 ## 视频素材
 
-在 Runner 持久目录 `/home/runner/software/x265/video/` 放入与 [x264 说明](../x264/README.md#视频素材)列出名称相同的 13 个 `.yuv` 文件。素材必须是 1920×1080、8 位 I420 的完整帧；两个架构上的文件须逐一相同。脚本记录 SHA-256、文件长度及使用帧数，以校验跨架构负载。
+在 Runner 持久目录 `/home/runner/software/x265/video/` 放入
+[x264 视频清单](../x264/README.md#视频素材)中的非空子集即可。例如只提供 3 个视频时，
+运行 3 个视频 × 4 个码率，共 12 个场景，不要求凑齐 13 个。素材必须是
+1920×1080、8 位 I420 的完整帧；x86_64 与 aarch64 必须提供相同文件名、
+相同内容的文件。脚本记录 SHA-256、文件长度及使用帧数，跨架构汇总会校验负载一致。
 
 ## 测试与指标
 
 测试阶段直接执行未修改的参考脚本 [fps-encode-x265.sh](scripts/fps-encode-x265.sh) 和 [score-x265.sh](scripts/score-x265.sh)。脚本需要的 `TEST_HOME/video` 是指向上述 Runner 持久目录的符号链接，`TEST_HOME` 为本次私有工作目录。
 
-调用方式与原文一致：aarch64 使用 `bash fps-encode-x265.sh 8core 920 1`，x86_64 使用 `bash fps-encode-x265.sh 8core x86 1`，随后执行 `bash score-x265.sh`。原脚本会对每个视频以 `2000`、`4000`、`6000`、`8000` kb/s 编码，共 52 个场景，固定传入 `--frames 9999`。CPU 绑定、线程池及编码参数均由原脚本决定；x86 的 CPU 偏移量也保留原脚本的 `192`。
+调用方式与原文一致：aarch64 使用 `bash fps-encode-x265.sh 8core 920 1`，x86_64 使用 `bash fps-encode-x265.sh 8core x86 1`，随后执行 `bash score-x265.sh`。原脚本会对目录中每个视频以 `2000`、`4000`、`6000`、`8000` kb/s 编码，固定传入 `--frames 9999`。CPU 绑定、线程池及编码参数均由原脚本决定；x86 的 CPU 偏移量也保留原脚本的 `192`。
 
 参考命令形态（实际值随视频变化）：
 
