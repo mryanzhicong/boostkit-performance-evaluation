@@ -50,7 +50,14 @@ x264 --version
 
 ## 视频素材
 
-将下列 13 个未经压缩的 1920×1080、8 位 I420 视频放在 Runner 持久目录 `/home/runner/software/x264/video/`，文件名以 `.yuv` 结尾。x265 使用相同内容，放在 `/home/runner/software/x265/video/`。两个架构上的视频必须逐一相同；脚本记录 SHA-256、文件长度及使用帧数，汇总时据此校验负载一致。文件不能缺失或包含不完整帧。
+将下列视频中需要测试的非空子集放在 Runner 持久目录
+`/home/runner/software/x264/video/`，文件名以 `.yuv` 结尾。视频必须是未经压缩的
+1920×1080、8 位 I420，且不能包含不完整帧。当前若只提供 3 个视频，就运行
+3 个视频 × 4 个码率，共 12 个场景；不要求凑齐 13 个。
+
+x86_64 和 aarch64 必须提供**相同文件名、相同内容**的视频。结果会记录各文件的
+SHA-256、长度和使用帧数；跨架构汇总会校验这些参数一致。x265 仍要求完整的
+13 个视频，使用自己的 `/home/runner/software/x265/video/` 目录。
 
 ```text
 Dota2_1920x1080_60.yuv
@@ -72,7 +79,7 @@ ParkScene_1920x1080_24.yuv
 
 测试阶段直接执行未修改的参考脚本 [fps-encode-x264.sh](scripts/fps-encode-x264.sh) 和 [score-x264.sh](scripts/score-x264.sh)。脚本需要的 `TEST_HOME/video` 是指向上述 Runner 持久目录的符号链接，`TEST_HOME` 为本次私有工作目录。
 
-调用方式与原文一致：aarch64 使用 `bash fps-encode-x264.sh 8core 920 1`，x86_64 使用 `bash fps-encode-x264.sh 8core x86 1`，随后执行 `bash score-x264.sh`。原脚本会对每个视频以 `2000`、`4000`、`6000`、`8000` kb/s 编码，共 52 个场景，固定传入 `--frames 9999`。CPU 绑定、线程选择及编码参数均由原脚本决定；x86 的 CPU 偏移量也保留原脚本的 `192`。
+调用方式与原文一致：aarch64 使用 `bash fps-encode-x264.sh 8core 920 1`，x86_64 使用 `bash fps-encode-x264.sh 8core x86 1`，随后执行 `bash score-x264.sh`。原脚本会对目录中每个视频以 `2000`、`4000`、`6000`、`8000` kb/s 编码，固定传入 `--frames 9999`。CPU 绑定、线程选择及编码参数均由原脚本决定；x86 的 CPU 偏移量也保留原脚本的 `192`。
 
 参考命令形态（实际值随视频变化）：
 

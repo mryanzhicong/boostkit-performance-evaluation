@@ -47,18 +47,24 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def inspect_videos(video_dir: Path, hash_files: bool = True) -> dict[str, dict[str, object]]:
+def inspect_videos(
+    video_dir: Path, hash_files: bool = True, allow_subset: bool = False
+) -> dict[str, dict[str, object]]:
     if not video_dir.is_dir():
         raise ValueError(f"reference video directory does not exist: {video_dir}")
     actual = {path.stem for path in video_dir.glob("*.yuv")}
     expected = set(VIDEO_NAMES)
-    if actual != expected:
+    if not actual:
+        raise ValueError(f"reference video directory contains no YUV inputs: {video_dir}")
+    if actual - expected or (not allow_subset and actual != expected):
         raise ValueError(
             f"reference video set differs: missing={sorted(expected - actual)}, "
             f"extra={sorted(actual - expected)}"
         )
     videos: dict[str, dict[str, object]] = {}
     for name in VIDEO_NAMES:
+        if name not in actual:
+            continue
         path = video_dir / f"{name}.yuv"
         size = path.stat().st_size
         if size == 0 or size % FRAME_BYTES:
@@ -82,9 +88,14 @@ def positive_decimal(value: str, description: str) -> Decimal:
     return number
 
 
-def read_summary(path: Path) -> dict[tuple[str, int], tuple[Decimal, Decimal]]:
+def read_summary(
+    path: Path, selected_names: set[str] | None = None
+) -> dict[tuple[str, int], tuple[Decimal, Decimal]]:
     if not path.is_file():
         raise ValueError(f"reference score CSV is missing: {path}")
+    if selected_names is None:
+        selected_names = set(VIDEO_NAMES)
+    expected_rows = {(name, bitrate) for name in selected_names for bitrate in BITRATES}
     rows: dict[tuple[str, int], tuple[Decimal, Decimal]] = {}
     with path.open(newline="", encoding="utf-8") as source:
         reader = csv.DictReader(source)
@@ -93,7 +104,7 @@ def read_summary(path: Path) -> dict[tuple[str, int], tuple[Decimal, Decimal]]:
         for row in reader:
             name = row["Video Directory"]
             bitrate_text = row["Bitrate"]
-            if name not in VIDEO_NAMES or bitrate_text not in {f"{n}k" for n in BITRATES}:
+            if name not in selected_names or bitrate_text not in {f"{n}k" for n in BITRATES}:
                 raise ValueError(f"unexpected reference score row: {row}")
             key = (name, int(bitrate_text[:-1]))
             if key in rows:
@@ -102,8 +113,11 @@ def read_summary(path: Path) -> dict[tuple[str, int], tuple[Decimal, Decimal]]:
                 positive_decimal(row["Total FPS"], f"{key} total FPS"),
                 positive_decimal(row["Average Bin Size"], f"{key} average bin size"),
             )
-    if len(rows) != len(VIDEO_NAMES) * len(BITRATES):
-        raise ValueError(f"reference score CSV has {len(rows)} rows, expected 52")
+    if set(rows) != expected_rows:
+        raise ValueError(
+            f"reference score CSV rows differ: missing={sorted(expected_rows - set(rows))}, "
+            f"extra={sorted(set(rows) - expected_rows)}"
+        )
     return rows
 
 
@@ -129,6 +143,8 @@ def collect(
     output_base = work_dir / f"outputfiles-{encoder}"
     with raw_output.open("a", encoding="utf-8") as combined:
         for name in VIDEO_NAMES:
+            if name not in videos:
+                continue
             for bitrate in BITRATES:
                 route_dir = output_base / f"{bitrate}k" / name
                 log_path = route_dir / f"log_{name}_{bitrate}k_1.txt"
@@ -161,6 +177,7 @@ def collect(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--allow-video-subset", action="store_true")
     parser.add_argument("--encoder", choices=("x264", "x265"))
     parser.add_argument("--video-dir", required=True, type=Path)
     parser.add_argument("--work-dir", type=Path)
@@ -171,7 +188,13 @@ def main() -> int:
     parser.add_argument("--architecture", choices=("x86_64", "aarch64"))
     args = parser.parse_args()
     try:
-        videos = inspect_videos(args.video_dir, hash_files=not args.check_only)
+        if args.allow_video_subset and args.encoder != "x264":
+            raise ValueError("video subset mode is available only for x264")
+        videos = inspect_videos(
+            args.video_dir,
+            hash_files=not args.check_only,
+            allow_subset=args.allow_video_subset,
+        )
         if args.check_only:
             print(f"[reference-video] verified {len(videos)} YUV inputs", flush=True)
             return 0
@@ -179,7 +202,7 @@ def main() -> int:
         missing = [field for field in required if getattr(args, field) is None]
         if missing:
             raise ValueError(f"missing result collection arguments: {', '.join(missing)}")
-        rows = read_summary(args.summary)
+        rows = read_summary(args.summary, set(videos))
         results = collect(args.encoder, args.work_dir, args.raw_output, rows, videos)
         payload = {
             "benchmark": f"{args.encoder}_reference_shell_suite",

@@ -16,7 +16,8 @@ start_x264_runtime() {
         return 40
     }
     python3 "${SCRIPT_DIR}/../collect_reference.py" \
-        --check-only --video-dir "${VIDEO_DIR}" || return 40
+        --check-only --encoder x264 --allow-video-subset \
+        --video-dir "${VIDEO_DIR}" || return 40
     [[ ! -e "${PERF_WORK_DIR}/video" ]] || {
         log_message "ERROR: reference video link already exists: ${PERF_WORK_DIR}/video"
         return 40

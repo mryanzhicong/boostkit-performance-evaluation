@@ -71,3 +71,58 @@ def test_rejects_incomplete_original_output(tmp_path: Path, monkeypatch: pytest.
     monkeypatch.setattr(reference, "BITRATES", (2000,))
     with pytest.raises(ValueError, match="missing"):
         reference.read_summary(tmp_path / "missing.csv")
+
+
+def test_x264_accepts_three_known_videos_without_weakening_result_checks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(reference, "VIDEO_NAMES", ("one", "two", "three", "four"))
+    monkeypatch.setattr(reference, "BITRATES", (2000, 4000))
+    monkeypatch.setattr(reference, "FRAME_BYTES", 6)
+    video_dir = tmp_path / "video"
+    video_dir.mkdir()
+    for name in ("one", "two", "three"):
+        (video_dir / f"{name}.yuv").write_bytes(b"123456")
+
+    with pytest.raises(ValueError, match="reference video set differs"):
+        reference.inspect_videos(video_dir)
+    videos = reference.inspect_videos(video_dir, allow_subset=True)
+    assert set(videos) == {"one", "two", "three"}
+
+    csv_path = tmp_path / "score.csv"
+    header = "Bitrate,Video Directory,Total FPS,Average Bin Size\n"
+    rows = "".join(
+        f"{bitrate}k,{name},12.50,4\n"
+        for name in videos
+        for bitrate in (2000, 4000)
+    )
+    csv_path.write_text(header + rows, encoding="utf-8")
+    selected_rows = reference.read_summary(csv_path, set(videos))
+    assert len(selected_rows) == 6
+
+    for name, bitrate in selected_rows:
+        route_dir = tmp_path / "outputfiles-x264" / f"{bitrate}k" / name
+        route_dir.mkdir(parents=True)
+        (route_dir / f"log_{name}_{bitrate}k_1.txt").write_text(
+            "encoded 1 frames, 12.50 fps, 2000.00 kb/s\n", encoding="utf-8"
+        )
+        (route_dir / f"{name}_{bitrate}k_1.bin").write_bytes(b"1234")
+    raw_output = tmp_path / "raw.log"
+    raw_output.write_text("original command output\n", encoding="utf-8")
+    assert len(reference.collect("x264", tmp_path, raw_output, selected_rows, videos)) == 6
+
+    csv_path.write_text(header + rows.rsplit("\n", 2)[0] + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="rows differ"):
+        reference.read_summary(csv_path, set(videos))
+
+
+def test_video_subset_rejects_empty_or_unknown_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(reference, "VIDEO_NAMES", ("known",))
+    monkeypatch.setattr(reference, "FRAME_BYTES", 6)
+    with pytest.raises(ValueError, match="no YUV inputs"):
+        reference.inspect_videos(tmp_path, allow_subset=True)
+    (tmp_path / "unknown.yuv").write_bytes(b"123456")
+    with pytest.raises(ValueError, match="extra=.*unknown"):
+        reference.inspect_videos(tmp_path, allow_subset=True)
