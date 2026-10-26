@@ -4,11 +4,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 require_commands() {
     local required package
     local packages=() dnf_options=()
-    for required in git python3 make gcc sed tee nproc taskset bc; do
+    for required in curl tar sha256sum python3 make gcc sed tee nproc taskset bc; do
         command -v "${required}" >/dev/null 2>&1 && continue
         case "${required}" in
-            tee) package="coreutils" ;;
-            nproc) package="coreutils" ;;
+            sha256sum|tee|nproc) package="coreutils" ;;
             taskset) package="util-linux" ;;
             *) package="${required}" ;;
         esac
@@ -31,7 +30,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required in git python3 make gcc sed tee nproc taskset bc; do
+    for required in curl tar sha256sum python3 make gcc sed tee nproc taskset bc; do
         command -v "${required}" >/dev/null 2>&1 || {
             log_message "ERROR: required command remains unavailable: ${required}"
             return 30
@@ -65,7 +64,7 @@ read_x264_version() {
 }
 
 build_x264_base() {
-    local actual_version
+    local actual_version archive_path archive_name
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
@@ -74,12 +73,28 @@ build_x264_base() {
         return 20
     }
 
-    export GIT_TERMINAL_PROMPT=0
-    log_message "cloning x264 from ${X264_SOURCE_URL}"
-    (cd "${PERF_WORK_DIR}" && git clone "${X264_SOURCE_URL}") || {
-        log_message "ERROR: failed to clone x264 from ${X264_SOURCE_URL}"
+    archive_name="x264-${X264_SOURCE_REVISION}.tar.gz"
+    archive_path="/home/runner/software/x264/${archive_name}"
+    if [[ -s "${archive_path}" ]]; then
+        log_message "using local x264 source archive ${archive_path}"
+    else
+        archive_path="${PERF_WORK_DIR}/${archive_name}"
+        log_message "downloading x264 source archive from ${X264_SOURCE_ARCHIVE_URL}"
+        curl -fSL --connect-timeout 30 --retry 3 \
+            -o "${archive_path}" "${X264_SOURCE_ARCHIVE_URL}" || {
+            log_message "ERROR: failed to download x264 source archive"
+            return 30
+        }
+    fi
+    if ! printf '%s  %s\n' "${X264_SOURCE_SHA256}" "${archive_path}" | sha256sum -c -; then
+        log_message "ERROR: x264 source archive SHA-256 mismatch"
         return 30
-    }
+    fi
+    mkdir -p "${SOURCE_DIR}"
+    if ! tar -xzf "${archive_path}" -C "${SOURCE_DIR}" --strip-components=1; then
+        log_message "ERROR: failed to extract x264 source archive"
+        return 30
+    fi
 
     log_message "building and installing x264 into ${INSTALL_DIR}"
     mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"

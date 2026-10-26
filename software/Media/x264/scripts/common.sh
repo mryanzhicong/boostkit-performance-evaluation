@@ -10,7 +10,9 @@ PERF_RUN_ID="${PERF_RUN_ID:-}"
 RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
-X264_SOURCE_URL="https://code.videolan.org/videolan/x264.git"
+X264_SOURCE_REVISION="0480cb05"
+X264_SOURCE_SHA256="d0967a1348c85dfde363bb52610403be898171493100561efa0dd05d5fd1ae50"
+X264_SOURCE_ARCHIVE_URL="https://github.com/mirror/x264/archive/${X264_SOURCE_REVISION}.tar.gz"
 VIDEO_DIR="${VIDEO_DIR:-/home/runner/software/x264/video}"
 
 # Lifecycle paths (assigned in configure_runtime_paths).

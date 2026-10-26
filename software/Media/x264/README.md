@@ -3,7 +3,7 @@
 测试版本为 `0.165.3223`。入口是 `x264_test.sh`，四阶段函数由 `case.yaml` 声明。测试场景参考[开箱测试方案](https://atomgit.com/weixin_51237760/tasks/tree/main/2026/0924-x264%E3%80%81x265%E5%BC%80%E7%AE%B1)。
 
 正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
-`scripts/builders/base.sh` 从上游仓库克隆并编译；调优版入口位于
+`scripts/builders/base.sh` 从固定提交的源码压缩包编译；调优版入口位于
 `scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
 不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本；
 `scripts/common.sh` 提供阶段间一致的私有路径与运行时初始化，独立运行环境收集
@@ -12,14 +12,26 @@
 
 ## 构建与安装
 
-脚本按参考资料从 [VideoLAN x264 官方仓库](https://code.videolan.org/videolan/x264)克隆源码，不指定分支或提交。缺少构建命令时用 `dnf` 安装，x86_64 还需要 NASM；`PERF_PROXY` 非空时作为 dnf 代理。
+源码固定为 VideoLAN x264 的 `0480cb05` 提交（版本 `0.165.3223`）。
+脚本参考 openEuler x264 Dockerfile，从
+[GitHub 镜像](https://github.com/mirror/x264/archive/0480cb05.tar.gz)获取源码压缩包，
+不访问需要人机验证的 VideoLAN Git 仓库。下载后校验 SHA-256：
+`d0967a1348c85dfde363bb52610403be898171493100561efa0dd05d5fd1ae50`。
+
+Runner 已有 `/home/runner/software/x264/x264-0480cb05.tar.gz` 时优先使用该离线包，
+同样必须通过校验；不存在时联网下载。缺少构建命令时用 `dnf` 安装，
+x86_64 还需要 NASM；`PERF_PROXY` 非空时作为 dnf 代理。
 
 关键命令（在本次私有工作目录 `PERF_WORK_DIR` 下执行）：
 
 ```bash
 cd "$PERF_WORK_DIR"
 INSTALL_DIR="$PERF_WORK_DIR/x264/x264_install"
-git clone https://code.videolan.org/videolan/x264.git
+curl -fSL --connect-timeout 30 --retry 3 \
+  -o x264-0480cb05.tar.gz https://github.com/mirror/x264/archive/0480cb05.tar.gz
+echo 'd0967a1348c85dfde363bb52610403be898171493100561efa0dd05d5fd1ae50  x264-0480cb05.tar.gz' | sha256sum -c -
+mkdir x264
+tar -xzf x264-0480cb05.tar.gz -C x264 --strip-components=1
 cd x264
 mkdir x264_build x264_install
 cd x264_build

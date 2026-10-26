@@ -51,6 +51,20 @@ def test_case_yaml_stages_use_split_scripts() -> None:
     assert build_variant["required"] is True
 
 
+def test_base_build_uses_pinned_checked_source_archive() -> None:
+    common = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
+    builder = (SCRIPT_DIR / "builders" / "base.sh").read_text(encoding="utf-8")
+    assert 'X264_SOURCE_REVISION="0480cb05"' in common
+    assert (
+        'X264_SOURCE_SHA256="d0967a1348c85dfde363bb52610403be898171493100561efa0dd05d5fd1ae50"'
+        in common
+    )
+    assert 'https://github.com/mirror/x264/archive/${X264_SOURCE_REVISION}.tar.gz' in common
+    assert "sha256sum -c -" in builder
+    assert 'tar -xzf "${archive_path}"' in builder
+    assert "git clone" not in builder
+
+
 def test_stage_scripts_do_not_depend_on_builder_only_functions() -> None:
     """Framework stages run standalone; they must not call builder-only helpers."""
     builder_functions: set[str] = set()

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # x264 performance case entry point (upstream source build + reference scripts).
 #
-# The four framework stages map to: clone and build upstream x264 into this
+# The four framework stages map to: download and build pinned upstream x264 into this
 # task's private directory (build), verify the binary and the reference video
 # set (start), run the untouched reference encode/score scripts (test), and a
 # no-op stop (x264 has no background service).
