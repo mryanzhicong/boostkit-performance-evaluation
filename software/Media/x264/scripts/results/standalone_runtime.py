@@ -175,11 +175,15 @@ def extract_metrics(
         group = result.get("group")
         if not isinstance(group, str) or not group:
             raise RuntimeError(f"指标 {result_key} 缺少码率分组")
+        subgroup = result.get("subgroup")
+        if not isinstance(subgroup, str) or not subgroup:
+            raise RuntimeError(f"指标 {result_key} 缺少视频分组")
         metrics[result_key] = {
             "value": value,
             "unit": "fps",
             "direction": "higher_is_better",
             "group": group,
+            "subgroup": subgroup,
         }
     if not metrics:
         raise RuntimeError("benchmark_x264.json 不包含任何指标")
@@ -228,16 +232,18 @@ def render_report(result: dict[str, Any]) -> str:
     ):
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
     lines.extend(["", "## 性能指标"])
-    groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+    groups: dict[str, dict[str, list[tuple[str, dict[str, Any]]]]] = {}
     for metric_name, metric in result.get("metrics", {}).items():
-        groups.setdefault(metric["group"], []).append((metric_name, metric))
-    for group, metrics in groups.items():
-        lines.extend(["", f"### {markdown_cell(group)}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
-        for metric_name, metric in metrics:
-            lines.append(
-                f"| {markdown_cell(metric_name)} | {metric['value']} | "
-                f"{metric['unit']} | 越大越好 |"
-            )
+        groups.setdefault(metric["group"], {}).setdefault(metric["subgroup"], []).append((metric_name, metric))
+    for group, videos in groups.items():
+        lines.extend(["", f"### {markdown_cell(group)}"])
+        for video, metrics in videos.items():
+            lines.extend(["", f"#### {markdown_cell(video)}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"])
+            for metric_name, metric in metrics:
+                lines.append(
+                    f"| {markdown_cell(metric_name.split(f'/{video}/', 1)[-1])} | {metric['value']} | "
+                    f"{metric['unit']} | 越大越好 |"
+                )
     if result.get("error"):
         lines.extend(["", "## 错误", "", markdown_cell(result["error"])])
     lines.append("")

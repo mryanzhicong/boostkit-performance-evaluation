@@ -188,6 +188,7 @@ def collect(
                     "source_name": key,
                     "source_field": "fps",
                     "group": "单路" if mode == "single" else "整机",
+                    "subgroup": name,
                     "value": value,
                     "average_bin_size_bytes": float(csv_size),
                 }

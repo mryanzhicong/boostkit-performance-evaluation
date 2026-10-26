@@ -63,6 +63,7 @@ def test_collects_original_script_csv_and_route_output(
     results = reference.collect(encoder, tmp_path, raw_output, rows, videos, "single", 1)
     assert results["single/sample/2000k/total_fps"]["value"] == 12.5
     assert results["single/sample/2000k/total_fps"]["group"] == "单路"
+    assert results["single/sample/2000k/total_fps"]["subgroup"] == "sample"
     assert log_line in raw_output.read_text(encoding="utf-8")
 
 

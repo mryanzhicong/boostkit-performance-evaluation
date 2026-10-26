@@ -116,6 +116,7 @@ def _run_faked_main(
             "source_name": name,
             "source_field": "fps",
             "group": "单路" if mode == "single" else "整机",
+            "subgroup": "sample",
             "value": 12.5,
             "average_bin_size_bytes": 4.0,
         }}

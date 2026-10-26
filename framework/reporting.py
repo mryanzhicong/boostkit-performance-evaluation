@@ -277,12 +277,58 @@ def _presentation_metric_groups(
     return groups, other_names
 
 
+def _presentation_metric_tables(
+    metrics: dict,
+    groups: dict[str, list[str]],
+    heading_level: int,
+    comparison: bool = False,
+) -> list[str]:
+    """Render an optional second heading level without changing flat groups."""
+    lines: list[str] = []
+    table = _grouped_comparison_metric_table if comparison else _single_metric_table
+    for group, names in groups.items():
+        lines.extend([f"{'#' * heading_level} {group}", ""])
+        subgroups: dict[str, list[str]] = {}
+        ungrouped: list[str] = []
+        for name in names:
+            subgroup = _presentation_subgroup(name, metrics[name])
+            if subgroup:
+                subgroups.setdefault(subgroup, []).append(name)
+            else:
+                ungrouped.append(name)
+        if ungrouped:
+            lines.extend(table(metrics, ungrouped))
+        for subgroup, subgroup_names in subgroups.items():
+            lines.extend([f"{'#' * (heading_level + 1)} {subgroup}", ""])
+            lines.extend(table(metrics, subgroup_names))
+    return lines
+
+
+def _presentation_subgroup(name: str, metric: dict) -> str | None:
+    subgroup = metric.get("subgroup")
+    if isinstance(subgroup, str) and subgroup:
+        return subgroup
+    # Older x264/x265 results contain the video only in their stable metric key.
+    parts = name.split("/")
+    mode = {"单路": "single", "整机": "whole_machine"}.get(metric.get("group"))
+    if (
+        len(parts) == 4
+        and parts[0] == mode
+        and parts[1]
+        and parts[2].endswith("k")
+        and parts[2][:-1].isdigit()
+        and parts[3] == "total_fps"
+    ):
+        return parts[1]
+    return None
+
+
 def _single_metric_table(metrics: dict, metric_names: list[str]) -> list[str]:
     rows: list[list[object]] = []
     for name in metric_names:
         metric = metrics[name]
         rows.append([
-            name,
+            _presentation_metric_name(name, metric),
             metric.get("value") if metric.get("value") is not None else "N/A",
             metric.get("unit", ""),
             direction_label(metric.get("direction")),
@@ -300,13 +346,22 @@ def _comparison_metric_rows(metrics: dict, metric_names: list[str]) -> list[list
         metric = metrics[name]
         relative = metric.get("relative_performance")
         rows.append([
-            name,
+            _presentation_metric_name(name, metric),
             direction_label(metric.get("direction")),
             metric.get("x86_64", "N/A"),
             metric.get("aarch64", "N/A"),
             relative if relative is not None else "N/A",
         ])
     return rows
+
+
+def _presentation_metric_name(name: str, metric: dict) -> str:
+    subgroup = _presentation_subgroup(name, metric)
+    if subgroup:
+        marker = f"/{subgroup}/"
+        if marker in name:
+            return name.split(marker, 1)[1]
+    return name
 
 
 def _grouped_comparison_metric_table(metrics: dict, metric_names: list[str]) -> list[str]:
@@ -426,9 +481,7 @@ def render_single(data: dict) -> str:
     if matrix_groups:
         lines.extend(_matrix_single_tables(matrix_groups, heading_level=3))
     presentation_groups, other_names = _presentation_metric_groups(metrics, other_names)
-    for group, metric_names in presentation_groups.items():
-        lines.extend([f"### {group}", ""])
-        lines.extend(_single_metric_table(metrics, metric_names))
+    lines.extend(_presentation_metric_tables(metrics, presentation_groups, heading_level=3))
     if not other_names:
         return "\n".join(lines)
     lines.extend(_single_metric_table(metrics, other_names))
@@ -442,9 +495,7 @@ def render_comparison(comparison: dict) -> str:
     if matrix_groups:
         lines.extend(_matrix_comparison_tables(matrix_groups, heading_level=2))
     presentation_groups, other_names = _presentation_metric_groups(metrics, other_names)
-    for group, metric_names in presentation_groups.items():
-        lines.extend([f"## {group}", ""])
-        lines.extend(_grouped_comparison_metric_table(metrics, metric_names))
+    lines.extend(_presentation_metric_tables(metrics, presentation_groups, heading_level=2, comparison=True))
     if other_names:
         lines.extend(_ungrouped_comparison_metric_table(metrics, other_names))
     if matrix_groups or presentation_groups or other_names:
@@ -560,9 +611,9 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
                     lines.extend(_matrix_single_tables(matrix_groups, heading_level=5))
                 if presentation_groups:
                     lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
-                    for group, group_names in presentation_groups.items():
-                        lines.extend([f"##### {group}", ""])
-                        lines.extend(_single_metric_table(item["metrics"], group_names))
+                    lines.extend(_presentation_metric_tables(
+                        item["metrics"], presentation_groups, heading_level=5,
+                    ))
                 if other_names:
                     lines.extend([f"#### {item.get('software')} {item.get('version')}", ""])
                     lines.extend(_single_metric_table(item["metrics"], other_names))
@@ -579,9 +630,9 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
             if matrix_groups:
                 lines.extend(_matrix_comparison_tables(matrix_groups, heading_level=4))
             if presentation_groups:
-                for group, group_names in presentation_groups.items():
-                    lines.extend([f"#### {group}", ""])
-                    lines.extend(_grouped_comparison_metric_table(metrics, group_names))
+                lines.extend(_presentation_metric_tables(
+                    metrics, presentation_groups, heading_level=4, comparison=True,
+                ))
             if other_names:
                 lines.extend(_ungrouped_comparison_metric_table(metrics, other_names))
         if has_comparison_metrics:

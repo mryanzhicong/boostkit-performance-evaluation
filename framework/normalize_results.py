@@ -112,6 +112,7 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
         unit: str,
         direction: str,
         group: str | None = None,
+        subgroup: str | None = None,
         matrix: dict[str, Any] | None = None,
     ) -> None:
         if not name:
@@ -134,6 +135,10 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
             if not isinstance(group, str) or not group:
                 raise ResultValidationError(f"metric {name} has an invalid group")
             metric["group"] = group
+        if subgroup is not None:
+            if not isinstance(subgroup, str) or not subgroup or group is None:
+                raise ResultValidationError(f"metric {name} has an invalid subgroup")
+            metric["subgroup"] = subgroup
         if matrix is not None:
             metric["matrix"] = matrix
         metrics[name] = metric
@@ -222,6 +227,14 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                     raise ResultValidationError(
                         f"metric {metric_name} is missing group path {group_path}"
                     )
+            subgroup = None
+            subgroup_path = collection.get("subgroup_path")
+            if subgroup_path is not None:
+                subgroup = get_path(item, subgroup_path, MISSING)
+                if subgroup is MISSING:
+                    raise ResultValidationError(
+                        f"metric {metric_name} is missing subgroup path {subgroup_path}"
+                    )
             matrix = None
             matrix_config = collection.get("matrix")
             if matrix_config is not None:
@@ -244,7 +257,7 @@ def _extract_metrics(context: RunContext, sources: dict[str, Any]) -> dict[str, 
                 note = matrix_config.get("single_note")
                 if note is not None:
                     matrix["single_note"] = note
-            add_metric(metric_name, value, unit, direction, group, matrix)
+            add_metric(metric_name, value, unit, direction, group, subgroup, matrix)
     if not metrics:
         raise ResultValidationError("no metrics were extracted")
     return metrics

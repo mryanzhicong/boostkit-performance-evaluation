@@ -61,6 +61,49 @@ def normalized_result(architecture: str, higher: float, lower: float) -> dict:
     }
 
 
+def test_video_subgroups_render_as_nested_headings_across_reports() -> None:
+    def video_result(architecture: str, factor: float) -> dict:
+        result = normalized_result(architecture, 1.0, 1.0)
+        result.update({"category": "Media", "software": "x264", "version": "0.165.3223"})
+        result["metrics"] = {
+            f"{mode}/{video}/{bitrate}k/total_fps": {
+                "value": 10.0 * factor,
+                "unit": "fps",
+                "direction": "higher_is_better",
+                "group": "单路" if mode == "single" else "整机",
+                "subgroup": video,
+            }
+            for mode in ("single", "whole_machine")
+            for video in ("video_a", "video_b")
+            for bitrate in (2000, 4000)
+        }
+        return result
+
+    x86, arm = video_result("x86_64", 1.0), video_result("aarch64", 1.2)
+    comparison = compare_pair(x86, arm)
+    assert comparison["metrics"]["single/video_a/2000k/total_fps"]["subgroup"] == "video_a"
+    single = render_single(arm)
+    cross = render_comparison(comparison)
+    from generate_comparison import build_summary
+
+    summary = render_summary(build_summary([x86, arm], [comparison]), [comparison])
+    assert "### 单路\n\n#### video_a" in single
+    assert "### 单路\n\n#### video_b" not in single
+    assert "#### video_b" in single
+    assert "## 单路\n\n### video_a" in cross
+    assert "## 整机\n\n### video_a" in cross
+    assert "##### 单路\n\n###### video_a" in summary
+    assert "#### 单路\n\n##### video_a" in summary
+    assert "2000k/total_fps" in cross
+    assert "single/video_a/2000k/total_fps" not in cross
+    for result in (x86, arm):
+        for metric in result["metrics"].values():
+            del metric["subgroup"]
+    old_comparison = compare_pair(x86, arm)
+    old_summary = render_summary(build_summary([x86, arm], [old_comparison]), [old_comparison])
+    assert "##### 单路\n\n###### video_a" in old_summary
+
+
 def sysbench_result(architecture: str, factor: float) -> dict:
     result = normalized_result(architecture, 100 * factor, 20 * factor)
     result.update({"category": "Database", "software": "mysql", "version": "8.0.46"})
@@ -309,6 +352,7 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
                     "unit": "messages/s",
                     "direction": "higher_is_better",
                     "group": "吞吐",
+                    "subgroup": "JSON",
                 },
                 "latency": {
                     "source_name": "serialize_latency_us",
@@ -316,6 +360,7 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
                     "unit": "us",
                     "direction": "lower_is_better",
                     "group": "延迟",
+                    "subgroup": "JSON",
                 },
             }
         },
@@ -342,6 +387,7 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
                     "unit_path": "unit",
                     "direction_path": "direction",
                     "group_path": "group",
+                    "subgroup_path": "subgroup",
                 },
             },
         },
@@ -361,12 +407,14 @@ def test_normalizer_collection_reads_unit_and_direction_from_each_item(
             "unit": "messages/s",
             "direction": "higher_is_better",
             "group": "吞吐",
+            "subgroup": "JSON",
         },
         "serialize_latency_us": {
             "value": 2.5,
             "unit": "us",
             "direction": "lower_is_better",
             "group": "延迟",
+            "subgroup": "JSON",
         },
     }
 def test_normalizer_rejects_missing_empty_and_non_numeric_metrics(tmp_path: Path) -> None:

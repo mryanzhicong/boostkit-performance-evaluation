@@ -414,6 +414,7 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     "direction",
                     "direction_path",
                     "group_path",
+                    "subgroup_path",
                     "matrix",
                 }
                 if unknown_fields:
@@ -440,6 +441,15 @@ def validate_case(path: Path, root: Path = ROOT) -> tuple[dict[str, Any] | None,
                     errors.append(
                         "metrics.collection.group_path must be a non-empty string"
                     )
+                subgroup_path = collection.get("subgroup_path")
+                if subgroup_path is not None and (
+                    not isinstance(subgroup_path, str) or not subgroup_path
+                ):
+                    errors.append(
+                        "metrics.collection.subgroup_path must be a non-empty string"
+                    )
+                if subgroup_path is not None and group_path is None:
+                    errors.append("metrics.collection.subgroup_path requires group_path")
                 matrix = collection.get("matrix")
                 if matrix is not None:
                     if not isinstance(matrix, dict):
