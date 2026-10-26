@@ -138,36 +138,56 @@ def collect(
     raw_output: Path,
     rows: dict[tuple[str, int], tuple[Decimal, Decimal]],
     videos: dict[str, dict[str, object]],
+    mode: str,
+    routes: int,
 ) -> dict[str, dict[str, object]]:
+    if mode not in ("single", "whole_machine") or routes < 1:
+        raise ValueError(f"invalid reference benchmark mode or route count: {mode}/{routes}")
     results: dict[str, dict[str, object]] = {}
-    output_base = work_dir / f"outputfiles-{encoder}"
+    output_base = work_dir / f"outputfiles-{encoder}-8core-{routes}"
     with raw_output.open("a", encoding="utf-8") as combined:
         for name in VIDEO_NAMES:
             if name not in videos:
                 continue
             for bitrate in BITRATES:
                 route_dir = output_base / f"{bitrate}k" / name
-                log_path = route_dir / f"log_{name}_{bitrate}k_1.txt"
-                bitstream = route_dir / f"{name}_{bitrate}k_1.bin"
-                if not log_path.is_file() or not bitstream.is_file():
-                    raise ValueError(f"reference route output is incomplete: {route_dir}")
-                output = log_path.read_text(encoding="utf-8", errors="replace")
-                combined.write(f"\n### {name} {bitrate}k: {log_path}\n{output}\n")
-                route_fps = parse_fps(encoder, output, int(videos[name]["frames"]))
+                actual_logs = set(route_dir.glob("*.txt"))
+                actual_bins = set(route_dir.glob("*.bin"))
+                expected_logs = {
+                    route_dir / f"log_{name}_{bitrate}k_{route}.txt"
+                    for route in range(1, routes + 1)
+                }
+                expected_bins = {
+                    route_dir / f"{name}_{bitrate}k_{route}.bin"
+                    for route in range(1, routes + 1)
+                }
+                if actual_logs != expected_logs or actual_bins != expected_bins:
+                    raise ValueError(f"reference route output count differs: {route_dir}")
+                route_fps = Decimal(0)
+                sizes = []
+                for route in range(1, routes + 1):
+                    log_path = route_dir / f"log_{name}_{bitrate}k_{route}.txt"
+                    bitstream = route_dir / f"{name}_{bitrate}k_{route}.bin"
+                    output = log_path.read_text(encoding="utf-8", errors="replace")
+                    combined.write(f"\n### {mode} {name} {bitrate}k route {route}: {log_path}\n{output}\n")
+                    route_fps += parse_fps(encoder, output, int(videos[name]["frames"]))
+                    size = bitstream.stat().st_size
+                    if size <= 0:
+                        raise ValueError(f"reference route bitstream is empty: {bitstream}")
+                    sizes.append(size)
                 csv_fps, csv_size = rows[(name, bitrate)]
                 if abs(route_fps - csv_fps) > Decimal("0.01"):
-                    raise ValueError(f"reference score FPS differs from route log: {name} {bitrate}k")
-                size = bitstream.stat().st_size
-                if size <= 0 or abs(csv_size - size) > Decimal("0.01"):
-                    raise ValueError(f"reference score size differs from bitstream: {name} {bitrate}k")
+                    raise ValueError(f"reference score FPS differs from route logs: {name} {bitrate}k")
+                if abs(csv_size - Decimal(sum(sizes)) / routes) > Decimal("0.01"):
+                    raise ValueError(f"reference score size differs from bitstreams: {name} {bitrate}k")
                 value = float(csv_fps)
                 if not math.isfinite(value):
                     raise ValueError(f"reference score FPS is not finite: {name} {bitrate}k")
-                key = f"{name}/{bitrate}k/total_fps"
+                key = f"{mode}/{name}/{bitrate}k/total_fps"
                 results[key] = {
                     "source_name": key,
                     "source_field": "fps",
-                    "group": f"{bitrate} kb/s",
+                    "group": "单路" if mode == "single" else "整机",
                     "value": value,
                     "average_bin_size_bytes": float(csv_size),
                 }
@@ -183,6 +203,7 @@ def main() -> int:
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--raw-output", type=Path)
     parser.add_argument("--summary", type=Path)
+    parser.add_argument("--whole-machine-routes", type=int)
     parser.add_argument("--normalized-output", type=Path)
     parser.add_argument("--version")
     parser.add_argument("--architecture", choices=("x86_64", "aarch64"))
@@ -196,12 +217,23 @@ def main() -> int:
         if args.check_only:
             print(f"[reference-video] verified {len(videos)} YUV inputs", flush=True)
             return 0
-        required = ("encoder", "work_dir", "raw_output", "summary", "normalized_output", "version", "architecture")
+        required = ("encoder", "work_dir", "raw_output", "summary", "whole_machine_routes", "normalized_output", "version", "architecture")
         missing = [field for field in required if getattr(args, field) is None]
         if missing:
             raise ValueError(f"missing result collection arguments: {', '.join(missing)}")
-        rows = read_summary(args.summary, set(videos))
-        results = collect(args.encoder, args.work_dir, args.raw_output, rows, videos)
+        if args.whole_machine_routes <= 1:
+            raise ValueError("whole-machine route count must exceed one")
+        single_summary = args.summary / f"video_fps_summary_{args.encoder}-8core-1.csv"
+        whole_summary = args.summary / f"video_fps_summary_{args.encoder}-8core-{args.whole_machine_routes}.csv"
+        results = collect(
+            args.encoder, args.work_dir, args.raw_output,
+            read_summary(single_summary, set(videos)), videos, "single", 1,
+        )
+        results.update(collect(
+            args.encoder, args.work_dir, args.raw_output,
+            read_summary(whole_summary, set(videos)), videos,
+            "whole_machine", args.whole_machine_routes,
+        ))
         payload = {
             "benchmark": f"{args.encoder}_reference_shell_suite",
             "software": args.encoder,
@@ -216,9 +248,11 @@ def main() -> int:
                 "bitrates_kbps": list(BITRATES),
                 "frames_argument": MAX_FRAMES,
                 "cpu_binding": "8core",
-                "routes": 1,
+                "modes": ["single", "whole_machine"],
+                "whole_machine_route_policy": "nproc/8",
                 "reference_revision": REFERENCE_REVISION,
             },
+            "actual_routes": {"single": 1, "whole_machine": args.whole_machine_routes},
             "results": results,
         }
         args.normalized_output.write_text(

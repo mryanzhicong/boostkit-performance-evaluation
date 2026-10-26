@@ -17,10 +17,10 @@ reference = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(reference)
 
 ORIGINAL_SHA256 = {
-    "x264/scripts/fps-encode-x264.sh": "1f041acad96c7911fa2c3eeacaa983a8bb2ac5fe18df0e0d137d361126eba461",
-    "x264/scripts/score-x264.sh": "6255a5cc16ef58ed58f3529ae67e77462ac48ff956e9fc1159aff1abbad06793",
-    "x265/scripts/fps-encode-x265.sh": "2ba13537fcca2b9dd1665eca1ce63fc5947cd9c1aea64d5f1fb0278f61732db9",
-    "x265/scripts/score-x265.sh": "96205cb6e540e09886e92d34b3688ccf0feecae05ca846ca4e8a21427e03294e",
+    "x264/scripts/fps-encode-x264.sh": "5fe04feacb5c5cfcb4fe087952098dfbc30dba7b02f8a75329235bc6d796530a",
+    "x264/scripts/score-x264.sh": "c83bdecea7428ace4b1d387a31f41e12042e2ef74380beaf9b71ec48a0342fd2",
+    "x265/scripts/fps-encode-x265.sh": "d520649bd84db013022953619d6d06463cd7f25f579c36abfc93719d977a0e70",
+    "x265/scripts/score-x265.sh": "78fef59be864a1c33077f482aec22f265b1c31efb211e7ec475053725d744145",
 }
 
 
@@ -46,7 +46,7 @@ def test_collects_original_script_csv_and_route_output(
     video_dir.mkdir()
     (video_dir / "sample.yuv").write_bytes(b"123456")
     videos = reference.inspect_videos(video_dir)
-    route_dir = tmp_path / f"outputfiles-{encoder}" / "2000k" / "sample"
+    route_dir = tmp_path / f"outputfiles-{encoder}-8core-1" / "2000k" / "sample"
     route_dir.mkdir(parents=True)
     (route_dir / "log_sample_2000k_1.txt").write_text(log_line + "\n", encoding="utf-8")
     (route_dir / "sample_2000k_1.bin").write_bytes(b"1234")
@@ -60,9 +60,9 @@ def test_collects_original_script_csv_and_route_output(
     assert rows[("sample", 2000)] == (Decimal("12.50"), Decimal(4))
     raw_output = tmp_path / "raw.log"
     raw_output.write_text("original command output\n", encoding="utf-8")
-    results = reference.collect(encoder, tmp_path, raw_output, rows, videos)
-    assert results["sample/2000k/total_fps"]["value"] == 12.5
-    assert results["sample/2000k/total_fps"]["group"] == "2000 kb/s"
+    results = reference.collect(encoder, tmp_path, raw_output, rows, videos, "single", 1)
+    assert results["single/sample/2000k/total_fps"]["value"] == 12.5
+    assert results["single/sample/2000k/total_fps"]["group"] == "单路"
     assert log_line in raw_output.read_text(encoding="utf-8")
 
 
@@ -101,7 +101,7 @@ def test_x264_accepts_three_known_videos_without_weakening_result_checks(
     assert len(selected_rows) == 6
 
     for name, bitrate in selected_rows:
-        route_dir = tmp_path / "outputfiles-x264" / f"{bitrate}k" / name
+        route_dir = tmp_path / "outputfiles-x264-8core-1" / f"{bitrate}k" / name
         route_dir.mkdir(parents=True)
         (route_dir / f"log_{name}_{bitrate}k_1.txt").write_text(
             "encoded 1 frames, 12.50 fps, 2000.00 kb/s\n", encoding="utf-8"
@@ -109,7 +109,7 @@ def test_x264_accepts_three_known_videos_without_weakening_result_checks(
         (route_dir / f"{name}_{bitrate}k_1.bin").write_bytes(b"1234")
     raw_output = tmp_path / "raw.log"
     raw_output.write_text("original command output\n", encoding="utf-8")
-    assert len(reference.collect("x264", tmp_path, raw_output, selected_rows, videos)) == 6
+    assert len(reference.collect("x264", tmp_path, raw_output, selected_rows, videos, "single", 1)) == 6
 
     csv_path.write_text(header + rows.rsplit("\n", 2)[0] + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="rows differ"):
@@ -126,6 +126,56 @@ def test_video_subset_rejects_empty_or_unknown_inputs(
     (tmp_path / "unknown.yuv").write_bytes(b"123456")
     with pytest.raises(ValueError, match="extra=.*unknown"):
         reference.inspect_videos(tmp_path, allow_subset=True)
+
+
+@pytest.mark.parametrize(
+    ("encoder", "log_line"),
+    [
+        ("x264", "encoded 1 frames, 12.50 fps, 2000.00 kb/s"),
+        ("x265", "encoded 1 frames in 0.08s (12.50 fps), 2000.00 kb/s"),
+    ],
+)
+def test_collects_and_separates_single_and_whole_machine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, encoder: str, log_line: str
+) -> None:
+    monkeypatch.setattr(reference, "VIDEO_NAMES", ("sample",))
+    monkeypatch.setattr(reference, "BITRATES", (2000,))
+    monkeypatch.setattr(reference, "FRAME_BYTES", 6)
+    video_dir = tmp_path / "video"
+    video_dir.mkdir()
+    (video_dir / "sample.yuv").write_bytes(b"123456")
+    videos = reference.inspect_videos(video_dir)
+    raw_output = tmp_path / "raw.log"
+    raw_output.write_text("original commands\n", encoding="utf-8")
+    combined = {}
+    for mode, routes in (("single", 1), ("whole_machine", 2)):
+        route_dir = tmp_path / f"outputfiles-{encoder}-8core-{routes}" / "2000k" / "sample"
+        route_dir.mkdir(parents=True)
+        for route in range(1, routes + 1):
+            (route_dir / f"log_sample_2000k_{route}.txt").write_text(
+                log_line + "\n", encoding="utf-8"
+            )
+            (route_dir / f"sample_2000k_{route}.bin").write_bytes(b"1234")
+        csv_path = tmp_path / f"video_fps_summary_{encoder}-8core-{routes}.csv"
+        csv_path.write_text(
+            "Bitrate,Video Directory,Total FPS,Average Bin Size\n"
+            f"2000k,sample,{routes * 12.5},4\n", encoding="utf-8"
+        )
+        combined.update(reference.collect(
+            encoder, tmp_path, raw_output,
+            reference.read_summary(csv_path), videos, mode, routes,
+        ))
+    assert combined["single/sample/2000k/total_fps"]["value"] == 12.5
+    assert combined["whole_machine/sample/2000k/total_fps"]["value"] == 25.0
+    assert combined["whole_machine/sample/2000k/total_fps"]["group"] == "整机"
+
+    (tmp_path / f"outputfiles-{encoder}-8core-2/2000k/sample/log_sample_2000k_2.txt").unlink()
+    with pytest.raises(ValueError, match="route output count differs"):
+        reference.collect(
+            encoder, tmp_path, raw_output,
+            reference.read_summary(tmp_path / f"video_fps_summary_{encoder}-8core-2.csv"),
+            videos, "whole_machine", 2,
+        )
 
 
 @pytest.mark.parametrize("encoder", ("x264", "x265"))

@@ -15,35 +15,42 @@ export LD_LIBRARY_PATH=$TEST_HOME/x265_4.2/x265_install/lib/
 export PKG_CONFIG_PATH=$TEST_HOME/x265_4.2/x265_install/pkgconfig/
 x265="$TEST_HOME/x265_4.2/x265_install/bin/x265"
 VIDEO_DIR="$TEST_HOME/video"
-OUTDIR_BASE="$TEST_HOME/outputfiles-x265"
+OUTDIR_BASE="$TEST_HOME/outputfiles-x265-${CPU_BINDING_TYPE}-${NUM_ROUTES}"  # 后缀带上绑核数和路数，避免单路/整机结果互相覆盖
 BITRATES=(2000 4000 6000 8000)  # 码率数组
 
 declare -a pid_array  # 存储进程 ID 的数组
 
-# 计算每一路的 CPU 绑定范围
+# 计算每一路的 CPU 绑定范围（每路固定 N 个逻辑核，920 与 x86 口径一致）
+#   920 : 连续 N 个逻辑核，如 8core 第 1 路 -> 0-7
+#   x86 : 开了超线程，一路拆成 前半段 N/2 个 + 偏移 CPU_OFFSET 的超线程兄弟 N/2 个，
+#         如 8core 第 1 路 -> 0-3,192-195（合计仍是 N 个逻辑核）
+#   满机路数 = 逻辑核总数 / 每路核数（如 384 逻辑核跑 8core 是 48 路）
 calculate_cpu_range() {
     local i=$1
     local CPU_BINDING_TYPE=$2
     local MACHINE_TYPE=$3
     local CPU_OFFSET=192
+    local cores_per_route=0
 
     if [ "$CPU_BINDING_TYPE" == "4core" ]; then
-        cpu_start=$(( (i - 1) * 4 ))
-        cpu_end=$(( cpu_start + 3 ))
+        cores_per_route=4
     elif [ "$CPU_BINDING_TYPE" == "8core" ]; then
-        cpu_start=$(( (i - 1) * 8 ))
-        cpu_end=$(( cpu_start + 7 ))
+        cores_per_route=8
     elif [ "$CPU_BINDING_TYPE" == "16core" ]; then
-        cpu_start=$(( (i - 1) * 16 ))
-        cpu_end=$(( cpu_start + 15 ))
+        cores_per_route=16
     else
         echo "Invalid CPU binding type. Use 4core, 8core, or 16core." >&2
         exit 1
     fi
 
     if [ "$MACHINE_TYPE" == "x86" ]; then
+        local half=$(( cores_per_route / 2 ))
+        local cpu_start=$(( (i - 1) * half ))
+        local cpu_end=$(( cpu_start + half - 1 ))
         echo "$cpu_start-$cpu_end,$(($CPU_OFFSET + cpu_start))-$(($CPU_OFFSET + cpu_end))"
     else
+        local cpu_start=$(( (i - 1) * cores_per_route ))
+        local cpu_end=$(( cpu_start + cores_per_route - 1 ))
         echo "$cpu_start-$cpu_end"
     fi
 }

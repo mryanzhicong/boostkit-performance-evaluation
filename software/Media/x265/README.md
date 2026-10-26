@@ -50,7 +50,21 @@ x265 --version
 
 测试阶段直接执行未修改的参考脚本 [fps-encode-x265.sh](scripts/fps-encode-x265.sh) 和 [score-x265.sh](scripts/score-x265.sh)。脚本需要的 `TEST_HOME/video` 是指向上述 Runner 持久目录的符号链接，`TEST_HOME` 为本次私有工作目录。
 
-调用方式与原文一致：aarch64 使用 `bash fps-encode-x265.sh 8core 920 1`，x86_64 使用 `bash fps-encode-x265.sh 8core x86 1`，随后执行 `bash score-x265.sh`。原脚本会对目录中每个视频以 `2000`、`4000`、`6000`、`8000` kb/s 编码，固定传入 `--frames 9999`。CPU 绑定、线程池及编码参数均由原脚本决定；x86 的 CPU 偏移量也保留原脚本的 `192`。
+每个架构依次执行单路与整机两组测试，整机路数按原文使用 `nproc / 8`：
+
+```bash
+# aarch64
+bash fps-encode-x265.sh 8core 920 1
+bash fps-encode-x265.sh 8core 920 $(($(nproc) / 8))
+
+# x86_64
+bash fps-encode-x265.sh 8core x86 1
+bash fps-encode-x265.sh 8core x86 $(($(nproc) / 8))
+
+bash score-x265.sh
+```
+
+原脚本将两组码流和日志分别写入 `outputfiles-x265-8core-<路数>/`，汇总为对应的 `video_fps_summary_x265-8core-<路数>.csv`。每个视频测试 `2000`、`4000`、`6000`、`8000` kb/s，固定传入 `--frames 9999`。CPU 绑定、线程池及编码参数均由原脚本决定；x86 的 CPU 偏移量保留原脚本的 `192`。
 
 参考命令形态（实际值随视频变化）：
 
@@ -64,7 +78,7 @@ taskset -c <本路 CPU 列表> "$INSTALL_DIR/bin/x265" \
   -o <本次任务的私有码流路径>
 ```
 
-报告指标取原脚本生成的 `video_fps_summary_x265.csv` 中的 `Total FPS`，单位 `fps`，越高越好；按码率分组。结果转换程序只校验原始日志与 CSV，并生成 `benchmark_x265.json` 供框架读取，不执行编码。原始日志合并到 `benchmark_encode.txt`；码流文件留在本次私有工作目录，独立运行结束时由现有清理流程处理。
+报告指标分别取单路和整机 CSV 中的 `Total FPS`，单位 `fps`，越高越好；只分“单路”和“整机”两组。每组列出各视频在四个码率下的 FPS，码率保留在指标名中。整机 `Total FPS` 是各路 FPS 之和，实际路数记录在原始结果 JSON 中。结果转换程序校验每一路日志、码流文件与 CSV，再生成 `benchmark_x265.json` 供框架读取，不执行编码。原始日志合并到 `benchmark_encode.txt`；码流文件留在本次私有工作目录，独立运行结束时由现有清理流程处理。
 
 独立运行：
 

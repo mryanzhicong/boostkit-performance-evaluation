@@ -109,15 +109,16 @@ def _run_faked_main(
 ) -> dict:
     videos = {"sample": {"bytes": 6, "frames": 1, "sha256": "deadbeef"}}
     rows = {("sample", 2000): (Decimal("12.50"), Decimal(4))}
-    results = {
-        "sample/2000k/total_fps": {
-            "source_name": "sample/2000k/total_fps",
+    def fake_collect(*args: object) -> dict:
+        mode = args[-2]
+        name = f"{mode}/sample/2000k/total_fps"
+        return {name: {
+            "source_name": name,
             "source_field": "fps",
-            "group": "2000 kb/s",
+            "group": "单路" if mode == "single" else "整机",
             "value": 12.5,
             "average_bin_size_bytes": 4.0,
-        }
-    }
+        }}
     normalized_output = tmp_path / f"benchmark-x265-{architecture}.json"
     raw_output = tmp_path / f"raw-{architecture}.txt"
     raw_output.write_text("original command output\n", encoding="utf-8")
@@ -126,7 +127,7 @@ def _run_faked_main(
         reference_module, "inspect_videos", lambda *args, **kwargs: videos
     )
     monkeypatch.setattr(reference_module, "read_summary", lambda *args: rows)
-    monkeypatch.setattr(reference_module, "collect", lambda *args: results)
+    monkeypatch.setattr(reference_module, "collect", fake_collect)
     monkeypatch.setattr(
         reference_module.sys,
         "argv",
@@ -137,6 +138,7 @@ def _run_faked_main(
             "--work-dir", str(tmp_path),
             "--raw-output", str(raw_output),
             "--summary", str(tmp_path / "score.csv"),
+            "--whole-machine-routes", "2",
             "--normalized-output", str(normalized_output),
             "--version", "4.2",
             "--architecture", architecture,
@@ -155,7 +157,7 @@ def test_normalized_parameters_align_across_architectures(
         for architecture in ("x86_64", "aarch64")
     ]
     assert payloads[0]["variant"] == "base"
-    assert len(payloads[0]["results"]) == 1
+    assert len(payloads[0]["results"]) == 2
     assert payloads[0]["parameters"] == payloads[1]["parameters"]
     assert not any(
         "boostkit-perf" in json.dumps(payload["parameters"]) for payload in payloads
