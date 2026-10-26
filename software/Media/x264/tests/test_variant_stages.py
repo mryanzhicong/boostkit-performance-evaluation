@@ -65,6 +65,29 @@ def test_base_build_uses_pinned_checked_source_archive() -> None:
     assert "git clone" not in builder
 
 
+@pytest.mark.parametrize(
+    ("binary_version", "expected_status"),
+    [("0.165.3223", 0), ("0.165.x", 0), ("0.164.x", 40)],
+)
+def test_archive_build_version_validation(
+    binary_version: str, expected_status: int
+) -> None:
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1"; verify_x264_version "$2"',
+            "bash",
+            str(SCRIPT_DIR / "builders" / "base.sh"),
+            binary_version,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == expected_status
+
+
 def test_stage_scripts_do_not_depend_on_builder_only_functions() -> None:
     """Framework stages run standalone; they must not call builder-only helpers."""
     builder_functions: set[str] = set()

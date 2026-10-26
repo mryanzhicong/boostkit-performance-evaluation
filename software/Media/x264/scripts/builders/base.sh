@@ -63,6 +63,21 @@ read_x264_version() {
     fi
 }
 
+verify_x264_version() {
+    local actual_version="$1"
+    if [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]]; then
+        return 0
+    fi
+    if [[ "${SOFTWARE_VERSION}" == "0.165.3223" && "${actual_version}" == "0.165.x" ]]; then
+        # x264's version.sh emits "x" without Git history. The archive was
+        # verified against the SHA-256 of the pinned 0480cb05 source above.
+        log_message "binary reports ${actual_version} without Git history; verified source is ${X264_SOURCE_REVISION} (${SOFTWARE_VERSION})"
+        return 0
+    fi
+    log_message "ERROR: requested x264 ${SOFTWARE_VERSION}, but built ${actual_version}"
+    return 40
+}
+
 build_x264_base() {
     local actual_version archive_path archive_name
     initialize_runtime || return $?
@@ -120,11 +135,8 @@ build_x264_base() {
         log_message "ERROR: cannot read the built x264 version"
         return 40
     }
-    [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
-        log_message "ERROR: requested x264 ${SOFTWARE_VERSION}, but built ${actual_version}"
-        return 40
-    }
+    verify_x264_version "${actual_version}" || return $?
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
-    printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
-    log_message "x264 ${actual_version} private installation is ready"
+    printf '%s\n' "${SOFTWARE_VERSION}" > "${PERF_ACTUAL_VERSION_FILE}" || return 40
+    log_message "x264 ${SOFTWARE_VERSION} private installation is ready"
 }
