@@ -6,8 +6,8 @@
 # upstream Sysbench client is built in that directory during the test stage.
 #
 # The four framework stages map to: fetch+verify the tarball (build), launch a
-# throwaway instance from it (start), run the single-instance Sysbench suite
-# (test), and tear that instance down (stop).
+# throwaway 8U32G MySQL container (start), run host-side Sysbench against it
+# (test), and tear the container down (stop).
 
 set -euo pipefail
 
@@ -159,7 +159,7 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, PERF_VARIANT, RESULTS_DIR, PERF_WORK_DIR,
-  MYSQL_DATA_ROOT
+  MYSQL_IMAGE_ARCHIVE_DIR, MYSQL_DATA_ROOT (only PERF_WORK_DIR/instances)
 USAGE
 }
 

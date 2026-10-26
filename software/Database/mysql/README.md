@@ -1,7 +1,8 @@
 # MySQL 8.0.43 性能测试
 
 本用例在 x86_64、aarch64 上部署 Oracle MySQL 官方 Linux Generic 二进制包，
-使用同一套单机 Sysbench OLTP 参数进行开箱对比。软件入口为 `mysql_test.sh`；
+在单个 8 CPU、32 GiB 的 openEuler 容器中运行 MySQL，宿主机运行 Sysbench，
+使用同一套单机 OLTP 参数进行开箱对比。软件入口为 `mysql_test.sh`；
 Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本，直接执行入口
 脚本也使用这些阶段函数。
 
@@ -17,10 +18,11 @@ Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
 | MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
+| 容器基础镜像 | [openEuler 22.03 LTS SP4 官方 Docker 归档](https://dl-cdn.openeuler.openatom.cn/openEuler-22.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/mysql/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
 | Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
 | LuaJIT | [上游 LuaJIT](https://github.com/LuaJIT/LuaJIT) v2.1，固定提交 `c6ffc141a8762b41703f9287d63d93622a13dd8f` | `${PERF_WORK_DIR}/sysbench-tools/luajit-<提交>`；编译前复制到 Sysbench 私有源码目录 |
 
-Sysbench 在私有目录编译，不安装到系统目录。脚本以 `src/lua/` 中的绝对路径
+Sysbench 在宿主机私有目录编译，不安装到系统目录，也不放进容器。脚本以 `src/lua/` 中的绝对路径
 调用 OLTP 用例，并设置 `LUA_PATH` 供用例加载同目录的 `oltp_common.lua`；
 开始准备数据前会验证三个用例都能加载。
 
@@ -52,17 +54,41 @@ mv "${PERF_WORK_DIR}/mysql-8.0.43-linux-glibc2.28-${EXPECTED_ARCH}" \
 实际脚本先检查本地包、校验 MD5，再解压并核对 `mysqld` 的实际版本；
 不会编译 MySQL，也不会向 `/usr/local/mysql` 或系统目录安装。
 
-`start_mysql_service` 在 `${PERF_WORK_DIR}/data/` 创建一次性实例。以下是脚本
-的初始化和数据准备模式启动命令；路径、端口、运行用户和密码都属于本次任务：
+`start_mysql_service` 创建单个容器，限制为 8 CPU 的总用量和 32 GiB 内存。
+容器可在 NUMA node 3 的全部可用 CPU 上调度，并从该节点分配内存；启动前会
+核对 node 3 至少有 8 个可用 CPU，否则失败。CPU 编号按机器拓扑读取，
+不会写死为 `288-383`。宿主机的 `${PERF_WORK_DIR}` 原路径挂载进容器，因此数据库文件
+位于 `${PERF_WORK_DIR}/instances/1/data/`；容器使用宿主网络，任务端口由运行 ID 派生。
+容器以当前 Runner 用户的 UID/GID 运行，避免数据文件归属 root。下面是
+初始化与数据准备模式的命令形态：
+
+Runner 必须能使用 Docker daemon。脚本先读取
+`/home/runner/software/mysql/openEuler-docker.<架构>.tar.xz`，缺失时从上表的
+官方目录下载对应架构的归档；SHA-256 文件也优先从本地同目录读取，缺失时
+从官方目录下载。校验通过后执行 `docker load --input <归档>`，使用归档加载出的
+镜像名；不访问 Docker Hub。`MYSQL_IMAGE_ARCHIVE_DIR` 可指定离线归档目录。
+容器内若缺少 MySQL 运行库，脚本在该容器中通过
+`dnf` 安装 `libaio`、`numactl-libs`，不向宿主机安装这些运行库。
 
 ```bash
-"${MYSQLD_BIN}" --no-defaults --initialize-insecure \
-  --basedir="${MYSQL_BASE_DIR}" --datadir="${DATADIR}" \
-  --user="$(id -un)" --log-error="${ERR_LOG}"
+docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
+  --label "boostkit.mysql.run-id=${PERF_RUN_ID}" \
+  --cpus=8 --cpuset-cpus="${CPU_SET}" --cpuset-mems="${NUMA_NODE}" \
+  --memory=32g --network=host --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${MYSQL_CONTAINER_IMAGE}" sleep infinity
 
-"${MYSQLD_BIN}" --no-defaults --daemonize \
+docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" \
+  --no-defaults --initialize-insecure \
   --basedir="${MYSQL_BASE_DIR}" --datadir="${DATADIR}" \
-  --tmpdir="${MYSQL_TMP_DIR}" --user="$(id -un)" \
+  --log-error="${ERR_LOG}"
+
+docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" \
+  --no-defaults --daemonize \
+  --basedir="${MYSQL_BASE_DIR}" --datadir="${DATADIR}" \
+  --tmpdir="${MYSQL_TMP_DIR}" \
   --socket="${SOCKET_PATH}" --pid-file="${PID_FILE}" \
   --port="${MYSQL_PORT}" --bind-address="${MYSQL_HOST}" \
   --max-connections=2048 --max-prepared-stmt-count=1048576 \
@@ -73,6 +99,13 @@ mv "${PERF_WORK_DIR}/mysql-8.0.43-linux-glibc2.28-${EXPECTED_ARCH}" \
 初始化后，脚本经私有 socket 给 `root` 设置本次任务密码、创建 `sbtest`，
 再通过 `127.0.0.1:<任务端口>` 执行 `SELECT 1` 验证连接。任务端口由运行 ID
 派生，不固定占用 `3306`；已有实例占用该端口时会拒绝继续测试。
+
+目录和容器名称均按实例编号生成。当前实例数固定为 **1**，因此只有
+`instances/1/` 和 `boostkit-mysql-<架构>-<run-id>-1`；数据库 socket、PID、
+错误日志和临时目录也位于 `instances/1/`，准备数据的快照在
+`instances/1/snapshot/`。端口基数由运行 ID 生成（或使用 `MYSQL_PORT`），
+实例 `i` 的端口为基数加 `i-1`。启动和停止阶段按实例编号执行；测试与报告
+仍只支持一个实例，多实例数量尚未对外开放。
 
 ```bash
 "${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root <<SQL
@@ -95,9 +128,10 @@ MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
 MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQLADMIN_BIN}" \
   --socket="${SOCKET_PATH}" -u root shutdown
 
-"${MYSQLD_BIN}" --no-defaults --daemonize \
+docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" \
+  --no-defaults --daemonize \
   --basedir="${MYSQL_BASE_DIR}" --datadir="${DATADIR}" \
-  --tmpdir="${MYSQL_TMP_DIR}" --user="$(id -un)" \
+  --tmpdir="${MYSQL_TMP_DIR}" \
   --socket="${SOCKET_PATH}" --pid-file="${PID_FILE}" \
   --port="${MYSQL_PORT}" --bind-address="${MYSQL_HOST}" \
   --max-connections=2048 --max-prepared-stmt-count=1048576 \
@@ -111,7 +145,8 @@ MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQLADMIN_BIN}" \
 `max_prepared_stmt_count` 的实际生效值。两种启动模式均校验预处理语句上限为
 `1048576`，以支持 64 张表、多线程的 Sysbench OLTP 场景；该值只是并发语句
 数量的上限，不会预先创建这么多语句。
-测试结束后再次通过任务 socket 正常关闭 MySQL，并清理私有数据目录。
+测试结束后再次通过任务 socket 正常关闭 MySQL，停止并移除本任务容器，
+然后清理私有数据目录。容器不安装 MySQL，也不修改宿主机的系统 MySQL。
 
 ## Sysbench 构建
 
@@ -145,7 +180,9 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 
 缺失的系统运行和编译依赖由脚本使用 `dnf` 安装；普通 Runner 用户使用
 `sudo -n dnf install -y <缺失的包>`，例如 `libaio-devel`、`openssl-devel`、
-`gcc`、`make`、`autoconf`、`automake`、`libtool`。测试仅连接本任务启动、绑定
+`gcc`、`make`、`autoconf`、`automake`、`libtool`。这些是宿主机客户端的
+构建依赖；Sysbench 的 `prepare`、预热和正式测试命令均在宿主机执行，
+通过容器共享的 `127.0.0.1:<任务端口>` 访问 MySQL。测试仅连接本任务启动、绑定
 `127.0.0.1` 的 MySQL 实例，不会修改系统 `/etc/my.cnf` 或系统 MySQL。
 
 ## 数据与运行顺序

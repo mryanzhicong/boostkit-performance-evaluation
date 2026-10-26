@@ -8,6 +8,11 @@ run_mysql_benchmarks() {
     local runs_dir="${RESULTS_DIR}/sysbench-runs"
 
     initialize_runtime || return $?
+    if (( MYSQL_INSTANCE_COUNT != 1 )); then
+        log_message "ERROR: multi-instance Sysbench testing is not enabled"
+        return 50
+    fi
+    check_mysql_container || return 50
     require_mysql_tools || return $?
     if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
         "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N -e 'SELECT 1' \

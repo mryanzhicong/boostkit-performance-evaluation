@@ -18,16 +18,23 @@ STANDALONE_CLEANUP_DONE="${STANDALONE_CLEANUP_DONE:-0}"
 # Connection settings for the throwaway server and for the benchmark client.
 MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 MYSQL_PORT="${MYSQL_PORT:-}"
+MYSQL_BASE_PORT="${MYSQL_PORT}"
+MYSQL_INSTANCE_COUNT=1
+MYSQL_INSTANCE_ID=1
 MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-}"
 MYSQL_PREPARED_STMT_LIMIT=1048576
+MYSQL_IMAGE_ARCHIVE_DIR="${MYSQL_IMAGE_ARCHIVE_DIR:-/home/runner/software/mysql}"
+MYSQL_CONTAINER_IMAGE=""
+MYSQL_CONTAINER_NAME=""
 
 # Lifecycle paths (assigned in configure_runtime_paths).
 MYSQL_BASE_DIR=""
 MYSQLD_BIN=""
 MYSQL_BIN=""
 MYSQLADMIN_BIN=""
+MYSQL_INSTANCES_DIR=""
 SERVICE_DIR=""
 DATADIR=""
 SOCKET_PATH=""
@@ -55,6 +62,26 @@ validate_variant() {
         base|optimized) ;;
         *) log_message "ERROR: invalid build variant: ${PERF_VARIANT}"; return 10 ;;
     esac
+}
+
+configure_mysql_instance() {
+    local instance_id="$1"
+    if [[ ! "${instance_id}" =~ ^[1-9][0-9]*$ ]] || (( instance_id > MYSQL_INSTANCE_COUNT )); then
+        log_message "ERROR: MySQL instance ${instance_id} is not enabled"
+        return 10
+    fi
+    MYSQL_INSTANCE_ID="${instance_id}"
+    SERVICE_DIR="${MYSQL_INSTANCES_DIR}/${instance_id}"
+    DATADIR="${SERVICE_DIR}/data"
+    SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
+    PID_FILE="${SERVICE_DIR}/mysql.pid"
+    ERR_LOG="${SERVICE_DIR}/mysql.err"
+    MYSQL_TMP_DIR="${SERVICE_DIR}/tmp"
+    MYSQL_SNAPSHOT_DIR="${SERVICE_DIR}/snapshot"
+    MYSQL_CONTAINER_NAME="boostkit-mysql-${EXPECTED_ARCH}-${PERF_RUN_ID}-${instance_id}"
+    MYSQL_PORT="$((MYSQL_BASE_PORT + instance_id - 1))"
+    TMPDIR="${MYSQL_TMP_DIR}"
+    export TMPDIR
 }
 
 configure_runtime_paths() {
@@ -98,34 +125,35 @@ configure_runtime_paths() {
     if [[ -z "${PERF_ACTUAL_VERSION_FILE}" ]]; then
         PERF_ACTUAL_VERSION_FILE="${RESULTS_DIR}/actual-version.txt"
     fi
-    if [[ -z "${MYSQL_DATA_ROOT}" ]]; then
-        MYSQL_DATA_ROOT="${PERF_WORK_DIR}/data"
+    if [[ -n "${MYSQL_DATA_ROOT}" && "${MYSQL_DATA_ROOT}" != "${PERF_WORK_DIR}/instances" ]]; then
+        log_message "ERROR: MYSQL_DATA_ROOT must be this task's instance directory: ${PERF_WORK_DIR}/instances"
+        return 10
     fi
+    MYSQL_DATA_ROOT="${PERF_WORK_DIR}/instances"
     MYSQL_BASE_DIR="${PERF_WORK_DIR}/mysql"
     MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
     MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
     MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
-    SERVICE_DIR="${MYSQL_DATA_ROOT}"
-    DATADIR="${SERVICE_DIR}/data"
-    SOCKET_PATH="${SERVICE_DIR}/mysql.sock"
-    PID_FILE="${SERVICE_DIR}/mysql.pid"
-    ERR_LOG="${SERVICE_DIR}/mysql.err"
-    MYSQL_TMP_DIR="${SERVICE_DIR}/tmp"
-    MYSQL_SNAPSHOT_DIR="${PERF_WORK_DIR}/mysql-data-snapshot"
+    MYSQL_INSTANCES_DIR="${MYSQL_DATA_ROOT}"
+    if [[ -z "${MYSQL_BASE_PORT}" ]]; then
+        local checksum
+        checksum="$(printf '%s' "${PERF_RUN_ID}" | cksum)"
+        MYSQL_BASE_PORT="$((20000 + ${checksum%% *} % 20000))"
+    fi
+    if [[ ! "${MYSQL_BASE_PORT}" =~ ^[1-9][0-9]{0,4}$ ]] || \
+       (( MYSQL_BASE_PORT < 1024 || MYSQL_BASE_PORT + MYSQL_INSTANCE_COUNT - 1 > 65535 )); then
+        log_message "ERROR: MYSQL_PORT must leave valid ports for all MySQL instances: ${MYSQL_BASE_PORT}"
+        return 10
+    fi
+    configure_mysql_instance 1 || return $?
     SYSBENCH_BIN="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/sysbench"
     SYSBENCH_LUA_DIR="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/lua"
-    TMPDIR="${MYSQL_TMP_DIR}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }
 
 initialize_runtime() {
     configure_runtime_paths || return $?
-    if [[ -z "${MYSQL_PORT}" ]]; then
-        local checksum
-        checksum="$(printf '%s' "${PERF_RUN_ID}" | cksum)"
-        MYSQL_PORT="$((20000 + ${checksum%% *} % 20000))"
-    fi
     if [[ -z "${MYSQL_PASSWORD}" ]]; then
         MYSQL_PASSWORD="boostkit-perf-${PERF_RUN_ID}"
     fi
@@ -133,12 +161,135 @@ initialize_runtime() {
         log_message "ERROR: MYSQL_PASSWORD must use only letters, numbers, dots, underscores, or hyphens"
         return 10
     fi
-    if [[ ! "${MYSQL_PORT}" =~ ^[0-9]+$ ]] || \
-       (( MYSQL_PORT < 1024 || MYSQL_PORT > 65535 )); then
-        log_message "ERROR: MYSQL_PORT must be an unprivileged TCP port: ${MYSQL_PORT}"
-        return 10
-    fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${MYSQL_TMP_DIR}"
+}
+
+select_container_cpu_set() {
+    python3 - <<'PY'
+import os
+from pathlib import Path
+
+node_cpus = []
+for cpu in sorted(os.sched_getaffinity(0)):
+    node_paths = sorted(Path(f"/sys/devices/system/cpu/cpu{cpu}").glob("node[0-9]*"))
+    if node_paths and node_paths[0].name == "node3":
+        node_cpus.append(cpu)
+
+if len(node_cpus) < 8:
+    raise SystemExit("NUMA node 3 has fewer than eight available CPUs")
+print(",".join(map(str, node_cpus)), 3)
+PY
+}
+
+prepare_mysql_container_image() {
+    local archive_name="openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+    local archive checksum expected actual load_output image_architecture
+    local image_url="https://dl-cdn.openeuler.openatom.cn/openEuler-22.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/${archive_name}"
+
+    if [[ -s "${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}" ]]; then
+        archive="${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}"
+        log_message "using local openEuler container image archive: ${archive}"
+    else
+        archive="${PERF_WORK_DIR}/${archive_name}"
+        log_message "downloading openEuler container image archive: ${image_url}"
+        curl -fSL --retry 3 --connect-timeout 30 -o "${archive}" "${image_url}" || return 30
+    fi
+
+    if [[ -s "${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum" ]]; then
+        checksum="${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum"
+    else
+        checksum="${PERF_WORK_DIR}/${archive_name}.sha256sum"
+        log_message "downloading official image checksum: ${image_url}.sha256sum"
+        curl -fSL --retry 3 --connect-timeout 30 -o "${checksum}" "${image_url}.sha256sum" || return 30
+    fi
+    expected="$(awk 'NR == 1 {print $1}' "${checksum}")"
+    if [[ ! "${expected}" =~ ^[[:xdigit:]]{64}$ ]]; then
+        log_message "ERROR: invalid official image checksum: ${checksum}"
+        return 30
+    fi
+    actual="$(sha256sum "${archive}")"
+    if [[ "${actual%% *}" != "${expected,,}" ]]; then
+        log_message "ERROR: openEuler container image checksum mismatch: ${archive}"
+        return 30
+    fi
+
+    log_message "loading verified openEuler container image: ${archive}"
+    load_output="$(docker load --input "${archive}")" || return 30
+    MYSQL_CONTAINER_IMAGE="$(printf '%s\n' "${load_output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+    if [[ -z "${MYSQL_CONTAINER_IMAGE}" ]] || ! docker image inspect "${MYSQL_CONTAINER_IMAGE}" >/dev/null 2>&1; then
+        log_message "ERROR: docker load did not report an inspectable image: ${load_output}"
+        return 30
+    fi
+    image_architecture="$(docker image inspect --format '{{.Architecture}}' "${MYSQL_CONTAINER_IMAGE}")"
+    case "${EXPECTED_ARCH}:${image_architecture}" in
+        x86_64:amd64|aarch64:arm64) ;;
+        *) log_message "ERROR: loaded image architecture is ${image_architecture}, expected ${EXPECTED_ARCH}"; return 30 ;;
+    esac
+    log_message "openEuler container image is ready: ${MYSQL_CONTAINER_IMAGE} (${image_architecture})"
+}
+
+require_mysql_container() {
+    local cpu_set numa_node
+    local -a dnf_options=()
+
+    if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+        log_message "ERROR: an accessible Docker daemon is required for the MySQL 8U32G container"
+        return 30
+    fi
+    if docker container inspect "${MYSQL_CONTAINER_NAME}" >/dev/null 2>&1; then
+        log_message "ERROR: refusing to reuse an existing container: ${MYSQL_CONTAINER_NAME}"
+        return 40
+    fi
+    if [[ -z "${MYSQL_CONTAINER_IMAGE}" ]]; then
+        prepare_mysql_container_image || return $?
+    fi
+    read -r cpu_set numa_node < <(select_container_cpu_set) || {
+        log_message "ERROR: cannot select available CPUs on NUMA node 3"
+        return 40
+    }
+    [[ -n "${cpu_set}" && -n "${numa_node}" ]] || {
+        log_message "ERROR: cannot select available CPUs on NUMA node 3"
+        return 40
+    }
+    log_message "starting 8U32G MySQL container ${MYSQL_CONTAINER_NAME}: CPUs ${cpu_set}, NUMA ${numa_node}"
+    docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
+        --label "boostkit.mysql.run-id=${PERF_RUN_ID}" \
+        --cpus=8 --cpuset-cpus="${cpu_set}" --cpuset-mems="${numa_node}" \
+        --memory=32g --network=host --user "$(id -u):$(id -g)" \
+        --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+        --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+        --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+        "${MYSQL_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if ! docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1; then
+        log_message "installing missing MySQL runtime libraries in the private container"
+        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+        docker exec --user 0 "${MYSQL_CONTAINER_NAME}" \
+            dnf "${dnf_options[@]}" install -y libaio numactl-libs || return 30
+        docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1 || {
+            log_message "ERROR: MySQL binary cannot run in ${MYSQL_CONTAINER_IMAGE}"
+            return 40
+        }
+    fi
+}
+
+check_mysql_container() {
+    [[ "$(docker inspect --format '{{.State.Running}}' "${MYSQL_CONTAINER_NAME}" 2>/dev/null)" == true ]] || {
+        log_message "ERROR: managed MySQL container is not running: ${MYSQL_CONTAINER_NAME}"
+        return 40
+    }
+}
+
+remove_mysql_container() {
+    if ! docker container inspect "${MYSQL_CONTAINER_NAME}" >/dev/null 2>&1; then
+        return 0
+    fi
+    if [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.mysql.run-id"}}' "${MYSQL_CONTAINER_NAME}" 2>/dev/null)" != "${PERF_RUN_ID}" ]]; then
+        log_message "ERROR: refusing to remove container without this task's ownership label: ${MYSQL_CONTAINER_NAME}"
+        return 50
+    fi
+    docker stop --time 30 "${MYSQL_CONTAINER_NAME}" >/dev/null || return 50
+    docker rm "${MYSQL_CONTAINER_NAME}" >/dev/null || return 50
+    log_message "removed managed MySQL container ${MYSQL_CONTAINER_NAME}"
 }
 
 configure_benchmark_account() {
@@ -165,7 +316,11 @@ SQL
 launch_mysql_server() {
     local mode="$1"
     local attempt actual_limit
-    local -a mode_options
+    local -a mode_options user_options=()
+
+    if [[ "$(id -u)" -eq 0 ]]; then
+        user_options=(--user=root)
+    fi
 
     case "${mode}" in
         prepare)
@@ -188,11 +343,12 @@ launch_mysql_server() {
             ;;
     esac
 
-    "${MYSQLD_BIN}" --no-defaults --daemonize \
+    check_mysql_container || return 40
+    docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --no-defaults --daemonize \
+        "${user_options[@]}" \
         --basedir="${MYSQL_BASE_DIR}" \
         --datadir="${DATADIR}" \
         --tmpdir="${MYSQL_TMP_DIR}" \
-        --user="$(id -un)" \
         --socket="${SOCKET_PATH}" \
         --pid-file="${PID_FILE}" \
         --port="${MYSQL_PORT}" \
