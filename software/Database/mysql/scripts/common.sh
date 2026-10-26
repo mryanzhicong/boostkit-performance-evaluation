@@ -25,7 +25,7 @@ MYSQL_DB_USER="${MYSQL_DB_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-}"
 MYSQL_PREPARED_STMT_LIMIT=1048576
-MYSQL_IMAGE_ARCHIVE_DIR="${MYSQL_IMAGE_ARCHIVE_DIR:-/home/runner/software/mysql}"
+MYSQL_IMAGE_ARCHIVE_DIR="${MYSQL_IMAGE_ARCHIVE_DIR:-/home/runner/software/mysql/openEuler-24.03-LTS-SP4}"
 MYSQL_CONTAINER_IMAGE=""
 MYSQL_CONTAINER_NAME=""
 
@@ -181,10 +181,23 @@ print(",".join(map(str, node_cpus)), 3)
 PY
 }
 
+verify_mysql_image_release() {
+    local release
+    release="$(docker run --rm --network=none "${MYSQL_CONTAINER_IMAGE}" cat /etc/os-release)" || {
+        log_message "ERROR: cannot read the loaded openEuler image release"
+        return 30
+    }
+    if ! grep -Eq '^ID="?openEuler"?$' <<< "${release}" || \
+       ! grep -Eq '^VERSION=.*24\.03.*LTS-SP4' <<< "${release}"; then
+        log_message "ERROR: loaded MySQL image is not openEuler 24.03 LTS SP4"
+        return 30
+    fi
+}
+
 prepare_mysql_container_image() {
     local archive_name="openEuler-docker.${EXPECTED_ARCH}.tar.xz"
     local archive checksum expected actual load_output image_architecture
-    local image_url="https://dl-cdn.openeuler.openatom.cn/openEuler-22.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/${archive_name}"
+    local image_url="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/${archive_name}"
 
     if [[ -s "${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}" ]]; then
         archive="${MYSQL_IMAGE_ARCHIVE_DIR}/${archive_name}"
@@ -225,6 +238,7 @@ prepare_mysql_container_image() {
         x86_64:amd64|aarch64:arm64) ;;
         *) log_message "ERROR: loaded image architecture is ${image_architecture}, expected ${EXPECTED_ARCH}"; return 30 ;;
     esac
+    verify_mysql_image_release || return $?
     log_message "openEuler container image is ready: ${MYSQL_CONTAINER_IMAGE} (${image_architecture})"
 }
 

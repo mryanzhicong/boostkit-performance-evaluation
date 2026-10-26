@@ -133,7 +133,7 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build Redis, start an isolated service, run 40/60/80-client SET/GET
+Build Redis, start a private 2U8G container, run 40/60/80-client SET/GET
 benchmark, collect the environment and report, then clean this run's data.
 The optimized build is reserved and fails until its implementation is
 supplied.
@@ -147,7 +147,9 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, PERF_VARIANT, RESULTS_DIR, PERF_WORK_DIR,
-  REDIS_DATA_ROOT, REDIS_SOURCE_URL, REDIS_SERVICE_PORT
+  REDIS_DATA_ROOT (only PERF_WORK_DIR/instances), REDIS_SOURCE_URL,
+  REDIS_SERVICE_PORT, REDIS_INSTANCE_COUNT, REDIS_NUMA_NODE,
+  REDIS_IMAGE_ARCHIVE_DIR
 USAGE
 }
 

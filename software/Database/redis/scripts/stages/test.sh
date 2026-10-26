@@ -3,6 +3,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 run_redis_benchmarks() {
     initialize_runtime || return $?
+    load_started_instance_count || return 50
+    if (( REDIS_INSTANCE_COUNT != 1 )); then
+        log_message "ERROR: multi-instance Redis benchmark collection is not enabled"
+        return 50
+    fi
+    check_redis_container || return 50
     if [[ ! -x "${REDIS_BENCHMARK_BIN}" || ! -x "${REDIS_CLI_BIN}" ]]; then
         log_message "ERROR: Redis benchmark tools are unavailable; run the build stage first"
         return 50

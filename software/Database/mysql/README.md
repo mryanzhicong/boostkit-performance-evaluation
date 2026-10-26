@@ -1,7 +1,7 @@
 # MySQL 8.0.43 性能测试
 
 本用例在 x86_64、aarch64 上部署 Oracle MySQL 官方 Linux Generic 二进制包，
-在单个 8 CPU、32 GiB 的 openEuler 容器中运行 MySQL，宿主机运行 Sysbench，
+在单个 8 CPU、32 GiB 的 openEuler 24.03 LTS SP4 容器中运行 MySQL，宿主机运行 Sysbench，
 使用同一套单机 OLTP 参数进行开箱对比。软件入口为 `mysql_test.sh`；
 Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本，直接执行入口
 脚本也使用这些阶段函数。
@@ -18,7 +18,7 @@ Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
 | MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
-| 容器基础镜像 | [openEuler 22.03 LTS SP4 官方 Docker 归档](https://dl-cdn.openeuler.openatom.cn/openEuler-22.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/mysql/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/mysql/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
 | Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
 | LuaJIT | [上游 LuaJIT](https://github.com/LuaJIT/LuaJIT) v2.1，固定提交 `c6ffc141a8762b41703f9287d63d93622a13dd8f` | `${PERF_WORK_DIR}/sysbench-tools/luajit-<提交>`；编译前复制到 Sysbench 私有源码目录 |
 
@@ -63,10 +63,11 @@ mv "${PERF_WORK_DIR}/mysql-8.0.43-linux-glibc2.28-${EXPECTED_ARCH}" \
 初始化与数据准备模式的命令形态：
 
 Runner 必须能使用 Docker daemon。脚本先读取
-`/home/runner/software/mysql/openEuler-docker.<架构>.tar.xz`，缺失时从上表的
+`/home/runner/software/mysql/openEuler-24.03-LTS-SP4/openEuler-docker.<架构>.tar.xz`，缺失时从上表的
 官方目录下载对应架构的归档；SHA-256 文件也优先从本地同目录读取，缺失时
-从官方目录下载。校验通过后执行 `docker load --input <归档>`，使用归档加载出的
-镜像名；不访问 Docker Hub。`MYSQL_IMAGE_ARCHIVE_DIR` 可指定离线归档目录。
+从官方目录下载。校验通过后执行 `docker load --input <归档>`，核对镜像架构及
+容器内的 openEuler 版本，再使用归档加载出的镜像名；不访问 Docker Hub。
+`MYSQL_IMAGE_ARCHIVE_DIR` 可指定离线归档目录。
 容器内若缺少 MySQL 运行库，脚本在该容器中通过
 `dnf` 安装 `libaio`、`numactl-libs`，不向宿主机安装这些运行库。
 

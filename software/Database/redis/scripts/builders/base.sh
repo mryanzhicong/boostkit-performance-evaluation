@@ -5,7 +5,7 @@ require_redis_commands() {
     local required package
     local packages=()
 
-    for required in git python3 gcc make sed grep cksum nproc; do
+    for required in git python3 gcc make nproc curl docker sed grep cksum sha256sum; do
         if command -v "${required}" >/dev/null 2>&1; then
             continue
         fi
@@ -14,9 +14,15 @@ require_redis_commands() {
             python3) package="python3" ;;
             gcc) package="gcc" ;;
             make) package="make" ;;
+            nproc) package="coreutils" ;;
+            curl) package="curl" ;;
+            docker)
+                log_message "ERROR: Docker and an accessible daemon are required for Redis builds"
+                return 30
+                ;;
             sed) package="sed" ;;
             grep) package="grep" ;;
-            cksum|nproc) package="coreutils" ;;
+            cksum|sha256sum) package="coreutils" ;;
         esac
         log_message "missing required Redis command: ${required}"
         packages+=("${package}")
@@ -43,7 +49,7 @@ require_redis_commands() {
         return 30
     fi
 
-    for required in git python3 gcc make sed grep cksum nproc; do
+    for required in git python3 gcc make nproc curl docker sed grep cksum sha256sum; do
         if ! command -v "${required}" >/dev/null 2>&1; then
             log_message "ERROR: required Redis command remains unavailable: ${required}"
             return 30
@@ -68,12 +74,12 @@ build_redis_base() {
         return 30
     fi
 
-    log_message "building Redis with the existing build command"
+    log_message "building Redis on the openEuler host"
     if ! (
         cd "${SOURCE_DIR}"
         make -j"$(nproc)" BUILD_TLS=no
     ); then
-        log_message "ERROR: Redis build failed"
+        log_message "ERROR: Redis host build failed"
         return 40
     fi
     for binary in "${REDIS_SERVER_BIN}" "${REDIS_BENCHMARK_BIN}" "${REDIS_CLI_BIN}"; do
@@ -90,4 +96,5 @@ build_redis_base() {
     fi
     mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
+    prepare_redis_container_image || return $?
 }

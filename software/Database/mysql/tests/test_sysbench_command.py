@@ -158,7 +158,8 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) 
         '  "image inspect") if [ "$3" = "--format" ]; then printf "%s\\n" "$DOCKER_TEST_ARCH"; fi; exit 0 ;;\n'
         'esac\n'
         'if [ "$1" = info ]; then exit 0; fi\n'
-        'if [ "$1" = load ]; then printf "Loaded image: openeuler-22.03-lts-sp4:latest\\n"; exit 0; fi\n'
+        'if [ "$1" = load ]; then printf "Loaded image: openeuler-24.03-lts-sp4:latest\\n"; exit 0; fi\n'
+        'if [ "$1" = run ] && [ "$2" = --rm ]; then printf "ID=\\\"openEuler\\\"\\nVERSION=\\\"24.03 (LTS-SP4)\\\"\\n"; exit 0; fi\n'
         'if [ "$1" = run ]; then printf "test-container-id\\n"; exit 0; fi\n'
         'if [ "$1" = exec ]; then exit 0; fi\n'
         'exit 1\n', encoding="utf-8"
@@ -189,6 +190,25 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) 
     assert f"load --input {archive}" in calls
     assert "pull" not in calls
     assert "sysbench" not in calls
+
+
+def test_rejects_wrong_openeuler_image_release(tmp_path: Path) -> None:
+    fake_docker = tmp_path / "docker"
+    fake_docker.write_text(
+        '#!/bin/sh\n'
+        'printf "ID=\\\"openEuler\\\"\\nVERSION=\\\"22.03 (LTS-SP4)\\\"\\n"\n',
+        encoding="utf-8",
+    )
+    fake_docker.chmod(0o755)
+    completed = subprocess.run(
+        ["bash", "-c", f'source "{COMMON}"; MYSQL_CONTAINER_IMAGE=old-image; verify_mysql_image_release'],
+        env=os.environ | {"PATH": f"{tmp_path}:{os.environ['PATH']}"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 30
+    assert "not openEuler 24.03 LTS SP4" in completed.stdout
 
 
 @pytest.mark.parametrize("mode", ["prepare", "benchmark"])
