@@ -17,7 +17,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RunYcsbTest(unittest.TestCase):
-    def test_load_warmup_and_two_formal_workloads(self):
+    def test_load_warmup_and_six_formal_workloads(self):
         with tempfile.TemporaryDirectory() as temporary:
             work = Path(temporary)
             distribution = work / "ycsb-dist"
@@ -25,7 +25,7 @@ class RunYcsbTest(unittest.TestCase):
             (distribution / "workloads").mkdir()
             (distribution / "lib").mkdir()
             (distribution / "lib" / "rocksdbjni-6.26.1.jar").write_bytes(b"fixture")
-            for name in ("workloada", "workloadc"):
+            for name in MODULE.WORKLOADS:
                 (distribution / "workloads" / name).write_text(name)
             (distribution / "bin" / "ycsb").write_text(
                 "import pathlib,sys\n"
@@ -46,9 +46,14 @@ class RunYcsbTest(unittest.TestCase):
             ):
                 self.assertEqual(MODULE.main(), 0)
             payload = json.loads(result.read_text())
-            self.assertEqual(set(payload["results"]), {"workloada throughput", "workloadc throughput"})
+            self.assertEqual(
+                set(payload["results"]),
+                {f"{workload} throughput" for workload in MODULE.WORKLOADS},
+            )
             self.assertTrue(all(row["value"] == 200.5 for row in payload["results"].values()))
-            self.assertEqual(raw.read_text().count("=== formal "), 2)
+            self.assertEqual(raw.read_text().count("=== formal "), 6)
+            self.assertIn("recordcount=10000000", raw.read_text())
+            self.assertIn("operationcount=5000000", raw.read_text())
             self.assertNotIn("rocksdb.optionsfile=", raw.read_text())
             self.assertNotIn("table=default", raw.read_text())
             self.assertNotIn("rocksdb.cfs=default", raw.read_text())

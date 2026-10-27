@@ -13,7 +13,7 @@ install_rocksdb_dependencies() {
     local command_name package
     local packages=()
 
-    for command_name in git gcc g++ make nproc python3 sed mvn flex; do
+    for command_name in git gcc g++ make nproc python3 sed mvn flex curl awk sha256sum; do
         if command -v "${command_name}" >/dev/null 2>&1; then
             continue
         fi
@@ -27,6 +27,9 @@ install_rocksdb_dependencies() {
             sed) package="sed" ;;
             mvn) package="maven" ;;
             flex) package="flex" ;;
+            curl) package="curl" ;;
+            awk) package="gawk" ;;
+            sha256sum) package="coreutils" ;;
         esac
         packages+=("${package}")
     done
@@ -60,6 +63,7 @@ build_rocksdb_base() {
 
     initialize_runtime || return $?
     install_rocksdb_dependencies || return $?
+    prepare_rocksdb_container_image || return $?
     java_binary="$(command -v javac || true)"
     if [[ -n "${java_binary}" ]]; then
         java_binary="$(readlink -f "${java_binary}")"

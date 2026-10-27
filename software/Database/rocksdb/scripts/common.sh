@@ -14,6 +14,11 @@ ROCKSDB_REPOSITORY="${ROCKSDB_REPOSITORY:-https://github.com/facebook/rocksdb.gi
 YCSB_REPOSITORY="${YCSB_REPOSITORY:-https://github.com/brianfrankcooper/YCSB.git}"
 YCSB_REVISION="19e885f7cb780fdded0547853f7810a150554caf"
 ROCKSDB_DATA_ROOT="${ROCKSDB_DATA_ROOT:-}"
+ROCKSDB_IMAGE_ARCHIVE_DIR="${ROCKSDB_IMAGE_ARCHIVE_DIR:-/home/runner/software/rocksdb/openEuler-24.03-LTS-SP4}"
+ROCKSDB_CONTAINER_IMAGE=""
+ROCKSDB_CONTAINER_NAME=""
+ROCKSDB_IMAGE_REF_FILE=""
+ROCKSDB_NUMA_NODE="${ROCKSDB_NUMA_NODE:-3}"
 
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
@@ -75,6 +80,7 @@ configure_runtime_paths() {
             RESULTS_DIR="${SCRIPT_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}"
         fi
     fi
+    RESULTS_DIR="$(realpath -m -- "${RESULTS_DIR}")"
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/home/runner/boostkit-perf/rocksdb/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
@@ -96,14 +102,113 @@ configure_runtime_paths() {
         log_message "ERROR: RocksDB data directory must be inside the task-private work directory"
         return 20
     fi
+    if [[ ! "${ROCKSDB_NUMA_NODE}" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR: ROCKSDB_NUMA_NODE must be a non-negative NUMA node number"
+        return 10
+    fi
     SOURCE_DIR="${PERF_WORK_DIR}/rocksdb-source"
     YCSB_SOURCE_DIR="${PERF_WORK_DIR}/ycsb-source"
     YCSB_DIST_DIR="${PERF_WORK_DIR}/ycsb-dist"
     MAVEN_REPO_DIR="${PERF_WORK_DIR}/maven-repository"
     MAVEN_SETTINGS_FILE="${PERF_WORK_DIR}/maven-settings.xml"
     BENCH_DATA_DIR="${ROCKSDB_DATA_ROOT}"
+    ROCKSDB_IMAGE_REF_FILE="${PERF_WORK_DIR}/rocksdb-container-image-24.03-LTS-SP4.txt"
+    ROCKSDB_CONTAINER_NAME="boostkit-rocksdb-${EXPECTED_ARCH}-${PERF_RUN_ID}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE ROCKSDB_BENCH_DATA_DIR="${BENCH_DATA_DIR}" TMPDIR
+}
+
+select_rocksdb_cpu_set() {
+    python3 - "${ROCKSDB_NUMA_NODE}" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+node = int(sys.argv[1])
+cpus = [
+    cpu for cpu in sorted(os.sched_getaffinity(0))
+    if (Path(f"/sys/devices/system/cpu/cpu{cpu}") / f"node{node}").exists()
+]
+if len(cpus) < 2:
+    raise SystemExit(f"NUMA node {node} has fewer than two available CPUs")
+print(",".join(map(str, cpus)), node)
+PY
+}
+
+verify_rocksdb_image_release() {
+    local release
+    release="$(docker run --rm --network=none "${ROCKSDB_CONTAINER_IMAGE}" cat /etc/os-release)" || return 30
+    if ! grep -Eq '^ID="?openEuler"?$' <<< "${release}" || \
+       ! grep -Eq '^VERSION=.*24\.03.*LTS-SP4' <<< "${release}"; then
+        log_message "ERROR: loaded RocksDB image is not openEuler 24.03 LTS SP4"
+        return 30
+    fi
+}
+
+prepare_rocksdb_container_image() {
+    local archive_name="openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+    local archive checksum expected actual load_output image_architecture
+    local image_url="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/${archive_name}"
+
+    if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+        log_message "ERROR: an accessible Docker daemon is required for the RocksDB container"
+        return 30
+    fi
+    if [[ -s "${ROCKSDB_IMAGE_REF_FILE}" ]]; then
+        ROCKSDB_CONTAINER_IMAGE="$(<"${ROCKSDB_IMAGE_REF_FILE}")"
+        if docker image inspect "${ROCKSDB_CONTAINER_IMAGE}" >/dev/null 2>&1; then
+            verify_rocksdb_image_release || return $?
+            return 0
+        fi
+        log_message "ERROR: recorded RocksDB image is no longer available"
+        return 30
+    fi
+    if [[ -s "${ROCKSDB_IMAGE_ARCHIVE_DIR}/${archive_name}" ]]; then
+        archive="${ROCKSDB_IMAGE_ARCHIVE_DIR}/${archive_name}"
+        log_message "using local openEuler image archive: ${archive}"
+    else
+        archive="${PERF_WORK_DIR}/${archive_name}"
+        log_message "downloading openEuler image archive: ${image_url}"
+        curl -fSL --retry 3 --connect-timeout 30 -o "${archive}" "${image_url}" || return 30
+    fi
+    if [[ -s "${ROCKSDB_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum" ]]; then
+        checksum="${ROCKSDB_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum"
+    else
+        checksum="${PERF_WORK_DIR}/${archive_name}.sha256sum"
+        curl -fSL --retry 3 --connect-timeout 30 -o "${checksum}" "${image_url}.sha256sum" || return 30
+    fi
+    expected="$(awk 'NR == 1 {print $1}' "${checksum}")"
+    if [[ ! "${expected}" =~ ^[[:xdigit:]]{64}$ ]]; then
+        log_message "ERROR: invalid openEuler image checksum: ${checksum}"
+        return 30
+    fi
+    actual="$(sha256sum "${archive}")"
+    if [[ "${actual%% *}" != "${expected,,}" ]]; then
+        log_message "ERROR: openEuler image checksum mismatch: ${archive}"
+        return 30
+    fi
+    load_output="$(docker load --input "${archive}")" || return 30
+    ROCKSDB_CONTAINER_IMAGE="$(printf '%s\n' "${load_output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+    if [[ -z "${ROCKSDB_CONTAINER_IMAGE}" ]] || ! docker image inspect "${ROCKSDB_CONTAINER_IMAGE}" >/dev/null 2>&1; then
+        log_message "ERROR: docker load did not report an inspectable image: ${load_output}"
+        return 30
+    fi
+    image_architecture="$(docker image inspect --format '{{.Architecture}}' "${ROCKSDB_CONTAINER_IMAGE}")"
+    case "${EXPECTED_ARCH}:${image_architecture}" in
+        x86_64:amd64|aarch64:arm64) ;;
+        *) log_message "ERROR: loaded image architecture is ${image_architecture}, expected ${EXPECTED_ARCH}"; return 30 ;;
+    esac
+    verify_rocksdb_image_release || return $?
+    printf '%s\n' "${ROCKSDB_CONTAINER_IMAGE}" > "${ROCKSDB_IMAGE_REF_FILE}"
+    log_message "openEuler 24.03 LTS SP4 image is ready: ${ROCKSDB_CONTAINER_IMAGE}"
+}
+
+check_rocksdb_container() {
+    if [[ "$(docker inspect --format '{{.State.Running}}' "${ROCKSDB_CONTAINER_NAME}" 2>/dev/null)" != true ]] || \
+       [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.rocksdb.run-id"}}' "${ROCKSDB_CONTAINER_NAME}" 2>/dev/null)" != "${PERF_RUN_ID}" ]]; then
+        log_message "ERROR: managed RocksDB container is unavailable: ${ROCKSDB_CONTAINER_NAME}"
+        return 50
+    fi
 }
 
 initialize_runtime() {

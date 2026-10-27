@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the document's local YCSB load/warmup/A/C flow without tuning.
+"""Run the document's YCSB container A-F flow inside the private container.
 
 The original YCSB launcher, workloads, and RocksDB binding are not edited.
 Every operation uses the same task-private RocksDB directory on persistent disk.
@@ -20,13 +20,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-RECORDS = 100_000_000
-OPERATIONS = 100_000_000
+RECORDS = 10_000_000
+OPERATIONS = 5_000_000
 FIELD_LENGTH = 256
 FIELD_COUNT = 1
 RUN_THREADS = 5
 WARMUP_THREADS = 3
-WORKLOADS = ("workloada", "workloadc")
+WORKLOADS = tuple(f"workload{letter}" for letter in "abcdef")
 YCSB_REVISION = "19e885f7cb780fdded0547853f7810a150554caf"
 THROUGHPUT = re.compile(r"^\[OVERALL\],\s*Throughput\(ops/sec\),\s*([0-9]+(?:\.[0-9]+)?)\s*$")
 ERROR_COUNT = re.compile(r"^\[[^]]+\],\s*Return=ERROR,\s*([0-9]+)\s*$")
@@ -81,6 +81,9 @@ def main() -> int:
         raise RuntimeError("RocksDB data directory must be a task-private child of PERF_WORK_DIR")
     if not (distribution / "bin" / "ycsb").is_file():
         raise RuntimeError("the original YCSB launcher is unavailable")
+    for workload in WORKLOADS:
+        if not (distribution / "workloads" / workload).is_file():
+            raise RuntimeError(f"the original YCSB workload is unavailable: {workload}")
     jni_jar = distribution / "lib" / f"rocksdbjni-{os.environ['SOFTWARE_VERSION']}.jar"
     if not jni_jar.is_file():
         raise RuntimeError(f"the locally built RocksDB JNI JAR is unavailable: {jni_jar}")
@@ -99,7 +102,7 @@ def main() -> int:
     raw_path.parent.mkdir(parents=True, exist_ok=True)
 
     with raw_path.open("w", encoding="utf-8", buffering=1) as raw_log:
-        # Same ordering as the document's physical-machine single-instance flow.
+        # Preserve the document's load, snapshot, and warmup sequence before A-F.
         run_phase(distribution, "load", "workloada", RUN_THREADS, db_dir, raw_log, "load")
         run_phase(distribution, "run", "workloadc", WARMUP_THREADS, db_dir, raw_log,
                   "warmup before snapshot")
@@ -122,7 +125,7 @@ def main() -> int:
             }
 
     payload = {
-        "benchmark": "ycsb_rocksdb_physical_single_instance",
+        "benchmark": "ycsb_rocksdb_container_single_instance",
         "software": "rocksdb", "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
         "variant": os.environ.get("PERF_VARIANT", "base"),
@@ -133,11 +136,13 @@ def main() -> int:
             "fieldlength": FIELD_LENGTH, "fieldcount": FIELD_COUNT,
             "load_threads": RUN_THREADS, "warmup_threads": WARMUP_THREADS,
             "run_threads": RUN_THREADS, "rocksdb_optionsfile": None,
-            "cpu_affinity": None, "warmup_runs": 2,
+            "container_cpus": 2, "container_memory_gib": 8,
+            "cpu_affinity": "available_cpus_on_one_numa_node", "warmup_runs": 2,
         },
         "runtime_context": {
             "java_version": version_lines[0],
             "jni_jar_sha256": jni_checksum,
+            "container_numa_node": os.environ.get("ROCKSDB_NUMA_NODE"),
         },
         "results": results,
     }

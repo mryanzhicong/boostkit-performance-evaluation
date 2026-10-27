@@ -3,9 +3,9 @@
 #
 # The four framework stages map to: build the unmodified upstream RocksDB JNI
 # JAR and the original YCSB RocksDB binding inside this task's private
-# directory (build), prepare the task-private benchmark data directory
-# (start), run the document's YCSB load/warmup/A/C flow (test), and remove the
-# task-private benchmark data directory (stop).
+# directory (build), start the task-private 2U8G container (start), run the
+# document's YCSB load/warmup/A-F flow inside it (test), and remove the
+# container and task-private benchmark data directory (stop).
 
 set -euo pipefail
 
@@ -144,7 +144,7 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Build upstream RocksDB JNI and the original YCSB RocksDB binding, then run
-the YCSB load/warmup/A/C flow on task-private disk data as a standalone
+the YCSB load/warmup/A-F flow inside a 2U8G container as a standalone
 performance evaluation. The optimized build is reserved and fails until its
 implementation is supplied.
 Results default to results/<version>/<run-id>/ inside this directory.

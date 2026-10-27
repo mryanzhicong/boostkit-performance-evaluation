@@ -110,6 +110,9 @@ def _run_faked_main(
     distribution = tmp_path / "ycsb-dist"
     (distribution / "bin").mkdir(parents=True, exist_ok=True)
     (distribution / "lib").mkdir(parents=True, exist_ok=True)
+    (distribution / "workloads").mkdir(parents=True, exist_ok=True)
+    for workload in benchmark_module.WORKLOADS:
+        (distribution / "workloads" / workload).write_text(workload, encoding="utf-8")
     (distribution / "lib" / "rocksdbjni-6.26.1.jar").write_bytes(b"fixture")
     (distribution / "bin" / "ycsb").write_text("#!/bin/sh\n", encoding="utf-8")
     raw_output = tmp_path / f"raw-{architecture}.log"
@@ -156,7 +159,9 @@ def test_normalized_parameters_align_across_architectures(
         for architecture in ("x86_64", "aarch64")
     ]
     assert payloads[0]["variant"] == "base"
-    assert len(payloads[0]["results"]) == 2
+    assert len(payloads[0]["results"]) == 6
+    assert payloads[0]["parameters"]["recordcount"] == 10_000_000
+    assert payloads[0]["parameters"]["operationcount"] == 5_000_000
     assert payloads[0]["parameters"] == payloads[1]["parameters"]
     assert not any(
         "boostkit-perf" in json.dumps(payload["parameters"]) for payload in payloads
