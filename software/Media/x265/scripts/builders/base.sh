@@ -4,7 +4,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 require_commands() {
     local required package
     local packages=() dnf_options=()
-    for required in python3 make cmake gcc g++ sed tee nproc wget tar taskset bc; do
+    local required_commands=(python3 make cmake gcc g++ sed tee nproc tar taskset bc)
+    if [[ ! -e "${X265_SOURCE_ARCHIVE_DIR}/x265_${SOFTWARE_VERSION}.tar.gz" ]]; then
+        required_commands+=(wget)
+    fi
+    for required in "${required_commands[@]}"; do
         command -v "${required}" >/dev/null 2>&1 && continue
         case "${required}" in
             g++) package="gcc-c++" ;;
@@ -32,7 +36,7 @@ require_commands() {
             sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
         fi
     fi
-    for required in python3 make cmake gcc g++ sed tee nproc wget tar taskset bc; do
+    for required in "${required_commands[@]}"; do
         command -v "${required}" >/dev/null 2>&1 || {
             log_message "ERROR: required command remains unavailable: ${required}"
             return 30
@@ -68,8 +72,31 @@ read_x265_version() {
     sed -n 's/^x265 \[info\]: HEVC encoder version \([^[:space:]]*\).*$/\1/p' <<<"${version_output}"
 }
 
+prepare_x265_source_archive() {
+    local archive_name="x265_${SOFTWARE_VERSION}.tar.gz"
+    local local_archive="${X265_SOURCE_ARCHIVE_DIR}/${archive_name}"
+    local archive_path
+
+    if [[ -e "${local_archive}" ]]; then
+        if [[ ! -f "${local_archive}" || ! -s "${local_archive}" ]]; then
+            log_message "ERROR: local x265 source archive is not a non-empty file: ${local_archive}"
+            return 30
+        fi
+        archive_path="${local_archive}"
+        log_message "using local official x265 source archive: ${archive_path}"
+    else
+        archive_path="${PERF_WORK_DIR}/${archive_name}"
+        log_message "downloading official x265 source archive ${archive_name}"
+        wget -O "${archive_path}" "${X265_ARCHIVE_BASE_URL}/${archive_name}" || return 30
+    fi
+    tar -zxvf "${archive_path}" -C "${PERF_WORK_DIR}" || {
+        log_message "ERROR: failed to extract x265 source archive: ${archive_path}"
+        return 30
+    }
+}
+
 build_x265_base() {
-    local actual_version archive_name
+    local actual_version
     initialize_runtime || return $?
     check_architecture || return $?
     require_commands || return $?
@@ -82,13 +109,7 @@ build_x265_base() {
         log_message "ERROR: the reference installation only defines x265 4.2"
         return 10
     }
-    archive_name="x265_${SOFTWARE_VERSION}.tar.gz"
-    log_message "downloading official x265 source archive ${archive_name}"
-    (
-        cd "${PERF_WORK_DIR}"
-        wget "${X265_ARCHIVE_BASE_URL}/${archive_name}" || exit 30
-        tar -zxvf "${archive_name}" || exit 30
-    ) || return $?
+    prepare_x265_source_archive || return $?
     [[ -d "${SOURCE_DIR}/source" ]] || {
         log_message "ERROR: x265 source directory was not extracted: ${SOURCE_DIR}"
         return 30

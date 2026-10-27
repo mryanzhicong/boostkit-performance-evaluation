@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import re
 import subprocess
+import tarfile
 from decimal import Decimal
 from pathlib import Path
 
@@ -102,6 +104,74 @@ def test_standalone_variant_option_rejects_unknown_values() -> None:
     )
     assert result.returncode == 10
     assert "invalid build variant" in result.stdout
+
+
+def _write_source_archive(path: Path) -> None:
+    content = b"fixture x265 source\n"
+    with tarfile.open(path, "w:gz") as archive:
+        member = tarfile.TarInfo("x265_4.2/source/CMakeLists.txt")
+        member.size = len(content)
+        archive.addfile(member, io.BytesIO(content))
+
+
+def _extract_source_archive(
+    tmp_path: Path, local_archive: Path | None
+) -> subprocess.CompletedProcess[str]:
+    work_dir = tmp_path / "work"
+    work_dir.mkdir()
+    offline_dir = tmp_path / "offline"
+    offline_dir.mkdir()
+    if local_archive is not None:
+        (offline_dir / "x265_4.2.tar.gz").write_bytes(local_archive.read_bytes())
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    wget = bin_dir / "wget"
+    wget.write_text(
+        '#!/bin/sh\n'
+        'printf "%s\\n" "$*" >> "$X265_WGET_CALLS"\n'
+        'cp "$X265_TEST_REMOTE_ARCHIVE" "$2"\n',
+        encoding="utf-8",
+    )
+    wget.chmod(0o755)
+    return subprocess.run(
+        ["bash", "-c", 'source "$1"; prepare_x265_source_archive', "bash",
+         str(SCRIPT_DIR / "builders" / "base.sh")],
+        env={
+            **os.environ,
+            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "PERF_WORK_DIR": str(work_dir),
+            "X265_SOURCE_ARCHIVE_DIR": str(offline_dir),
+            "X265_TEST_REMOTE_ARCHIVE": str(tmp_path / "remote.tar.gz"),
+            "X265_WGET_CALLS": str(tmp_path / "wget-calls.log"),
+        },
+        capture_output=True, text=True, check=False,
+    )
+
+
+def test_x265_prefers_local_source_archive(tmp_path: Path) -> None:
+    archive = tmp_path / "local.tar.gz"
+    _write_source_archive(archive)
+    result = _extract_source_archive(tmp_path, archive)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (tmp_path / "work" / "x265_4.2" / "source" / "CMakeLists.txt").is_file()
+    assert not (tmp_path / "wget-calls.log").exists()
+
+
+def test_x265_downloads_when_local_archive_is_missing(tmp_path: Path) -> None:
+    _write_source_archive(tmp_path / "remote.tar.gz")
+    result = _extract_source_archive(tmp_path, None)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (tmp_path / "work" / "x265_4.2" / "source" / "CMakeLists.txt").is_file()
+    assert "x265_4.2.tar.gz" in (tmp_path / "wget-calls.log").read_text(encoding="utf-8")
+
+
+def test_x265_rejects_empty_local_archive_without_network_fallback(tmp_path: Path) -> None:
+    archive = tmp_path / "local.tar.gz"
+    archive.touch()
+    result = _extract_source_archive(tmp_path, archive)
+    assert result.returncode == 30
+    assert "not a non-empty file" in result.stdout
+    assert not (tmp_path / "wget-calls.log").exists()
 
 
 def _run_faked_main(

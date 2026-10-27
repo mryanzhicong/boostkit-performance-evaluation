@@ -11,6 +11,7 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 X265_ARCHIVE_BASE_URL="https://bitbucket.org/multicoreware/x265_git/downloads"
+X265_SOURCE_ARCHIVE_DIR="${X265_SOURCE_ARCHIVE_DIR:-/home/runner/software/x265}"
 VIDEO_DIR="${VIDEO_DIR:-/home/runner/software/x265/video}"
 
 # Lifecycle paths (assigned in configure_runtime_paths).

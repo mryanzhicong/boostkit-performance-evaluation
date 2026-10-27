@@ -12,15 +12,26 @@
 
 ## 构建与安装
 
-脚本按参考资料从 [x265 官方下载目录](https://bitbucket.org/multicoreware/x265_git/downloads)获取 `x265_4.2.tar.gz` 并解压。缺少构建命令时用 `dnf` 安装，x86_64 还需要 NASM；`PERF_PROXY` 非空时作为 dnf 代理。
+源码包优先读取 Runner 持久目录 `/home/runner/software/x265/x265_4.2.tar.gz`；
+文件不存在时，才从 [x265 官方下载目录](https://bitbucket.org/multicoreware/x265_git/downloads)
+下载。`X265_SOURCE_ARCHIVE_DIR` 可指定其他本地目录；本地文件存在但为空或无法解压
+时直接失败，不切换到网络包。缺少构建命令时用 `dnf` 安装，x86_64 还需要 NASM；
+`PERF_PROXY` 非空时作为 dnf 代理。
 
 关键命令（在本次私有工作目录 `PERF_WORK_DIR` 下执行）：
 
 ```bash
 cd "$PERF_WORK_DIR"
 INSTALL_DIR="$PERF_WORK_DIR/x265_4.2/x265_install"
-wget https://bitbucket.org/multicoreware/x265_git/downloads/x265_4.2.tar.gz
-tar -zxvf x265_4.2.tar.gz
+LOCAL_ARCHIVE="${X265_SOURCE_ARCHIVE_DIR:-/home/runner/software/x265}/x265_4.2.tar.gz"
+if [ -e "$LOCAL_ARCHIVE" ]; then
+  test -f "$LOCAL_ARCHIVE" && test -s "$LOCAL_ARCHIVE" || exit 1
+  ARCHIVE="$LOCAL_ARCHIVE"
+else
+  ARCHIVE="$PERF_WORK_DIR/x265_4.2.tar.gz"
+  wget -O "$ARCHIVE" https://bitbucket.org/multicoreware/x265_git/downloads/x265_4.2.tar.gz
+fi
+tar -zxvf "$ARCHIVE" -C "$PERF_WORK_DIR"
 cd x265_4.2
 mkdir x265_build x265_install
 cd x265_build
