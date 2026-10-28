@@ -140,7 +140,7 @@ jobs:
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
   performance_x86:
-    name: Run x86_64 performance cases
+    name: Test ${{ matrix.software }} ${{ matrix.version }} (x86_64)
     if: needs.prepare.outputs.has_x86 == 'true'
     needs: prepare
     strategy:
@@ -161,7 +161,7 @@ jobs:
     secrets: inherit
 
   performance_arm:
-    name: Run aarch64 performance cases
+    name: Test ${{ matrix.software }} ${{ matrix.version }} (aarch64)
     if: needs.prepare.outputs.has_arm == 'true'
     needs: prepare
     strategy:
@@ -182,7 +182,7 @@ jobs:
     secrets: inherit
 
   upload_x86:
-    name: Upload x86_64 results
+    name: Upload ${{ matrix.software }} ${{ matrix.version }} (x86_64)
     if: always() && needs.prepare.result == 'success' && needs.performance_x86.result != 'skipped'
     needs: [prepare, performance_x86]
     strategy:
@@ -201,7 +201,7 @@ jobs:
     secrets: inherit
 
   upload_arm:
-    name: Upload aarch64 results
+    name: Upload ${{ matrix.software }} ${{ matrix.version }} (aarch64)
     if: always() && needs.prepare.result == 'success' && needs.performance_arm.result != 'skipped'
     needs: [prepare, performance_arm]
     strategy:
