@@ -112,8 +112,9 @@ jobs:
       - name: Align historical video headings and generate report
         shell: bash
         run: |
-          python3 .github/scripts/recover_x265_subgroups.py \
-            --input-root .perf-output/x265-recovery-input
+          python3 .github/scripts/recover_video_subgroups.py \
+            --input-root .perf-output/x265-recovery-input \
+            --software x265 --version 4.2
           python3 framework/generate_comparison.py \
             --input-root .perf-output/x265-recovery-input \
             --output-dir .perf-output/x265-recovery-report
