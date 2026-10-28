@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -32,3 +33,31 @@ def test_result_and_report_paths_are_separated() -> None:
 def test_unknown_variant_is_rejected() -> None:
     with pytest.raises(RuntimeError, match="invalid build variant"):
         obs_transfer.report_key("prefix", "run", "unknown")
+
+
+def test_upload_retries_proxy_like_403(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    statuses = iter((403, 403, 200))
+    delays = []
+
+    class FakeClient:
+        def putFile(self, bucket: str, key: str, path: str) -> SimpleNamespace:
+            assert (bucket, key, path) == ("bucket", "key", str(tmp_path / "data"))
+            return SimpleNamespace(status=next(statuses), errorCode=None, errorMessage=None)
+
+    monkeypatch.setattr(obs_transfer.time, "sleep", delays.append)
+    obs_transfer.put_file(FakeClient(), "bucket", "key", tmp_path / "data")
+    assert delays == [2, 4]
+
+
+def test_upload_does_not_retry_named_obs_403(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    calls = []
+
+    class FakeClient:
+        def putFile(self, bucket: str, key: str, path: str) -> SimpleNamespace:
+            calls.append(key)
+            return SimpleNamespace(status=403, errorCode="AccessDenied", errorMessage="denied")
+
+    monkeypatch.setattr(obs_transfer.time, "sleep", lambda delay: pytest.fail("unexpected retry"))
+    with pytest.raises(RuntimeError, match="403 AccessDenied denied"):
+        obs_transfer.put_file(FakeClient(), "bucket", "key", tmp_path / "data")
+    assert calls == ["key"]

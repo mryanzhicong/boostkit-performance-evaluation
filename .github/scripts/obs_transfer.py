@@ -18,6 +18,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import unquote, urlsplit
@@ -26,6 +27,7 @@ from urllib.parse import unquote, urlsplit
 MANIFEST_NAME = ".boostkit-obs-manifest.json"
 COMPRESSED_MANIFEST_NAME = f"{MANIFEST_NAME}.gz"
 TRANSFER_CHUNK_SIZE = 64 * 1024
+UPLOAD_RETRY_DELAYS = (2, 4, 8, 16)
 
 
 def fail(message: str) -> None:
@@ -108,6 +110,28 @@ def response_ok(response: Any, action: str, object_key: str) -> None:
         fail(f"OBS {action} failed for {object_key}: {status} {error_code} {error_message}")
 
 
+def put_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
+    for attempt in range(len(UPLOAD_RETRY_DELAYS) + 1):
+        response = obs_client.putFile(bucket, key, str(path))
+        status = getattr(response, "status", None)
+        if isinstance(status, int) and 200 <= status < 300:
+            return
+        code = getattr(response, "errorCode", None)
+        message = getattr(response, "errorMessage", None)
+        retryable = status == 403 and code is None and message is None
+        retryable = retryable or status == 429 or (isinstance(status, int) and status >= 500)
+        if retryable and attempt < len(UPLOAD_RETRY_DELAYS):
+            delay = UPLOAD_RETRY_DELAYS[attempt]
+            print(
+                f"[obs] upload {key} returned HTTP {status} without a usable result; "
+                f"retrying in {delay}s ({attempt + 1}/{len(UPLOAD_RETRY_DELAYS)})",
+                flush=True,
+            )
+            time.sleep(delay)
+            continue
+        response_ok(response, "upload", key)
+
+
 def relative_file_path(root: Path, file_path: Path) -> str:
     relative = file_path.relative_to(root)
     if file_path.is_symlink():
@@ -161,8 +185,7 @@ def upload_file(
     relative: str,
 ) -> list[dict[str, Any]]:
     if path.stat().st_size <= TRANSFER_CHUNK_SIZE:
-        response = obs_client.putFile(bucket, key, str(path))
-        response_ok(response, "upload", key)
+        put_file(obs_client, bucket, key, path)
         return []
 
     chunks: list[dict[str, Any]] = []
@@ -175,8 +198,7 @@ def upload_file(
                 relative_part = f"{relative}.parts/{part_number:06d}"
                 part_key = f"{key}.parts/{part_number:06d}"
                 chunk_path.write_bytes(content)
-                response = obs_client.putFile(bucket, part_key, str(chunk_path))
-                response_ok(response, "upload", part_key)
+                put_file(obs_client, bucket, part_key, chunk_path)
                 chunks.append({
                     "path": relative_part,
                     "size": len(content),
@@ -259,8 +281,7 @@ def upload_manifest(obs_client: Any, bucket: str, base_key: str, manifest: dict[
         if manifest_path.stat().st_size > TRANSFER_CHUNK_SIZE:
             fail("OBS manifest index exceeds the proxy upload limit")
         manifest_key = f"{base_key}/{MANIFEST_NAME}"
-        response = obs_client.putFile(bucket, manifest_key, str(manifest_path))
-        response_ok(response, "upload", manifest_key)
+        put_file(obs_client, bucket, manifest_key, manifest_path)
 
 
 def compressed_manifest_details(manifest: dict[str, Any]) -> dict[str, Any] | None:
