@@ -70,7 +70,11 @@ openEuler 版本后使用。`ROCKSDB_IMAGE_ARCHIVE_DIR` 可指定其他离线归
 容器可在 NUMA node 3 的所有可用 CPU 上调度，并从该节点分配内存；脚本要求
 该节点至少有 2 个可用 CPU。CPU 编号由运行机器实时读取，不写死架构专用编号；
 `ROCKSDB_NUMA_NODE` 可选择其他节点。容器名按架构和运行 ID 生成，
-只挂载本次任务目录及结果目录，不使用 `--privileged`。启动命令形态为：
+挂载本次任务目录及结果目录；正式测试启用 `PERF_PROXY` 时，还将宿主机
+`/home/runner/software/anchors/` 中的代理 CA 证书只读挂载到容器的
+`/etc/pki/ca-trust/source/anchors/`。`ROCKSDB_CA_ANCHORS_DIR` 可指定其他宿主机
+证书目录；设置代理但目录不存在时，启动阶段直接失败。不使用 `--privileged`。
+启动命令形态为：
 
 ```bash
 docker run --detach --name "${ROCKSDB_CONTAINER_NAME}" \
@@ -79,12 +83,17 @@ docker run --detach --name "${ROCKSDB_CONTAINER_NAME}" \
   --memory=8g --network=host --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount "type=bind,source=/home/runner/software/anchors,target=/etc/pki/ca-trust/source/anchors,readonly" \
   "${ROCKSDB_CONTAINER_IMAGE}" sleep infinity
 ```
 
-若结果目录已在工作目录内，脚本不重复挂载它。启动后，脚本只在本任务容器内
-通过 `dnf` 安装 Java 11、Python 3 和 RocksDB/JNI 运行库，并校验运行环境。
-构建和依赖安装可使用 `PERF_PROXY` 指定的代理；不修改系统代理配置。
+证书挂载参数仅在 `PERF_PROXY` 非空时加入；若结果目录已在工作目录内，脚本也不重复
+挂载它。容器启动后，启用代理时先以 root 执行 `update-ca-trust extract`。随后在本任务
+容器内注释 `/etc/yum.repos.d/openEuler.repo` 中以 `meta` 开头的地址，并将
+`repo.openeuler.org` 替换为 `repo.huaweicloud.com/openeuler`。最后通过 `dnf`
+安装 Java 11、Python 3 和 RocksDB/JNI 运行库，并校验运行环境。容器内的
+`dnf` 在启用代理时使用 `--setopt=proxy=${PERF_PROXY}`；这些证书和软件源操作
+都不修改宿主机配置。
 
 ## 数据与运行顺序
 

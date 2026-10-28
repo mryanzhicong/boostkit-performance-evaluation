@@ -21,6 +21,7 @@ def run_shell(script: str, tmp_path: Path, **extra: str) -> subprocess.Completed
         "PERF_RUN_ID": "unit-test",
         "EXPECTED_ARCH": os.uname().machine,
         "DOCKER_CALLS": str(tmp_path / "docker-calls.log"),
+        "PERF_PROXY": "",
     } | extra
     return subprocess.run(
         ["bash", "-c", script], env=environment,
@@ -103,8 +104,57 @@ def test_start_mounts_private_paths_and_limits_resources(tmp_path: Path) -> None
     assert "--cpuset-cpus=10,11,12" in calls and "--cpuset-mems=3" in calls
     assert f"source={work},target={work}" in calls
     assert f"source={results},target={results}" in calls
+    assert "update-ca-trust" not in calls
+    assert "repo.huaweicloud.com\\/openeuler" in calls
+    assert calls.index("/etc/yum.repos.d/openEuler.repo") < calls.index("dnf install -y")
     assert "--privileged" not in calls
     assert (work / "data").is_dir()
+
+
+def test_start_installs_proxy_ca_before_container_dnf(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    (work / "dist" / "bin").mkdir(parents=True)
+    (work / "dist" / "bin" / "ycsb").write_text("#!/bin/sh\n", encoding="utf-8")
+    anchors = tmp_path / "anchors"
+    anchors.mkdir()
+    fake_docker = tmp_path / "docker"
+    fake_docker.write_text(
+        '#!/bin/sh\n'
+        'printf "%s\\n" "$*" >> "$DOCKER_CALLS"\n'
+        'if [ "$1 $2" = "container inspect" ]; then exit 1; fi\n'
+        'case " $* " in *" java -version "*) printf "openjdk version \\"11.0.1\\"\\n" >&2 ;; esac\n'
+        'exit 0\n', encoding="utf-8",
+    )
+    fake_docker.chmod(0o755)
+    script = (
+        f'source "{START}"; initialize_runtime() {{ :; }}; '
+        'prepare_rocksdb_container_image() { ROCKSDB_CONTAINER_IMAGE=openeuler-test; }; '
+        'select_rocksdb_cpu_set() { printf "10,11,12 3\\n"; }; '
+        f'PERF_WORK_DIR="{work}"; RESULTS_DIR="{work}/results"; '
+        f'YCSB_DIST_DIR="{work}/dist"; BENCH_DATA_DIR="{work}/data"; '
+        'ROCKSDB_CONTAINER_NAME=rocksdb-unit-test; ROCKSDB_NUMA_NODE=3; '
+        'prepare_rocksdb_benchmark_data'
+    )
+    completed = run_shell(
+        script, tmp_path, PERF_PROXY="http://proxy.example:8080",
+        ROCKSDB_CA_ANCHORS_DIR=str(anchors),
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    calls = (tmp_path / "docker-calls.log").read_text(encoding="utf-8")
+    assert f"source={anchors},target=/etc/pki/ca-trust/source/anchors,readonly" in calls
+    assert calls.index("update-ca-trust extract") < calls.index("/etc/yum.repos.d/openEuler.repo")
+    assert calls.index("/etc/yum.repos.d/openEuler.repo") < calls.index("dnf --setopt=proxy=http://proxy.example:8080")
+
+    (work / "data").rmdir()
+    failed = run_shell(
+        script, tmp_path, PERF_PROXY="http://proxy.example:8080",
+        ROCKSDB_CA_ANCHORS_DIR=str(tmp_path / "missing-anchors"),
+        DOCKER_CALLS=str(tmp_path / "missing-docker-calls.log"),
+    )
+    assert failed.returncode == 30
+    assert "proxy CA certificate directory is missing" in failed.stdout
+    missing_calls = (tmp_path / "missing-docker-calls.log").read_text(encoding="utf-8")
+    assert "run --detach" not in missing_calls
 
 
 def test_benchmark_executes_inside_container(tmp_path: Path) -> None:
