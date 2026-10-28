@@ -18,8 +18,43 @@ preserve_spec_build_logs() {
     done < <(find "${SPEC_OUTPUT_ROOT}/benchspec/CPU" -type f -name 'make*.out' -print0)
 }
 
+prepare_spec_configuration() {
+    local config_source spec_label spec_group
+
+    config_source="${SCRIPT_DIR}/scripts/${SPEC_CONFIG_NAME}"
+    if [[ ! -f "${config_source}" ]]; then
+        log_message "ERROR: SPEC CPU2017 GCC configuration is missing: ${config_source}"
+        return 50
+    fi
+    if ! sed \
+        -e "s|^%   define  gcc_dir[[:space:]].*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
+        -e "s|^%   define label 14[.]4[.]0-base$|%   define label ${SOFTWARE_VERSION}-base|" \
+        "${config_source}" > "${SPEC_CONFIG_PATH}"; then
+        log_message "ERROR: failed to place the SPEC CPU2017 GCC configuration"
+        return 50
+    fi
+    if ! grep -Fxq "%   define  gcc_dir        ${INSTALL_DIR}" "${SPEC_CONFIG_PATH}"; then
+        log_message "ERROR: SPEC CPU2017 GCC compiler path was not updated"
+        return 50
+    fi
+    spec_label="$(awk '$1 == "%" && $2 == "define" && $3 == "label" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
+    spec_group="$(awk '$1 == "%" && $2 == "define" && $3 == "group" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
+    if [[ "${spec_label}" != "${SOFTWARE_VERSION}-base" || \
+          ! "${spec_group}" =~ ^[A-Za-z0-9._-]+$ ]] || \
+        ! grep -Fqx 'output_root          = %{top}/result/%{group}/%{label}' "${SPEC_CONFIG_PATH}"; then
+        log_message "ERROR: unsupported SPEC CPU2017 output_root configuration"
+        return 50
+    fi
+    SPEC_OUTPUT_ROOT="${SPEC_DIR}/result/${spec_group}/${spec_label}"
+    SPEC_RESULT_DIR="${SPEC_OUTPUT_ROOT}/result"
+    if ! cp "${SPEC_CONFIG_PATH}" "${RESULTS_DIR}/${SPEC_CONFIG_NAME}"; then
+        log_message "ERROR: failed to preserve the SPEC CPU2017 GCC configuration"
+        return 50
+    fi
+}
+
 run_gcc_benchmarks() {
-    local actual_version config_source spec_label spec_group
+    local actual_version
 
     initialize_runtime || return $?
     if [[ ! -x "${GCC_BIN}" || ! -x "${GXX_BIN}" || ! -x "${GFORTRAN_BIN}" ]]; then
@@ -70,34 +105,7 @@ run_gcc_benchmarks() {
         log_message "ERROR: SPEC CPU2017 installation is incomplete"
         return 50
     fi
-    config_source="${SCRIPT_DIR}/scripts/${SPEC_CONFIG_NAME}"
-    if [[ ! -f "${config_source}" ]]; then
-        log_message "ERROR: SPEC CPU2017 GCC configuration is missing: ${config_source}"
-        return 50
-    fi
-    if ! sed \
-        -e "s|^%   define  gcc_dir[[:space:]].*$|%   define  gcc_dir        ${INSTALL_DIR}|" \
-        "${config_source}" > "${SPEC_CONFIG_PATH}"; then
-        log_message "ERROR: failed to place the SPEC CPU2017 GCC configuration"
-        return 50
-    fi
-    if ! grep -Fxq "%   define  gcc_dir        ${INSTALL_DIR}" "${SPEC_CONFIG_PATH}"; then
-        log_message "ERROR: SPEC CPU2017 GCC compiler path was not updated"
-        return 50
-    fi
-    spec_label="$(awk '$1 == "%" && $2 == "define" && $3 == "label" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
-    spec_group="$(awk '$1 == "%" && $2 == "define" && $3 == "group" {print $4; exit}' "${SPEC_CONFIG_PATH}")"
-    if [[ ! "${spec_label}" =~ ^[A-Za-z0-9._-]+$ || ! "${spec_group}" =~ ^[A-Za-z0-9._-]+$ ]] || \
-        ! grep -Fqx 'output_root          = %{top}/result/%{group}/%{label}' "${SPEC_CONFIG_PATH}"; then
-        log_message "ERROR: unsupported SPEC CPU2017 output_root configuration"
-        return 50
-    fi
-    SPEC_OUTPUT_ROOT="${SPEC_DIR}/result/${spec_group}/${spec_label}"
-    SPEC_RESULT_DIR="${SPEC_OUTPUT_ROOT}/result"
-    if ! cp "${SPEC_CONFIG_PATH}" "${RESULTS_DIR}/${SPEC_CONFIG_NAME}"; then
-        log_message "ERROR: failed to preserve the SPEC CPU2017 GCC configuration"
-        return 50
-    fi
+    prepare_spec_configuration || return $?
     if ! cat /proc/sys/kernel/randomize_va_space > "${ASLR_STATE_FILE}"; then
         log_message "ERROR: failed to record the current ASLR setting"
         return 50

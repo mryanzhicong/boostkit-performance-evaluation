@@ -62,6 +62,9 @@ prepare_gcc_source() {
         14.4.0)
             GCC_SOURCE_SHA256="752b6f567beac83159c77a7680b1316bdd784738bff9a9d070112c09da90f6d9"
             ;;
+        12.5.0)
+            GCC_SOURCE_SHA256="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
+            ;;
         *)
             log_message "ERROR: unsupported GCC version: ${SOFTWARE_VERSION}"
             return 20

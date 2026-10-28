@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 CASE_DIR = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ PARSER = CASE_DIR / "scripts" / "results" / "parse_benchmark.py"
 
 def test_case_yaml_stages_use_split_scripts() -> None:
     case = yaml.safe_load((CASE_DIR / "case.yaml").read_text(encoding="utf-8"))
+    assert case["versions"] == ["14.4.0", "12.5.0"]
     stages = case["execution"]["stages"]
     assert stages["build"] == {
         "script": "scripts/builders/dispatch.sh",
@@ -73,7 +75,45 @@ def test_standalone_variant_option_rejects_unknown_values() -> None:
     assert "invalid build variant" in result.stdout
 
 
-def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> None:
+@pytest.mark.parametrize("version", ["14.4.0", "12.5.0"])
+def test_spec_configuration_uses_selected_version(tmp_path: Path, version: str) -> None:
+    for architecture, config_name in (
+        ("x86_64", "spec-gcc-x86.cfg"),
+        ("aarch64", "spec-gcc-aarch64.cfg"),
+    ):
+        work_dir = tmp_path / architecture
+        config_dir = work_dir / "cpu2017" / "config"
+        result_dir = work_dir / "results"
+        config_dir.mkdir(parents=True)
+        result_dir.mkdir()
+        compiler_dir = work_dir / "gcc-install"
+        output_config = config_dir / config_name
+        command = (
+            'source "$1"; SOFTWARE_VERSION="$2"; INSTALL_DIR="$3"; '
+            'SPEC_DIR="$4"; SPEC_CONFIG_NAME="$5"; SPEC_CONFIG_PATH="$6"; '
+            'RESULTS_DIR="$7"; prepare_spec_configuration; printf "%s" "$SPEC_RESULT_DIR"'
+        )
+        result = subprocess.run(
+            [
+                "bash", "-c", command, "bash",
+                str(CASE_DIR / "scripts/stages/test.sh"), version,
+                str(compiler_dir), str(config_dir.parent), config_name,
+                str(output_config), str(result_dir),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr or result.stdout
+        assert result.stdout == str(config_dir.parent / "result" / "gnu" / f"{version}-base" / "result")
+        rendered = output_config.read_text(encoding="utf-8")
+        assert f"%   define label {version}-base" in rendered
+        assert f"%   define  gcc_dir        {compiler_dir}" in rendered
+        assert (result_dir / config_name).read_text(encoding="utf-8") == rendered
+
+
+@pytest.mark.parametrize("version", ["14.4.0", "12.5.0"])
+def test_normalized_parameters_align_across_architectures(tmp_path: Path, version: str) -> None:
     parameters = []
     for architecture in ("x86_64", "aarch64"):
         result_directory = tmp_path / f"spec-results-{architecture}"
@@ -92,10 +132,10 @@ def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> Non
             ],
             env={
                 **os.environ,
-                "SOFTWARE_VERSION": "14.4.0",
+                "SOFTWARE_VERSION": version,
                 "EXPECTED_ARCH": architecture,
                 "PERF_VARIANT": "base",
-                "GCC_VERSION_STRING": "gcc (GCC) 14.4.0",
+                "GCC_VERSION_STRING": f"gcc (GCC) {version}",
                 "SPEC_CONFIG_NAME": f"spec-gcc-{'x86' if architecture == 'x86_64' else 'aarch64'}.cfg",
                 "SPEC_COPIES": "384",
             },
