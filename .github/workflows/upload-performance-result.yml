@@ -1,0 +1,87 @@
+name: Upload one preserved performance result
+
+on:
+  workflow_call:
+    inputs:
+      category:
+        required: true
+        type: string
+      software:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      architecture:
+        required: true
+        type: string
+      runner_label:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+      result_directory:
+        required: true
+        type: string
+      variant:
+        required: true
+        type: string
+
+jobs:
+  upload:
+    name: ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }}) OBS upload
+    runs-on: [self-hosted, '${{ inputs.runner_label }}']
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        env:
+          http_proxy: ${{ secrets.PERF_PROXY }}
+          https_proxy: ${{ secrets.PERF_PROXY }}
+          no_proxy: localhost,127.0.0.1,::1
+      - name: Install OBS transfer dependency
+        shell: bash
+        env:
+          http_proxy: ${{ secrets.PERF_PROXY }}
+          https_proxy: ${{ secrets.PERF_PROXY }}
+          no_proxy: localhost,127.0.0.1,::1
+        run: |
+          transfer_deps="${RUNNER_TEMP}/boostkit-obs-deps"
+          python3 -m pip install \
+            --disable-pip-version-check --no-input --no-cache-dir \
+            --trusted-host mirrors.huaweicloud.com \
+            -i https://mirrors.huaweicloud.com/repository/pypi/simple \
+            --target "${transfer_deps}" "esdk-obs-python"
+          echo "PYTHONPATH=${transfer_deps}" >> "${GITHUB_ENV}"
+      - name: Upload preserved result to Huawei OBS
+        env:
+          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
+          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
+          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
+          OBS_AK: ${{ secrets.OBS_AK }}
+          OBS_SK: ${{ secrets.OBS_SK }}
+          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
+          PERF_PROXY: ${{ secrets.PERF_PROXY }}
+          CATEGORY: ${{ inputs.category }}
+          SOFTWARE: ${{ inputs.software }}
+          VERSION: ${{ inputs.version }}
+          ARCHITECTURE: ${{ inputs.architecture }}
+          RUN_ID: ${{ inputs.run_id }}
+          RESULT_DIRECTORY: ${{ inputs.result_directory }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          source="/home/runner/boostkit-perf-result/${CATEGORY}/${SOFTWARE}/${VERSION}"
+          if [[ "${VARIANT}" == optimized ]]; then
+            source="${source}/optimized"
+          fi
+          source="${source}/${RESULT_DIRECTORY}/${ARCHITECTURE}"
+          python3 .github/scripts/obs_transfer.py upload-result \
+            --source "${source}" \
+            --run-id "${RUN_ID}" \
+            --category "${CATEGORY}" \
+            --software "${SOFTWARE}" \
+            --version "${VERSION}" \
+            --architecture "${ARCHITECTURE}" \
+            --result-directory "${RESULT_DIRECTORY}" \
+            --variant "${VARIANT}"

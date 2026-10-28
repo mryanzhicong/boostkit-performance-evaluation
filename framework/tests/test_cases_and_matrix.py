@@ -357,6 +357,12 @@ def test_unknown_runner_profile_is_rejected() -> None:
 
 def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(encoding="utf-8")
+    performance_workflow = (
+        ROOT / ".github" / "workflows" / "performance-architecture.yml"
+    ).read_text(encoding="utf-8")
+    upload_workflow = (
+        ROOT / ".github" / "workflows" / "upload-performance-result.yml"
+    ).read_text(encoding="utf-8")
     development_workflow = (
         ROOT / ".github" / "workflows" / "development-performance-test.yml"
     ).read_text(encoding="utf-8")
@@ -371,7 +377,14 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
     ) in workflow
     assert "matrix.runner_label" in workflow
     assert "options: [base, optimized]" in workflow
-    assert "PERF_VARIANT: ${{ inputs.variant }}" in workflow
+    assert "PERF_VARIANT: ${{ inputs.variant }}" in performance_workflow
+    assert "${{ inputs.runner_label }}" in performance_workflow
+    assert "${{ inputs.runner_label }}" in upload_workflow
+    assert "needs: [prepare, performance_x86]" in workflow
+    assert "needs: [prepare, performance_arm]" in workflow
+    assert "needs: [prepare, performance_x86, performance_arm, upload_x86, upload_arm]" in workflow
+    assert "--run-id '${{ needs.prepare.outputs.result_run_id }}'" in workflow
+    assert "persist_result.py" in performance_workflow
     assert all(label not in workflow for label in configured_runner_labels().values())
     assert "--runner-profile \"${INPUT_RUNNER_PROFILE}\"" in workflow
     assert "INPUT_RUNNER_PROFILE: production" in workflow
@@ -394,9 +407,9 @@ def test_workflow_consumes_matrix_runner_label_without_duplicates() -> None:
         "stop",
         "finalize",
     ):
-        assert f"--stage {stage}" in workflow
+        assert f"--stage {stage}" in performance_workflow
     for removed_stage in ("validate", "start-service", "stop-service", "collect-report"):
-        assert f"--stage {removed_stage}" not in workflow
+        assert f"--stage {removed_stage}" not in performance_workflow
 
 
 def test_development_workflow_uses_development_runner_profile() -> None:
@@ -433,18 +446,24 @@ def test_workflow_uses_default_pypi_on_ubuntu_and_huawei_on_runners() -> None:
     workflow = (ROOT / ".github" / "workflows" / "performance-test.yml").read_text(
         encoding="utf-8"
     )
-    prepare_job, performance_and_report = workflow.split("  performance:", 1)
-    performance_job, report_job = performance_and_report.split("  report:", 1)
+    performance_job = (
+        ROOT / ".github" / "workflows" / "performance-architecture.yml"
+    ).read_text(encoding="utf-8")
+    upload_job = (
+        ROOT / ".github" / "workflows" / "upload-performance-result.yml"
+    ).read_text(encoding="utf-8")
+    prepare_job, report_job = workflow.split("  report:", 1)
     assert "--index-url" not in prepare_job
-    assert workflow.count("https://mirrors.huaweicloud.com/repository/pypi/simple") == 1
+    assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in upload_job
     assert "https://mirrors.huaweicloud.com/repository/pypi/simple" in performance_job
-    for job in (prepare_job, performance_job, report_job):
+    for job in (prepare_job, performance_job, upload_job, report_job):
         assert job.count("--target") == 1
         assert job.count("--no-cache-dir") == 1
     assert '"PyYAML==6.0.2"' in prepare_job
     assert '"PyYAML==6.0.2"' in performance_job
     assert '"PyYAML==6.0.2"' not in report_job
-    assert '"esdk-obs-python"' in performance_job
+    assert '"esdk-obs-python"' not in performance_job
+    assert '"esdk-obs-python"' in upload_job
     assert '"esdk-obs-python"' in report_job
     assert "Verify preinstalled framework runtime" not in workflow
     assert not (ROOT / "pyproject.toml").exists()

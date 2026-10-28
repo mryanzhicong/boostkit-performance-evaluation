@@ -68,6 +68,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
+      x86_matrix: ${{ steps.matrix.outputs.x86_matrix }}
+      arm_matrix: ${{ steps.matrix.outputs.arm_matrix }}
+      has_x86: ${{ steps.matrix.outputs.has_x86 }}
+      has_arm: ${{ steps.matrix.outputs.has_arm }}
+      result_run_id: ${{ steps.result_directory.outputs.run_id }}
       result_directory: ${{ steps.result_directory.outputs.value }}
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +82,7 @@ jobs:
         run: |
           timestamp="$(TZ=Asia/Shanghai date '+%Y-%m-%d-%H-%M-%S')"
           echo "value=${timestamp}_${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_OUTPUT}"
+          echo "run_id=${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_OUTPUT}"
       - name: Validate baseline update scope
         if: inputs.update_baseline && inputs.architecture != 'all'
         shell: bash
@@ -118,147 +124,105 @@ jobs:
             python3 -c 'import json, pathlib, sys; entries=json.loads(sys.argv[1])["include"]; missing=[entry["software"] for entry in entries if not (pathlib.Path(entry["case_path"]).parent / "scripts/builders/optimized.sh").is_file()]; sys.exit("optimized build is unavailable for: " + ", ".join(sorted(set(missing))) if missing else 0)' "${matrix}"
           fi
           echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+          for architecture in x86_64 aarch64; do
+            filtered="$(python3 -c 'import json,sys; entries=json.loads(sys.argv[1])["include"]; print(json.dumps({"include":[entry for entry in entries if entry["arch"] == sys.argv[2]]},separators=(",",":")))' "${matrix}" "${architecture}")"
+            if [[ "${architecture}" == x86_64 ]]; then
+              echo "x86_matrix=${filtered}" >> "${GITHUB_OUTPUT}"
+              echo "has_x86=$(python3 -c 'import json,sys; print(str(bool(json.loads(sys.argv[1])["include"])).lower())' "${filtered}")" >> "${GITHUB_OUTPUT}"
+            else
+              echo "arm_matrix=${filtered}" >> "${GITHUB_OUTPUT}"
+              echo "has_arm=$(python3 -c 'import json,sys; print(str(bool(json.loads(sys.argv[1])["include"])).lower())' "${filtered}")" >> "${GITHUB_OUTPUT}"
+            fi
+          done
           echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
           echo '```json' >> "${GITHUB_STEP_SUMMARY}"
           echo "${matrix}" | python3 -m json.tool >> "${GITHUB_STEP_SUMMARY}"
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
-  performance:
-    name: ${{ matrix.software }} ${{ matrix.version }} (${{ matrix.arch }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}
+  performance_x86:
+    name: Run x86_64 performance cases
+    if: needs.prepare.outputs.has_x86 == 'true'
     needs: prepare
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
-    runs-on:
-      - self-hosted
-      - ${{ matrix.runner_label }}
-    timeout-minutes: ${{ matrix.job_timeout_minutes }}
-    env:
-      PERF_DEDICATED_RUNNER: "true"
-      PERF_WORK_ROOT: /home/runner/boostkit-perf
-      PERF_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
-      PERF_VARIANT: ${{ inputs.variant }}
-      PERF_SKIP_SYSTEM_PACKAGES: "true"
-      PERF_PROXY: ${{ secrets.PERF_PROXY }}
-      PERF_GITHUB_DOWNLOAD_PROXY: ""
-    steps:
-      - uses: actions/checkout@v4
-        env:
-          http_proxy: ${{ secrets.PERF_PROXY }}
-          https_proxy: ${{ secrets.PERF_PROXY }}
-          no_proxy: localhost,127.0.0.1,::1
-      - name: Global cleanup before performance test
-        run: bash framework/cleanup_environment.sh --before
-      - name: Install framework runtime dependencies from Huawei mirror
-        shell: bash
-        run: |
-          framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
-          python3 -m pip install \
-            --disable-pip-version-check \
-            --no-input \
-            --no-cache-dir \
-            --trusted-host mirrors.huaweicloud.com \
-            -i https://mirrors.huaweicloud.com/repository/pypi/simple \
-            --target "${framework_deps}" \
-            "PyYAML==6.0.2" \
-            "esdk-obs-python"
-          echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
-      - name: Verify installed framework runtime
-        run: >-
-          python3 -c "import sys, yaml; from obs import ObsClient;
-          assert sys.version_info >= (3, 11), sys.version;
-          assert yaml.__version__ == '6.0.2', yaml.__version__;
-          print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}, OBS SDK available')"
-      - name: Prepare task and capture environment
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage prepare
-      - name: Build, install and validate software
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage build
-      - name: Run software start stage
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage start
-      - name: Execute performance tests
-        id: execute
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage test
-      - name: Run software stop stage
-        if: always()
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage stop
-      - name: Validate results and finalize task report
-        if: always()
-        run: >-
-          python3 framework/run_case.py
-          --case '${{ matrix.case_path }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --stage finalize
-      - name: Global cleanup after performance test
-        id: post_cleanup
-        if: always()
-        run: bash framework/cleanup_environment.sh --after
-      - name: Record cleanup result
-        if: always()
-        run: >-
-          python3 framework/mark_cleanup.py
-          --output-dir '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
-          --outcome '${{ steps.post_cleanup.outcome }}'
-      - name: Upload complete result directory to Huawei OBS
-        if: always()
-        env:
-          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
-          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
-          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
-          OBS_AK: ${{ secrets.OBS_AK }}
-          OBS_SK: ${{ secrets.OBS_SK }}
-          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
-          PERF_PROXY: ${{ secrets.PERF_PROXY }}
-          PYTHONPATH: ${{ runner.temp }}/boostkit-framework-deps
-          http_proxy: ${{ secrets.PERF_PROXY }}
-          https_proxy: ${{ secrets.PERF_PROXY }}
-          no_proxy: localhost,127.0.0.1,::1
-        run: >-
-          python3 .github/scripts/obs_transfer.py upload-result
-          --source '.perf-output/${{ matrix.category }}/${{ matrix.software }}/${{ matrix.version }}/${{ matrix.arch }}/${{ env.PERF_RUN_ID }}'
-          --run-id '${{ env.PERF_RUN_ID }}'
-          --category '${{ matrix.category }}'
-          --software '${{ matrix.software }}'
-          --version '${{ matrix.version }}'
-          --architecture '${{ matrix.arch }}'
-          --result-directory '${{ needs.prepare.outputs.result_directory }}'
-          --variant '${{ inputs.variant }}'
+      matrix: ${{ fromJSON(needs.prepare.outputs.x86_matrix) }}
+    uses: ./.github/workflows/performance-architecture.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      timeout_minutes: ${{ matrix.job_timeout_minutes }}
+      case_path: ${{ matrix.case_path }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+    secrets: inherit
+
+  performance_arm:
+    name: Run aarch64 performance cases
+    if: needs.prepare.outputs.has_arm == 'true'
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.arm_matrix) }}
+    uses: ./.github/workflows/performance-architecture.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      timeout_minutes: ${{ matrix.job_timeout_minutes }}
+      case_path: ${{ matrix.case_path }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+    secrets: inherit
+
+  upload_x86:
+    name: Upload x86_64 results
+    if: always() && needs.prepare.result == 'success' && needs.performance_x86.result != 'skipped'
+    needs: [prepare, performance_x86]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.x86_matrix) }}
+    uses: ./.github/workflows/upload-performance-result.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+    secrets: inherit
+
+  upload_arm:
+    name: Upload aarch64 results
+    if: always() && needs.prepare.result == 'success' && needs.performance_arm.result != 'skipped'
+    needs: [prepare, performance_arm]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.arm_matrix) }}
+    uses: ./.github/workflows/upload-performance-result.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+    secrets: inherit
 
   report:
     name: Generate consolidated report
-    if: always()
-    needs: [prepare, performance]
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, performance_x86, performance_arm, upload_x86, upload_arm]
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -292,7 +256,7 @@ jobs:
           printf '%s\n' "${EXECUTION_MATRIX}" > .perf-output/execution-matrix.json
           python3 .github/scripts/obs_transfer.py download-results \
             --destination .perf-output/downloaded \
-            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
+            --run-id '${{ needs.prepare.outputs.result_run_id }}' \
             --result-directory "${RESULT_DIRECTORY}" \
             --variant '${{ inputs.variant }}' \
             --matrix .perf-output/execution-matrix.json
@@ -315,11 +279,16 @@ jobs:
         run: >-
           python3 .github/scripts/obs_transfer.py upload-report
           --source .perf-output/report
-          --run-id '${{ github.run_id }}-${{ github.run_attempt }}'
+          --run-id '${{ needs.prepare.outputs.result_run_id }}'
           --result-directory '${{ needs.prepare.outputs.result_directory }}'
           --variant '${{ inputs.variant }}'
       - name: Prepare permanent result history
-        if: needs.performance.result == 'success'
+        id: prepare_history
+        if: >-
+          (needs.performance_x86.result == 'success' || needs.performance_x86.result == 'skipped') &&
+          (needs.performance_arm.result == 'success' || needs.performance_arm.result == 'skipped') &&
+          (needs.upload_x86.result == 'success' || needs.upload_x86.result == 'skipped') &&
+          (needs.upload_arm.result == 'success' || needs.upload_arm.result == 'skipped')
         env:
           UPDATE_BASELINE: ${{ inputs.update_baseline }}
           INPUT_VARIANT: ${{ inputs.variant }}
@@ -337,12 +306,12 @@ jobs:
             --input-root .perf-output/downloaded \
             --report-dir .perf-output/report \
             --output-root .perf-output/permanent \
-            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
+            --run-id '${{ needs.prepare.outputs.result_run_id }}' \
             --repository '${{ github.repository }}' \
             --source-commit '${{ github.sha }}' \
             --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
             --variant '${{ inputs.variant }}' \
             "${baseline_args[@]}"
       - name: Publish permanent results branch
-        if: needs.performance.result == 'success'
+        if: steps.prepare_history.outcome == 'success'
         run: bash framework/publish_result_history.sh .perf-output/permanent performance-results

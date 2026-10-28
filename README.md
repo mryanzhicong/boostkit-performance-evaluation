@@ -16,10 +16,10 @@
 两个工作流使用相同的测试阶段：
 
 ```text
-校验清单并生成矩阵 → prepare → build → start → test → stop → finalize → cleanup → 汇总报告
+校验清单并生成矩阵 → prepare → build → start → test → stop → finalize → cleanup
 ```
 
-每个软件、版本、架构是独立任务。`stop` 和 `cleanup` 在失败路径仍会执行。正式与开发工作流分别使用独立的 Runner 标签和并发组。
+每个软件、版本、架构是独立任务。`stop` 和 `cleanup` 在失败路径仍会执行。正式工作流在清理后保存完整结果，再由对应架构的独立上传任务传至 OBS；两个架构的上传任务完成后，原 `Generate consolidated report` 任务生成汇总报告。开发工作流仍直接使用 Actions Artifact。正式与开发工作流分别使用独立的 Runner 标签和并发组。
 
 ## Runner 要求
 
@@ -30,7 +30,7 @@ Runner 标签统一在 [config/defaults.yaml](config/defaults.yaml) 中维护：
 | 正式测试 | `PERF_RUNNER_X86_64` | `PERF_RUNNER_ARM64` |
 | 开发验证 | `PERF_DEV_X86_64` | `PERF_DEV_ARM64` |
 
-Runner 应是与标签架构一致的专用裸机，安装 Git、Python 3.11+、pip 和 `dnf`，并允许测试账户管理 `/home/runner/boostkit-perf` 及其测试进程。软件脚本通过 `dnf` 安装缺失的系统依赖；若需要代理，工作流从 `secrets.PERF_PROXY` 提供代理地址，脚本将其传给 `dnf`，不依赖 `sudo` 继承代理环境变量。
+Runner 应是与标签架构一致的专用裸机，安装 Git、Python 3.11+、pip 和 `dnf`，并允许测试账户管理 `/home/runner/boostkit-perf`、`/home/runner/boostkit-perf-result` 及其测试进程。软件脚本通过 `dnf` 安装缺失的系统依赖；若需要代理，工作流从 `secrets.PERF_PROXY` 提供代理地址，脚本将其传给 `dnf`，不依赖 `sudo` 继承代理环境变量。
 
 测试账户还需要免密执行 `dnf`，以及读取完整 CPU 型号所用的 `lscpu`。以下示例中的 `runner` 应替换为实际 Actions 服务账户；如软件另需特权操作，应单独配置：
 
@@ -40,7 +40,7 @@ runner ALL=(root) NOPASSWD: /usr/bin/dnf, /usr/bin/env LC_ALL=C /usr/bin/lscpu
 
 正式工作流上传和汇总结果还需要配置 `OBS_ENDPOINT`、`OBS_BUCKET`、`OBS_PREFIX`、`OBS_AK`、`OBS_SK`；使用临时凭据时配置 `OBS_SECURITY_TOKEN`。这些值通过 GitHub Actions Secrets 提供。
 
-任务的源码、构建、安装、缓存和测试数据统一放在 `/home/runner/boostkit-perf/<软件名>/` 下。工作流仅在专用 Runner 上执行全局清理；清理会删除该工作根目录中的任务数据，请勿将其他资料放入其中。
+任务的源码、构建、安装、缓存和测试数据统一放在 `/home/runner/boostkit-perf/<软件名>/` 下。工作流仅在专用 Runner 上执行全局清理；清理会删除该工作根目录中的任务数据，请勿将其他资料放入其中。正式结果保存在独立的 `/home/runner/boostkit-perf-result`，不受该清理步骤影响。目前每个正式架构标签对应一台 Runner；上传任务必须回到保存结果的同一台机器，增加同架构 Runner 前需配置专属标签或共享存储。
 
 ## 结果与报告
 
@@ -51,6 +51,14 @@ runner ALL=(root) NOPASSWD: /usr/bin/dnf, /usr/bin/env LC_ALL=C /usr/bin/lscpu
 ```
 
 其中包含原始测试输出、阶段日志、`normalized_result.json` 和单架构 `report.md`。汇总阶段按同软件、同版本配对两个架构的结果，校验可比性并生成跨架构报告；缺失或不匹配的指标不会被强行对齐。正式测试的完整任务目录和汇总报告上传 OBS，供汇总阶段读取；`performance-results` 分支保存精简的不可变历史及可选基线。开发测试只使用 Actions Artifact，不写入 OBS 或正式历史。
+
+正式测试完成清理并记录清理结果后，将完整结果原子保存至 Runner 本地：
+
+```text
+/home/runner/boostkit-perf-result/<分类>/<软件>/<版本>/[optimized/]<结果目录>/<架构>/
+```
+
+基础版没有 `base/` 层；`<结果目录>` 为 UTC+8 时间戳加原始 run ID。上传任务只读取此目录，OBS 失败不需要重新测试。重试失败任务时使用首次准备阶段固定的 run ID 和结果目录，不使用新的 `run_attempt` 拼接路径。该本地目录不自动删除，确认已归档后由管理员按需清理。
 
 ## 本地校验与软件接入
 
