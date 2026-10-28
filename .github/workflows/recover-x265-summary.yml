@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       x86_run_id:
-        description: "Run ID of the x86_64 result in OBS"
+        description: "Run ID of the x86_64 result retained on the production x86 runner"
         required: true
         default: "40516025943-1"
         type: string
@@ -34,7 +34,24 @@ jobs:
     runs-on: [self-hosted, PERF_RUNNER_X86_64]
     timeout-minutes: 120
     steps:
+      - name: Preserve x86_64 result before checkout
+        id: preserve
+        shell: bash
+        env:
+          X86_RUN_ID: ${{ inputs.x86_run_id }}
+        run: |
+          source_dir="${GITHUB_WORKSPACE}/.perf-output/Media/x265/4.2/x86_64/${X86_RUN_ID}"
+          if [[ ! -s "${source_dir}/normalized_result.json" ]]; then
+            echo "::error::Missing x86_64 result: ${source_dir}/normalized_result.json"
+            exit 1
+          fi
+          snapshot="$(mktemp -d "${RUNNER_TEMP}/x265-recovery.XXXXXX")"
+          cp -a "${source_dir}/." "${snapshot}/"
+          echo "path=${snapshot}" >> "${GITHUB_OUTPUT}"
+
       - uses: actions/checkout@v4
+        with:
+          clean: false
         env:
           http_proxy: ${{ secrets.PERF_PROXY }}
           https_proxy: ${{ secrets.PERF_PROXY }}
@@ -55,8 +72,8 @@ jobs:
             --target "${dependency_dir}" "esdk-obs-python"
           echo "PYTHONPATH=${dependency_dir}" >> "${GITHUB_ENV}"
 
-      - name: Download existing x86_64 and aarch64 results from OBS
-        id: download_results
+      - name: Download existing aarch64 result from OBS
+        id: download_arm
         shell: bash
         env:
           OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
@@ -66,18 +83,9 @@ jobs:
           OBS_SK: ${{ secrets.OBS_SK }}
           OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
           PERF_PROXY: ${{ secrets.PERF_PROXY }}
-          X86_RUN_ID: ${{ inputs.x86_run_id }}
-          X86_RESULT_DIRECTORY: ${{ inputs.x86_result_directory }}
           ARM_RUN_ID: ${{ inputs.arm_run_id }}
           ARM_RESULT_DIRECTORY: ${{ inputs.arm_result_directory }}
         run: |
-          printf '%s\n' '{"include":[{"category":"Media","software":"x265","version":"4.2","arch":"x86_64"}]}' \
-            > "${RUNNER_TEMP}/x265-recovery-matrix.json"
-          python3 .github/scripts/obs_transfer.py download-results \
-            --destination "${RUNNER_TEMP}/x265-recovery-input" \
-            --run-id "${X86_RUN_ID}" \
-            --result-directory "${X86_RESULT_DIRECTORY}" \
-            --matrix "${RUNNER_TEMP}/x265-recovery-matrix.json"
           printf '%s\n' '{"include":[{"category":"Media","software":"x265","version":"4.2","arch":"aarch64"}]}' \
             > "${RUNNER_TEMP}/x265-recovery-matrix.json"
           python3 .github/scripts/obs_transfer.py download-results \
@@ -85,6 +93,16 @@ jobs:
             --run-id "${ARM_RUN_ID}" \
             --result-directory "${ARM_RESULT_DIRECTORY}" \
             --matrix "${RUNNER_TEMP}/x265-recovery-matrix.json"
+
+      - name: Add preserved x86_64 result
+        id: add_x86
+        shell: bash
+        env:
+          X86_SNAPSHOT: ${{ steps.preserve.outputs.path }}
+        run: |
+          target="${RUNNER_TEMP}/x265-recovery-input/Media/x265/4.2/x86_64"
+          mkdir -p "${target}"
+          cp -a "${X86_SNAPSHOT}/." "${target}/"
 
       - name: Generate and validate cross-architecture report
         id: compare
@@ -99,7 +117,7 @@ jobs:
             "${RUNNER_TEMP}/x265-recovery-report"
 
       - name: Publish recovered summary
-        if: always() && steps.download_results.outcome == 'success'
+        if: always() && steps.add_x86.outcome == 'success'
         shell: bash
         env:
           X86_RUN_ID: ${{ inputs.x86_run_id }}
