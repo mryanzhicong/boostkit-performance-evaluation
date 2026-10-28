@@ -26,7 +26,7 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-}"
 MYSQL_PREPARED_STMT_LIMIT=1048576
 MYSQL_IMAGE_ARCHIVE_DIR="${MYSQL_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
-MYSQL_CERTS_DIR="${MYSQL_CERTS_DIR:-/home/runner/software/certs-master}"
+MYSQL_CA_ANCHORS_DIR="${MYSQL_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 MYSQL_CONTAINER_IMAGE=""
 MYSQL_CONTAINER_NAME=""
 
@@ -268,11 +268,11 @@ require_mysql_container() {
         return 40
     }
     if [[ -n "${PERF_PROXY:-}" ]]; then
-        if [[ ! -d "${MYSQL_CERTS_DIR}" || ! -f "${MYSQL_CERTS_DIR}/install_full.sh" ]]; then
-            log_message "ERROR: proxy certificate installer is missing: ${MYSQL_CERTS_DIR}/install_full.sh"
+        if [[ ! -d "${MYSQL_CA_ANCHORS_DIR}" ]]; then
+            log_message "ERROR: proxy CA certificate directory is missing: ${MYSQL_CA_ANCHORS_DIR}"
             return 30
         fi
-        cert_mount+=(--mount "type=bind,source=${MYSQL_CERTS_DIR},target=${MYSQL_CERTS_DIR},readonly")
+        cert_mount+=(--mount "type=bind,source=${MYSQL_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
     log_message "starting 8U32G MySQL container ${MYSQL_CONTAINER_NAME}: CPUs ${cpu_set}, NUMA ${numa_node}"
     docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
@@ -285,10 +285,9 @@ require_mysql_container() {
         "${cert_mount[@]}" \
         "${MYSQL_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
     if [[ -n "${PERF_PROXY:-}" ]]; then
-        log_message "installing proxy CA certificates in the private MySQL container"
-        docker exec --user 0 --workdir "${MYSQL_CERTS_DIR}" "${MYSQL_CONTAINER_NAME}" \
-            bash ./install_full.sh install || {
-            log_message "ERROR: failed to install proxy CA certificates in the MySQL container"
+        log_message "updating CA trust in the private MySQL container"
+        docker exec --user 0 "${MYSQL_CONTAINER_NAME}" update-ca-trust extract || {
+            log_message "ERROR: failed to update CA trust in the MySQL container"
             return 30
         }
     fi

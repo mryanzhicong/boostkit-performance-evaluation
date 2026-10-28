@@ -168,9 +168,9 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(
         'exit 1\n', encoding="utf-8"
     )
     fake_docker.chmod(0o755)
-    cert_dir = tmp_path / "certs-master"
+    cert_dir = tmp_path / "anchors"
     cert_dir.mkdir()
-    (cert_dir / "install_full.sh").write_text("#!/bin/bash\n", encoding="utf-8")
+    (cert_dir / "proxy-ca.crt").write_text("test CA fixture\n", encoding="utf-8")
     environment = os.environ | {
         "PATH": f"{tmp_path}:{os.environ['PATH']}",
         "DOCKER_CALLS": str(tmp_path / "docker-calls.log"),
@@ -179,7 +179,7 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(
         "RESULTS_DIR": str(tmp_path / "results"),
         "EXPECTED_ARCH": os.uname().machine,
         "MYSQL_IMAGE_ARCHIVE_DIR": str(tmp_path),
-        "MYSQL_CERTS_DIR": str(cert_dir),
+        "MYSQL_CA_ANCHORS_DIR": str(cert_dir),
         "PERF_PROXY": "http://proxy.example.invalid:8080" if proxy_enabled else "",
         "DOCKER_TEST_ARCH": "amd64" if os.uname().machine == "x86_64" else "arm64",
     }
@@ -199,11 +199,10 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(
     assert "pull" not in calls
     assert "sysbench" not in calls
     if proxy_enabled:
-        assert f"source={cert_dir},target={cert_dir},readonly" in calls
-        assert f"exec --user 0 --workdir {cert_dir}" in calls
-        assert "bash ./install_full.sh install" in calls
+        assert f"source={cert_dir},target=/etc/pki/ca-trust/source/anchors,readonly" in calls
+        assert f"exec --user 0 boostkit-mysql-{os.uname().machine}-unit-test-1 update-ca-trust extract" in calls
     else:
-        assert "install_full.sh" not in calls
+        assert "update-ca-trust" not in calls
 
 
 def test_rejects_wrong_openeuler_image_release(tmp_path: Path) -> None:

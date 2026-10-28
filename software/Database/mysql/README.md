@@ -71,10 +71,11 @@ Runner 必须能使用 Docker daemon。脚本先读取
 容器内若缺少 MySQL 运行库，脚本在该容器中通过
 `dnf` 安装 `libaio`、`numactl-libs`，不向宿主机安装这些运行库。
 正式测试启用 `PERF_PROXY` 时，两台 Runner 还须提供
-`/home/runner/software/certs-master/install_full.sh`。脚本先确认该文件存在，
-将证书目录只读挂载到容器内的相同路径，并以容器内的 root 用户执行
-`bash ./install_full.sh install`；成功后才运行容器内的 `dnf`。
-未启用 `PERF_PROXY` 时不挂载或执行证书脚本。
+`/home/runner/software/anchors/` 中的代理 CA 证书。脚本将该目录只读挂载到
+容器内的 `/etc/pki/ca-trust/source/anchors/`，以容器内的 root 用户执行
+`update-ca-trust extract`；成功后才运行容器内的 `dnf`。不会执行宿主机上的
+证书安装脚本，也不会修改宿主机的信任库。未启用 `PERF_PROXY` 时跳过此步骤。
+`MYSQL_CA_ANCHORS_DIR` 可指定其他宿主机证书目录。
 
 下面是启用代理时的容器启动及证书安装命令形态：
 
@@ -86,11 +87,10 @@ docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
   --mount type=bind,source=/etc/group,target=/etc/group,readonly \
-  --mount type=bind,source=/home/runner/software/certs-master,target=/home/runner/software/certs-master,readonly \
+  --mount type=bind,source=/home/runner/software/anchors,target=/etc/pki/ca-trust/source/anchors,readonly \
   "${MYSQL_CONTAINER_IMAGE}" sleep infinity
 
-docker exec --user 0 --workdir /home/runner/software/certs-master \
-  "${MYSQL_CONTAINER_NAME}" bash ./install_full.sh install
+docker exec --user 0 "${MYSQL_CONTAINER_NAME}" update-ca-trust extract
 ```
 
 随后初始化并启动 MySQL：
