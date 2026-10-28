@@ -18,7 +18,7 @@ Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
 | MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
-| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/mysql/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取公共目录 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
 | Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
 | LuaJIT | [上游 LuaJIT](https://github.com/LuaJIT/LuaJIT) v2.1，固定提交 `c6ffc141a8762b41703f9287d63d93622a13dd8f` | `${PERF_WORK_DIR}/sysbench-tools/luajit-<提交>`；编译前复制到 Sysbench 私有源码目录 |
 
@@ -63,7 +63,7 @@ mv "${PERF_WORK_DIR}/mysql-8.0.43-linux-glibc2.28-${EXPECTED_ARCH}" \
 初始化与数据准备模式的命令形态：
 
 Runner 必须能使用 Docker daemon。脚本先读取
-`/home/runner/software/mysql/openEuler-24.03-LTS-SP4/openEuler-docker.<架构>.tar.xz`，缺失时从上表的
+`/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<架构>.tar.xz`，缺失时从上表的
 官方目录下载对应架构的归档；SHA-256 文件也优先从本地同目录读取，缺失时
 从官方目录下载。校验通过后执行 `docker load --input <归档>`，核对镜像架构及
 容器内的 openEuler 版本，再使用归档加载出的镜像名；不访问 Docker Hub。

@@ -21,7 +21,7 @@ YCSB 执行与结果解析位于 `scripts/results/`。
 | RocksDB | [上游 RocksDB](https://github.com/facebook/rocksdb) 标签 `v6.26.1` | `${PERF_WORK_DIR}/rocksdb-source`，宿主机编译 JNI JAR |
 | YCSB | [上游 YCSB](https://github.com/brianfrankcooper/YCSB) 提交 `19e885f7cb780fdded0547853f7810a150554caf`，构建版本 `0.18.0-SNAPSHOT` | `${PERF_WORK_DIR}/ycsb-source` 和 `ycsb-dist` |
 | JDK | openEuler 软件源的 JDK 11 | 宿主机用于构建；容器内安装 Java 11 运行环境 |
-| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/rocksdb/openEuler-24.03-LTS-SP4/`；缺失时下载到 `${PERF_WORK_DIR}`，校验 SHA-256 后 `docker load` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取公共目录 `/home/runner/software/openEuler-24.03-LTS-SP4/`；缺失时下载到 `${PERF_WORK_DIR}`，校验 SHA-256 后 `docker load` |
 
 Runner 需要可访问的 Docker daemon。缺失的宿主机依赖由脚本通过 `dnf` 安装；
 普通 Runner 用户使用 `sudo -n dnf`。RocksDB、YCSB、JNI JAR、Maven 仓库和

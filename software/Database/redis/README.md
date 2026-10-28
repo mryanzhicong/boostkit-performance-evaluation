@@ -17,7 +17,7 @@
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
 | Redis | [上游 Redis](https://github.com/redis/redis) 标签 `7.0.15` | `${PERF_WORK_DIR}/redis-source`，宿主机编译，不执行 `make install` |
-| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/redis/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取公共目录 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
 | `redis-benchmark`、`redis-cli` | 与被测 Redis 同一源码和版本 | `${PERF_WORK_DIR}/redis-source/src/`，在宿主机运行 |
 
 Runner 需要可访问的 Docker daemon。缺失的宿主机构建命令由脚本通过 `dnf`
@@ -41,7 +41,7 @@ make -j"$(nproc)" BUILD_TLS=no
 
 容器镜像按架构选取 `openEuler-docker.x86_64.tar.xz` 或
 `openEuler-docker.aarch64.tar.xz`。脚本先查找
-`/home/runner/software/redis/openEuler-24.03-LTS-SP4/` 中的归档和同名
+`/home/runner/software/openEuler-24.03-LTS-SP4/` 中的归档和同名
 `.sha256sum`；缺失时从上表的官方目录下载。SHA-256 校验通过后执行
 `docker load --input <归档>`，再核对镜像架构及容器内的 openEuler 版本。
 `REDIS_IMAGE_ARCHIVE_DIR` 可指定其他离线归档目录。
