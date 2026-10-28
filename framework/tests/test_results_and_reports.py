@@ -1,5 +1,6 @@
 """Verify normalization and cross-architecture direction semantics."""
 
+import json
 import os
 import re
 import subprocess
@@ -991,6 +992,58 @@ def test_baseline_update_rejects_a_single_architecture(tmp_path: Path) -> None:
             source_commit="abc123",
             workflow_url="https://github.example/actions/runs/12345",
             update_baseline=True,
+        )
+
+
+def test_permanent_history_accepts_independent_architecture_run_ids(tmp_path: Path) -> None:
+    input_root = tmp_path / "artifacts"
+    source_run_ids = {"x86_64": "111-1", "aarch64": "222-1"}
+    for architecture, source_run_id in source_run_ids.items():
+        result = normalized_result(architecture, 100, 10)
+        result["run_id"] = source_run_id
+        result_dir = input_root / architecture
+        atomic_write_json(result_dir / "normalized_result.json", result)
+        (result_dir / "raw-output.log").write_text(
+            f"original output from {source_run_id}\n", encoding="utf-8"
+        )
+    report_dir = tmp_path / "report"
+    generate(input_root, report_dir)
+
+    prepared = prepare(
+        input_root, report_dir, tmp_path / "permanent",
+        run_id="333-1", repository="owner/repo", source_commit="abc123",
+        workflow_url="https://github.example/actions/runs/333",
+        source_run_ids=source_run_ids,
+    )
+    assert len(prepared) == 1
+    run_root = prepared[0]
+    manifest = json.loads((run_root / "manifest.json").read_text())
+    assert manifest["run_id"] == "333-1"
+    assert manifest["source_run_ids"] == source_run_ids
+    for architecture, source_run_id in source_run_ids.items():
+        archived = json.loads(
+            (run_root / architecture / "normalized_result.json").read_text()
+        )
+        assert archived["run_id"] == source_run_id
+        assert (run_root / architecture / "raw-output.log").read_text() == (
+            f"original output from {source_run_id}\n"
+        )
+    assert (run_root / "comparison.json").is_file()
+
+
+def test_permanent_history_rejects_wrong_independent_run_id(tmp_path: Path) -> None:
+    import pytest
+
+    input_root = tmp_path / "artifacts"
+    result = normalized_result("x86_64", 100, 10)
+    result["run_id"] = "unexpected-1"
+    atomic_write_json(input_root / "x86_64" / "normalized_result.json", result)
+    with pytest.raises(ValueError, match="does not match requested 111-1"):
+        prepare(
+            input_root, tmp_path / "report", tmp_path / "permanent",
+            run_id="333-1", repository="owner/repo", source_commit="abc123",
+            workflow_url="https://github.example/actions/runs/333",
+            source_run_ids={"x86_64": "111-1"},
         )
 
 

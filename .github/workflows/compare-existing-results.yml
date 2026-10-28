@@ -36,7 +36,7 @@ on:
         options: [base, optimized]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   compare:
@@ -68,7 +68,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check --no-input \
             --target "${dependency_dir}" esdk-obs-python
           echo "PYTHONPATH=${dependency_dir}" >> "${GITHUB_ENV}"
-      - name: Download x86_64 normalized result from OBS
+      - name: Download complete x86_64 result from OBS
         env:
           OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
           OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
@@ -84,9 +84,9 @@ jobs:
           python3 .github/scripts/obs_transfer.py download-results \
             --destination .perf-output/existing-comparison/input \
             --run-id "${RUN_ID}" --result-directory "${RESULT_DIRECTORY}" \
-            --variant "${VARIANT}" --only-file normalized_result.json \
+            --variant "${VARIANT}" \
             --matrix .perf-output/existing-comparison/x86_64-matrix.json
-      - name: Download aarch64 normalized result from OBS
+      - name: Download complete aarch64 result from OBS
         env:
           OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
           OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
@@ -102,7 +102,7 @@ jobs:
           python3 .github/scripts/obs_transfer.py download-results \
             --destination .perf-output/existing-comparison/input \
             --run-id "${RUN_ID}" --result-directory "${RESULT_DIRECTORY}" \
-            --variant "${VARIANT}" --only-file normalized_result.json \
+            --variant "${VARIANT}" \
             --matrix .perf-output/existing-comparison/aarch64-matrix.json
       - name: Verify identities and generate cross-architecture report
         env:
@@ -134,6 +134,47 @@ jobs:
           printf 'Source runs: x86_64 `%s`, aarch64 `%s`.\n\n' \
             "${X86_RUN_ID}" "${ARM_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
           cat .perf-output/existing-comparison/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+      - name: Allocate UTC+8 consolidated result directory
+        shell: bash
+        run: |
+          timestamp="$(TZ=Asia/Shanghai date '+%Y-%m-%d-%H-%M-%S')"
+          echo "REPORT_RESULT_DIRECTORY=${timestamp}_${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_ENV}"
+      - name: Upload consolidated report to Huawei OBS
+        env:
+          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
+          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
+          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
+          OBS_AK: ${{ secrets.OBS_AK }}
+          OBS_SK: ${{ secrets.OBS_SK }}
+          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 .github/scripts/obs_transfer.py upload-report \
+            --source .perf-output/existing-comparison/report \
+            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
+            --result-directory "${REPORT_RESULT_DIRECTORY}" --variant "${VARIANT}"
+      - name: Prepare permanent result history
+        env:
+          X86_RUN_ID: ${{ inputs.x86_run_id }}
+          ARM_RUN_ID: ${{ inputs.arm_run_id }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 framework/prepare_result_history.py \
+            --input-root .perf-output/existing-comparison/input \
+            --report-dir .perf-output/existing-comparison/report \
+            --output-root .perf-output/existing-comparison/permanent \
+            --run-id '${{ github.run_id }}-${{ github.run_attempt }}' \
+            --source-run-id "x86_64=${X86_RUN_ID}" \
+            --source-run-id "aarch64=${ARM_RUN_ID}" \
+            --repository '${{ github.repository }}' \
+            --source-commit '${{ github.sha }}' \
+            --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            --variant "${VARIANT}"
+      - name: Publish permanent results branch
+        shell: bash
+        run: bash framework/publish_result_history.sh .perf-output/existing-comparison/permanent performance-results
       - name: Save generated report artifact
         uses: actions/upload-artifact@v4
         with:

@@ -70,11 +70,14 @@ def prepare(
     workflow_url: str,
     variant: str = "base",
     update_baseline: bool = False,
+    source_run_ids: dict[str, str] | None = None,
 ) -> list[Path]:
     if variant not in {"base", "optimized"}:
         raise ValueError(f"invalid build variant: {variant}")
     if variant == "optimized" and update_baseline:
         raise ValueError("optimized results cannot update the base baseline.json")
+    if source_run_ids is not None and update_baseline:
+        raise ValueError("independently sourced results cannot update the baseline")
     normalized_paths = sorted(input_root.rglob("normalized_result.json"))
     if not normalized_paths:
         raise ValueError("no normalized_result.json files were downloaded")
@@ -82,7 +85,7 @@ def prepare(
     output_root.mkdir(parents=True, exist_ok=True)
     (output_root / "README.md").write_text(
         "# Performance result history\n\n"
-        "This branch is maintained by the manually triggered performance workflow.\n"
+        "This branch is maintained by manually triggered performance workflows.\n"
         "Result directories use UTC+8 time: YYYY-MM-DD-HH-MM-SS_RUN_ID-ATTEMPT.\n"
         "Optimized runs are stored in an optimized/ directory below the version.\n"
         "Each architecture keeps its normalized data, report, declared outputs, "
@@ -97,8 +100,12 @@ def prepare(
     for normalized_path in normalized_paths:
         result = load_json(normalized_path, {})
         category, software, version, architecture, result_run_id = _identity(result)
-        if result_run_id != run_id:
-            raise ValueError(f"result run_id {result_run_id} does not match requested {run_id}")
+        expected_run_id = source_run_ids.get(architecture) if source_run_ids is not None else run_id
+        if result_run_id != expected_run_id:
+            raise ValueError(
+                f"result run_id {result_run_id} does not match requested {expected_run_id} "
+                f"for {architecture}"
+            )
         if result.get("status") != "passed" or result.get("cleanup_status") != "passed":
             raise ValueError(
                 f"permanent history requires passed test and cleanup: "
@@ -165,6 +172,11 @@ def prepare(
             "parameter_signatures": sorted(parameter_signatures),
             "results": result_summaries,
         }
+        if source_run_ids is not None:
+            manifest["source_run_ids"] = {
+                architecture: source_run_ids[architecture]
+                for architecture in sorted(architecture_dirs)
+            }
         atomic_write_json(run_root / "manifest.json", manifest)
         prepared.append(run_root)
 
@@ -205,7 +217,21 @@ def main() -> int:
     parser.add_argument("--workflow-url", required=True)
     parser.add_argument("--variant", choices=("base", "optimized"), default="base")
     parser.add_argument("--update-baseline", action="store_true")
+    parser.add_argument(
+        "--source-run-id", action="append", default=[], metavar="ARCH=RUN_ID",
+        help="Original architecture run ID when combining independently executed runs",
+    )
     args = parser.parse_args()
+    source_run_ids: dict[str, str] | None = None
+    if args.source_run_id:
+        source_run_ids = {}
+        for item in args.source_run_id:
+            architecture, separator, source_id = item.partition("=")
+            if not separator or architecture not in {"x86_64", "aarch64"} or not source_id:
+                parser.error(f"invalid --source-run-id {item!r}; expected x86_64=ID or aarch64=ID")
+            if architecture in source_run_ids:
+                parser.error(f"duplicate --source-run-id for {architecture}")
+            source_run_ids[architecture] = source_id
     paths = prepare(
         args.input_root,
         args.report_dir,
@@ -216,6 +242,7 @@ def main() -> int:
         workflow_url=args.workflow_url,
         variant=args.variant,
         update_baseline=args.update_baseline,
+        source_run_ids=source_run_ids,
     )
     print(json.dumps([str(path) for path in paths], ensure_ascii=False))
     return 0
