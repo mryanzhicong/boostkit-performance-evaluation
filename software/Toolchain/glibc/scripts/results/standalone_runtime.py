@@ -164,7 +164,7 @@ def record_build_info(
             ),
             "benchset": benchset.split(),
             "timing_backend": "clock_gettime(CLOCK_MONOTONIC), ns",
-            "benchtest_patch": "scripts/glibc-2.31-benchtests.patch",
+            "benchtest_patch": "scripts/glibc-2.44-benchtests.patch",
         },
     )
 

@@ -1,4 +1,4 @@
-"""Checks for the glibc 2.31 public-function metric contract."""
+"""Checks for the glibc 2.44 public-function metric contract."""
 
 import importlib.util
 import json
@@ -35,7 +35,9 @@ def write_output(directory, function, *, timing_type="clock_gettime_ns", public=
             "timings": [90.0, float(length // 1024)] if public else [90.0],
         }
         if function == "memcmp":
-            row["expected_result"] = 0
+            row["result"] = 0
+        else:
+            row["dst > src"] = 0
         rows.append(row)
     (directory / f"bench-{function}.out").write_text(
         json.dumps(
@@ -55,15 +57,15 @@ def test_public_metrics_use_same_scenarios_and_nanoseconds(tmp_path):
     metrics = PARSER.extract_metrics(tmp_path)
 
     assert len(metrics) == 4
-    assert metrics["memcpy.length=2048.align1=0.align2=0"]["value"] == 2
-    assert metrics["memcmp.length=4096.align1=0.align2=0.expected_result=0"]["value"] == 4
+    assert metrics["memcpy.length=2048.align1=0.align2=0.dst_gt_src=0"]["value"] == 2
+    assert metrics["memcmp.length=4096.align1=0.align2=0.result=0"]["value"] == 4
     assert {metric["raw_unit"] for metric in metrics.values()} == {"ns"}
     assert {metric["source_field"].split(".")[-1] for metric in metrics.values()} == {
         "timings[1]"
     }
     standalone_metrics = RUNTIME.extract_metrics(
-        {"software": "glibc", "version": "2.31", "architecture": "x86_64", "results": metrics},
-        "2.31",
+        {"software": "glibc", "version": "2.44", "architecture": "x86_64", "results": metrics},
+        "2.44",
         "x86_64",
     )
     assert set(standalone_metrics) == set(metrics)
@@ -94,7 +96,7 @@ def test_memcpy_page_size_duplicate_uses_first_sweep_result(tmp_path):
     payload["functions"]["memcpy"]["results"].append(duplicate)
     path.write_text(json.dumps(payload), encoding="utf-8")
 
-    metric = PARSER.extract_metrics(tmp_path)["memcpy.length=4096.align1=0.align2=0"]
+    metric = PARSER.extract_metrics(tmp_path)["memcpy.length=4096.align1=0.align2=0.dst_gt_src=0"]
     assert metric["value"] == 4.0
     assert metric["source_field"] == "functions.memcpy.results[1].timings[1]"
 
@@ -104,7 +106,7 @@ def test_memcmp_requires_equal_input_marker(tmp_path):
     write_output(tmp_path, "memcmp")
     path = tmp_path / "bench-memcmp.out"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    del payload["functions"]["memcmp"]["results"][0]["expected_result"]
+    del payload["functions"]["memcmp"]["results"][0]["result"]
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="has no"):
         PARSER.extract_metrics(tmp_path)

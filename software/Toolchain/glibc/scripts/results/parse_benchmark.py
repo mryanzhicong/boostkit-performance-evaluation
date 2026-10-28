@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract comparable public memcpy/memcmp timings from glibc 2.31 benchtests."""
+"""Extract comparable public memcpy/memcmp timings from glibc 2.44 benchtests."""
 
 from __future__ import annotations
 
@@ -43,8 +43,10 @@ def extract_metrics(directory: Path) -> dict[str, Any]:
         implementation_index = benchmark["ifuncs"].index(function)
         for length in LENGTHS:
             scenario = {"length": length, "align1": 0, "align2": 0}
-            if function == "memcmp":
-                scenario["expected_result"] = 0
+            if function == "memcpy":
+                scenario["dst > src"] = 0
+            else:
+                scenario["result"] = 0
             matches = [
                 (index, row)
                 for index, row in enumerate(benchmark["results"])
@@ -71,8 +73,7 @@ def extract_metrics(directory: Path) -> dict[str, Any]:
             ):
                 raise ValueError(f"{source_file} contains an invalid public timing: {value!r}")
             name = f"{function}.length={length}.align1=0.align2=0"
-            if function == "memcmp":
-                name += ".expected_result=0"
+            name += ".dst_gt_src=0" if function == "memcpy" else ".result=0"
             results[name] = {
                 "source_name": name,
                 "source_field": (
@@ -104,7 +105,7 @@ def main() -> int:
         print(f"[glibc-parse] ERROR: {exc}", file=sys.stderr)
         return 1
     payload = {
-        "benchmark": "glibc_2.31_string_benchtests",
+        "benchmark": "glibc_2.44_string_benchtests",
         "software": "glibc",
         "version": os.environ["SOFTWARE_VERSION"],
         "architecture": os.environ["EXPECTED_ARCH"],
@@ -115,7 +116,7 @@ def main() -> int:
             "build_targets": ["bench-timing-type", "bench-memcpy", "bench-memcmp"],
             "run_commands": ["bench-memcpy", "bench-memcmp"],
             "timing_backend": "clock_gettime(CLOCK_MONOTONIC)",
-            "benchtest_patch": "scripts/glibc-2.31-benchtests.patch",
+            "benchtest_patch": "scripts/glibc-2.44-benchtests.patch",
             "selected_lengths": list(LENGTHS),
         },
         "results": results,

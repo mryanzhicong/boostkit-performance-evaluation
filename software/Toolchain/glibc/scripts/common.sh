@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOFTWARE_VERSION="${SOFTWARE_VERSION:-2.31}"
+SOFTWARE_VERSION="${SOFTWARE_VERSION:-2.44}"
 EXPECTED_ARCH="${EXPECTED_ARCH:-$(uname -m)}"
 PERF_VARIANT="${PERF_VARIANT:-base}"
 PERF_RUN_ID="${PERF_RUN_ID:-}"
@@ -10,16 +10,12 @@ RESULTS_DIR="${RESULTS_DIR:-}"
 PERF_WORK_DIR="${PERF_WORK_DIR:-}"
 PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 GLIBC_SOURCE_URL="${GLIBC_SOURCE_URL:-https://ftp.gnu.org/gnu/glibc}"
-MAKE_SOURCE_URL="https://ftp.gnu.org/gnu/make"
-MAKE_VERSION="4.3"
-MAKE_ARCHIVE_SHA256="e05fdde47c5f7ca45cb697e973894ff4f5d79e13b750ed57d7b66d8defc78e19"
 # Build and run only these two official benchtest executables.
 GLIBC_BENCHSET="memcpy memcmp"
 GLIBC_BENCHMARKS=(bench-memcpy bench-memcmp)
 SRC_DIR=""
 BUILD_DIR=""
 INSTALL_DIR=""
-MAKE_INSTALL_DIR=""
 LDCONFIG_BIN=""
 GCC_VERSION_STRING=""
 TIMING_TYPE_OUTPUT=""
@@ -92,13 +88,7 @@ configure_runtime_paths() {
     SRC_DIR="${PERF_WORK_DIR}/glibc-src"
     BUILD_DIR="${PERF_WORK_DIR}/glibc-build"
     INSTALL_DIR="${PERF_WORK_DIR}/glibc-install"
-    MAKE_INSTALL_DIR="${PERF_WORK_DIR}/make-${MAKE_VERSION}-install"
     LDCONFIG_BIN="${BUILD_DIR}/elf/ldconfig"
-    if [[ -x "${MAKE_INSTALL_DIR}/bin/make" &&
-          "${PATH}" != "${MAKE_INSTALL_DIR}/bin:"* ]]; then
-        PATH="${MAKE_INSTALL_DIR}/bin:${PATH}"
-        export PATH
-    fi
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR
 }

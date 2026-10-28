@@ -7,19 +7,15 @@ start_glibc_runtime() {
     # runner environment again.  Do not let host library search paths affect
     # the freshly built glibc benchtest tools.
     unset LD_LIBRARY_PATH
-    if [[ "$(make --version | head -n 1)" != "GNU Make ${MAKE_VERSION}" ]]; then
-        log_message "ERROR: private GNU Make ${MAKE_VERSION} is required for glibc 2.31 benchtests"
-        return 40
-    fi
     if [[ ! -x "${LDCONFIG_BIN}" ]]; then
         log_message "ERROR: glibc is not built; run the build stage first"
         return 40
     fi
-    log_message "building glibc 2.31 memcpy and memcmp benchtests"
-    if ! make -C "${SRC_DIR}/benchtests" objdir="${BUILD_DIR}" \
+    log_message "building glibc ${SOFTWARE_VERSION} memcpy and memcmp benchtests"
+    if ! make -C "${SRC_DIR}/benchtests" objdir="${BUILD_DIR}" USE_CLOCK_GETTIME=1 \
         "${BUILD_DIR}/benchtests/bench-timing-type" \
         "${BUILD_DIR}/benchtests/bench-memcpy" \
-        "${BUILD_DIR}/benchtests/bench-memcmp" CXX=; then
+        "${BUILD_DIR}/benchtests/bench-memcmp"; then
         log_message "ERROR: glibc memcpy and memcmp benchtest build failed"
         return 40
     fi

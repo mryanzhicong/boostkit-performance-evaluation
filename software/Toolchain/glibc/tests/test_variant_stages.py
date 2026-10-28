@@ -87,7 +87,9 @@ def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> Non
                     "timings": [90.0, float(length // 1024)],
                 }
                 if function == "memcmp":
-                    row["expected_result"] = 0
+                    row["result"] = 0
+                else:
+                    row["dst > src"] = 0
                 rows.append(row)
             (directory / f"bench-{function}.out").write_text(
                 json.dumps(
@@ -113,7 +115,7 @@ def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> Non
             ],
             env={
                 **os.environ,
-                "SOFTWARE_VERSION": "2.31",
+                "SOFTWARE_VERSION": "2.44",
                 "EXPECTED_ARCH": architecture,
                 "PERF_VARIANT": "base",
                 "TIMING_TYPE_OUTPUT": "clock_gettime_ns",

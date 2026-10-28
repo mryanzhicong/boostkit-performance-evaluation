@@ -1,0 +1,35 @@
+--- a/benchtests/bench-timing.h
++++ b/benchtests/bench-timing.h
+@@ -29,7 +29,11 @@
+ #define GLRO(x) _##x
+ typedef hp_timing_t timing_t;
+ 
+-#define TIMING_TYPE "hp_timing"
++#ifdef USE_CLOCK_GETTIME
++# define TIMING_TYPE "clock_gettime_ns"
++#else
++# define TIMING_TYPE "hp_timing"
++#endif
+ 
+ #define TIMING_NOW(var) HP_TIMING_NOW (var)
+ #define TIMING_DIFF(diff, start, end) HP_TIMING_DIFF ((diff), (start), (end))
+--- a/benchtests/bench-string.h
++++ b/benchtests/bench-string.h
+@@ -195,16 +195,12 @@
+ 	 if (func_count != 0)						      \
+ 	   {								      \
+ 	     int f;							      \
+-	     impl_t *skip = NULL, *a;					      \
++	     impl_t *a;					      \
+ 	     for (impl = __start_impls; impl < __stop_impls; ++impl)	      \
+-	       if (strcmp (impl->name, TEST_NAME) == 0)			      \
+-		 skip = impl;						      \
+-	       else							      \
+ 		 impl_count++;						      \
+ 	     a = impl_array = xmalloc ((impl_count + func_count) *	      \
+ 				       sizeof (impl_t));		      \
+ 	     for (impl = __start_impls; impl < __stop_impls; ++impl)	      \
+-	       if (impl != skip)					      \
+ 		 *a++ = *impl;						      \
+ 	     for (f = 0; f < func_count; f++)				      \
+ 	       if (func_list[f].usable)					      \

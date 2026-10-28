@@ -62,8 +62,8 @@ prepare_glibc_source() {
     # The official GNU release checksums are declared beside the download
     # logic: adding a version requires adding its checksum here.
     case "${SOFTWARE_VERSION}" in
-        2.31)
-            expected_sha256="9246fe44f68feeec8c666bb87973d590ce0137cca145df014c72ec95be9ffd17"
+        2.44)
+            expected_sha256="37f600f2bef3c5e8300147059568b2a2e40a7ad6ccc65ce942556d49429cc667"
             ;;
         *)
             log_message "ERROR: no official GNU checksum is declared for glibc ${SOFTWARE_VERSION}"
@@ -105,66 +105,16 @@ prepare_glibc_source() {
         log_message "ERROR: failed to move the unpacked source into ${SRC_DIR}"
         return 30
     fi
-    # The upstream 2.31 benchtests use TSC ticks on x86_64 and nanoseconds
-    # on aarch64. Apply the same measurement-only changes to both builds.
+    # Keep the public function entries and identify the upstream
+    # USE_CLOCK_GETTIME backend explicitly in both architecture outputs.
     if ! patch --batch --forward --fuzz=0 -l -p1 -d "${SRC_DIR}" \
-        -i "${SCRIPT_DIR}/scripts/glibc-2.31-benchtests.patch"; then
-        log_message "ERROR: failed to apply the glibc 2.31 benchtest measurement patch"
+        -i "${SCRIPT_DIR}/scripts/glibc-2.44-benchtests.patch"; then
+        log_message "ERROR: failed to apply the glibc 2.44 benchtest measurement patch"
         return 30
     fi
     if [[ "${tarball}" == "${PERF_WORK_DIR}/"* ]]; then
         rm -f "${tarball}"
     fi
-}
-
-prepare_compatible_make() {
-    local archive="${PERF_WORK_DIR}/make-${MAKE_VERSION}.tar.gz"
-    local local_archive="/home/runner/software/glibc/make-${MAKE_VERSION}.tar.gz"
-    local source_dir="${PERF_WORK_DIR}/make-${MAKE_VERSION}-src"
-    local actual_sha256
-
-    if [[ -f "${local_archive}" ]]; then
-        archive="${local_archive}"
-        log_message "using local GNU Make archive ${archive}"
-    else
-        log_message "downloading GNU Make ${MAKE_VERSION} from ${MAKE_SOURCE_URL}"
-        if ! curl -fsSL --retry 3 --connect-timeout 30 \
-            -o "${archive}" "${MAKE_SOURCE_URL}/make-${MAKE_VERSION}.tar.gz"; then
-            rm -f "${archive}"
-            log_message "ERROR: failed to download GNU Make ${MAKE_VERSION}"
-            return 30
-        fi
-    fi
-    actual_sha256="$(sha256sum "${archive}" | awk '{print $1}')"
-    if [[ "${actual_sha256}" != "${MAKE_ARCHIVE_SHA256}" ]]; then
-        log_message "ERROR: GNU Make ${MAKE_VERSION} archive checksum mismatch"
-        return 30
-    fi
-    mkdir -p "${source_dir}"
-    if ! tar -xzf "${archive}" -C "${source_dir}" --strip-components=1; then
-        log_message "ERROR: failed to extract GNU Make ${MAKE_VERSION}"
-        return 30
-    fi
-    if [[ "${archive}" == "${PERF_WORK_DIR}/"* ]]; then
-        rm -f "${archive}"
-    fi
-    log_message "building GNU Make ${MAKE_VERSION} in the private work directory"
-    (
-        cd "${source_dir}"
-        ./configure --prefix="${MAKE_INSTALL_DIR}" --disable-nls
-        make -j4
-        make install
-    ) || {
-        log_message "ERROR: failed to build GNU Make ${MAKE_VERSION}"
-        return 30
-    }
-    if [[ "$("${MAKE_INSTALL_DIR}/bin/make" --version | head -n 1)" != "GNU Make ${MAKE_VERSION}" ]]; then
-        log_message "ERROR: private GNU Make ${MAKE_VERSION} is unavailable"
-        return 30
-    fi
-    PATH="${MAKE_INSTALL_DIR}/bin:${PATH}"
-    export PATH
-    log_message "using private $(make --version | head -n 1)"
 }
 
 build_glibc_base() {
@@ -178,7 +128,6 @@ build_glibc_base() {
         return 20
     fi
     prepare_glibc_source || return $?
-    prepare_compatible_make || return $?
     GCC_VERSION_STRING="$(gcc --version | head -n 1)"
 
     log_message "configuring glibc ${SOFTWARE_VERSION} (out-of-tree build)"
@@ -199,9 +148,7 @@ build_glibc_base() {
     (
         cd "${BUILD_DIR}"
         unset LD_LIBRARY_PATH
-        # The runner's newer libstdc++ requires symbols absent from glibc 2.31.
-        # Use glibc's C implementation of its build-only links-dso helper.
-        make -j"$(nproc)" CXX=
+        make -j"$(nproc)"
     ) || {
         log_message "ERROR: glibc make build failed"
         return 40
@@ -214,7 +161,7 @@ build_glibc_base() {
     (
         cd "${BUILD_DIR}"
         unset LD_LIBRARY_PATH
-        make install cross-compiling=yes CXX=
+        make install cross-compiling=yes
     ) || {
         log_message "ERROR: glibc installation into ${INSTALL_DIR} failed"
         return 40
@@ -232,7 +179,7 @@ build_glibc_base() {
         log_message "ERROR: built ldconfig cannot report its version"
         return 40
     fi
-    # Output format: "ldconfig (GNU libc) 2.31".
+    # Output format: "ldconfig (GNU libc) 2.44".
     actual_version="$(printf '%s\n' "${version_output}" | awk '{print $NF}')"
     if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
         log_message "ERROR: built glibc reports ${actual_version}, requested ${SOFTWARE_VERSION}"
