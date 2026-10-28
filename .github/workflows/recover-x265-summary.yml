@@ -51,6 +51,7 @@ jobs:
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
           temporary = Path(os.environ["RUNNER_TEMP"])
           roots = [
+              Path("/home/runner") / run_id,
               workspace / ".perf-output" / "Media" / "x265" / "4.2" / "x86_64" / run_id,
               *sorted(temporary.glob("x265-recovery.*")),
               Path("/home/runner/boostkit-perf-result"),
@@ -59,7 +60,7 @@ jobs:
               if not root.is_dir():
                   continue
               candidates = [root / "normalized_result.json"]
-              if root.name == "boostkit-perf-result":
+              if root.name in {run_id, "boostkit-perf-result"}:
                   candidates.extend(root.rglob("normalized_result.json"))
               for normalized in candidates:
                   if not normalized.is_file():
