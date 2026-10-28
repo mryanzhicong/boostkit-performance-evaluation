@@ -40,14 +40,42 @@ jobs:
         env:
           X86_RUN_ID: ${{ inputs.x86_run_id }}
         run: |
-          source_dir="${GITHUB_WORKSPACE}/.perf-output/Media/x265/4.2/x86_64/${X86_RUN_ID}"
-          if [[ ! -s "${source_dir}/normalized_result.json" ]]; then
-            echo "::error::Missing x86_64 result: ${source_dir}/normalized_result.json"
-            exit 1
-          fi
-          snapshot="$(mktemp -d "${RUNNER_TEMP}/x265-recovery.XXXXXX")"
-          cp -a "${source_dir}/." "${snapshot}/"
-          echo "path=${snapshot}" >> "${GITHUB_OUTPUT}"
+          python3 - <<'PY'
+          import json
+          import os
+          import shutil
+          import tempfile
+          from pathlib import Path
+
+          run_id = os.environ["X86_RUN_ID"]
+          workspace = Path(os.environ["GITHUB_WORKSPACE"])
+          temporary = Path(os.environ["RUNNER_TEMP"])
+          roots = [
+              workspace / ".perf-output" / "Media" / "x265" / "4.2" / "x86_64" / run_id,
+              *sorted(temporary.glob("x265-recovery.*")),
+              Path("/home/runner/boostkit-perf-result"),
+          ]
+          for root in roots:
+              if not root.is_dir():
+                  continue
+              candidates = [root / "normalized_result.json"]
+              if root.name == "boostkit-perf-result":
+                  candidates.extend(root.rglob("normalized_result.json"))
+              for normalized in candidates:
+                  if not normalized.is_file():
+                      continue
+                  result = json.loads(normalized.read_text(encoding="utf-8"))
+                  if (result.get("run_id"), result.get("architecture")) != (run_id, "x86_64"):
+                      continue
+                  snapshot = Path(tempfile.mkdtemp(prefix="x265-recovery.", dir=temporary))
+                  shutil.copytree(normalized.parent, snapshot, dirs_exist_ok=True)
+                  print(f"Found x86_64 result at {normalized.parent}")
+                  with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+                      print(f"path={snapshot}", file=output)
+                  raise SystemExit(0)
+          print("::error::No retained x86_64 normalized result found in workspace, Runner temp, or persistent result root")
+          raise SystemExit(1)
+          PY
 
       - uses: actions/checkout@v4
         with:
