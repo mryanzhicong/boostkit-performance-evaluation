@@ -61,3 +61,31 @@ def test_upload_does_not_retry_named_obs_403(monkeypatch: pytest.MonkeyPatch, tm
     with pytest.raises(RuntimeError, match="403 AccessDenied denied"):
         obs_transfer.put_file(FakeClient(), "bucket", "key", tmp_path / "data")
     assert calls == ["key"]
+
+
+def test_download_retries_proxy_like_403(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    statuses = iter((403, 403, 200))
+    delays = []
+
+    class FakeClient:
+        def getObject(self, bucket: str, key: str, path: str) -> SimpleNamespace:
+            assert (bucket, key, path) == ("bucket", "key", str(tmp_path / "data"))
+            return SimpleNamespace(status=next(statuses), errorCode=None, errorMessage=None)
+
+    monkeypatch.setattr(obs_transfer.time, "sleep", delays.append)
+    obs_transfer.download_file(FakeClient(), "bucket", "key", tmp_path / "data")
+    assert delays == [2, 4]
+
+
+def test_download_does_not_retry_named_obs_403(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    calls = []
+
+    class FakeClient:
+        def getObject(self, bucket: str, key: str, path: str) -> SimpleNamespace:
+            calls.append(key)
+            return SimpleNamespace(status=403, errorCode="AccessDenied", errorMessage="denied")
+
+    monkeypatch.setattr(obs_transfer.time, "sleep", lambda delay: pytest.fail("unexpected retry"))
+    with pytest.raises(RuntimeError, match="403 AccessDenied denied"):
+        obs_transfer.download_file(FakeClient(), "bucket", "key", tmp_path / "data")
+    assert calls == ["key"]

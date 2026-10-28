@@ -28,6 +28,7 @@ MANIFEST_NAME = ".boostkit-obs-manifest.json"
 COMPRESSED_MANIFEST_NAME = f"{MANIFEST_NAME}.gz"
 TRANSFER_CHUNK_SIZE = 64 * 1024
 UPLOAD_RETRY_DELAYS = (2, 4, 8, 16)
+DOWNLOAD_RETRY_DELAYS = (2, 4, 8, 16, 30, 60)
 
 
 def fail(message: str) -> None:
@@ -209,8 +210,25 @@ def upload_file(
 
 def download_file(obs_client: Any, bucket: str, key: str, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    response = obs_client.getObject(bucket, key, str(path))
-    response_ok(response, "download", key)
+    for attempt in range(len(DOWNLOAD_RETRY_DELAYS) + 1):
+        response = obs_client.getObject(bucket, key, str(path))
+        status = getattr(response, "status", None)
+        if isinstance(status, int) and 200 <= status < 300:
+            return
+        code = getattr(response, "errorCode", None)
+        message = getattr(response, "errorMessage", None)
+        retryable = status == 403 and code is None and message is None
+        retryable = retryable or status == 429 or (isinstance(status, int) and status >= 500)
+        if retryable and attempt < len(DOWNLOAD_RETRY_DELAYS):
+            delay = DOWNLOAD_RETRY_DELAYS[attempt]
+            print(
+                f"[obs] download {key} returned HTTP {status} without a usable result; "
+                f"retrying in {delay}s ({attempt + 1}/{len(DOWNLOAD_RETRY_DELAYS)})",
+                flush=True,
+            )
+            time.sleep(delay)
+            continue
+        response_ok(response, "download", key)
 
 
 def download_chunks(
