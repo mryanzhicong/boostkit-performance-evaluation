@@ -291,6 +291,14 @@ require_mysql_container() {
             return 30
         }
     fi
+    log_message "switching private MySQL container repositories to the Huawei openEuler mirror"
+    docker exec --user 0 "${MYSQL_CONTAINER_NAME}" sed -i \
+        -e '/^meta/ s/^\(.*\)$/#\1/g' \
+        -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+        /etc/yum.repos.d/openEuler.repo || {
+        log_message "ERROR: failed to update openEuler repositories in the MySQL container"
+        return 30
+    }
     if ! docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1; then
         log_message "installing missing MySQL runtime libraries in the private container"
         [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")

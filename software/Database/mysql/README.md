@@ -76,6 +76,10 @@ Runner 必须能使用 Docker daemon。脚本先读取
 `update-ca-trust extract`；成功后才运行容器内的 `dnf`。不会执行宿主机上的
 证书安装脚本，也不会修改宿主机的信任库。未启用 `PERF_PROXY` 时跳过此步骤。
 `MYSQL_CA_ANCHORS_DIR` 可指定其他宿主机证书目录。
+容器启动后还会修改容器内的 `/etc/yum.repos.d/openEuler.repo`：注释以 `meta`
+开头的镜像元数据地址，并将 `repo.openeuler.org` 替换为
+`repo.huaweicloud.com/openeuler`。此操作仅影响本次私有容器，并在安装
+`libaio`、`numactl-libs` 之前执行。
 
 下面是启用代理时的容器启动及证书安装命令形态：
 
@@ -91,6 +95,11 @@ docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
   "${MYSQL_CONTAINER_IMAGE}" sleep infinity
 
 docker exec --user 0 "${MYSQL_CONTAINER_NAME}" update-ca-trust extract
+
+docker exec --user 0 "${MYSQL_CONTAINER_NAME}" sed -i \
+  -e '/^meta/ s/^\(.*\)$/#\1/g' \
+  -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+  /etc/yum.repos.d/openEuler.repo
 ```
 
 随后初始化并启动 MySQL：

@@ -198,9 +198,13 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(
     assert f"load --input {archive}" in calls
     assert "pull" not in calls
     assert "sysbench" not in calls
+    assert "sed -i -e /^meta/" in calls
+    assert "repo.huaweicloud.com\\/openeuler" in calls
+    assert "/etc/yum.repos.d/openEuler.repo" in calls
     if proxy_enabled:
         assert f"source={cert_dir},target=/etc/pki/ca-trust/source/anchors,readonly" in calls
         assert f"exec --user 0 boostkit-mysql-{os.uname().machine}-unit-test-1 update-ca-trust extract" in calls
+        assert calls.index("update-ca-trust extract") < calls.index("sed -i")
     else:
         assert "update-ca-trust" not in calls
 
