@@ -1,0 +1,143 @@
+name: Compare existing architecture results
+run-name: "Compare ${{ inputs.software }} ${{ inputs.version }} - ${{ inputs.x86_run_id }} vs ${{ inputs.arm_run_id }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      software:
+        description: "Software already tested on both architectures"
+        required: true
+        type: string
+      version:
+        description: "Same software version in both results"
+        required: true
+        type: string
+      x86_run_id:
+        description: "x86_64 test run ID, e.g. 40628396799-1"
+        required: true
+        type: string
+      x86_result_directory:
+        description: "x86_64 original OBS result directory name, not a full path"
+        required: true
+        type: string
+      arm_run_id:
+        description: "aarch64 test run ID"
+        required: true
+        type: string
+      arm_result_directory:
+        description: "aarch64 original OBS result directory name, not a full path"
+        required: true
+        type: string
+      variant:
+        description: "Both results must use this build variant"
+        required: true
+        default: base
+        type: choice
+        options: [base, optimized]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Generate cross-architecture report from OBS
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate inputs and locate both result directories
+        env:
+          SOFTWARE: ${{ inputs.software }}
+          VERSION: ${{ inputs.version }}
+          X86_RUN_ID: ${{ inputs.x86_run_id }}
+          X86_RESULT_DIRECTORY: ${{ inputs.x86_result_directory }}
+          ARM_RUN_ID: ${{ inputs.arm_run_id }}
+          ARM_RESULT_DIRECTORY: ${{ inputs.arm_result_directory }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 .github/scripts/prepare_existing_comparison.py prepare \
+            --software "${SOFTWARE}" --version "${VERSION}" \
+            --x86-run-id "${X86_RUN_ID}" --x86-result-directory "${X86_RESULT_DIRECTORY}" \
+            --arm-run-id "${ARM_RUN_ID}" --arm-result-directory "${ARM_RESULT_DIRECTORY}" \
+            --variant "${VARIANT}" --output-dir .perf-output/existing-comparison
+      - name: Install OBS download dependency
+        shell: bash
+        run: |
+          dependency_dir="${RUNNER_TEMP}/boostkit-obs-comparison-deps"
+          python3 -m pip install --disable-pip-version-check --no-input \
+            --target "${dependency_dir}" esdk-obs-python
+          echo "PYTHONPATH=${dependency_dir}" >> "${GITHUB_ENV}"
+      - name: Download x86_64 normalized result from OBS
+        env:
+          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
+          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
+          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
+          OBS_AK: ${{ secrets.OBS_AK }}
+          OBS_SK: ${{ secrets.OBS_SK }}
+          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
+          RUN_ID: ${{ inputs.x86_run_id }}
+          RESULT_DIRECTORY: ${{ inputs.x86_result_directory }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 .github/scripts/obs_transfer.py download-results \
+            --destination .perf-output/existing-comparison/input \
+            --run-id "${RUN_ID}" --result-directory "${RESULT_DIRECTORY}" \
+            --variant "${VARIANT}" --only-file normalized_result.json \
+            --matrix .perf-output/existing-comparison/x86_64-matrix.json
+      - name: Download aarch64 normalized result from OBS
+        env:
+          OBS_ENDPOINT: ${{ secrets.OBS_ENDPOINT }}
+          OBS_BUCKET: ${{ secrets.OBS_BUCKET }}
+          OBS_PREFIX: ${{ secrets.OBS_PREFIX }}
+          OBS_AK: ${{ secrets.OBS_AK }}
+          OBS_SK: ${{ secrets.OBS_SK }}
+          OBS_SECURITY_TOKEN: ${{ secrets.OBS_SECURITY_TOKEN }}
+          RUN_ID: ${{ inputs.arm_run_id }}
+          RESULT_DIRECTORY: ${{ inputs.arm_result_directory }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 .github/scripts/obs_transfer.py download-results \
+            --destination .perf-output/existing-comparison/input \
+            --run-id "${RUN_ID}" --result-directory "${RESULT_DIRECTORY}" \
+            --variant "${VARIANT}" --only-file normalized_result.json \
+            --matrix .perf-output/existing-comparison/aarch64-matrix.json
+      - name: Verify identities and generate cross-architecture report
+        env:
+          SOFTWARE: ${{ inputs.software }}
+          VERSION: ${{ inputs.version }}
+          X86_RUN_ID: ${{ inputs.x86_run_id }}
+          ARM_RUN_ID: ${{ inputs.arm_run_id }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          python3 .github/scripts/prepare_existing_comparison.py verify \
+            --software "${SOFTWARE}" --version "${VERSION}" \
+            --x86-run-id "${X86_RUN_ID}" --arm-run-id "${ARM_RUN_ID}" \
+            --variant "${VARIANT}" --input-root .perf-output/existing-comparison/input
+          python3 framework/generate_comparison.py \
+            --input-root .perf-output/existing-comparison/input \
+            --output-dir .perf-output/existing-comparison/report
+          python3 .github/scripts/prepare_existing_comparison.py verify \
+            --software "${SOFTWARE}" --version "${VERSION}" \
+            --x86-run-id "${X86_RUN_ID}" --arm-run-id "${ARM_RUN_ID}" \
+            --variant "${VARIANT}" --input-root .perf-output/existing-comparison/input \
+            --report-dir .perf-output/existing-comparison/report
+      - name: Publish comparison in workflow summary
+        shell: bash
+        env:
+          X86_RUN_ID: ${{ inputs.x86_run_id }}
+          ARM_RUN_ID: ${{ inputs.arm_run_id }}
+        run: |
+          printf 'Source runs: x86_64 `%s`, aarch64 `%s`.\n\n' \
+            "${X86_RUN_ID}" "${ARM_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          cat .perf-output/existing-comparison/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+      - name: Save generated report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-comparison-${{ github.run_id }}
+          path: .perf-output/existing-comparison/report/
+          if-no-files-found: error
+          retention-days: 30
