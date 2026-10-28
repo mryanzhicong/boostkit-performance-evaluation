@@ -70,6 +70,13 @@ Runner 必须能使用 Docker daemon。脚本先读取
 `MYSQL_IMAGE_ARCHIVE_DIR` 可指定离线归档目录。
 容器内若缺少 MySQL 运行库，脚本在该容器中通过
 `dnf` 安装 `libaio`、`numactl-libs`，不向宿主机安装这些运行库。
+正式测试启用 `PERF_PROXY` 时，两台 Runner 还须提供
+`/home/runner/software/certs-master/install_full.sh`。脚本先确认该文件存在，
+将证书目录只读挂载到容器内的相同路径，并以容器内的 root 用户执行
+`bash ./install_full.sh install`；成功后才运行容器内的 `dnf`。
+未启用 `PERF_PROXY` 时不挂载或执行证书脚本。
+
+下面是启用代理时的容器启动及证书安装命令形态：
 
 ```bash
 docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
@@ -79,8 +86,16 @@ docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
   --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  --mount type=bind,source=/home/runner/software/certs-master,target=/home/runner/software/certs-master,readonly \
   "${MYSQL_CONTAINER_IMAGE}" sleep infinity
 
+docker exec --user 0 --workdir /home/runner/software/certs-master \
+  "${MYSQL_CONTAINER_NAME}" bash ./install_full.sh install
+```
+
+随后初始化并启动 MySQL：
+
+```bash
 docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" \
   --no-defaults --initialize-insecure \
   --basedir="${MYSQL_BASE_DIR}" --datadir="${DATADIR}" \

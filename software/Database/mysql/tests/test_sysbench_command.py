@@ -141,7 +141,10 @@ def test_start_visits_only_instance_one(tmp_path: Path) -> None:
     assert not (tmp_path / "instances" / "2").exists()
 
 
-def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) -> None:
+@pytest.mark.parametrize("proxy_enabled", [False, True])
+def test_single_container_is_limited_and_keeps_sysbench_on_host(
+    tmp_path: Path, proxy_enabled: bool,
+) -> None:
     archive_name = f"openEuler-docker.{os.uname().machine}.tar.xz"
     archive = tmp_path / archive_name
     archive.write_bytes(b"test image archive")
@@ -165,6 +168,9 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) 
         'exit 1\n', encoding="utf-8"
     )
     fake_docker.chmod(0o755)
+    cert_dir = tmp_path / "certs-master"
+    cert_dir.mkdir()
+    (cert_dir / "install_full.sh").write_text("#!/bin/bash\n", encoding="utf-8")
     environment = os.environ | {
         "PATH": f"{tmp_path}:{os.environ['PATH']}",
         "DOCKER_CALLS": str(tmp_path / "docker-calls.log"),
@@ -173,6 +179,8 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) 
         "RESULTS_DIR": str(tmp_path / "results"),
         "EXPECTED_ARCH": os.uname().machine,
         "MYSQL_IMAGE_ARCHIVE_DIR": str(tmp_path),
+        "MYSQL_CERTS_DIR": str(cert_dir),
+        "PERF_PROXY": "http://proxy.example.invalid:8080" if proxy_enabled else "",
         "DOCKER_TEST_ARCH": "amd64" if os.uname().machine == "x86_64" else "arm64",
     }
     completed = subprocess.run(
@@ -190,6 +198,12 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(tmp_path: Path) 
     assert f"load --input {archive}" in calls
     assert "pull" not in calls
     assert "sysbench" not in calls
+    if proxy_enabled:
+        assert f"source={cert_dir},target={cert_dir},readonly" in calls
+        assert f"exec --user 0 --workdir {cert_dir}" in calls
+        assert "bash ./install_full.sh install" in calls
+    else:
+        assert "install_full.sh" not in calls
 
 
 def test_rejects_wrong_openeuler_image_release(tmp_path: Path) -> None:

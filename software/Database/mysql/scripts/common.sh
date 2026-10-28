@@ -26,6 +26,7 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 MYSQL_DATA_ROOT="${MYSQL_DATA_ROOT:-}"
 MYSQL_PREPARED_STMT_LIMIT=1048576
 MYSQL_IMAGE_ARCHIVE_DIR="${MYSQL_IMAGE_ARCHIVE_DIR:-/home/runner/software/mysql/openEuler-24.03-LTS-SP4}"
+MYSQL_CERTS_DIR="${MYSQL_CERTS_DIR:-/home/runner/software/certs-master}"
 MYSQL_CONTAINER_IMAGE=""
 MYSQL_CONTAINER_NAME=""
 
@@ -245,6 +246,7 @@ prepare_mysql_container_image() {
 require_mysql_container() {
     local cpu_set numa_node
     local -a dnf_options=()
+    local -a cert_mount=()
 
     if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
         log_message "ERROR: an accessible Docker daemon is required for the MySQL 8U32G container"
@@ -265,6 +267,13 @@ require_mysql_container() {
         log_message "ERROR: cannot select available CPUs on NUMA node 3"
         return 40
     }
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        if [[ ! -d "${MYSQL_CERTS_DIR}" || ! -f "${MYSQL_CERTS_DIR}/install_full.sh" ]]; then
+            log_message "ERROR: proxy certificate installer is missing: ${MYSQL_CERTS_DIR}/install_full.sh"
+            return 30
+        fi
+        cert_mount+=(--mount "type=bind,source=${MYSQL_CERTS_DIR},target=${MYSQL_CERTS_DIR},readonly")
+    fi
     log_message "starting 8U32G MySQL container ${MYSQL_CONTAINER_NAME}: CPUs ${cpu_set}, NUMA ${numa_node}"
     docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
         --label "boostkit.mysql.run-id=${PERF_RUN_ID}" \
@@ -273,7 +282,16 @@ require_mysql_container() {
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+        "${cert_mount[@]}" \
         "${MYSQL_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        log_message "installing proxy CA certificates in the private MySQL container"
+        docker exec --user 0 --workdir "${MYSQL_CERTS_DIR}" "${MYSQL_CONTAINER_NAME}" \
+            bash ./install_full.sh install || {
+            log_message "ERROR: failed to install proxy CA certificates in the MySQL container"
+            return 30
+        }
+    fi
     if ! docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1; then
         log_message "installing missing MySQL runtime libraries in the private container"
         [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
