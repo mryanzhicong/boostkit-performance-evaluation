@@ -433,6 +433,11 @@ def matrix_entries(matrix_path: Path) -> list[dict[str, str]]:
 
 def download_results(args: argparse.Namespace) -> None:
     destination = Path(args.destination).resolve()
+    only_files = set(getattr(args, "only_file", []) or [])
+    for relative in only_files:
+        safe_relative = PurePosixPath(relative)
+        if safe_relative.is_absolute() or ".." in safe_relative.parts or relative in {"", "."}:
+            fail(f"unsafe requested OBS file path: {relative!r}")
     obs_client, bucket, prefix = client()
     downloaded = 0
     for identity in matrix_entries(Path(args.matrix)):
@@ -462,6 +467,7 @@ def download_results(args: argparse.Namespace) -> None:
         if not isinstance(files, list) or not files:
             fail(f"OBS manifest has no files: {manifest_key}")
         base_path = destination / category / software / version / architecture
+        selected_files: set[str] = set()
         for entry in files:
             if not isinstance(entry, dict):
                 fail(f"invalid file entry in OBS manifest: {manifest_key}")
@@ -477,6 +483,9 @@ def download_results(args: argparse.Namespace) -> None:
             safe_relative = PurePosixPath(relative)
             if safe_relative.is_absolute() or ".." in safe_relative.parts or relative in {"", "."}:
                 fail(f"unsafe file path in OBS manifest: {relative!r}")
+            if only_files and relative not in only_files:
+                continue
+            selected_files.add(relative)
             target = base_path.joinpath(*safe_relative.parts)
             print(f"[obs] downloading {category}/{software}/{version}/{architecture}/{relative}", flush=True)
             chunks = entry.get("chunks")
@@ -497,6 +506,8 @@ def download_results(args: argparse.Namespace) -> None:
             if sha256(target) != expected_sha256:
                 fail(f"checksum mismatch after OBS download: {relative}")
             downloaded += 1
+        if only_files - selected_files:
+            fail(f"requested files missing from OBS manifest: {sorted(only_files - selected_files)}")
     if not downloaded:
         fail(f"no result files were downloaded for run {args.run_id}")
     print(f"[obs] downloaded {downloaded} result files to {destination}", flush=True)
@@ -524,6 +535,7 @@ def parser() -> argparse.ArgumentParser:
     upload_report.set_defaults(kind="report", handler=upload_directory)
     download = subparsers.add_parser("download-results", help="download all results in the execution matrix")
     download.add_argument("--destination", required=True)
+    download.add_argument("--only-file", action="append", default=[], help="Download only this manifest file; repeatable")
     download.add_argument("--run-id", required=True)
     download.add_argument("--result-directory", required=True)
     download.add_argument("--variant", choices=("base", "optimized"), default="base")

@@ -1,6 +1,7 @@
 """Verify base OBS paths remain stable while optimized runs are separated."""
 
 import importlib.util
+import hashlib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -89,3 +90,36 @@ def test_download_does_not_retry_named_obs_403(monkeypatch: pytest.MonkeyPatch, 
     with pytest.raises(RuntimeError, match="403 AccessDenied denied"):
         obs_transfer.download_file(FakeClient(), "bucket", "key", tmp_path / "data")
     assert calls == ["key"]
+
+
+def test_download_only_selected_manifest_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    normalized = b'{"status":"passed"}'
+    raw_log = b"large raw log"
+    files = [
+        {"path": name, "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        for name, data in (("normalized_result.json", normalized), ("raw-output.log", raw_log))
+    ]
+    manifest = {
+        "kind": "result", "run_id": "run-1", "result_directory": "directory",
+        "variant": "base", "category": "Media", "software": "x265", "version": "4.2",
+        "architecture": "aarch64", "files": files,
+    }
+    downloaded = []
+
+    def fake_download(client, bucket, key, target):
+        downloaded.append(key)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(normalized)
+
+    monkeypatch.setattr(obs_transfer, "client", lambda: (object(), "bucket", "prefix"))
+    monkeypatch.setattr(obs_transfer, "load_manifest", lambda client, bucket, key: manifest)
+    monkeypatch.setattr(obs_transfer, "matrix_entries", lambda path: [{
+        "category": "Media", "software": "x265", "version": "4.2", "arch": "aarch64",
+    }])
+    monkeypatch.setattr(obs_transfer, "download_file", fake_download)
+    args = SimpleNamespace(
+        destination=str(tmp_path), matrix=str(tmp_path / "matrix.json"), run_id="run-1",
+        result_directory="directory", variant="base", only_file=["normalized_result.json"],
+    )
+    obs_transfer.download_results(args)
+    assert downloaded == ["prefix/Media/x265/4.2/directory/aarch64/normalized_result.json"]

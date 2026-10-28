@@ -106,6 +106,8 @@ jobs:
             --destination .perf-output/x265-recovery-input \
             --run-id "${ARM_RUN_ID}" \
             --result-directory "${ARM_RESULT_DIRECTORY}" \
+            --only-file normalized_result.json \
+            --only-file report.md \
             --matrix "${RUNNER_TEMP}/x265-recovery-matrix.json"
       - name: Align historical video headings and generate report
         shell: bash
