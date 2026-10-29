@@ -14,7 +14,7 @@ install_dependencies() {
     if [[ "${missing}" -eq 0 ]] && printf \
         '#include <gmp.h>\n#include <mpfr.h>\n#include <mpc.h>\nint main(void) { return 0; }\n' | \
         g++ -x c++ -fsyntax-only - >/dev/null 2>&1 && \
-        ldconfig -p 2>/dev/null | grep -q 'libnsl\.so\.1'; then
+        ldconfig -p 2>/dev/null | grep 'libnsl\.so\.1' >/dev/null; then
         return
     fi
 
@@ -49,7 +49,7 @@ install_dependencies() {
         log_message "ERROR: GMP, MPFR, or MPC development headers are unavailable after installation"
         return 30
     fi
-    if ! ldconfig -p 2>/dev/null | grep -q 'libnsl\.so\.1'; then
+    if ! ldconfig -p 2>/dev/null | grep 'libnsl\.so\.1' >/dev/null; then
         log_message "ERROR: SPEC CPU2017 tools require libnsl.so.1, but libnsl did not provide it"
         return 30
     fi
