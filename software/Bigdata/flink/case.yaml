@@ -1,0 +1,49 @@
+name: flink
+category: Bigdata
+enabled: true
+versions:
+  - "1.16.3"
+test_tools:
+  nexmark:
+    version: "0.3-SNAPSHOT"
+    revision: 6b3646c3baec701f1fa74baf938d235f742e5d3c
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_flink
+    start:
+      script: scripts/stages/start.sh
+      function: start_flink_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_flink_benchmark
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_flink_runtime
+  timeout_minutes: 720
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_flink_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_flink.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
