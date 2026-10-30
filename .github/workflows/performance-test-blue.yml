@@ -1,0 +1,285 @@
+name: 'Blue: Manual performance evaluation'
+run-name: "Performance evaluation - ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      software:
+        description: "Software to evaluate"
+        required: true
+        default: python
+        type: choice
+        options:
+          - bishengjdk
+          - brpc
+          - envoy
+          - faiss
+          - folly
+          - gcc
+          - glibc
+          - golang
+          - hnswlib
+          - lz4
+          - mysql
+          - oceanbase
+          - protobuf
+          - python
+          - redis
+          - rocksdb
+          - snappy
+          - sonic-cpp
+          - sonic-go
+          - x264
+          - x265
+          - zstd
+      version:
+        description: "Version, comma-separated versions, or all declared versions of the selected software"
+        required: true
+        default: all
+        type: string
+      architecture:
+        description: "Target architecture; all runs both architectures"
+        required: true
+        default: all
+        type: choice
+        options: [all, x86_64, aarch64]
+      variant:
+        description: "Build variant"
+        required: true
+        default: base
+        type: choice
+        options: [base, optimized]
+      update_baseline:
+        description: "Update baseline.json; requires successful x86_64 and aarch64 results"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dedicated-performance-runners
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate input and build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      x86_matrix: ${{ steps.matrix.outputs.x86_matrix }}
+      arm_matrix: ${{ steps.matrix.outputs.arm_matrix }}
+      has_x86: ${{ steps.matrix.outputs.has_x86 }}
+      has_arm: ${{ steps.matrix.outputs.has_arm }}
+      result_run_id: ${{ steps.result_directory.outputs.run_id }}
+      result_directory: ${{ steps.result_directory.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Allocate UTC+8 result directory
+        id: result_directory
+        shell: bash
+        run: |
+          timestamp="$(TZ=Asia/Shanghai date '+%Y-%m-%d-%H-%M-%S')"
+          echo "value=${timestamp}_${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_OUTPUT}"
+          echo "run_id=${{ github.run_id }}-${{ github.run_attempt }}" >> "${GITHUB_OUTPUT}"
+      - name: Validate baseline update scope
+        if: inputs.update_baseline && inputs.architecture != 'all'
+        shell: bash
+        run: |
+          echo "::error::update_baseline requires architecture=all"
+          exit 2
+      - name: Reject optimized baseline updates
+        if: inputs.update_baseline && inputs.variant == 'optimized'
+        run: |
+          echo '::error::optimized results cannot update the base baseline.json'
+          exit 2
+      - name: Install framework runtime dependencies from PyPI
+        shell: bash
+        run: |
+          framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-input \
+            --no-cache-dir \
+            --target "${framework_deps}" \
+            "PyYAML==6.0.2"
+          echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
+      - name: Validate software catalog and generate execution matrix
+        id: matrix
+        env:
+          INPUT_SOFTWARE: ${{ inputs.software }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_ARCHITECTURE: ${{ inputs.architecture }}
+          INPUT_VARIANT: ${{ inputs.variant }}
+          INPUT_RUNNER_PROFILE: production
+        shell: bash
+        run: |
+          matrix="$(python3 framework/catalog.py matrix \
+            --software "${INPUT_SOFTWARE}" \
+            --version "${INPUT_VERSION}" \
+            --architecture "${INPUT_ARCHITECTURE}" \
+            --runner-profile "${INPUT_RUNNER_PROFILE}")"
+          if [[ "${INPUT_VARIANT}" == optimized ]]; then
+            python3 -c 'import json, pathlib, sys; entries=json.loads(sys.argv[1])["include"]; missing=[entry["software"] for entry in entries if not (pathlib.Path(entry["case_path"]).parent / "scripts/builders/optimized.sh").is_file()]; sys.exit("optimized build is unavailable for: " + ", ".join(sorted(set(missing))) if missing else 0)' "${matrix}"
+          fi
+          echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+          for architecture in x86_64 aarch64; do
+            filtered="$(python3 -c 'import json,sys; entries=json.loads(sys.argv[1])["include"]; print(json.dumps({"include":[entry for entry in entries if entry["arch"] == sys.argv[2]]},separators=(",",":")))' "${matrix}" "${architecture}")"
+            if [[ "${architecture}" == x86_64 ]]; then
+              echo "x86_matrix=${filtered}" >> "${GITHUB_OUTPUT}"
+              echo "has_x86=$(python3 -c 'import json,sys; print(str(bool(json.loads(sys.argv[1])["include"])).lower())' "${filtered}")" >> "${GITHUB_OUTPUT}"
+            else
+              echo "arm_matrix=${filtered}" >> "${GITHUB_OUTPUT}"
+              echo "has_arm=$(python3 -c 'import json,sys; print(str(bool(json.loads(sys.argv[1])["include"])).lower())' "${filtered}")" >> "${GITHUB_OUTPUT}"
+            fi
+          done
+          echo '### Execution matrix' >> "${GITHUB_STEP_SUMMARY}"
+          echo '```json' >> "${GITHUB_STEP_SUMMARY}"
+          echo "${matrix}" | python3 -m json.tool >> "${GITHUB_STEP_SUMMARY}"
+          echo '```' >> "${GITHUB_STEP_SUMMARY}"
+
+  performance_x86:
+    name: Test ${{ matrix.software }} ${{ matrix.version }} (x86_64)
+    if: needs.prepare.outputs.has_x86 == 'true'
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.x86_matrix) }}
+    uses: ./.github/workflows/performance-architecture-blue.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      timeout_minutes: ${{ matrix.job_timeout_minutes }}
+      case_path: ${{ matrix.case_path }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+  performance_arm:
+    name: Test ${{ matrix.software }} ${{ matrix.version }} (aarch64)
+    if: needs.prepare.outputs.has_arm == 'true'
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.arm_matrix) }}
+    uses: ./.github/workflows/performance-architecture-blue.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      timeout_minutes: ${{ matrix.job_timeout_minutes }}
+      case_path: ${{ matrix.case_path }}
+      run_id: ${{ needs.prepare.outputs.result_run_id }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+  upload_x86:
+    name: Upload ${{ matrix.software }} ${{ matrix.version }} (x86_64)
+    if: always() && needs.prepare.result == 'success' && needs.performance_x86.result != 'skipped'
+    needs: [prepare, performance_x86]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.x86_matrix) }}
+    uses: ./.github/workflows/upload-performance-result-blue.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+  upload_arm:
+    name: Upload ${{ matrix.software }} ${{ matrix.version }} (aarch64)
+    if: always() && needs.prepare.result == 'success' && needs.performance_arm.result != 'skipped'
+    needs: [prepare, performance_arm]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.arm_matrix) }}
+    uses: ./.github/workflows/upload-performance-result-blue.yml
+    with:
+      category: ${{ matrix.category }}
+      software: ${{ matrix.software }}
+      version: ${{ matrix.version }}
+      architecture: ${{ matrix.arch }}
+      runner_label: ${{ matrix.runner_label }}
+      result_directory: ${{ needs.prepare.outputs.result_directory }}
+      variant: ${{ inputs.variant }}
+  report:
+    name: Generate consolidated report
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, performance_x86, performance_arm, upload_x86, upload_arm]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require successful architecture uploads
+        env:
+          X86_UPLOAD_RESULT: ${{ needs.upload_x86.result }}
+          ARM_UPLOAD_RESULT: ${{ needs.upload_arm.result }}
+        shell: bash
+        run: |
+          if [[ "${X86_UPLOAD_RESULT}" != success && "${X86_UPLOAD_RESULT}" != skipped ]] ||
+             [[ "${ARM_UPLOAD_RESULT}" != success && "${ARM_UPLOAD_RESULT}" != skipped ]]; then
+            echo '::error::An architecture artifact upload failed; retry upload jobs before generating the report'
+            exit 1
+          fi
+      - name: Download task results from GitHub Actions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blue-result-*
+          path: .perf-output/downloaded
+      - name: Generate single-run summary and cross-architecture comparison
+        run: >-
+          python3 framework/generate_comparison.py
+          --input-root .perf-output/downloaded
+          --output-dir .perf-output/report
+      - name: Publish report in workflow summary
+        shell: bash
+        run: cat .perf-output/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+      - name: Upload consolidated report to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: blue-performance-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .perf-output/report
+          if-no-files-found: error
+          retention-days: 30
+      - name: Prepare permanent result history
+        id: prepare_history
+        if: >-
+          (needs.performance_x86.result == 'success' || needs.performance_x86.result == 'skipped') &&
+          (needs.performance_arm.result == 'success' || needs.performance_arm.result == 'skipped') &&
+          (needs.upload_x86.result == 'success' || needs.upload_x86.result == 'skipped') &&
+          (needs.upload_arm.result == 'success' || needs.upload_arm.result == 'skipped')
+        env:
+          UPDATE_BASELINE: ${{ inputs.update_baseline }}
+          INPUT_VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          baseline_args=()
+          if [[ "${UPDATE_BASELINE}" == "true" ]]; then
+            if [[ "${INPUT_VARIANT}" == optimized ]]; then
+              echo '::error::optimized results cannot update the base baseline.json'
+              exit 2
+            fi
+            baseline_args+=(--update-baseline)
+          fi
+          python3 framework/prepare_result_history.py \
+            --input-root .perf-output/downloaded \
+            --report-dir .perf-output/report \
+            --output-root .perf-output/permanent \
+            --run-id '${{ needs.prepare.outputs.result_run_id }}' \
+            --repository '${{ github.repository }}' \
+            --source-commit '${{ github.sha }}' \
+            --workflow-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            --variant '${{ inputs.variant }}' \
+            "${baseline_args[@]}"
+      - name: Publish permanent results branch
+        if: steps.prepare_history.outcome == 'success'
+        run: bash framework/publish_result_history.sh .perf-output/permanent performance-results

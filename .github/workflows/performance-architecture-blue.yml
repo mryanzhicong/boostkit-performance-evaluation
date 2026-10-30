@@ -1,0 +1,141 @@
+name: Run one Blue performance case on one architecture
+
+on:
+  workflow_call:
+    inputs:
+      category:
+        required: true
+        type: string
+      software:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      architecture:
+        required: true
+        type: string
+      runner_label:
+        required: true
+        type: string
+      timeout_minutes:
+        required: true
+        type: number
+      case_path:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+      result_directory:
+        required: true
+        type: string
+      variant:
+        required: true
+        type: string
+
+jobs:
+  performance:
+    name: ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }})${{ inputs.variant == 'optimized' && ' - optimized' || '' }}
+    runs-on: [self-hosted, '${{ inputs.runner_label }}']
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    env:
+      PERF_DEDICATED_RUNNER: "true"
+      PERF_WORK_ROOT: /home/runner/boostkit-perf
+      PERF_RUN_ID: ${{ inputs.run_id }}
+      PERF_VARIANT: ${{ inputs.variant }}
+      PERF_SKIP_SYSTEM_PACKAGES: "true"
+      PERF_DIRECT_NETWORK: "true"
+      SONIC_GO_PROXY: direct
+    steps:
+      - uses: actions/checkout@v4
+      - name: Global cleanup before performance test
+        run: bash framework/cleanup_environment.sh --before
+      - name: Install framework runtime dependencies from PyPI
+        shell: bash
+        run: |
+          framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-input \
+            --no-cache-dir \
+            --target "${framework_deps}" \
+            "PyYAML==6.0.2"
+          echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
+      - name: Verify installed framework runtime
+        run: >-
+          python3 -c "import sys, yaml;
+          assert sys.version_info >= (3, 11), sys.version;
+          assert yaml.__version__ == '6.0.2', yaml.__version__;
+          print(f'Python {sys.version.split()[0]}, PyYAML {yaml.__version__}')"
+      - name: Prepare task and capture environment
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage prepare
+      - name: Build, install and validate software
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage build
+      - name: Run software start stage
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage start
+      - name: Execute performance tests
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage test
+      - name: Run software stop stage
+        if: always()
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage stop
+      - name: Validate results and finalize task report
+        if: always()
+        run: >-
+          python3 framework/run_case.py
+          --case '${{ inputs.case_path }}'
+          --version '${{ inputs.version }}'
+          --architecture '${{ inputs.architecture }}'
+          --run-id '${{ inputs.run_id }}'
+          --stage finalize
+      - name: Global cleanup after performance test
+        id: post_cleanup
+        if: always()
+        run: bash framework/cleanup_environment.sh --after
+      - name: Record cleanup result
+        if: always()
+        run: >-
+          python3 framework/mark_cleanup.py
+          --output-dir '.perf-output/${{ inputs.category }}/${{ inputs.software }}/${{ inputs.version }}/${{ inputs.architecture }}/${{ inputs.run_id }}'
+          --outcome '${{ steps.post_cleanup.outcome }}'
+      - name: Preserve complete result on this runner
+        if: always()
+        run: >-
+          python3 .github/scripts/persist_result.py
+          --source '.perf-output/${{ inputs.category }}/${{ inputs.software }}/${{ inputs.version }}/${{ inputs.architecture }}/${{ inputs.run_id }}'
+          --category '${{ inputs.category }}'
+          --software '${{ inputs.software }}'
+          --version '${{ inputs.version }}'
+          --result-directory '${{ inputs.result_directory }}'
+          --architecture '${{ inputs.architecture }}'
+          --variant '${{ inputs.variant }}'

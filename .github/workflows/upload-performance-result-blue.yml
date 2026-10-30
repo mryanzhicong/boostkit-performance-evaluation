@@ -1,0 +1,61 @@
+name: Upload one preserved Blue performance result
+
+on:
+  workflow_call:
+    inputs:
+      category:
+        required: true
+        type: string
+      software:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      architecture:
+        required: true
+        type: string
+      runner_label:
+        required: true
+        type: string
+      result_directory:
+        required: true
+        type: string
+      variant:
+        required: true
+        type: string
+
+jobs:
+  upload:
+    name: ${{ inputs.software }} ${{ inputs.version }} (${{ inputs.architecture }}) artifact upload
+    runs-on: [self-hosted, '${{ inputs.runner_label }}']
+    timeout-minutes: 240
+    steps:
+      - name: Locate preserved result on this runner
+        id: result
+        env:
+          CATEGORY: ${{ inputs.category }}
+          SOFTWARE: ${{ inputs.software }}
+          VERSION: ${{ inputs.version }}
+          ARCHITECTURE: ${{ inputs.architecture }}
+          RESULT_DIRECTORY: ${{ inputs.result_directory }}
+          VARIANT: ${{ inputs.variant }}
+        shell: bash
+        run: |
+          source="/home/runner/boostkit-perf-result/${CATEGORY}/${SOFTWARE}/${VERSION}"
+          if [[ "${VARIANT}" == optimized ]]; then
+            source="${source}/optimized"
+          fi
+          source="${source}/${RESULT_DIRECTORY}/${ARCHITECTURE}"
+          if [[ ! -s "${source}/status.json" ]]; then
+            echo "::error::Preserved result is missing or incomplete: ${source}"
+            exit 1
+          fi
+          echo "path=${source}" >> "${GITHUB_OUTPUT}"
+      - name: Upload raw and normalized result to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: blue-result-${{ inputs.category }}-${{ inputs.software }}-${{ inputs.version }}-${{ inputs.architecture }}
+          path: ${{ steps.result.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
