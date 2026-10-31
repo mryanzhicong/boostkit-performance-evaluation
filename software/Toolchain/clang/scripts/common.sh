@@ -14,12 +14,23 @@ PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-}"
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
 
-# Official LLVM release endpoint (prebuilt release tarballs).
-LLVM_RELEASE_BASE="${LLVM_RELEASE_BASE:-https://github.com/llvm/llvm-project/releases/download}"
+# LLVM download endpoint. Proxy runners use the official GitHub release;
+# direct-network runners (Blue) use the TUNA github-release mirror. An
+# explicit LLVM_ARCHIVE_URL or LLVM_RELEASE_BASE overrides the selection.
+LLVM_RELEASE_BASE="${LLVM_RELEASE_BASE:-}"
+LLVM_ARCHIVE_URL="${LLVM_ARCHIVE_URL:-}"
 
 # Fixed benchmark workload from the official SQLite release area. SQLite
 # publishes SHA3-256 checksums (not SHA-256), verified through python3.
-SQLITE_BENCHMARK_BASE="${SQLITE_BENCHMARK_BASE:-https://www.sqlite.org/2026}"
+# There is no verified domestic SQLite mirror, so direct-network runners must
+# provide the two archives offline unless SQLITE_BENCHMARK_BASE is set.
+if [[ -n "${SQLITE_BENCHMARK_BASE:-}" ]]; then
+    :
+elif [[ -n "${PERF_PROXY:-}" ]]; then
+    SQLITE_BENCHMARK_BASE="https://www.sqlite.org/2026"
+else
+    SQLITE_BENCHMARK_BASE=""
+fi
 SQLITE_AMALGAMATION_PACKAGE="${SQLITE_AMALGAMATION_PACKAGE:-sqlite-amalgamation-3540100.zip}"
 SQLITE_AMALGAMATION_SHA3_256="${SQLITE_AMALGAMATION_SHA3_256:-92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30}"
 SQLITE_SOURCE_PACKAGE="${SQLITE_SOURCE_PACKAGE:-sqlite-src-3540100.zip}"
@@ -76,6 +87,14 @@ llvm_archive_for_version() {
             return 10
             ;;
     esac
+    if [[ -n "${LLVM_ARCHIVE_URL}" ]]; then
+        return 0
+    fi
+    if [[ -n "${PERF_PROXY:-}" || -n "${LLVM_RELEASE_BASE}" ]]; then
+        LLVM_ARCHIVE_URL="${LLVM_RELEASE_BASE:-https://github.com/llvm/llvm-project/releases/download}/llvmorg-${SOFTWARE_VERSION}/${LLVM_ARCHIVE_NAME}"
+    else
+        LLVM_ARCHIVE_URL="https://mirrors.tuna.tsinghua.edu.cn/github-release/llvm/llvm-project/LLVM%20${SOFTWARE_VERSION}/${LLVM_ARCHIVE_NAME}"
+    fi
 }
 
 configure_runtime_paths() {

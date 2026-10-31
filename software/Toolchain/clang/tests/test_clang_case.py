@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -254,6 +255,75 @@ fetch_llvm_archive
     assert result.returncode == 0
     assert result.stdout.strip() == str(archive)
     assert "using cached LLVM archive" in result.stderr
+
+
+def test_llvm_archive_url_selects_mirror_by_network_mode(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/common.sh"
+export PERF_WORK_DIR="{tmp_path}/work"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+configure_runtime_paths
+printf "%s\\n" "$LLVM_ARCHIVE_URL"
+"""
+    direct = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert "mirrors.tuna.tsinghua.edu.cn/github-release/llvm/llvm-project/LLVM%2023.1.4" in direct.stdout
+    assert direct.stdout.strip().endswith("LLVM-23.1.4-Linux-X64.tar.xz")
+    proxied = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.stdout.strip().startswith(
+        "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/"
+    )
+
+
+def test_sqlite_base_requires_offline_archives_on_direct_network(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/builders/base.sh"
+export PERF_WORK_DIR="{tmp_path}/work"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+configure_runtime_paths
+printf "%s\\n" "$SQLITE_BENCHMARK_BASE"
+"""
+    direct = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert direct.stdout.strip() == ""
+    proxied = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.stdout.strip() == "https://www.sqlite.org/2026"
+
+
+def test_fetch_sqlite_archive_fails_fast_without_source(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    results = tmp_path / "results"
+    empty_archive = tmp_path / "offline"
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{results}"
+export CLANG_ARCHIVE_DIR="{empty_archive}"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+initialize_runtime
+fetch_sqlite_archive sqlite-amalgamation-3540100.zip 92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30
+"""
+    result = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert result.returncode != 0
+    assert "no SQLite download base is configured" in result.stderr
 
 
 def test_container_runs_without_pinning_and_mounts_results() -> None:

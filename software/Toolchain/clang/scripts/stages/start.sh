@@ -9,6 +9,10 @@ fetch_sqlite_archive() {
         log_message "using local SQLite archive: ${local_archive}"
         cp "${local_archive}" "${archive_path}" || return 30
     elif [[ ! -s "${archive_path}" ]]; then
+        if [[ -z "${SQLITE_BENCHMARK_BASE}" ]]; then
+            log_message "ERROR: ${package_name} is not available offline and no SQLite download base is configured; provision /home/runner/software/clang/${package_name} or set SQLITE_BENCHMARK_BASE"
+            return 30
+        fi
         log_message "downloading ${package_name}"
         with_network_proxy curl -fL --retry 3 --connect-timeout 30 \
             -o "${archive_path}" \

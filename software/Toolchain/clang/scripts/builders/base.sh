@@ -35,8 +35,7 @@ fetch_llvm_archive() {
     else
         log_message "downloading ${LLVM_ARCHIVE_NAME}"
         with_network_proxy curl -fL --retry 3 --connect-timeout 30 \
-            -o "${archive_path}" \
-            "${LLVM_RELEASE_BASE}/llvmorg-${SOFTWARE_VERSION}/${LLVM_ARCHIVE_NAME}" || return 30
+            -o "${archive_path}" "${LLVM_ARCHIVE_URL}" || return 30
     fi
     verify_sha256 "${archive_path}" "${LLVM_ARCHIVE_SHA256}" || return $?
     printf '%s\n' "${archive_path}"

@@ -25,20 +25,40 @@ openEuler 24.03 LTS SP4 容器内运行**（基镜像与用法参照 MySQL 用�
 SQLite 官方公布的是 SHA3-256（不提供 SHA-256），脚本用 `python3 hashlib.sha3_256`
 校验；LLVM tarball 使用官方 Release 的 SHA-256。两者校验失败都会中止。
 
-| 包 | 校验值 |
-|---|---|
-| `LLVM-23.1.4-Linux-X64.tar.xz` | SHA-256 `25d814fda50d5fb0084b42be09605d8b1595d49d5e2e03a3345d7e112ff6f9f3` |
-| `LLVM-23.1.4-Linux-ARM64.tar.xz` | SHA-256 `9b27cf263d711aa6ebfd4045ab241d947bd09b3cd19ffa5728f48a80c9eb3a91` |
-| `sqlite-amalgamation-3540100.zip` | SHA3-256 `92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30` |
-| `sqlite-src-3540100.zip` | SHA3-256 `877c6f4996ce7adb368686bce21638de9e3d91534832ad3d9d119037d1bc22ad` |
+| 包 | 下载地址 | 校验值 |
+|---|---|---|
+| `LLVM-23.1.4-Linux-X64.tar.xz` | <https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/LLVM-23.1.4-Linux-X64.tar.xz> | SHA-256 `25d814fda50d5fb0084b42be09605d8b1595d49d5e2e03a3345d7e112ff6f9f3` |
+| `LLVM-23.1.4-Linux-ARM64.tar.xz` | <https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/LLVM-23.1.4-Linux-ARM64.tar.xz> | SHA-256 `9b27cf263d711aa6ebfd4045ab241d947bd09b3cd19ffa5728f48a80c9eb3a91` |
+| `sqlite-amalgamation-3540100.zip` | <https://www.sqlite.org/2026/sqlite-amalgamation-3540100.zip> | SHA3-256 `92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30` |
+| `sqlite-src-3540100.zip` | <https://www.sqlite.org/2026/sqlite-src-3540100.zip> | SHA3-256 `877c6f4996ce7adb368686bce21638de9e3d91534832ad3d9d119037d1bc22ad` |
 
-脚本通过 `dnf` 安装缺失的系统依赖：`tar`、`xz`、`unzip`、`sed`、`findutils`、
-`gawk`、`coreutils`、`curl`、`python3`、`which`。启用 `PERF_PROXY` 时，下载通过代理。
+离线包文件名与上游资产完全一致（LLVM 为 `LLVM-<版本>-Linux-X64/ARM64.tar.xz`，SQLite 为
+官方 zip 文件名），不带额外后缀；版本由表中的校验值固定。
+
+下载源按运行环境选择：设置 `PERF_PROXY` 时使用上表的官方地址并走代理；Blue 直连 Runner
+访问境外站点受限时，LLVM tarball 默认改用清华 TUNA 的 GitHub Release 镜像：
+
+| 架构 | 镜像地址 |
+|---|---|
+| `x86_64` | <https://mirrors.tuna.tsinghua.edu.cn/github-release/llvm/llvm-project/LLVM%2023.1.4/LLVM-23.1.4-Linux-X64.tar.xz> |
+| `aarch64` | <https://mirrors.tuna.tsinghua.edu.cn/github-release/llvm/llvm-project/LLVM%2023.1.4/LLVM-23.1.4-Linux-ARM64.tar.xz> |
+
+TUNA 镜像的文件大小与官方 Release 资产一致（2017061664 / 1829686400 字节），下载后仍按
+上表 SHA-256 校验。SQLite 没有已核实的国内镜像，因此 Blue 直连 Runner 必须把两个 zip
+预置到 `/home/runner/software/clang/`；缺失且未设置 `SQLITE_BENCHMARK_BASE` 时会明确
+失败而不是长时间重试。`LLVM_ARCHIVE_URL`、`LLVM_RELEASE_BASE`、`SQLITE_BENCHMARK_BASE`
+均可覆盖默认选择。
+
+脚本在容器内通过 `dnf` 安装缺失的系统依赖：`tar`、`xz`、`unzip`、`sed`、`findutils`、
+`gawk`、`coreutils`、`curl`、`python3`、`which`、`diffutils`、`bash`；容器内仓库切换为
+华为云 openEuler 镜像。启用 `PERF_PROXY` 时，容器挂载代理 CA 证书并执行
+`update-ca-trust extract`，下载走代理。
 
 ## 部署与版本核对
 
 LLVM tarball 优先读取 `/home/runner/software/clang/<包名>`，其次本次任务目录缓存
-（离线包会先复制到该目录，容器才能读取），最后从 `https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/` 下载。
+（离线包会先复制到该目录，容器才能读取），最后使用上节选择的下载地址（代理环境为官方
+GitHub Release，直连环境为 TUNA 镜像）。
 解压后脚本自动定位携带 `bin/clang` 的目录并作为工具链根目录：
 
 以下命令在私有容器内执行（归档先复制到 `${PERF_WORK_DIR}`，容器才能读取）：
