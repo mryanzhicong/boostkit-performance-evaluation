@@ -1,0 +1,58 @@
+name: php
+category: Toolchain
+enabled: true
+versions:
+  - "8.5.12"
+test_tools:
+  php:
+    version: "8.5.12"
+  php_source:
+    version: "php-8.5.12.tar.gz from https://www.php.net/distributions (official SHA-256 from the php.net releases JSON)"
+  php_benchmarks:
+    version: "Zend/bench.php and Zend/micro_bench.php from the same official tarball plus repository-committed workloads, see benchmarks/ and README section 3"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_php
+    start:
+      script: scripts/stages/start.sh
+      function: start_php_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_php_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_php_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  php_raw_output:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
