@@ -1,0 +1,59 @@
+name: rust
+category: Toolchain
+enabled: true
+versions:
+  - "1.99.1"
+test_tools:
+  rustc-perf:
+    version: "0.1.0"
+    revision: 9fa958a70781ab8abe5ee9e0875f0a9a62ecb20c
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_rust
+    start:
+      script: scripts/stages/start.sh
+      function: start_rust_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_rust_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_rust_runtime
+  timeout_minutes: 480
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  compile_benchmark_output:
+    path: benchmark_rust_compile.log
+    stage: test
+    format: text
+    required: true
+  runtime_benchmark_output:
+    path: benchmark_rust_runtime.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_rust.json
+    stage: test
+    format: json
+    required: true
+  rustc_perf_database:
+    path: rustc_perf.db
+    stage: test
+    format: binary
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
