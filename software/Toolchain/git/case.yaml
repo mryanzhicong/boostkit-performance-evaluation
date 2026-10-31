@@ -1,0 +1,56 @@
+name: git
+category: Toolchain
+enabled: true
+versions:
+  - "2.56.0"
+test_tools:
+  git_perf_suite:
+    version: "与被测软件版本一致"
+    revision: a018953688f1b10bddf91bff8747068f5f4746a4
+  gnu_time:
+    version: unknown
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_git
+    start:
+      script: scripts/stages/start.sh
+      function: start_git_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_git_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_git_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  perf_console_output:
+    path: git_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  perf_raw_results:
+    path: git_perf_results
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_git.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
