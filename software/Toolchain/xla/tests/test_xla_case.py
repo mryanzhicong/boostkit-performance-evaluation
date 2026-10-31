@@ -269,6 +269,8 @@ def test_container_runs_without_pinning_and_mounts_results() -> None:
     assert "docker load" in content
     assert "update-ca-trust extract" in content
     assert "repo.huaweicloud.com" in content
+    assert 'BAZELISK_HOME="${BAZELISK_HOME}"' in content
+    assert 'HOME="${CONTAINER_HOME}"' in content
 
 
 def test_build_and_test_run_inside_container() -> None:

@@ -61,7 +61,8 @@ docker run --detach --name "${XLA_CONTAINER_NAME}" \
 - 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
 - `--network=host`：容器直接使用宿主机网络。
 - `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以宿主机原路径挂载，源码、Bazel 产物和所有
-  测试结果都落在宿主机指定目录。
+  测试结果都落在宿主机指定目录；容器内的 `HOME` 与 `BAZELISK_HOME` 指向任务私有目录，
+  避免 bazelisk 尝试写入镜像内不可写的 `/home/runner/.cache`。
 - `stop` 阶段只停止并删除带本任务归属标签的容器，重复调用安全。
 
 ## 获取、构建与版本核对

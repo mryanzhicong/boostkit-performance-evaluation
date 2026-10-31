@@ -119,6 +119,8 @@ configure_runtime_paths() {
     TMPDIR="${PERF_WORK_DIR}/tmp"
     XLA_SRC_DIR="${PERF_WORK_DIR}/xla-src"
     BAZELISK_BIN="${PERF_WORK_DIR}/bazelisk/bazelisk"
+    BAZELISK_HOME="${PERF_WORK_DIR}/bazelisk-home"
+    CONTAINER_HOME="${PERF_WORK_DIR}/home"
     HLO_RUNNER_BIN="${XLA_SRC_DIR}/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main"
     XSPACE_STATS_BIN="${XLA_SRC_DIR}/bazel-bin/xla/tools/compute_xspace_stats_main"
     OFFICIAL_RUN_BENCHMARK="${XLA_SRC_DIR}/.github/workflows/benchmarks/run_benchmark.sh"
@@ -126,11 +128,13 @@ configure_runtime_paths() {
     XLA_CONTAINER_NAME="boostkit-xla-${EXPECTED_ARCH}-${PERF_RUN_ID}"
     export SOFTWARE_VERSION PERF_VARIANT EXPECTED_ARCH PERF_RUN_ID PERF_WORK_DIR RESULTS_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR HARDWARE_CATEGORY CONFIG_ID XLA_CONTAINER_NAME
+    export BAZELISK_HOME CONTAINER_HOME
 }
 
 initialize_runtime() {
     configure_runtime_paths || return $?
-    mkdir -p "${PERF_WORK_DIR}" "${RESULTS_DIR}" "${TMPDIR}"
+    mkdir -p "${PERF_WORK_DIR}" "${RESULTS_DIR}" "${TMPDIR}" \
+        "${BAZELISK_HOME}" "${CONTAINER_HOME}"
 }
 
 with_network_proxy() {
@@ -277,9 +281,11 @@ check_xla_container() {
 container_exec() {
     if [[ -n "${PERF_PROXY:-}" ]]; then
         docker exec -e http_proxy="${PERF_PROXY}" -e https_proxy="${PERF_PROXY}" \
-            -e TMPDIR="${TMPDIR}" "${XLA_CONTAINER_NAME}" "$@"
+            -e TMPDIR="${TMPDIR}" -e HOME="${CONTAINER_HOME}" \
+            -e BAZELISK_HOME="${BAZELISK_HOME}" "${XLA_CONTAINER_NAME}" "$@"
     else
-        docker exec -e TMPDIR="${TMPDIR}" "${XLA_CONTAINER_NAME}" "$@"
+        docker exec -e TMPDIR="${TMPDIR}" -e HOME="${CONTAINER_HOME}" \
+            -e BAZELISK_HOME="${BAZELISK_HOME}" "${XLA_CONTAINER_NAME}" "$@"
     fi
 }
 
