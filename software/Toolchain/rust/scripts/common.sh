@@ -15,7 +15,17 @@ STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
 
 # Official Rust distribution endpoint and the pinned upstream benchmark suite.
-RUST_RELEASE_BASE="${RUST_RELEASE_BASE:-https://static.rust-lang.org/dist}"
+# Direct-network runners (no PERF_PROXY) can reach domestic mirrors but not
+# overseas hosts, so the Rust distribution and crates registry fall back to
+# the USTC mirror; the proxy path keeps the official endpoints.
+if [[ -n "${RUST_RELEASE_BASE:-}" ]]; then
+    :
+elif [[ -n "${PERF_PROXY:-}" ]]; then
+    RUST_RELEASE_BASE="https://static.rust-lang.org/dist"
+else
+    RUST_RELEASE_BASE="https://mirrors.ustc.edu.cn/rust-static/dist"
+fi
+RUST_CARGO_MIRROR_INDEX="${RUST_CARGO_MIRROR_INDEX:-sparse+https://mirrors.ustc.edu.cn/crates.io-index/}"
 RUSTC_PERF_REPOSITORY="${RUSTC_PERF_REPOSITORY:-https://github.com/rust-lang/rustc-perf.git}"
 RUSTC_PERF_REVISION="${RUSTC_PERF_REVISION:-9fa958a70781ab8abe5ee9e0875f0a9a62ecb20c}"
 RUST_ARCHIVE_DIR="${RUST_ARCHIVE_DIR:-/home/runner/software/rust}"
@@ -127,6 +137,26 @@ with_network_proxy() {
     else
         "$@"
     fi
+}
+
+# Direct-network runners cannot reach the overseas crates registry; point the
+# task-private CARGO_HOME at a domestic sparse mirror when no proxy is set.
+configure_cargo_mirror() {
+    [[ -n "${PERF_PROXY:-}" ]] && return 0
+    [[ -n "${RUST_CARGO_MIRROR_INDEX:-}" ]] || return 0
+    local config="${CARGO_HOME}/config.toml"
+    mkdir -p "${CARGO_HOME}"
+    if [[ -f "${config}" ]] && grep -q 'crates.io-index' "${config}"; then
+        return 0
+    fi
+    cat > "${config}" <<EOF
+[source.crates-io]
+replace-with = "ustc"
+
+[source.ustc]
+registry = "${RUST_CARGO_MIRROR_INDEX}"
+EOF
+    log_message "configured the container cargo registry mirror: ${RUST_CARGO_MIRROR_INDEX}"
 }
 
 require_docker() {

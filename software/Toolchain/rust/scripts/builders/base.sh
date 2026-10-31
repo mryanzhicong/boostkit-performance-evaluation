@@ -90,9 +90,12 @@ install_rustc_perf() {
 
 build_collector() {
     log_message 'building the unmodified upstream collector with the installed toolchain inside the container'
-    # The private toolchain prefix is not on the container PATH by default.
+    # Keep cargo's normal progress output so a slow build is visible in the
+    # stage log instead of appearing stalled behind --quiet. The private
+    # toolchain prefix is not on the container PATH by default.
     container_exec sh -c \
-        "export PATH='${RUST_HOME}/bin:\$PATH' && cd '${RUSTC_PERF_DIR}' && cargo build -p collector --release --locked --quiet" || return 30
+        "export PATH='${RUST_HOME}/bin:\$PATH' && rustc --version && cargo --version && \
+         cd '${RUSTC_PERF_DIR}' && cargo build -p collector --release --locked" || return 30
     container_exec test -x "${COLLECTOR_BIN}" || {
         log_message 'ERROR: collector binary is missing after the build'
         return 30
@@ -101,6 +104,7 @@ build_collector() {
 
 build_rust_base() {
     initialize_runtime || return $?
+    configure_cargo_mirror || return $?
     require_rust_container || return $?
     install_build_dependencies || return $?
     install_rust_toolchain || return $?

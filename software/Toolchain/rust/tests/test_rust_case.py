@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
@@ -308,6 +310,54 @@ def test_optimized_builder_fails_explicitly() -> None:
     content = (SCRIPT_DIR / "builders" / "optimized.sh").read_text(encoding="utf-8")
     assert "not implemented" in content
     assert "return 30" in content
+
+
+def test_release_base_uses_domestic_mirror_without_proxy(tmp_path: Path) -> None:
+    script = f'source "{SCRIPT_DIR}/common.sh"; printf "%s\\n" "$RUST_RELEASE_BASE"'
+    direct = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert direct.stdout.strip() == "https://mirrors.ustc.edu.cn/rust-static/dist"
+    proxied = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.stdout.strip() == "https://static.rust-lang.org/dist"
+
+
+def test_cargo_mirror_configured_only_without_proxy(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    results = tmp_path / "results"
+    script = f"""
+source "{SCRIPT_DIR}/common.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{results}"
+export CARGO_HOME="{work}/cargo"
+export EXPECTED_ARCH=x86_64
+configure_runtime_paths
+configure_cargo_mirror
+cat "${{CARGO_HOME}}/config.toml"
+"""
+    direct = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert direct.returncode == 0
+    assert 'replace-with = "ustc"' in direct.stdout
+    assert "sparse+https://mirrors.ustc.edu.cn/crates.io-index/" in direct.stdout
+    proxied_work = tmp_path / "work-proxy"
+    proxied_script = script.replace(f'export PERF_WORK_DIR="{work}"', f'export PERF_WORK_DIR="{proxied_work}"').replace(
+        f'export CARGO_HOME="{work}/cargo"', f'export CARGO_HOME="{proxied_work}/cargo"'
+    )
+    proxied = subprocess.run(
+        ["bash", "-c", proxied_script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.returncode != 0
+    assert not (proxied_work / "cargo" / "config.toml").exists()
 
 
 def test_container_runs_without_pinning_and_mounts_results() -> None:

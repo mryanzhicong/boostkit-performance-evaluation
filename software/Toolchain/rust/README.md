@@ -30,6 +30,13 @@ mount 保存在宿主机本次任务目录。
 `PERF_PROXY` 时，容器挂载代理 CA 证书目录并执行 `update-ca-trust extract`，`git`、
 `cargo` 与 `dnf` 的下载都通过代理。
 
+未设置 `PERF_PROXY` 的直连 Runner（Blue）不能访问境外站点，因此 Rust 发行包默认改用
+中科大镜像 `https://mirrors.ustc.edu.cn/rust-static/dist`，任务私有 `CARGO_HOME`
+写入 `config.toml`，把 crates.io 替换为中科大 sparse 镜像
+`sparse+https://mirrors.ustc.edu.cn/crates.io-index/`；设置 `PERF_PROXY` 时仍使用
+官方 `static.rust-lang.org` 与 crates.io。两者都可用 `RUST_RELEASE_BASE`、
+`RUST_CARGO_MIRROR_INDEX` 覆盖。
+
 collector 通过 Linux `perf` 采集用户态硬件计数器（`instructions:u`、`cycles:u`），
 因此容器额外授予 `PERFMON` capability；Runner 仍需保持
 `kernel.perf_event_paranoid` 不超过 2（默认值即可，本用例不改内核参数）。
