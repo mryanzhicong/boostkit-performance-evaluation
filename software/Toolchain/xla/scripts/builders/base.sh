@@ -36,7 +36,7 @@ fetch_bazelisk() {
             ;;
     esac
     mkdir -p "$(dirname "${BAZELISK_BIN}")"
-    local_archive="${XLA_ARCHIVE_DIR}/${archive_name}-${BAZELISK_VERSION}"
+    local_archive="${XLA_ARCHIVE_DIR}/${archive_name}"
     if [[ -x "${BAZELISK_BIN}" ]]; then
         log_message "reusing cached bazelisk ${BAZELISK_VERSION}"
     elif [[ -s "${local_archive}" ]]; then
