@@ -202,3 +202,41 @@ def test_optimized_builder_fails_explicitly() -> None:
     content = (SCRIPT_DIR / "builders" / "optimized.sh").read_text(encoding="utf-8")
     assert "not implemented" in content
     assert "return 30" in content
+
+
+def test_container_runs_without_pinning_and_mounts_results() -> None:
+    content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
+    assert "--network=host" in content
+    assert "--cpuset-cpus" not in content
+    assert "--cpuset-mems" not in content
+    assert "--cpus=" not in content
+    assert 'type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in content
+    assert 'type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}' in content
+    assert 'boostkit.git.run-id=${PERF_RUN_ID}' in content
+    assert "openEuler-24.03-LTS-SP4" in content
+    assert "docker load" in content
+    assert "update-ca-trust extract" in content
+    assert "repo.huaweicloud.com" in content
+
+
+def test_build_and_test_run_inside_container() -> None:
+    base = (SCRIPT_DIR / "builders" / "base.sh").read_text(encoding="utf-8")
+    test_stage = (SCRIPT_DIR / "stages" / "test.sh").read_text(encoding="utf-8")
+    start = (SCRIPT_DIR / "stages" / "start.sh").read_text(encoding="utf-8")
+    stop = (SCRIPT_DIR / "stages" / "stop.sh").read_text(encoding="utf-8")
+    assert "require_git_container" in base
+    assert "container_exec_root dnf" in base
+    assert "container_exec git clone" in base
+    assert "container_exec make -C" in base
+    assert "container_exec" in start
+    assert "container_exec sh -c" in test_stage
+    assert "remove_git_container" in stop
+
+
+def test_readme_documents_container_execution() -> None:
+    text = (CASE_DIR / "README.md").read_text(encoding="utf-8")
+    assert "容器" in text
+    assert "openEuler 24.03 LTS SP4" in text
+    assert "--network=host" in text
+    assert "不绑核" in text
+    assert "docker load" in text
