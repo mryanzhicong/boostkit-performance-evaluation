@@ -1,0 +1,233 @@
+[xla] [2026-11-01 02:09:29] using cached HLO artifact: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma3_1b_flax_call.hlo
+[xla] [2026-11-01 02:09:29] using cached HLO artifact: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma2_2b_keras_jax.hlo
+[xla] [2026-11-01 02:09:29] all three official CPU HLO workloads are staged and verified
+[xla] [2026-11-01 02:09:29] running the official XLA CPU registry entries with 5 repeats
+--- Running Benchmark Script ---
+Benchmark Name: gemma3_1b_flax_call
+Config ID: cpu_arm64
+Hardware Category: CPU_ARM64
+Output Directory: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call
+Runner Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main
+Stats Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/compute_xspace_stats_main
+Device Type Flag: host
+Local Artifact Path: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma3_1b_flax_call.hlo
+Input Format: 
+XLA Flags JSON: []
+Runtime Flags JSON: ["--num_repeats=5"]
+Commit SHA: 1930995a8aabe45a13854f701b5b39ab732aef94
+Workflow Run ID: 41187311004-1
+Executing HLO Runner command:
+/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main --device_type=host --num_repeats=5 --xla_gpu_dump_xspace_to=/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/xspace.pb /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma3_1b_flax_call.hlo 
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470171.288485   47583 rsqrt.cc:180] Falling back to 1 / sqrt(x) for f32 false
+I0000 00:00:1793470172.406713   45782 functional_hlo_runner.cc:1251] Initialized and loaded arguments on 1 addressable device(s) in 0.8476s.
+I0000 00:00:1793470173.196534   45782 profiler_session.cc:171] Profiler session initializing.
+I0000 00:00:1793470173.196609   45782 profiler_session.cc:186] Profiler session started.
+I0000 00:00:1793470173.325879   45782 profiler_session.cc:134] Profiler session collecting data.
+I0000 00:00:1793470173.446345   45782 hlo_runner_profiler.cc:310] Saving xspace result to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/xspace.pb
+I0000 00:00:1793470173.516014   45782 functional_hlo_runner.cc:1613] Dump output to: 
+I0000 00:00:1793470173.516561   45782 profiler_session.cc:217] Profiler session tear down.
+
+** Running /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma3_1b_flax_call.hlo **
+Runner stdout/stderr saved to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/runner_stdout.txt
+Runner exited with code: 0
+XSpace file found. Running compute_xspace_stats_main...
+Executing Stats command and capturing its output:
+compute_xspace_stats_main output:
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470173.883920   47611 compute_xspace_stats.cc:299] Input file: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/xspace.pb
+I0000 00:00:1793470173.894348   47611 compute_xspace_stats.cc:306] Successfully parsed XSpace proto.
+CPU Time: 523586.08 us
+Wall Time: 157330.27 us
+compute_xspace_stats_main exited with code: 0
+::warning::Skipping unsupported unit: log messages before absl::InitializeLog() is called are written to STDERR
+::warning::Skipping unsupported unit: 47611 compute
+::warning::Skipping unsupported unit: 47611 compute
+INFO: Parsed metric: OriginalKey='CPU Time', BaseKey='CPU_TIME', FinalKey='CPU_TIME', Value='523.586 ms'
+INFO: Parsed metric: OriginalKey='Wall Time', BaseKey='WALL_TIME', FinalKey='WALL_TIME', Value='157.330 ms'
+Successfully parsed metrics from stats output.
+Final results.json created at /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/results.json.
+DEBUG: Listing contents of OUTPUT_DIR (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call):
+total 4060
+drwxr-xr-x  2 runner runner    4096 Nov  1 02:09 .
+drwxr-xr-x 11 runner runner    4096 Nov  1 02:09 ..
+-rw-r--r--  1 runner runner     414 Nov  1 02:09 results.json
+-rw-r--r--  1 runner runner    1597 Nov  1 02:09 runner_stdout.txt
+-rw-r--r--  1 runner runner 4139659 Nov  1 02:09 xspace.pb
+DEBUG: Checking for RESULTS_JSON_FILE (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma3_1b_flax_call/results.json):
+DEBUG: RESULTS_JSON_FILE exists. Content (first 20 lines):
+{
+  "benchmark_name": "gemma3_1b_flax_call",
+  "config_id": "cpu_arm64",
+  "hardware_category": "CPU_ARM64",
+  "run_status": "SUCCESS",
+  "error_message": "",
+  "commit_sha": "1930995a8aabe45a13854f701b5b39ab732aef94",
+  "workflow_run_id": "41187311004-1",
+  "metrics": {
+    "CPU_TIME": {
+      "value": 523.586,
+      "unit": "ms"
+    },
+    "WALL_TIME": {
+      "value": 157.330,
+      "unit": "ms"
+    }
+  }
+}
+DEBUG: End of file check.
+--- Run Benchmark Script Finished ---
+[xla] [2026-11-01 02:09:34] benchmark gemma3_1b_flax_call completed
+--- Running Benchmark Script ---
+Benchmark Name: gemma2_2b_keras_jax
+Config ID: cpu_arm64
+Hardware Category: CPU_ARM64
+Output Directory: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax
+Runner Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main
+Stats Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/compute_xspace_stats_main
+Device Type Flag: host
+Local Artifact Path: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma2_2b_keras_jax.hlo
+Input Format: 
+XLA Flags JSON: []
+Runtime Flags JSON: ["--num_repeats=5"]
+Commit SHA: 1930995a8aabe45a13854f701b5b39ab732aef94
+Workflow Run ID: 41187311004-1
+Executing HLO Runner command:
+/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main --device_type=host --num_repeats=5 --xla_gpu_dump_xspace_to=/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/xspace.pb /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma2_2b_keras_jax.hlo 
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470176.373372   49496 rsqrt.cc:180] Falling back to 1 / sqrt(x) for f32 false
+I0000 00:00:1793470179.288186   47699 functional_hlo_runner.cc:1251] Initialized and loaded arguments on 1 addressable device(s) in 2.52284s.
+I0000 00:00:1793470202.826755   47699 profiler_session.cc:171] Profiler session initializing.
+I0000 00:00:1793470202.827390   47699 profiler_session.cc:186] Profiler session started.
+I0000 00:00:1793470208.692020   47699 profiler_session.cc:134] Profiler session collecting data.
+I0000 00:00:1793470209.399568   47699 hlo_runner_profiler.cc:310] Saving xspace result to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/xspace.pb
+I0000 00:00:1793470209.666717   47699 functional_hlo_runner.cc:1613] Dump output to: 
+I0000 00:00:1793470209.667232   47699 profiler_session.cc:217] Profiler session tear down.
+
+** Running /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/gemma2_2b_keras_jax.hlo **
+Runner stdout/stderr saved to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/runner_stdout.txt
+Runner exited with code: 0
+XSpace file found. Running compute_xspace_stats_main...
+Executing Stats command and capturing its output:
+compute_xspace_stats_main output:
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470210.141479   49528 compute_xspace_stats.cc:299] Input file: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/xspace.pb
+I0000 00:00:1793470210.220884   49528 compute_xspace_stats.cc:306] Successfully parsed XSpace proto.
+CPU Time: 18915804.02 us
+Wall Time: 5933171.14 us
+compute_xspace_stats_main exited with code: 0
+::warning::Skipping unsupported unit: log messages before absl::InitializeLog() is called are written to STDERR
+::warning::Skipping unsupported unit: 49528 compute
+::warning::Skipping unsupported unit: 49528 compute
+INFO: Parsed metric: OriginalKey='CPU Time', BaseKey='CPU_TIME', FinalKey='CPU_TIME', Value='18915.804 ms'
+INFO: Parsed metric: OriginalKey='Wall Time', BaseKey='WALL_TIME', FinalKey='WALL_TIME', Value='5933.171 ms'
+Successfully parsed metrics from stats output.
+Final results.json created at /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/results.json.
+DEBUG: Listing contents of OUTPUT_DIR (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax):
+total 14316
+drwxr-xr-x  2 runner runner     4096 Nov  1 02:10 .
+drwxr-xr-x 11 runner runner     4096 Nov  1 02:09 ..
+-rw-r--r--  1 runner runner      417 Nov  1 02:10 results.json
+-rw-r--r--  1 runner runner     1601 Nov  1 02:10 runner_stdout.txt
+-rw-r--r--  1 runner runner 14642550 Nov  1 02:10 xspace.pb
+DEBUG: Checking for RESULTS_JSON_FILE (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma2_2b_keras_jax/results.json):
+DEBUG: RESULTS_JSON_FILE exists. Content (first 20 lines):
+{
+  "benchmark_name": "gemma2_2b_keras_jax",
+  "config_id": "cpu_arm64",
+  "hardware_category": "CPU_ARM64",
+  "run_status": "SUCCESS",
+  "error_message": "",
+  "commit_sha": "1930995a8aabe45a13854f701b5b39ab732aef94",
+  "workflow_run_id": "41187311004-1",
+  "metrics": {
+    "CPU_TIME": {
+      "value": 18915.804,
+      "unit": "ms"
+    },
+    "WALL_TIME": {
+      "value": 5933.171,
+      "unit": "ms"
+    }
+  }
+}
+DEBUG: End of file check.
+--- Run Benchmark Script Finished ---
+[xla] [2026-11-01 02:10:10] benchmark gemma2_2b_keras_jax completed
+--- Running Benchmark Script ---
+Benchmark Name: gemma4_2b_bf16
+Config ID: cpu_arm64
+Hardware Category: CPU_ARM64
+Output Directory: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16
+Runner Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main
+Stats Binary: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/compute_xspace_stats_main
+Device Type Flag: host
+Local Artifact Path: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/hlo_gemma4_2b_bf16.hlo
+Input Format: 
+XLA Flags JSON: []
+Runtime Flags JSON: ["--num_repeats=5"]
+Commit SHA: 1930995a8aabe45a13854f701b5b39ab732aef94
+Workflow Run ID: 41187311004-1
+Executing HLO Runner command:
+/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/xla-src/bazel-bin/xla/tools/multihost_hlo_runner/hlo_runner_main --device_type=host --num_repeats=5 --xla_gpu_dump_xspace_to=/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/xspace.pb /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/hlo_gemma4_2b_bf16.hlo 
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470219.750726   49617 functional_hlo_runner.cc:1251] Initialized and loaded arguments on 1 addressable device(s) in 3.4747s.
+I0000 00:00:1793470241.088912   49617 profiler_session.cc:171] Profiler session initializing.
+I0000 00:00:1793470241.088960   49617 profiler_session.cc:186] Profiler session started.
+I0000 00:00:1793470246.450502   49617 profiler_session.cc:134] Profiler session collecting data.
+I0000 00:00:1793470247.421584   49617 hlo_runner_profiler.cc:310] Saving xspace result to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/xspace.pb
+I0000 00:00:1793470247.881230   49617 functional_hlo_runner.cc:1613] Dump output to: 
+I0000 00:00:1793470247.882633   49617 profiler_session.cc:217] Profiler session tear down.
+
+** Running /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/benchmark/hlo_gemma4_2b_bf16.hlo **
+Runner stdout/stderr saved to /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/runner_stdout.txt
+Runner exited with code: 0
+XSpace file found. Running compute_xspace_stats_main...
+Executing Stats command and capturing its output:
+compute_xspace_stats_main output:
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1793470248.333224   51446 compute_xspace_stats.cc:299] Input file: /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/xspace.pb
+I0000 00:00:1793470248.417040   51446 compute_xspace_stats.cc:306] Successfully parsed XSpace proto.
+CPU Time: 15015671.94 us
+Wall Time: 5456122.26 us
+compute_xspace_stats_main exited with code: 0
+::warning::Skipping unsupported unit: log messages before absl::InitializeLog() is called are written to STDERR
+::warning::Skipping unsupported unit: 51446 compute
+::warning::Skipping unsupported unit: 51446 compute
+INFO: Parsed metric: OriginalKey='CPU Time', BaseKey='CPU_TIME', FinalKey='CPU_TIME', Value='15015.672 ms'
+INFO: Parsed metric: OriginalKey='Wall Time', BaseKey='WALL_TIME', FinalKey='WALL_TIME', Value='5456.122 ms'
+Successfully parsed metrics from stats output.
+Final results.json created at /home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/results.json.
+DEBUG: Listing contents of OUTPUT_DIR (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16):
+total 13660
+drwxr-xr-x  2 runner runner     4096 Nov  1 02:10 .
+drwxr-xr-x 11 runner runner     4096 Nov  1 02:10 ..
+-rw-r--r--  1 runner runner      412 Nov  1 02:10 results.json
+-rw-r--r--  1 runner runner     1495 Nov  1 02:10 runner_stdout.txt
+-rw-r--r--  1 runner runner 13971336 Nov  1 02:10 xspace.pb
+DEBUG: Checking for RESULTS_JSON_FILE (/home/runner/boostkit-perf/xla/1930995a8aab/aarch64/41187311004-1/bench-gemma4_2b_bf16/results.json):
+DEBUG: RESULTS_JSON_FILE exists. Content (first 20 lines):
+{
+  "benchmark_name": "gemma4_2b_bf16",
+  "config_id": "cpu_arm64",
+  "hardware_category": "CPU_ARM64",
+  "run_status": "SUCCESS",
+  "error_message": "",
+  "commit_sha": "1930995a8aabe45a13854f701b5b39ab732aef94",
+  "workflow_run_id": "41187311004-1",
+  "metrics": {
+    "CPU_TIME": {
+      "value": 15015.672,
+      "unit": "ms"
+    },
+    "WALL_TIME": {
+      "value": 5456.122,
+      "unit": "ms"
+    }
+  }
+}
+DEBUG: End of file check.
+--- Run Benchmark Script Finished ---
+[xla] [2026-11-01 02:10:48] benchmark gemma4_2b_bf16 completed
+[xla] collected 6 metrics from 3 benchmarks
+[xla] [2026-11-01 02:10:48] official XLA benchmark suite completed
