@@ -35,8 +35,8 @@ PY
 
 prefetch_benchmark_dependencies() {
     local crate_list="${PERF_WORK_DIR}/benchmark-crates.txt"
-    local crate_dir
-    log_message 'prefetching locked dependencies for every selected benchmark'
+    local crate_dir relative
+    log_message 'prefetching locked dependencies for every selected benchmark inside the container'
     list_benchmark_crate_dirs > "${crate_list}" || return 40
     [[ -s "${crate_list}" ]] || {
         log_message 'ERROR: no benchmark crates were selected for prefetching'
@@ -44,9 +44,9 @@ prefetch_benchmark_dependencies() {
     }
     while IFS= read -r crate_dir; do
         [[ -n "${crate_dir}" ]] || continue
-        (cd "${crate_dir}" && \
-            with_network_proxy env CARGO_HOME="${CARGO_HOME}" \
-                cargo fetch --locked --quiet) || {
+        relative="${crate_dir#${PERF_WORK_DIR}/}"
+        container_exec sh -c \
+            "export PATH='${RUST_HOME}/bin:\$PATH' && cd '${PERF_WORK_DIR}/${relative}' && cargo fetch --locked --quiet" || {
             log_message "ERROR: cargo fetch failed for ${crate_dir}"
             return 40
         }
@@ -55,17 +55,21 @@ prefetch_benchmark_dependencies() {
 
 start_rust_runtime() {
     initialize_runtime || return $?
-    load_rust_toolchain || return $?
-    [[ -x "${COLLECTOR_BIN}" ]] || {
+    check_rust_container || return $?
+    container_exec test -x "${RUSTC_BIN}" || {
+        log_message 'ERROR: Rust toolchain is missing; build stage did not complete'
+        return 40
+    }
+    container_exec test -x "${COLLECTOR_BIN}" || {
         log_message 'ERROR: collector binary is missing; build stage did not complete'
         return 40
     }
-    command -v perf >/dev/null 2>&1 || {
+    container_exec command -v perf >/dev/null 2>&1 || {
         log_message 'ERROR: perf is required by the upstream collector'
         return 40
     }
-    perf stat -e instructions:u,cycles:u true >/dev/null 2>&1 || {
-        log_message 'ERROR: perf cannot read user-space hardware counters; check kernel.perf_event_paranoid'
+    container_exec perf stat -e instructions:u,cycles:u true >/dev/null 2>&1 || {
+        log_message 'ERROR: perf cannot read user-space hardware counters in the container'
         return 40
     }
     local actual_version
@@ -75,5 +79,5 @@ start_rust_runtime() {
         return 40
     }
     prefetch_benchmark_dependencies || return $?
-    log_message "toolchain and benchmark suite are ready (id ${RUST_BENCH_ID})"
+    log_message "toolchain and benchmark suite are ready inside the container (id ${RUST_BENCH_ID})"
 }

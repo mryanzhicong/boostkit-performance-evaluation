@@ -13,7 +13,9 @@ from pathlib import Path
 
 COMPILE_METRICS = ("wall-time", "instructions:u")
 PROFILE_NAMES = ("check", "debug", "opt")
-RUNTIME_FINISHED_RE = re.compile(r"^Finished (\S+)/(\S+) \(\d+/\d+\)")
+# The runtime log line is "Finished <group>/<benchmark> (<n>/<total>)"; the
+# database stores only the benchmark name, not the group prefix.
+RUNTIME_FINISHED_RE = re.compile(r"^Finished \S+/(\S+) \(\d+/\d+\)")
 FRONTEND_THREADS_DEFAULT = (1,)
 
 
@@ -44,7 +46,7 @@ def load_runtime_benchmarks(runtime_log: Path) -> set[str]:
     for line in runtime_log.read_text(encoding="utf-8", errors="replace").splitlines():
         match = RUNTIME_FINISHED_RE.match(line.strip())
         if match:
-            names.add(f"{match.group(1)}/{match.group(2)}")
+            names.add(match.group(1))
     if not names:
         raise ParseError("runtime log contains no finished benchmark rows")
     return names
@@ -52,14 +54,18 @@ def load_runtime_benchmarks(runtime_log: Path) -> set[str]:
 
 def fetch_compile_rows(conn: sqlite3.Connection, artifact_id: str, target: str) -> dict[tuple, float]:
     rows: dict[tuple, float] = {}
+    # The collector writes one row per measured iteration; the upstream site
+    # reports the minimum value per series, so aggregate the same way.
     for crate, profile, scenario, threads, metric, value in conn.execute(
         """
-        SELECT ps."crate", ps.profile, ps.scenario, ps.frontend_threads, ps.metric, p.value
+        SELECT ps."crate", ps.profile, ps.scenario, ps.frontend_threads, ps.metric,
+               MIN(p.value)
         FROM pstat AS p
         JOIN pstat_series AS ps ON ps.id = p.series
         JOIN artifact AS a ON a.id = p.aid
         WHERE a.name = ? AND ps.target = ? AND ps.backend = 'llvm'
           AND ps.metric IN ('wall-time', 'instructions:u')
+        GROUP BY ps."crate", ps.profile, ps.scenario, ps.frontend_threads, ps.metric
         """,
         (artifact_id, target),
     ):
@@ -72,13 +78,15 @@ def fetch_compile_rows(conn: sqlite3.Connection, artifact_id: str, target: str) 
 
 def fetch_runtime_rows(conn: sqlite3.Connection, artifact_id: str, target: str) -> dict[tuple, float]:
     rows: dict[tuple, float] = {}
+    # Same aggregation as the upstream site: minimum over all iterations.
     for benchmark, metric, value in conn.execute(
         """
-        SELECT rs.benchmark, rs.metric, rp.value
+        SELECT rs.benchmark, rs.metric, MIN(rp.value)
         FROM runtime_pstat AS rp
         JOIN runtime_pstat_series AS rs ON rs.id = rp.series
         JOIN artifact AS a ON a.id = rp.aid
         WHERE a.name = ? AND rs.target = ? AND rs.metric IN ('wall-time', 'instructions:u')
+        GROUP BY rs.benchmark, rs.metric
         """,
         (artifact_id, target),
     ):
