@@ -1,0 +1,23 @@
+# Lua 5.5.1 workload matrix. Columns are pipe-separated (the delimiter is not
+# an IFS whitespace character, so empty fields are preserved by both the Shell
+# and Python readers):
+# scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+#
+# runner:
+#   lua_script          benchmarks/<target> <scale> executed by the built lua
+#   luac_compile        luac -o <out> generated/module_*.lua generated/main.lua
+#   official_test_suite lua -e "_U=true" all.lua inside the upstream test suite
+# check:
+#   int      exact integer checksum printed by the workload
+#   float    floating-point checksum, matched with the relative tolerance
+#   marker   required literal in the raw log
+arithmetic_loop_100000000|compute|lua_script|arithmetic_loop.lua|100000000|int|136284248||integer modulo accumulation (legacy 2M representative load extended for stable timing)
+nbody_500000|compute|lua_script|nbody.lua|500000|float|-0.16909656666616|1e-9|five-body solar-system simulation, 500,000 steps
+fannkuch_10|compute|lua_script|fannkuch.lua|10|int|380073196||permutation flip benchmark over all 10! permutations
+spectral_norm_800|compute|lua_script|spectral_norm.lua|800|float|1.2742241437011448|1e-9|ten power iterations of A^T A on an 800x800 matrix
+binary_trees_16|allocation_gc|lua_script|binary_trees.lua|16|int|14985902||bottom-up binary tree allocation and traversal
+table_build_1000000|data_structure|lua_script|table_build.lua|1000000|int|2000000346607511||1,000,000 integer keys + 1,000,000 string keys, traversal and entry count
+string_churn_1000000|string|lua_script|string_churn.lua|1000000|int|35651692||concatenation, table.concat, pattern substitution and string.format
+gc_stress_15000|gc|lua_script|gc_stress.lua|15000|int|47821686||table/closure/string allocation churn with periodic full collections
+luac_compile_12000|compile|luac_compile||12000|int|49056906||statically generated 12,000-module project compiled by luac in one invocation
+official_test_suite|upstream|official_test_suite|||marker|final OK||upstream Lua 5.5.1 basic test suite (all.lua, _U=true)
