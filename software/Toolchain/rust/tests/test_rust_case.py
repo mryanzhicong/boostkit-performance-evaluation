@@ -385,14 +385,14 @@ def test_build_and_test_run_inside_container() -> None:
     assert "container_exec_root dnf" in base
     assert "container_exec sh -c" in base
     assert "cargo build -p collector" in base
-    assert "${RUST_HOME}/bin" in base
+    assert 'export PATH=\\"${RUST_HOME}/bin:\\$PATH\\"' in base
     assert "container_exec" in start
     assert "container_exec perf stat" in start
-    assert "${RUST_HOME}/bin" in start
+    assert 'export PATH=\\"${RUST_HOME}/bin:\\$PATH\\"' in start
     assert "container_exec sh -c" in test_stage
     assert "bench_local" in test_stage
     assert "bench_runtime_local" in test_stage
-    assert "${RUST_HOME}/bin" in test_stage
+    assert 'export PATH=\\"${RUST_HOME}/bin:\\$PATH\\"' in test_stage
     assert "remove_rust_container" in stop
 
 

@@ -11,7 +11,7 @@ run_rust_benchmarks() {
     container_exec rm -f "${RUST_DB}"
     log_message "running upstream rustc-perf compile benchmarks inside the container: ${RUST_COMPILE_CATEGORY} x ${RUST_COMPILE_PROFILES} x ${RUST_COMPILE_SCENARIOS}"
     if ! container_exec sh -c \
-        "export PATH='${RUST_HOME}/bin:\$PATH' && cd '${RUSTC_PERF_DIR}' && '${COLLECTOR_BIN}' bench_local '${RUSTC_BIN}' \
+        "export PATH=\"${RUST_HOME}/bin:\$PATH\" && cd '${RUSTC_PERF_DIR}' && '${COLLECTOR_BIN}' bench_local '${RUSTC_BIN}' \
             --id '${RUST_BENCH_ID}' --cargo '${CARGO_BIN}' \
             --profiles '${RUST_COMPILE_PROFILES}' --scenarios '${RUST_COMPILE_SCENARIOS}' \
             --category '${RUST_COMPILE_CATEGORY}' --iterations '${RUST_COMPILE_ITERATIONS}' \

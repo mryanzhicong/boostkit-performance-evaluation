@@ -94,7 +94,7 @@ build_collector() {
     # stage log instead of appearing stalled behind --quiet. The private
     # toolchain prefix is not on the container PATH by default.
     container_exec sh -c \
-        "export PATH='${RUST_HOME}/bin:\$PATH' && rustc --version && cargo --version && \
+        "export PATH=\"${RUST_HOME}/bin:\$PATH\" && rustc --version && cargo --version && \
          cd '${RUSTC_PERF_DIR}' && cargo build -p collector --release --locked" || return 30
     container_exec test -x "${COLLECTOR_BIN}" || {
         log_message 'ERROR: collector binary is missing after the build'

@@ -46,7 +46,7 @@ prefetch_benchmark_dependencies() {
         [[ -n "${crate_dir}" ]] || continue
         relative="${crate_dir#${PERF_WORK_DIR}/}"
         container_exec sh -c \
-            "export PATH='${RUST_HOME}/bin:\$PATH' && cd '${PERF_WORK_DIR}/${relative}' && cargo fetch --locked --quiet" || {
+            "export PATH=\"${RUST_HOME}/bin:\$PATH\" && cd '${PERF_WORK_DIR}/${relative}' && cargo fetch --locked --quiet" || {
             log_message "ERROR: cargo fetch failed for ${crate_dir}"
             return 40
         }
