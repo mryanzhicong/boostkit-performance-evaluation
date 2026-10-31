@@ -93,9 +93,16 @@ docker exec "${XLA_CONTAINER_NAME}" sh -c \
   "cd '${PERF_WORK_DIR}/xla-src' && python3 ./configure.py --backend=CPU && \
    '${PERF_WORK_DIR}/bazelisk/bazelisk' --output_user_root='${PERF_WORK_DIR}/bazel-root' \
      build -c opt --config=nonccl --jobs=\"\$(getconf _NPROCESSORS_ONLN)\" \
+     --repository_cache='${BAZEL_REPOSITORY_CACHE}' \
      //xla/tools/multihost_hlo_runner:hlo_runner_main \
      //xla/tools:compute_xspace_stats_main"
 ```
+
+Bazel 使用内容寻址的 repository cache 复用外部依赖下载：优先使用
+`/home/runner/software/xla/bazel-repository-cache`（按宿主机原路径挂载进容器，供同一
+Runner 上的后续任务复用），目录不可写时回退到本次任务的
+`${PERF_WORK_DIR}/bazel-repository-cache`；可用 `XLA_BAZEL_REPOSITORY_CACHE` 覆盖。
+缓存只保存按校验值寻址的下载归档，不改变构建隔离。
 
 `--config=nonccl` 来自仓库 `tensorflow.bazelrc`，与官方 CPU 构建类型
 （`XLA_LINUX_X86_CPU_*_PRESUBMIT_GITHUB_ACTIONS` 对应的本地等价构建）一致；官方

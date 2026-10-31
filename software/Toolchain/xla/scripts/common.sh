@@ -21,6 +21,11 @@ XLA_REPOSITORY="${XLA_REPOSITORY:-https://github.com/openxla/xla.git}"
 XLA_COMMIT="${XLA_COMMIT:-1930995a8aabe45a13854f701b5b39ab732aef94}"
 XLA_ARCHIVE_DIR="${XLA_ARCHIVE_DIR:-/home/runner/software/xla}"
 
+# Content-addressed Bazel download cache shared across tasks on one runner.
+# It only stores verified archives, so reuse does not affect build isolation.
+XLA_BAZEL_REPOSITORY_CACHE="${XLA_BAZEL_REPOSITORY_CACHE:-/home/runner/software/xla/bazel-repository-cache}"
+BAZEL_REPOSITORY_CACHE=""
+
 # openEuler container runtime (same base image and loading method as MySQL).
 XLA_IMAGE_ARCHIVE_DIR="${XLA_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
 XLA_CA_ANCHORS_DIR="${XLA_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
@@ -226,7 +231,7 @@ prepare_xla_container_image() {
 # One private container per run: host network, no CPU/NUMA pinning, work and
 # result directories bind-mounted at their host paths.
 require_xla_container() {
-    local -a cert_mount=()
+    local -a cert_mount=() cache_mount=()
     require_docker || return $?
     if docker container inspect "${XLA_CONTAINER_NAME}" >/dev/null 2>&1; then
         log_message "ERROR: refusing to reuse an existing container: ${XLA_CONTAINER_NAME}"
@@ -242,6 +247,9 @@ require_xla_container() {
         fi
         cert_mount+=(--mount "type=bind,source=${XLA_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
+    if [[ -n "${BAZEL_REPOSITORY_CACHE}" && "${BAZEL_REPOSITORY_CACHE}" == "${XLA_BAZEL_REPOSITORY_CACHE}" ]]; then
+        cache_mount+=(--mount "type=bind,source=${BAZEL_REPOSITORY_CACHE},target=${BAZEL_REPOSITORY_CACHE}")
+    fi
     log_message "starting XLA container ${XLA_CONTAINER_NAME} (host network, no CPU/NUMA pinning)"
     # Bazel opens many file descriptors; the daemon default can be 1024.
     docker run --detach --name "${XLA_CONTAINER_NAME}" \
@@ -252,7 +260,7 @@ require_xla_container() {
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
-        "${cert_mount[@]}" \
+        "${cert_mount[@]}" "${cache_mount[@]}" \
         "${XLA_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
     if [[ -n "${PERF_PROXY:-}" ]]; then
         log_message 'updating CA trust in the private XLA container'

@@ -72,8 +72,22 @@ clone_xla() {
     printf '%s\n' "${actual_commit}" > "${PERF_ACTUAL_VERSION_FILE}"
 }
 
+select_bazel_repository_cache() {
+    local shared="${XLA_BAZEL_REPOSITORY_CACHE}"
+    if [[ -n "${shared}" ]] && mkdir -p "${shared}" 2>/dev/null && [[ -w "${shared}" ]]; then
+        BAZEL_REPOSITORY_CACHE="${shared}"
+        log_message "using shared bazel repository cache: ${shared}"
+        return 0
+    fi
+    [[ -n "${shared}" ]] && log_message "WARN: shared bazel repository cache is not writable: ${shared}"
+    BAZEL_REPOSITORY_CACHE="${PERF_WORK_DIR}/bazel-repository-cache"
+    mkdir -p "${BAZEL_REPOSITORY_CACHE}"
+    log_message "using task-private bazel repository cache: ${BAZEL_REPOSITORY_CACHE}"
+}
+
 build_xla_base() {
     initialize_runtime || return $?
+    select_bazel_repository_cache || return $?
     require_xla_container || return $?
     install_build_dependencies || return $?
     fetch_bazelisk || return $?
@@ -88,6 +102,7 @@ build_xla_base() {
          if [ -f ./configure.py ]; then python3 ./configure.py --backend=CPU || true; fi && \
          '${BAZELISK_BIN}' --output_user_root='${PERF_WORK_DIR}/bazel-root' \
            build -c opt --config=nonccl --jobs='$(getconf _NPROCESSORS_ONLN)' \
+           --repository_cache='${BAZEL_REPOSITORY_CACHE}' \
            //xla/tools/multihost_hlo_runner:hlo_runner_main \
            //xla/tools:compute_xspace_stats_main" || return 40
     container_exec test -x "${HLO_RUNNER_BIN}" || {

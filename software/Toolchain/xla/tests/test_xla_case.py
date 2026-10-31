@@ -260,6 +260,7 @@ def test_container_runs_without_pinning_and_mounts_results() -> None:
     content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
     assert "--network=host" in content
     assert "--ulimit nofile=1048576:1048576" in content
+    assert "BAZEL_REPOSITORY_CACHE" in content
     assert "--cpuset-cpus" not in content
     assert "--cpuset-mems" not in content
     assert "--cpus=" not in content
@@ -283,6 +284,8 @@ def test_build_and_test_run_inside_container() -> None:
     assert "container_exec_root dnf" in base
     assert "container_exec git clone" in base
     assert "container_exec sh -c" in base
+    assert "--repository_cache='${BAZEL_REPOSITORY_CACHE}'" in base
+    assert "select_bazel_repository_cache" in base
     assert "hlo_runner_main" in base
     assert "container_exec" in start
     assert "container_exec env" in start
