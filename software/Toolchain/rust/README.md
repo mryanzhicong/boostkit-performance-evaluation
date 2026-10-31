@@ -49,7 +49,8 @@ collector 通过 Linux `perf` 采集用户态硬件计数器（`instructions:u`�
 ```bash
 docker run --detach --name "${RUST_CONTAINER_NAME}" \
   --label "boostkit.rust.run-id=${PERF_RUN_ID}" \
-  --network=host --cap-add=PERFMON --user "$(id -u):$(id -g)" \
+  --network=host --cap-add=PERFMON --security-opt seccomp=unconfined \
+  --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
@@ -60,6 +61,8 @@ docker run --detach --name "${RUST_CONTAINER_NAME}" \
 - 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
 - `--network=host`：容器直接使用宿主机网络。
 - `--cap-add=PERFMON`：允许容器内的 `perf_event_open` 读取本进程用户态硬件计数器。
+- `--security-opt seccomp=unconfined`：rustc-perf 通过 `setarch -R` 关闭 ASLR，而默认
+  Docker seccomp 配置拒绝 `personality()` 系统调用（实测返回 `Operation not permitted`）。
 - `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以宿主机原路径挂载，源码、构建产物和所有
   测试结果都落在宿主机指定目录。
 - 镜像归档优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<架构>.tar.xz`，

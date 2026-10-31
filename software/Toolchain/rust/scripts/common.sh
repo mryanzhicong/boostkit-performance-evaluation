@@ -251,9 +251,12 @@ require_rust_container() {
         cert_mount+=(--mount "type=bind,source=${RUST_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
     log_message "starting Rust container ${RUST_CONTAINER_NAME} (host network, no CPU/NUMA pinning)"
+    # rustc-perf runs compilations under `setarch -R` to disable ASLR; the
+    # personality() syscall is denied by the default Docker seccomp profile.
     docker run --detach --name "${RUST_CONTAINER_NAME}" \
         --label "boostkit.rust.run-id=${PERF_RUN_ID}" \
-        --network=host --cap-add=PERFMON --user "$(id -u):$(id -g)" \
+        --network=host --cap-add=PERFMON --security-opt seccomp=unconfined \
+        --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
