@@ -1,0 +1,49 @@
+name: gradle
+category: Toolchain
+enabled: true
+versions:
+  - "9.8.2"
+test_tools:
+  gradle:
+    version: "9.8.2"
+  temurin_jdk:
+    version: "21.0.13+9"
+  gradle_source_release:
+    version: "v9.8.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_gradle
+    start:
+      script: scripts/stages/start.sh
+      function: start_gradle_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_gradle_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_gradle_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
+    subgroup_path: task
