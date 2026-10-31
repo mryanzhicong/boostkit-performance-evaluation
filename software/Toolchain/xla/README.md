@@ -29,7 +29,7 @@ SHA-256 固定（见下表）；更换提交时必须同时更新 `xla_test.sh` 
 |---|---|---|
 | XLA | 官方仓库固定提交（bazel 源码构建，非二进制包） | 容器内 `${PERF_WORK_DIR}/xla-src`（宿主机同路径可见） |
 | Bazel | 由仓库 `.bazelversion` 固定为 `8.8.2`，经 bazelisk 下载 | `${PERF_WORK_DIR}/bazel-root` |
-| bazelisk | 官方 GitHub Release `v1.29.0`（`bazelisk-linux-amd64` / `bazelisk-linux-arm64`，SHA-256 校验） | `${PERF_WORK_DIR}/bazelisk/bazelisk` |
+| bazelisk | 官方 GitHub Release [`v1.29.0`](https://github.com/bazelbuild/bazelisk/releases/tag/v1.29.0)（`bazelisk-linux-amd64` / `bazelisk-linux-arm64`，SHA-256 校验） | `${PERF_WORK_DIR}/bazelisk/bazelisk` |
 | 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载；SHA-256 校验后 `docker load` |
 | 基准执行链 | 仓库自带 `run_benchmark.sh`、`hlo_runner_main`、`compute_xspace_stats_main` | 固定提交内构建 |
 
@@ -67,13 +67,14 @@ docker run --detach --name "${XLA_CONTAINER_NAME}" \
 
 ## 获取、构建与版本核对
 
-bazelisk 优先读取离线包 `/home/runner/software/xla/bazelisk-linux-<arch>-v1.29.0`，
+bazelisk 优先读取离线包 `/home/runner/software/xla/bazelisk-linux-<arch>`（与上游 Release
+资产同名，不带版本号；版本由下方 SHA-256 固定），
 缺失时从官方 Release 下载；两种来源都校验 SHA-256：
 
-| 架构 | 文件 | SHA-256 |
-|---|---|---|
-| `x86_64` | `bazelisk-linux-amd64` | `5a408715e932c0250d28bd84555f12edbf70117de42f9181691c736eacc4a992` |
-| `aarch64` | `bazelisk-linux-arm64` | `e20e8b0f4f240091b7a55bf17b9398bd4f40ee70ae0208dff95dd4c445fb4010` |
+| 架构 | 文件 | 下载地址 | SHA-256 |
+|---|---|---|---|
+| `x86_64` | `bazelisk-linux-amd64` | <https://github.com/bazelbuild/bazelisk/releases/download/v1.29.0/bazelisk-linux-amd64> | `5a408715e932c0250d28bd84555f12edbf70117de42f9181691c736eacc4a992` |
+| `aarch64` | `bazelisk-linux-arm64` | <https://github.com/bazelbuild/bazelisk/releases/download/v1.29.0/bazelisk-linux-arm64> | `e20e8b0f4f240091b7a55bf17b9398bd4f40ee70ae0208dff95dd4c445fb4010` |
 
 源码与构建命令形态：
 

@@ -36,6 +36,8 @@ fetch_bazelisk() {
             ;;
     esac
     mkdir -p "$(dirname "${BAZELISK_BIN}")"
+    # Upstream release assets carry no version in the file name; the pinned
+    # SHA-256 below identifies the version.
     local_archive="${XLA_ARCHIVE_DIR}/${archive_name}"
     if [[ -x "${BAZELISK_BIN}" ]]; then
         log_message "reusing cached bazelisk ${BAZELISK_VERSION}"
