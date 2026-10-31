@@ -3,7 +3,9 @@
 本用例在 x86_64、aarch64 Runner 上部署 LLVM 官方预编译 Clang 工具链
 （`LLVM-23.1.4-Linux-X64.tar.xz` / `LLVM-23.1.4-Linux-ARM64.tar.xz`），使用 SQLite
 官方固定版本源码（amalgamation 与 `speedtest1`）作为基准负载，进行开箱性能对比。
-不从源码编译 LLVM，不安装系统级 Clang 软件包，不做绑核或调优。
+不从源码编译 LLVM，不安装系统级 Clang 软件包，不做绑核或调优。**构建与测试全部在
+openEuler 24.03 LTS SP4 容器内运行**（基镜像与用法参照 MySQL 用例），容器不绑核、
+不绑 NUMA、使用宿主机网络；源码、工具链和结果目录通过 bind mount 保存在宿主机。
 
 软件入口为 `clang_test.sh`。Framework 通过 `case.yaml` 分别调用构建、启动、测试和
 停止阶段；直接执行入口脚本也使用这些阶段函数。基础版构建位于
@@ -15,7 +17,8 @@
 
 | 项目 | 来源与版本 | 位置 |
 |---|---|---|
-| Clang | [LLVM 官方 GitHub Release](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.4) 预编译 tarball | 优先读取 `/home/runner/software/clang/`，缺失时下载；解压到 `${PERF_WORK_DIR}/llvm` |
+| Clang | [LLVM 官方 GitHub Release](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.4) 预编译 tarball | 宿主机优先读取 `/home/runner/software/clang/`，缺失时下载并校验；容器内解压到 `${PERF_WORK_DIR}/llvm` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载；SHA-256 校验后 `docker load` |
 | SQLite amalgamation | 官方 `https://www.sqlite.org/2026/sqlite-amalgamation-3540100.zip`（版本 3.54.1） | `${PERF_WORK_DIR}/benchmark/amalgamation/` |
 | SQLite 源码树 | 官方 `https://www.sqlite.org/2026/sqlite-src-3540100.zip`（含 `speedtest1.c`） | `${PERF_WORK_DIR}/benchmark/sqlite-src/` |
 
@@ -34,25 +37,53 @@ SQLite 官方公布的是 SHA3-256（不提供 SHA-256），脚本用 `python3 h
 
 ## 部署与版本核对
 
-LLVM tarball 优先读取 `/home/runner/software/clang/<包名>`，其次本次任务目录缓存，
-最后从 `https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/` 下载。
+LLVM tarball 优先读取 `/home/runner/software/clang/<包名>`，其次本次任务目录缓存
+（离线包会先复制到该目录，容器才能读取），最后从 `https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/` 下载。
 解压后脚本自动定位携带 `bin/clang` 的目录并作为工具链根目录：
 
+以下命令在私有容器内执行（归档先复制到 `${PERF_WORK_DIR}`，容器才能读取）：
+
 ```bash
-tar -xJf "${PERF_WORK_DIR}/LLVM-23.1.4-Linux-X64.tar.xz" -C "${PERF_WORK_DIR}/llvm-unpack"
-"${PERF_WORK_DIR}/llvm/bin/clang" --version    # 必须报告 23.1.4
+docker exec "${CLANG_CONTAINER_NAME}" tar -xJf \
+  "${PERF_WORK_DIR}/LLVM-23.1.4-Linux-X64.tar.xz" -C "${PERF_WORK_DIR}/llvm-unpack"
+docker exec "${CLANG_CONTAINER_NAME}" "${PERF_WORK_DIR}/llvm/bin/clang" --version  # 必须报告 23.1.4
 ```
 
 构建阶段还会检查 `clang`、`clang++` 可执行、`ldd` 无缺失依赖，并把实际版本写入
 `PERF_ACTUAL_VERSION_FILE`，不直接写请求版本。工具链仅位于本次任务私有目录。
 
+## 容器
+
+每个任务创建且仅创建一个私有容器 `boostkit-clang-<架构>-<run-id>`，带
+`boostkit.clang.run-id=<run-id>` 归属标签。启动方式：
+
+```bash
+docker run --detach --name "${CLANG_CONTAINER_NAME}" \
+  --label "boostkit.clang.run-id=${PERF_RUN_ID}" \
+  --network=host --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${CLANG_CONTAINER_IMAGE}" sleep infinity
+```
+
+- 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
+- `--network=host`：容器直接使用宿主机网络。
+- `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以宿主机原路径挂载，工具链和所有测试结果都
+  落在宿主机指定目录。
+- 容器内仓库切换为华为云 openEuler 镜像；启用 `PERF_PROXY` 时挂载代理 CA 证书并执行
+  `update-ca-trust extract`，`dnf`/`curl` 下载走代理。
+- `stop` 阶段只停止并删除带本任务归属标签的容器，重复调用安全。
+
 ## 基准数据与正式测试
 
-`start` 阶段下载并校验两份 SQLite 包，解压到 `${PERF_WORK_DIR}/benchmark/`，再以被测
-clang 冒烟构建 `speedtest1` 并运行 `--size 100 --memdb` 一次，确认工具链、基准源码和
+`start` 阶段下载并校验两份 SQLite 包，在容器内解压到 `${PERF_WORK_DIR}/benchmark/`，
+再以被测 clang 冒烟构建 `speedtest1` 并运行 `--size 100 --memdb` 一次，确认工具链、基准源码和
 链接环境可用；冒烟产物随后丢弃。正式测试只对已验证的组合计时。
 
-`test` 阶段固定每档 5 轮（`CLANG_ROUNDS` 可覆盖），用 `date +%s.%N` 前后差值计时：
+`test` 阶段在容器内固定每档 5 轮（`CLANG_ROUNDS` 可覆盖），用 `date +%s.%N`
+前后差值计时：
 
 1. **compile 场景**（编译吞吐）：对 `sqlite3.c` 分别以 `-O0`、`-O2`、`-Os` 各编译
    5 轮，记录每轮墙钟时间与 `sqlite3.o` 大小：
@@ -97,8 +128,8 @@ clang 冒烟构建 `speedtest1` 并运行 `--size 100 --memdb` 一次，确认�
 | `actual-version.txt` | 从产物读取的实际版本 |
 | `results.json`、`status.json`、`report.md` | 独立入口生成的状态、指标与单架构报告 |
 
-`stop` 阶段无需停止服务（所有进程为测试阶段的子进程，随阶段结束退出）；
-私有工作目录由 Framework 或独立入口清理。脱离 Workflow 执行完整流程：
+`stop` 阶段停止并删除本任务的容器（按归属标签校验），无需停止其他服务；宿主机的
+`${PERF_WORK_DIR}` 由 Framework 或独立入口清理，`${RESULTS_DIR}` 保留。脱离 Workflow 执行完整流程：
 
 ```bash
 bash software/Toolchain/clang/clang_test.sh \

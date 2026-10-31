@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
-# Clang runs as plain child processes of the test stage and has already
-# exited. No service is started, so stop is a deliberate no-op that stays
-# safe on success and failure paths; the private work directory is removed
-# by the framework or by the standalone entry.
+# The whole build and benchmark ran inside this task's private container.
+# stop removes only that container (verified by its ownership label) and is
+# safe to call repeatedly; the host work and result directories are left for
+# the framework or the standalone entry to clean.
 stop_clang_runtime() {
     initialize_runtime || return $?
-    log_message 'no service to stop for this task'
+    if ! command -v docker >/dev/null 2>&1; then
+        log_message 'no Docker daemon; no managed container to stop'
+        return 0
+    fi
+    remove_clang_container || return $?
+    log_message 'managed Clang container stopped'
 }

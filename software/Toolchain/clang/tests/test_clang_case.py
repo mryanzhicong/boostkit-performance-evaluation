@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -218,3 +220,68 @@ def test_optimized_builder_fails_explicitly() -> None:
     content = (SCRIPT_DIR / "builders" / "optimized.sh").read_text(encoding="utf-8")
     assert "not implemented" in content
     assert "return 30" in content
+
+
+def test_logs_go_to_stderr_so_fetch_helpers_return_clean_paths(tmp_path: Path) -> None:
+    # The CI failure came from log output being captured together with the
+    # archive path returned on stdout by fetch_llvm_archive.
+    result = subprocess.run(
+        ["bash", "-c", f'source "{SCRIPT_DIR}/common.sh"; log_message hello'],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.stdout == ""
+    assert "hello" in result.stderr
+
+
+def test_fetch_llvm_archive_returns_only_the_path(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    payload = b"fake llvm archive"
+    content_sha = hashlib.sha256(payload).hexdigest()
+    archive = work / "LLVM-23.1.4-Linux-X64.tar.xz"
+    archive.write_bytes(payload)
+    script = f"""
+source "{SCRIPT_DIR}/builders/base.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+configure_runtime_paths
+LLVM_ARCHIVE_NAME="LLVM-23.1.4-Linux-X64.tar.xz"
+LLVM_ARCHIVE_SHA256="{content_sha}"
+fetch_llvm_archive
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(archive)
+    assert "using cached LLVM archive" in result.stderr
+
+
+def test_container_runs_without_pinning_and_mounts_results() -> None:
+    content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
+    assert "--network=host" in content
+    assert "--cpuset-cpus" not in content
+    assert "--cpuset-mems" not in content
+    assert "--cpus=" not in content
+    assert 'type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in content
+    assert 'type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}' in content
+    assert "boostkit.clang.run-id=${PERF_RUN_ID}" in content
+    assert "openEuler-24.03-LTS-SP4" in content
+    assert "docker load" in content
+    assert "update-ca-trust extract" in content
+    assert "repo.huaweicloud.com" in content
+
+
+def test_build_and_test_run_inside_container() -> None:
+    base = (SCRIPT_DIR / "builders" / "base.sh").read_text(encoding="utf-8")
+    start = (SCRIPT_DIR / "stages" / "start.sh").read_text(encoding="utf-8")
+    test_stage = (SCRIPT_DIR / "stages" / "test.sh").read_text(encoding="utf-8")
+    stop = (SCRIPT_DIR / "stages" / "stop.sh").read_text(encoding="utf-8")
+    assert "require_clang_container" in base
+    assert "container_exec_root dnf" in base
+    assert "container_exec tar" in base
+    assert "container_exec" in start
+    assert "container_exec unzip" in start
+    assert "container_exec sh -c" in test_stage
+    assert "run_compile_scenario" in test_stage
+    assert "run_speedtest_scenario" in test_stage
+    assert "remove_clang_container" in stop

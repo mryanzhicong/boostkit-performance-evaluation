@@ -27,6 +27,12 @@ SQLITE_SOURCE_SHA3_256="${SQLITE_SOURCE_SHA3_256:-877c6f4996ce7adb368686bce21638
 SQLITE_BENCHMARK_VERSION="${SQLITE_BENCHMARK_VERSION:-3.54.1}"
 CLANG_ARCHIVE_DIR="${CLANG_ARCHIVE_DIR:-/home/runner/software/clang}"
 
+# openEuler container runtime (same base image and loading method as MySQL).
+CLANG_IMAGE_ARCHIVE_DIR="${CLANG_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
+CLANG_CA_ANCHORS_DIR="${CLANG_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
+CLANG_CONTAINER_IMAGE=""
+CLANG_CONTAINER_NAME=""
+
 # Formal workload: three compile options over the SQLite amalgamation and
 # two speedtest1 database sizes, five rounds each.
 CLANG_ROUNDS="${CLANG_ROUNDS:-5}"
@@ -45,7 +51,8 @@ SQLITE3_H=""
 SPEEDTEST1_C=""
 SPEEDTEST1_BIN=""
 
-log_message() { printf '[clang] [%s] %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*"; }
+# Logs go to stderr so helper functions can return file paths on stdout.
+log_message() { printf '[clang] [%s] %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*" >&2; }
 
 validate_variant() {
     case "${PERF_VARIANT}" in
@@ -116,7 +123,8 @@ configure_runtime_paths() {
     SQLITE3_H="${AMALGAMATION_DIR}/sqlite3.h"
     SPEEDTEST1_C="${SQLITE_SOURCE_DIR}/speedtest1.c"
     export SOFTWARE_VERSION PERF_VARIANT EXPECTED_ARCH PERF_RUN_ID PERF_WORK_DIR RESULTS_DIR
-    export PERF_ACTUAL_VERSION_FILE TMPDIR
+    CLANG_CONTAINER_NAME="boostkit-clang-${EXPECTED_ARCH}-${PERF_RUN_ID}"
+    export PERF_ACTUAL_VERSION_FILE TMPDIR CLANG_CONTAINER_NAME
 }
 
 initialize_runtime() {
@@ -155,4 +163,154 @@ PY
         log_message "ERROR: SHA3-256 mismatch for ${file_path}: expected ${expected}, got ${actual}"
         return 30
     }
+}
+
+require_docker() {
+    if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+        log_message 'ERROR: an accessible Docker daemon is required for the Clang container'
+        return 30
+    fi
+}
+
+verify_clang_image_release() {
+    local release
+    release="$(docker run --rm --network=none "${CLANG_CONTAINER_IMAGE}" cat /etc/os-release)" || {
+        log_message 'ERROR: cannot read the loaded openEuler image release'
+        return 30
+    }
+    if ! grep -Eq '^ID="?openEuler"?$' <<< "${release}" || \
+       ! grep -Eq '^VERSION=.*24\.03.*LTS-SP4' <<< "${release}"; then
+        log_message 'ERROR: loaded Clang container image is not openEuler 24.03 LTS SP4'
+        return 30
+    fi
+}
+
+prepare_clang_container_image() {
+    local archive_name="openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+    local archive checksum expected actual load_output image_architecture
+    local image_url="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/${archive_name}"
+
+    if [[ -s "${CLANG_IMAGE_ARCHIVE_DIR}/${archive_name}" ]]; then
+        archive="${CLANG_IMAGE_ARCHIVE_DIR}/${archive_name}"
+        log_message "using local openEuler container image archive: ${archive}"
+    else
+        archive="${PERF_WORK_DIR}/${archive_name}"
+        log_message "downloading openEuler container image archive: ${image_url}"
+        with_network_proxy curl -fSL --retry 3 --connect-timeout 30 -o "${archive}" "${image_url}" || return 30
+    fi
+
+    if [[ -s "${CLANG_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum" ]]; then
+        checksum="${CLANG_IMAGE_ARCHIVE_DIR}/${archive_name}.sha256sum"
+    else
+        checksum="${PERF_WORK_DIR}/${archive_name}.sha256sum"
+        log_message "downloading official image checksum: ${image_url}.sha256sum"
+        with_network_proxy curl -fSL --retry 3 --connect-timeout 30 -o "${checksum}" "${image_url}.sha256sum" || return 30
+    fi
+    expected="$(awk 'NR == 1 {print $1}' "${checksum}")"
+    if [[ ! "${expected}" =~ ^[[:xdigit:]]{64}$ ]]; then
+        log_message "ERROR: invalid official image checksum: ${checksum}"
+        return 30
+    fi
+    actual="$(sha256sum "${archive}")"
+    if [[ "${actual%% *}" != "${expected,,}" ]]; then
+        log_message "ERROR: openEuler container image checksum mismatch: ${archive}"
+        return 30
+    fi
+
+    log_message "loading verified openEuler container image: ${archive}"
+    load_output="$(docker load --input "${archive}")" || return 30
+    CLANG_CONTAINER_IMAGE="$(printf '%s\n' "${load_output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+    if [[ -z "${CLANG_CONTAINER_IMAGE}" ]] || ! docker image inspect "${CLANG_CONTAINER_IMAGE}" >/dev/null 2>&1; then
+        log_message "ERROR: docker load did not report an inspectable image: ${load_output}"
+        return 30
+    fi
+    image_architecture="$(docker image inspect --format '{{.Architecture}}' "${CLANG_CONTAINER_IMAGE}")"
+    case "${EXPECTED_ARCH}:${image_architecture}" in
+        x86_64:amd64|aarch64:arm64) ;;
+        *) log_message "ERROR: loaded image architecture is ${image_architecture}, expected ${EXPECTED_ARCH}"; return 30 ;;
+    esac
+    verify_clang_image_release || return $?
+    export CLANG_CONTAINER_IMAGE
+    log_message "openEuler container image is ready: ${CLANG_CONTAINER_IMAGE} (${image_architecture})"
+}
+
+# One private container per run: host network, no CPU/NUMA pinning, work and
+# result directories bind-mounted at their host paths.
+require_clang_container() {
+    local -a cert_mount=()
+    require_docker || return $?
+    if docker container inspect "${CLANG_CONTAINER_NAME}" >/dev/null 2>&1; then
+        log_message "ERROR: refusing to reuse an existing container: ${CLANG_CONTAINER_NAME}"
+        return 40
+    fi
+    if [[ -z "${CLANG_CONTAINER_IMAGE}" ]]; then
+        prepare_clang_container_image || return $?
+    fi
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        if [[ ! -d "${CLANG_CA_ANCHORS_DIR}" ]]; then
+            log_message "ERROR: proxy CA certificate directory is missing: ${CLANG_CA_ANCHORS_DIR}"
+            return 30
+        fi
+        cert_mount+=(--mount "type=bind,source=${CLANG_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
+    fi
+    log_message "starting Clang container ${CLANG_CONTAINER_NAME} (host network, no CPU/NUMA pinning)"
+    docker run --detach --name "${CLANG_CONTAINER_NAME}" \
+        --label "boostkit.clang.run-id=${PERF_RUN_ID}" \
+        --network=host --user "$(id -u):$(id -g)" \
+        --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+        --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+        --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+        --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+        "${cert_mount[@]}" \
+        "${CLANG_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        log_message 'updating CA trust in the private Clang container'
+        docker exec --user 0 "${CLANG_CONTAINER_NAME}" update-ca-trust extract || {
+            log_message 'ERROR: failed to update CA trust in the Clang container'
+            return 30
+        }
+    fi
+    log_message 'switching private Clang container repositories to the Huawei openEuler mirror'
+    if docker exec --user 0 "${CLANG_CONTAINER_NAME}" test -f /etc/yum.repos.d/openEuler.repo; then
+        docker exec --user 0 "${CLANG_CONTAINER_NAME}" sed -i \
+            -e '/^meta/ s/^\(.*\)$/#\1/g' \
+            -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+            /etc/yum.repos.d/openEuler.repo || {
+            log_message 'ERROR: failed to update repositories in the Clang container'
+            return 30
+        }
+    fi
+}
+
+check_clang_container() {
+    [[ "$(docker inspect --format '{{.State.Running}}' "${CLANG_CONTAINER_NAME}" 2>/dev/null)" == true ]] || {
+        log_message "ERROR: managed Clang container is not running: ${CLANG_CONTAINER_NAME}"
+        return 40
+    }
+}
+
+container_exec() {
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        docker exec -e http_proxy="${PERF_PROXY}" -e https_proxy="${PERF_PROXY}" \
+            -e TMPDIR="${TMPDIR}" "${CLANG_CONTAINER_NAME}" "$@"
+    else
+        docker exec -e TMPDIR="${TMPDIR}" "${CLANG_CONTAINER_NAME}" "$@"
+    fi
+}
+
+container_exec_root() {
+    docker exec --user 0 -e TMPDIR="${TMPDIR}" "${CLANG_CONTAINER_NAME}" "$@"
+}
+
+remove_clang_container() {
+    if ! docker container inspect "${CLANG_CONTAINER_NAME}" >/dev/null 2>&1; then
+        return 0
+    fi
+    if [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.clang.run-id"}}' "${CLANG_CONTAINER_NAME}" 2>/dev/null)" != "${PERF_RUN_ID}" ]]; then
+        log_message "ERROR: refusing to remove container without this task's ownership label: ${CLANG_CONTAINER_NAME}"
+        return 50
+    fi
+    docker stop --time 30 "${CLANG_CONTAINER_NAME}" >/dev/null || return 50
+    docker rm "${CLANG_CONTAINER_NAME}" >/dev/null || return 50
+    log_message "removed managed Clang container ${CLANG_CONTAINER_NAME}"
 }

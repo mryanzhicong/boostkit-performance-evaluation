@@ -6,59 +6,64 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 source "${SCRIPT_DIR}/scripts/stages/start.sh"
 
 run_compile_scenario() {
-    local option round round_start round_end round_seconds object_file
-    for option in "${CLANG_COMPILE_OPTIONS[@]}"; do
-        for round in $(seq 1 "${CLANG_ROUNDS}"); do
-            object_file="${BENCHMARK_DIR}/sqlite3-${option#-}-r${round}.o"
-            rm -f "${object_file}"
-            round_start="$(date +%s.%N)"
-            "${CLANG_BIN}" "${option}" -c "${SQLITE3_C}" -o "${object_file}" || {
-                log_message "ERROR: compile round failed: ${option} round ${round}"
-                return 50
-            }
-            round_end="$(date +%s.%N)"
-            round_seconds="$(awk -v s="${round_start}" -v e="${round_end}" 'BEGIN { printf "%.3f", e - s }')"
-            printf 'result scenario=compile workload=%s round=%d wall_seconds=%s artifact_bytes=%s\n' \
-                "${option}" "${round}" "${round_seconds}" "$(stat -c %s "${object_file}")"
-        done
-        rm -f "${BENCHMARK_DIR}"/sqlite3-*-r*.o
+    container_exec sh -c "$(cat <<EOS
+for option in ${CLANG_COMPILE_OPTIONS[*]}; do
+    for round in \$(seq 1 ${CLANG_ROUNDS}); do
+        object_file="${BENCHMARK_DIR}/sqlite3-\${option#-}-r\${round}.o"
+        rm -f "\$object_file"
+        round_start=\$(date +%s.%N)
+        "${CLANG_BIN}" "\$option" -c "${SQLITE3_C}" -o "\$object_file" || exit 50
+        round_end=\$(date +%s.%N)
+        round_seconds=\$(awk -v s="\$round_start" -v e="\$round_end" 'BEGIN { printf "%.3f", e - s }')
+        printf 'result scenario=compile workload=%s round=%d wall_seconds=%s artifact_bytes=%s\n' \
+            "\$option" "\$round" "\$round_seconds" "\$(stat -c %s "\$object_file")"
     done
+    rm -f "${BENCHMARK_DIR}"/sqlite3-*-r*.o
+done
+EOS
+)" || {
+        log_message 'ERROR: compile scenario failed inside the container'
+        return 50
+    }
 }
 
 run_speedtest_scenario() {
-    local size round round_dir round_start round_end round_seconds binary_bytes
+    local binary_bytes
     build_speedtest1_binary "${SPEEDTEST1_BIN}" || return $?
-    binary_bytes="$(stat -c %s "${SPEEDTEST1_BIN}")"
-    for size in "${CLANG_SPEEDTEST_SIZES[@]}"; do
-        for round in $(seq 1 "${CLANG_ROUNDS}"); do
-            round_dir="${BENCHMARK_DIR}/speedtest1-size${size}-r${round}"
-            rm -rf "${round_dir}"
-            mkdir -p "${round_dir}"
-            round_start="$(date +%s.%N)"
-            (cd "${round_dir}" && "${SPEEDTEST1_BIN}" --size "${size}" --memdb test.db) || {
-                rm -rf "${round_dir}"
-                log_message "ERROR: speedtest1 round failed: size ${size} round ${round}"
-                return 50
-            }
-            round_end="$(date +%s.%N)"
-            round_seconds="$(awk -v s="${round_start}" -v e="${round_end}" 'BEGIN { printf "%.3f", e - s }')"
-            printf 'result scenario=speedtest1 workload=%d round=%d wall_seconds=%s artifact_bytes=%s\n' \
-                "${size}" "${round}" "${round_seconds}" "${binary_bytes}"
-            rm -rf "${round_dir}"
-        done
+    binary_bytes="$(container_exec stat -c %s "${SPEEDTEST1_BIN}")"
+    container_exec sh -c "$(cat <<EOS
+for size in ${CLANG_SPEEDTEST_SIZES[*]}; do
+    for round in \$(seq 1 ${CLANG_ROUNDS}); do
+        round_dir="${BENCHMARK_DIR}/speedtest1-size\${size}-r\${round}"
+        rm -rf "\$round_dir"
+        mkdir -p "\$round_dir"
+        round_start=\$(date +%s.%N)
+        cd "\$round_dir" && "${SPEEDTEST1_BIN}" --size "\$size" --memdb test.db || exit 50
+        round_end=\$(date +%s.%N)
+        round_seconds=\$(awk -v s="\$round_start" -v e="\$round_end" 'BEGIN { printf "%.3f", e - s }')
+        printf 'result scenario=speedtest1 workload=%d round=%d wall_seconds=%s artifact_bytes=%s\n' \
+            "\$size" "\$round" "\$round_seconds" "${binary_bytes}"
+        cd "${BENCHMARK_DIR}" && rm -rf "\$round_dir"
     done
+done
+EOS
+)" || {
+        log_message 'ERROR: speedtest1 scenario failed inside the container'
+        return 50
+    }
 }
 
 run_clang_benchmarks() {
     local raw_output
     initialize_runtime || return $?
-    [[ -x "${CLANG_BIN}" ]] || {
+    check_clang_container || return $?
+    container_exec test -x "${CLANG_BIN}" || {
         log_message 'ERROR: clang is not deployed; build stage did not complete'
         return 40
     }
     prepare_benchmark_sources || return $?
     raw_output="${RESULTS_DIR}/sqlite_clang_raw.log"
-    log_message "running ${CLANG_ROUNDS} rounds per workload"
+    log_message "running ${CLANG_ROUNDS} rounds per workload inside the container"
     if ! (
         run_compile_scenario || exit 50
         run_speedtest_scenario || exit 50
