@@ -243,9 +243,11 @@ require_xla_container() {
         cert_mount+=(--mount "type=bind,source=${XLA_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
     log_message "starting XLA container ${XLA_CONTAINER_NAME} (host network, no CPU/NUMA pinning)"
+    # Bazel opens many file descriptors; the daemon default can be 1024.
     docker run --detach --name "${XLA_CONTAINER_NAME}" \
         --label "boostkit.xla.run-id=${PERF_RUN_ID}" \
-        --network=host --user "$(id -u):$(id -g)" \
+        --network=host --ulimit nofile=1048576:1048576 \
+        --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \

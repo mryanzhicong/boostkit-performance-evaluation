@@ -50,7 +50,8 @@ SHA-256 固定（见下表）；更换提交时必须同时更新 `xla_test.sh` 
 ```bash
 docker run --detach --name "${XLA_CONTAINER_NAME}" \
   --label "boostkit.xla.run-id=${PERF_RUN_ID}" \
-  --network=host --user "$(id -u):$(id -g)" \
+  --network=host --ulimit nofile=1048576:1048576 \
+  --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
@@ -60,6 +61,8 @@ docker run --detach --name "${XLA_CONTAINER_NAME}" \
 
 - 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
 - `--network=host`：容器直接使用宿主机网络。
+- `--ulimit nofile=1048576:1048576`：Bazel 启动时需要较多文件描述符，Docker 守护进程
+  的默认上限可能只有 1024，会导致 `epoll_create1() failed: Too many open files`。
 - `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以宿主机原路径挂载，源码、Bazel 产物和所有
   测试结果都落在宿主机指定目录；容器内的 `HOME` 与 `BAZELISK_HOME` 指向任务私有目录，
   避免 bazelisk 尝试写入镜像内不可写的 `/home/runner/.cache`。

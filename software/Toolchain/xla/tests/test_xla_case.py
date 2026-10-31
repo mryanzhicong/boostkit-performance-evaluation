@@ -259,6 +259,7 @@ def test_optimized_builder_fails_explicitly() -> None:
 def test_container_runs_without_pinning_and_mounts_results() -> None:
     content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
     assert "--network=host" in content
+    assert "--ulimit nofile=1048576:1048576" in content
     assert "--cpuset-cpus" not in content
     assert "--cpuset-mems" not in content
     assert "--cpus=" not in content
