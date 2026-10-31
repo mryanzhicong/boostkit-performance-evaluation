@@ -1,0 +1,152 @@
+=== Running 10 tests in this tree ===
+perf 1 - read_cache/discard_cache 1000 times: 1 2 3 4 5 ok
+# passed all 1 test(s)
+1..1
+perf 1 - log --raw: 1 2 3 4 5 ok
+perf 2 - log -S: 1 2 3 4 5 ok
+# passed all 2 test(s)
+1..2
+ok 1 - verify both methods build the same hashmaps
+ok 2 - calibrate
+perf 3 - single-threaded, 5078 entries, 1000 rounds: 1 2 3 4 5 ok
+perf 4 - multi-threaded, 5078 entries, 1000 rounds: 1 2 3 4 5 ok
+# passed all 4 test(s)
+1..4
+ok 1 - setup repo
+perf 2 - read-tree status br_ballast (4854): 1 2 3 4 5 ok
+# passed all 2 test(s)
+1..2
+ok 1 - setup repo
+perf 2 - write_locked_index 3 times (4854 files): 1 2 3 4 5 ok
+# passed all 2 test(s)
+1..2
+perf 1 - add 500 files (fsyncMethod=none): 1 2 3 4 5 ok
+perf 2 - add 500 files (fsyncMethod=fsync): 1 2 3 4 5 ok
+perf 3 - add 500 files (fsyncMethod=batch): 1 2 3 4 5 ok
+perf 4 - add 500 files (fsyncMethod=writeout-only): 1 2 3 4 5 ok
+perf 5 - stash 500 files (fsyncMethod=none): 1 2 3 4 5 ok
+perf 6 - stash 500 files (fsyncMethod=fsync): 1 2 3 4 5 ok
+perf 7 - stash 500 files (fsyncMethod=batch): 1 2 3 4 5 ok
+perf 8 - stash 500 files (fsyncMethod=writeout-only): 1 2 3 4 5 ok
+perf 9 - unpack 500 files (fsyncMethod=none): 1 2 3 4 5 ok
+perf 10 - unpack 500 files (fsyncMethod=fsync): 1 2 3 4 5 ok
+perf 11 - unpack 500 files (fsyncMethod=batch): 1 2 3 4 5 ok
+perf 12 - unpack 500 files (fsyncMethod=writeout-only): 1 2 3 4 5 ok
+perf 13 - commit 500 files (fsyncMethod=none): 1 2 3 4 5 ok
+perf 14 - commit 500 files (fsyncMethod=fsync): 1 2 3 4 5 ok
+perf 15 - commit 500 files (fsyncMethod=batch): 1 2 3 4 5 ok
+perf 16 - commit 500 files (fsyncMethod=writeout-only): 1 2 3 4 5 ok
+# passed all 16 test(s)
+1..16
+ok 1 - setup
+perf 2 - diff pathspec subtree: 1 2 3 4 5 ok
+# passed all 2 test(s)
+1..2
+ok 1 - setup
+perf 2 - sort(1) unsorted: 1 2 3 4 5 ok
+ok 3 - reverse
+perf 4 - sort(1) sorted: 1 2 3 4 5 ok
+perf 5 - sort(1) reversed: 1 2 3 4 5 ok
+perf 6 - string_list_sort() unsorted: 1 2 3 4 5 ok
+ok 7 - string_list_sort() unsorted sorts like sort(1)
+perf 8 - string_list_sort() sorted: 1 2 3 4 5 ok
+ok 9 - string_list_sort() sorted sorts like sort(1)
+perf 10 - string_list_sort() reversed: 1 2 3 4 5 ok
+ok 11 - string_list_sort() reversed sorts like sort(1)
+perf 12 - DEFINE_LIST_SORT unsorted: 1 2 3 4 5 ok
+ok 13 - DEFINE_LIST_SORT unsorted sorts like sort(1)
+perf 14 - DEFINE_LIST_SORT sorted: 1 2 3 4 5 ok
+ok 15 - DEFINE_LIST_SORT sorted sorts like sort(1)
+perf 16 - DEFINE_LIST_SORT reversed: 1 2 3 4 5 ok
+ok 17 - DEFINE_LIST_SORT reversed sorts like sort(1)
+# passed all 17 test(s)
+1..17
+ok 1 - setup cache tree
+perf 2 - no-op, clean: 1 2 3 4 5 ok
+perf 3 - prime_cache_tree, clean: 1 2 3 4 5 ok
+perf 4 - cache_tree_update, clean: 1 2 3 4 5 ok
+perf 5 - no-op, invalidate 2: 1 2 3 4 5 ok
+perf 6 - prime_cache_tree, invalidate 2: 1 2 3 4 5 ok
+perf 7 - cache_tree_update, invalidate 2: 1 2 3 4 5 ok
+perf 8 - no-op, invalidate 50: 1 2 3 4 5 ok
+perf 9 - prime_cache_tree, invalidate 50: 1 2 3 4 5 ok
+perf 10 - cache_tree_update, invalidate 50: 1 2 3 4 5 ok
+perf 11 - no-op, empty: 1 2 3 4 5 ok
+perf 12 - prime_cache_tree, empty: 1 2 3 4 5 ok
+perf 13 - cache_tree_update, empty: 1 2 3 4 5 ok
+# passed all 13 test(s)
+1..13
+ok 1 - setup
+perf 2 - refglob((a*)^nb) against tag (a^100).t; n = 1: 1 2 3 4 5 ok
+perf 3 - refglob((a*)^nb) against tag (a^100).t; n = 2: 1 2 3 4 5 ok
+perf 4 - refglob((a*)^nb) against tag (a^100).t; n = 3: 1 2 3 4 5 ok
+perf 5 - refglob((a*)^nb) against tag (a^100).t; n = 4: 1 2 3 4 5 ok
+perf 6 - refglob((a*)^nb) against tag (a^100).t; n = 5: 1 2 3 4 5 ok
+perf 7 - refglob((a*)^nb) against tag (a^100).t; n = 6: 1 2 3 4 5 ok
+perf 8 - fileglob((a*)^nb) against file (a^100).t; n = 1: 1 2 3 4 5 ok
+perf 9 - fileglob((a*)^nb) against file (a^100).t; n = 2: 1 2 3 4 5 ok
+perf 10 - fileglob((a*)^nb) against file (a^100).t; n = 3: 1 2 3 4 5 ok
+perf 11 - fileglob((a*)^nb) against file (a^100).t; n = 4: 1 2 3 4 5 ok
+perf 12 - fileglob((a*)^nb) against file (a^100).t; n = 5: 1 2 3 4 5 ok
+perf 13 - fileglob((a*)^nb) against file (a^100).t; n = 6: 1 2 3 4 5 ok
+# passed all 13 test(s)
+1..13
+Test                                                       this tree      
+--------------------------------------------------------------------------
+0002.1: read_cache/discard_cache 1000 times                0.15(0.11+0.03)
+0003.1: log --raw                                          0.01(0.01+0.00)
+0003.2: log -S                                             0.26(0.26+0.00)
+0004.3: single-threaded, 5078 entries, 1000 rounds         0.61(0.59+0.02)
+0004.4: multi-threaded, 5078 entries, 1000 rounds          1.34(0.42+0.11)
+0005.2: read-tree status br_ballast (4854)                 0.03(0.02+0.01)
+0007.2: write_locked_index 3 times (4854 files)            0.02(0.01+0.00)
+0008.1: add 500 files (fsyncMethod=none)                   0.04(0.00+0.04)
+0008.2: add 500 files (fsyncMethod=fsync)                  0.16(0.01+0.05)
+0008.3: add 500 files (fsyncMethod=batch)                  0.11(0.00+0.06)
+0008.4: add 500 files (fsyncMethod=writeout-only)          0.07(0.01+0.04)
+0008.5: stash 500 files (fsyncMethod=none)                 0.09(0.01+0.07)
+0008.6: stash 500 files (fsyncMethod=fsync)                0.29(0.02+0.09)
+0008.7: stash 500 files (fsyncMethod=batch)                0.17(0.02+0.09)
+0008.8: stash 500 files (fsyncMethod=writeout-only)        0.13(0.02+0.07)
+0008.9: unpack 500 files (fsyncMethod=none)                0.04(0.01+0.03)
+0008.10: unpack 500 files (fsyncMethod=fsync)              0.25(0.00+0.06)
+0008.11: unpack 500 files (fsyncMethod=batch)              0.11(0.01+0.06)
+0008.12: unpack 500 files (fsyncMethod=writeout-only)      0.09(0.01+0.04)
+0008.13: commit 500 files (fsyncMethod=none)               0.04(0.00+0.03)
+0008.14: commit 500 files (fsyncMethod=fsync)              0.25(0.02+0.05)
+0008.15: commit 500 files (fsyncMethod=batch)              0.17(0.01+0.07)
+0008.16: commit 500 files (fsyncMethod=writeout-only)      0.12(0.01+0.04)
+0009.2: diff pathspec subtree                              0.01(0.00+0.01)
+0071.2: sort(1) unsorted                                   0.17(0.29+0.04)
+0071.4: sort(1) sorted                                     0.10(0.11+0.03)
+0071.5: sort(1) reversed                                   0.09(0.10+0.05)
+0071.6: string_list_sort() unsorted                        0.38(0.33+0.04)
+0071.8: string_list_sort() sorted                          0.17(0.14+0.02)
+0071.10: string_list_sort() reversed                       0.16(0.14+0.02)
+0071.12: DEFINE_LIST_SORT unsorted                         0.44(0.42+0.02)
+0071.14: DEFINE_LIST_SORT sorted                           0.15(0.13+0.01)
+0071.16: DEFINE_LIST_SORT reversed                         0.15(0.13+0.01)
+0090.2: no-op, clean                                       0.34(0.15+0.18)
+0090.3: prime_cache_tree, clean                            0.48(0.25+0.22)
+0090.4: cache_tree_update, clean                           0.34(0.16+0.17)
+0090.5: no-op, invalidate 2                                0.34(0.19+0.14)
+0090.6: prime_cache_tree, invalidate 2                     0.49(0.25+0.23)
+0090.7: cache_tree_update, invalidate 2                    0.43(0.21+0.20)
+0090.8: no-op, invalidate 50                               0.34(0.14+0.18)
+0090.9: prime_cache_tree, invalidate 50                    0.48(0.23+0.24)
+0090.10: cache_tree_update, invalidate 50                  0.51(0.28+0.22)
+0090.11: no-op, empty                                      0.34(0.18+0.14)
+0090.12: prime_cache_tree, empty                           0.48(0.25+0.22)
+0090.13: cache_tree_update, empty                          0.55(0.31+0.23)
+0100.2: refglob((a*)^nb) against tag (a^100).t; n = 1      0.01(0.00+0.00)
+0100.3: refglob((a*)^nb) against tag (a^100).t; n = 2      0.01(0.01+0.00)
+0100.4: refglob((a*)^nb) against tag (a^100).t; n = 3      0.01(0.00+0.00)
+0100.5: refglob((a*)^nb) against tag (a^100).t; n = 4      0.01(0.00+0.00)
+0100.6: refglob((a*)^nb) against tag (a^100).t; n = 5      0.01(0.00+0.00)
+0100.7: refglob((a*)^nb) against tag (a^100).t; n = 6      0.01(0.00+0.00)
+0100.8: fileglob((a*)^nb) against file (a^100).t; n = 1    0.01(0.01+0.00)
+0100.9: fileglob((a*)^nb) against file (a^100).t; n = 2    0.01(0.00+0.00)
+0100.10: fileglob((a*)^nb) against file (a^100).t; n = 3   0.01(0.00+0.00)
+0100.11: fileglob((a*)^nb) against file (a^100).t; n = 4   0.01(0.00+0.00)
+0100.12: fileglob((a*)^nb) against file (a^100).t; n = 5   0.01(0.00+0.00)
+0100.13: fileglob((a*)^nb) against file (a^100).t; n = 6   0.01(0.00+0.00)
