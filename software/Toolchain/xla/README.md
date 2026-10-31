@@ -3,7 +3,9 @@
 本用例在 x86_64、aarch64 Runner 上从官方源码构建 [openxla/xla](https://github.com/openxla/xla)
 固定提交，并使用 XLA 官方基准套件（仓库自带的 `xla/tools/benchmarks` CPU 注册表条目和
 `.github/workflows/benchmarks/run_benchmark.sh` 执行链）进行开箱性能对比。不修改源码，
-不绑核，不做额外调优。
+不绑核，不做额外调优。**构建与测试全部在 openEuler 24.03 LTS SP4 容器内运行**
+（基镜像与用法参照 MySQL 用例），容器不绑核、不绑 NUMA、使用宿主机网络；源码、构建
+产物和结果目录通过 bind mount 保存在宿主机本次任务目录。
 
 软件入口为 `xla_test.sh`。Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止阶段；
 直接执行入口脚本也使用这些阶段函数。基础版构建位于 `scripts/builders/base.sh`，公共路径在
@@ -25,18 +27,42 @@ SHA-256 固定（见下表）；更换提交时必须同时更新 `xla_test.sh` 
 
 | 项目 | 来源与版本 | 位置 |
 |---|---|---|
-| XLA | 官方仓库固定提交（bazel 源码构建，非二进制包） | `${PERF_WORK_DIR}/xla-src` |
+| XLA | 官方仓库固定提交（bazel 源码构建，非二进制包） | 容器内 `${PERF_WORK_DIR}/xla-src`（宿主机同路径可见） |
 | Bazel | 由仓库 `.bazelversion` 固定为 `8.8.2`，经 bazelisk 下载 | `${PERF_WORK_DIR}/bazel-root` |
 | bazelisk | 官方 GitHub Release `v1.29.0`（`bazelisk-linux-amd64` / `bazelisk-linux-arm64`，SHA-256 校验） | `${PERF_WORK_DIR}/bazelisk/bazelisk` |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载；SHA-256 校验后 `docker load` |
 | 基准执行链 | 仓库自带 `run_benchmark.sh`、`hlo_runner_main`、`compute_xspace_stats_main` | 固定提交内构建 |
 
 `x` 架构到官方硬件类别的对应关系：`x86_64 → CPU_X86`，`aarch64 → CPU_ARM64`；
 `run_benchmark.sh` 在 CPU 上以 `--device_type=host` 运行，指标名两种架构一致。
 
-脚本用 `dnf` 安装缺失的系统依赖：`git`、`curl`、`jq`、`python3`、`tar`、`gzip`、
-`unzip`、`findutils`、`sed`、`coreutils`、`which`。XLA 默认使用自带的 hermetic clang
-工具链，不依赖系统 GCC。启用 `PERF_PROXY` 时，`git`、`curl`、bazelisk 和 Bazel
-的下载都通过代理。
+脚本在容器内用 `dnf` 安装缺失的系统依赖：`git`、`curl`、`jq`、`python3`、`tar`、
+`gzip`、`unzip`、`findutils`、`sed`、`coreutils`、`which`、`diffutils`、`patch`、
+`make`、`gcc`、`gcc-c++`。XLA 默认使用自带的 hermetic clang 工具链，不依赖系统 GCC。
+容器内仓库切换为华为云 openEuler 镜像；启用 `PERF_PROXY` 时，容器挂载代理 CA 证书目录
+并执行 `update-ca-trust extract`，`git`、`curl` 与 Bazel 的下载都通过代理。
+
+## 容器
+
+每个任务创建且仅创建一个私有容器 `boostkit-xla-<架构>-<run-id>`，带
+`boostkit.xla.run-id=<run-id>` 归属标签。启动方式：
+
+```bash
+docker run --detach --name "${XLA_CONTAINER_NAME}" \
+  --label "boostkit.xla.run-id=${PERF_RUN_ID}" \
+  --network=host --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${XLA_CONTAINER_IMAGE}" sleep infinity
+```
+
+- 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
+- `--network=host`：容器直接使用宿主机网络。
+- `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以宿主机原路径挂载，源码、Bazel 产物和所有
+  测试结果都落在宿主机指定目录。
+- `stop` 阶段只停止并删除带本任务归属标签的容器，重复调用安全。
 
 ## 获取、构建与版本核对
 
@@ -51,16 +77,19 @@ bazelisk 优先读取离线包 `/home/runner/software/xla/bazelisk-linux-<arch>-
 源码与构建命令形态：
 
 ```bash
-git clone --filter=blob:none https://github.com/openxla/xla.git "${PERF_WORK_DIR}/xla-src"
-git -C "${PERF_WORK_DIR}/xla-src" checkout --detach 1930995a8aabe45a13854f701b5b39ab732aef94
-git -C "${PERF_WORK_DIR}/xla-src" rev-parse --short=12 HEAD   # 必须为 1930995a8aab
+docker exec "${XLA_CONTAINER_NAME}" git clone --filter=blob:none \
+  https://github.com/openxla/xla.git "${PERF_WORK_DIR}/xla-src"
+docker exec "${XLA_CONTAINER_NAME}" git -C "${PERF_WORK_DIR}/xla-src" \
+  checkout --detach 1930995a8aabe45a13854f701b5b39ab732aef94
+docker exec "${XLA_CONTAINER_NAME}" git -C "${PERF_WORK_DIR}/xla-src" \
+  rev-parse --short=12 HEAD   # 必须为 1930995a8aab
 
-cd "${PERF_WORK_DIR}/xla-src"
-python3 ./configure.py --backend=CPU                          # 官方 build_binaries.sh 的 CPU 配置步骤
-"${PERF_WORK_DIR}/bazelisk/bazelisk" --output_user_root="${PERF_WORK_DIR}/bazel-root" \
-  build -c opt --config=nonccl --jobs="$(getconf _NPROCESSORS_ONLN)" \
-  //xla/tools/multihost_hlo_runner:hlo_runner_main \
-  //xla/tools:compute_xspace_stats_main
+docker exec "${XLA_CONTAINER_NAME}" sh -c \
+  "cd '${PERF_WORK_DIR}/xla-src' && python3 ./configure.py --backend=CPU && \
+   '${PERF_WORK_DIR}/bazelisk/bazelisk' --output_user_root='${PERF_WORK_DIR}/bazel-root' \
+     build -c opt --config=nonccl --jobs=\"\$(getconf _NPROCESSORS_ONLN)\" \
+     //xla/tools/multihost_hlo_runner:hlo_runner_main \
+     //xla/tools:compute_xspace_stats_main"
 ```
 
 `--config=nonccl` 来自仓库 `tensorflow.bazelrc`，与官方 CPU 构建类型
@@ -110,11 +139,12 @@ bash .github/workflows/benchmarks/run_benchmark.sh
 `${RESULTS_DIR}/benchmark_runs/` 和 `hlo_benchmark_raw.log`。
 
 固定负载参数（写入结果 `parameters`）：官方注册表三个 CPU 条目、`--num_repeats=5`、
-`--device_type=host`、无额外 XLA flags。CPU 型号与核数等机器相关值记录在系统信息中，
-不跨架构强行统一。
+`--device_type=host`、无额外 XLA flags。硬件类别（`CPU_X86`/`CPU_ARM64`）与 `config_id`
+属于架构相关值，写入 `runtime_context`，不进入 `parameters`，保证跨架构参数签名一致；
+CPU 型号与核数等机器相关值记录在系统信息中，不跨架构强行统一。
 
-预计单架构耗时：bazel 依赖下载 10–30 分钟，XLA 构建 1–3 小时（随核数变化），
-三个基准各 5 次重复约 20–60 分钟；峰值磁盘约 30 GiB。
+预计单架构耗时：镜像加载与容器内依赖安装 5–15 分钟，bazel 依赖下载 10–30 分钟，
+XLA 构建 1–3 小时（随核数变化），三个基准各 5 次重复约 20–60 分钟；峰值磁盘约 30 GiB。
 
 ## 指标与产物
 
@@ -139,8 +169,9 @@ bash .github/workflows/benchmarks/run_benchmark.sh
 | `actual-version.txt` | 从源码检出读取的实际提交 |
 | `results.json`、`status.json`、`report.md` | 独立入口生成的状态、指标与单架构报告 |
 
-`stop` 阶段无需停止服务（所有进程为测试阶段的子进程，随阶段结束退出）；
-私有工作目录由 Framework 或独立入口清理。脱离 Workflow 执行完整流程：
+`stop` 阶段停止并删除本任务的容器（按归属标签校验），无需停止其他服务；宿主机的
+`${PERF_WORK_DIR}` 由 Framework 或独立入口清理，`${RESULTS_DIR}` 保留。脱离 Workflow
+执行完整流程（宿主机需可访问 Docker daemon）：
 
 ```bash
 bash software/Toolchain/xla/xla_test.sh \

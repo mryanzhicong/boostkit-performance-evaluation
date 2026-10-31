@@ -21,7 +21,12 @@ verify_benchmark_result() {
 run_xla_benchmarks() {
     local raw_output benchmark_name hlo_name benchmark_runs_dir work_dir
     initialize_runtime || return $?
-    [[ -x "${HLO_RUNNER_BIN}" && -x "${XSPACE_STATS_BIN}" ]] || {
+    check_xla_container || return $?
+    container_exec test -x "${HLO_RUNNER_BIN}" || {
+        log_message 'ERROR: XLA benchmark harness is missing; build stage did not complete'
+        return 40
+    }
+    container_exec test -x "${XSPACE_STATS_BIN}" || {
         log_message 'ERROR: XLA benchmark harness is missing; build stage did not complete'
         return 40
     }

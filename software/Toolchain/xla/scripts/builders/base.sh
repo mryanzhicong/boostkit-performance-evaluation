@@ -1,27 +1,28 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
+XLA_BUILD_PACKAGES=(git curl jq python3 tar gzip unzip findutils sed coreutils
+    which diffutils patch make gcc gcc-c++)
+
 install_build_dependencies() {
-    local -a packages=(git curl jq python3 tar gzip unzip findutils sed coreutils which)
-    local -a missing=()
     local -a dnf_options=()
-    local package
-    for package in "${packages[@]}"; do
-        rpm -q "${package}" >/dev/null 2>&1 || missing+=("${package}")
-    done
-    (( ${#missing[@]} > 0 )) || return 0
     [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
-    log_message "installing missing build packages: ${missing[*]}"
-    if [[ "$(id -u)" -eq 0 ]]; then
-        dnf "${dnf_options[@]}" install -y "${missing[@]}" || return 30
-    elif command -v sudo >/dev/null 2>&1; then
-        sudo -n dnf "${dnf_options[@]}" install -y "${missing[@]}" || return 30
-    else
-        log_message 'ERROR: dnf requires root or passwordless sudo'
+    log_message 'installing build packages inside the XLA container'
+    container_exec_root dnf "${dnf_options[@]}" install -y "${XLA_BUILD_PACKAGES[@]}" || {
+        log_message 'ERROR: failed to install build packages inside the XLA container'
         return 30
-    fi
+    }
+    local command_name
+    for command_name in git curl jq python3 tar unzip; do
+        container_exec command -v "${command_name}" >/dev/null 2>&1 || {
+            log_message "ERROR: required command is missing in the XLA container: ${command_name}"
+            return 30
+        }
+    done
 }
 
+# The bazelisk binary lives under PERF_WORK_DIR, which is bind-mounted into the
+# container; the offline archive is read on the host and staged there.
 fetch_bazelisk() {
     local archive_name expected_sha256 local_archive
     case "${EXPECTED_ARCH}" in
@@ -52,17 +53,17 @@ fetch_bazelisk() {
 }
 
 clone_xla() {
-    log_message "cloning ${XLA_REPOSITORY} at ${XLA_COMMIT}"
-    with_network_proxy git clone --quiet --filter=blob:none \
+    log_message "cloning ${XLA_REPOSITORY} at ${XLA_COMMIT} inside the container"
+    container_exec git clone --quiet --filter=blob:none \
         "${XLA_REPOSITORY}" "${XLA_SRC_DIR}" || return 30
-    with_network_proxy git -C "${XLA_SRC_DIR}" checkout --quiet --detach "${XLA_COMMIT}" || return 30
+    container_exec git -C "${XLA_SRC_DIR}" checkout --quiet --detach "${XLA_COMMIT}" || return 30
     local actual_commit
-    actual_commit="$(git -C "${XLA_SRC_DIR}" rev-parse --short=12 HEAD)"
+    actual_commit="$(container_exec git -C "${XLA_SRC_DIR}" rev-parse --short=12 HEAD)" || return 30
     [[ "${actual_commit}" == "${SOFTWARE_VERSION}" ]] || {
         log_message "ERROR: cloned XLA is ${actual_commit}, expected ${SOFTWARE_VERSION}"
         return 30
     }
-    [[ "$(git -C "${XLA_SRC_DIR}" rev-parse HEAD)" == "${XLA_COMMIT}" ]] || {
+    [[ "$(container_exec git -C "${XLA_SRC_DIR}" rev-parse HEAD)" == "${XLA_COMMIT}" ]] || {
         log_message 'ERROR: full commit verification failed'
         return 30
     }
@@ -71,34 +72,31 @@ clone_xla() {
 
 build_xla_base() {
     initialize_runtime || return $?
+    require_xla_container || return $?
     install_build_dependencies || return $?
     fetch_bazelisk || return $?
     clone_xla || return $?
-    [[ -f "${XLA_SRC_DIR}/.bazelversion" ]] || {
+    container_exec test -f "${XLA_SRC_DIR}/.bazelversion" || {
         log_message 'ERROR: the pinned checkout has no .bazelversion'
         return 40
     }
-    log_message "building the official benchmark harness with bazel $(< "${XLA_SRC_DIR}/.bazelversion")"
-    (
-        cd "${XLA_SRC_DIR}" || exit 40
-        # The official build_binaries.sh configures the CPU backend first and
-        # treats a configuration failure as informational.
-        if [[ -f ./configure.py ]]; then
-            with_network_proxy env TMPDIR="${TMPDIR}" \
-                python3 ./configure.py --backend=CPU \
-                || log_message 'WARN: configure.py --backend=CPU failed; continuing'
-        fi
-        with_network_proxy env TMPDIR="${TMPDIR}" \
-            "${BAZELISK_BIN}" --output_user_root="${PERF_WORK_DIR}/bazel-root" \
-            build -c opt --config=nonccl --jobs="$(getconf _NPROCESSORS_ONLN)" \
-            //xla/tools/multihost_hlo_runner:hlo_runner_main \
-            //xla/tools:compute_xspace_stats_main
-    ) || return 40
-    [[ -x "${HLO_RUNNER_BIN}" && -x "${XSPACE_STATS_BIN}" ]] || {
+    log_message "building the official benchmark harness inside the container"
+    container_exec sh -c \
+        "cd '${XLA_SRC_DIR}' && \
+         if [ -f ./configure.py ]; then python3 ./configure.py --backend=CPU || true; fi && \
+         '${BAZELISK_BIN}' --output_user_root='${PERF_WORK_DIR}/bazel-root' \
+           build -c opt --config=nonccl --jobs='$(getconf _NPROCESSORS_ONLN)' \
+           //xla/tools/multihost_hlo_runner:hlo_runner_main \
+           //xla/tools:compute_xspace_stats_main" || return 40
+    container_exec test -x "${HLO_RUNNER_BIN}" || {
         log_message 'ERROR: benchmark harness binaries are missing after the build'
         return 40
     }
-    [[ -f "${OFFICIAL_RUN_BENCHMARK}" ]] || {
+    container_exec test -x "${XSPACE_STATS_BIN}" || {
+        log_message 'ERROR: benchmark harness binaries are missing after the build'
+        return 40
+    }
+    container_exec test -f "${OFFICIAL_RUN_BENCHMARK}" || {
         log_message 'ERROR: the official run_benchmark.sh is missing in the checkout'
         return 40
     }

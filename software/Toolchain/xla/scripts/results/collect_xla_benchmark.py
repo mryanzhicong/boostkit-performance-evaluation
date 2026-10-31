@@ -99,8 +99,6 @@ def collect(
         "parameters": {
             "suite": "XLA official benchmark registry (CPU entries)",
             "xla_commit": XLA_COMMIT,
-            "hardware_category": expected_category,
-            "config_id": "cpu_x86" if architecture == "x86_64" else "cpu_arm64",
             "device_type": "host",
             "num_repeats": num_repeats,
             "benchmark_count": len(BENCHMARKS),
@@ -109,6 +107,8 @@ def collect(
         "runtime_context": {
             "xla_version": version,
             "architecture": architecture,
+            "hardware_category": expected_category,
+            "config_id": "cpu_x86" if architecture == "x86_64" else "cpu_arm64",
             "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
         "measurements": measurements,

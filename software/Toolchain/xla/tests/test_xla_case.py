@@ -88,7 +88,10 @@ def test_collector_extracts_all_six_metrics(official_runs: Path) -> None:
     assert payload["parameters"]["xla_commit"] == \
         "1930995a8aabe45a13854f701b5b39ab732aef94"
     assert payload["parameters"]["num_repeats"] == 5
-    assert payload["parameters"]["hardware_category"] == "CPU_X86"
+    assert payload["runtime_context"]["hardware_category"] == "CPU_X86"
+    assert payload["runtime_context"]["config_id"] == "cpu_x86"
+    assert "hardware_category" not in payload["parameters"]
+    assert "config_id" not in payload["parameters"]
     assert payload["parameters"]["device_type"] == "host"
     assert len(payload["measurements"]) == 6
 
@@ -231,7 +234,55 @@ def test_case_yaml_wiring_matches_scripts() -> None:
     assert collection["group_path"] == "group"
 
 
+def test_collector_parameters_match_across_architectures(official_runs: Path) -> None:
+    # The cross-architecture comparison rejects differing parameters, so only
+    # machine-dependent values may live in runtime_context.
+    x86 = collector.collect(official_runs, "1930995a8aab", "x86_64", 5)
+    arm_runs = official_runs.parent / "arm_runs"
+    arm_runs.mkdir()
+    for benchmark in collector.BENCHMARKS:
+        write_official_result(
+            arm_runs / benchmark / "results.json", benchmark, "CPU_ARM64", 1.0, 1.0
+        )
+    arm = collector.collect(arm_runs, "1930995a8aab", "aarch64", 5)
+    assert x86["parameters"] == arm["parameters"]
+    assert x86["runtime_context"]["hardware_category"] == "CPU_X86"
+    assert arm["runtime_context"]["hardware_category"] == "CPU_ARM64"
+
+
 def test_optimized_builder_fails_explicitly() -> None:
     content = (SCRIPT_DIR / "builders" / "optimized.sh").read_text(encoding="utf-8")
     assert "not implemented" in content
     assert "return 30" in content
+
+
+def test_container_runs_without_pinning_and_mounts_results() -> None:
+    content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
+    assert "--network=host" in content
+    assert "--cpuset-cpus" not in content
+    assert "--cpuset-mems" not in content
+    assert "--cpus=" not in content
+    assert 'type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in content
+    assert 'type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}' in content
+    assert "boostkit.xla.run-id=${PERF_RUN_ID}" in content
+    assert "openEuler-24.03-LTS-SP4" in content
+    assert "docker load" in content
+    assert "update-ca-trust extract" in content
+    assert "repo.huaweicloud.com" in content
+
+
+def test_build_and_test_run_inside_container() -> None:
+    base = (SCRIPT_DIR / "builders" / "base.sh").read_text(encoding="utf-8")
+    start = (SCRIPT_DIR / "stages" / "start.sh").read_text(encoding="utf-8")
+    test_stage = (SCRIPT_DIR / "stages" / "test.sh").read_text(encoding="utf-8")
+    stop = (SCRIPT_DIR / "stages" / "stop.sh").read_text(encoding="utf-8")
+    assert "require_xla_container" in base
+    assert "container_exec_root dnf" in base
+    assert "container_exec git clone" in base
+    assert "container_exec sh -c" in base
+    assert "hlo_runner_main" in base
+    assert "container_exec" in start
+    assert "container_exec env" in start
+    assert "container_exec" in test_stage
+    assert "run_official_benchmark" in test_stage
+    assert "remove_xla_container" in stop

@@ -39,37 +39,42 @@ stage_benchmark_workloads() {
     log_message 'all three official CPU HLO workloads are staged and verified'
 }
 
-# Drive one benchmark through the repository's own run_benchmark.sh, which
-# derives CPU_TIME/WALL_TIME (milliseconds) from the XSpace profile.
+# Drive one benchmark through the repository's own run_benchmark.sh inside the
+# container; it derives CPU_TIME/WALL_TIME (milliseconds) from the XSpace
+# profile.
 run_official_benchmark() {
     local benchmark_name="$1" hlo_path="$2" num_repeats="$3" output_dir="$4"
     mkdir -p "${output_dir}"
-    (
-        export BENCHMARK_NAME="${benchmark_name}"
-        export CONFIG_ID="${CONFIG_ID}"
-        export HARDWARE_CATEGORY="${HARDWARE_CATEGORY}"
-        export OUTPUT_DIR="${output_dir}"
-        export RUNNER_BINARY="${HLO_RUNNER_BIN}"
-        export STATS_BINARY="${XSPACE_STATS_BIN}"
-        export DEVICE_TYPE_FLAG="host"
-        export LOCAL_ARTIFACT_PATH="${hlo_path}"
-        export INPUT_FORMAT=""
-        export XLA_FLAGS_JSON="[]"
-        export RUNTIME_FLAGS_JSON="[\"--num_repeats=${num_repeats}\"]"
-        export COMMIT_SHA="${XLA_COMMIT}"
-        export WORKFLOW_RUN_ID="${PERF_RUN_ID}"
+    container_exec env \
+        BENCHMARK_NAME="${benchmark_name}" \
+        CONFIG_ID="${CONFIG_ID}" \
+        HARDWARE_CATEGORY="${HARDWARE_CATEGORY}" \
+        OUTPUT_DIR="${output_dir}" \
+        RUNNER_BINARY="${HLO_RUNNER_BIN}" \
+        STATS_BINARY="${XSPACE_STATS_BIN}" \
+        DEVICE_TYPE_FLAG="host" \
+        LOCAL_ARTIFACT_PATH="${hlo_path}" \
+        INPUT_FORMAT="" \
+        XLA_FLAGS_JSON="[]" \
+        RUNTIME_FLAGS_JSON="[\"--num_repeats=${num_repeats}\"]" \
+        COMMIT_SHA="${XLA_COMMIT}" \
+        WORKFLOW_RUN_ID="${PERF_RUN_ID}" \
         bash "${OFFICIAL_RUN_BENCHMARK}"
-    )
 }
 
 start_xla_runtime() {
     local smoke_dir
     initialize_runtime || return $?
-    [[ -x "${HLO_RUNNER_BIN}" && -x "${XSPACE_STATS_BIN}" ]] || {
+    check_xla_container || return $?
+    container_exec test -x "${HLO_RUNNER_BIN}" || {
         log_message 'ERROR: XLA benchmark harness is missing; build stage did not complete'
         return 40
     }
-    command -v jq >/dev/null 2>&1 || {
+    container_exec test -x "${XSPACE_STATS_BIN}" || {
+        log_message 'ERROR: XLA benchmark harness is missing; build stage did not complete'
+        return 40
+    }
+    container_exec command -v jq >/dev/null 2>&1 || {
         log_message 'ERROR: jq is required by the official run_benchmark.sh'
         return 40
     }
