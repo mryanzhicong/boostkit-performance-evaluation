@@ -127,6 +127,8 @@ def collect(raw_log: Path, version: str, architecture: str, expected_rounds: int
             "sqlite_version": "3.54.1",
             "compile_options": list(EXPECTED_WORKLOADS["compile"]),
             "speedtest_sizes": [int(size) for size in EXPECTED_WORKLOADS["speedtest1"]],
+            "speedtest_testset": "mix1",
+            "speedtest_database_mode": "memory",
             "rounds": expected_rounds,
             "compiler": "clang",
         },

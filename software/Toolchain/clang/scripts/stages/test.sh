@@ -38,7 +38,7 @@ for size in ${CLANG_SPEEDTEST_SIZES[*]}; do
         rm -rf "\$round_dir"
         mkdir -p "\$round_dir"
         round_start=\$(date +%s.%N)
-        cd "\$round_dir" && "${SPEEDTEST1_BIN}" --size "\$size" --memdb test.db || exit 50
+        cd "\$round_dir" && "${SPEEDTEST1_BIN}" --size "\$size" ${CLANG_SPEEDTEST_ARGS[*]} || exit 50
         round_end=\$(date +%s.%N)
         round_seconds=\$(awk -v s="\$round_start" -v e="\$round_end" 'BEGIN { printf "%.3f", e - s }')
         printf 'result scenario=speedtest1 workload=%d round=%d wall_seconds=%s artifact_bytes=%s\n' \

@@ -108,7 +108,7 @@ docker run --detach --name "${CLANG_CONTAINER_NAME}" \
 ## 基准数据与正式测试
 
 `start` 阶段下载并校验两份 SQLite 包，在容器内解压到 `${PERF_WORK_DIR}/benchmark/`，
-再以被测 clang 冒烟构建 `speedtest1` 并运行 `--size 100 --memdb` 一次，确认工具链、基准源码和
+再以被测 clang 冒烟构建 `speedtest1` 并运行 `--size 100 --testset mix1 --memdb` 一次，确认工具链、基准源码和
 链接环境可用；冒烟产物随后丢弃。正式测试只对已验证的组合计时。
 
 `test` 阶段在容器内固定每档 5 轮（`CLANG_ROUNDS` 可覆盖），用 `date +%s.%N`
@@ -127,7 +127,7 @@ docker run --detach --name "${CLANG_CONTAINER_NAME}" \
 
    ```bash
    "${CLANG_BIN}" -O2 -I"${AMALGAMATION_DIR}" speedtest1.c sqlite3.c -lm -o speedtest1
-   ./speedtest1 --size 100 --memdb test.db
+   ./speedtest1 --size 100 --testset mix1 --memdb
    ```
 
 固定负载参数写入结果的 `parameters`：SQLite 3.54.1、三个编译档位、两个运行档位、
@@ -136,6 +136,10 @@ docker run --detach --name "${CLANG_CONTAINER_NAME}" \
 `speedtest1 --size` 是相对规模系数（默认 100），不是行数。当前正式运行档位为
 100/500；此前 100000/500000 档位的结果不能与当前档位直接比较，需重新测试。
 实际耗时取决于下载速度、CPU 与内存；调整后的负载尚需在目标 Runner 上测量耗时。
+
+冒烟与正式运行共用 `--testset mix1 --memdb`，不传数据库文件名。`--memdb test.db`
+会让初始连接使用内存库，但 `app` 子测试仍尝试重新打开磁盘上的 `test.db`，导致失败；
+不传文件名时 `app` 复用现有连接。测试集与内存模式也记录在结果 `parameters` 中。
 
 ## 指标与产物
 

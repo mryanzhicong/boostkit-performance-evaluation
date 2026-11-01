@@ -75,6 +75,8 @@ def test_collector_extracts_fifteen_metrics(raw_log: Path) -> None:
     assert payload["parameters"]["rounds"] == 5
     assert payload["parameters"]["compile_options"] == ["-O0", "-O2", "-Os"]
     assert payload["parameters"]["speedtest_sizes"] == [100, 500]
+    assert payload["parameters"]["speedtest_testset"] == "mix1"
+    assert payload["parameters"]["speedtest_database_mode"] == "memory"
     assert "architecture" not in payload["parameters"]
 
 
@@ -153,6 +155,44 @@ def test_standalone_validation_accepts_payload(raw_log: Path) -> None:
     payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
     metrics = standalone.validate_metrics(payload)
     assert len(metrics) == 15
+
+
+def test_smoke_and_formal_runs_share_memory_database_arguments(tmp_path: Path) -> None:
+    fixture = tmp_path / "speedtest1-fixture"
+    fixture.write_text("""#!/bin/sh
+test "$#" -eq 5 || exit 91
+test "$1" = --size || exit 92
+case "$2" in 100|500) ;; *) exit 93 ;; esac
+test "$3" = --testset || exit 94
+test "$4" = mix1 || exit 95
+test "$5" = --memdb || exit 96
+printf 'memory-testset-ok size=%s\\n' "$2"
+""", encoding="utf-8")
+    fixture.chmod(0o755)
+    script = f"""
+source "{SCRIPT_DIR}/stages/test.sh"
+RESULTS_DIR="{tmp_path}"
+BENCHMARK_DIR="{tmp_path}/benchmark"
+SPEEDTEST1_BIN="$BENCHMARK_DIR/speedtest1"
+CLANG_BIN=/llvm/bin/clang
+CLANGXX_BIN=/llvm/bin/clang++
+CLANG_ROUNDS=1
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+build_speedtest1_binary() {{ cp "{fixture}" "$1"; }}
+container_exec() {{
+    if [[ "$1" == test ]]; then return 0; fi
+    "$@"
+}}
+start_clang_runtime || exit $?
+run_speedtest_scenario
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert "memory-testset-ok size=100" in (tmp_path / "speedtest1-smoke.log").read_text()
+    assert "memory-testset-ok size=100" in result.stdout
+    assert "memory-testset-ok size=500" in result.stdout
 
 
 def test_smoke_failure_preserves_diagnostics(tmp_path: Path) -> None:

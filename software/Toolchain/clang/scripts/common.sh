@@ -49,6 +49,7 @@ CLANG_CONTAINER_NAME=""
 CLANG_ROUNDS="${CLANG_ROUNDS:-5}"
 CLANG_COMPILE_OPTIONS=("-O0" "-O2" "-Os")
 CLANG_SPEEDTEST_SIZES=(100 500)
+CLANG_SPEEDTEST_ARGS=(--testset mix1 --memdb)
 
 # Lifecycle paths (assigned in configure_runtime_paths).
 LLVM_ROOT=""

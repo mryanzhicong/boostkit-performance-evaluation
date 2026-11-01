@@ -84,7 +84,7 @@ start_clang_runtime() {
         rm -rf "${smoke_dir}"
         return 40
     }
-    container_exec sh -c "cd '${smoke_dir}' && ./speedtest1 --size 100 --memdb test.db" \
+    container_exec sh -c "cd '${smoke_dir}' && ./speedtest1 --size 100 ${CLANG_SPEEDTEST_ARGS[*]}" \
         >"${RESULTS_DIR}/speedtest1-smoke.log" 2>&1 || {
         cat "${RESULTS_DIR}/speedtest1-smoke.log" >&2
         rm -rf "${smoke_dir}"
