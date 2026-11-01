@@ -1,0 +1,1127 @@
+{
+  "software": "react",
+  "category": "Toolchain",
+  "version": "19.3.1",
+  "architecture": "aarch64",
+  "run_id": "41280100094-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-01T06:22:30Z",
+    "category": "Toolchain",
+    "software": "react",
+    "requested_version": "19.3.1",
+    "actual_version": "19.3.1",
+    "architecture": "aarch64",
+    "run_id": "41280100094-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "variant": "base",
+      "repetitions": 5,
+      "warmup_renders": 10,
+      "offline": true,
+      "node_env": "production",
+      "node_version": "v20.19.0",
+      "npm_version": "10.8.2",
+      "yarn_version": "1.22.22",
+      "react_version": "19.3.1",
+      "react_dom_version": "19.3.1",
+      "scheduler_version": "0.28.0",
+      "react_source_version": "19.3.1",
+      "node_archive_sha256": "dbe339e55eb393955a213e6b872066880bb9feceaa494f4d44c7aac205ec2ab9",
+      "react_archive_sha256": "",
+      "react_dom_archive_sha256": "",
+      "scheduler_archive_sha256": "",
+      "react_source_sha256": "350d7bd46030667a3421422f7bae6e30dd1e0955c21e777bf467961fa56de650",
+      "registry": "https://registry.npmmirror.com",
+      "scales_items": [
+        100,
+        1000,
+        10000
+      ],
+      "tasks": [
+        "render_to_string",
+        "static_markup",
+        "stream"
+      ],
+      "renders_per_repetition": {
+        "100": 2000,
+        "1000": 1000,
+        "10000": 200
+      },
+      "upstream_build_script": "scripts/rollup/build.js",
+      "upstream_build_entries": "react/index,react/jsx,react.react-server,react-dom/index,react-dom/client,react-dom/server,react-dom.react-server,react-dom-server.node,react-dom-server-legacy.node,scheduler,react-server-dom-webpack/,react-server-dom-unbundled/",
+      "upstream_build_types": "NODE_PROD,ESM_PROD,NODE_ES2015",
+      "upstream_release_channel": "stable",
+      "upstream_build_output": "build",
+      "upstream_scenarios": [
+        "upstream_build"
+      ]
+    }
+  },
+  "parameter_signature": "a6b3293900b7c78122f6bc0c7d6da950639a502d642ab9c3b94d0a8b368076e9",
+  "test_tools": {
+    "react": {
+      "version": "19.3.1"
+    },
+    "react-dom": {
+      "version": "19.3.1"
+    },
+    "scheduler": {
+      "version": "0.28.0"
+    },
+    "node": {
+      "version": "20.19.0"
+    },
+    "yarn": {
+      "version": "1.22.22"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-01T06:19:26Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "-",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 379653 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 384233 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387058 MB\nnode 2 free: 381419 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 385957 MB\nnode 3 free: 384432 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-01T06:19:26Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337002496 12111093760 1604048326656    71757824  6887256064 1604225908736\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-01T06:31:13Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337002496 13863337984 1598290800640    73728000 11043282944 1602473664512\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "software": "react",
+      "version": "19.3.1"
+    },
+    "benchmark_result": {
+      "software": "react",
+      "version": "19.3.1",
+      "architecture": "aarch64",
+      "variant": "base",
+      "generated_at": "2026-11-01T06:31:13Z",
+      "measurement": {
+        "repetitions": 5,
+        "warmup_renders": 10,
+        "offline": true,
+        "clock": "process.hrtime.bigint (monotonic) inside the harness; wall time around the process"
+      },
+      "parameters": {
+        "variant": "base",
+        "repetitions": 5,
+        "warmup_renders": 10,
+        "offline": true,
+        "node_env": "production",
+        "node_version": "v20.19.0",
+        "npm_version": "10.8.2",
+        "yarn_version": "1.22.22",
+        "react_version": "19.3.1",
+        "react_dom_version": "19.3.1",
+        "scheduler_version": "0.28.0",
+        "react_source_version": "19.3.1",
+        "node_archive_sha256": "dbe339e55eb393955a213e6b872066880bb9feceaa494f4d44c7aac205ec2ab9",
+        "react_archive_sha256": "",
+        "react_dom_archive_sha256": "",
+        "scheduler_archive_sha256": "",
+        "react_source_sha256": "350d7bd46030667a3421422f7bae6e30dd1e0955c21e777bf467961fa56de650",
+        "registry": "https://registry.npmmirror.com",
+        "scales_items": [
+          100,
+          1000,
+          10000
+        ],
+        "tasks": [
+          "render_to_string",
+          "static_markup",
+          "stream"
+        ],
+        "renders_per_repetition": {
+          "100": 2000,
+          "1000": 1000,
+          "10000": 200
+        },
+        "upstream_build_script": "scripts/rollup/build.js",
+        "upstream_build_entries": "react/index,react/jsx,react.react-server,react-dom/index,react-dom/client,react-dom/server,react-dom.react-server,react-dom-server.node,react-dom-server-legacy.node,scheduler,react-server-dom-webpack/,react-server-dom-unbundled/",
+        "upstream_build_types": "NODE_PROD,ESM_PROD,NODE_ES2015",
+        "upstream_release_channel": "stable",
+        "upstream_build_output": "build",
+        "upstream_scenarios": [
+          "upstream_build"
+        ]
+      },
+      "results": {
+        "render_to_string_100": {
+          "source_name": "render_to_string_100",
+          "scenario": "render_to_string_100",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 0.135081694,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.135081694,
+          "mean": 0.134970727,
+          "min": 0.132409644,
+          "max": 0.137589695,
+          "stdev": 0.001911724,
+          "samples": [
+            0.135081694,
+            0.137589695,
+            0.135652472,
+            0.132409644,
+            0.134120128
+          ]
+        },
+        "render_to_string_100_rps": {
+          "source_name": "render_to_string_100_rps",
+          "scenario": "render_to_string_100",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 14805.855,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 14805.855,
+          "mean": 14820.4058,
+          "min": 14535.972,
+          "max": 15104.64,
+          "stdev": 209.880647223,
+          "samples": [
+            14805.855,
+            14535.972,
+            14743.557,
+            15104.64,
+            14912.005
+          ]
+        },
+        "render_to_string_100_rss": {
+          "source_name": "render_to_string_100_rss",
+          "scenario": "render_to_string_100",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 46.301,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 46.301,
+          "mean": 46.3018,
+          "min": 46.301,
+          "max": 46.305,
+          "stdev": 0.001788854,
+          "samples": [
+            46.301,
+            46.301,
+            46.305,
+            46.301,
+            46.301
+          ]
+        },
+        "static_markup_100": {
+          "source_name": "static_markup_100",
+          "scenario": "static_markup_100",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 0.133069722,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.133069722,
+          "mean": 0.133418774,
+          "min": 0.132337924,
+          "max": 0.134450536,
+          "stdev": 0.000965317,
+          "samples": [
+            0.132813642,
+            0.132337924,
+            0.134422046,
+            0.134450536,
+            0.133069722
+          ]
+        },
+        "static_markup_100_rps": {
+          "source_name": "static_markup_100_rps",
+          "scenario": "static_markup_100",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 15029.715,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 15029.715,
+          "mean": 14991.0212,
+          "min": 14875.359,
+          "max": 15112.826,
+          "stdev": 108.338926424,
+          "samples": [
+            15058.694,
+            15112.826,
+            14878.512,
+            14875.359,
+            15029.715
+          ]
+        },
+        "static_markup_100_rss": {
+          "source_name": "static_markup_100_rss",
+          "scenario": "static_markup_100",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 46.305,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 46.305,
+          "mean": 46.3018,
+          "min": 46.293,
+          "max": 46.305,
+          "stdev": 0.005215362,
+          "samples": [
+            46.301,
+            46.305,
+            46.293,
+            46.305,
+            46.305
+          ]
+        },
+        "stream_100": {
+          "source_name": "stream_100",
+          "scenario": "stream_100",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 0.5992175,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.5992175,
+          "mean": 0.598739278,
+          "min": 0.589908605,
+          "max": 0.602997006,
+          "stdev": 0.005271645,
+          "samples": [
+            0.602581058,
+            0.602997006,
+            0.5992175,
+            0.598992221,
+            0.589908605
+          ]
+        },
+        "stream_100_rps": {
+          "source_name": "stream_100_rps",
+          "scenario": "stream_100",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 3337.686,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 3337.686,
+          "mean": 3340.5612,
+          "min": 3316.766,
+          "max": 3390.356,
+          "stdev": 29.660983888,
+          "samples": [
+            3319.056,
+            3316.766,
+            3337.686,
+            3338.942,
+            3390.356
+          ]
+        },
+        "stream_100_rss": {
+          "source_name": "stream_100_rss",
+          "scenario": "stream_100",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 100,
+          "renders_per_repetition": 2000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 91.301,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 91.301,
+          "mean": 90.6994,
+          "min": 88.289,
+          "max": 94.301,
+          "stdev": 2.513093074,
+          "samples": [
+            91.305,
+            91.301,
+            88.289,
+            88.301,
+            94.301
+          ]
+        },
+        "render_to_string_1000": {
+          "source_name": "render_to_string_1000",
+          "scenario": "render_to_string_1000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 0.544081312,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.544081312,
+          "mean": 0.545722199,
+          "min": 0.535457554,
+          "max": 0.557828453,
+          "stdev": 0.00899993,
+          "samples": [
+            0.535457554,
+            0.557828453,
+            0.539732949,
+            0.551510726,
+            0.544081312
+          ]
+        },
+        "render_to_string_1000_rps": {
+          "source_name": "render_to_string_1000_rps",
+          "scenario": "render_to_string_1000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 1837.961,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 1837.961,
+          "mean": 1832.8316,
+          "min": 1792.666,
+          "max": 1867.562,
+          "stdev": 30.118961441,
+          "samples": [
+            1867.562,
+            1792.666,
+            1852.768,
+            1813.201,
+            1837.961
+          ]
+        },
+        "render_to_string_1000_rss": {
+          "source_name": "render_to_string_1000_rss",
+          "scenario": "render_to_string_1000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 73.293,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 73.293,
+          "mean": 72.0994,
+          "min": 70.289,
+          "max": 73.305,
+          "stdev": 1.64537558,
+          "samples": [
+            73.305,
+            70.305,
+            70.289,
+            73.305,
+            73.293
+          ]
+        },
+        "static_markup_1000": {
+          "source_name": "static_markup_1000",
+          "scenario": "static_markup_1000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 0.543549305,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.543549305,
+          "mean": 0.544866998,
+          "min": 0.541523812,
+          "max": 0.550615359,
+          "stdev": 0.003889954,
+          "samples": [
+            0.543549305,
+            0.546967003,
+            0.550615359,
+            0.541679511,
+            0.541523812
+          ]
+        },
+        "static_markup_1000_rps": {
+          "source_name": "static_markup_1000_rps",
+          "scenario": "static_markup_1000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 1839.76,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 1839.76,
+          "mean": 1835.385,
+          "min": 1816.15,
+          "max": 1846.641,
+          "stdev": 13.053329575,
+          "samples": [
+            1839.76,
+            1828.264,
+            1816.15,
+            1846.11,
+            1846.641
+          ]
+        },
+        "static_markup_1000_rss": {
+          "source_name": "static_markup_1000_rss",
+          "scenario": "static_markup_1000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 73.305,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 73.305,
+          "mean": 73.3034,
+          "min": 73.301,
+          "max": 73.305,
+          "stdev": 0.00219089,
+          "samples": [
+            73.301,
+            73.301,
+            73.305,
+            73.305,
+            73.305
+          ]
+        },
+        "stream_1000": {
+          "source_name": "stream_1000",
+          "scenario": "stream_1000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 2.387403476,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.387403476,
+          "mean": 2.391902906,
+          "min": 2.385429964,
+          "max": 2.402471061,
+          "stdev": 0.00770911,
+          "samples": [
+            2.387403476,
+            2.385429964,
+            2.402471061,
+            2.38645656,
+            2.397753469
+          ]
+        },
+        "stream_1000_rps": {
+          "source_name": "stream_1000_rps",
+          "scenario": "stream_1000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 418.865,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 418.865,
+          "mean": 418.0806,
+          "min": 416.238,
+          "max": 419.212,
+          "stdev": 1.345505593,
+          "samples": [
+            418.865,
+            419.212,
+            416.238,
+            419.031,
+            417.057
+          ]
+        },
+        "stream_1000_rss": {
+          "source_name": "stream_1000_rss",
+          "scenario": "stream_1000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 1000,
+          "renders_per_repetition": 1000,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 82.301,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 82.301,
+          "mean": 82.3026,
+          "min": 82.301,
+          "max": 82.305,
+          "stdev": 0.00219089,
+          "samples": [
+            82.305,
+            82.305,
+            82.301,
+            82.301,
+            82.301
+          ]
+        },
+        "render_to_string_10000": {
+          "source_name": "render_to_string_10000",
+          "scenario": "render_to_string_10000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 2.163374199,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.163374199,
+          "mean": 2.181560434,
+          "min": 2.140305773,
+          "max": 2.232709864,
+          "stdev": 0.038351571,
+          "samples": [
+            2.161210787,
+            2.210201547,
+            2.232709864,
+            2.140305773,
+            2.163374199
+          ]
+        },
+        "render_to_string_10000_rps": {
+          "source_name": "render_to_string_10000_rps",
+          "scenario": "render_to_string_10000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 92.448,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 92.448,
+          "mean": 91.7,
+          "min": 89.577,
+          "max": 93.445,
+          "stdev": 1.603547629,
+          "samples": [
+            92.541,
+            90.489,
+            89.577,
+            93.445,
+            92.448
+          ]
+        },
+        "render_to_string_10000_rss": {
+          "source_name": "render_to_string_10000_rss",
+          "scenario": "render_to_string_10000",
+          "task": "render_to_string",
+          "api": "renderToString",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 163.355,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 163.355,
+          "mean": 177.403,
+          "min": 159.703,
+          "max": 202.0,
+          "stdev": 22.037568639,
+          "samples": [
+            163.355,
+            159.703,
+            200.996,
+            202.0,
+            160.961
+          ]
+        },
+        "static_markup_10000": {
+          "source_name": "static_markup_10000",
+          "scenario": "static_markup_10000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 2.216967872,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.216967872,
+          "mean": 2.215344358,
+          "min": 2.171021091,
+          "max": 2.243123496,
+          "stdev": 0.027913915,
+          "samples": [
+            2.243123496,
+            2.216967872,
+            2.234349489,
+            2.171021091,
+            2.211259843
+          ]
+        },
+        "static_markup_10000_rps": {
+          "source_name": "static_markup_10000_rps",
+          "scenario": "static_markup_10000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 90.213,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 90.213,
+          "mean": 90.291,
+          "min": 89.161,
+          "max": 92.123,
+          "stdev": 1.147832087,
+          "samples": [
+            89.161,
+            90.213,
+            89.512,
+            92.123,
+            90.446
+          ]
+        },
+        "static_markup_10000_rss": {
+          "source_name": "static_markup_10000_rss",
+          "scenario": "static_markup_10000",
+          "task": "static_markup",
+          "api": "renderToStaticMarkup",
+          "mode": "sync",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 201.5,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 201.5,
+          "mean": 193.7476,
+          "min": 157.656,
+          "max": 206.785,
+          "stdev": 20.328259992,
+          "samples": [
+            200.133,
+            202.664,
+            201.5,
+            206.785,
+            157.656
+          ]
+        },
+        "stream_10000": {
+          "source_name": "stream_10000",
+          "scenario": "stream_10000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 4.93910065,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 4.93910065,
+          "mean": 4.959461515,
+          "min": 4.913995132,
+          "max": 5.014861762,
+          "stdev": 0.046092945,
+          "samples": [
+            4.93910065,
+            4.913995132,
+            5.014861762,
+            5.002707457,
+            4.926642576
+          ]
+        },
+        "stream_10000_rps": {
+          "source_name": "stream_10000_rps",
+          "scenario": "stream_10000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 40.493,
+          "unit": "render/s",
+          "direction": "higher_is_better",
+          "median": 40.493,
+          "mean": 40.3296,
+          "min": 39.881,
+          "max": 40.7,
+          "stdev": 0.37407526,
+          "samples": [
+            40.493,
+            40.7,
+            39.881,
+            39.978,
+            40.596
+          ]
+        },
+        "stream_10000_rss": {
+          "source_name": "stream_10000_rss",
+          "scenario": "stream_10000",
+          "task": "stream",
+          "api": "renderToPipeableStream",
+          "mode": "stream",
+          "scale_items": 10000,
+          "renders_per_repetition": 200,
+          "warmup_renders": 10,
+          "workload": "deterministic React element tree rendered by the pinned React 19.3.1 runtime",
+          "value": 141.164,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 141.164,
+          "mean": 141.2646,
+          "min": 138.691,
+          "max": 144.59,
+          "stdev": 2.174236372,
+          "samples": [
+            138.691,
+            141.648,
+            140.23,
+            144.59,
+            141.164
+          ]
+        },
+        "upstream_build": {
+          "source_name": "upstream_build",
+          "scenario": "upstream_build",
+          "task": "upstream_build",
+          "api": null,
+          "mode": null,
+          "scale_items": null,
+          "renders_per_repetition": null,
+          "warmup_renders": null,
+          "workload": "upstream facebook/react v19.3.1 source tree, rollup release build",
+          "value": 71.126253,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 71.126253,
+          "mean": 71.1992096,
+          "min": 70.7019,
+          "max": 72.063648,
+          "stdev": 0.531685066,
+          "samples": [
+            71.261401,
+            70.7019,
+            71.126253,
+            72.063648,
+            70.842846
+          ]
+        },
+        "upstream_build_rss": {
+          "source_name": "upstream_build_rss",
+          "scenario": "upstream_build",
+          "task": "upstream_build",
+          "api": null,
+          "mode": null,
+          "scale_items": null,
+          "renders_per_repetition": null,
+          "warmup_renders": null,
+          "workload": "upstream facebook/react v19.3.1 source tree, rollup release build",
+          "value": 1182.465,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1182.465,
+          "mean": 1192.4554,
+          "min": 1112.004,
+          "max": 1323.59,
+          "stdev": 81.350725933,
+          "samples": [
+            1182.465,
+            1202.73,
+            1112.004,
+            1323.59,
+            1141.488
+          ]
+        }
+      }
+    }
+  },
+  "metrics": {
+    "render_to_string_100": {
+      "value": 0.135081694,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "render_to_string_100",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_100_rps": {
+      "value": 14805.855,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "render_to_string_100",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_100_rss": {
+      "value": 46.301,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "render_to_string_100",
+      "subgroup": "render_to_string"
+    },
+    "static_markup_100": {
+      "value": 0.133069722,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "static_markup_100",
+      "subgroup": "static_markup"
+    },
+    "static_markup_100_rps": {
+      "value": 15029.715,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "static_markup_100",
+      "subgroup": "static_markup"
+    },
+    "static_markup_100_rss": {
+      "value": 46.305,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "static_markup_100",
+      "subgroup": "static_markup"
+    },
+    "stream_100": {
+      "value": 0.5992175,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "stream_100",
+      "subgroup": "stream"
+    },
+    "stream_100_rps": {
+      "value": 3337.686,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "stream_100",
+      "subgroup": "stream"
+    },
+    "stream_100_rss": {
+      "value": 91.301,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "stream_100",
+      "subgroup": "stream"
+    },
+    "render_to_string_1000": {
+      "value": 0.544081312,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "render_to_string_1000",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_1000_rps": {
+      "value": 1837.961,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "render_to_string_1000",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_1000_rss": {
+      "value": 73.293,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "render_to_string_1000",
+      "subgroup": "render_to_string"
+    },
+    "static_markup_1000": {
+      "value": 0.543549305,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "static_markup_1000",
+      "subgroup": "static_markup"
+    },
+    "static_markup_1000_rps": {
+      "value": 1839.76,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "static_markup_1000",
+      "subgroup": "static_markup"
+    },
+    "static_markup_1000_rss": {
+      "value": 73.305,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "static_markup_1000",
+      "subgroup": "static_markup"
+    },
+    "stream_1000": {
+      "value": 2.387403476,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "stream_1000",
+      "subgroup": "stream"
+    },
+    "stream_1000_rps": {
+      "value": 418.865,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "stream_1000",
+      "subgroup": "stream"
+    },
+    "stream_1000_rss": {
+      "value": 82.301,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "stream_1000",
+      "subgroup": "stream"
+    },
+    "render_to_string_10000": {
+      "value": 2.163374199,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "render_to_string_10000",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_10000_rps": {
+      "value": 92.448,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "render_to_string_10000",
+      "subgroup": "render_to_string"
+    },
+    "render_to_string_10000_rss": {
+      "value": 163.355,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "render_to_string_10000",
+      "subgroup": "render_to_string"
+    },
+    "static_markup_10000": {
+      "value": 2.216967872,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "static_markup_10000",
+      "subgroup": "static_markup"
+    },
+    "static_markup_10000_rps": {
+      "value": 90.213,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "static_markup_10000",
+      "subgroup": "static_markup"
+    },
+    "static_markup_10000_rss": {
+      "value": 201.5,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "static_markup_10000",
+      "subgroup": "static_markup"
+    },
+    "stream_10000": {
+      "value": 4.93910065,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "stream_10000",
+      "subgroup": "stream"
+    },
+    "stream_10000_rps": {
+      "value": 40.493,
+      "unit": "render/s",
+      "direction": "higher_is_better",
+      "group": "stream_10000",
+      "subgroup": "stream"
+    },
+    "stream_10000_rss": {
+      "value": 141.164,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "stream_10000",
+      "subgroup": "stream"
+    },
+    "upstream_build": {
+      "value": 71.126253,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_build",
+      "subgroup": "upstream_build"
+    },
+    "upstream_build_rss": {
+      "value": 1182.465,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_build",
+      "subgroup": "upstream_build"
+    }
+  }
+}
