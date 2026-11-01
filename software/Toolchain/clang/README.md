@@ -50,7 +50,10 @@ TUNA 镜像的文件大小与官方 Release 资产一致（2017061664 / 18296864
 均可覆盖默认选择。
 
 脚本在容器内通过 `dnf` 安装缺失的系统依赖：`tar`、`xz`、`unzip`、`sed`、`findutils`、
-`gawk`、`coreutils`、`curl`、`python3`、`which`、`diffutils`、`bash`；容器内仓库切换为
+`gawk`、`coreutils`、`curl`、`python3`、`which`、`diffutils`、`bash`、`glibc-devel`、
+`gcc`、`binutils`。后三者提供 C 标准库头文件、启动对象、GCC 运行库与系统链接器，
+供预编译 Clang 编译和链接 SQLite 使用；实际基准仍由 `${CLANG_BIN}` 编译。
+容器内仓库切换为
 华为云 openEuler 镜像。启用 `PERF_PROXY` 时，容器挂载代理 CA 证书并执行
 `update-ca-trust extract`，下载走代理。
 

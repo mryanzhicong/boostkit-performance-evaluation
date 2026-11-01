@@ -2,7 +2,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 CLANG_BUILD_PACKAGES=(tar xz unzip sed findutils gawk coreutils curl python3
-    which diffutils bash)
+    which diffutils bash glibc-devel gcc binutils)
 
 install_build_dependencies() {
     local -a dnf_options=()
