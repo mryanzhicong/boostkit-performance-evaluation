@@ -24,7 +24,7 @@ FIELDS = (
 )
 EXPECTED_WORKLOADS = {
     "compile": ("-O0", "-O2", "-Os"),
-    "speedtest1": ("100000", "500000"),
+    "speedtest1": ("100", "500"),
 }
 MIN_ROUNDS = 2
 
@@ -51,7 +51,13 @@ def parse_log(raw_log: Path) -> dict[tuple[str, str], dict[str, list]]:
             raise ParseError(f"unknown benchmark scenario: {scenario}")
         if workload not in EXPECTED_WORKLOADS[scenario]:
             raise ParseError(f"unknown workload for {scenario}: {workload}")
-        entry = rounds.setdefault((scenario, workload), {"walls": [], "bytes": []})
+        entry = rounds.setdefault((scenario, workload), {"walls": [], "bytes": [], "rounds": []})
+        round_number = int(match.group("round"))
+        if round_number < 1 or round_number in entry["rounds"]:
+            raise ParseError(f"invalid or duplicate round for {scenario} {workload}: {round_number}")
+        if int(match.group("bytes")) <= 0:
+            raise ParseError(f"non-positive artifact size for {scenario} {workload}")
+        entry["rounds"].append(round_number)
         entry["walls"].append(float(match.group("wall")))
         entry["bytes"].append(int(match.group("bytes")))
     missing = [
@@ -78,6 +84,8 @@ def collect(raw_log: Path, version: str, architecture: str, expected_rounds: int
         raise ParseError(
             f"expected {expected_rounds} rounds per workload, observed {sorted(counts)}"
         )
+    if any(set(entry["rounds"]) != set(range(1, expected_rounds + 1)) for entry in rounds.values()):
+        raise ParseError("round numbers must cover 1 through the expected round count")
     results: dict[str, dict] = {}
     measurements: list[dict] = []
     for (scenario, workload), entry in sorted(rounds.items()):

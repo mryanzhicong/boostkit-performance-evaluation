@@ -53,6 +53,9 @@ TUNA 镜像的文件大小与官方 Release 资产一致（2017061664 / 18296864
 `gawk`、`coreutils`、`curl`、`python3`、`which`、`diffutils`、`bash`、`glibc-devel`、
 `gcc`、`binutils`。后三者提供 C 标准库头文件、启动对象、GCC 运行库与系统链接器，
 供预编译 Clang 编译和链接 SQLite 使用；实际基准仍由 `${CLANG_BIN}` 编译。
+构建 `speedtest1` 时在容器内通过 `gcc -print-file-name=crtbeginS.o` 定位 GCC
+运行库目录，检查启动对象存在后用 `--gcc-install-dir` 显式传给 Clang，避免
+openEuler 的 GCC 目录未被上游预编译 Clang 自动识别；冒烟和正式构建使用同一逻辑。
 容器内仓库切换为
 华为云 openEuler 镜像。启用 `PERF_PROXY` 时，容器挂载代理 CA 证书并执行
 `update-ca-trust extract`，下载走代理。
@@ -74,6 +77,9 @@ docker exec "${CLANG_CONTAINER_NAME}" "${PERF_WORK_DIR}/llvm/bin/clang" --versio
 
 构建阶段还会检查 `clang`、`clang++` 可执行、`ldd` 无缺失依赖，并把实际版本写入
 `PERF_ACTUAL_VERSION_FILE`，不直接写请求版本。工具链仅位于本次任务私有目录。
+在确认版本后，构建阶段还会用被测 Clang 编译、链接并运行一个小型 C 程序，覆盖标准
+头文件、GCC 启动对象、数学库、线程库和动态加载；预检失败立即终止，不进入 SQLite
+阶段。SQLite 冒烟运行的输出保存在 `${RESULTS_DIR}/speedtest1-smoke.log`，失败时也打印到控制台。
 
 ## 容器
 
@@ -116,17 +122,20 @@ docker run --detach --name "${CLANG_CONTAINER_NAME}" \
    ```
 
 2. **speedtest1 场景**（生成代码质量）：以 `-O2` 构建官方 `speedtest1`，再以
-   `--memdb` 分别按 `--size 100000` 和 `--size 500000` 各运行 5 轮，记录每轮墙钟
+   `--memdb` 分别按 `--size 100` 和 `--size 500` 各运行 5 轮，记录每轮墙钟
    时间与可执行文件大小：
 
    ```bash
    "${CLANG_BIN}" -O2 -I"${AMALGAMATION_DIR}" speedtest1.c sqlite3.c -lm -o speedtest1
-   ./speedtest1 --size 100000 --memdb test.db
+   ./speedtest1 --size 100 --memdb test.db
    ```
 
 固定负载参数写入结果的 `parameters`：SQLite 3.54.1、三个编译档位、两个运行档位、
-5 轮。CPU 型号与核数记录在系统信息中，不跨架构强行统一。预计单架构耗时约
-30–60 分钟（tarball 下载 5–15 分钟、解压 2–5 分钟、5 档 × 5 轮基准 15–30 分钟）。
+5 轮。CPU 型号与核数记录在系统信息中，不跨架构强行统一。
+
+`speedtest1 --size` 是相对规模系数（默认 100），不是行数。当前正式运行档位为
+100/500；此前 100000/500000 档位的结果不能与当前档位直接比较，需重新测试。
+实际耗时取决于下载速度、CPU 与内存；调整后的负载尚需在目标 Runner 上测量耗时。
 
 ## 指标与产物
 

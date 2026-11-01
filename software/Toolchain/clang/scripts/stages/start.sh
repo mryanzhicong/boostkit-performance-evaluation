@@ -53,8 +53,11 @@ prepare_benchmark_sources() {
 
 build_speedtest1_binary() {
     local output_path="$1"
+    # openEuler's GCC target directory may not match Clang's auto-detection.
+    # Query GCC inside the same container rather than guessing its triple/version.
+    configure_gcc_runtime || return $?
     log_message "building speedtest1 with ${CLANG_BIN} -O2"
-    container_exec "${CLANG_BIN}" -O2 -I"$(dirname "${SQLITE3_H}")" \
+    container_exec "${CLANG_BIN}" "--gcc-install-dir=${CLANG_GCC_INSTALL_DIR}" -O2 -I"$(dirname "${SQLITE3_H}")" \
         "${SPEEDTEST1_C}" "${SQLITE3_C}" -lm -o "${output_path}" || {
         log_message 'ERROR: failed to build speedtest1 with clang'
         return 50
@@ -81,7 +84,9 @@ start_clang_runtime() {
         rm -rf "${smoke_dir}"
         return 40
     }
-    container_exec sh -c "cd '${smoke_dir}' && ./speedtest1 --size 100 --memdb test.db" >/dev/null 2>&1 || {
+    container_exec sh -c "cd '${smoke_dir}' && ./speedtest1 --size 100 --memdb test.db" \
+        >"${RESULTS_DIR}/speedtest1-smoke.log" 2>&1 || {
+        cat "${RESULTS_DIR}/speedtest1-smoke.log" >&2
         rm -rf "${smoke_dir}"
         log_message 'ERROR: speedtest1 smoke run failed'
         return 40

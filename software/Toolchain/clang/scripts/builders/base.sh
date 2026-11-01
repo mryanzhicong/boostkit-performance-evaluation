@@ -13,8 +13,8 @@ install_build_dependencies() {
         return 30
     }
     local command_name
-    for command_name in tar xz unzip sed find awk stat python3; do
-        container_exec command -v "${command_name}" >/dev/null 2>&1 || {
+    for command_name in tar xz unzip sed find awk stat python3 gcc ld date seq rm mkdir sh; do
+        container_exec which "${command_name}" >/dev/null 2>&1 || {
             log_message "ERROR: required command is missing in the Clang container: ${command_name}"
             return 30
         }
@@ -69,7 +69,7 @@ extract_llvm_archive() {
 }
 
 build_clang_base() {
-    local archive_path actual_version
+    local archive_path actual_version compiler_path runtime_dependencies
     initialize_runtime || return $?
     require_clang_container || return $?
     install_build_dependencies || return $?
@@ -83,16 +83,25 @@ build_clang_base() {
         log_message 'ERROR: clang/clang++ binaries not found after extraction'
         return 40
     }
-    if container_exec ldd "${CLANG_BIN}" 2>&1 | grep -q 'not found'; then
-        log_message 'ERROR: clang runtime dependencies are missing in the container'
-        return 40
-    fi
+    for compiler_path in "${CLANG_BIN}" "${CLANGXX_BIN}"; do
+        runtime_dependencies="$(container_exec ldd "${compiler_path}" 2>&1)" || {
+            log_message "ERROR: cannot inspect compiler runtime dependencies: ${compiler_path}"
+            printf '%s\n' "${runtime_dependencies}" >&2
+            return 40
+        }
+        if grep -q 'not found' <<< "${runtime_dependencies}"; then
+            log_message "ERROR: compiler runtime dependencies are missing: ${compiler_path}"
+            printf '%s\n' "${runtime_dependencies}" >&2
+            return 40
+        fi
+    done
     actual_version="$(container_exec "${CLANG_BIN}" --version 2>/dev/null | \
         sed -nE 's/^clang version ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -n 1)"
     [[ "${actual_version}" == "${SOFTWARE_VERSION}" ]] || {
         log_message "ERROR: deployed clang is ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
         return 40
     }
+    validate_clang_toolchain || return $?
     printf '%s\n' "${actual_version}" > "${PERF_ACTUAL_VERSION_FILE}"
     log_message "clang ${actual_version} deployed from the official prebuilt tarball"
 }

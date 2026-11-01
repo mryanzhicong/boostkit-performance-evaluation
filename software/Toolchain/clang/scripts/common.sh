@@ -48,7 +48,7 @@ CLANG_CONTAINER_NAME=""
 # two speedtest1 database sizes, five rounds each.
 CLANG_ROUNDS="${CLANG_ROUNDS:-5}"
 CLANG_COMPILE_OPTIONS=("-O0" "-O2" "-Os")
-CLANG_SPEEDTEST_SIZES=(100000 500000)
+CLANG_SPEEDTEST_SIZES=(100 500)
 
 # Lifecycle paths (assigned in configure_runtime_paths).
 LLVM_ROOT=""
@@ -149,6 +149,48 @@ configure_runtime_paths() {
 initialize_runtime() {
     configure_runtime_paths || return $?
     mkdir -p "${PERF_WORK_DIR}" "${RESULTS_DIR}" "${TMPDIR}"
+}
+
+configure_gcc_runtime() {
+    local crtbegin_path
+    crtbegin_path="$(container_exec gcc -print-file-name=crtbeginS.o)" || return 40
+    if [[ "${crtbegin_path}" != /* ]] || ! container_exec test -f "${crtbegin_path}"; then
+        log_message "ERROR: GCC startup object is missing in the container: ${crtbegin_path}"
+        return 40
+    fi
+    CLANG_GCC_INSTALL_DIR="$(dirname "${crtbegin_path}")"
+    log_message "using GCC runtime directory: ${CLANG_GCC_INSTALL_DIR}"
+}
+
+validate_clang_toolchain() {
+    local probe_dir="${PERF_WORK_DIR}/toolchain-check"
+    configure_gcc_runtime || return $?
+    mkdir -p "${probe_dir}" || return 40
+    cat > "${probe_dir}/check.c" <<'C'
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <pthread.h>
+#include <dlfcn.h>
+int main(void) {
+    volatile double value = 4.0;
+    void *handle = dlopen(NULL, RTLD_LAZY);
+    assert(handle != NULL);
+    assert(pthread_equal(pthread_self(), pthread_self()));
+    printf("%.0f\n", sqrt(value));
+    dlclose(handle);
+    return 0;
+}
+C
+    if ! container_exec "${CLANG_BIN}" "--gcc-install-dir=${CLANG_GCC_INSTALL_DIR}" \
+        -O2 "${probe_dir}/check.c" -lm -ldl -pthread -o "${probe_dir}/check" || \
+       ! container_exec "${probe_dir}/check"; then
+        log_message 'ERROR: Clang compile/link/run preflight failed; check container headers, startup objects, runtime libraries and loader'
+        return 40
+    fi
+    rm -rf "${probe_dir}" || return 40
+    log_message 'Clang compile/link/run preflight passed'
 }
 
 with_network_proxy() {

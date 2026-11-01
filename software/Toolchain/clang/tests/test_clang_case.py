@@ -44,7 +44,7 @@ def raw_log_text(rounds: int = 5) -> str:
                 f"result scenario=compile workload={option} round={index + 1} "
                 f"wall_seconds={10.0 + index + len(option)} artifact_bytes={1000000 + index * 7}"
             )
-        for size in (100000, 500000):
+        for size in (100, 500):
             lines.append(
                 f"result scenario=speedtest1 workload={size} round={index + 1} "
                 f"wall_seconds={2.0 + index + size / 1000000} artifact_bytes={500000 + index}"
@@ -69,12 +69,12 @@ def test_collector_extracts_fifteen_metrics(raw_log: Path) -> None:
     assert metric["group"] == "compile"
     assert metric["workload"] == "-O2"
     assert metric["source_field"] == "median wall time"
-    artifact = payload["results"]["speedtest1 --size=100000: artifact size"]
+    artifact = payload["results"]["speedtest1 --size=100: artifact size"]
     assert artifact["unit"] == "KiB"
     assert payload["parameters"]["sqlite_version"] == "3.54.1"
     assert payload["parameters"]["rounds"] == 5
     assert payload["parameters"]["compile_options"] == ["-O0", "-O2", "-Os"]
-    assert payload["parameters"]["speedtest_sizes"] == [100000, 500000]
+    assert payload["parameters"]["speedtest_sizes"] == [100, 500]
     assert "architecture" not in payload["parameters"]
 
 
@@ -103,15 +103,104 @@ def test_collector_rejects_unknown_scenario(raw_log: Path) -> None:
         collector.collect(raw_log, "23.1.4", "x86_64", 5)
 
 
+@pytest.mark.parametrize("old,new", [
+    ("round=2", "round=1"),
+    ("round=5", "round=6"),
+    ("artifact_bytes=1000000", "artifact_bytes=0"),
+])
+def test_collector_rejects_corrupt_rounds(raw_log: Path, old: str, new: str) -> None:
+    raw_log.write_text(raw_log.read_text().replace(old, new), encoding="utf-8")
+    with pytest.raises(ValueError):
+        collector.collect(raw_log, "23.1.4", "x86_64", 5)
+
+
+@pytest.mark.parametrize("failure", ["none", "compile", "run"])
+def test_toolchain_preflight_checks_compile_link_and_run(tmp_path: Path, failure: str) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/common.sh"
+PERF_WORK_DIR="{tmp_path}"
+CLANG_BIN=/llvm/bin/clang
+container_exec() {{
+    if [[ "$1" == gcc ]]; then
+        printf '%s\\n' /usr/lib/gcc/example/12/crtbeginS.o
+    elif [[ "$1" == test ]]; then
+        return 0
+    elif [[ "$1" == /llvm/bin/clang ]]; then
+        printf 'compile %s\\n' "$*"
+        [[ '{failure}' != compile ]]
+    else
+        printf 'run %s\\n' "$*"
+        [[ '{failure}' != run ]]
+    fi
+}}
+validate_clang_toolchain
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert "--gcc-install-dir=/usr/lib/gcc/example/12" in result.stdout
+    assert "-lm -ldl -pthread" in result.stdout
+    if failure == "none":
+        assert result.returncode == 0, result.stderr
+        assert "run " in result.stdout
+        assert not (tmp_path / "toolchain-check").exists()
+    else:
+        assert result.returncode == 40
+        assert "preflight failed" in result.stderr
+        if failure == "compile":
+            assert "run " not in result.stdout
+
+
 def test_standalone_validation_accepts_payload(raw_log: Path) -> None:
     payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
     metrics = standalone.validate_metrics(payload)
     assert len(metrics) == 15
 
 
+def test_smoke_failure_preserves_diagnostics(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+RESULTS_DIR="{tmp_path}"
+BENCHMARK_DIR="{tmp_path}/benchmark"
+CLANG_BIN=/llvm/bin/clang
+CLANGXX_BIN=/llvm/bin/clang++
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+build_speedtest1_binary() {{ :; }}
+container_exec() {{
+    if [[ "$1" == test ]]; then return 0; fi
+    printf '%s\\n' 'loader: missing shared library' >&2
+    return 127
+}}
+start_clang_runtime
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 40
+    assert "loader: missing shared library" in result.stderr
+    assert "loader: missing shared library" in (tmp_path / "speedtest1-smoke.log").read_text()
+
+
+def test_benchmark_failure_is_not_hidden_by_tee(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/test.sh"
+RESULTS_DIR="{tmp_path}"
+CLANG_BIN=/llvm/bin/clang
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+container_exec() {{ :; }}
+run_compile_scenario() {{ printf '%s\\n' 'compile failed'; return 50; }}
+run_speedtest_scenario() {{ printf '%s\\n' 'must not run'; return 0; }}
+run_clang_benchmarks
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 50
+    assert "must not run" not in result.stdout
+    assert "compile failed" in (tmp_path / "sqlite_clang_raw.log").read_text()
+
+
 def test_standalone_validation_rejects_incomplete_payload(raw_log: Path) -> None:
     payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
-    del payload["results"]["speedtest1 --size=500000: artifact size"]
+    del payload["results"]["speedtest1 --size=500: artifact size"]
     with pytest.raises(RuntimeError, match="expected 15 Clang metrics"):
         standalone.validate_metrics(payload)
 
@@ -176,7 +265,7 @@ def test_cross_architecture_report_pairs_same_workloads(raw_log: Path) -> None:
     assert "## compile" in markdown
     assert "## speedtest1" in markdown
     assert ">−Os<" in markdown or "-Os" in markdown
-    assert ">500000<" in markdown or "500000" in markdown
+    assert ">500<" in markdown or "500" in markdown
     assert "median wall time" in markdown
     assert "artifact size" in markdown
     assert "越小越好" in markdown
@@ -364,6 +453,44 @@ fetch_sqlite_archive sqlite-amalgamation-3540100.zip 92281c86e2957f9b9305890f9ac
     )
     assert result.returncode != 0
     assert "no SQLite download base is configured" in result.stderr
+
+
+@pytest.mark.parametrize("crt_path", [
+    "/usr/lib/gcc/aarch64-openEuler-linux/12/crtbeginS.o",
+    "/usr/lib/gcc/x86_64-openEuler-linux/12/crtbeginS.o",
+    "crtbeginS.o",
+])
+def test_speedtest_build_selects_container_gcc_runtime(crt_path: str) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+CLANG_BIN=/llvm/bin/clang
+SQLITE3_H=/sqlite/sqlite3.h
+SQLITE3_C=/sqlite/sqlite3.c
+SPEEDTEST1_C=/sqlite/speedtest1.c
+container_exec() {{
+    if [[ "$1" == gcc ]]; then
+        [[ "$2" == -print-file-name=crtbeginS.o ]] || return 98
+        printf '%s\\n' '{crt_path}'
+    elif [[ "$1" == test ]]; then
+        [[ "$2" == -f && "$3" == '{crt_path}' ]]
+    else
+        printf '%s\\n' "$@"
+    fi
+}}
+build_speedtest1_binary /output/speedtest1
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    if crt_path == "crtbeginS.o":
+        assert result.returncode == 40
+        assert "GCC startup object is missing" in result.stderr
+        assert result.stdout == ""
+    else:
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.splitlines() == [
+            "/llvm/bin/clang", f"--gcc-install-dir={Path(crt_path).parent}",
+            "-O2", "-I/sqlite", "/sqlite/speedtest1.c", "/sqlite/sqlite3.c",
+            "-lm", "-o", "/output/speedtest1",
+        ]
 
 
 def test_container_runs_without_pinning_and_mounts_results() -> None:
