@@ -304,6 +304,46 @@ printf "%s\\n" "$SQLITE_BENCHMARK_BASE"
     assert proxied.stdout.strip() == "https://www.sqlite.org/2026"
 
 
+@pytest.mark.parametrize("source", ["offline", "download"])
+def test_fetch_sqlite_archive_creates_missing_benchmark_dir(tmp_path: Path, source: str) -> None:
+    work = tmp_path / "work"
+    offline = tmp_path / "offline"
+    offline.mkdir()
+    package = "sqlite-amalgamation-3540100.zip"
+    payload = b"sqlite archive fixture"
+    fixture = tmp_path / "archive.zip"
+    fixture.write_bytes(payload)
+    if source == "offline":
+        (offline / package).write_bytes(payload)
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{tmp_path}/results"
+export CLANG_ARCHIVE_DIR="{offline}"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+initialize_runtime || exit $?
+[[ ! -e "$BENCHMARK_DIR" ]] || exit 99
+SQLITE_BENCHMARK_BASE=https://sqlite.example
+with_network_proxy() {{
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == -o ]]; then
+            cp "{fixture}" "$2"
+            return $?
+        fi
+        shift
+    done
+    return 98
+}}
+fetch_sqlite_archive "{package}" "{hashlib.sha3_256(payload).hexdigest()}"
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    archive = work / "benchmark" / package
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == str(archive)
+    assert archive.read_bytes() == payload
+
+
 def test_fetch_sqlite_archive_fails_fast_without_source(tmp_path: Path) -> None:
     work = tmp_path / "work"
     results = tmp_path / "results"

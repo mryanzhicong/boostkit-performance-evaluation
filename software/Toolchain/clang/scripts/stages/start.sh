@@ -5,6 +5,7 @@ fetch_sqlite_archive() {
     local package_name="$1" expected_sha3="$2"
     local archive_path="${BENCHMARK_DIR}/${package_name}"
     local local_archive="${CLANG_ARCHIVE_DIR}/${package_name}"
+    mkdir -p "${BENCHMARK_DIR}" || return 30
     if [[ -s "${local_archive}" ]]; then
         log_message "using local SQLite archive: ${local_archive}"
         cp "${local_archive}" "${archive_path}" || return 30
