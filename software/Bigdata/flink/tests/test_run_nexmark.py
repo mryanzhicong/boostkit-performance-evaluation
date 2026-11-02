@@ -46,6 +46,17 @@ def test_parse_all_official_query_logs(tmp_path: Path) -> None:
     assert len(payload["measurements"]) == 23
     assert len(payload["results"]) == 46
     assert payload["parameters"]["benchmark_events"] == 10_000_000
+    assert payload["parameters"]["checkpoint_interval"] == 180_000
+
+
+def test_jdk_and_checkpoint_match_ten_million_event_runbook() -> None:
+    case_dir = SCRIPT.parents[1]
+    common = (case_dir / "scripts/common.sh").read_text(encoding="utf-8")
+    build = (case_dir / "scripts/builders/base.sh").read_text(encoding="utf-8")
+    assert 'BISHENG_JDK_RELEASE="8u472-b11"' in common
+    assert "prepare_bisheng_jdk || return $?" in build
+    assert "execution.checkpointing.interval: 180000" in build
+    assert "java-11-openjdk-devel" not in build
 
 
 def test_optimized_standalone_does_not_fall_back_to_base(tmp_path: Path) -> None:
