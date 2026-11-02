@@ -28,7 +28,12 @@ install_pinned_node() {
             log_message "downloading Node.js ${NODE_VERSION} from ${url}"
             if curl -fsSL --retry 2 --connect-timeout 20 -o "${target}" "${url}"; then
                 if [[ "$(file_sha256 "${target}")" == "${sha256}" ]]; then
-                    cp -f "${target}" "${candidate}" 2>/dev/null || true
+                    if mkdir -p "${CATJ_OFFLINE_DIR}" 2>/dev/null && cp -f "${target}" "${candidate}" 2>/dev/null; then
+                        log_message "cached the Node.js archive at ${candidate}"
+                    else
+                        log_message "WARNING: cannot cache the Node.js archive under ${CATJ_OFFLINE_DIR}; using ${target}"
+                        candidate="${target}"
+                    fi
                     downloaded=1
                     break
                 fi
