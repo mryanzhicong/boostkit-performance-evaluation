@@ -1,0 +1,953 @@
+{
+  "architecture": "aarch64",
+  "parameters": {
+    "measurement": {
+      "environment": {
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "UV_THREADPOOL_SIZE": "1"
+      },
+      "offline": true,
+      "operations_per_sample": {
+        "compare_async_cost10": 10,
+        "compare_async_cost12": 10,
+        "compare_sync_cost10": 10,
+        "hash_async_cost10": 10,
+        "hash_sync_cost10": 10,
+        "hash_sync_cost12": 10
+      },
+      "processes_per_sample": 1,
+      "repetitions": 5,
+      "salt_generated_before_timed_window": true,
+      "statistic": "median",
+      "timing": "process.hrtime.bigint() per operation",
+      "warmups": 1
+    },
+    "node": {
+      "archive_sha256": "6287aa46b6c375d816e63ae66d024fbbfd70404825aabdfdf898a970871d2f4b",
+      "version": "v22.23.4"
+    },
+    "package": {
+      "dependencies": {
+        "node-addon-api": "8.9.2",
+        "node-gyp-build": "4.8.4"
+      },
+      "dependency_tree_sha256": "ac85950fb1fc53fefb774b9272e15313bf05d0e508173fb02727122ae7949329",
+      "name": "bcrypt",
+      "napi": "10",
+      "native_binary": "prebuilds/linux-arm64/bcrypt.glibc.node",
+      "native_binary_sha256": "68f3cf61756809c6d466c186aaa2bc1cbc17911f248c361a5284aa4e769fcc52",
+      "tarball_sha256": "3b2478cda06f066c744e06cd0b68f55e14cc546c19ee2b80be600dfc65b5ae20",
+      "version": "6.0.0"
+    },
+    "scenarios": {
+      "compare_async_cost10": {
+        "api": "async",
+        "cost": 10,
+        "op": "compare",
+        "ops": 10,
+        "timeout_seconds": 180
+      },
+      "compare_async_cost12": {
+        "api": "async",
+        "cost": 12,
+        "op": "compare",
+        "ops": 10,
+        "timeout_seconds": 300
+      },
+      "compare_sync_cost10": {
+        "api": "sync",
+        "cost": 10,
+        "op": "compare",
+        "ops": 10,
+        "timeout_seconds": 180
+      },
+      "hash_async_cost10": {
+        "api": "async",
+        "cost": 10,
+        "op": "hash",
+        "ops": 10,
+        "timeout_seconds": 180
+      },
+      "hash_sync_cost10": {
+        "api": "sync",
+        "cost": 10,
+        "op": "hash",
+        "ops": 10,
+        "timeout_seconds": 180
+      },
+      "hash_sync_cost12": {
+        "api": "sync",
+        "cost": 12,
+        "op": "hash",
+        "ops": 10,
+        "timeout_seconds": 300
+      }
+    },
+    "software": "bcrypt",
+    "variant": "base",
+    "workload": {
+      "password": "BoostKit-bcrypt-benchmark-2026"
+    }
+  },
+  "results": {
+    "compare_async_cost10.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost10",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "compare_async_cost10.ms_per_op",
+      "statistics": {
+        "max": 97.012109,
+        "mean": 84.80520320000001,
+        "median": 81.71746,
+        "min": 81.389804,
+        "samples": [
+          81.659218,
+          97.012109,
+          81.389804,
+          82.247425,
+          81.71746
+        ],
+        "stdev": 6.830942672384147
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 81.71746
+    },
+    "compare_async_cost10.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost10",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "compare_async_cost10.ops_per_second",
+      "statistics": {
+        "max": 12.286551,
+        "mean": 11.847256,
+        "median": 12.237287,
+        "min": 10.307992,
+        "samples": [
+          12.246015,
+          10.307992,
+          12.286551,
+          12.158435,
+          12.237287
+        ],
+        "stdev": 0.8617248763097185
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 12.237287
+    },
+    "compare_async_cost10.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost10",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "compare_async_cost10.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.083600000000004,
+        "median": 47.086,
+        "min": 47.074,
+        "samples": [
+          47.09,
+          47.086,
+          47.09,
+          47.078,
+          47.074
+        ],
+        "stdev": 0.007266360849835429
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.086
+    },
+    "compare_async_cost12.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost12",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "compare_async_cost12.ms_per_op",
+      "statistics": {
+        "max": 340.53995,
+        "mean": 330.3523758,
+        "median": 325.168833,
+        "min": 324.637576,
+        "samples": [
+          325.168833,
+          324.637576,
+          340.53995,
+          336.766326,
+          324.649194
+        ],
+        "stdev": 7.697073479673096
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 325.168833
+    },
+    "compare_async_cost12.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost12",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "compare_async_cost12.ops_per_second",
+      "statistics": {
+        "max": 3.080358,
+        "mean": 3.0283724,
+        "median": 3.075325,
+        "min": 2.936513,
+        "samples": [
+          3.075325,
+          3.080358,
+          2.936513,
+          2.969418,
+          3.080248
+        ],
+        "stdev": 0.06984249740881254
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 3.075325
+    },
+    "compare_async_cost12.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_async_cost12",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "compare_async_cost12.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.086800000000004,
+        "median": 47.09,
+        "min": 47.074,
+        "samples": [
+          47.09,
+          47.09,
+          47.09,
+          47.09,
+          47.074
+        ],
+        "stdev": 0.007155417528001717
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.09
+    },
+    "compare_sync_cost10.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "compare_sync_cost10.ms_per_op",
+      "statistics": {
+        "max": 81.743168,
+        "mean": 81.301818,
+        "median": 81.170792,
+        "min": 81.040918,
+        "samples": [
+          81.743168,
+          81.075482,
+          81.040918,
+          81.47873,
+          81.170792
+        ],
+        "stdev": 0.30106157419039536
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 81.170792
+    },
+    "compare_sync_cost10.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "compare_sync_cost10.ops_per_second",
+      "statistics": {
+        "max": 12.339446,
+        "mean": 12.2999826,
+        "median": 12.319702,
+        "min": 12.233438,
+        "samples": [
+          12.233438,
+          12.334185,
+          12.339446,
+          12.273142,
+          12.319702
+        ],
+        "stdev": 0.04545497893300596
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 12.319702
+    },
+    "compare_sync_cost10.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "compare_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "compare_sync_cost10.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.089200000000005,
+        "median": 47.09,
+        "min": 47.086,
+        "samples": [
+          47.09,
+          47.09,
+          47.09,
+          47.09,
+          47.086
+        ],
+        "stdev": 0.001788854382002018
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.09
+    },
+    "hash_async_cost10.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_async_cost10",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "hash_async_cost10.ms_per_op",
+      "statistics": {
+        "max": 81.735656,
+        "mean": 81.604753,
+        "median": 81.56905,
+        "min": 81.548901,
+        "samples": [
+          81.557138,
+          81.548901,
+          81.61302,
+          81.56905,
+          81.735656
+        ],
+        "stdev": 0.07724195271353797
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 81.56905
+    },
+    "hash_async_cost10.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_async_cost10",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "hash_async_cost10.ops_per_second",
+      "statistics": {
+        "max": 12.262581,
+        "mean": 12.254197000000001,
+        "median": 12.259552,
+        "min": 12.234563,
+        "samples": [
+          12.261342,
+          12.262581,
+          12.252947,
+          12.259552,
+          12.234563
+        ],
+        "stdev": 0.011587438910303172
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 12.259552
+    },
+    "hash_async_cost10.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_async_cost10",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "hash_async_cost10.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.09,
+        "median": 47.09,
+        "min": 47.09,
+        "samples": [
+          47.09,
+          47.09,
+          47.09,
+          47.09,
+          47.09
+        ],
+        "stdev": 0.0
+      },
+      "subgroup": "async",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.09
+    },
+    "hash_sync_cost10.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "hash_sync_cost10.ms_per_op",
+      "statistics": {
+        "max": 86.495213,
+        "mean": 83.3448712,
+        "median": 82.548712,
+        "min": 81.077487,
+        "samples": [
+          81.152388,
+          86.495213,
+          81.077487,
+          82.548712,
+          85.450556
+        ],
+        "stdev": 2.4970204794021438
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 82.548712
+    },
+    "hash_sync_cost10.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "hash_sync_cost10.ops_per_second",
+      "statistics": {
+        "max": 12.33388,
+        "mean": 12.0068884,
+        "median": 12.114059,
+        "min": 11.561333,
+        "samples": [
+          12.322496,
+          11.561333,
+          12.33388,
+          12.114059,
+          11.702674
+        ],
+        "stdev": 0.356750338748683
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 12.114059
+    },
+    "hash_sync_cost10.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost10",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "hash_sync_cost10.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.089200000000005,
+        "median": 47.09,
+        "min": 47.086,
+        "samples": [
+          47.09,
+          47.09,
+          47.09,
+          47.09,
+          47.086
+        ],
+        "stdev": 0.001788854382002018
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.09
+    },
+    "hash_sync_cost12.ms_per_op": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost12",
+      "group_path": "metric.group",
+      "metric": "ms_per_op",
+      "source_name": "hash_sync_cost12.ms_per_op",
+      "statistics": {
+        "max": 340.695645,
+        "mean": 330.2124452,
+        "median": 328.428928,
+        "min": 323.964226,
+        "samples": [
+          333.050063,
+          340.695645,
+          324.923364,
+          328.428928,
+          323.964226
+        ],
+        "stdev": 6.858299890274108
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "ms",
+      "unit_path": "metric.unit",
+      "value": 328.428928
+    },
+    "hash_sync_cost12.ops_per_second": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost12",
+      "group_path": "metric.group",
+      "metric": "ops_per_second",
+      "source_name": "hash_sync_cost12.ops_per_second",
+      "statistics": {
+        "max": 3.086761,
+        "mean": 3.0293864,
+        "median": 3.044799,
+        "min": 2.935171,
+        "samples": [
+          3.002552,
+          2.935171,
+          3.077649,
+          3.044799,
+          3.086761
+        ],
+        "stdev": 0.062159669688633346
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "op/s",
+      "unit_path": "metric.unit",
+      "value": 3.044799
+    },
+    "hash_sync_cost12.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "hash_sync_cost12",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "hash_sync_cost12.peak_rss_mib",
+      "statistics": {
+        "max": 47.09,
+        "mean": 47.082,
+        "median": 47.086,
+        "min": 47.074,
+        "samples": [
+          47.074,
+          47.086,
+          47.09,
+          47.086,
+          47.074
+        ],
+        "stdev": 0.007483314773549432
+      },
+      "subgroup": "sync",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 47.086
+    }
+  },
+  "runtime": {
+    "bcrypt": {
+      "files": {
+        "bcrypt.js": "427843f9f572915536dffb47cbeddfdeb8f1c24ddf5db75d76021c1efa522c48",
+        "binding.gyp": "b55c2f501c320237f9a2340994b4645a471d641af3d341b9d9f3eb404b3bda5d",
+        "package.json": "33510b2b8859265a413ab101cdf961b1c9b076d93496f52d8ac7eacc007859a4"
+      },
+      "native": {
+        "binary": "prebuilds/linux-arm64/bcrypt.glibc.node",
+        "napi": "10",
+        "sha256": "68f3cf61756809c6d466c186aaa2bc1cbc17911f248c361a5284aa4e769fcc52"
+      },
+      "version": "6.0.0"
+    },
+    "dependencies": {
+      "node-addon-api": {
+        "version": "8.9.2"
+      },
+      "node-gyp-build": {
+        "version": "4.8.4"
+      }
+    },
+    "machine": "aarch64",
+    "node": {
+      "version": "v22.23.4"
+    },
+    "scenarios": [
+      "hash_sync_cost10",
+      "hash_async_cost10",
+      "compare_sync_cost10",
+      "compare_async_cost10",
+      "hash_sync_cost12",
+      "compare_async_cost12"
+    ],
+    "suite": "bcrypt-cost-load"
+  },
+  "scenarios": {
+    "compare_async_cost10": {
+      "api": "async",
+      "correctness": {
+        "detail": "all 10 comparisons returned true",
+        "ok": true
+      },
+      "cost": 10,
+      "op": "compare",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 97.012109,
+          "mean": 84.80520320000001,
+          "median": 81.71746,
+          "min": 81.389804,
+          "samples": [
+            81.659218,
+            97.012109,
+            81.389804,
+            82.247425,
+            81.71746
+          ],
+          "stdev": 6.830942672384147
+        },
+        "ops_per_second": {
+          "max": 12.286551,
+          "mean": 11.847256,
+          "median": 12.237287,
+          "min": 10.307992,
+          "samples": [
+            12.246015,
+            10.307992,
+            12.286551,
+            12.158435,
+            12.237287
+          ],
+          "stdev": 0.8617248763097185
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.083600000000004,
+          "median": 47.086,
+          "min": 47.074,
+          "samples": [
+            47.09,
+            47.086,
+            47.09,
+            47.078,
+            47.074
+          ],
+          "stdev": 0.007266360849835429
+        }
+      }
+    },
+    "compare_async_cost12": {
+      "api": "async",
+      "correctness": {
+        "detail": "all 10 comparisons returned true",
+        "ok": true
+      },
+      "cost": 12,
+      "op": "compare",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 340.53995,
+          "mean": 330.3523758,
+          "median": 325.168833,
+          "min": 324.637576,
+          "samples": [
+            325.168833,
+            324.637576,
+            340.53995,
+            336.766326,
+            324.649194
+          ],
+          "stdev": 7.697073479673096
+        },
+        "ops_per_second": {
+          "max": 3.080358,
+          "mean": 3.0283724,
+          "median": 3.075325,
+          "min": 2.936513,
+          "samples": [
+            3.075325,
+            3.080358,
+            2.936513,
+            2.969418,
+            3.080248
+          ],
+          "stdev": 0.06984249740881254
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.086800000000004,
+          "median": 47.09,
+          "min": 47.074,
+          "samples": [
+            47.09,
+            47.09,
+            47.09,
+            47.09,
+            47.074
+          ],
+          "stdev": 0.007155417528001717
+        }
+      }
+    },
+    "compare_sync_cost10": {
+      "api": "sync",
+      "correctness": {
+        "detail": "all 10 comparisons returned true",
+        "ok": true
+      },
+      "cost": 10,
+      "op": "compare",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 81.743168,
+          "mean": 81.301818,
+          "median": 81.170792,
+          "min": 81.040918,
+          "samples": [
+            81.743168,
+            81.075482,
+            81.040918,
+            81.47873,
+            81.170792
+          ],
+          "stdev": 0.30106157419039536
+        },
+        "ops_per_second": {
+          "max": 12.339446,
+          "mean": 12.2999826,
+          "median": 12.319702,
+          "min": 12.233438,
+          "samples": [
+            12.233438,
+            12.334185,
+            12.339446,
+            12.273142,
+            12.319702
+          ],
+          "stdev": 0.04545497893300596
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.089200000000005,
+          "median": 47.09,
+          "min": 47.086,
+          "samples": [
+            47.09,
+            47.09,
+            47.09,
+            47.09,
+            47.086
+          ],
+          "stdev": 0.001788854382002018
+        }
+      }
+    },
+    "hash_async_cost10": {
+      "api": "async",
+      "correctness": {
+        "detail": "every hash comparison against the produced hash returned true",
+        "ok": true
+      },
+      "cost": 10,
+      "op": "hash",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 81.735656,
+          "mean": 81.604753,
+          "median": 81.56905,
+          "min": 81.548901,
+          "samples": [
+            81.557138,
+            81.548901,
+            81.61302,
+            81.56905,
+            81.735656
+          ],
+          "stdev": 0.07724195271353797
+        },
+        "ops_per_second": {
+          "max": 12.262581,
+          "mean": 12.254197000000001,
+          "median": 12.259552,
+          "min": 12.234563,
+          "samples": [
+            12.261342,
+            12.262581,
+            12.252947,
+            12.259552,
+            12.234563
+          ],
+          "stdev": 0.011587438910303172
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.09,
+          "median": 47.09,
+          "min": 47.09,
+          "samples": [
+            47.09,
+            47.09,
+            47.09,
+            47.09,
+            47.09
+          ],
+          "stdev": 0.0
+        }
+      }
+    },
+    "hash_sync_cost10": {
+      "api": "sync",
+      "correctness": {
+        "detail": "every hash comparison against the produced hash returned true",
+        "ok": true
+      },
+      "cost": 10,
+      "op": "hash",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 86.495213,
+          "mean": 83.3448712,
+          "median": 82.548712,
+          "min": 81.077487,
+          "samples": [
+            81.152388,
+            86.495213,
+            81.077487,
+            82.548712,
+            85.450556
+          ],
+          "stdev": 2.4970204794021438
+        },
+        "ops_per_second": {
+          "max": 12.33388,
+          "mean": 12.0068884,
+          "median": 12.114059,
+          "min": 11.561333,
+          "samples": [
+            12.322496,
+            11.561333,
+            12.33388,
+            12.114059,
+            11.702674
+          ],
+          "stdev": 0.356750338748683
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.089200000000005,
+          "median": 47.09,
+          "min": 47.086,
+          "samples": [
+            47.09,
+            47.09,
+            47.09,
+            47.09,
+            47.086
+          ],
+          "stdev": 0.001788854382002018
+        }
+      }
+    },
+    "hash_sync_cost12": {
+      "api": "sync",
+      "correctness": {
+        "detail": "every hash comparison against the produced hash returned true",
+        "ok": true
+      },
+      "cost": 12,
+      "op": "hash",
+      "operations_per_sample": 10,
+      "statistics": {
+        "ms_per_op": {
+          "max": 340.695645,
+          "mean": 330.2124452,
+          "median": 328.428928,
+          "min": 323.964226,
+          "samples": [
+            333.050063,
+            340.695645,
+            324.923364,
+            328.428928,
+            323.964226
+          ],
+          "stdev": 6.858299890274108
+        },
+        "ops_per_second": {
+          "max": 3.086761,
+          "mean": 3.0293864,
+          "median": 3.044799,
+          "min": 2.935171,
+          "samples": [
+            3.002552,
+            2.935171,
+            3.077649,
+            3.044799,
+            3.086761
+          ],
+          "stdev": 0.062159669688633346
+        },
+        "peak_rss_mib": {
+          "max": 47.09,
+          "mean": 47.082,
+          "median": 47.086,
+          "min": 47.074,
+          "samples": [
+            47.074,
+            47.086,
+            47.09,
+            47.086,
+            47.074
+          ],
+          "stdev": 0.007483314773549432
+        }
+      }
+    }
+  },
+  "software": "bcrypt",
+  "summary": {
+    "metric_count": 18,
+    "samples_per_scenario": 5,
+    "scenario_count": 6,
+    "statistic": "median",
+    "warmups_per_scenario": 1
+  },
+  "variant": "base",
+  "version": "6.0.0"
+}
