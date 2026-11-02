@@ -1,0 +1,903 @@
+{
+  "software": "lua",
+  "category": "Toolchain",
+  "version": "5.5.1",
+  "architecture": "aarch64",
+  "run_id": "41543844646-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-02T23:19:08Z",
+    "category": "Toolchain",
+    "software": "lua",
+    "requested_version": "5.5.1",
+    "actual_version": "5.5.1",
+    "architecture": "aarch64",
+    "run_id": "41543844646-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "variant": "base",
+      "build_variant": {
+        "variant": "base"
+      },
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "interpreter": "PUC Lua 5.5.1 (no LuaJIT)",
+      "build": {
+        "target": "linux",
+        "compiler": "gcc -std=gnu99",
+        "cflags": "-O2 -Wall -Wextra -DLUA_USE_LINUX",
+        "system_libs": "-lm -Wl,-E -ldl"
+      },
+      "gc": "Lua default incremental GC; only gc_stress performs explicit full collections",
+      "matrix": [
+        "arithmetic_loop_100000000",
+        "nbody_500000",
+        "fannkuch_10",
+        "spectral_norm_800",
+        "binary_trees_16",
+        "table_build_1000000",
+        "string_churn_1000000",
+        "gc_stress_15000",
+        "luac_compile_12000",
+        "official_test_suite"
+      ],
+      "dimensions": [
+        "allocation_gc",
+        "compile",
+        "compute",
+        "data_structure",
+        "gc",
+        "string",
+        "upstream"
+      ],
+      "generated_modules": 12000
+    }
+  },
+  "parameter_signature": "59b6443082923dbb69471dec1206c66585193e59ce4b06f38899933512bc4298",
+  "test_tools": {
+    "lua": {
+      "version": "5.5.1"
+    },
+    "lua_test_suite": {
+      "version": "5.5.1 (official lua-5.5.1-tests.tar.gz, basic suite with _U=true)"
+    },
+    "lua_benchmarks": {
+      "version": "repository-committed custom workloads, see benchmarks/ and README section 3"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-02T23:18:51Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 379748 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 385453 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 376807 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 382929 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-02T23:18:51Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 12814077952 1599014502400    78364672 11458797568 1603522985984\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-02T23:20:49Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 13426106368 1598244397056    80289792 11623505920 1602910957568\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "lua_raw_output": {
+      "path": "raw-output.log",
+      "size": 7241
+    },
+    "benchmark_result": {
+      "benchmark": "lua_workload_matrix",
+      "software": "lua",
+      "version": "5.5.1",
+      "architecture": "aarch64",
+      "variant": "base",
+      "timestamp": "2026-11-02T23:20:49Z",
+      "parameters": {
+        "variant": "base",
+        "build_variant": {
+          "variant": "base"
+        },
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "interpreter": "PUC Lua 5.5.1 (no LuaJIT)",
+        "build": {
+          "target": "linux",
+          "compiler": "gcc -std=gnu99",
+          "cflags": "-O2 -Wall -Wextra -DLUA_USE_LINUX",
+          "system_libs": "-lm -Wl,-E -ldl"
+        },
+        "gc": "Lua default incremental GC; only gc_stress performs explicit full collections",
+        "matrix": [
+          "arithmetic_loop_100000000",
+          "nbody_500000",
+          "fannkuch_10",
+          "spectral_norm_800",
+          "binary_trees_16",
+          "table_build_1000000",
+          "string_churn_1000000",
+          "gc_stress_15000",
+          "luac_compile_12000",
+          "official_test_suite"
+        ],
+        "dimensions": [
+          "allocation_gc",
+          "compile",
+          "compute",
+          "data_structure",
+          "gc",
+          "string",
+          "upstream"
+        ],
+        "generated_modules": 12000
+      },
+      "inputs": {
+        "source": "https://www.lua.org/ftp/lua-5.5.1.tar.gz",
+        "source_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+        "test_suite": "https://www.lua.org/tests/lua-5.5.1-tests.tar.gz",
+        "test_suite_sha256": "da07b543872dc0bb2ff12aabd0c248578d78df3eb6b67efdc537a46d455c7f31",
+        "test_suite_selection": "basic suite: lua -e _U=true all.lua (complete/internal suites excluded)"
+      },
+      "metric_contract": {
+        "wall_time": {
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "peak_rss": {
+          "unit": "MiB",
+          "direction": "lower_is_better"
+        },
+        "statistic": "median of independent repetitions"
+      },
+      "scenarios": [
+        {
+          "scenario": "arithmetic_loop_100000000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 100000000,
+          "workload": "integer modulo accumulation (legacy 2M representative load extended for stable timing)",
+          "checks": [
+            "136284248",
+            "136284248",
+            "136284248",
+            "136284248",
+            "136284248"
+          ]
+        },
+        {
+          "scenario": "nbody_500000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 500000,
+          "workload": "five-body solar-system simulation, 500,000 steps",
+          "checks": [
+            "-0.16909656666616",
+            "-0.16909656666616",
+            "-0.16909656666616",
+            "-0.16909656666616",
+            "-0.16909656666616"
+          ]
+        },
+        {
+          "scenario": "fannkuch_10",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 10,
+          "workload": "permutation flip benchmark over all 10! permutations",
+          "checks": [
+            "380073196",
+            "380073196",
+            "380073196",
+            "380073196",
+            "380073196"
+          ]
+        },
+        {
+          "scenario": "spectral_norm_800",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 800,
+          "workload": "ten power iterations of A^T A on an 800x800 matrix",
+          "checks": [
+            "1.274224143701145",
+            "1.274224143701145",
+            "1.274224143701145",
+            "1.274224143701145",
+            "1.274224143701145"
+          ]
+        },
+        {
+          "scenario": "binary_trees_16",
+          "dimension": "allocation_gc",
+          "runner": "lua_script",
+          "scale": 16,
+          "workload": "bottom-up binary tree allocation and traversal",
+          "checks": [
+            "14985902",
+            "14985902",
+            "14985902",
+            "14985902",
+            "14985902"
+          ]
+        },
+        {
+          "scenario": "table_build_1000000",
+          "dimension": "data_structure",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "1,000,000 integer keys + 1,000,000 string keys, traversal and entry count",
+          "checks": [
+            "2000000346607511",
+            "2000000346607511",
+            "2000000346607511",
+            "2000000346607511",
+            "2000000346607511"
+          ]
+        },
+        {
+          "scenario": "string_churn_1000000",
+          "dimension": "string",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "concatenation, table.concat, pattern substitution and string.format",
+          "checks": [
+            "35651692",
+            "35651692",
+            "35651692",
+            "35651692",
+            "35651692"
+          ]
+        },
+        {
+          "scenario": "gc_stress_15000",
+          "dimension": "gc",
+          "runner": "lua_script",
+          "scale": 15000,
+          "workload": "table/closure/string allocation churn with periodic full collections",
+          "checks": [
+            "47821686",
+            "47821686",
+            "47821686",
+            "47821686",
+            "47821686"
+          ]
+        },
+        {
+          "scenario": "luac_compile_12000",
+          "dimension": "compile",
+          "runner": "luac_compile",
+          "scale": 12000,
+          "workload": "statically generated 12,000-module project compiled by luac in one invocation",
+          "checks": [
+            "49056906",
+            "49056906",
+            "49056906",
+            "49056906",
+            "49056906"
+          ]
+        },
+        {
+          "scenario": "official_test_suite",
+          "dimension": "upstream",
+          "runner": "official_test_suite",
+          "scale": null,
+          "workload": "upstream Lua 5.5.1 basic test suite (all.lua, _U=true)",
+          "checks": [
+            "final OK",
+            "final OK",
+            "final OK",
+            "final OK",
+            "final OK"
+          ]
+        }
+      ],
+      "results": {
+        "arithmetic_loop_100000000": {
+          "source_name": "arithmetic_loop_100000000",
+          "scenario": "arithmetic_loop_100000000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 100000000,
+          "workload": "integer modulo accumulation (legacy 2M representative load extended for stable timing)",
+          "value": 1.780083,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.780083,
+          "mean": 1.810339,
+          "min": 1.779272,
+          "max": 1.881182,
+          "stdev": 0.045448,
+          "samples": [
+            1.831245,
+            1.779913,
+            1.779272,
+            1.780083,
+            1.881182
+          ]
+        },
+        "arithmetic_loop_100000000_rss": {
+          "source_name": "arithmetic_loop_100000000_rss",
+          "scenario": "arithmetic_loop_100000000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 100000000,
+          "workload": "integer modulo accumulation (legacy 2M representative load extended for stable timing)",
+          "value": 1.695,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.695,
+          "mean": 1.6952,
+          "min": 1.688,
+          "max": 1.699,
+          "stdev": 0.004494,
+          "samples": [
+            1.695,
+            1.699,
+            1.699,
+            1.695,
+            1.688
+          ]
+        },
+        "nbody_500000": {
+          "source_name": "nbody_500000",
+          "scenario": "nbody_500000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 500000,
+          "workload": "five-body solar-system simulation, 500,000 steps",
+          "value": 1.121765,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.121765,
+          "mean": 1.122392,
+          "min": 1.121387,
+          "max": 1.123762,
+          "stdev": 0.001139,
+          "samples": [
+            1.123762,
+            1.121557,
+            1.121765,
+            1.121387,
+            1.123491
+          ]
+        },
+        "nbody_500000_rss": {
+          "source_name": "nbody_500000_rss",
+          "scenario": "nbody_500000",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 500000,
+          "workload": "five-body solar-system simulation, 500,000 steps",
+          "value": 1.773,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.773,
+          "mean": 1.7678,
+          "min": 1.754,
+          "max": 1.773,
+          "stdev": 0.008289,
+          "samples": [
+            1.773,
+            1.773,
+            1.754,
+            1.766,
+            1.773
+          ]
+        },
+        "fannkuch_10": {
+          "source_name": "fannkuch_10",
+          "scenario": "fannkuch_10",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 10,
+          "workload": "permutation flip benchmark over all 10! permutations",
+          "value": 1.880525,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.880525,
+          "mean": 1.909562,
+          "min": 1.880317,
+          "max": 2.025898,
+          "stdev": 0.065034,
+          "samples": [
+            1.8805,
+            1.880525,
+            1.880569,
+            1.880317,
+            2.025898
+          ]
+        },
+        "fannkuch_10_rss": {
+          "source_name": "fannkuch_10_rss",
+          "scenario": "fannkuch_10",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 10,
+          "workload": "permutation flip benchmark over all 10! permutations",
+          "value": 1.699,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.699,
+          "mean": 1.6982,
+          "min": 1.695,
+          "max": 1.703,
+          "stdev": 0.003347,
+          "samples": [
+            1.695,
+            1.699,
+            1.695,
+            1.703,
+            1.699
+          ]
+        },
+        "spectral_norm_800": {
+          "source_name": "spectral_norm_800",
+          "scenario": "spectral_norm_800",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 800,
+          "workload": "ten power iterations of A^T A on an 800x800 matrix",
+          "value": 1.52643,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.52643,
+          "mean": 1.526364,
+          "min": 1.524386,
+          "max": 1.528426,
+          "stdev": 0.001886,
+          "samples": [
+            1.528426,
+            1.524549,
+            1.524386,
+            1.52643,
+            1.528028
+          ]
+        },
+        "spectral_norm_800_rss": {
+          "source_name": "spectral_norm_800_rss",
+          "scenario": "spectral_norm_800",
+          "dimension": "compute",
+          "runner": "lua_script",
+          "scale": 800,
+          "workload": "ten power iterations of A^T A on an 800x800 matrix",
+          "value": 1.781,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.781,
+          "mean": 1.7874,
+          "min": 1.781,
+          "max": 1.797,
+          "stdev": 0.008764,
+          "samples": [
+            1.797,
+            1.781,
+            1.781,
+            1.797,
+            1.781
+          ]
+        },
+        "binary_trees_16": {
+          "source_name": "binary_trees_16",
+          "scenario": "binary_trees_16",
+          "dimension": "allocation_gc",
+          "runner": "lua_script",
+          "scale": 16,
+          "workload": "bottom-up binary tree allocation and traversal",
+          "value": 2.734951,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.734951,
+          "mean": 2.733879,
+          "min": 2.729955,
+          "max": 2.737508,
+          "stdev": 0.003049,
+          "samples": [
+            2.737508,
+            2.731597,
+            2.729955,
+            2.734951,
+            2.735386
+          ]
+        },
+        "binary_trees_16_rss": {
+          "source_name": "binary_trees_16_rss",
+          "scenario": "binary_trees_16",
+          "dimension": "allocation_gc",
+          "runner": "lua_script",
+          "scale": 16,
+          "workload": "bottom-up binary tree allocation and traversal",
+          "value": 56.836,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 56.836,
+          "mean": 56.8352,
+          "min": 56.828,
+          "max": 56.84,
+          "stdev": 0.005215,
+          "samples": [
+            56.836,
+            56.84,
+            56.828,
+            56.832,
+            56.84
+          ]
+        },
+        "table_build_1000000": {
+          "source_name": "table_build_1000000",
+          "scenario": "table_build_1000000",
+          "dimension": "data_structure",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "1,000,000 integer keys + 1,000,000 string keys, traversal and entry count",
+          "value": 2.131361,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.131361,
+          "mean": 2.130614,
+          "min": 2.126503,
+          "max": 2.132945,
+          "stdev": 0.002571,
+          "samples": [
+            2.129903,
+            2.126503,
+            2.131361,
+            2.132357,
+            2.132945
+          ]
+        },
+        "table_build_1000000_rss": {
+          "source_name": "table_build_1000000_rss",
+          "scenario": "table_build_1000000",
+          "dimension": "data_structure",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "1,000,000 integer keys + 1,000,000 string keys, traversal and entry count",
+          "value": 106.324,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 106.324,
+          "mean": 106.3294,
+          "min": 106.316,
+          "max": 106.359,
+          "stdev": 0.016906,
+          "samples": [
+            106.324,
+            106.316,
+            106.359,
+            106.324,
+            106.324
+          ]
+        },
+        "string_churn_1000000": {
+          "source_name": "string_churn_1000000",
+          "scenario": "string_churn_1000000",
+          "dimension": "string",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "concatenation, table.concat, pattern substitution and string.format",
+          "value": 1.778653,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.778653,
+          "mean": 1.778859,
+          "min": 1.778493,
+          "max": 1.779869,
+          "stdev": 0.000572,
+          "samples": [
+            1.778557,
+            1.778493,
+            1.778721,
+            1.778653,
+            1.779869
+          ]
+        },
+        "string_churn_1000000_rss": {
+          "source_name": "string_churn_1000000_rss",
+          "scenario": "string_churn_1000000",
+          "dimension": "string",
+          "runner": "lua_script",
+          "scale": 1000000,
+          "workload": "concatenation, table.concat, pattern substitution and string.format",
+          "value": 120.324,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 120.324,
+          "mean": 120.3102,
+          "min": 120.227,
+          "max": 120.391,
+          "stdev": 0.078751,
+          "samples": [
+            120.227,
+            120.324,
+            120.379,
+            120.23,
+            120.391
+          ]
+        },
+        "gc_stress_15000": {
+          "source_name": "gc_stress_15000",
+          "scenario": "gc_stress_15000",
+          "dimension": "gc",
+          "runner": "lua_script",
+          "scale": 15000,
+          "workload": "table/closure/string allocation churn with periodic full collections",
+          "value": 1.880336,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.880336,
+          "mean": 1.88904,
+          "min": 1.879324,
+          "max": 1.925404,
+          "stdev": 0.020336,
+          "samples": [
+            1.880665,
+            1.925404,
+            1.879469,
+            1.879324,
+            1.880336
+          ]
+        },
+        "gc_stress_15000_rss": {
+          "source_name": "gc_stress_15000_rss",
+          "scenario": "gc_stress_15000",
+          "dimension": "gc",
+          "runner": "lua_script",
+          "scale": 15000,
+          "workload": "table/closure/string allocation churn with periodic full collections",
+          "value": 1.824,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.824,
+          "mean": 1.8224,
+          "min": 1.82,
+          "max": 1.824,
+          "stdev": 0.002191,
+          "samples": [
+            1.82,
+            1.824,
+            1.82,
+            1.824,
+            1.824
+          ]
+        },
+        "luac_compile_12000": {
+          "source_name": "luac_compile_12000",
+          "scenario": "luac_compile_12000",
+          "dimension": "compile",
+          "runner": "luac_compile",
+          "scale": 12000,
+          "workload": "statically generated 12,000-module project compiled by luac in one invocation",
+          "value": 0.423695,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.423695,
+          "mean": 0.423291,
+          "min": 0.421341,
+          "max": 0.424325,
+          "stdev": 0.001205,
+          "samples": [
+            0.42298,
+            0.424112,
+            0.424325,
+            0.423695,
+            0.421341
+          ]
+        },
+        "luac_compile_12000_rss": {
+          "source_name": "luac_compile_12000_rss",
+          "scenario": "luac_compile_12000",
+          "dimension": "compile",
+          "runner": "luac_compile",
+          "scale": 12000,
+          "workload": "statically generated 12,000-module project compiled by luac in one invocation",
+          "value": 41.281,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 41.281,
+          "mean": 41.2794,
+          "min": 41.277,
+          "max": 41.281,
+          "stdev": 0.002191,
+          "samples": [
+            41.281,
+            41.277,
+            41.277,
+            41.281,
+            41.281
+          ]
+        },
+        "official_test_suite": {
+          "source_name": "official_test_suite",
+          "scenario": "official_test_suite",
+          "dimension": "upstream",
+          "runner": "official_test_suite",
+          "scale": null,
+          "workload": "upstream Lua 5.5.1 basic test suite (all.lua, _U=true)",
+          "value": 0.620352,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.620352,
+          "mean": 0.629851,
+          "min": 0.617861,
+          "max": 0.670079,
+          "stdev": 0.022524,
+          "samples": [
+            0.617861,
+            0.619605,
+            0.670079,
+            0.620352,
+            0.621358
+          ]
+        },
+        "official_test_suite_rss": {
+          "source_name": "official_test_suite_rss",
+          "scenario": "official_test_suite",
+          "dimension": "upstream",
+          "runner": "official_test_suite",
+          "scale": null,
+          "workload": "upstream Lua 5.5.1 basic test suite (all.lua, _U=true)",
+          "value": 96.543,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 96.543,
+          "mean": 96.5766,
+          "min": 96.539,
+          "max": 96.715,
+          "stdev": 0.077387,
+          "samples": [
+            96.543,
+            96.543,
+            96.543,
+            96.539,
+            96.715
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 126
+    }
+  },
+  "metrics": {
+    "arithmetic_loop_100000000": {
+      "value": 1.780083,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arithmetic_loop_100000000"
+    },
+    "arithmetic_loop_100000000_rss": {
+      "value": 1.695,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arithmetic_loop_100000000"
+    },
+    "nbody_500000": {
+      "value": 1.121765,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "nbody_500000"
+    },
+    "nbody_500000_rss": {
+      "value": 1.773,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "nbody_500000"
+    },
+    "fannkuch_10": {
+      "value": 1.880525,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "fannkuch_10"
+    },
+    "fannkuch_10_rss": {
+      "value": 1.699,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "fannkuch_10"
+    },
+    "spectral_norm_800": {
+      "value": 1.52643,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "spectral_norm_800"
+    },
+    "spectral_norm_800_rss": {
+      "value": 1.781,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "spectral_norm_800"
+    },
+    "binary_trees_16": {
+      "value": 2.734951,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "binary_trees_16"
+    },
+    "binary_trees_16_rss": {
+      "value": 56.836,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "binary_trees_16"
+    },
+    "table_build_1000000": {
+      "value": 2.131361,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "table_build_1000000"
+    },
+    "table_build_1000000_rss": {
+      "value": 106.324,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "table_build_1000000"
+    },
+    "string_churn_1000000": {
+      "value": 1.778653,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_churn_1000000"
+    },
+    "string_churn_1000000_rss": {
+      "value": 120.324,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_churn_1000000"
+    },
+    "gc_stress_15000": {
+      "value": 1.880336,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "gc_stress_15000"
+    },
+    "gc_stress_15000_rss": {
+      "value": 1.824,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "gc_stress_15000"
+    },
+    "luac_compile_12000": {
+      "value": 0.423695,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "luac_compile_12000"
+    },
+    "luac_compile_12000_rss": {
+      "value": 41.281,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "luac_compile_12000"
+    },
+    "official_test_suite": {
+      "value": 0.620352,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "official_test_suite"
+    },
+    "official_test_suite_rss": {
+      "value": 96.543,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "official_test_suite"
+    }
+  }
+}
