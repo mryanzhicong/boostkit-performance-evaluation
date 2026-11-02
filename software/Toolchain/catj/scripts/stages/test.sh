@@ -89,6 +89,7 @@ run_catj_benchmarks() {
         return 50
     fi
     log_message "measurement finished (${#CATJ_SCENARIOS[@]} scenarios x ${CATJ_REPS} samples)"
+    export PERF_REPS="${CATJ_REPS}"
     if ! python3 "${SCRIPT_DIR}/scripts/results/parse_benchmark.py" \
         "${RUNS_DIR}" "${RESULTS_DIR}/results.json" >>"${log_path}" 2>&1; then
         log_message "ERROR: strict result parsing failed"
