@@ -106,7 +106,7 @@ install_jdk() {
     fi
     local tarball="${PERF_WORK_DIR}/downloads/${JDK_TARBALL_NAME}"
     materialize_asset "${JDK_TARBALL_NAME}" "${JDK_TARBALL_SHA256}" "${tarball}" \
-        "${JDK_TARBALL_URL}" || return $?
+        "${JDK_TARBALL_URLS[@]}" || return $?
     mkdir -p "${JDK_HOME}"
     log_message "extracting Temurin ${JDK_RELEASE} to ${JDK_HOME}"
     tar -xzf "${tarball}" -C "${JDK_HOME}" --strip-components=1 || {

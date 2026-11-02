@@ -56,6 +56,14 @@ JDK_X64_SHA256="d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c
 JDK_ARM64_NAME="OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.13_9.tar.gz"
 JDK_ARM64_SHA256="e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578"
 JDK_BASE_URL="https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9"
+# The dedicated runners cannot reliably reach github.com (where the official
+# Temurin release assets live).  The same archive is published on public
+# Adoptium mirrors; every source is verified against the identical pinned
+# SHA-256, so the download path never changes the measured runtime.
+JDK_MIRROR_BASE_URLS=(
+    "https://mirrors.tuna.tsinghua.edu.cn/Adoptium/21/jdk"
+    "https://mirrors.huaweicloud.com/adoptium/21/jdk"
+)
 
 GRADLE_SCALES=(100 1000 10000)
 GRADLE_MATRIX_TASKS=(clean_build incremental_build noop_build)
@@ -72,6 +80,7 @@ JDK_HOME=""
 JDK_TARBALL_NAME=""
 JDK_TARBALL_SHA256=""
 JDK_TARBALL_URL=""
+declare -ga JDK_TARBALL_URLS=()
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
 
@@ -117,14 +126,17 @@ validate_reps() {
 }
 
 select_jdk_artifact() {
+    local arch_dir
     case "${EXPECTED_ARCH}" in
         x86_64)
             JDK_TARBALL_NAME="${JDK_X64_NAME}"
             JDK_TARBALL_SHA256="${JDK_X64_SHA256}"
+            arch_dir="x64"
             ;;
         aarch64)
             JDK_TARBALL_NAME="${JDK_ARM64_NAME}"
             JDK_TARBALL_SHA256="${JDK_ARM64_SHA256}"
+            arch_dir="aarch64"
             ;;
         *)
             log_message "ERROR: no JDK artifact for architecture ${EXPECTED_ARCH}"
@@ -132,6 +144,12 @@ select_jdk_artifact() {
             ;;
     esac
     JDK_TARBALL_URL="${JDK_BASE_URL}/${JDK_TARBALL_NAME}"
+    JDK_TARBALL_URLS=()
+    local mirror_base
+    for mirror_base in "${JDK_MIRROR_BASE_URLS[@]}"; do
+        JDK_TARBALL_URLS+=("${mirror_base}/${arch_dir}/linux/${JDK_TARBALL_NAME}")
+    done
+    JDK_TARBALL_URLS+=("${JDK_TARBALL_URL}")
 }
 
 configure_runtime_paths() {
