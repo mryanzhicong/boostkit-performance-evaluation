@@ -266,6 +266,15 @@ require_commands() {
     if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
         packages+=(curl)
     fi
+    # APR-util 1.6.5 always compiles its XML support and needs expat headers;
+    # the dedicated runner only ships the runtime library.
+    if [[ ! -f /usr/include/expat.h ]] && [[ ! -f /usr/include/aarch64-linux-gnu/expat.h ]] && [[ ! -f /usr/include/x86_64-linux-gnu/expat.h ]]; then
+        if command -v dnf >/dev/null 2>&1; then
+            packages+=(expat-devel)
+        elif command -v apt-get >/dev/null 2>&1; then
+            packages+=(libexpat1-dev)
+        fi
+    fi
     if (( ${#packages[@]} == 0 )); then
         return 0
     fi
