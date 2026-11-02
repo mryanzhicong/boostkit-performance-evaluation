@@ -1,0 +1,698 @@
+{
+  "benchmark": "libxml2_parse_validation_matrix",
+  "software": "libxml2",
+  "version": "2.15.4",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-02T15:28:12Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "parse_network": "disabled (xmllint --nonet, no external DTD/entities)",
+    "build_parallel_jobs": 4,
+    "build_system": "autotools (in-tree ./configure + make)",
+    "compile_flags": "-O2",
+    "configure_flags": "--disable-shared --enable-static --without-python --without-zlib --without-iconv --without-icu --disable-dependency-tracking",
+    "source_name": "libxml2-2.15.4.tar.xz",
+    "source_sha256": "98087fd181d9070724f3fbc65c7377db03038eb92bd882374daff44940138821",
+    "source_url": "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.4.tar.xz",
+    "libxml2_version_string": "/home/runner/boostkit-perf/libxml2/2.15.4/aarch64/41470167828-1/libxml2-source/xmllint: using libxml version 21504",
+    "repeat_iterations": 100,
+    "runtest_total": 3886,
+    "runsuite_total": 1471,
+    "xpath_item_total": 100000,
+    "corpora": {
+      "deep.xml": 38947,
+      "dtd.xml": 3786689,
+      "huge.xml": 38936621,
+      "namespaced.xml": 3333483,
+      "repeat.xml": 4772701,
+      "wide.xml": 9567551
+    },
+    "scenarios": [
+      "xmllint_parse_wide",
+      "xmllint_parse_huge",
+      "xmllint_parse_deep",
+      "xmllint_parse_namespaced",
+      "xmllint_dtd_validate",
+      "xmllint_sax_namespaced",
+      "xmllint_repeat_wide",
+      "xmllint_xpath_wide",
+      "upstream_runtest",
+      "upstream_runsuite"
+    ]
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "parse_throughput": {
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "test_rate": {
+      "unit": "tests/s",
+      "direction": "higher_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "xmllint_parse_wide": {
+      "source_name": "xmllint_parse_wide",
+      "scenario": "xmllint_parse_wide",
+      "task": "parse",
+      "workload": "",
+      "value": 0.164963,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.164963,
+      "mean": 0.165036,
+      "min": 0.164812,
+      "max": 0.165414,
+      "stdev": 0.000232,
+      "samples": [
+        0.164916,
+        0.164812,
+        0.164963,
+        0.165076,
+        0.165414
+      ]
+    },
+    "xmllint_parse_wide_rss": {
+      "source_name": "xmllint_parse_wide_rss",
+      "scenario": "xmllint_parse_wide",
+      "task": "parse",
+      "workload": "",
+      "value": 134.539,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 134.539,
+      "mean": 134.5366,
+      "min": 134.531,
+      "max": 134.539,
+      "stdev": 0.003578,
+      "samples": [
+        134.539,
+        134.539,
+        134.531,
+        134.539,
+        134.535
+      ]
+    },
+    "xmllint_parse_wide_mbs": {
+      "source_name": "xmllint_parse_wide_mbs",
+      "scenario": "xmllint_parse_wide",
+      "task": "parse",
+      "workload": "",
+      "value": 55.311359,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 55.311359,
+      "mean": 55.286913,
+      "min": 55.160553,
+      "max": 55.362035,
+      "stdev": 0.077467,
+      "samples": [
+        55.327122,
+        55.362035,
+        55.311359,
+        55.273496,
+        55.160553
+      ]
+    },
+    "xmllint_parse_huge": {
+      "source_name": "xmllint_parse_huge",
+      "scenario": "xmllint_parse_huge",
+      "task": "parse",
+      "workload": "",
+      "value": 0.619129,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.619129,
+      "mean": 0.618848,
+      "min": 0.617779,
+      "max": 0.61916,
+      "stdev": 0.0006,
+      "samples": [
+        0.61916,
+        0.617779,
+        0.619141,
+        0.619129,
+        0.619029
+      ]
+    },
+    "xmllint_parse_huge_rss": {
+      "source_name": "xmllint_parse_huge_rss",
+      "scenario": "xmllint_parse_huge",
+      "task": "parse",
+      "workload": "",
+      "value": 532.789,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 532.789,
+      "mean": 532.7874,
+      "min": 532.777,
+      "max": 532.793,
+      "stdev": 0.006066,
+      "samples": [
+        532.777,
+        532.793,
+        532.789,
+        532.789,
+        532.789
+      ]
+    },
+    "xmllint_parse_huge_mbs": {
+      "source_name": "xmllint_parse_huge_mbs",
+      "scenario": "xmllint_parse_huge",
+      "task": "parse",
+      "workload": "",
+      "value": 59.975959,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 59.975959,
+      "mean": 60.003276,
+      "min": 59.972956,
+      "max": 60.107021,
+      "stdev": 0.058203,
+      "samples": [
+        59.972956,
+        60.107021,
+        59.974796,
+        59.975959,
+        59.985648
+      ]
+    },
+    "xmllint_parse_deep": {
+      "source_name": "xmllint_parse_deep",
+      "scenario": "xmllint_parse_deep",
+      "task": "parse",
+      "workload": "",
+      "value": 0.002152,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.002152,
+      "mean": 0.002485,
+      "min": 0.001841,
+      "max": 0.004136,
+      "stdev": 0.000934,
+      "samples": [
+        0.001841,
+        0.002071,
+        0.002152,
+        0.004136,
+        0.002227
+      ]
+    },
+    "xmllint_parse_deep_rss": {
+      "source_name": "xmllint_parse_deep_rss",
+      "scenario": "xmllint_parse_deep",
+      "task": "parse",
+      "workload": "",
+      "value": 19.711,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 19.711,
+      "mean": 19.707,
+      "min": 19.695,
+      "max": 19.711,
+      "stdev": 0.006928,
+      "samples": [
+        19.695,
+        19.711,
+        19.707,
+        19.711,
+        19.711
+      ]
+    },
+    "xmllint_parse_deep_mbs": {
+      "source_name": "xmllint_parse_deep_mbs",
+      "scenario": "xmllint_parse_deep",
+      "task": "parse",
+      "workload": "",
+      "value": 17.259644,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 17.259644,
+      "mean": 16.205678,
+      "min": 8.980356,
+      "max": 20.175314,
+      "stdev": 4.25109,
+      "samples": [
+        20.175314,
+        17.934695,
+        17.259644,
+        8.980356,
+        16.678381
+      ]
+    },
+    "xmllint_parse_namespaced": {
+      "source_name": "xmllint_parse_namespaced",
+      "scenario": "xmllint_parse_namespaced",
+      "task": "parse",
+      "workload": "",
+      "value": 0.06457,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.06457,
+      "mean": 0.064647,
+      "min": 0.064181,
+      "max": 0.065322,
+      "stdev": 0.000416,
+      "samples": [
+        0.064626,
+        0.065322,
+        0.064537,
+        0.06457,
+        0.064181
+      ]
+    },
+    "xmllint_parse_namespaced_rss": {
+      "source_name": "xmllint_parse_namespaced_rss",
+      "scenario": "xmllint_parse_namespaced",
+      "task": "parse",
+      "workload": "",
+      "value": 53.055,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 53.055,
+      "mean": 53.0534,
+      "min": 53.051,
+      "max": 53.055,
+      "stdev": 0.002191,
+      "samples": [
+        53.051,
+        53.051,
+        53.055,
+        53.055,
+        53.055
+      ]
+    },
+    "xmllint_parse_namespaced_mbs": {
+      "source_name": "xmllint_parse_namespaced_mbs",
+      "scenario": "xmllint_parse_namespaced",
+      "task": "parse",
+      "workload": "",
+      "value": 49.234275,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 49.234275,
+      "mean": 49.1771,
+      "min": 48.66748,
+      "max": 49.532683,
+      "stdev": 0.314807,
+      "samples": [
+        49.191612,
+        48.66748,
+        49.25945,
+        49.234275,
+        49.532683
+      ]
+    },
+    "xmllint_dtd_validate": {
+      "source_name": "xmllint_dtd_validate",
+      "scenario": "xmllint_dtd_validate",
+      "task": "dtd_validate",
+      "workload": "",
+      "value": 0.115201,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.115201,
+      "mean": 0.115139,
+      "min": 0.114868,
+      "max": 0.115358,
+      "stdev": 0.000196,
+      "samples": [
+        0.115015,
+        0.115253,
+        0.115201,
+        0.114868,
+        0.115358
+      ]
+    },
+    "xmllint_dtd_validate_rss": {
+      "source_name": "xmllint_dtd_validate_rss",
+      "scenario": "xmllint_dtd_validate",
+      "task": "dtd_validate",
+      "workload": "",
+      "value": 65.02,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 65.02,
+      "mean": 65.0228,
+      "min": 65.012,
+      "max": 65.031,
+      "stdev": 0.008167,
+      "samples": [
+        65.02,
+        65.02,
+        65.031,
+        65.012,
+        65.031
+      ]
+    },
+    "xmllint_dtd_validate_mbs": {
+      "source_name": "xmllint_dtd_validate_mbs",
+      "scenario": "xmllint_dtd_validate",
+      "task": "dtd_validate",
+      "workload": "",
+      "value": 31.347541,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 31.347541,
+      "mean": 31.364494,
+      "min": 31.304877,
+      "max": 31.438417,
+      "stdev": 0.053413,
+      "samples": [
+        31.398235,
+        31.333397,
+        31.347541,
+        31.438417,
+        31.304877
+      ]
+    },
+    "xmllint_sax_namespaced": {
+      "source_name": "xmllint_sax_namespaced",
+      "scenario": "xmllint_sax_namespaced",
+      "task": "sax",
+      "workload": "",
+      "value": 0.032536,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.032536,
+      "mean": 0.032496,
+      "min": 0.032349,
+      "max": 0.032585,
+      "stdev": 9.3e-05,
+      "samples": [
+        0.032467,
+        0.032585,
+        0.032544,
+        0.032536,
+        0.032349
+      ]
+    },
+    "xmllint_sax_namespaced_rss": {
+      "source_name": "xmllint_sax_namespaced_rss",
+      "scenario": "xmllint_sax_namespaced",
+      "task": "sax",
+      "workload": "",
+      "value": 19.699,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 19.699,
+      "mean": 19.699,
+      "min": 19.691,
+      "max": 19.703,
+      "stdev": 0.004899,
+      "samples": [
+        19.703,
+        19.703,
+        19.699,
+        19.699,
+        19.691
+      ]
+    },
+    "xmllint_sax_namespaced_mbs": {
+      "source_name": "xmllint_sax_namespaced_mbs",
+      "scenario": "xmllint_sax_namespaced",
+      "task": "sax",
+      "workload": "",
+      "value": 97.708911,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 97.708911,
+      "mean": 97.829217,
+      "min": 97.56198,
+      "max": 98.273737,
+      "stdev": 0.279261,
+      "samples": [
+        97.916565,
+        97.56198,
+        97.684892,
+        97.708911,
+        98.273737
+      ]
+    },
+    "xmllint_repeat_wide": {
+      "source_name": "xmllint_repeat_wide",
+      "scenario": "xmllint_repeat_wide",
+      "task": "repeat",
+      "workload": "",
+      "value": 7.61311,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 7.61311,
+      "mean": 7.617249,
+      "min": 7.515128,
+      "max": 7.772597,
+      "stdev": 0.096134,
+      "samples": [
+        7.61703,
+        7.56838,
+        7.61311,
+        7.772597,
+        7.515128
+      ]
+    },
+    "xmllint_repeat_wide_rss": {
+      "source_name": "xmllint_repeat_wide_rss",
+      "scenario": "xmllint_repeat_wide",
+      "task": "repeat",
+      "workload": "",
+      "value": 68.164,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 68.164,
+      "mean": 68.164,
+      "min": 68.164,
+      "max": 68.164,
+      "stdev": 0.0,
+      "samples": [
+        68.164,
+        68.164,
+        68.164,
+        68.164,
+        68.164
+      ]
+    },
+    "xmllint_repeat_wide_mbs": {
+      "source_name": "xmllint_repeat_wide_mbs",
+      "scenario": "xmllint_repeat_wide",
+      "task": "repeat",
+      "workload": "",
+      "value": 59.786373,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 59.786373,
+      "mean": 59.761434,
+      "min": 58.559608,
+      "max": 60.565866,
+      "stdev": 0.747538,
+      "samples": [
+        59.755605,
+        60.139718,
+        59.786373,
+        58.559608,
+        60.565866
+      ]
+    },
+    "xmllint_xpath_wide": {
+      "source_name": "xmllint_xpath_wide",
+      "scenario": "xmllint_xpath_wide",
+      "task": "xpath",
+      "workload": "",
+      "value": 0.215284,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.215284,
+      "mean": 0.215305,
+      "min": 0.215062,
+      "max": 0.215526,
+      "stdev": 0.000203,
+      "samples": [
+        0.215062,
+        0.215158,
+        0.215493,
+        0.215284,
+        0.215526
+      ]
+    },
+    "xmllint_xpath_wide_rss": {
+      "source_name": "xmllint_xpath_wide_rss",
+      "scenario": "xmllint_xpath_wide",
+      "task": "xpath",
+      "workload": "",
+      "value": 135.312,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 135.312,
+      "mean": 135.3108,
+      "min": 135.309,
+      "max": 135.312,
+      "stdev": 0.001643,
+      "samples": [
+        135.312,
+        135.309,
+        135.309,
+        135.312,
+        135.312
+      ]
+    },
+    "xmllint_xpath_wide_mbs": {
+      "source_name": "xmllint_xpath_wide_mbs",
+      "scenario": "xmllint_xpath_wide",
+      "task": "xpath",
+      "workload": "",
+      "value": 42.382749,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 42.382749,
+      "mean": 42.378724,
+      "min": 42.33516,
+      "max": 42.426499,
+      "stdev": 0.040011,
+      "samples": [
+        42.426499,
+        42.407569,
+        42.341643,
+        42.382749,
+        42.33516
+      ]
+    },
+    "upstream_runtest": {
+      "source_name": "upstream_runtest",
+      "scenario": "upstream_runtest",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 2.329048,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.329048,
+      "mean": 2.347314,
+      "min": 2.277214,
+      "max": 2.428338,
+      "stdev": 0.057558,
+      "samples": [
+        2.428338,
+        2.329048,
+        2.32441,
+        2.377559,
+        2.277214
+      ]
+    },
+    "upstream_runtest_rss": {
+      "source_name": "upstream_runtest_rss",
+      "scenario": "upstream_runtest",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 19.695,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 19.695,
+      "mean": 19.6942,
+      "min": 19.691,
+      "max": 19.695,
+      "stdev": 0.001789,
+      "samples": [
+        19.691,
+        19.695,
+        19.695,
+        19.695,
+        19.695
+      ]
+    },
+    "upstream_runtest_tps": {
+      "source_name": "upstream_runtest_tps",
+      "scenario": "upstream_runtest",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 1668.492878,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "median": 1668.492878,
+      "mean": 1656.301408,
+      "min": 1600.271461,
+      "max": 1706.471153,
+      "stdev": 40.383753,
+      "samples": [
+        1600.271461,
+        1668.492878,
+        1671.822097,
+        1634.44945,
+        1706.471153
+      ]
+    },
+    "upstream_runsuite": {
+      "source_name": "upstream_runsuite",
+      "scenario": "upstream_runsuite",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 0.164596,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.164596,
+      "mean": 0.164648,
+      "min": 0.164193,
+      "max": 0.165126,
+      "stdev": 0.000338,
+      "samples": [
+        0.164755,
+        0.165126,
+        0.164596,
+        0.164569,
+        0.164193
+      ]
+    },
+    "upstream_runsuite_rss": {
+      "source_name": "upstream_runsuite_rss",
+      "scenario": "upstream_runsuite",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 19.695,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 19.695,
+      "mean": 19.6958,
+      "min": 19.691,
+      "max": 19.699,
+      "stdev": 0.003347,
+      "samples": [
+        19.699,
+        19.695,
+        19.695,
+        19.699,
+        19.691
+      ]
+    },
+    "upstream_runsuite_tps": {
+      "source_name": "upstream_runsuite_tps",
+      "scenario": "upstream_runsuite",
+      "task": "upstream_suite",
+      "workload": "",
+      "value": 8937.033707,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "median": 8937.033707,
+      "mean": 8934.252062,
+      "min": 8908.348776,
+      "max": 8958.969018,
+      "stdev": 18.315523,
+      "samples": [
+        8928.40885,
+        8908.348776,
+        8937.033707,
+        8938.499961,
+        8958.969018
+      ]
+    }
+  }
+}
