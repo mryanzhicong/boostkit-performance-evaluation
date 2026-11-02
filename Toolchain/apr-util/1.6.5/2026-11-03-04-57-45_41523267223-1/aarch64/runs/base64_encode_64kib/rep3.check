@@ -1,0 +1,10 @@
+# scenario: base64_encode_64kib
+# repetition: rep3
+PERF-CHECK name=harness_mode expected=encode actual=encode status=ok
+PERF-CHECK name=payload_bytes expected=65536 actual=65536 status=ok
+PERF-CHECK name=loops expected=24000 actual=24000 status=ok
+PERF-CHECK name=encoded_length expected=87385 actual=87385 status=ok
+PERF-CHECK name=roundtrip expected=ok actual=ok status=ok
+PERF-CHECK name=encoded_bytes expected=2097216000 actual=2097216000 status=ok
+PERF-CHECK name=input_bytes expected=1572864000 actual=1572864000 status=ok
+PERF-RESULT status=ok

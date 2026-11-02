@@ -1,0 +1,10 @@
+# scenario: base64_decode_64b
+# repetition: warmup
+PERF-CHECK name=harness_mode expected=decode actual=decode status=ok
+PERF-CHECK name=payload_bytes expected=64 actual=64 status=ok
+PERF-CHECK name=loops expected=16000000 actual=16000000 status=ok
+PERF-CHECK name=encoded_length expected=89 actual=89 status=ok
+PERF-CHECK name=roundtrip expected=ok actual=ok status=ok
+PERF-CHECK name=decoded_bytes expected=1024000000 actual=1024000000 status=ok
+PERF-CHECK name=decoded_length expected=64 actual=64 status=ok
+PERF-RESULT status=ok
