@@ -1,0 +1,1545 @@
+{
+  "software": "ruby",
+  "category": "Toolchain",
+  "version": "4.0.9",
+  "architecture": "aarch64",
+  "run_id": "41484637691-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-02T16:49:53Z",
+    "category": "Toolchain",
+    "software": "ruby",
+    "requested_version": "4.0.9",
+    "actual_version": "4.0.9",
+    "architecture": "aarch64",
+    "run_id": "41484637691-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+      "matrix": [
+        "arith_int_small",
+        "arith_int_large",
+        "arith_float_small",
+        "arith_float_large",
+        "string_concat_small",
+        "string_concat_large",
+        "regex_subst_small",
+        "regex_subst_large",
+        "hash_ops_small",
+        "hash_ops_large",
+        "array_sort_small",
+        "array_sort_large",
+        "method_calls_small",
+        "method_calls_large",
+        "block_yield_small",
+        "block_yield_large",
+        "upstream_benchmark"
+      ],
+      "dimensions": [
+        "blocks",
+        "calls",
+        "compute",
+        "hashing",
+        "sorting",
+        "strings",
+        "upstream"
+      ],
+      "scenario_details": [
+        {
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "2000000",
+          "check": "int",
+          "expected": "794992328",
+          "tolerance": null,
+          "workload": "integer add/multiply/modulo loop, 2M iterations"
+        },
+        {
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "8000000",
+          "check": "int",
+          "expected": "179965187",
+          "tolerance": null,
+          "workload": "integer add/multiply/modulo loop, 8M iterations"
+        },
+        {
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "2000000",
+          "check": "float",
+          "expected": "287600047361.493164062500",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/add loop, 2M iterations"
+        },
+        {
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "8000000",
+          "check": "float",
+          "expected": "4586514088935.879882812500",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/add loop, 8M iterations"
+        },
+        {
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "200000",
+          "check": "int",
+          "expected": "3088895",
+          "tolerance": null,
+          "workload": "formatted string concatenation, 200k appends"
+        },
+        {
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "800000",
+          "check": "int",
+          "expected": "12688895",
+          "tolerance": null,
+          "workload": "formatted string concatenation, 800k appends"
+        },
+        {
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "20000",
+          "check": "int",
+          "expected": "40000",
+          "tolerance": null,
+          "workload": "regex substitution over 20k generated lines"
+        },
+        {
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "80000",
+          "check": "int",
+          "expected": "160000",
+          "tolerance": null,
+          "workload": "regex substitution over 80k generated lines"
+        },
+        {
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "200000",
+          "check": "int",
+          "expected": "279990",
+          "tolerance": null,
+          "workload": "string hash insert/lookup/delete, 200k keys"
+        },
+        {
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "800000",
+          "check": "int",
+          "expected": "1119840",
+          "tolerance": null,
+          "workload": "string hash insert/lookup/delete, 800k keys"
+        },
+        {
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "100000",
+          "check": "int",
+          "expected": "1499120",
+          "tolerance": null,
+          "workload": "LCG integer array numeric sort, 100k values"
+        },
+        {
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "400000",
+          "check": "int",
+          "expected": "1497949",
+          "tolerance": null,
+          "workload": "LCG integer array numeric sort, 400k values"
+        },
+        {
+          "scenario": "method_calls_small",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "2000000",
+          "check": "int",
+          "expected": "95998893",
+          "tolerance": null,
+          "workload": "two argument method calls, 2M calls"
+        },
+        {
+          "scenario": "method_calls_large",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "8000000",
+          "check": "int",
+          "expected": "383999197",
+          "tolerance": null,
+          "workload": "two argument method calls, 8M calls"
+        },
+        {
+          "scenario": "block_yield_small",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "1000000",
+          "check": "int",
+          "expected": "43999915",
+          "tolerance": null,
+          "workload": "block/yield invocation, 1M calls"
+        },
+        {
+          "scenario": "block_yield_large",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "4000000",
+          "check": "int",
+          "expected": "175999489",
+          "tolerance": null,
+          "workload": "block/yield invocation, 4M calls"
+        },
+        {
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "ruby_script",
+          "target": "bench.rb",
+          "scale": "2",
+          "check": "int",
+          "expected": "2",
+          "tolerance": null,
+          "workload": "Ruby stdlib Benchmark.bm report"
+        }
+      ]
+    }
+  },
+  "parameter_signature": "ad54e9ec5bbf0df028e3a4786b7a1f9b2ad8e3a0c4077fc7dae546def2dbdc60",
+  "test_tools": {
+    "ruby": {
+      "version": "4.0.9"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-02T16:46:50Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 379934 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 386131 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 382936 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 384608 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-02T16:46:50Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 11664097280 1608107548672    71655424  2380419072 1604672966656\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-02T16:50:46Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 13941637120 1605303500800    73474048  3435266048 1602395426816\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "config": {
+        "configure": "./configure --prefix=<install> --disable-install-doc --disable-yjit",
+        "jobs": 4,
+        "source_sha256": "c35350682ff050b79702d57ade4516e7336063f510155d19fb2fb5b3f3909511"
+      }
+    },
+    "raw_output": {
+      "path": "raw-output.log",
+      "size": 12371
+    },
+    "benchmark_result": {
+      "software": "ruby",
+      "version": "4.0.9",
+      "architecture": "aarch64",
+      "variant": "base",
+      "generated_at": "2026-11-02T16:50:46Z",
+      "scenarios": [
+        "arith_int_small",
+        "arith_int_large",
+        "arith_float_small",
+        "arith_float_large",
+        "string_concat_small",
+        "string_concat_large",
+        "regex_subst_small",
+        "regex_subst_large",
+        "hash_ops_small",
+        "hash_ops_large",
+        "array_sort_small",
+        "array_sort_large",
+        "method_calls_small",
+        "method_calls_large",
+        "block_yield_small",
+        "block_yield_large",
+        "upstream_benchmark"
+      ],
+      "results": {
+        "arith_int_small": {
+          "source_name": "arith_int_small",
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.268529,
+          "samples": [
+            0.269221,
+            0.268529,
+            0.268047,
+            0.268815,
+            0.268047
+          ],
+          "median": 0.268529,
+          "min": 0.268047,
+          "max": 0.269221,
+          "mean": 0.268532,
+          "stdev": 0.000506,
+          "warmup_wall_seconds": 0.267329,
+          "checksum": 794992328
+        },
+        "arith_int_small_rss": {
+          "source_name": "arith_int_small_rss",
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.039,
+            17.039,
+            17.035,
+            17.027,
+            17.035
+          ],
+          "median": 17.035,
+          "min": 17.027,
+          "max": 17.039,
+          "mean": 17.035,
+          "stdev": 0.004899,
+          "warmup_rss_mib": 17.027
+        },
+        "arith_int_large": {
+          "source_name": "arith_int_large",
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.820437,
+          "samples": [
+            0.822759,
+            0.820437,
+            0.81982,
+            0.819821,
+            0.821167
+          ],
+          "median": 0.820437,
+          "min": 0.81982,
+          "max": 0.822759,
+          "mean": 0.820801,
+          "stdev": 0.001227,
+          "warmup_wall_seconds": 0.822075,
+          "checksum": 179965187
+        },
+        "arith_int_large_rss": {
+          "source_name": "arith_int_large_rss",
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.023,
+            17.035,
+            17.035,
+            17.02,
+            17.035
+          ],
+          "median": 17.035,
+          "min": 17.02,
+          "max": 17.035,
+          "mean": 17.0296,
+          "stdev": 0.00747,
+          "warmup_rss_mib": 17.035
+        },
+        "arith_float_small": {
+          "source_name": "arith_float_small",
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.369871,
+          "samples": [
+            0.368052,
+            0.368095,
+            0.370571,
+            0.371149,
+            0.369871
+          ],
+          "median": 0.369871,
+          "min": 0.368052,
+          "max": 0.371149,
+          "mean": 0.369548,
+          "stdev": 0.00142,
+          "warmup_wall_seconds": 0.36922,
+          "checksum": 287600047361.49316
+        },
+        "arith_float_small_rss": {
+          "source_name": "arith_float_small_rss",
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.031,
+            17.035,
+            17.035,
+            17.035,
+            17.035
+          ],
+          "median": 17.035,
+          "min": 17.031,
+          "max": 17.035,
+          "mean": 17.0342,
+          "stdev": 0.001789,
+          "warmup_rss_mib": 17.035
+        },
+        "arith_float_large": {
+          "source_name": "arith_float_large",
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 1.275315,
+          "samples": [
+            1.324032,
+            1.275303,
+            1.275315,
+            1.271969,
+            1.321242
+          ],
+          "median": 1.275315,
+          "min": 1.271969,
+          "max": 1.324032,
+          "mean": 1.293572,
+          "stdev": 0.026586,
+          "warmup_wall_seconds": 1.323812,
+          "checksum": 4586514088935.88
+        },
+        "arith_float_large_rss": {
+          "source_name": "arith_float_large_rss",
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.035,
+            17.035,
+            17.027,
+            17.035,
+            17.039
+          ],
+          "median": 17.035,
+          "min": 17.027,
+          "max": 17.039,
+          "mean": 17.0342,
+          "stdev": 0.004382,
+          "warmup_rss_mib": 17.039
+        },
+        "string_concat_small": {
+          "source_name": "string_concat_small",
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.116195,
+          "samples": [
+            0.115953,
+            0.115447,
+            0.116195,
+            0.116552,
+            0.116427
+          ],
+          "median": 0.116195,
+          "min": 0.115447,
+          "max": 0.116552,
+          "mean": 0.116115,
+          "stdev": 0.000438,
+          "warmup_wall_seconds": 0.116991,
+          "checksum": 3088895
+        },
+        "string_concat_small_rss": {
+          "source_name": "string_concat_small_rss",
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 20.035,
+          "samples": [
+            20.035,
+            20.035,
+            20.023,
+            20.031,
+            20.035
+          ],
+          "median": 20.035,
+          "min": 20.023,
+          "max": 20.035,
+          "mean": 20.0318,
+          "stdev": 0.005215,
+          "warmup_rss_mib": 20.031
+        },
+        "string_concat_large": {
+          "source_name": "string_concat_large",
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.266821,
+          "samples": [
+            0.266735,
+            0.267041,
+            0.266821,
+            0.266167,
+            0.26796
+          ],
+          "median": 0.266821,
+          "min": 0.266167,
+          "max": 0.26796,
+          "mean": 0.266945,
+          "stdev": 0.000653,
+          "warmup_wall_seconds": 0.266408,
+          "checksum": 12688895
+        },
+        "string_concat_large_rss": {
+          "source_name": "string_concat_large_rss",
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 29.035,
+          "samples": [
+            29.039,
+            29.027,
+            29.035,
+            29.027,
+            29.035
+          ],
+          "median": 29.035,
+          "min": 29.027,
+          "max": 29.039,
+          "mean": 29.0326,
+          "stdev": 0.005367,
+          "warmup_rss_mib": 29.039
+        },
+        "regex_subst_small": {
+          "source_name": "regex_subst_small",
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "20000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.116426,
+          "samples": [
+            0.115957,
+            0.115237,
+            0.116426,
+            0.116712,
+            0.116695
+          ],
+          "median": 0.116426,
+          "min": 0.115237,
+          "max": 0.116712,
+          "mean": 0.116205,
+          "stdev": 0.000621,
+          "warmup_wall_seconds": 0.115914,
+          "checksum": 40000
+        },
+        "regex_subst_small_rss": {
+          "source_name": "regex_subst_small_rss",
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "20000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 20.035,
+          "samples": [
+            20.031,
+            20.031,
+            20.035,
+            20.035,
+            20.039
+          ],
+          "median": 20.035,
+          "min": 20.031,
+          "max": 20.039,
+          "mean": 20.0342,
+          "stdev": 0.003347,
+          "warmup_rss_mib": 20.023
+        },
+        "regex_subst_large": {
+          "source_name": "regex_subst_large",
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "80000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.16729,
+          "samples": [
+            0.166529,
+            0.167161,
+            0.16729,
+            0.168596,
+            0.16832
+          ],
+          "median": 0.16729,
+          "min": 0.166529,
+          "max": 0.168596,
+          "mean": 0.167579,
+          "stdev": 0.000858,
+          "warmup_wall_seconds": 0.167079,
+          "checksum": 160000
+        },
+        "regex_subst_large_rss": {
+          "source_name": "regex_subst_large_rss",
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "ruby_script",
+          "scale": "80000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 29.035,
+          "samples": [
+            29.02,
+            29.035,
+            29.035,
+            29.035,
+            29.039
+          ],
+          "median": 29.035,
+          "min": 29.02,
+          "max": 29.039,
+          "mean": 29.0328,
+          "stdev": 0.007362,
+          "warmup_rss_mib": 29.035
+        },
+        "hash_ops_small": {
+          "source_name": "hash_ops_small",
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.417935,
+          "samples": [
+            0.417639,
+            0.417935,
+            0.418049,
+            0.41765,
+            0.417959
+          ],
+          "median": 0.417935,
+          "min": 0.417639,
+          "max": 0.418049,
+          "mean": 0.417846,
+          "stdev": 0.000189,
+          "warmup_wall_seconds": 0.419184,
+          "checksum": 279990
+        },
+        "hash_ops_small_rss": {
+          "source_name": "hash_ops_small_rss",
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 47.035,
+          "samples": [
+            47.035,
+            47.023,
+            47.027,
+            47.035,
+            47.035
+          ],
+          "median": 47.035,
+          "min": 47.023,
+          "max": 47.035,
+          "mean": 47.031,
+          "stdev": 0.005657,
+          "warmup_rss_mib": 47.027
+        },
+        "hash_ops_large": {
+          "source_name": "hash_ops_large",
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 1.826447,
+          "samples": [
+            1.831075,
+            1.824708,
+            1.825684,
+            1.831847,
+            1.826447
+          ],
+          "median": 1.826447,
+          "min": 1.824708,
+          "max": 1.831847,
+          "mean": 1.827952,
+          "stdev": 0.003273,
+          "warmup_wall_seconds": 1.830057,
+          "checksum": 1119840
+        },
+        "hash_ops_large_rss": {
+          "source_name": "hash_ops_large_rss",
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "ruby_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 147.527,
+          "samples": [
+            147.781,
+            147.527,
+            147.531,
+            147.52,
+            147.395
+          ],
+          "median": 147.527,
+          "min": 147.395,
+          "max": 147.781,
+          "mean": 147.5508,
+          "stdev": 0.140688,
+          "warmup_rss_mib": 147.645
+        },
+        "array_sort_small": {
+          "source_name": "array_sort_small",
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "scale": "100000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.116252,
+          "samples": [
+            0.116252,
+            0.116247,
+            0.115908,
+            0.116677,
+            0.116591
+          ],
+          "median": 0.116252,
+          "min": 0.115908,
+          "max": 0.116677,
+          "mean": 0.116335,
+          "stdev": 0.000308,
+          "warmup_wall_seconds": 0.116176,
+          "checksum": 1499120
+        },
+        "array_sort_small_rss": {
+          "source_name": "array_sort_small_rss",
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "scale": "100000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 20.035,
+          "samples": [
+            20.02,
+            20.035,
+            20.035,
+            20.035,
+            20.035
+          ],
+          "median": 20.035,
+          "min": 20.02,
+          "max": 20.035,
+          "mean": 20.032,
+          "stdev": 0.006708,
+          "warmup_rss_mib": 20.035
+        },
+        "array_sort_large": {
+          "source_name": "array_sort_large",
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "scale": "400000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.166637,
+          "samples": [
+            0.167331,
+            0.166637,
+            0.166499,
+            0.167226,
+            0.165897
+          ],
+          "median": 0.166637,
+          "min": 0.165897,
+          "max": 0.167331,
+          "mean": 0.166718,
+          "stdev": 0.000584,
+          "warmup_wall_seconds": 0.167006,
+          "checksum": 1497949
+        },
+        "array_sort_large_rss": {
+          "source_name": "array_sort_large_rss",
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "ruby_script",
+          "scale": "400000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 26.035,
+          "samples": [
+            26.035,
+            26.035,
+            26.031,
+            26.035,
+            26.035
+          ],
+          "median": 26.035,
+          "min": 26.031,
+          "max": 26.035,
+          "mean": 26.0342,
+          "stdev": 0.001789,
+          "warmup_rss_mib": 26.039
+        },
+        "method_calls_small": {
+          "source_name": "method_calls_small",
+          "scenario": "method_calls_small",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.266981,
+          "samples": [
+            0.26567,
+            0.266617,
+            0.266981,
+            0.267895,
+            0.26795
+          ],
+          "median": 0.266981,
+          "min": 0.26567,
+          "max": 0.26795,
+          "mean": 0.267023,
+          "stdev": 0.000951,
+          "warmup_wall_seconds": 0.2662,
+          "checksum": 95998893
+        },
+        "method_calls_small_rss": {
+          "source_name": "method_calls_small_rss",
+          "scenario": "method_calls_small",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.027,
+            17.035,
+            17.035,
+            17.031,
+            17.039
+          ],
+          "median": 17.035,
+          "min": 17.027,
+          "max": 17.039,
+          "mean": 17.0334,
+          "stdev": 0.004561,
+          "warmup_rss_mib": 17.035
+        },
+        "method_calls_large": {
+          "source_name": "method_calls_large",
+          "scenario": "method_calls_large",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.872742,
+          "samples": [
+            0.874083,
+            0.873639,
+            0.872742,
+            0.869766,
+            0.87229
+          ],
+          "median": 0.872742,
+          "min": 0.869766,
+          "max": 0.874083,
+          "mean": 0.872504,
+          "stdev": 0.001687,
+          "warmup_wall_seconds": 0.87234,
+          "checksum": 383999197
+        },
+        "method_calls_large_rss": {
+          "source_name": "method_calls_large_rss",
+          "scenario": "method_calls_large",
+          "dimension": "calls",
+          "runner": "ruby_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.035,
+            17.039,
+            17.035,
+            17.02,
+            17.035
+          ],
+          "median": 17.035,
+          "min": 17.02,
+          "max": 17.039,
+          "mean": 17.0328,
+          "stdev": 0.007362,
+          "warmup_rss_mib": 17.023
+        },
+        "block_yield_small": {
+          "source_name": "block_yield_small",
+          "scenario": "block_yield_small",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "scale": "1000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.218243,
+          "samples": [
+            0.218182,
+            0.218742,
+            0.219011,
+            0.21803,
+            0.218243
+          ],
+          "median": 0.218243,
+          "min": 0.21803,
+          "max": 0.219011,
+          "mean": 0.218442,
+          "stdev": 0.000416,
+          "warmup_wall_seconds": 0.217293,
+          "checksum": 43999915
+        },
+        "block_yield_small_rss": {
+          "source_name": "block_yield_small_rss",
+          "scenario": "block_yield_small",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "scale": "1000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.027,
+            17.035,
+            17.02,
+            17.035,
+            17.035
+          ],
+          "median": 17.035,
+          "min": 17.02,
+          "max": 17.035,
+          "mean": 17.0304,
+          "stdev": 0.006768,
+          "warmup_rss_mib": 17.035
+        },
+        "block_yield_large": {
+          "source_name": "block_yield_large",
+          "scenario": "block_yield_large",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "scale": "4000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.669135,
+          "samples": [
+            0.670196,
+            0.66869,
+            0.669135,
+            0.669093,
+            0.718059
+          ],
+          "median": 0.669135,
+          "min": 0.66869,
+          "max": 0.718059,
+          "mean": 0.679035,
+          "stdev": 0.021822,
+          "warmup_wall_seconds": 0.672236,
+          "checksum": 175999489
+        },
+        "block_yield_large_rss": {
+          "source_name": "block_yield_large_rss",
+          "scenario": "block_yield_large",
+          "dimension": "blocks",
+          "runner": "ruby_script",
+          "scale": "4000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 17.035,
+          "samples": [
+            17.039,
+            17.031,
+            17.035,
+            17.035,
+            17.027
+          ],
+          "median": 17.035,
+          "min": 17.027,
+          "max": 17.039,
+          "mean": 17.0334,
+          "stdev": 0.004561,
+          "warmup_rss_mib": 17.035
+        },
+        "upstream_benchmark": {
+          "source_name": "upstream_benchmark",
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "ruby_script",
+          "scale": "2",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.116728,
+          "samples": [
+            0.117341,
+            0.11646,
+            0.116728,
+            0.116843,
+            0.116671
+          ],
+          "median": 0.116728,
+          "min": 0.11646,
+          "max": 0.117341,
+          "mean": 0.116809,
+          "stdev": 0.000328,
+          "warmup_wall_seconds": 0.116251,
+          "checksum": 2
+        },
+        "upstream_benchmark_rss": {
+          "source_name": "upstream_benchmark_rss",
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "ruby_script",
+          "scale": "2",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 20.031,
+          "samples": [
+            20.035,
+            20.035,
+            20.027,
+            20.031,
+            20.031
+          ],
+          "median": 20.031,
+          "min": 20.027,
+          "max": 20.035,
+          "mean": 20.0318,
+          "stdev": 0.003347,
+          "warmup_rss_mib": 20.031
+        }
+      },
+      "parameters": {
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+        "matrix": [
+          "arith_int_small",
+          "arith_int_large",
+          "arith_float_small",
+          "arith_float_large",
+          "string_concat_small",
+          "string_concat_large",
+          "regex_subst_small",
+          "regex_subst_large",
+          "hash_ops_small",
+          "hash_ops_large",
+          "array_sort_small",
+          "array_sort_large",
+          "method_calls_small",
+          "method_calls_large",
+          "block_yield_small",
+          "block_yield_large",
+          "upstream_benchmark"
+        ],
+        "dimensions": [
+          "blocks",
+          "calls",
+          "compute",
+          "hashing",
+          "sorting",
+          "strings",
+          "upstream"
+        ],
+        "scenario_details": [
+          {
+            "scenario": "arith_int_small",
+            "dimension": "compute",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "2000000",
+            "check": "int",
+            "expected": "794992328",
+            "tolerance": null,
+            "workload": "integer add/multiply/modulo loop, 2M iterations"
+          },
+          {
+            "scenario": "arith_int_large",
+            "dimension": "compute",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "8000000",
+            "check": "int",
+            "expected": "179965187",
+            "tolerance": null,
+            "workload": "integer add/multiply/modulo loop, 8M iterations"
+          },
+          {
+            "scenario": "arith_float_small",
+            "dimension": "compute",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "2000000",
+            "check": "float",
+            "expected": "287600047361.493164062500",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/add loop, 2M iterations"
+          },
+          {
+            "scenario": "arith_float_large",
+            "dimension": "compute",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "8000000",
+            "check": "float",
+            "expected": "4586514088935.879882812500",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/add loop, 8M iterations"
+          },
+          {
+            "scenario": "string_concat_small",
+            "dimension": "strings",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "200000",
+            "check": "int",
+            "expected": "3088895",
+            "tolerance": null,
+            "workload": "formatted string concatenation, 200k appends"
+          },
+          {
+            "scenario": "string_concat_large",
+            "dimension": "strings",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "800000",
+            "check": "int",
+            "expected": "12688895",
+            "tolerance": null,
+            "workload": "formatted string concatenation, 800k appends"
+          },
+          {
+            "scenario": "regex_subst_small",
+            "dimension": "strings",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "20000",
+            "check": "int",
+            "expected": "40000",
+            "tolerance": null,
+            "workload": "regex substitution over 20k generated lines"
+          },
+          {
+            "scenario": "regex_subst_large",
+            "dimension": "strings",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "80000",
+            "check": "int",
+            "expected": "160000",
+            "tolerance": null,
+            "workload": "regex substitution over 80k generated lines"
+          },
+          {
+            "scenario": "hash_ops_small",
+            "dimension": "hashing",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "200000",
+            "check": "int",
+            "expected": "279990",
+            "tolerance": null,
+            "workload": "string hash insert/lookup/delete, 200k keys"
+          },
+          {
+            "scenario": "hash_ops_large",
+            "dimension": "hashing",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "800000",
+            "check": "int",
+            "expected": "1119840",
+            "tolerance": null,
+            "workload": "string hash insert/lookup/delete, 800k keys"
+          },
+          {
+            "scenario": "array_sort_small",
+            "dimension": "sorting",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "100000",
+            "check": "int",
+            "expected": "1499120",
+            "tolerance": null,
+            "workload": "LCG integer array numeric sort, 100k values"
+          },
+          {
+            "scenario": "array_sort_large",
+            "dimension": "sorting",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "400000",
+            "check": "int",
+            "expected": "1497949",
+            "tolerance": null,
+            "workload": "LCG integer array numeric sort, 400k values"
+          },
+          {
+            "scenario": "method_calls_small",
+            "dimension": "calls",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "2000000",
+            "check": "int",
+            "expected": "95998893",
+            "tolerance": null,
+            "workload": "two argument method calls, 2M calls"
+          },
+          {
+            "scenario": "method_calls_large",
+            "dimension": "calls",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "8000000",
+            "check": "int",
+            "expected": "383999197",
+            "tolerance": null,
+            "workload": "two argument method calls, 8M calls"
+          },
+          {
+            "scenario": "block_yield_small",
+            "dimension": "blocks",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "1000000",
+            "check": "int",
+            "expected": "43999915",
+            "tolerance": null,
+            "workload": "block/yield invocation, 1M calls"
+          },
+          {
+            "scenario": "block_yield_large",
+            "dimension": "blocks",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "4000000",
+            "check": "int",
+            "expected": "175999489",
+            "tolerance": null,
+            "workload": "block/yield invocation, 4M calls"
+          },
+          {
+            "scenario": "upstream_benchmark",
+            "dimension": "upstream",
+            "runner": "ruby_script",
+            "target": "bench.rb",
+            "scale": "2",
+            "check": "int",
+            "expected": "2",
+            "tolerance": null,
+            "workload": "Ruby stdlib Benchmark.bm report"
+          }
+        ]
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 204
+    }
+  },
+  "metrics": {
+    "arith_int_small": {
+      "value": 0.268529,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_int_small"
+    },
+    "arith_int_small_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_int_small"
+    },
+    "arith_int_large": {
+      "value": 0.820437,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_int_large"
+    },
+    "arith_int_large_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_int_large"
+    },
+    "arith_float_small": {
+      "value": 0.369871,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_float_small"
+    },
+    "arith_float_small_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_float_small"
+    },
+    "arith_float_large": {
+      "value": 1.275315,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_float_large"
+    },
+    "arith_float_large_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_float_large"
+    },
+    "string_concat_small": {
+      "value": 0.116195,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_concat_small"
+    },
+    "string_concat_small_rss": {
+      "value": 20.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_concat_small"
+    },
+    "string_concat_large": {
+      "value": 0.266821,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_concat_large"
+    },
+    "string_concat_large_rss": {
+      "value": 29.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_concat_large"
+    },
+    "regex_subst_small": {
+      "value": 0.116426,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "regex_subst_small"
+    },
+    "regex_subst_small_rss": {
+      "value": 20.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "regex_subst_small"
+    },
+    "regex_subst_large": {
+      "value": 0.16729,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "regex_subst_large"
+    },
+    "regex_subst_large_rss": {
+      "value": 29.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "regex_subst_large"
+    },
+    "hash_ops_small": {
+      "value": 0.417935,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "hash_ops_small"
+    },
+    "hash_ops_small_rss": {
+      "value": 47.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "hash_ops_small"
+    },
+    "hash_ops_large": {
+      "value": 1.826447,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "hash_ops_large"
+    },
+    "hash_ops_large_rss": {
+      "value": 147.527,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "hash_ops_large"
+    },
+    "array_sort_small": {
+      "value": 0.116252,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "array_sort_small"
+    },
+    "array_sort_small_rss": {
+      "value": 20.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "array_sort_small"
+    },
+    "array_sort_large": {
+      "value": 0.166637,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "array_sort_large"
+    },
+    "array_sort_large_rss": {
+      "value": 26.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "array_sort_large"
+    },
+    "method_calls_small": {
+      "value": 0.266981,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "method_calls_small"
+    },
+    "method_calls_small_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "method_calls_small"
+    },
+    "method_calls_large": {
+      "value": 0.872742,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "method_calls_large"
+    },
+    "method_calls_large_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "method_calls_large"
+    },
+    "block_yield_small": {
+      "value": 0.218243,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "block_yield_small"
+    },
+    "block_yield_small_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "block_yield_small"
+    },
+    "block_yield_large": {
+      "value": 0.669135,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "block_yield_large"
+    },
+    "block_yield_large_rss": {
+      "value": 17.035,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "block_yield_large"
+    },
+    "upstream_benchmark": {
+      "value": 0.116728,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_benchmark"
+    },
+    "upstream_benchmark_rss": {
+      "value": 20.031,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_benchmark"
+    }
+  }
+}
