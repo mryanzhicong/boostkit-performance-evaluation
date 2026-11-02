@@ -1,0 +1,379 @@
+{
+  "benchmark": "ant_build_matrix",
+  "software": "ant",
+  "version": "1.10.18",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-02T17:11:38Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "scenarios": [
+      "clean_jar_50",
+      "clean_jar_100",
+      "clean_jar_200",
+      "clean_compile_100",
+      "incremental_noop_100",
+      "incremental_touch_100"
+    ],
+    "extra_parameters": {
+      "clean_jar_scales": [
+        50,
+        100,
+        200
+      ],
+      "incremental_work_scale": 100,
+      "jdk_release": "21.0.13+9"
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "clean_jar_50__wall_seconds": {
+      "source_name": "clean_jar_50__wall_seconds",
+      "scenario": "clean_jar_50",
+      "description": "ant clean build (javac + jar) of the generated 50-class project",
+      "workload": "50 generated Java sources",
+      "value": 0.819499,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.819499,
+      "mean": 0.819399,
+      "min": 0.818867,
+      "max": 0.82007,
+      "stdev": 0.000478,
+      "samples": [
+        0.819499,
+        0.82007,
+        0.819546,
+        0.819015,
+        0.818867
+      ]
+    },
+    "clean_jar_50__peak_rss_mib": {
+      "source_name": "clean_jar_50__peak_rss_mib",
+      "scenario": "clean_jar_50",
+      "description": "ant clean build (javac + jar) of the generated 50-class project",
+      "workload": "50 generated Java sources",
+      "value": 143.605,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 143.605,
+      "mean": 143.6586,
+      "min": 139.285,
+      "max": 148.438,
+      "stdev": 3.914695,
+      "samples": [
+        139.285,
+        140.379,
+        146.586,
+        143.605,
+        148.438
+      ]
+    },
+    "clean_jar_50__classes_per_second": {
+      "source_name": "clean_jar_50__classes_per_second",
+      "scenario": "clean_jar_50",
+      "description": "ant clean build (javac + jar) of the generated 50-class project",
+      "workload": "50 generated Java sources",
+      "value": 61.012887,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 61.012887,
+      "mean": 61.02032,
+      "min": 60.970405,
+      "max": 61.059977,
+      "stdev": 0.035561,
+      "samples": [
+        61.012887,
+        60.970405,
+        61.009388,
+        61.048943,
+        61.059977
+      ]
+    },
+    "clean_jar_100__wall_seconds": {
+      "source_name": "clean_jar_100__wall_seconds",
+      "scenario": "clean_jar_100",
+      "description": "ant clean build (javac + jar) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 0.920729,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.920729,
+      "mean": 0.920077,
+      "min": 0.918807,
+      "max": 0.920846,
+      "stdev": 0.000963,
+      "samples": [
+        0.918807,
+        0.919271,
+        0.920734,
+        0.920846,
+        0.920729
+      ]
+    },
+    "clean_jar_100__peak_rss_mib": {
+      "source_name": "clean_jar_100__peak_rss_mib",
+      "scenario": "clean_jar_100",
+      "description": "ant clean build (javac + jar) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 148.84,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 148.84,
+      "mean": 151.6492,
+      "min": 146.816,
+      "max": 158.895,
+      "stdev": 5.222562,
+      "samples": [
+        148.293,
+        148.84,
+        155.402,
+        158.895,
+        146.816
+      ]
+    },
+    "clean_jar_100__classes_per_second": {
+      "source_name": "clean_jar_100__classes_per_second",
+      "scenario": "clean_jar_100",
+      "description": "ant clean build (javac + jar) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 108.609591,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 108.609591,
+      "mean": 108.686604,
+      "min": 108.595791,
+      "max": 108.836785,
+      "stdev": 0.113827,
+      "samples": [
+        108.836785,
+        108.78185,
+        108.609001,
+        108.595791,
+        108.609591
+      ]
+    },
+    "clean_jar_200__wall_seconds": {
+      "source_name": "clean_jar_200__wall_seconds",
+      "scenario": "clean_jar_200",
+      "description": "ant clean build (javac + jar) of the generated 200-class project",
+      "workload": "200 generated Java sources",
+      "value": 1.071157,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.071157,
+      "mean": 1.081099,
+      "min": 1.069665,
+      "max": 1.122147,
+      "stdev": 0.02297,
+      "samples": [
+        1.070172,
+        1.069665,
+        1.071157,
+        1.072352,
+        1.122147
+      ]
+    },
+    "clean_jar_200__peak_rss_mib": {
+      "source_name": "clean_jar_200__peak_rss_mib",
+      "scenario": "clean_jar_200",
+      "description": "ant clean build (javac + jar) of the generated 200-class project",
+      "workload": "200 generated Java sources",
+      "value": 172.805,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 172.805,
+      "mean": 171.9666,
+      "min": 167.723,
+      "max": 175.516,
+      "stdev": 2.912879,
+      "samples": [
+        173.039,
+        175.516,
+        172.805,
+        170.75,
+        167.723
+      ]
+    },
+    "clean_jar_200__classes_per_second": {
+      "source_name": "clean_jar_200__classes_per_second",
+      "scenario": "clean_jar_200",
+      "description": "ant clean build (javac + jar) of the generated 200-class project",
+      "workload": "200 generated Java sources",
+      "value": 186.713992,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 186.713992,
+      "mean": 185.061991,
+      "min": 178.229768,
+      "max": 186.974427,
+      "stdev": 3.823519,
+      "samples": [
+        186.885846,
+        186.974427,
+        186.713992,
+        186.505923,
+        178.229768
+      ]
+    },
+    "clean_compile_100__wall_seconds": {
+      "source_name": "clean_compile_100__wall_seconds",
+      "scenario": "clean_compile_100",
+      "description": "ant clean compile (javac only) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 0.8685,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.8685,
+      "mean": 0.868903,
+      "min": 0.867693,
+      "max": 0.870936,
+      "stdev": 0.001244,
+      "samples": [
+        0.867693,
+        0.8685,
+        0.869106,
+        0.870936,
+        0.868278
+      ]
+    },
+    "clean_compile_100__peak_rss_mib": {
+      "source_name": "clean_compile_100__peak_rss_mib",
+      "scenario": "clean_compile_100",
+      "description": "ant clean compile (javac only) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 149.602,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 149.602,
+      "mean": 149.4866,
+      "min": 143.441,
+      "max": 155.98,
+      "stdev": 4.912716,
+      "samples": [
+        143.441,
+        146.234,
+        149.602,
+        155.98,
+        152.176
+      ]
+    },
+    "clean_compile_100__classes_per_second": {
+      "source_name": "clean_compile_100__classes_per_second",
+      "scenario": "clean_compile_100",
+      "description": "ant clean compile (javac only) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "value": 115.141048,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 115.141048,
+      "mean": 115.087887,
+      "min": 114.818999,
+      "max": 115.248135,
+      "stdev": 0.164594,
+      "samples": [
+        115.248135,
+        115.141048,
+        115.060764,
+        114.818999,
+        115.170487
+      ]
+    },
+    "incremental_noop_100__wall_seconds": {
+      "source_name": "incremental_noop_100__wall_seconds",
+      "scenario": "incremental_noop_100",
+      "description": "ant incremental jar build with no source change (idle incremental)",
+      "workload": "100 unchanged Java sources",
+      "value": 0.417062,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.417062,
+      "mean": 0.416902,
+      "min": 0.4156,
+      "max": 0.418087,
+      "stdev": 0.000926,
+      "samples": [
+        0.4156,
+        0.416491,
+        0.417062,
+        0.418087,
+        0.417268
+      ]
+    },
+    "incremental_noop_100__peak_rss_mib": {
+      "source_name": "incremental_noop_100__peak_rss_mib",
+      "scenario": "incremental_noop_100",
+      "description": "ant incremental jar build with no source change (idle incremental)",
+      "workload": "100 unchanged Java sources",
+      "value": 96.016,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 96.016,
+      "mean": 98.5884,
+      "min": 92.715,
+      "max": 108.973,
+      "stdev": 6.259585,
+      "samples": [
+        108.973,
+        95.902,
+        96.016,
+        92.715,
+        99.336
+      ]
+    },
+    "incremental_touch_100__wall_seconds": {
+      "source_name": "incremental_touch_100__wall_seconds",
+      "scenario": "incremental_touch_100",
+      "description": "ant incremental jar build after modifying a single source file",
+      "workload": "100 Java sources, 1 modified",
+      "value": 0.417557,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.417557,
+      "mean": 0.538077,
+      "min": 0.416459,
+      "max": 0.719873,
+      "stdev": 0.165815,
+      "samples": [
+        0.416459,
+        0.719564,
+        0.417557,
+        0.416934,
+        0.719873
+      ]
+    },
+    "incremental_touch_100__peak_rss_mib": {
+      "source_name": "incremental_touch_100__peak_rss_mib",
+      "scenario": "incremental_touch_100",
+      "description": "ant incremental jar build after modifying a single source file",
+      "workload": "100 Java sources, 1 modified",
+      "value": 97.82,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 97.82,
+      "mean": 112.3544,
+      "min": 92.445,
+      "max": 141.277,
+      "stdev": 24.307236,
+      "samples": [
+        92.445,
+        136.375,
+        97.82,
+        93.855,
+        141.277
+      ]
+    }
+  }
+}

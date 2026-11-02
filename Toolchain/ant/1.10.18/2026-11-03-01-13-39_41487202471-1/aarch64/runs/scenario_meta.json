@@ -1,0 +1,64 @@
+{
+  "reps": 5,
+  "parameters": {
+    "clean_jar_scales": [
+      50,
+      100,
+      200
+    ],
+    "incremental_work_scale": 100,
+    "jdk_release": "21.0.13+9"
+  },
+  "scenarios": [
+    {
+      "scenario": "clean_jar_50",
+      "description": "ant clean build (javac + jar) of the generated 50-class project",
+      "workload": "50 generated Java sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 50,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "clean_jar_100",
+      "description": "ant clean build (javac + jar) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 100,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "clean_jar_200",
+      "description": "ant clean build (javac + jar) of the generated 200-class project",
+      "workload": "200 generated Java sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 200,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "clean_compile_100",
+      "description": "ant clean compile (javac only) of the generated 100-class project",
+      "workload": "100 generated Java sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 100,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "incremental_noop_100",
+      "description": "ant incremental jar build with no source change (idle incremental)",
+      "workload": "100 unchanged Java sources"
+    },
+    {
+      "scenario": "incremental_touch_100",
+      "description": "ant incremental jar build after modifying a single source file",
+      "workload": "100 Java sources, 1 modified"
+    }
+  ]
+}
