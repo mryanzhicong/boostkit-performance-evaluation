@@ -4,8 +4,9 @@
   六阶段在 Ubuntu 22.04 / x86_64 上全部通过，被测量程序是上游 fbthrift 自带的
   `ProtocolBench`（Google Benchmark），不是替代程序；30 个指标全部由严格解析器
   从原始 Google Benchmark JSON 与 GNU time 记录派生，无补零、无伪造。
-- 证据边界：aarch64 侧只做了脚本与依赖映射的静态审查，**没有**在 aarch64 机器上
-  实跑，最终结论必须在专用 Runner 上复核（见第 7、8 节）。
+- 证据边界：aarch64 侧只在 Actions 上跑过 build 阶段（两次失败均已定位，见
+  第 10 节），**没有**在 aarch64 上产出过测量数据，最终结论必须在专用 Runner
+  上复核（见第 7、8 节）。
 - 分支：`adapt-fbthrift-v2026.10.26.00`；工作副本
   `D:\workspace\Performance_evaluation\work\fbthrift\repo`。
 
@@ -208,9 +209,11 @@ SHA-256；全部失败返回 30 并逐条打印尝试的 URL。本地两条路�
   明确只覆盖协议序列化/反序列化路径。
 - **磁盘与时限**：单次 run 的私有工作目录约 2.6 GiB（install 占 894 MiB），
   `timeout_minutes` 240 足够（本地 5 次重复整轮约 17 分钟）。
-- **aarch64 未实测**：仓库里没有 aarch64 机器，`catalog.py matrix` 只验证了
-  x86_64；aarch64 的包名映射、`-march=armv8-a` 与协议基准数值必须在
-  `PERF_RUNNER_AARCH64` 上复核。
+- **aarch64 只在 Actions 上跑到 build 阶段**：仓库里没有 aarch64 机器；
+  `catalog.py matrix` 只验证 x86_64。Actions 上跑过两次：`41398104023` 在
+  workflow checkout 阶段被 GitHub 代理返回 418（与用例无关，build 未开始），
+  `41406888054` 在 build 阶段因 ICU 开发包缺失退出 30（见第 10 节）。修复后的
+  aarch64 测量数据仍需在 `PERF_RUNNER_AARCH64` 上产出。
 
 ## 8. 已知限制与风险
 
@@ -252,3 +255,97 @@ python3 framework/run_case.py --case software/Acceleration/fbthrift/case.yaml \
 bash software/Acceleration/fbthrift/fbthrift_test.sh --variant optimized \
   --results-dir /tmp/fbthrift-optimized-check    # 期望 30，无 build_variant.json
 ```
+
+## 10. aarch64 第二次失败复盘与修复（ICU，2026-11-02）
+
+### 10.1 现象（run `41406888054`）
+
+- 环境：openEuler 24.03 SP3 / aarch64 / GCC 12.3.1 / CMake 3.27.9；build 阶段
+  6m7s 后退出 30。
+- 失败目标 `thrift/lib/cpp/util/test/CMakeFiles/VarintUtilsBench`：
+
+```text
+/usr/bin/ld: cannot find -licudata: No such file or directory
+/usr/bin/ld: cannot find -licui18n: No such file or directory
+/usr/bin/ld: cannot find -licuuc: No such file or directory
+```
+
+- 同一份 configure 日志里 folly 只报了 `Could NOT find LibUnwind / BZip2 /
+  LibLZMA / LZ4 / Snappy / LibDwarf / Libiberty / LibAIO / LibUring / Libsodium`，
+  **没有任何 ICU 相关输出**，所以问题不是 `find_package(ICU)` 失败，而是 ICU
+  根本不在 folly/fbthrift 的 CMake 依赖图里。
+
+### 10.2 根因
+
+1. 逐个文件确认：folly 与 fbthrift 源码树里没有 `find_package(ICU)`、也没有
+   `-licu*` 的显式链接（只有 `utf8_string_icu` 这个头文件目标名里带 icu）。
+2. openEuler 的 Boost CMake 包把 ICU 作为**裸链接项**透传给 `Boost::regex`
+   （folly 的必需组件之一，本机链接行也证实 `Boost::regex` 在
+   `FOLLY_BOOST_COMPONENTS` 里），因此 ICU 只在链接命令行出现，配置阶段静默。
+3. Runner 上只装了 ICU 运行时包（`libicuuc.so.XX`），没有 `libicu-devel` 提供的
+   unversioned `.so` 开发符号链接；ld 按 `-licuuc` 名字找库就失败。
+4. 本地 x86_64 证据机装了 `libicu-dev`（`/usr/lib/x86_64-linux-gnu/libicuuc.so
+   -> libicuuc.so.70.1`），所以本地六阶段一直能过——这是环境差异造成的盲区。
+
+### 10.3 修复内容（`scripts/common.sh`、`scripts/builders/base.sh`）
+
+- 必需依赖清单加入 ICU：头文件探测 `unicode/ucnv.h` + 包映射
+  `libicu-devel`（dnf）/ `libicu-dev`（apt）。
+- 新增 `icu_link_available()` / `verify_icu_linkage()`：编译
+  `int main(void){return 0;}` 并显式链接 `-licuuc -licui18n -licudata`。
+  - 失败时把 `ld` 的**原始输出**逐行写进 job 日志（`ERROR: ld: ...`），打印
+    `ERROR: ICU development libraries are not usable (-licuuc/-licui18n/-licudata)`
+    与安装提示，然后 `return 30`；
+  - 头文件齐全但链接不通（正是 Runner 的形态）时会强制把 ICU 包加入安装事务，
+    装完再复检；
+  - “依赖已全部安装”的早退分支同样要过链接自检，不再只看头文件。
+- 安装包列表去重；记录继承的 `CFLAGS/CXXFLAGS/CPPFLAGS/LDFLAGS`，便于下次
+  排查 Runner 环境注入的链接项。
+- CMake 生成器改为**依赖安装之后**解析（Runner 首次运行会在安装完
+  `ninja-build` 后用 Ninja，而不是退回 `Unix Makefiles`），并打印
+  `cmake generator:` 行。
+- 其余库保持“不装可选 `-devel`、让 CMake 找不到就不链接”的策略，逐项表格见
+  README 的“依赖（链接行逐项说明）”。
+
+### 10.4 本机验证
+
+```text
+bash -n scripts/common.sh                                        # SYNTAX_OK
+ICU 自检成功路径：
+[fbthrift] ICU development libraries are usable (-licuuc -licui18n -licudata)  rc=0
+ICU 自检失败路径（伪造 cc 复现 Runner 的 ld 输出）：
+[fbthrift] ERROR: ICU development libraries are not usable (-licuuc/-licui18n/-licudata)
+[fbthrift] ERROR: ld: /usr/bin/ld: cannot find -licudata: No such file or directory
+[fbthrift] ERROR: ld: /usr/bin/ld: cannot find -licui18n: No such file or directory
+[fbthrift] ERROR: ld: /usr/bin/ld: cannot find -licuuc: No such file or directory
+[fbthrift] ERROR: ld: collect2: error: ld returned 1 exit status
+[fbthrift] ERROR: install the ICU development package (dnf: libicu-devel, apt: libicu-dev)
+verify_icu_linkage rc=30
+```
+
+修复后重跑六阶段（`PERF_REPS=1`，run id `local-20261102-icu`）：prepare / build /
+start / test / stop / finalize 六阶段 rc 全 0（build 约 6.5 分钟、test 约 2 分钟），
+`status.json` = `passed`，`normalized_result.json` 仍是 **30 个指标**
+（`measured_repetitions=1`、`warmup_runs_per_scenario=1`），build 日志第 3~4 行
+可见 `ICU development libraries are usable` 与 `cmake generator: Ninja`。
+
+本机链接行（`build.ninja`）实测包含：`aio boost_* bz2 crypto dwarf event gflags
+glog iberty lz4 lzma snappy sodium ssl unwind xxhash z zstd`；这些 `-dev` 包本地
+apt 都装了，所以本地会链接。Runner 上没装的可选项（unwind/dwarf/lzma/bz2/lz4/
+snappy/sodium/aio/uring）CMake 找不到，直接不进链接行，不会造成新的失败。
+
+### 10.5 aarch64 上还缺什么（判断）
+
+| 链接项 | 判断 |
+|---|---|
+| `-licuuc -licui18n -licudata` | 本次修复目标；`libicu-devel` 提供 unversioned `.so` 后应可链接 |
+| `-lboost_context/filesystem/program_options/regex` | 上次 build 已成功链接（boost 头文件已在镜像里），保持 |
+| `-lglog -lgflags -levent -lssl -lcrypto -lz -lzstd -lxxhash` | 上次 build 已成功链接，保持 |
+| `-lunwind -ldwarf -llzma -lbz2 -llz4 -lsnappy -lsodium -laio -luring` | Runner 未装 `-devel`，`find_package` 找不到 → 不进链接行；不会失败 |
+| `-lpthread -ldl -lrt` | glibc 自带 |
+| 风险 | 若该 Runner 的 Boost 还在编译期需要 ICU 头（`BOOST_REGEX_HAS_ICU`），`libicu-devel` 同时提供头文件，已覆盖；若仍有其它 `-l` 找不到，本次新增的探测模式会先把 ICU 摘掉，剩下的只会在链接阶段以 `ld` 原文暴露，需要下一次日志继续定位 |
+
+### 10.6 首次 aarch64 失败（`41398104023`）
+
+不是本用例的问题：workflow checkout 阶段 `gh-proxy.test.osinfra.cn` 返回 418，
+连仓库都没拉下来，build 未执行。

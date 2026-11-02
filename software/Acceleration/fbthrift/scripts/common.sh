@@ -214,6 +214,7 @@ resolve_cmake_generator() {
             CMAKE_GENERATOR="Unix Makefiles"
         fi
     fi
+    log_message "cmake generator: ${CMAKE_GENERATOR}"
 }
 
 cmake_version_ok() {
@@ -241,6 +242,56 @@ header_available() {
         "${CXX:-c++}" -x c++ -fsyntax-only - >/dev/null 2>&1
 }
 
+# ICU is not referenced by folly/fbthrift CMake (there is no FindICU call), but
+# openEuler's Boost CMake package re-exports ICU as raw -licuuc/-licui18n/
+# -licudata flags through Boost::regex.  On the aarch64 runner only the ICU
+# runtime package is installed, so the link fails with "cannot find -licudata".
+# A header check is not enough: the unversioned .so development symlinks (which
+# the -devel package provides) are exactly what the linker needs.
+icu_link_available() {
+    local workdir probe
+    workdir="$(mktemp -d "${TMPDIR:-/tmp}/fbthrift-icu.XXXXXX" 2>/dev/null)" || return 1
+    probe="${workdir}/icu-probe"
+    if printf 'int main(void){return 0;}\n' | \
+            "${CC:-cc}" -x c - -licuuc -licui18n -licudata -o "${probe}" >/dev/null 2>&1; then
+        rm -rf -- "${workdir}"
+        return 0
+    fi
+    rm -rf -- "${workdir}"
+    return 1
+}
+
+verify_icu_linkage() {
+    local workdir probe output
+    workdir="$(mktemp -d "${TMPDIR:-/tmp}/fbthrift-icu.XXXXXX" 2>/dev/null)" || {
+        log_message "ERROR: cannot create a temporary directory for the ICU link probe"
+        return 30
+    }
+    probe="${workdir}/icu-probe"
+    if output="$(printf 'int main(void){return 0;}\n' | \
+            "${CC:-cc}" -x c - -licuuc -licui18n -licudata -o "${probe}" 2>&1)"; then
+        log_message "ICU development libraries are usable (-licuuc -licui18n -licudata)"
+        rm -rf -- "${workdir}"
+        return 0
+    fi
+    log_message "ERROR: ICU development libraries are not usable (-licuuc/-licui18n/-licudata)"
+    local line
+    while IFS= read -r line; do
+        [[ -n "${line}" ]] && log_message "ERROR: ld: ${line}"
+    done <<< "${output}"
+    log_message "ERROR: install the ICU development package (dnf: libicu-devel, apt: libicu-dev)"
+    rm -rf -- "${workdir}"
+    return 30
+}
+
+log_inherited_build_environment() {
+    local name value
+    for name in CFLAGS CXXFLAGS CPPFLAGS LDFLAGS; do
+        value="${!name:-}"
+        [[ -n "${value}" ]] && log_message "inherited ${name}=${value}"
+    done
+}
+
 # The runner uses dnf while the local evidence machine uses apt; both branches
 # are implemented and every required header is re-probed after installation.
 install_system_dependencies() {
@@ -253,6 +304,7 @@ install_system_dependencies() {
         "zlib.h"
         "zstd.h"
         "xxhash.h"
+        "unicode/ucnv.h"
     )
     local -a missing_headers=()
     local header
@@ -263,9 +315,12 @@ install_system_dependencies() {
     [[ -x /usr/bin/time ]] || need_time=1
     local need_ninja=0
     command -v ninja >/dev/null 2>&1 || need_ninja=1
+    local icu_link_ok=0
+    icu_link_available && icu_link_ok=1
 
-    if (( ${#missing_headers[@]} == 0 && need_time == 0 && need_ninja == 0 )); then
+    if (( ${#missing_headers[@]} == 0 && need_time == 0 && need_ninja == 0 && icu_link_ok == 1 )); then
         log_message "all system build dependencies are already installed"
+        verify_icu_linkage || return 30
         return 0
     fi
 
@@ -289,6 +344,7 @@ install_system_dependencies() {
         "zlib.h:zlib-devel"
         "zstd.h:libzstd-devel"
         "xxhash.h:xxhash-devel"
+        "unicode/ucnv.h:libicu-devel"
     )
     local probes_packages_apt=(
         "boost/version.hpp:libboost-all-dev"
@@ -299,6 +355,7 @@ install_system_dependencies() {
         "zlib.h:zlib1g-dev"
         "zstd.h:libzstd-dev"
         "xxhash.h:libxxhash-dev"
+        "unicode/ucnv.h:libicu-dev"
     )
     local -a mapping=()
     if [[ "${package_manager}" == "dnf" ]]; then
@@ -316,12 +373,37 @@ install_system_dependencies() {
             fi
         done
     done
+    # ICU headers can be present while the development symlinks are not; the
+    # link probe is the authoritative check, so always request the ICU package
+    # when linking does not work yet.
+    if (( icu_link_ok == 0 )); then
+        if [[ "${package_manager}" == "dnf" ]]; then
+            packages+=("libicu-devel")
+        else
+            packages+=("libicu-dev")
+        fi
+    fi
     (( need_time == 0 )) || packages+=("time")
     (( need_ninja == 0 )) || packages+=("ninja-build")
     if (( ${#packages[@]} == 0 )); then
         log_message "ERROR: required headers are missing but no package mapping matched"
         return 30
     fi
+    local -a deduped=()
+    local package seen
+    for package in "${packages[@]}"; do
+        seen=0
+        for entry in "${deduped[@]}"; do
+            if [[ "${entry}" == "${package}" ]]; then
+                seen=1
+                break
+            fi
+        done
+        if (( seen == 0 )); then
+            deduped+=("${package}")
+        fi
+    done
+    packages=("${deduped[@]}")
 
     local -a dnf_options=() apt_options=()
     if [[ -n "${PERF_PROXY}" ]]; then
@@ -363,6 +445,7 @@ install_system_dependencies() {
         log_message "ERROR: build dependencies still missing after installation: ${still_missing[*]}"
         return 30
     fi
+    verify_icu_linkage || return 30
     log_message "system build dependencies are ready"
 }
 
@@ -399,6 +482,7 @@ require_build_tools() {
             return 30
         }
     done
+    log_inherited_build_environment
     resolve_cmake_binary || return 30
     if ! cmake_version_ok "${PERF_CMAKE_BIN}"; then
         log_message "ERROR: cmake >= 3.24 is required by fbthrift"

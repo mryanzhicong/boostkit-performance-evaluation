@@ -231,9 +231,12 @@ write_actual_version() {
 build_fbthrift_base() {
     validate_variant || return $?
     initialize_runtime || return $?
-    resolve_cmake_generator
     require_build_tools || return 30
     install_system_dependencies || return 30
+    # Resolve the generator after installing dependencies: the dnf/apt branch may
+    # install ninja-build, and picking it up keeps the aarch64/runner build fast
+    # instead of falling back to Unix Makefiles on the first run of a fresh image.
+    resolve_cmake_generator
     fetch_all_sources || return 30
     verify_source_identity || return 30
     build_fmt || return 30

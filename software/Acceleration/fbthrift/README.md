@@ -108,24 +108,40 @@ openssl/zlib/zstd/xxhash 等）由发行版包提供，版本记录在构建日�
 
 1. 检查 `EXPECTED_ARCH` 与本机架构一致；不一致返回 20。
 2. `dnf`（Runner）与 `apt-get`（本地证据机）双分支安装缺失依赖；每个必需头文件
-   （boost/glog/gflags/libevent/openssl/zlib/zstd/xxhash）在安装后用编译器重新
-   探测，仍缺失则返回 30。`PERF_PROXY` 会传给包管理器与下载用的 curl。fmt、
-   fast_float、benchmark 由本用例自建，不依赖发行版包，因此不探测系统版本。
-3. 要求 cmake ≥ 3.24（fbthrift 的 `cmake_minimum_required`）；系统 cmake 过旧
+   （boost/glog/gflags/libevent/openssl/zlib/zstd/xxhash/**ICU**）在安装后用编译
+   器重新探测，仍缺失则返回 30。`PERF_PROXY` 会传给包管理器与下载用的 curl。
+   fmt、fast_float、benchmark 由本用例自建，不依赖发行版包，因此不探测系统版本。
+3. **ICU 链接自检**（aarch64 二次失败后新增）：头文件存在不代表能链接，脚本会
+   编译一个只引用 `-licuuc -licui18n -licudata` 的最小程序；失败时把 `ld` 的
+   原始输出打进 job 日志并返回 30，同时提示安装 `libicu-devel` / `libicu-dev`。
+   动机：openEuler 的 Boost CMake 包会把 ICU 以裸 `-licu*` 形式透传给
+   `Boost::regex`，而 folly/fbthrift 自身从不调用 `FindICU`，所以“配置阶段
+   看不出问题、链接阶段才炸”。详见“依赖”一节和 QA 文档。
+4. 要求 cmake ≥ 3.24（fbthrift 的 `cmake_minimum_required`）；系统 cmake 过旧
    时可用 `PERF_CMAKE_BIN` 指定新版，未指定则先尝试用 pip 装一份私有 cmake，
    仍失败返回 30。要求 GCC ≥ 11（folly/fbthrift 的 C++20 构建）。
-4. 按来源顺序取 5 个归档并校验 SHA-256，逐个解包并核对顶层目录名
+5. 按来源顺序取 5 个归档并校验 SHA-256，逐个解包并核对顶层目录名
    （`fbthrift-2026.10.26.00` 等），随后校验内容指纹：
    `ProtocolBench.cpp` = `39ade0ce40faaec58f07fafea52b497b4d81d989f04a549201aedf2dadeb8044`，
    `ProtocolBenchData.thrift` = `170e66ce8e0f9e2c6db69bc548e45a9757dc1f5d72594b5744157d01253dabb0`，
    folly `CMakeLists.txt` = `063bc67360f74460e81c43e389a60773befe5637eb40713f84eb4df310bbcd68`。
-5. 依次构建并安装：fmt（静态库）→ fast_float（头文件）→ google benchmark（静态库）
+6. 依次构建并安装：fmt（静态库）→ fast_float（头文件）→ google benchmark（静态库）
    → folly（静态库，`BUILD_TESTS=OFF`）→ fbthrift（`THRIFT_RPC=OFF`、
    `THRIFT_TESTS=OFF`、`THRIFT_BENCHMARKS=ON`、`THRIFT_PY_DEPRECATED=OFF`），
    全程 `Release` + 私有 `CMAKE_INSTALL_PREFIX` 与 `CMAKE_PREFIX_PATH`。
-6. 校验 `install/bin/ProtocolBench` 可执行、`--benchmark_list_tests=true` 能列出
+7. 校验 `install/bin/ProtocolBench` 可执行、`--benchmark_list_tests=true` 能列出
    `scripts/scenarios.tsv` 中声明的全部用例，写出实际版本文件与
    `dependencies.json`。
+
+**最终构建目标**：两个第三方项目都构建其默认 all 目标。fbthrift 侧启用
+`THRIFT_BENCHMARKS=ON` 后，`thrift/lib/cpp2/test/CMakeLists.txt` 生成
+`ProtocolBench`（被测目标），`thrift/lib/cpp/util/test/CMakeLists.txt` 同时生成
+`VarintUtilsBench`（上游的另一个基准，也在 install 规则里，因此 `cmake --install`
+要求它必须链接成功）。两者都链接 `Folly::folly`，所以都会经过 Boost::regex →
+ICU 的链接路径；aarch64 首次失败正是死在 `VarintUtilsBench` 的 ICU 链接上。
+本用例**没有**改成 `--target ProtocolBench` 的“只构建一个目标”方案：fbthrift 的
+install 规则覆盖全部库与两个 bench，跳过目标会让 `cmake --install` 失败；保留
+全量构建可以保证安装树完整、`bin/ProtocolBench` 的 rpath/依赖与上游发布形态一致。
 
 关键命令形式（完整输出见 `command-build.log`）：
 
@@ -144,6 +160,68 @@ cmake -S "$WORK/sources/fbthrift" -B "$WORK/build/fbthrift" -G Ninja \
 cmake --build "$WORK/build/fbthrift" -j "${PERF_BUILD_JOBS:-6}"
 cmake --install "$WORK/build/fbthrift"
 ```
+
+CMake 生成器在依赖安装**之后**才确定：首次在干净镜像上运行时，dnf/apt 分支会
+装上 `ninja-build`，随后解析生成器就能用上 Ninja（否则会退回 `Unix Makefiles`，
+aarch64 首次失败那轮的构建日志里就是 `-G Unix Makefiles`）。选择的生成器会写进
+`command-build.log` 的 `cmake generator:` 行。
+
+### 依赖（链接行逐项说明）
+
+`build/fbthrift/build.ninja` 里 `ProtocolBench` / `VarintUtilsBench` 的链接行
+会按 CMake `find_package()` 的结果出现下列库。本用例的策略是：必需库装对应
+`-devel` 包；可选的库**不安装**对应的 `-devel` 包，让 CMake 的
+`find_package()` 失败从而不进入链接行（等价于显式关闭，且避免在 Runner 上引入
+额外链接面）。ICU 是例外：它不是 folly/fbthrift 的 `find_package` 依赖，却会被
+openEuler 的 Boost 包透传到链接行，因此必须装 `-devel` 并用链接自检兜底。
+
+| 链接项 | 来源 / 包（dnf / apt） | 策略 |
+|---|---|---|
+| `-licuuc -licui18n -licudata` | `libicu-devel` / `libicu-dev` | **必需**，头文件探测 + 链接自检 |
+| `-lboost_context -lboost_filesystem -lboost_program_options -lboost_regex` | `boost-devel` / `libboost-all-dev` | 必需（folly 的 `FOLLY_BOOST_COMPONENTS`） |
+| `-lglog` | `glog-devel` / `libgoogle-glog-dev` | 必需 |
+| `-lgflags` | `gflags-devel` / `libgflags-dev` | 必需 |
+| `-levent` | `libevent-devel` / `libevent-dev` | 必需 |
+| `-lssl -lcrypto` | `openssl-devel` / `libssl-dev` | 必需 |
+| `-lz` | `zlib-devel` / `zlib1g-dev` | 必需 |
+| `-lzstd` | `libzstd-devel` / `libzstd-dev` | 必需（fbthrift 的压缩支持） |
+| `-lxxhash` | `xxhash-devel` / `libxxhash-dev` | 必需（fbthrift checksum） |
+| `-lpthread -ldl -lrt` | glibc | 系统自带 |
+| `-lunwind` | `libunwind-devel` / `libunwind-dev` | 不装；未找到则 folly 不链接（aarch64 日志里的 `Could NOT find LibUnwind` 就是这种情况，非致命） |
+| `-ldwarf -liberty` | `libdwarf-devel` / `libdwarf-dev`、`libiberty`（binutils/gcc） | 不装；未找到则不链接 |
+| `-llzma` | `xz-devel` / `liblzma-dev` | 不装；未找到则不链接 |
+| `-lbz2` | `bzip2-devel` / `libbz2-dev` | 不装；未找到则不链接 |
+| `-llz4` | `lz4-devel` / `liblz4-dev` | 不装；未找到则不链接 |
+| `-lsnappy` | `snappy-devel` / `libsnappy-dev` | 不装；未找到则不链接 |
+| `-lsodium` | `libsodium-devel` / `libsodium-dev` | 不装（只在 RPC 栈需要） |
+| `-laio` | `libaio-devel` / `libaio-dev` | 不装；未找到则不链接 |
+| `-luring` | `liburing-devel` / `liburing-dev` | 不装；未找到则不链接 |
+| `-ldouble-conversion` | `double-conversion-devel` / `libdouble-conversion-dev` | 不装；folly 2026 已不再依赖它（本机链接行中没有出现） |
+| `libfmt.a`、`libbenchmark.a`、`libfolly.a`、`libthrift*.a` | 本用例自建 | 必需 |
+
+本机 x86_64 实测的链接行还包含 `libunwind/libdwarf/libiberty/libaio/libsnappy/
+libsodium/libbz2/liblzma/liblz4`（本地 apt 装了这些 `-dev` 包）；aarch64 Runner
+上不装它们，链接行会自动少掉这些项，因此**两边的链接面不同，但这不影响
+ProtocolBench 的测量路径**（这些库都不在序列化热路径上）。
+
+### aarch64 Actions 失败与修复（ICU）
+
+第二次 aarch64 运行（run `41406888054`，openEuler 24.03 SP3 / GCC 12.3.1 /
+CMake 3.27.9）在 build 阶段退出 30，`6m7s` 处 `VarintUtilsBench` 链接失败：
+
+```text
+/usr/bin/ld: cannot find -licudata: No such file or directory
+/usr/bin/ld: cannot find -licui18n: No such file or directory
+/usr/bin/ld: cannot find -licuuc: No such file or directory
+```
+
+根因：Runner 上只有 ICU 运行时包，没有提供 unversioned `.so` 开发符号链接的
+`libicu-devel`；而 openEuler 的 Boost CMake 包会把 ICU 作为裸链接项透传给
+`Boost::regex`（folly 的必需组件之一），于是配置阶段完全正常、链接阶段才失败。
+修复：必需依赖清单加入 `libicu-devel`/`libicu-dev`，并在装机后显式做
+`-licuuc -licui18n -licudata` 链接自检；自检失败时打印 `ld` 原始输出并 build 30，
+不再等到 6 分钟后才在某个 bench 目标上暴露。
+
 
 架构差异：`scripts/common.sh` 按 `EXPECTED_ARCH`/`uname -m` 选择基线指令集，
 aarch64 用 `-march=armv8-a`，x86_64 用 `-march=x86-64-v2`；两边都不做
