@@ -55,10 +55,23 @@ fetch_bazelisk() {
 }
 
 clone_xla() {
-    log_message "cloning ${XLA_REPOSITORY} at ${XLA_COMMIT} inside the container"
-    container_exec git clone --quiet --filter=blob:none \
-        "${XLA_REPOSITORY}" "${XLA_SRC_DIR}" || return 30
-    container_exec git -C "${XLA_SRC_DIR}" checkout --quiet --detach "${XLA_COMMIT}" || return 30
+    local attempt
+    for attempt in 1 2 3; do
+        log_message "cloning ${XLA_REPOSITORY} at ${XLA_COMMIT} inside the container (attempt ${attempt}/3)"
+        container_exec sh -c "rm -rf '${XLA_SRC_DIR}'" 2>/dev/null || true
+        if container_exec git clone --quiet --filter=blob:none \
+               -c http.postBuffer=524288000 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=60 \
+               "${XLA_REPOSITORY}" "${XLA_SRC_DIR}" \
+           && container_exec git -C "${XLA_SRC_DIR}" checkout --quiet --detach "${XLA_COMMIT}"; then
+            break
+        fi
+        if [[ "${attempt}" -ge 3 ]]; then
+            log_message "ERROR: cloning the XLA checkout failed after ${attempt} attempts"
+            return 30
+        fi
+        log_message "WARN: cloning the XLA checkout failed; retrying in 10s"
+        sleep 10
+    done
     local actual_commit
     actual_commit="$(container_exec git -C "${XLA_SRC_DIR}" rev-parse --short=12 HEAD)" || return 30
     [[ "${actual_commit}" == "${SOFTWARE_VERSION}" ]] || {
