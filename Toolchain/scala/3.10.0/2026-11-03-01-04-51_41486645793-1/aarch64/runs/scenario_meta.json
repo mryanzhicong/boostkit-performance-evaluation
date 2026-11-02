@@ -1,0 +1,68 @@
+{
+  "reps": 5,
+  "parameters": {
+    "compile_scales": [
+      20,
+      100,
+      300
+    ],
+    "run_workloads": [
+      "arith",
+      "collections",
+      "strings"
+    ],
+    "jdk_release": "21.0.13+9"
+  },
+  "scenarios": [
+    {
+      "scenario": "compile_20",
+      "description": "scalac clean compile of the generated 20-class project",
+      "workload": "20 generated Scala 3 sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 20,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "compile_100",
+      "description": "scalac clean compile of the generated 100-class project",
+      "workload": "100 generated Scala 3 sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 100,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "compile_300",
+      "description": "scalac clean compile of the generated 300-class project",
+      "workload": "300 generated Scala 3 sources",
+      "throughput": {
+        "name": "classes_per_second",
+        "items": 300,
+        "unit": "classes/s"
+      }
+    },
+    {
+      "scenario": "run_arith",
+      "description": "JVM execution of the precompiled arith workload",
+      "workload": "scala3-library workload: arith"
+    },
+    {
+      "scenario": "run_collections",
+      "description": "JVM execution of the precompiled collections workload",
+      "workload": "scala3-library workload: collections"
+    },
+    {
+      "scenario": "run_strings",
+      "description": "JVM execution of the precompiled strings workload",
+      "workload": "scala3-library workload: strings"
+    },
+    {
+      "scenario": "pipeline_compile_and_run",
+      "description": "compile the 100-class project and run it in one measured pipeline",
+      "workload": "100 generated sources + JVM execution"
+    }
+  ]
+}
