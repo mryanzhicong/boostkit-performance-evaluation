@@ -1,0 +1,823 @@
+[clang] [2026-11-03 05:51:24] using local SQLite archive: /home/runner/software/clang/sqlite-amalgamation-3540100.zip
+[clang] [2026-11-03 05:51:24] using local SQLite archive: /home/runner/software/clang/sqlite-src-3540100.zip
+[clang] [2026-11-03 05:51:25] SQLite 3.54.1 benchmark sources are staged
+[clang] [2026-11-03 05:51:25] running 5 rounds per workload inside the container
+result scenario=compile workload=-O0 round=1 wall_seconds=1.249 artifact_bytes=1615896
+result scenario=compile workload=-O0 round=2 wall_seconds=1.245 artifact_bytes=1615896
+result scenario=compile workload=-O0 round=3 wall_seconds=1.243 artifact_bytes=1615896
+result scenario=compile workload=-O0 round=4 wall_seconds=1.255 artifact_bytes=1615896
+result scenario=compile workload=-O0 round=5 wall_seconds=1.246 artifact_bytes=1615896
+result scenario=compile workload=-O2 round=1 wall_seconds=14.475 artifact_bytes=1617656
+result scenario=compile workload=-O2 round=2 wall_seconds=14.448 artifact_bytes=1617656
+result scenario=compile workload=-O2 round=3 wall_seconds=14.505 artifact_bytes=1617656
+result scenario=compile workload=-O2 round=4 wall_seconds=14.513 artifact_bytes=1617656
+result scenario=compile workload=-O2 round=5 wall_seconds=14.543 artifact_bytes=1617656
+result scenario=compile workload=-Os round=1 wall_seconds=10.198 artifact_bytes=1207848
+result scenario=compile workload=-Os round=2 wall_seconds=10.197 artifact_bytes=1207848
+result scenario=compile workload=-Os round=3 wall_seconds=10.207 artifact_bytes=1207848
+result scenario=compile workload=-Os round=4 wall_seconds=10.224 artifact_bytes=1207848
+result scenario=compile workload=-Os round=5 wall_seconds=10.171 artifact_bytes=1207848
+[clang] [2026-11-03 05:53:35] using GCC runtime directory: /usr/lib/gcc/aarch64-openEuler-linux/12
+[clang] [2026-11-03 05:53:35] building speedtest1 with /home/runner/boostkit-perf/clang/23.1.4/aarch64/41530815316-1/llvm/bin/clang -O2
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 50000 INSERTs into table with no index......................    0.028s
+ 110 - 50000 ordered INSERTS with one index/PK.....................    0.046s
+ 120 - 50000 unordered INSERTS with one index/PK...................    0.059s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.059s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.083s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.151s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.073s
+ 150 - CREATE INDEX five times.....................................    0.111s
+ 160 - 10000 SELECTS, numeric BETWEEN, indexed.....................    0.039s
+ 161 - 10000 SELECTS, numeric BETWEEN, PK..........................    0.039s
+ 170 - 10000 SELECTS, text BETWEEN, indexed........................    0.080s
+ 180 - 50000 INSERTS with three indexes............................    0.090s
+ 190 - DELETE and REFILL one table.................................    0.088s
+ 200 - VACUUM......................................................    0.069s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.003s
+ 230 - 10000 UPDATES, numeric BETWEEN, indexed.....................    0.036s
+ 240 - 50000 UPDATES of individual rows............................    0.050s
+ 250 - One big UPDATE of the whole 50000-row table.................    0.008s
+ 260 - Query added column after filling............................    0.003s
+ 270 - 10000 DELETEs, numeric BETWEEN, indexed.....................    0.090s
+ 280 - 50000 DELETEs of individual rows............................    0.066s
+ 290 - Refill two 50000-row tables using REPLACE...................    0.197s
+ 300 - Refill a 50000-row table using (b&1)==(a&1).................    0.097s
+ 310 - 10000 four-ways joins.......................................    0.180s
+ 320 - subquery in result set......................................    0.369s
+ 400 - 70000 REPLACE ops on an IPK.................................    0.068s
+ 410 - 70000 SELECTS on an IPK.....................................    0.041s
+ 500 - 70000 REPLACE on TEXT PK....................................    0.080s
+ 510 - 70000 SELECTS on a TEXT PK..................................    0.073s
+ 520 - 70000 SELECT DISTINCT.......................................    0.045s
+ 980 - PRAGMA integrity_check......................................    0.244s
+ 990 - ANALYZE.....................................................    0.026s
+ 999 - Reset the database..........................................    0.009s
+       Begin testset "orm"
+ 100 - Fill 6250 rows..............................................    0.039s
+ 110 - Query 6250 rows by rowid....................................    0.064s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.010s
+ 200 - Sudoku with VALUES 'digits'.................................    0.011s
+ 300 - Mandelbrot Set with spacing=0.250000........................    0.030s
+ 400 - EXCEPT operator on 200000-element tables....................    0.066s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 500 rows of JSONB...............................    0.102s
+ 110 - table J2 is 100 rows from J1 converted to text..............    0.010s
+ 120 - create indexes on JSON expressions on J1....................    0.014s
+ 130 - create indexes on JSON expressions on J2....................    0.033s
+ 140 - queries against J1..........................................    0.087s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.078s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.063s
+ 999 - Reset the database..........................................    0.003s
+       Begin testset "fp"
+ 100 - Fill a table with 30000 FP values...........................    0.010s
+ 110 - 2 range queries.............................................    0.004s
+ 120 - CREATE INDEX three times....................................    0.024s
+ 130 - 3 indexed range queries.....................................    0.000s
+ 140 - 15000 calls to round()......................................    0.004s
+ 150 - 60000 printf() calls........................................    0.014s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "parsenumber"
+ 100 - parsing 2500 small integers.................................    0.005s
+ 110 - parsing 2500 large integers.................................    0.005s
+ 200 - parsing 2500 small reals....................................    0.005s
+ 210 - parsing 2500 large reals....................................    0.005s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 5000 entries.......................    0.004s
+ 110 - Create indexes on all attributes columns....................    0.012s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.017s
+ 140 - Star query with LEFT JOINs..................................    0.001s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 300 times.........................    0.064s
+       TOTAL.......................................................    3.490s
+result scenario=speedtest1 workload=100 round=1 wall_seconds=3.501 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 50000 INSERTs into table with no index......................    0.028s
+ 110 - 50000 ordered INSERTS with one index/PK.....................    0.045s
+ 120 - 50000 unordered INSERTS with one index/PK...................    0.059s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.062s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.083s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.151s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.074s
+ 150 - CREATE INDEX five times.....................................    0.110s
+ 160 - 10000 SELECTS, numeric BETWEEN, indexed.....................    0.038s
+ 161 - 10000 SELECTS, numeric BETWEEN, PK..........................    0.040s
+ 170 - 10000 SELECTS, text BETWEEN, indexed........................    0.080s
+ 180 - 50000 INSERTS with three indexes............................    0.089s
+ 190 - DELETE and REFILL one table.................................    0.088s
+ 200 - VACUUM......................................................    0.068s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.003s
+ 230 - 10000 UPDATES, numeric BETWEEN, indexed.....................    0.036s
+ 240 - 50000 UPDATES of individual rows............................    0.049s
+ 250 - One big UPDATE of the whole 50000-row table.................    0.009s
+ 260 - Query added column after filling............................    0.002s
+ 270 - 10000 DELETEs, numeric BETWEEN, indexed.....................    0.088s
+ 280 - 50000 DELETEs of individual rows............................    0.065s
+ 290 - Refill two 50000-row tables using REPLACE...................    0.196s
+ 300 - Refill a 50000-row table using (b&1)==(a&1).................    0.096s
+ 310 - 10000 four-ways joins.......................................    0.180s
+ 320 - subquery in result set......................................    0.368s
+ 400 - 70000 REPLACE ops on an IPK.................................    0.067s
+ 410 - 70000 SELECTS on an IPK.....................................    0.041s
+ 500 - 70000 REPLACE on TEXT PK....................................    0.079s
+ 510 - 70000 SELECTS on a TEXT PK..................................    0.073s
+ 520 - 70000 SELECT DISTINCT.......................................    0.044s
+ 980 - PRAGMA integrity_check......................................    0.244s
+ 990 - ANALYZE.....................................................    0.025s
+ 999 - Reset the database..........................................    0.009s
+       Begin testset "orm"
+ 100 - Fill 6250 rows..............................................    0.039s
+ 110 - Query 6250 rows by rowid....................................    0.063s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.011s
+ 200 - Sudoku with VALUES 'digits'.................................    0.010s
+ 300 - Mandelbrot Set with spacing=0.250000........................    0.029s
+ 400 - EXCEPT operator on 200000-element tables....................    0.066s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 500 rows of JSONB...............................    0.100s
+ 110 - table J2 is 100 rows from J1 converted to text..............    0.011s
+ 120 - create indexes on JSON expressions on J1....................    0.013s
+ 130 - create indexes on JSON expressions on J2....................    0.033s
+ 140 - queries against J1..........................................    0.087s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.078s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.064s
+ 999 - Reset the database..........................................    0.003s
+       Begin testset "fp"
+ 100 - Fill a table with 30000 FP values...........................    0.010s
+ 110 - 2 range queries.............................................    0.004s
+ 120 - CREATE INDEX three times....................................    0.023s
+ 130 - 3 indexed range queries.....................................    0.001s
+ 140 - 15000 calls to round()......................................    0.004s
+ 150 - 60000 printf() calls........................................    0.014s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "parsenumber"
+ 100 - parsing 2500 small integers.................................    0.004s
+ 110 - parsing 2500 large integers.................................    0.006s
+ 200 - parsing 2500 small reals....................................    0.004s
+ 210 - parsing 2500 large reals....................................    0.005s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 5000 entries.......................    0.004s
+ 110 - Create indexes on all attributes columns....................    0.012s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.018s
+ 140 - Star query with LEFT JOINs..................................    0.001s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.001s
+ 110 - Open and use the database 300 times.........................    0.062s
+       TOTAL.......................................................    3.473s
+result scenario=speedtest1 workload=100 round=2 wall_seconds=3.481 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 50000 INSERTs into table with no index......................    0.028s
+ 110 - 50000 ordered INSERTS with one index/PK.....................    0.045s
+ 120 - 50000 unordered INSERTS with one index/PK...................    0.059s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.062s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.084s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.151s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.073s
+ 150 - CREATE INDEX five times.....................................    0.111s
+ 160 - 10000 SELECTS, numeric BETWEEN, indexed.....................    0.039s
+ 161 - 10000 SELECTS, numeric BETWEEN, PK..........................    0.039s
+ 170 - 10000 SELECTS, text BETWEEN, indexed........................    0.080s
+ 180 - 50000 INSERTS with three indexes............................    0.089s
+ 190 - DELETE and REFILL one table.................................    0.087s
+ 200 - VACUUM......................................................    0.068s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.004s
+ 230 - 10000 UPDATES, numeric BETWEEN, indexed.....................    0.035s
+ 240 - 50000 UPDATES of individual rows............................    0.050s
+ 250 - One big UPDATE of the whole 50000-row table.................    0.008s
+ 260 - Query added column after filling............................    0.003s
+ 270 - 10000 DELETEs, numeric BETWEEN, indexed.....................    0.088s
+ 280 - 50000 DELETEs of individual rows............................    0.065s
+ 290 - Refill two 50000-row tables using REPLACE...................    0.196s
+ 300 - Refill a 50000-row table using (b&1)==(a&1).................    0.096s
+ 310 - 10000 four-ways joins.......................................    0.180s
+ 320 - subquery in result set......................................    0.371s
+ 400 - 70000 REPLACE ops on an IPK.................................    0.067s
+ 410 - 70000 SELECTS on an IPK.....................................    0.040s
+ 500 - 70000 REPLACE on TEXT PK....................................    0.080s
+ 510 - 70000 SELECTS on a TEXT PK..................................    0.074s
+ 520 - 70000 SELECT DISTINCT.......................................    0.045s
+ 980 - PRAGMA integrity_check......................................    0.245s
+ 990 - ANALYZE.....................................................    0.025s
+ 999 - Reset the database..........................................    0.010s
+       Begin testset "orm"
+ 100 - Fill 6250 rows..............................................    0.039s
+ 110 - Query 6250 rows by rowid....................................    0.066s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.010s
+ 200 - Sudoku with VALUES 'digits'.................................    0.011s
+ 300 - Mandelbrot Set with spacing=0.250000........................    0.029s
+ 400 - EXCEPT operator on 200000-element tables....................    0.066s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 500 rows of JSONB...............................    0.102s
+ 110 - table J2 is 100 rows from J1 converted to text..............    0.010s
+ 120 - create indexes on JSON expressions on J1....................    0.013s
+ 130 - create indexes on JSON expressions on J2....................    0.033s
+ 140 - queries against J1..........................................    0.087s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.078s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.065s
+ 999 - Reset the database..........................................    0.004s
+       Begin testset "fp"
+ 100 - Fill a table with 30000 FP values...........................    0.010s
+ 110 - 2 range queries.............................................    0.004s
+ 120 - CREATE INDEX three times....................................    0.023s
+ 130 - 3 indexed range queries.....................................    0.001s
+ 140 - 15000 calls to round()......................................    0.004s
+ 150 - 60000 printf() calls........................................    0.013s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "parsenumber"
+ 100 - parsing 2500 small integers.................................    0.004s
+ 110 - parsing 2500 large integers.................................    0.005s
+ 200 - parsing 2500 small reals....................................    0.005s
+ 210 - parsing 2500 large reals....................................    0.005s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 5000 entries.......................    0.003s
+ 110 - Create indexes on all attributes columns....................    0.013s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.017s
+ 140 - Star query with LEFT JOINs..................................    0.001s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.001s
+ 110 - Open and use the database 300 times.........................    0.063s
+       TOTAL.......................................................    3.487s
+result scenario=speedtest1 workload=100 round=3 wall_seconds=3.496 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 50000 INSERTs into table with no index......................    0.029s
+ 110 - 50000 ordered INSERTS with one index/PK.....................    0.045s
+ 120 - 50000 unordered INSERTS with one index/PK...................    0.059s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.062s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.082s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.151s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.072s
+ 150 - CREATE INDEX five times.....................................    0.111s
+ 160 - 10000 SELECTS, numeric BETWEEN, indexed.....................    0.038s
+ 161 - 10000 SELECTS, numeric BETWEEN, PK..........................    0.040s
+ 170 - 10000 SELECTS, text BETWEEN, indexed........................    0.079s
+ 180 - 50000 INSERTS with three indexes............................    0.088s
+ 190 - DELETE and REFILL one table.................................    0.088s
+ 200 - VACUUM......................................................    0.069s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.003s
+ 230 - 10000 UPDATES, numeric BETWEEN, indexed.....................    0.036s
+ 240 - 50000 UPDATES of individual rows............................    0.049s
+ 250 - One big UPDATE of the whole 50000-row table.................    0.008s
+ 260 - Query added column after filling............................    0.003s
+ 270 - 10000 DELETEs, numeric BETWEEN, indexed.....................    0.088s
+ 280 - 50000 DELETEs of individual rows............................    0.065s
+ 290 - Refill two 50000-row tables using REPLACE...................    0.195s
+ 300 - Refill a 50000-row table using (b&1)==(a&1).................    0.096s
+ 310 - 10000 four-ways joins.......................................    0.179s
+ 320 - subquery in result set......................................    0.369s
+ 400 - 70000 REPLACE ops on an IPK.................................    0.067s
+ 410 - 70000 SELECTS on an IPK.....................................    0.041s
+ 500 - 70000 REPLACE on TEXT PK....................................    0.080s
+ 510 - 70000 SELECTS on a TEXT PK..................................    0.074s
+ 520 - 70000 SELECT DISTINCT.......................................    0.044s
+ 980 - PRAGMA integrity_check......................................    0.242s
+ 990 - ANALYZE.....................................................    0.025s
+ 999 - Reset the database..........................................    0.010s
+       Begin testset "orm"
+ 100 - Fill 6250 rows..............................................    0.038s
+ 110 - Query 6250 rows by rowid....................................    0.064s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.011s
+ 200 - Sudoku with VALUES 'digits'.................................    0.011s
+ 300 - Mandelbrot Set with spacing=0.250000........................    0.029s
+ 400 - EXCEPT operator on 200000-element tables....................    0.067s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 500 rows of JSONB...............................    0.102s
+ 110 - table J2 is 100 rows from J1 converted to text..............    0.011s
+ 120 - create indexes on JSON expressions on J1....................    0.013s
+ 130 - create indexes on JSON expressions on J2....................    0.033s
+ 140 - queries against J1..........................................    0.087s
+ 141 - queries involving json_type()...............................    0.000s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.078s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.064s
+ 999 - Reset the database..........................................    0.004s
+       Begin testset "fp"
+ 100 - Fill a table with 30000 FP values...........................    0.010s
+ 110 - 2 range queries.............................................    0.004s
+ 120 - CREATE INDEX three times....................................    0.023s
+ 130 - 3 indexed range queries.....................................    0.001s
+ 140 - 15000 calls to round()......................................    0.004s
+ 150 - 60000 printf() calls........................................    0.013s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "parsenumber"
+ 100 - parsing 2500 small integers.................................    0.005s
+ 110 - parsing 2500 large integers.................................    0.005s
+ 200 - parsing 2500 small reals....................................    0.005s
+ 210 - parsing 2500 large reals....................................    0.005s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 5000 entries.......................    0.003s
+ 110 - Create indexes on all attributes columns....................    0.013s
+ 120 - Create dimension tables.....................................    0.000s
+ 130 - Star query over the entire fact table.......................    0.018s
+ 140 - Star query with LEFT JOINs..................................    0.001s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 300 times.........................    0.061s
+       TOTAL.......................................................    3.473s
+result scenario=speedtest1 workload=100 round=4 wall_seconds=3.482 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 50000 INSERTs into table with no index......................    0.029s
+ 110 - 50000 ordered INSERTS with one index/PK.....................    0.044s
+ 120 - 50000 unordered INSERTS with one index/PK...................    0.060s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.060s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.083s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.152s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.073s
+ 150 - CREATE INDEX five times.....................................    0.110s
+ 160 - 10000 SELECTS, numeric BETWEEN, indexed.....................    0.039s
+ 161 - 10000 SELECTS, numeric BETWEEN, PK..........................    0.040s
+ 170 - 10000 SELECTS, text BETWEEN, indexed........................    0.080s
+ 180 - 50000 INSERTS with three indexes............................    0.089s
+ 190 - DELETE and REFILL one table.................................    0.088s
+ 200 - VACUUM......................................................    0.069s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.003s
+ 230 - 10000 UPDATES, numeric BETWEEN, indexed.....................    0.037s
+ 240 - 50000 UPDATES of individual rows............................    0.049s
+ 250 - One big UPDATE of the whole 50000-row table.................    0.008s
+ 260 - Query added column after filling............................    0.002s
+ 270 - 10000 DELETEs, numeric BETWEEN, indexed.....................    0.089s
+ 280 - 50000 DELETEs of individual rows............................    0.065s
+ 290 - Refill two 50000-row tables using REPLACE...................    0.195s
+ 300 - Refill a 50000-row table using (b&1)==(a&1).................    0.095s
+ 310 - 10000 four-ways joins.......................................    0.180s
+ 320 - subquery in result set......................................    0.367s
+ 400 - 70000 REPLACE ops on an IPK.................................    0.067s
+ 410 - 70000 SELECTS on an IPK.....................................    0.041s
+ 500 - 70000 REPLACE on TEXT PK....................................    0.080s
+ 510 - 70000 SELECTS on a TEXT PK..................................    0.073s
+ 520 - 70000 SELECT DISTINCT.......................................    0.044s
+ 980 - PRAGMA integrity_check......................................    0.243s
+ 990 - ANALYZE.....................................................    0.025s
+ 999 - Reset the database..........................................    0.010s
+       Begin testset "orm"
+ 100 - Fill 6250 rows..............................................    0.038s
+ 110 - Query 6250 rows by rowid....................................    0.064s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.011s
+ 200 - Sudoku with VALUES 'digits'.................................    0.011s
+ 300 - Mandelbrot Set with spacing=0.250000........................    0.028s
+ 400 - EXCEPT operator on 200000-element tables....................    0.067s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 500 rows of JSONB...............................    0.101s
+ 110 - table J2 is 100 rows from J1 converted to text..............    0.011s
+ 120 - create indexes on JSON expressions on J1....................    0.013s
+ 130 - create indexes on JSON expressions on J2....................    0.033s
+ 140 - queries against J1..........................................    0.087s
+ 141 - queries involving json_type()...............................    0.000s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.077s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.064s
+ 999 - Reset the database..........................................    0.003s
+       Begin testset "fp"
+ 100 - Fill a table with 30000 FP values...........................    0.010s
+ 110 - 2 range queries.............................................    0.004s
+ 120 - CREATE INDEX three times....................................    0.023s
+ 130 - 3 indexed range queries.....................................    0.001s
+ 140 - 15000 calls to round()......................................    0.004s
+ 150 - 60000 printf() calls........................................    0.013s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "parsenumber"
+ 100 - parsing 2500 small integers.................................    0.004s
+ 110 - parsing 2500 large integers.................................    0.005s
+ 200 - parsing 2500 small reals....................................    0.005s
+ 210 - parsing 2500 large reals....................................    0.005s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 5000 entries.......................    0.003s
+ 110 - Create indexes on all attributes columns....................    0.013s
+ 120 - Create dimension tables.....................................    0.000s
+ 130 - Star query over the entire fact table.......................    0.018s
+ 140 - Star query with LEFT JOINs..................................    0.001s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 300 times.........................    0.062s
+       TOTAL.......................................................    3.472s
+result scenario=speedtest1 workload=100 round=5 wall_seconds=3.481 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 250000 INSERTs into table with no index.....................    0.159s
+ 110 - 250000 ordered INSERTS with one index/PK....................    0.246s
+ 120 - 250000 unordered INSERTS with one index/PK..................    0.343s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.323s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.456s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.968s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.391s
+ 150 - CREATE INDEX five times.....................................    0.675s
+ 160 - 50000 SELECTS, numeric BETWEEN, indexed.....................    0.636s
+ 161 - 50000 SELECTS, numeric BETWEEN, PK..........................    0.654s
+ 170 - 50000 SELECTS, text BETWEEN, indexed........................    0.671s
+ 180 - 250000 INSERTS with three indexes...........................    0.559s
+ 190 - DELETE and REFILL one table.................................    0.556s
+ 200 - VACUUM......................................................    0.392s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.018s
+ 230 - 50000 UPDATES, numeric BETWEEN, indexed.....................    0.578s
+ 240 - 250000 UPDATES of individual rows...........................    0.365s
+ 250 - One big UPDATE of the whole 250000-row table................    0.041s
+ 260 - Query added column after filling............................    0.016s
+ 270 - 50000 DELETEs, numeric BETWEEN, indexed.....................    0.554s
+ 280 - 250000 DELETEs of individual rows...........................    0.514s
+ 290 - Refill two 250000-row tables using REPLACE..................    1.069s
+ 300 - Refill a 250000-row table using (b&1)==(a&1)................    0.632s
+ 310 - 50000 four-ways joins.......................................    1.603s
+ 320 - subquery in result set......................................    4.136s
+ 400 - 350000 REPLACE ops on an IPK................................    0.402s
+ 410 - 350000 SELECTS on an IPK....................................    0.251s
+ 500 - 350000 REPLACE on TEXT PK...................................    0.429s
+ 510 - 350000 SELECTS on a TEXT PK.................................    0.434s
+ 520 - 350000 SELECT DISTINCT......................................    0.219s
+ 980 - PRAGMA integrity_check......................................    1.563s
+ 990 - ANALYZE.....................................................    0.135s
+ 999 - Reset the database..........................................    0.061s
+       Begin testset "orm"
+ 100 - Fill 31250 rows.............................................    0.199s
+ 110 - Query 31250 rows by rowid...................................    0.328s
+ 999 - Reset the database..........................................    0.008s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.276s
+ 200 - Sudoku with VALUES 'digits'.................................    0.282s
+ 300 - Mandelbrot Set with spacing=0.050000........................    0.708s
+ 400 - EXCEPT operator on 1000000-element tables...................    0.353s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 2500 rows of JSONB..............................    0.511s
+ 110 - table J2 is 500 rows from J1 converted to text..............    0.052s
+ 120 - create indexes on JSON expressions on J1....................    0.079s
+ 130 - create indexes on JSON expressions on J2....................    0.166s
+ 140 - queries against J1..........................................    0.522s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.408s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.326s
+ 999 - Reset the database..........................................    0.017s
+       Begin testset "fp"
+ 100 - Fill a table with 150000 FP values..........................    0.050s
+ 110 - 2 range queries.............................................    0.021s
+ 120 - CREATE INDEX three times....................................    0.155s
+ 130 - 7 indexed range queries.....................................    0.005s
+ 140 - 75000 calls to round()......................................    0.020s
+ 150 - 300000 printf() calls.......................................    0.066s
+ 999 - Reset the database..........................................    0.003s
+       Begin testset "parsenumber"
+ 100 - parsing 12500 small integers................................    0.021s
+ 110 - parsing 12500 large integers................................    0.026s
+ 200 - parsing 12500 small reals...................................    0.022s
+ 210 - parsing 12500 large reals...................................    0.027s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 25000 entries......................    0.016s
+ 110 - Create indexes on all attributes columns....................    0.079s
+ 120 - Create dimension tables.....................................    0.000s
+ 130 - Star query over the entire fact table.......................    0.093s
+ 140 - Star query with LEFT JOINs..................................    0.012s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 1500 times........................    0.311s
+       TOTAL.......................................................   25.215s
+result scenario=speedtest1 workload=500 round=1 wall_seconds=25.251 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 250000 INSERTs into table with no index.....................    0.158s
+ 110 - 250000 ordered INSERTS with one index/PK....................    0.246s
+ 120 - 250000 unordered INSERTS with one index/PK..................    0.347s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.324s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.457s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.974s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.391s
+ 150 - CREATE INDEX five times.....................................    0.670s
+ 160 - 50000 SELECTS, numeric BETWEEN, indexed.....................    0.638s
+ 161 - 50000 SELECTS, numeric BETWEEN, PK..........................    0.652s
+ 170 - 50000 SELECTS, text BETWEEN, indexed........................    0.671s
+ 180 - 250000 INSERTS with three indexes...........................    0.558s
+ 190 - DELETE and REFILL one table.................................    0.556s
+ 200 - VACUUM......................................................    0.388s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.017s
+ 230 - 50000 UPDATES, numeric BETWEEN, indexed.....................    0.579s
+ 240 - 250000 UPDATES of individual rows...........................    0.360s
+ 250 - One big UPDATE of the whole 250000-row table................    0.041s
+ 260 - Query added column after filling............................    0.016s
+ 270 - 50000 DELETEs, numeric BETWEEN, indexed.....................    0.554s
+ 280 - 250000 DELETEs of individual rows...........................    0.522s
+ 290 - Refill two 250000-row tables using REPLACE..................    1.073s
+ 300 - Refill a 250000-row table using (b&1)==(a&1)................    0.637s
+ 310 - 50000 four-ways joins.......................................    1.606s
+ 320 - subquery in result set......................................    4.176s
+ 400 - 350000 REPLACE ops on an IPK................................    0.402s
+ 410 - 350000 SELECTS on an IPK....................................    0.250s
+ 500 - 350000 REPLACE on TEXT PK...................................    0.430s
+ 510 - 350000 SELECTS on a TEXT PK.................................    0.435s
+ 520 - 350000 SELECT DISTINCT......................................    0.220s
+ 980 - PRAGMA integrity_check......................................    1.565s
+ 990 - ANALYZE.....................................................    0.137s
+ 999 - Reset the database..........................................    0.057s
+       Begin testset "orm"
+ 100 - Fill 31250 rows.............................................    0.197s
+ 110 - Query 31250 rows by rowid...................................    0.328s
+ 999 - Reset the database..........................................    0.008s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.269s
+ 200 - Sudoku with VALUES 'digits'.................................    0.276s
+ 300 - Mandelbrot Set with spacing=0.050000........................    0.689s
+ 400 - EXCEPT operator on 1000000-element tables...................    0.347s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 2500 rows of JSONB..............................    0.506s
+ 110 - table J2 is 500 rows from J1 converted to text..............    0.051s
+ 120 - create indexes on JSON expressions on J1....................    0.079s
+ 130 - create indexes on JSON expressions on J2....................    0.166s
+ 140 - queries against J1..........................................    0.521s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.408s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.321s
+ 999 - Reset the database..........................................    0.017s
+       Begin testset "fp"
+ 100 - Fill a table with 150000 FP values..........................    0.050s
+ 110 - 2 range queries.............................................    0.021s
+ 120 - CREATE INDEX three times....................................    0.155s
+ 130 - 7 indexed range queries.....................................    0.006s
+ 140 - 75000 calls to round()......................................    0.020s
+ 150 - 300000 printf() calls.......................................    0.066s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "parsenumber"
+ 100 - parsing 12500 small integers................................    0.021s
+ 110 - parsing 12500 large integers................................    0.026s
+ 200 - parsing 12500 small reals...................................    0.023s
+ 210 - parsing 12500 large reals...................................    0.027s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 25000 entries......................    0.016s
+ 110 - Create indexes on all attributes columns....................    0.080s
+ 120 - Create dimension tables.....................................    0.000s
+ 130 - Star query over the entire fact table.......................    0.093s
+ 140 - Star query with LEFT JOINs..................................    0.012s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 1500 times........................    0.312s
+       TOTAL.......................................................   25.224s
+result scenario=speedtest1 workload=500 round=2 wall_seconds=25.259 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 250000 INSERTs into table with no index.....................    0.160s
+ 110 - 250000 ordered INSERTS with one index/PK....................    0.247s
+ 120 - 250000 unordered INSERTS with one index/PK..................    0.348s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.332s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.455s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.986s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.394s
+ 150 - CREATE INDEX five times.....................................    0.664s
+ 160 - 50000 SELECTS, numeric BETWEEN, indexed.....................    0.634s
+ 161 - 50000 SELECTS, numeric BETWEEN, PK..........................    0.653s
+ 170 - 50000 SELECTS, text BETWEEN, indexed........................    0.662s
+ 180 - 250000 INSERTS with three indexes...........................    0.557s
+ 190 - DELETE and REFILL one table.................................    0.560s
+ 200 - VACUUM......................................................    0.378s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.018s
+ 230 - 50000 UPDATES, numeric BETWEEN, indexed.....................    0.585s
+ 240 - 250000 UPDATES of individual rows...........................    0.360s
+ 250 - One big UPDATE of the whole 250000-row table................    0.041s
+ 260 - Query added column after filling............................    0.016s
+ 270 - 50000 DELETEs, numeric BETWEEN, indexed.....................    0.560s
+ 280 - 250000 DELETEs of individual rows...........................    0.520s
+ 290 - Refill two 250000-row tables using REPLACE..................    1.073s
+ 300 - Refill a 250000-row table using (b&1)==(a&1)................    0.631s
+ 310 - 50000 four-ways joins.......................................    1.604s
+ 320 - subquery in result set......................................    4.233s
+ 400 - 350000 REPLACE ops on an IPK................................    0.405s
+ 410 - 350000 SELECTS on an IPK....................................    0.254s
+ 500 - 350000 REPLACE on TEXT PK...................................    0.431s
+ 510 - 350000 SELECTS on a TEXT PK.................................    0.438s
+ 520 - 350000 SELECT DISTINCT......................................    0.220s
+ 980 - PRAGMA integrity_check......................................    1.582s
+ 990 - ANALYZE.....................................................    0.139s
+ 999 - Reset the database..........................................    0.061s
+       Begin testset "orm"
+ 100 - Fill 31250 rows.............................................    0.198s
+ 110 - Query 31250 rows by rowid...................................    0.326s
+ 999 - Reset the database..........................................    0.008s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.278s
+ 200 - Sudoku with VALUES 'digits'.................................    0.288s
+ 300 - Mandelbrot Set with spacing=0.050000........................    0.708s
+ 400 - EXCEPT operator on 1000000-element tables...................    0.354s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 2500 rows of JSONB..............................    0.520s
+ 110 - table J2 is 500 rows from J1 converted to text..............    0.052s
+ 120 - create indexes on JSON expressions on J1....................    0.078s
+ 130 - create indexes on JSON expressions on J2....................    0.165s
+ 140 - queries against J1..........................................    0.515s
+ 141 - queries involving json_type()...............................    0.000s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.407s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.322s
+ 999 - Reset the database..........................................    0.017s
+       Begin testset "fp"
+ 100 - Fill a table with 150000 FP values..........................    0.050s
+ 110 - 2 range queries.............................................    0.021s
+ 120 - CREATE INDEX three times....................................    0.154s
+ 130 - 7 indexed range queries.....................................    0.006s
+ 140 - 75000 calls to round()......................................    0.019s
+ 150 - 300000 printf() calls.......................................    0.066s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "parsenumber"
+ 100 - parsing 12500 small integers................................    0.022s
+ 110 - parsing 12500 large integers................................    0.027s
+ 200 - parsing 12500 small reals...................................    0.024s
+ 210 - parsing 12500 large reals...................................    0.027s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 25000 entries......................    0.016s
+ 110 - Create indexes on all attributes columns....................    0.079s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.092s
+ 140 - Star query with LEFT JOINs..................................    0.011s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 1500 times........................    0.311s
+       TOTAL.......................................................   25.369s
+result scenario=speedtest1 workload=500 round=3 wall_seconds=25.404 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 250000 INSERTs into table with no index.....................    0.159s
+ 110 - 250000 ordered INSERTS with one index/PK....................    0.246s
+ 120 - 250000 unordered INSERTS with one index/PK..................    0.343s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.331s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.459s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.975s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.399s
+ 150 - CREATE INDEX five times.....................................    0.665s
+ 160 - 50000 SELECTS, numeric BETWEEN, indexed.....................    0.650s
+ 161 - 50000 SELECTS, numeric BETWEEN, PK..........................    0.670s
+ 170 - 50000 SELECTS, text BETWEEN, indexed........................    0.678s
+ 180 - 250000 INSERTS with three indexes...........................    0.558s
+ 190 - DELETE and REFILL one table.................................    0.556s
+ 200 - VACUUM......................................................    0.379s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.017s
+ 230 - 50000 UPDATES, numeric BETWEEN, indexed.....................    0.594s
+ 240 - 250000 UPDATES of individual rows...........................    0.366s
+ 250 - One big UPDATE of the whole 250000-row table................    0.042s
+ 260 - Query added column after filling............................    0.016s
+ 270 - 50000 DELETEs, numeric BETWEEN, indexed.....................    0.551s
+ 280 - 250000 DELETEs of individual rows...........................    0.519s
+ 290 - Refill two 250000-row tables using REPLACE..................    1.067s
+ 300 - Refill a 250000-row table using (b&1)==(a&1)................    0.627s
+ 310 - 50000 four-ways joins.......................................    1.606s
+ 320 - subquery in result set......................................    4.204s
+ 400 - 350000 REPLACE ops on an IPK................................    0.403s
+ 410 - 350000 SELECTS on an IPK....................................    0.253s
+ 500 - 350000 REPLACE on TEXT PK...................................    0.429s
+ 510 - 350000 SELECTS on a TEXT PK.................................    0.438s
+ 520 - 350000 SELECT DISTINCT......................................    0.220s
+ 980 - PRAGMA integrity_check......................................    1.570s
+ 990 - ANALYZE.....................................................    0.132s
+ 999 - Reset the database..........................................    0.056s
+       Begin testset "orm"
+ 100 - Fill 31250 rows.............................................    0.199s
+ 110 - Query 31250 rows by rowid...................................    0.330s
+ 999 - Reset the database..........................................    0.008s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.271s
+ 200 - Sudoku with VALUES 'digits'.................................    0.277s
+ 300 - Mandelbrot Set with spacing=0.050000........................    0.690s
+ 400 - EXCEPT operator on 1000000-element tables...................    0.347s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 2500 rows of JSONB..............................    0.505s
+ 110 - table J2 is 500 rows from J1 converted to text..............    0.052s
+ 120 - create indexes on JSON expressions on J1....................    0.079s
+ 130 - create indexes on JSON expressions on J2....................    0.167s
+ 140 - queries against J1..........................................    0.520s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.410s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.324s
+ 999 - Reset the database..........................................    0.018s
+       Begin testset "fp"
+ 100 - Fill a table with 150000 FP values..........................    0.050s
+ 110 - 2 range queries.............................................    0.021s
+ 120 - CREATE INDEX three times....................................    0.155s
+ 130 - 7 indexed range queries.....................................    0.006s
+ 140 - 75000 calls to round()......................................    0.019s
+ 150 - 300000 printf() calls.......................................    0.065s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "parsenumber"
+ 100 - parsing 12500 small integers................................    0.021s
+ 110 - parsing 12500 large integers................................    0.026s
+ 200 - parsing 12500 small reals...................................    0.022s
+ 210 - parsing 12500 large reals...................................    0.026s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 25000 entries......................    0.016s
+ 110 - Create indexes on all attributes columns....................    0.079s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.092s
+ 140 - Star query with LEFT JOINs..................................    0.012s
+ 999 - Reset the database..........................................    0.001s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.002s
+ 110 - Open and use the database 1500 times........................    0.311s
+       TOTAL.......................................................   25.303s
+result scenario=speedtest1 workload=500 round=4 wall_seconds=25.337 artifact_bytes=1346152
+-- Speedtest1 for SQLite 3.54.1 2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b
+ 100 - 250000 INSERTs into table with no index.....................    0.159s
+ 110 - 250000 ordered INSERTS with one index/PK....................    0.248s
+ 120 - 250000 unordered INSERTS with one index/PK..................    0.344s
+ 130 - 25 SELECTS, numeric BETWEEN, unindexed......................    0.323s
+ 140 - 10 SELECTS, LIKE, unindexed.................................    0.460s
+ 142 - 10 SELECTS w/ORDER BY, unindexed............................    0.979s
+ 145 - 10 SELECTS w/ORDER BY and LIMIT, unindexed..................    0.398s
+ 150 - CREATE INDEX five times.....................................    0.636s
+ 160 - 50000 SELECTS, numeric BETWEEN, indexed.....................    0.634s
+ 161 - 50000 SELECTS, numeric BETWEEN, PK..........................    0.652s
+ 170 - 50000 SELECTS, text BETWEEN, indexed........................    0.664s
+ 180 - 250000 INSERTS with three indexes...........................    0.554s
+ 190 - DELETE and REFILL one table.................................    0.554s
+ 200 - VACUUM......................................................    0.382s
+ 210 - ALTER TABLE ADD COLUMN, and query...........................    0.017s
+ 230 - 50000 UPDATES, numeric BETWEEN, indexed.....................    0.569s
+ 240 - 250000 UPDATES of individual rows...........................    0.361s
+ 250 - One big UPDATE of the whole 250000-row table................    0.041s
+ 260 - Query added column after filling............................    0.016s
+ 270 - 50000 DELETEs, numeric BETWEEN, indexed.....................    0.558s
+ 280 - 250000 DELETEs of individual rows...........................    0.512s
+ 290 - Refill two 250000-row tables using REPLACE..................    1.072s
+ 300 - Refill a 250000-row table using (b&1)==(a&1)................    0.626s
+ 310 - 50000 four-ways joins.......................................    1.607s
+ 320 - subquery in result set......................................    4.120s
+ 400 - 350000 REPLACE ops on an IPK................................    0.400s
+ 410 - 350000 SELECTS on an IPK....................................    0.251s
+ 500 - 350000 REPLACE on TEXT PK...................................    0.427s
+ 510 - 350000 SELECTS on a TEXT PK.................................    0.385s
+ 520 - 350000 SELECT DISTINCT......................................    0.215s
+ 980 - PRAGMA integrity_check......................................    1.563s
+ 990 - ANALYZE.....................................................    0.132s
+ 999 - Reset the database..........................................    0.056s
+       Begin testset "orm"
+ 100 - Fill 31250 rows.............................................    0.199s
+ 110 - Query 31250 rows by rowid...................................    0.328s
+ 999 - Reset the database..........................................    0.008s
+       Begin testset "cte"
+ 100 - Sudoku with recursive 'digits'..............................    0.271s
+ 200 - Sudoku with VALUES 'digits'.................................    0.276s
+ 300 - Mandelbrot Set with spacing=0.050000........................    0.690s
+ 400 - EXCEPT operator on 1000000-element tables...................    0.344s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "json"
+ 100 - table J1 is 2500 rows of JSONB..............................    0.503s
+ 110 - table J2 is 500 rows from J1 converted to text..............    0.051s
+ 120 - create indexes on JSON expressions on J1....................    0.079s
+ 130 - create indexes on JSON expressions on J2....................    0.168s
+ 140 - queries against J1..........................................    0.520s
+ 141 - queries involving json_type()...............................    0.001s
+ 150 - json_insert()/set()/remove() on every row of J1.............    0.409s
+ 160 - json_insert()/set()/remove() on every row of J2.............    0.322s
+ 999 - Reset the database..........................................    0.018s
+       Begin testset "fp"
+ 100 - Fill a table with 150000 FP values..........................    0.050s
+ 110 - 2 range queries.............................................    0.021s
+ 120 - CREATE INDEX three times....................................    0.155s
+ 130 - 7 indexed range queries.....................................    0.006s
+ 140 - 75000 calls to round()......................................    0.019s
+ 150 - 300000 printf() calls.......................................    0.067s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "parsenumber"
+ 100 - parsing 12500 small integers................................    0.021s
+ 110 - parsing 12500 large integers................................    0.026s
+ 200 - parsing 12500 small reals...................................    0.022s
+ 210 - parsing 12500 large reals...................................    0.027s
+ 999 - Reset the database..........................................    0.000s
+       Begin testset "star"
+ 100 - Create a fact table with 25000 entries......................    0.016s
+ 110 - Create indexes on all attributes columns....................    0.080s
+ 120 - Create dimension tables.....................................    0.001s
+ 130 - Star query over the entire fact table.......................    0.093s
+ 140 - Star query with LEFT JOINs..................................    0.012s
+ 999 - Reset the database..........................................    0.002s
+       Begin testset "app"
+ 100 - Generate a Fossil-like database schema......................    0.001s
+ 110 - Open and use the database 1500 times........................    0.309s
+       TOTAL.......................................................   25.032s
+result scenario=speedtest1 workload=500 round=5 wall_seconds=25.066 artifact_bytes=1346152
+[clang] collected 15 metrics from 2 scenarios
+[clang] [2026-11-03 05:56:14] clang benchmark suite completed
