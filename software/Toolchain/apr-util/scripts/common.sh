@@ -279,19 +279,30 @@ require_commands() {
         return 0
     fi
     local package_manager=""
+    # The dedicated aarch64 runner executes the job as a regular user, so the
+    # package manager has to be reached through passwordless sudo.
+    local -a runner=()
+    if [[ "$(id -u)" -ne 0 ]]; then
+        if sudo -n true >/dev/null 2>&1; then
+            runner=(sudo -n)
+        else
+            fail_message "cannot install ${packages[*]}: not root and 'sudo -n' is unavailable"
+            return 30
+        fi
+    fi
     if command -v dnf >/dev/null 2>&1; then
         package_manager=dnf
         log_message "installing build dependencies with dnf: ${packages[*]}"
-        dnf install -y "${packages[@]}" >"${APR_UTIL_STATE_DIR}/deps-install.log" 2>&1 || {
+        "${runner[@]}" dnf install -y "${packages[@]}" >"${APR_UTIL_STATE_DIR}/deps-install.log" 2>&1 || {
             fail_message "dnf install failed, see ${APR_UTIL_STATE_DIR}/deps-install.log"
             return 30
         }
     elif command -v apt-get >/dev/null 2>&1; then
         package_manager=apt-get
         log_message "installing build dependencies with apt-get: ${packages[*]}"
-        DEBIAN_FRONTEND=noninteractive apt-get update -qq \
+        DEBIAN_FRONTEND=noninteractive "${runner[@]}" apt-get update -qq \
             >"${APR_UTIL_STATE_DIR}/deps-install.log" 2>&1 || true
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}" \
+        DEBIAN_FRONTEND=noninteractive "${runner[@]}" apt-get install -y -qq "${packages[@]}" \
             >>"${APR_UTIL_STATE_DIR}/deps-install.log" 2>&1 || {
             fail_message "apt-get install failed, see ${APR_UTIL_STATE_DIR}/deps-install.log"
             return 30
