@@ -47,6 +47,7 @@ run_bcrypt_benchmarks() {
         done
     done
     log_message "measurement finished (${#BCRYPT_SCENARIOS[@]} scenarios x ${BCRYPT_REPS} samples)"
+    export PERF_REPS="${BCRYPT_REPS}"
     if ! python3 "${SCRIPT_DIR}/scripts/results/parse_benchmark.py" "${RUNS_DIR}" "${RESULTS_DIR}/results.json"; then
         log_message "ERROR: strict result parsing failed"
         if [[ -f "${measurement_log}" ]]; then
