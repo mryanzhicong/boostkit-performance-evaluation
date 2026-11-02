@@ -1,0 +1,1111 @@
+{
+  "architecture": "aarch64",
+  "asv_snapshot": {
+    "benchmark_modules": [
+      "benchmarks.groupby",
+      "benchmarks.join_merge",
+      "benchmarks.reindex",
+      "benchmarks.reshape",
+      "benchmarks.rolling",
+      "benchmarks.stat_ops",
+      "benchmarks.strings"
+    ],
+    "vendored_file_count": 64,
+    "vendored_manifest_sha256": "14478c8f93b5572bc1b7dfd381f9c324c85bb6a9851d29d51ad4feae3bf6a564"
+  },
+  "parameters": {
+    "asv": {
+      "n_jobs": 1,
+      "profile": "benchmark",
+      "repository": "https://github.com/pandas-dev/pandas",
+      "suite": "asv_bench/benchmarks",
+      "tag": "v3.1.0",
+      "tag_commit": "c6f46769b808eb60218189d089dd67841b44f1b9",
+      "vendored_manifest_sha256": "14478c8f93b5572bc1b7dfd381f9c324c85bb6a9851d29d51ad4feae3bf6a564"
+    },
+    "measurement": {
+      "environment": {
+        "LC_ALL": "C",
+        "PYTHONHASHSEED": "0",
+        "TZ": "UTC"
+      },
+      "offline": true,
+      "processes_per_sample": 1,
+      "repetitions": 5,
+      "seed": 1234,
+      "statistic": "median",
+      "threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "warmups": 1
+    },
+    "python": {
+      "implementation": "CPython",
+      "source_sha256": "710c3e75dac8b2f258d9cd0f76e5c4c2e9175fac9e249c98901552f7cf33b7dd",
+      "source_version": "3.12.16",
+      "version": "3.12.16"
+    },
+    "runtime": {
+      "numpy": "2.0.2",
+      "pandas": "3.1.0",
+      "python-dateutil": "2.9.0.post0",
+      "six": "1.17.0"
+    },
+    "scenarios": {
+      "drop_duplicates_int": {
+        "class": "DropDuplicates",
+        "iterations": 220,
+        "method": "time_frame_drop_dups_int",
+        "module": "benchmarks.reindex",
+        "params": [
+          false
+        ]
+      },
+      "groupby_int64_overflow": {
+        "class": "Int64",
+        "iterations": 8,
+        "method": "time_overflow",
+        "module": "benchmarks.groupby",
+        "params": []
+      },
+      "groupby_sort_high_cardinality": {
+        "class": "SortHighCardinality",
+        "iterations": 10,
+        "method": "time_sum",
+        "module": "benchmarks.groupby",
+        "params": [
+          true
+        ]
+      },
+      "join_single_key": {
+        "class": "Join",
+        "iterations": 130,
+        "method": "time_join_dataframe_index_single_key_bigger",
+        "module": "benchmarks.join_merge",
+        "params": [
+          true
+        ]
+      },
+      "merge_asof_int": {
+        "class": "MergeAsof",
+        "iterations": 240,
+        "method": "time_on_int",
+        "module": "benchmarks.join_merge",
+        "params": [
+          "backward",
+          null
+        ]
+      },
+      "reshape_unstack": {
+        "class": "SimpleReshape",
+        "iterations": 1100,
+        "method": "time_unstack",
+        "module": "benchmarks.reshape",
+        "params": []
+      },
+      "rolling_mean_window": {
+        "class": "Methods",
+        "iterations": 1100,
+        "method": "time_method",
+        "module": "benchmarks.rolling",
+        "params": [
+          "DataFrame",
+          [
+            "rolling",
+            {
+              "window": 1000
+            }
+          ],
+          "float",
+          "mean"
+        ]
+      },
+      "stat_ops_frame_skew": {
+        "class": "FrameOps",
+        "iterations": 1800,
+        "method": "time_op",
+        "module": "benchmarks.stat_ops",
+        "params": [
+          "skew",
+          "float",
+          0
+        ]
+      },
+      "strings_upper": {
+        "class": "Methods",
+        "iterations": 800,
+        "method": "time_upper",
+        "module": "benchmarks.strings",
+        "params": [
+          "str"
+        ]
+      }
+    },
+    "software": "pandas",
+    "source_distribution_sha256": "ecb9b2d8a817b1e1ba1fdb90c0abe9eab31b4fdf2562b7a56b86ac66ace17e49",
+    "variant": "base"
+  },
+  "results": {
+    "drop_duplicates_int.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "drop_duplicates_int",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "drop_duplicates_int.peak_rss_mib",
+      "statistics": {
+        "max": 105.098,
+        "mean": 105.0916,
+        "median": 105.094,
+        "min": 105.078,
+        "samples": [
+          105.094,
+          105.078,
+          105.098,
+          105.098,
+          105.09
+        ],
+        "stdev": 0.00829457654132889
+      },
+      "subgroup": "deduplication",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 105.094
+    },
+    "drop_duplicates_int.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "drop_duplicates_int",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "drop_duplicates_int.wall_seconds",
+      "statistics": {
+        "max": 0.00983426,
+        "mean": 0.0095699664,
+        "median": 0.00947901,
+        "min": 0.009349592,
+        "samples": [
+          0.009349592,
+          0.00983426,
+          0.009423487,
+          0.00947901,
+          0.009763483
+        ],
+        "stdev": 0.00021540307505766928
+      },
+      "subgroup": "deduplication",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.00947901
+    },
+    "groupby_int64_overflow.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "groupby_int64_overflow",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "groupby_int64_overflow.peak_rss_mib",
+      "statistics": {
+        "max": 181.273,
+        "mean": 181.2682,
+        "median": 181.27,
+        "min": 181.262,
+        "samples": [
+          181.27,
+          181.266,
+          181.262,
+          181.27,
+          181.273
+        ],
+        "stdev": 0.0042661458015423575
+      },
+      "subgroup": "groupby",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 181.27
+    },
+    "groupby_int64_overflow.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "groupby_int64_overflow",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "groupby_int64_overflow.wall_seconds",
+      "statistics": {
+        "max": 0.160024801,
+        "mean": 0.1591846074,
+        "median": 0.159285872,
+        "min": 0.157544383,
+        "samples": [
+          0.159223338,
+          0.159844643,
+          0.160024801,
+          0.157544383,
+          0.159285872
+        ],
+        "stdev": 0.0009802630947471662
+      },
+      "subgroup": "groupby",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.159285872
+    },
+    "groupby_sort_high_cardinality.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "groupby_sort_high_cardinality",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "groupby_sort_high_cardinality.peak_rss_mib",
+      "statistics": {
+        "max": 143.871,
+        "mean": 143.86939999999998,
+        "median": 143.871,
+        "min": 143.863,
+        "samples": [
+          143.871,
+          143.871,
+          143.871,
+          143.871,
+          143.863
+        ],
+        "stdev": 0.003577708764004036
+      },
+      "subgroup": "groupby",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 143.871
+    },
+    "groupby_sort_high_cardinality.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "groupby_sort_high_cardinality",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "groupby_sort_high_cardinality.wall_seconds",
+      "statistics": {
+        "max": 0.088706549,
+        "mean": 0.08662145759999999,
+        "median": 0.085946679,
+        "min": 0.085833799,
+        "samples": [
+          0.086709781,
+          0.085946679,
+          0.08591048,
+          0.088706549,
+          0.085833799
+        ],
+        "stdev": 0.0012182598805483976
+      },
+      "subgroup": "groupby",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.085946679
+    },
+    "join_single_key.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "join_single_key",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "join_single_key.peak_rss_mib",
+      "statistics": {
+        "max": 85.441,
+        "mean": 85.43620000000001,
+        "median": 85.438,
+        "min": 85.43,
+        "samples": [
+          85.438,
+          85.441,
+          85.43,
+          85.434,
+          85.438
+        ],
+        "stdev": 0.00426614580153936
+      },
+      "subgroup": "join",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 85.438
+    },
+    "join_single_key.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "join_single_key",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "join_single_key.wall_seconds",
+      "statistics": {
+        "max": 0.01081297,
+        "mean": 0.0106819528,
+        "median": 0.010790759,
+        "min": 0.010261081,
+        "samples": [
+          0.010808198,
+          0.010790759,
+          0.010261081,
+          0.010736756,
+          0.01081297
+        ],
+        "stdev": 0.0002372122515505892
+      },
+      "subgroup": "join",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.010790759
+    },
+    "merge_asof_int.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "merge_asof_int",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "merge_asof_int.peak_rss_mib",
+      "statistics": {
+        "max": 188.871,
+        "mean": 188.8648,
+        "median": 188.867,
+        "min": 188.852,
+        "samples": [
+          188.852,
+          188.867,
+          188.871,
+          188.863,
+          188.871
+        ],
+        "stdev": 0.007886697661253581
+      },
+      "subgroup": "join",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 188.867
+    },
+    "merge_asof_int.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "merge_asof_int",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "merge_asof_int.wall_seconds",
+      "statistics": {
+        "max": 0.004597119,
+        "mean": 0.0045899088,
+        "median": 0.004590953,
+        "min": 0.004580044,
+        "samples": [
+          0.004597119,
+          0.00458968,
+          0.004580044,
+          0.004590953,
+          0.004591748
+        ],
+        "stdev": 6.201343056145166e-06
+      },
+      "subgroup": "join",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.004590953
+    },
+    "reshape_unstack.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "reshape_unstack",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "reshape_unstack.peak_rss_mib",
+      "statistics": {
+        "max": 69.707,
+        "mean": 69.69839999999999,
+        "median": 69.699,
+        "min": 69.688,
+        "samples": [
+          69.707,
+          69.703,
+          69.688,
+          69.699,
+          69.695
+        ],
+        "stdev": 0.007334848328355402
+      },
+      "subgroup": "reshape",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 69.699
+    },
+    "reshape_unstack.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "reshape_unstack",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "reshape_unstack.wall_seconds",
+      "statistics": {
+        "max": 0.000964347,
+        "mean": 0.0009591124,
+        "median": 0.000960541,
+        "min": 0.00095395,
+        "samples": [
+          0.000961826,
+          0.000960541,
+          0.00095395,
+          0.000964347,
+          0.000954898
+        ],
+        "stdev": 4.506026553405999e-06
+      },
+      "subgroup": "reshape",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.000960541
+    },
+    "rolling_mean_window.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "rolling_mean_window",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "rolling_mean_window.peak_rss_mib",
+      "statistics": {
+        "max": 70.914,
+        "mean": 70.9132,
+        "median": 70.914,
+        "min": 70.91,
+        "samples": [
+          70.91,
+          70.914,
+          70.914,
+          70.914,
+          70.914
+        ],
+        "stdev": 0.001788854382002018
+      },
+      "subgroup": "rolling",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 70.914
+    },
+    "rolling_mean_window.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "rolling_mean_window",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "rolling_mean_window.wall_seconds",
+      "statistics": {
+        "max": 0.001743862,
+        "mean": 0.001723927,
+        "median": 0.00171978,
+        "min": 0.00171495,
+        "samples": [
+          0.001743862,
+          0.00172502,
+          0.00171495,
+          0.001716023,
+          0.00171978
+        ],
+        "stdev": 1.182007009285484e-05
+      },
+      "subgroup": "rolling",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.00171978
+    },
+    "stat_ops_frame_skew.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "stat_ops_frame_skew",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "stat_ops_frame_skew.peak_rss_mib",
+      "statistics": {
+        "max": 71.824,
+        "mean": 71.82079999999999,
+        "median": 71.82,
+        "min": 71.82,
+        "samples": [
+          71.82,
+          71.82,
+          71.82,
+          71.82,
+          71.824
+        ],
+        "stdev": 0.001788854382002018
+      },
+      "subgroup": "statistics",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 71.82
+    },
+    "stat_ops_frame_skew.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "stat_ops_frame_skew",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "stat_ops_frame_skew.wall_seconds",
+      "statistics": {
+        "max": 0.000564955,
+        "mean": 0.0005552958,
+        "median": 0.00055819,
+        "min": 0.000545372,
+        "samples": [
+          0.00055819,
+          0.000545911,
+          0.000564955,
+          0.000545372,
+          0.000562051
+        ],
+        "stdev": 9.135993963439326e-06
+      },
+      "subgroup": "statistics",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.00055819
+    },
+    "strings_upper.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "strings_upper",
+      "group_path": "runtime.group",
+      "metric": "peak_rss_mib",
+      "source_name": "strings_upper.peak_rss_mib",
+      "statistics": {
+        "max": 67.242,
+        "mean": 67.2382,
+        "median": 67.242,
+        "min": 67.227,
+        "samples": [
+          67.227,
+          67.238,
+          67.242,
+          67.242,
+          67.242
+        ],
+        "stdev": 0.006496152707564968
+      },
+      "subgroup": "strings",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "MiB",
+      "unit_path": "runtime.unit",
+      "value": 67.242
+    },
+    "strings_upper.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "runtime.direction",
+      "group": "strings_upper",
+      "group_path": "runtime.group",
+      "metric": "wall_seconds",
+      "source_name": "strings_upper.wall_seconds",
+      "statistics": {
+        "max": 0.001382958,
+        "mean": 0.0013615392,
+        "median": 0.001371266,
+        "min": 0.001318617,
+        "samples": [
+          0.001371266,
+          0.001359323,
+          0.001382958,
+          0.001318617,
+          0.001375532
+        ],
+        "stdev": 2.5477445313453267e-05
+      },
+      "subgroup": "strings",
+      "subgroup_path": "runtime.subgroup",
+      "unit": "s",
+      "unit_path": "runtime.unit",
+      "value": 0.001371266
+    }
+  },
+  "runtime": {
+    "numpy": "2.0.2",
+    "pandas": "3.1.0",
+    "python-dateutil": "2.9.0.post0",
+    "six": "1.17.0"
+  },
+  "scenarios": {
+    "drop_duplicates_int": {
+      "class": "DropDuplicates",
+      "correctness": {
+        "detail": "drop_duplicates kept exactly 10000 distinct keys",
+        "kind": "dropdup_unique_count",
+        "ok": true
+      },
+      "data_shape": [
+        10000
+      ],
+      "iterations": 220,
+      "method": "time_frame_drop_dups_int",
+      "module": "benchmarks.reindex",
+      "params": [
+        false
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 105.098,
+          "mean": 105.0916,
+          "median": 105.094,
+          "min": 105.078,
+          "samples": [
+            105.094,
+            105.078,
+            105.098,
+            105.098,
+            105.09
+          ],
+          "stdev": 0.00829457654132889
+        },
+        "wall_seconds": {
+          "max": 0.00983426,
+          "mean": 0.0095699664,
+          "median": 0.00947901,
+          "min": 0.009349592,
+          "samples": [
+            0.009349592,
+            0.00983426,
+            0.009423487,
+            0.00947901,
+            0.009763483
+          ],
+          "stdev": 0.00021540307505766928
+        }
+      },
+      "subsystem": "deduplication",
+      "warnings": [
+        "Pandas4Warning: The inplace keyword in DataFrame.drop_duplicates is deprecated and will be removed in a future version (PDEP-8).\nSee https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details."
+      ]
+    },
+    "groupby_int64_overflow": {
+      "class": "Int64",
+      "correctness": {
+        "detail": "grouped max of 2 aggregated columns matched the ungrouped maxima",
+        "kind": "groupby_max_columns",
+        "ok": true
+      },
+      "data_shape": [
+        131072,
+        2
+      ],
+      "iterations": 8,
+      "method": "time_overflow",
+      "module": "benchmarks.groupby",
+      "params": [],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 181.273,
+          "mean": 181.2682,
+          "median": 181.27,
+          "min": 181.262,
+          "samples": [
+            181.27,
+            181.266,
+            181.262,
+            181.27,
+            181.273
+          ],
+          "stdev": 0.0042661458015423575
+        },
+        "wall_seconds": {
+          "max": 0.160024801,
+          "mean": 0.1591846074,
+          "median": 0.159285872,
+          "min": 0.157544383,
+          "samples": [
+            0.159223338,
+            0.159844643,
+            0.160024801,
+            0.157544383,
+            0.159285872
+          ],
+          "stdev": 0.0009802630947471662
+        }
+      },
+      "subsystem": "groupby",
+      "warnings": []
+    },
+    "groupby_sort_high_cardinality": {
+      "class": "SortHighCardinality",
+      "correctness": {
+        "detail": "grouped sum matched the frame total over 787079 groups",
+        "kind": "groupby_sum_total",
+        "ok": true
+      },
+      "data_shape": [
+        787079
+      ],
+      "iterations": 10,
+      "method": "time_sum",
+      "module": "benchmarks.groupby",
+      "params": [
+        true
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 143.871,
+          "mean": 143.86939999999998,
+          "median": 143.871,
+          "min": 143.863,
+          "samples": [
+            143.871,
+            143.871,
+            143.871,
+            143.871,
+            143.863
+          ],
+          "stdev": 0.003577708764004036
+        },
+        "wall_seconds": {
+          "max": 0.088706549,
+          "mean": 0.08662145759999999,
+          "median": 0.085946679,
+          "min": 0.085833799,
+          "samples": [
+            0.086709781,
+            0.085946679,
+            0.08591048,
+            0.088706549,
+            0.085833799
+          ],
+          "stdev": 0.0012182598805483976
+        }
+      },
+      "subsystem": "groupby",
+      "warnings": []
+    },
+    "join_single_key": {
+      "class": "Join",
+      "correctness": {
+        "detail": "join kept 100000 rows and 8 columns",
+        "kind": "join_row_count",
+        "ok": true
+      },
+      "data_shape": [
+        100000,
+        8
+      ],
+      "iterations": 130,
+      "method": "time_join_dataframe_index_single_key_bigger",
+      "module": "benchmarks.join_merge",
+      "params": [
+        true
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 85.441,
+          "mean": 85.43620000000001,
+          "median": 85.438,
+          "min": 85.43,
+          "samples": [
+            85.438,
+            85.441,
+            85.43,
+            85.434,
+            85.438
+          ],
+          "stdev": 0.00426614580153936
+        },
+        "wall_seconds": {
+          "max": 0.01081297,
+          "mean": 0.0106819528,
+          "median": 0.010790759,
+          "min": 0.010261081,
+          "samples": [
+            0.010808198,
+            0.010790759,
+            0.010261081,
+            0.010736756,
+            0.01081297
+          ],
+          "stdev": 0.0002372122515505892
+        }
+      },
+      "subsystem": "join",
+      "warnings": []
+    },
+    "merge_asof_int": {
+      "class": "MergeAsof",
+      "correctness": {
+        "detail": "asof merge kept all 200000 left rows and stayed sorted on 'time'",
+        "kind": "merge_asof_rows",
+        "ok": true
+      },
+      "data_shape": [
+        200000,
+        3
+      ],
+      "iterations": 240,
+      "method": "time_on_int",
+      "module": "benchmarks.join_merge",
+      "params": [
+        "backward",
+        null
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 188.871,
+          "mean": 188.8648,
+          "median": 188.867,
+          "min": 188.852,
+          "samples": [
+            188.852,
+            188.867,
+            188.871,
+            188.863,
+            188.871
+          ],
+          "stdev": 0.007886697661253581
+        },
+        "wall_seconds": {
+          "max": 0.004597119,
+          "mean": 0.0045899088,
+          "median": 0.004590953,
+          "min": 0.004580044,
+          "samples": [
+            0.004597119,
+            0.00458968,
+            0.004580044,
+            0.004590953,
+            0.004591748
+          ],
+          "stdev": 6.201343056145166e-06
+        }
+      },
+      "subsystem": "join",
+      "warnings": []
+    },
+    "reshape_unstack": {
+      "class": "SimpleReshape",
+      "correctness": {
+        "detail": "unstack produced the full 100x400 grid with source values",
+        "kind": "reshape_unstack",
+        "ok": true
+      },
+      "data_shape": [
+        100,
+        400
+      ],
+      "iterations": 1100,
+      "method": "time_unstack",
+      "module": "benchmarks.reshape",
+      "params": [],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 69.707,
+          "mean": 69.69839999999999,
+          "median": 69.699,
+          "min": 69.688,
+          "samples": [
+            69.707,
+            69.703,
+            69.688,
+            69.699,
+            69.695
+          ],
+          "stdev": 0.007334848328355402
+        },
+        "wall_seconds": {
+          "max": 0.000964347,
+          "mean": 0.0009591124,
+          "median": 0.000960541,
+          "min": 0.00095395,
+          "samples": [
+            0.000961826,
+            0.000960541,
+            0.00095395,
+            0.000964347,
+            0.000954898
+          ],
+          "stdev": 4.506026553405999e-06
+        }
+      },
+      "subsystem": "reshape",
+      "warnings": []
+    },
+    "rolling_mean_window": {
+      "class": "Methods",
+      "correctness": {
+        "detail": "last rolling mean matched the numpy window mean (50.197769)",
+        "kind": "rolling_mean_last",
+        "ok": true
+      },
+      "data_shape": [
+        100000
+      ],
+      "iterations": 1100,
+      "method": "time_method",
+      "module": "benchmarks.rolling",
+      "params": [
+        "DataFrame",
+        [
+          "rolling",
+          {
+            "window": 1000
+          }
+        ],
+        "float",
+        "mean"
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 70.914,
+          "mean": 70.9132,
+          "median": 70.914,
+          "min": 70.91,
+          "samples": [
+            70.91,
+            70.914,
+            70.914,
+            70.914,
+            70.914
+          ],
+          "stdev": 0.001788854382002018
+        },
+        "wall_seconds": {
+          "max": 0.001743862,
+          "mean": 0.001723927,
+          "median": 0.00171978,
+          "min": 0.00171495,
+          "samples": [
+            0.001743862,
+            0.00172502,
+            0.00171495,
+            0.001716023,
+            0.00171978
+          ],
+          "stdev": 1.182007009285484e-05
+        }
+      },
+      "subsystem": "rolling",
+      "warnings": []
+    },
+    "stat_ops_frame_skew": {
+      "class": "FrameOps",
+      "correctness": {
+        "detail": "skew returned 4 finite per-column values",
+        "kind": "frame_skew",
+        "ok": true
+      },
+      "data_shape": [
+        4
+      ],
+      "iterations": 1800,
+      "method": "time_op",
+      "module": "benchmarks.stat_ops",
+      "params": [
+        "skew",
+        "float",
+        0
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 71.824,
+          "mean": 71.82079999999999,
+          "median": 71.82,
+          "min": 71.82,
+          "samples": [
+            71.82,
+            71.82,
+            71.82,
+            71.82,
+            71.824
+          ],
+          "stdev": 0.001788854382002018
+        },
+        "wall_seconds": {
+          "max": 0.000564955,
+          "mean": 0.0005552958,
+          "median": 0.00055819,
+          "min": 0.000545372,
+          "samples": [
+            0.00055819,
+            0.000545911,
+            0.000564955,
+            0.000545372,
+            0.000562051
+          ],
+          "stdev": 9.135993963439326e-06
+        }
+      },
+      "subsystem": "statistics",
+      "warnings": []
+    },
+    "strings_upper": {
+      "class": "Methods",
+      "correctness": {
+        "detail": "str.upper matched the Python reference for 10000 values",
+        "kind": "string_upper",
+        "ok": true
+      },
+      "data_shape": [
+        10000
+      ],
+      "iterations": 800,
+      "method": "time_upper",
+      "module": "benchmarks.strings",
+      "params": [
+        "str"
+      ],
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 67.242,
+          "mean": 67.2382,
+          "median": 67.242,
+          "min": 67.227,
+          "samples": [
+            67.227,
+            67.238,
+            67.242,
+            67.242,
+            67.242
+          ],
+          "stdev": 0.006496152707564968
+        },
+        "wall_seconds": {
+          "max": 0.001382958,
+          "mean": 0.0013615392,
+          "median": 0.001371266,
+          "min": 0.001318617,
+          "samples": [
+            0.001371266,
+            0.001359323,
+            0.001382958,
+            0.001318617,
+            0.001375532
+          ],
+          "stdev": 2.5477445313453267e-05
+        }
+      },
+      "subsystem": "strings",
+      "warnings": []
+    }
+  },
+  "software": "pandas",
+  "summary": {
+    "metric_count": 18,
+    "samples_per_scenario": 5,
+    "scenario_count": 9,
+    "statistic": "median",
+    "warmups_per_scenario": 1
+  },
+  "variant": "base",
+  "version": "3.1.0"
+}

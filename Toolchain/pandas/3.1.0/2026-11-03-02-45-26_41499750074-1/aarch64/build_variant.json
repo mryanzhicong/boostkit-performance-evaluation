@@ -1,0 +1,81 @@
+{
+  "actual_version": "3.1.0",
+  "asv_suite": {
+    "n_jobs": 1,
+    "profile": "benchmark",
+    "repository": "https://github.com/pandas-dev/pandas",
+    "suite": "asv_bench/benchmarks",
+    "tag": "v3.1.0",
+    "tag_commit": "c6f46769b808eb60218189d089dd67841b44f1b9",
+    "vendored_manifest": "asv_bench/manifest.sha256",
+    "vendored_manifest_sha256": "14478c8f93b5572bc1b7dfd381f9c324c85bb6a9851d29d51ad4feae3bf6a564"
+  },
+  "comments": [
+    "# Hash-locked runtime for the pandas benchmark case.",
+    "# Every wheel is verified with --require-hashes against requirements.lock."
+  ],
+  "measurement_protocol": {
+    "offline": true,
+    "processes_per_sample": 1,
+    "statistic": "median",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "prefetch_seconds": 4,
+  "private_venv": {
+    "created": true,
+    "venv_seconds": 3,
+    "wheel_install_seconds": 7
+  },
+  "python": {
+    "build_jobs": 384,
+    "build_seconds": {
+      "configure": 41,
+      "install": 12,
+      "make": 20
+    },
+    "configure_options": [
+      "--with-ensurepip=install"
+    ],
+    "implementation": "CPython",
+    "source": "python.org official source archive",
+    "source_sha256": "710c3e75dac8b2f258d9cd0f76e5c4c2e9175fac9e249c98901552f7cf33b7dd",
+    "version": "3.12.16"
+  },
+  "requested_version": "3.1.0",
+  "runtime": {
+    "numpy": "2.0.2",
+    "pandas": "3.1.0",
+    "python-dateutil": "2.9.0.post0",
+    "six": "1.17.0"
+  },
+  "runtime_wheels_sha256": {
+    "numpy-2.0.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl": "c05e238064fc0610c840d1cf6a13bf63d7e391717d247f1bf0318172e759e692",
+    "pandas-3.1.0-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl": "9b4e696ff70ed06e986feeec09356c491ce878d0df69a36c8e591b6a38afa29b",
+    "python_dateutil-2.9.0.post0-py2.py3-none-any.whl": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427",
+    "six-1.17.0-py2.py3-none-any.whl": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+  },
+  "scenarios": [
+    "groupby_sort_high_cardinality",
+    "groupby_int64_overflow",
+    "join_single_key",
+    "merge_asof_int",
+    "stat_ops_frame_skew",
+    "rolling_mean_window",
+    "drop_duplicates_int",
+    "reshape_unstack",
+    "strings_upper"
+  ],
+  "software": "pandas",
+  "source_distribution": {
+    "bytes": 5933421,
+    "file": "pandas-3.1.0.tar.gz",
+    "notes": "provenance only: measurement uses the published wheel",
+    "sha256": "ecb9b2d8a817b1e1ba1fdb90c0abe9eab31b4fdf2562b7a56b86ac66ace17e49"
+  },
+  "variant": "base"
+}
