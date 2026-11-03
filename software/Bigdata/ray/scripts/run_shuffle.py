@@ -23,6 +23,14 @@ OBJECT_STORE_BYTES = 16 * 1024**3
 WARMUPS = 1
 FORMAL_ROUNDS = 7
 ROUND_TIMEOUT = 1800
+MAX_UNIX_SOCKET_BYTES = 107
+
+
+def validate_ray_temp_dir(ray_temp: Path) -> None:
+    socket_path = (ray_temp / "session_0000-00-00_00-00-00_000000_000000000"
+                   / "sockets" / "plasma_store")
+    if len(os.fsencode(str(socket_path))) > MAX_UNIX_SOCKET_BYTES:
+        raise ValueError(f"Ray socket directory is too long: {ray_temp}")
 
 
 def parse_round(path: Path) -> float:
@@ -85,7 +93,8 @@ def run_round(script: Path, output: Path, log, address: str, index: int, warmup:
     return value
 
 
-def run(script: Path, work_dir: Path, result_dir: Path) -> dict:
+def run(script: Path, work_dir: Path, result_dir: Path,
+        ray_temp_dir: Path | None = None) -> dict:
     os.environ["RAY_memory_monitor_refresh_ms"] = "0"
     import ray
 
@@ -93,7 +102,9 @@ def run(script: Path, work_dir: Path, result_dir: Path) -> dict:
     result_dir.mkdir(parents=True, exist_ok=True)
     rounds_dir = result_dir / "shuffle-rounds"
     rounds_dir.mkdir(exist_ok=True)
-    ray_temp = work_dir / "ray-temp"
+    ray_temp = ray_temp_dir if ray_temp_dir is not None else work_dir / "ray-temp"
+    if ray_temp_dir is not None:
+        validate_ray_temp_dir(ray_temp)
     ray_temp.mkdir(exist_ok=True)
     raw_log = result_dir / "benchmark_ray_raw.log"
     measurements = []
@@ -137,10 +148,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shuffle-script", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
+    parser.add_argument("--ray-temp-dir", type=Path)
     parser.add_argument("--results-dir", required=True, type=Path)
     args = parser.parse_args()
     try:
-        payload = run(args.shuffle_script, args.work_dir, args.results_dir)
+        payload = run(args.shuffle_script, args.work_dir, args.results_dir,
+                      args.ray_temp_dir)
         target = args.results_dir / "benchmark_ray.json"
         target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     except (OSError, ValueError, RuntimeError) as exc:

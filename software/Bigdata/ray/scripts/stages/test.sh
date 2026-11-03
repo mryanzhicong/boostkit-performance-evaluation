@@ -11,6 +11,7 @@ run_ray_benchmark() {
         "VIRTUAL_ENV=${RAY_VENV}" "${RAY_VENV}/bin/python" "${RAY_RUNNER_SCRIPT}" \
         --shuffle-script "${RAY_SHUFFLE_SCRIPT}" \
         --work-dir "${PERF_WORK_DIR}" \
+        --ray-temp-dir "${RAY_SOCKET_DIR}" \
         --results-dir "${RESULTS_DIR}" || {
         log_message 'ERROR: official Ray Shuffle benchmark failed'
         return 50

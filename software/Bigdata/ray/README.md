@@ -23,7 +23,7 @@ Ray wheel 和测试脚本优先读取宿主机 `/home/runner/software/ray/` 下�
 
 Framework 的 `build` 阶段调用 `scripts/builders/dispatch.sh`。`base` 在容器内完整安装官方 Ray，并在容器内用 `import ray; print(ray.__version__)` 核对实际版本；`optimized` 暂未实现，会明确失败。容器镜像与生命周期函数集中在 `scripts/common.sh`，与 UnixBench 相同；后续 `start`、`test`、`stop` 共用。
 
-`start` 在容器内检查 16 个可用 CPU 和 `/dev/shm` 至少 16 GiB 可用空间，不足时失败，不把 object store 悄悄放到 `/tmp`。`test` 在容器内的 `${PERF_WORK_DIR}/ray-temp` 启动本次私有单节点 Ray，注入官方用例所需的 `RAY_ADDRESS` 和 `TEST_OUTPUT_JSON`，运行原脚本：
+`start` 在容器内检查 16 个可用 CPU 和 `/dev/shm` 至少 16 GiB 可用空间，不足时失败，不把 object store 悄悄放到 `/tmp`。容器将宿主机 `${PERF_WORK_DIR}/ray-temp` 单独挂载为容器内 `/r`，`test` 以 `/r` 作为 Ray `_temp_dir`；这样 Unix socket 路径足够短，而会话文件和日志仍保存在本次任务目录。测试注入官方用例所需的 `RAY_ADDRESS` 和 `TEST_OUTPUT_JSON`，运行原脚本：
 
 ```bash
 python shuffle_test.py --num-partitions 50 --partition-size 80000000

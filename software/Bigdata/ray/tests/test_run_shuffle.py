@@ -65,3 +65,9 @@ def test_single_node_aggregate_keeps_fixed_parameters(tmp_path: Path, monkeypatc
     assert sum(row["included"] for row in payload["measurements"]) == 7
     assert calls[0]["resources"] == {"node": 1}
     assert calls[-1] == "shutdown"
+
+
+def test_container_socket_path_is_short() -> None:
+    MODULE.validate_ray_temp_dir(Path("/r"))
+    with pytest.raises(ValueError, match="too long"):
+        MODULE.validate_ray_temp_dir(Path("/home/runner/boostkit-perf/ray/2.55.1/aarch64/41423736849-3/ray-temp"))

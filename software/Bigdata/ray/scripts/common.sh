@@ -17,6 +17,7 @@ RAY_IMAGE_ARCHIVE_DIR="${RAY_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-
 RAY_CA_ANCHORS_DIR="${RAY_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 RAY_CONTAINER_IMAGE=""
 RAY_CONTAINER_NAME=""
+RAY_SOCKET_DIR=/r
 RAY_SHUFFLE_SHA256=38bac871b718d2192e325054bb0fadaad2c29b07263c893a083e15de564c55f6
 RAY_SHUFFLE_URL="https://raw.githubusercontent.com/ray-project/ray/ray-${SOFTWARE_VERSION}/release/nightly_tests/shuffle/shuffle_test.py"
 RAY_NUM_CPUS=16
@@ -59,9 +60,11 @@ configure_runtime_paths() {
     RAY_VENV="${PERF_WORK_DIR}/ray-venv"
     RAY_SHUFFLE_SCRIPT="${PERF_WORK_DIR}/shuffle_test.py"
     RAY_RUNNER_SCRIPT="${PERF_WORK_DIR}/run_shuffle.py"
+    RAY_TEMP_HOST_DIR="${PERF_WORK_DIR}/ray-temp"
     RAY_CONTAINER_NAME="boostkit-ray-${EXPECTED_ARCH}-${PERF_RUN_ID}"
     export SOFTWARE_VERSION PERF_VARIANT EXPECTED_ARCH PERF_RUN_ID PERF_WORK_DIR RESULTS_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR RAY_VENV RAY_SHUFFLE_SCRIPT RAY_RUNNER_SCRIPT
+    export RAY_TEMP_HOST_DIR RAY_SOCKET_DIR
 }
 
 initialize_runtime() {
@@ -139,11 +142,13 @@ start_ray_container() {
         }
         cert_mount+=(--mount "type=bind,source=${RAY_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
+    mkdir -p "${RAY_TEMP_HOST_DIR}" || return 40
     log_message "starting private Ray container ${RAY_CONTAINER_NAME} (single node, 20 GiB /dev/shm)"
     docker run --detach --name "${RAY_CONTAINER_NAME}" \
         --label "boostkit.ray.run-id=${PERF_RUN_ID}" \
         --network=host --shm-size=20g --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+        --mount "type=bind,source=${RAY_TEMP_HOST_DIR},target=${RAY_SOCKET_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
