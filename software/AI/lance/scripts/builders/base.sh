@@ -1,6 +1,34 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
+prepare_cargo_mirror() {
+    mkdir -p "${PERF_WORK_DIR}/cargo" || return 40
+    cat > "${PERF_WORK_DIR}/cargo/config.toml" <<'EOF'
+[source.crates-io]
+replace-with = "rsproxy-sparse"
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[net]
+git-fetch-with-cli = true
+EOF
+}
+
+install_pinned_rust_toolchain() {
+    local channel
+    channel="$(sed -nE 's/^[[:space:]]*channel = "([^"]+)"$/\1/p' \
+        "${LANCE_SOURCE_DIR}/rust-toolchain.toml" | head -n 1)"
+    [[ "${channel}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+        log "ERROR: invalid upstream Rust toolchain channel: ${channel}"; return 40;
+    }
+    log "installing upstream pinned Rust ${channel} from RsProxy"
+    container_exec "${PERF_WORK_DIR}/cargo/bin/rustup" toolchain install "${channel}" \
+        --profile minimal || return 40
+    container_exec sh -c 'cd "$1" && "$2/bin/rustc" --version' sh \
+        "${LANCE_SOURCE_DIR}" "${PERF_WORK_DIR}/cargo" || return 40
+}
+
 build_lance_base() {
     local version
     local -a dnf_options=()
@@ -36,11 +64,13 @@ build_lance_base() {
     log 'installing SIFT benchmark dependencies inside the container'
     container_exec "${LANCE_VENV}/bin/python" -m pip install \
         'numpy>=1.22' 'pyarrow>=14' pandas ml_dtypes 'torch>=2.0' || return 40
-    log 'installing upstream pinned Rust toolchain inside the private container'
+    log 'configuring private RsProxy Cargo mirror and installing upstream pinned Rust toolchain'
+    prepare_cargo_mirror || return $?
     container_exec curl -fSL --retry 3 --connect-timeout 30 \
-        -o "${PERF_WORK_DIR}/rustup-init.sh" https://sh.rustup.rs || return 40
+        -o "${PERF_WORK_DIR}/rustup-init.sh" "${LANCE_RUSTUP_SCRIPT_URL}" || return 40
     container_exec sh "${PERF_WORK_DIR}/rustup-init.sh" -y --no-modify-path \
         --profile minimal --default-toolchain none || return 40
+    install_pinned_rust_toolchain || return $?
     log 'building unmodified upstream pylance with maturin --release inside the container'
     container_exec sh -c 'cd "$1" && PATH="$2:$PATH" VIRTUAL_ENV="$3" \
         "$3/bin/maturin" develop --release' sh \

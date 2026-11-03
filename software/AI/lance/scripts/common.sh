@@ -12,6 +12,9 @@ LANCE_IMAGE_ARCHIVE_DIR="${LANCE_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEu
 LANCE_CA_ANCHORS_DIR="${LANCE_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 LANCE_DATA_ARCHIVE_DIR="${LANCE_DATA_ARCHIVE_DIR:-/home/runner/software/lance}"
 LANCE_PYPI_INDEX_URL="${LANCE_PYPI_INDEX_URL:-https://repo.huaweicloud.com/repository/pypi/simple}"
+LANCE_RUSTUP_SCRIPT_URL="https://rsproxy.cn/rustup-init.sh"
+LANCE_RUSTUP_UPDATE_ROOT="https://rsproxy.cn/rustup"
+LANCE_RUSTUP_DIST_SERVER="https://rsproxy.cn"
 LANCE_CONTAINER_IMAGE=""
 LANCE_CONTAINER_NAME=""
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
@@ -158,6 +161,8 @@ container_exec() {
         "${git_config[@]}" \
         -e "CARGO_HOME=${PERF_WORK_DIR}/cargo" \
         -e "RUSTUP_HOME=${PERF_WORK_DIR}/rustup" \
+        -e "RUSTUP_UPDATE_ROOT=${LANCE_RUSTUP_UPDATE_ROOT}" \
+        -e "RUSTUP_DIST_SERVER=${LANCE_RUSTUP_DIST_SERVER}" \
         -e "PIP_INDEX_URL=${LANCE_PYPI_INDEX_URL}" \
         -e "PIP_CACHE_DIR=${PERF_WORK_DIR}/pip-cache" \
         "${LANCE_CONTAINER_NAME}" "$@"
