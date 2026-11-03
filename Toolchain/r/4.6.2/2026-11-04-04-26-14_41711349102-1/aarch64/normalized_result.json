@@ -1,0 +1,1458 @@
+{
+  "software": "r",
+  "category": "Toolchain",
+  "version": "4.6.2",
+  "architecture": "aarch64",
+  "run_id": "41711349102-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-03T20:23:57Z",
+    "category": "Toolchain",
+    "software": "r",
+    "requested_version": "4.6.2",
+    "actual_version": "4.6.2",
+    "architecture": "aarch64",
+    "run_id": "41711349102-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+      "matrix": [
+        "crossprod_small",
+        "crossprod_large",
+        "matvec_small",
+        "matvec_large",
+        "solve_small",
+        "solve_large",
+        "vector_arith_small",
+        "vector_arith_large",
+        "sort_small",
+        "sort_large",
+        "lapply_small",
+        "lapply_large",
+        "paste_small",
+        "paste_large",
+        "rowsum_small",
+        "rowsum_large"
+      ],
+      "dimensions": [
+        "blas",
+        "calls",
+        "matrix",
+        "strings",
+        "vector"
+      ],
+      "scenario_details": [
+        {
+          "scenario": "crossprod_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "400",
+          "check": "float",
+          "expected": "16033800.787921709940",
+          "tolerance": "1e-09",
+          "workload": "crossprod of a 400x400 double matrix (BLAS dgemm)"
+        },
+        {
+          "scenario": "crossprod_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "1200",
+          "check": "float",
+          "expected": "431497997.192656815052",
+          "tolerance": "1e-09",
+          "workload": "crossprod of a 1200x1200 double matrix (BLAS dgemm)"
+        },
+        {
+          "scenario": "matvec_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "500",
+          "check": "float",
+          "expected": "63900.229739928029",
+          "tolerance": "1e-09",
+          "workload": "matrix-vector product 500x500 (BLAS dgemv)"
+        },
+        {
+          "scenario": "matvec_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "1500",
+          "check": "float",
+          "expected": "559495.296892058803",
+          "tolerance": "1e-09",
+          "workload": "matrix-vector product 1500x1500 (BLAS dgemv)"
+        },
+        {
+          "scenario": "solve_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "300",
+          "check": "float",
+          "expected": "0.035995605184",
+          "tolerance": "1e-09",
+          "workload": "solve 300x300 positive definite system (LAPACK)"
+        },
+        {
+          "scenario": "solve_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "900",
+          "check": "float",
+          "expected": "0.075889014603",
+          "tolerance": "1e-09",
+          "workload": "solve 900x900 positive definite system (LAPACK)"
+        },
+        {
+          "scenario": "vector_arith_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "5000000",
+          "check": "float",
+          "expected": "1793168203899.968261718750",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/sum over a 5M element numeric vector"
+        },
+        {
+          "scenario": "vector_arith_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "20000000",
+          "check": "float",
+          "expected": "28631058481635.855468750000",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/sum over a 20M element numeric vector"
+        },
+        {
+          "scenario": "sort_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "1000000",
+          "check": "float",
+          "expected": "499916.506571774138",
+          "tolerance": "1e-09",
+          "workload": "sort 1M uniform random doubles"
+        },
+        {
+          "scenario": "sort_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "4000000",
+          "check": "float",
+          "expected": "1999827.257361510070",
+          "tolerance": "1e-09",
+          "workload": "sort 4M uniform random doubles"
+        },
+        {
+          "scenario": "lapply_small",
+          "dimension": "calls",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "200000",
+          "check": "int",
+          "expected": "82857528571",
+          "tolerance": null,
+          "workload": "lapply over 200k elements"
+        },
+        {
+          "scenario": "lapply_large",
+          "dimension": "calls",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "800000",
+          "check": "int",
+          "expected": "382858228583",
+          "tolerance": null,
+          "workload": "lapply over 800k elements"
+        },
+        {
+          "scenario": "paste_small",
+          "dimension": "strings",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "200000",
+          "check": "int",
+          "expected": "2488895",
+          "tolerance": null,
+          "workload": "paste0 over 200k elements"
+        },
+        {
+          "scenario": "paste_large",
+          "dimension": "strings",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "800000",
+          "check": "int",
+          "expected": "10288895",
+          "tolerance": null,
+          "workload": "paste0 over 800k elements"
+        },
+        {
+          "scenario": "rowsum_small",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "20000",
+          "check": "float",
+          "expected": "999524.848536490696",
+          "tolerance": "1e-09",
+          "workload": "rowSums over a 20000x100 matrix"
+        },
+        {
+          "scenario": "rowsum_large",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "target": "bench.R",
+          "scale": "40000",
+          "check": "float",
+          "expected": "1999827.257361510070",
+          "tolerance": "1e-09",
+          "workload": "rowSums over a 40000x100 matrix"
+        }
+      ]
+    }
+  },
+  "parameter_signature": "1a25ecd7ab8703d4e3b2c744ac419fe1c4bf77b12eef97444a6b3204baa5514c",
+  "test_tools": {
+    "r": {
+      "version": "4.6.2"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-03T20:19:20Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 378842 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 384959 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 370442 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 381455 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-03T20:19:20Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 14146977792 1589326831616    82980864 19869810688 1602190086144\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-03T20:25:29Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 14461001728 1588599701504    85155840 20291555328 1601876062208\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "config": {
+        "configure": "./configure --prefix=<install> --without-x --without-recommended-packages --disable-java --without-readline --without-libcurl",
+        "jobs": 4,
+        "source_sha256": "c297040f6392b1dac6e5c0eb398422cfdaedf540ae2205edb9ad0d10cb10ee00",
+        "blas": "/home/runner/boostkit-perf/r/4.6.2/aarch64/41711349102-1/r-install/lib/R/lib/libRblas.so "
+      }
+    },
+    "raw_output": {
+      "path": "raw-output.log",
+      "size": 10655
+    },
+    "benchmark_result": {
+      "software": "r",
+      "version": "4.6.2",
+      "architecture": "aarch64",
+      "variant": "base",
+      "generated_at": "2026-11-03T20:24:58Z",
+      "scenarios": [
+        "crossprod_small",
+        "crossprod_large",
+        "matvec_small",
+        "matvec_large",
+        "solve_small",
+        "solve_large",
+        "vector_arith_small",
+        "vector_arith_large",
+        "sort_small",
+        "sort_large",
+        "lapply_small",
+        "lapply_large",
+        "paste_small",
+        "paste_large",
+        "rowsum_small",
+        "rowsum_large"
+      ],
+      "results": {
+        "crossprod_small": {
+          "source_name": "crossprod_small",
+          "scenario": "crossprod_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "400",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.216954,
+          "samples": [
+            0.216928,
+            0.216323,
+            0.216954,
+            0.217385,
+            0.217259
+          ],
+          "median": 0.216954,
+          "min": 0.216323,
+          "max": 0.217385,
+          "mean": 0.21697,
+          "stdev": 0.000411,
+          "warmup_wall_seconds": 0.216257,
+          "checksum": 16033800.78792171
+        },
+        "crossprod_small_rss": {
+          "source_name": "crossprod_small_rss",
+          "scenario": "crossprod_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "400",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 50.59,
+          "samples": [
+            50.59,
+            50.59,
+            50.59,
+            50.59,
+            50.582
+          ],
+          "median": 50.59,
+          "min": 50.582,
+          "max": 50.59,
+          "mean": 50.5884,
+          "stdev": 0.003578,
+          "warmup_rss_mib": 50.574
+        },
+        "crossprod_large": {
+          "source_name": "crossprod_large",
+          "scenario": "crossprod_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "1200",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.970993,
+          "samples": [
+            0.974853,
+            0.973205,
+            0.970321,
+            0.970993,
+            0.970129
+          ],
+          "median": 0.970993,
+          "min": 0.970129,
+          "max": 0.974853,
+          "mean": 0.9719,
+          "stdev": 0.002054,
+          "warmup_wall_seconds": 0.972289,
+          "checksum": 431497997.1926568
+        },
+        "crossprod_large_rss": {
+          "source_name": "crossprod_large_rss",
+          "scenario": "crossprod_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "1200",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 79.891,
+          "samples": [
+            79.891,
+            79.879,
+            79.891,
+            79.883,
+            79.891
+          ],
+          "median": 79.891,
+          "min": 79.879,
+          "max": 79.891,
+          "mean": 79.887,
+          "stdev": 0.005657,
+          "warmup_rss_mib": 79.891
+        },
+        "matvec_small": {
+          "source_name": "matvec_small",
+          "scenario": "matvec_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "500",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.168004,
+          "samples": [
+            0.166814,
+            0.167073,
+            0.168221,
+            0.168189,
+            0.168004
+          ],
+          "median": 0.168004,
+          "min": 0.166814,
+          "max": 0.168221,
+          "mean": 0.16766,
+          "stdev": 0.000666,
+          "warmup_wall_seconds": 0.166492,
+          "checksum": 63900.22973992803
+        },
+        "matvec_small_rss": {
+          "source_name": "matvec_small_rss",
+          "scenario": "matvec_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "500",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 50.75,
+          "samples": [
+            50.75,
+            50.75,
+            52.723,
+            50.75,
+            50.754
+          ],
+          "median": 50.75,
+          "min": 50.75,
+          "max": 52.723,
+          "mean": 51.1454,
+          "stdev": 0.881907,
+          "warmup_rss_mib": 50.734
+        },
+        "matvec_large": {
+          "source_name": "matvec_large",
+          "scenario": "matvec_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "1500",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.166361,
+          "samples": [
+            0.166361,
+            0.166321,
+            0.165765,
+            0.166389,
+            0.216452
+          ],
+          "median": 0.166361,
+          "min": 0.165765,
+          "max": 0.216452,
+          "mean": 0.176258,
+          "stdev": 0.022471,
+          "warmup_wall_seconds": 0.166609,
+          "checksum": 559495.2968920588
+        },
+        "matvec_large_rss": {
+          "source_name": "matvec_large_rss",
+          "scenario": "matvec_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "1500",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 81.289,
+          "samples": [
+            81.289,
+            81.281,
+            81.289,
+            81.293,
+            81.293
+          ],
+          "median": 81.289,
+          "min": 81.281,
+          "max": 81.293,
+          "mean": 81.289,
+          "stdev": 0.004899,
+          "warmup_rss_mib": 81.289
+        },
+        "solve_small": {
+          "source_name": "solve_small",
+          "scenario": "solve_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "300",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.166406,
+          "samples": [
+            0.167252,
+            0.16642,
+            0.166406,
+            0.165746,
+            0.166344
+          ],
+          "median": 0.166406,
+          "min": 0.165746,
+          "max": 0.167252,
+          "mean": 0.166434,
+          "stdev": 0.000537,
+          "warmup_wall_seconds": 0.16703,
+          "checksum": 0.035995605184
+        },
+        "solve_small_rss": {
+          "source_name": "solve_small_rss",
+          "scenario": "solve_small",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "300",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 51.605,
+          "samples": [
+            51.605,
+            51.605,
+            51.605,
+            51.605,
+            51.605
+          ],
+          "median": 51.605,
+          "min": 51.605,
+          "max": 51.605,
+          "mean": 51.605,
+          "stdev": 0.0,
+          "warmup_rss_mib": 51.605
+        },
+        "solve_large": {
+          "source_name": "solve_large",
+          "scenario": "solve_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "900",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.669433,
+          "samples": [
+            0.669416,
+            0.669069,
+            0.669433,
+            0.67028,
+            0.671923
+          ],
+          "median": 0.669433,
+          "min": 0.669069,
+          "max": 0.671923,
+          "mean": 0.670024,
+          "stdev": 0.001151,
+          "warmup_wall_seconds": 0.668852,
+          "checksum": 0.075889014603
+        },
+        "solve_large_rss": {
+          "source_name": "solve_large_rss",
+          "scenario": "solve_large",
+          "dimension": "blas",
+          "runner": "r_script",
+          "scale": "900",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 84.609,
+          "samples": [
+            84.605,
+            84.609,
+            84.621,
+            84.617,
+            84.605
+          ],
+          "median": 84.609,
+          "min": 84.605,
+          "max": 84.621,
+          "mean": 84.6114,
+          "stdev": 0.007266,
+          "warmup_rss_mib": 84.605
+        },
+        "vector_arith_small": {
+          "source_name": "vector_arith_small",
+          "scenario": "vector_arith_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "5000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.317229,
+          "samples": [
+            0.317115,
+            0.316967,
+            0.317229,
+            0.317419,
+            0.317417
+          ],
+          "median": 0.317229,
+          "min": 0.316967,
+          "max": 0.317419,
+          "mean": 0.317229,
+          "stdev": 0.000196,
+          "warmup_wall_seconds": 0.317242,
+          "checksum": 1793168203899.9683
+        },
+        "vector_arith_small_rss": {
+          "source_name": "vector_arith_small_rss",
+          "scenario": "vector_arith_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "5000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 141.809,
+          "samples": [
+            141.809,
+            141.809,
+            141.812,
+            141.809,
+            141.809
+          ],
+          "median": 141.809,
+          "min": 141.809,
+          "max": 141.812,
+          "mean": 141.8096,
+          "stdev": 0.001342,
+          "warmup_rss_mib": 141.809
+        },
+        "vector_arith_large": {
+          "source_name": "vector_arith_large",
+          "scenario": "vector_arith_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "20000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.771111,
+          "samples": [
+            0.773073,
+            0.773426,
+            0.721733,
+            0.771111,
+            0.720224
+          ],
+          "median": 0.771111,
+          "min": 0.720224,
+          "max": 0.773426,
+          "mean": 0.751913,
+          "stdev": 0.028258,
+          "warmup_wall_seconds": 0.771416,
+          "checksum": 28631058481635.855
+        },
+        "vector_arith_large_rss": {
+          "source_name": "vector_arith_large_rss",
+          "scenario": "vector_arith_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "20000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 428.242,
+          "samples": [
+            428.234,
+            428.23,
+            428.242,
+            428.246,
+            428.242
+          ],
+          "median": 428.242,
+          "min": 428.23,
+          "max": 428.246,
+          "mean": 428.2388,
+          "stdev": 0.006573,
+          "warmup_rss_mib": 428.246
+        },
+        "sort_small": {
+          "source_name": "sort_small",
+          "scenario": "sort_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "1000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.268513,
+          "samples": [
+            0.267714,
+            0.26761,
+            0.268513,
+            0.268707,
+            0.269111
+          ],
+          "median": 0.268513,
+          "min": 0.26761,
+          "max": 0.269111,
+          "mean": 0.268331,
+          "stdev": 0.000649,
+          "warmup_wall_seconds": 0.266528,
+          "checksum": 499916.50657177414
+        },
+        "sort_small_rss": {
+          "source_name": "sort_small_rss",
+          "scenario": "sort_small",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "1000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 77.273,
+          "samples": [
+            77.273,
+            77.273,
+            77.277,
+            77.262,
+            77.273
+          ],
+          "median": 77.273,
+          "min": 77.262,
+          "max": 77.277,
+          "mean": 77.2716,
+          "stdev": 0.005639,
+          "warmup_rss_mib": 77.27
+        },
+        "sort_large": {
+          "source_name": "sort_large",
+          "scenario": "sort_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "4000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.6191,
+          "samples": [
+            0.621209,
+            0.618824,
+            0.618585,
+            0.6191,
+            0.619836
+          ],
+          "median": 0.6191,
+          "min": 0.618585,
+          "max": 0.621209,
+          "mean": 0.619511,
+          "stdev": 0.001059,
+          "warmup_wall_seconds": 0.622423,
+          "checksum": 1999827.25736151
+        },
+        "sort_large_rss": {
+          "source_name": "sort_large_rss",
+          "scenario": "sort_large",
+          "dimension": "vector",
+          "runner": "r_script",
+          "scale": "4000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 168.824,
+          "samples": [
+            168.828,
+            168.824,
+            168.824,
+            168.809,
+            168.824
+          ],
+          "median": 168.824,
+          "min": 168.809,
+          "max": 168.828,
+          "mean": 168.8218,
+          "stdev": 0.007362,
+          "warmup_rss_mib": 168.824
+        },
+        "lapply_small": {
+          "source_name": "lapply_small",
+          "scenario": "lapply_small",
+          "dimension": "calls",
+          "runner": "r_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.319234,
+          "samples": [
+            0.319429,
+            0.319214,
+            0.318146,
+            0.319267,
+            0.319234
+          ],
+          "median": 0.319234,
+          "min": 0.318146,
+          "max": 0.319429,
+          "mean": 0.319058,
+          "stdev": 0.000517,
+          "warmup_wall_seconds": 0.319453,
+          "checksum": 82857528571
+        },
+        "lapply_small_rss": {
+          "source_name": "lapply_small_rss",
+          "scenario": "lapply_small",
+          "dimension": "calls",
+          "runner": "r_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 68.91,
+          "samples": [
+            68.91,
+            68.902,
+            68.906,
+            68.91,
+            70.879
+          ],
+          "median": 68.91,
+          "min": 68.902,
+          "max": 70.879,
+          "mean": 69.3014,
+          "stdev": 0.881911,
+          "warmup_rss_mib": 68.902
+        },
+        "lapply_large": {
+          "source_name": "lapply_large",
+          "scenario": "lapply_large",
+          "dimension": "calls",
+          "runner": "r_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.870365,
+          "samples": [
+            0.870136,
+            0.871029,
+            0.869778,
+            0.870365,
+            0.870809
+          ],
+          "median": 0.870365,
+          "min": 0.869778,
+          "max": 0.871029,
+          "mean": 0.870423,
+          "stdev": 0.000504,
+          "warmup_wall_seconds": 0.869793,
+          "checksum": 382858228583
+        },
+        "lapply_large_rss": {
+          "source_name": "lapply_large_rss",
+          "scenario": "lapply_large",
+          "dimension": "calls",
+          "runner": "r_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 126.418,
+          "samples": [
+            126.414,
+            126.418,
+            126.41,
+            128.387,
+            126.418
+          ],
+          "median": 126.418,
+          "min": 126.41,
+          "max": 128.387,
+          "mean": 126.8094,
+          "stdev": 0.881911,
+          "warmup_rss_mib": 126.414
+        },
+        "paste_small": {
+          "source_name": "paste_small",
+          "scenario": "paste_small",
+          "dimension": "strings",
+          "runner": "r_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.269156,
+          "samples": [
+            0.267976,
+            0.269428,
+            0.269778,
+            0.269139,
+            0.269156
+          ],
+          "median": 0.269156,
+          "min": 0.267976,
+          "max": 0.269778,
+          "mean": 0.269095,
+          "stdev": 0.000677,
+          "warmup_wall_seconds": 0.267113,
+          "checksum": 2488895
+        },
+        "paste_small_rss": {
+          "source_name": "paste_small_rss",
+          "scenario": "paste_small",
+          "dimension": "strings",
+          "runner": "r_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 78.109,
+          "samples": [
+            78.125,
+            78.121,
+            78.105,
+            78.105,
+            78.109
+          ],
+          "median": 78.109,
+          "min": 78.105,
+          "max": 78.125,
+          "mean": 78.113,
+          "stdev": 0.009381,
+          "warmup_rss_mib": 78.121
+        },
+        "paste_large": {
+          "source_name": "paste_large",
+          "scenario": "paste_large",
+          "dimension": "strings",
+          "runner": "r_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.869886,
+          "samples": [
+            0.869715,
+            0.869939,
+            0.869886,
+            0.768824,
+            0.86994
+          ],
+          "median": 0.869886,
+          "min": 0.768824,
+          "max": 0.86994,
+          "mean": 0.849661,
+          "stdev": 0.045189,
+          "warmup_wall_seconds": 0.872096,
+          "checksum": 10288895
+        },
+        "paste_large_rss": {
+          "source_name": "paste_large_rss",
+          "scenario": "paste_large",
+          "dimension": "strings",
+          "runner": "r_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 156.93,
+          "samples": [
+            156.91,
+            156.93,
+            156.93,
+            156.93,
+            156.926
+          ],
+          "median": 156.93,
+          "min": 156.91,
+          "max": 156.93,
+          "mean": 156.9252,
+          "stdev": 0.008672,
+          "warmup_rss_mib": 156.926
+        },
+        "rowsum_small": {
+          "source_name": "rowsum_small",
+          "scenario": "rowsum_small",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "scale": "20000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.216803,
+          "samples": [
+            0.216989,
+            0.216719,
+            0.217116,
+            0.216284,
+            0.216803
+          ],
+          "median": 0.216803,
+          "min": 0.216284,
+          "max": 0.217116,
+          "mean": 0.216782,
+          "stdev": 0.000319,
+          "warmup_wall_seconds": 0.217752,
+          "checksum": 999524.8485364907
+        },
+        "rowsum_small_rss": {
+          "source_name": "rowsum_small_rss",
+          "scenario": "rowsum_small",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "scale": "20000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 77.914,
+          "samples": [
+            77.914,
+            77.918,
+            77.914,
+            77.914,
+            77.918
+          ],
+          "median": 77.914,
+          "min": 77.914,
+          "max": 77.918,
+          "mean": 77.9156,
+          "stdev": 0.002191,
+          "warmup_rss_mib": 77.914
+        },
+        "rowsum_large": {
+          "source_name": "rowsum_large",
+          "scenario": "rowsum_large",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "scale": "40000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.267234,
+          "samples": [
+            0.267876,
+            0.267234,
+            0.266929,
+            0.26757,
+            0.266983
+          ],
+          "median": 0.267234,
+          "min": 0.266929,
+          "max": 0.267876,
+          "mean": 0.267318,
+          "stdev": 0.000402,
+          "warmup_wall_seconds": 0.266647,
+          "checksum": 1999827.25736151
+        },
+        "rowsum_large_rss": {
+          "source_name": "rowsum_large_rss",
+          "scenario": "rowsum_large",
+          "dimension": "matrix",
+          "runner": "r_script",
+          "scale": "40000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 108.848,
+          "samples": [
+            108.848,
+            110.824,
+            108.848,
+            108.848,
+            108.848
+          ],
+          "median": 108.848,
+          "min": 108.848,
+          "max": 110.824,
+          "mean": 109.2432,
+          "stdev": 0.883694,
+          "warmup_rss_mib": 108.848
+        }
+      },
+      "parameters": {
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+        "matrix": [
+          "crossprod_small",
+          "crossprod_large",
+          "matvec_small",
+          "matvec_large",
+          "solve_small",
+          "solve_large",
+          "vector_arith_small",
+          "vector_arith_large",
+          "sort_small",
+          "sort_large",
+          "lapply_small",
+          "lapply_large",
+          "paste_small",
+          "paste_large",
+          "rowsum_small",
+          "rowsum_large"
+        ],
+        "dimensions": [
+          "blas",
+          "calls",
+          "matrix",
+          "strings",
+          "vector"
+        ],
+        "scenario_details": [
+          {
+            "scenario": "crossprod_small",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "400",
+            "check": "float",
+            "expected": "16033800.787921709940",
+            "tolerance": "1e-09",
+            "workload": "crossprod of a 400x400 double matrix (BLAS dgemm)"
+          },
+          {
+            "scenario": "crossprod_large",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "1200",
+            "check": "float",
+            "expected": "431497997.192656815052",
+            "tolerance": "1e-09",
+            "workload": "crossprod of a 1200x1200 double matrix (BLAS dgemm)"
+          },
+          {
+            "scenario": "matvec_small",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "500",
+            "check": "float",
+            "expected": "63900.229739928029",
+            "tolerance": "1e-09",
+            "workload": "matrix-vector product 500x500 (BLAS dgemv)"
+          },
+          {
+            "scenario": "matvec_large",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "1500",
+            "check": "float",
+            "expected": "559495.296892058803",
+            "tolerance": "1e-09",
+            "workload": "matrix-vector product 1500x1500 (BLAS dgemv)"
+          },
+          {
+            "scenario": "solve_small",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "300",
+            "check": "float",
+            "expected": "0.035995605184",
+            "tolerance": "1e-09",
+            "workload": "solve 300x300 positive definite system (LAPACK)"
+          },
+          {
+            "scenario": "solve_large",
+            "dimension": "blas",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "900",
+            "check": "float",
+            "expected": "0.075889014603",
+            "tolerance": "1e-09",
+            "workload": "solve 900x900 positive definite system (LAPACK)"
+          },
+          {
+            "scenario": "vector_arith_small",
+            "dimension": "vector",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "5000000",
+            "check": "float",
+            "expected": "1793168203899.968261718750",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/sum over a 5M element numeric vector"
+          },
+          {
+            "scenario": "vector_arith_large",
+            "dimension": "vector",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "20000000",
+            "check": "float",
+            "expected": "28631058481635.855468750000",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/sum over a 20M element numeric vector"
+          },
+          {
+            "scenario": "sort_small",
+            "dimension": "vector",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "1000000",
+            "check": "float",
+            "expected": "499916.506571774138",
+            "tolerance": "1e-09",
+            "workload": "sort 1M uniform random doubles"
+          },
+          {
+            "scenario": "sort_large",
+            "dimension": "vector",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "4000000",
+            "check": "float",
+            "expected": "1999827.257361510070",
+            "tolerance": "1e-09",
+            "workload": "sort 4M uniform random doubles"
+          },
+          {
+            "scenario": "lapply_small",
+            "dimension": "calls",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "200000",
+            "check": "int",
+            "expected": "82857528571",
+            "tolerance": null,
+            "workload": "lapply over 200k elements"
+          },
+          {
+            "scenario": "lapply_large",
+            "dimension": "calls",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "800000",
+            "check": "int",
+            "expected": "382858228583",
+            "tolerance": null,
+            "workload": "lapply over 800k elements"
+          },
+          {
+            "scenario": "paste_small",
+            "dimension": "strings",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "200000",
+            "check": "int",
+            "expected": "2488895",
+            "tolerance": null,
+            "workload": "paste0 over 200k elements"
+          },
+          {
+            "scenario": "paste_large",
+            "dimension": "strings",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "800000",
+            "check": "int",
+            "expected": "10288895",
+            "tolerance": null,
+            "workload": "paste0 over 800k elements"
+          },
+          {
+            "scenario": "rowsum_small",
+            "dimension": "matrix",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "20000",
+            "check": "float",
+            "expected": "999524.848536490696",
+            "tolerance": "1e-09",
+            "workload": "rowSums over a 20000x100 matrix"
+          },
+          {
+            "scenario": "rowsum_large",
+            "dimension": "matrix",
+            "runner": "r_script",
+            "target": "bench.R",
+            "scale": "40000",
+            "check": "float",
+            "expected": "1999827.257361510070",
+            "tolerance": "1e-09",
+            "workload": "rowSums over a 40000x100 matrix"
+          }
+        ]
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 192
+    }
+  },
+  "metrics": {
+    "crossprod_small": {
+      "value": 0.216954,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "crossprod_small"
+    },
+    "crossprod_small_rss": {
+      "value": 50.59,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "crossprod_small"
+    },
+    "crossprod_large": {
+      "value": 0.970993,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "crossprod_large"
+    },
+    "crossprod_large_rss": {
+      "value": 79.891,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "crossprod_large"
+    },
+    "matvec_small": {
+      "value": 0.168004,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "matvec_small"
+    },
+    "matvec_small_rss": {
+      "value": 50.75,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "matvec_small"
+    },
+    "matvec_large": {
+      "value": 0.166361,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "matvec_large"
+    },
+    "matvec_large_rss": {
+      "value": 81.289,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "matvec_large"
+    },
+    "solve_small": {
+      "value": 0.166406,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "solve_small"
+    },
+    "solve_small_rss": {
+      "value": 51.605,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "solve_small"
+    },
+    "solve_large": {
+      "value": 0.669433,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "solve_large"
+    },
+    "solve_large_rss": {
+      "value": 84.609,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "solve_large"
+    },
+    "vector_arith_small": {
+      "value": 0.317229,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "vector_arith_small"
+    },
+    "vector_arith_small_rss": {
+      "value": 141.809,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "vector_arith_small"
+    },
+    "vector_arith_large": {
+      "value": 0.771111,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "vector_arith_large"
+    },
+    "vector_arith_large_rss": {
+      "value": 428.242,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "vector_arith_large"
+    },
+    "sort_small": {
+      "value": 0.268513,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sort_small"
+    },
+    "sort_small_rss": {
+      "value": 77.273,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "sort_small"
+    },
+    "sort_large": {
+      "value": 0.6191,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sort_large"
+    },
+    "sort_large_rss": {
+      "value": 168.824,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "sort_large"
+    },
+    "lapply_small": {
+      "value": 0.319234,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "lapply_small"
+    },
+    "lapply_small_rss": {
+      "value": 68.91,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "lapply_small"
+    },
+    "lapply_large": {
+      "value": 0.870365,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "lapply_large"
+    },
+    "lapply_large_rss": {
+      "value": 126.418,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "lapply_large"
+    },
+    "paste_small": {
+      "value": 0.269156,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "paste_small"
+    },
+    "paste_small_rss": {
+      "value": 78.109,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "paste_small"
+    },
+    "paste_large": {
+      "value": 0.869886,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "paste_large"
+    },
+    "paste_large_rss": {
+      "value": 156.93,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "paste_large"
+    },
+    "rowsum_small": {
+      "value": 0.216803,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "rowsum_small"
+    },
+    "rowsum_small_rss": {
+      "value": 77.914,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "rowsum_small"
+    },
+    "rowsum_large": {
+      "value": 0.267234,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "rowsum_large"
+    },
+    "rowsum_large_rss": {
+      "value": 108.848,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "rowsum_large"
+    }
+  }
+}
