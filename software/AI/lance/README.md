@@ -66,7 +66,7 @@ git clone --depth 1 --branch v13.0.0 \
 python3 -m venv "${PERF_WORK_DIR}/venv"
 "${PERF_WORK_DIR}/venv/bin/python" -m pip install --upgrade pip maturin
 "${PERF_WORK_DIR}/venv/bin/python" -m pip install \
-  'numpy>=1.22' 'pyarrow>=14' pandas ml_dtypes 'torch>=2.0'
+  'numpy>=1.22' 'pyarrow>=14' pandas ml_dtypes 'torch>=2.0' tqdm
 curl -fSL https://rsproxy.cn/rustup-init.sh -o "${PERF_WORK_DIR}/rustup-init.sh"
 sh "${PERF_WORK_DIR}/rustup-init.sh" -y --no-modify-path \
   --profile minimal --default-toolchain none
@@ -85,7 +85,10 @@ Rust 构建脚本引用的 `google/protobuf/any.proto`、`empty.proto`。安装�
 构建命令会自行把私有 Cargo 目录加入 `PATH`。脚本从上游 `rust-toolchain.toml`
 读取版本，显式安装并检查 `rustc --version`，成功后才调用 Maturin；工具链下载
 失败会停在该步骤并显示 rustup 的原始错误。构建后检查 `pylance` 的实际版本为
-`13.0.0`，记录上游提交到 `source-commit.txt`，并将实际 Python 依赖版本写入
+`13.0.0`。耗时的 Rust 编译前先导入 NumPy、PyArrow、Pandas、ML Dtypes、
+PyTorch 和 `tqdm`；编译后再导入 `metrics.py` 真值计算所需的
+`ground_truth`。这样缺少测试依赖不会拖到索引构建后才暴露。脚本记录上游提交到
+`source-commit.txt`，并将实际 Python 依赖版本写入
 `python-dependencies.txt`。不启用额外的 `fp16kernels`、GPU 或架构专用选项。
 
 Rust 下载使用 [RsProxy](https://rsproxy.cn/)：容器内执行命令时固定设置

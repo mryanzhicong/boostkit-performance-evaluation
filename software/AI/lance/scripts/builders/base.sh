@@ -72,7 +72,11 @@ build_lance_base() {
     container_exec "${LANCE_VENV}/bin/python" -m pip install --upgrade pip maturin || return 40
     log 'installing SIFT benchmark dependencies inside the container'
     container_exec "${LANCE_VENV}/bin/python" -m pip install \
-        'numpy>=1.22' 'pyarrow>=14' pandas ml_dtypes 'torch>=2.0' || return 40
+        'numpy>=1.22' 'pyarrow>=14' pandas ml_dtypes 'torch>=2.0' tqdm || return 40
+    container_exec "${LANCE_VENV}/bin/python" -c \
+        'import numpy, pyarrow, pandas, ml_dtypes, torch; from tqdm import tqdm' || {
+        log 'ERROR: SIFT benchmark Python dependencies are unavailable'; return 40;
+    }
     log 'configuring private RsProxy Cargo mirror and installing upstream pinned Rust toolchain'
     prepare_cargo_mirror || return $?
     container_exec curl -fSL --retry 3 --connect-timeout 30 \
@@ -85,7 +89,7 @@ build_lance_base() {
         "$3/bin/maturin" develop --release' sh \
         "${LANCE_SOURCE_DIR}/python" "${PERF_WORK_DIR}/cargo/bin" "${LANCE_VENV}" || return 40
     container_exec "${LANCE_VENV}/bin/python" -c \
-        'import importlib.metadata as m, lance; assert m.version("pylance") == "13.0.0"' || return 40
+        'import importlib.metadata as m, lance; from lance.torch.bench_utils import ground_truth; from tqdm import tqdm; assert m.version("pylance") == "13.0.0"' || return 40
     container_exec "${LANCE_VENV}/bin/python" -m pip freeze > "${RESULTS_DIR}/python-dependencies.txt" || return 40
     printf '%s\n' "${version}" > "${PERF_ACTUAL_VERSION_FILE}"
     log "Lance ${version} source build is ready"
