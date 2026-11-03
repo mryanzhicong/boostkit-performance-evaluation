@@ -9,10 +9,11 @@ Gradle 9.8.2 构建性能用例。完整口径为**确定性多模块构建矩�
 | 软件版本 | **9.8.2** |
 | 版本来源 | 交付手册 `15-Gradle.md` 指定 9.8.2；官方发行版 `gradle-9.8.2-bin.zip` |
 | Gradle 发行版 | `gradle-9.8.2-bin.zip`（151,620,138 字节）<br>上游：`https://services.gradle.org/distributions/gradle-9.8.2-bin.zip`<br>镜像：`https://repo.huaweicloud.com/gradle/gradle-9.8.2-bin.zip`（首选）、`https://mirrors.cloud.tencent.com/gradle/gradle-9.8.2-bin.zip`（备选）<br>SHA-256 `21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607` |
-| JDK 运行时 | **Eclipse Temurin 21.0.13+9**（与本仓库 Maven 用例同一 JDK）<br>x86_64：`OpenJDK21U-jdk_x64_linux_hotspot_21.0.13_9.tar.gz` SHA-256 `d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c`<br>aarch64：`OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.13_9.tar.gz` SHA-256 `e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578`<br>上游：`https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/` |
+| JDK 运行时 | **容器内 `java-21-openjdk-headless`/`-devel`**（openEuler 24.03 LTS SP4 固定为 `21.0.12.8-4.oe2403sp4`，实际版本作为运行上下文记录）<br>不再从宿主下载 JDK 归档 |
 | 源码制品（上游工程负载） | `gradle-9.8.2-source.tar.gz`，GitHub tag 归档（tag `v9.8.2`）<br>`https://codeload.github.com/gradle/gradle/tar.gz/refs/tags/v9.8.2`<br>SHA-256 `54b41c997ff95f61e74ed257e02012ebbc855b3c4c2637837e744a82595f6d8a` |
 | 上游负载来源 | 源码归档内 Gradle 官方文档/集成示例工程：`integration-tests/java/incrementalAnnotationProcessing/groovy`（3 模块：`library` / `processor` / `user`，注解处理链路）、`reference/platforms/jvm/incrementalAnnotationProcessing/groovy`（3 模块，同上）；两者都不依赖外部 Maven 仓库 |
-| 离线包目录 | `/home/runner/software/gradle`（可用 `PERF_GRADLE_OFFLINE_DIR` 覆盖）；JDK 归档缺失时回退到 `/home/runner/software/maven`（可用 `PERF_GRADLE_JDK_FALLBACK_DIR` 覆盖） |
+| 离线包目录 | `/home/runner/software/gradle`（可用 `PERF_GRADLE_OFFLINE_DIR` 覆盖）；JDK 由容器镜像提供，不再需要离线 JDK 归档 |
+| 执行环境 | 私有 openEuler 24.03 LTS SP4 容器 `boostkit-gradle-<arch>-<run-id>`（`--no-daemon`） |
 
 所有归档在解包前强制核对 SHA-256：不匹配、下载失败、解包失败一律 `build` 失败（返回码 30），不降级、不跳过。
 
@@ -23,23 +24,22 @@ Gradle 9.8.2 构建性能用例。完整口径为**确定性多模块构建矩�
 ```text
 gradle-9.8.2-bin.zip
 gradle-9.8.2-source.tar.gz
-OpenJDK21U-jdk_x64_linux_hotspot_21.0.13_9.tar.gz
-OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.13_9.tar.gz
 ```
 
 ## 2. 安装与构建
 
 `build` 阶段（`scripts/builders/dispatch.sh` → `base.sh`）完成：
 
-1. 校验系统依赖（`curl`、`unzip`、`tar`、`sha256sum`、`python3`、`awk`）；Runner 通过 `sudo -n dnf` 补齐缺失包，代理来自 `PERF_PROXY`。
-2. 按 `uname -m` 选择 Temurin 21.0.13+9 归档，核对 SHA-256 后解包到 `$PERF_WORK_DIR/jdk-install`；`java -version` 必须是 21.0.13。
-3. 解包 `gradle-9.8.2-bin.zip` 到 `$PERF_WORK_DIR/gradle-install`，显式 `chmod +x bin/gradle`（手册明确要求保留 ZIP 内的可执行位），复核 `gradle --version` 报 **9.8.2**。
-4. 解包上游源码归档到 `$PERF_WORK_DIR/gradle-source`，复核 `settings.gradle.kts` 存在、三个固定示例工程目录齐全。
-5. 用固定 Gradle 生成 100 / 1000 / 10000 类的确定性单模块 Java 工程到 `$PERF_WORK_DIR/projects/project-<n>`（同一生成器、同一模板、固定类名与内容）。
-6. 预热共享的 `GRADLE_USER_HOME`（`$PERF_WORK_DIR/gradle-home`）：联网执行一次 100 类工程 `clean build`，使测量阶段不再需要解析任何外部依赖。
-7. 把两个上游示例工程复制到 `$PERF_WORK_DIR/upstream-samples/`，用**与测量阶段完全相同的批次脚本**（仅去掉 `--offline`）联网执行一次全量 `build`，把所需插件/依赖元数据写入同一份 `GRADLE_USER_HOME`。批次脚本对每个工程先删除 `build/` 与工程级 `.gradle/` 缓存，保证每次都是全量多模块构建。
-8. 冒烟校验（不计入测量）：离线 `clean build` 100 类工程并确认产出 jar；离线跑一遍完整上游批次并确认每个工程 `rc=0`。
-9. 退出前写出 `actual-version.txt` 与 `build_variant.json`。
+1. 启动本 run 的私有 openEuler 24.03 LTS SP4 容器（见第 9 节），宿主机只保留 docker 与下载/校验工具（`curl`、`unzip`、`tar`、`sha256sum`、`python3`、`awk`）。
+2. 容器内 `dnf install -y --setopt=install_weak_deps=False java-21-openjdk-headless java-21-openjdk-devel unzip tar gzip coreutils findutils which`（关闭弱依赖：java-devel 的弱依赖 dbus-daemon 在只读 `/etc/passwd` 的容器里装不上），装后 `command -v java/javac/unzip` 自检。
+3. 容器内 `readlink -f $(command -v javac)` 解析 `JAVA_HOME`，写入 `$PERF_WORK_DIR/container-jdk-home.txt` 供后续阶段复用；`java -version` 主版本必须是 21。
+4. 解包 `gradle-9.8.2-bin.zip` 到 `$PERF_WORK_DIR/gradle-install`（解包在容器内完成），显式 `chmod +x bin/gradle`（手册明确要求保留 ZIP 内的可执行位），容器内复核 `gradle --version` 报 **9.8.2**。
+5. 容器内解包上游源码归档到 `$PERF_WORK_DIR/gradle-source`，复核 `settings.gradle.kts` 存在、三个固定示例工程目录齐全。
+6. 容器内用固定 Gradle 生成 100 / 1000 / 10000 类的确定性单模块 Java 工程到 `$PERF_WORK_DIR/projects/project-<n>`（同一生成器、同一模板、固定类名与内容）。
+7. 容器内预热共享的 `GRADLE_USER_HOME`（`$PERF_WORK_DIR/gradle-home`，显式注入 `GRADLE_USER_HOME`，不使用操作者 `~/.gradle`）：联网执行一次 100 类工程 `clean build`。
+8. 把两个上游示例工程复制到 `$PERF_WORK_DIR/upstream-samples/`，容器内用**与测量阶段完全相同的批次脚本**（仅去掉 `--offline`）联网执行一次全量 `build`，把所需插件/依赖元数据写入同一份 `GRADLE_USER_HOME`。批次脚本对每个工程先删除 `build/` 与工程级 `.gradle/` 缓存，保证每次都是全量多模块构建。
+9. 冒烟校验（不计入测量）：容器内离线 `clean build` 100 类工程并确认产出 jar；容器内离线跑一遍完整上游批次并确认每个工程 `rc=0`。
+10. 退出前写出 `actual-version.txt` 与 `build_variant.json`。
 
 **测量阶段不需要网络**：所有被测命令都带 `--offline`，只读 `$PERF_WORK_DIR` 中已解包的发行版、JDK、工程与已预热的 `GRADLE_USER_HOME`。
 
@@ -181,6 +181,30 @@ bash software/Toolchain/gradle/gradle_test.sh \
 | F | 目录可移植性 | 用例目录复制到仓库外（`/root/gradle-portable/case`）运行（`PERF_REPS=1`） | passed；26 指标 / 10 场景，生成证据中无仓库路径残留 |
 | G | 目录与矩阵注册 | `catalog.validate_catalog()`、`catalog.build_matrix("gradle", "9.8.2", arch)` | 24 个用例全部加载、`errors=[]`；gradle 在 x86_64 / aarch64 各 1 条，`timeout_minutes=240`、`job_timeout_minutes=270`，`case_path` 正确 |
 
-## 9. 许可证
+## 9. 容器化执行
 
-Gradle 采用 Apache License 2.0（Gradle, Inc. 及贡献者）；Eclipse Temurin JDK 采用 GPL v2 + Classpath Exception；上游示例工程随 Gradle 源码归档分发，许可证同 Gradle。本用例自带的工程生成器、计时与解析/报告脚本为本仓库原创，遵循仓库既有许可。
+- **容器**：每个 run 一个 `boostkit-gradle-<arch>-<run-id>`，标签
+  `boostkit.gradle.run-id=<run-id>`；`start_gradle_container` 拒绝复用已存在的同名
+  容器，`sweep_gradle_stale_containers` 只清理同前缀且标签不属于本 run 的残留容器。
+- **镜像**：优先使用本地归档
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz`，
+  缺失时从 `repo.openeuler.org` 下载；校验同名 `.sha256sum`、镜像架构与
+  `/etc/os-release` 的 `24.03` 标识后 `docker load`。
+- **挂载**：`PERF_WORK_DIR`（容器 `HOME=$PERF_WORK_DIR/home`、`TMPDIR` 同宿主）、
+  `RESULTS_DIR`、用例目录（结果目录在用例目录内时去掉 `readonly`）、`/etc/passwd`、
+  `/etc/group`；网络为 host（build 阶段预热依赖需要联网，测量阶段全部 `--offline`）；
+  容器以宿主 uid:gid 运行，不需要 `--privileged`。
+- **JDK 与缓存**：`JAVA_HOME` 来自容器内解析并持久化；`GRADLE_USER_HOME` 始终为
+  `$PERF_WORK_DIR/gradle-home`，由 `gradle_container_env_exec(_at)` 显式注入，既不使用
+  宿主的 `~/.gradle`，也不会写进容器可写层。
+- **宿主职责**：docker、下载并校验 Gradle 发行版/源码归档、framework、严格解析器；
+  解包、工程生成、`gradle --version`、上游批次、`run_timed.py` 计时驱动与全部测量
+  子进程都在容器内执行，因此 `docker exec` 开销不进入采样窗口。
+- **与整机执行的差异**：宿主不再安装 JDK，`java`/`gradle` 只在容器内可见；独立运行
+  `gradle_test.sh` 需要可用的 docker daemon，否则 build 返回 30。
+- **清理**：stop 阶段先 `remove_gradle_container`（仅本 run 标签，幂等）再清理临时文件；
+  Gradle 以 `--no-daemon` 运行，无常驻服务。
+
+## 10. 许可证
+
+Gradle 采用 Apache License 2.0（Gradle, Inc. 及贡献者）；容器内 OpenJDK 21（openEuler 构建）采用 GPL v2 + Classpath Exception；上游示例工程随 Gradle 源码归档分发，许可证同 Gradle。本用例自带的工程生成器、计时与解析/报告脚本为本仓库原创，遵循仓库既有许可。
