@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Test stage: every measured Ant invocation, including the timing wrapper, runs
+# inside this task's private container, so the sample is produced by a
+# container-native child process and docker's management overhead never lands in
+# a measurement window.  The strict parser still runs on the host.
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 run_timed_command() {
@@ -6,33 +10,31 @@ run_timed_command() {
     shift 3
     local directory="${RUNS_DIR}/${scenario}"
     mkdir -p "${directory}"
-    (
-        cd "${workdir}" || exit 1
+    ant_container_java_exec_at "${workdir}" \
         python3 "${SCRIPT_DIR}/scripts/run_timed.py" \
-            --scenario "${scenario}" \
-            --json "${directory}/${label}.json" \
-            --log "${directory}/${label}.log" \
-            --timeout 1800 \
-            -- "$@"
-    )
+        --scenario "${scenario}" \
+        --json "${directory}/${label}.json" \
+        --log "${directory}/${label}.log" \
+        --timeout 1800 \
+        -- "$@"
 }
 
 ant_build() {
     local project="$1"
     shift
-    "${ANT_BIN}" -f "${project}/build.xml" "$@"
+    ant_container_java_exec "${ANT_BIN}" -f "${project}/build.xml" "$@"
 }
 
 reset_project() {
     local project="$1"
-    rm -rf -- "${project}/build"
+    ant_container_exec rm -rf -- "${project}/build"
 }
 
 touch_one_source() {
     local project="$1"
     local target="${project}/src/bench/Class0001.java"
-    [[ -f "${target}" ]] || return 40
-    touch "${target}"
+    ant_container_exec test -f "${target}" || return 40
+    ant_container_exec touch "${target}"
 }
 
 verify_artifacts() {
@@ -41,7 +43,7 @@ verify_artifacts() {
     local -a expected=("$@")
     local relative
     for relative in "${expected[@]}"; do
-        [[ -e "${project}/${relative}" ]] || {
+        ant_container_exec test -e "${project}/${relative}" || {
             log_message "ERROR: scenario ${scenario} did not produce ${relative}"
             return 50
         }
@@ -81,7 +83,7 @@ prepare_incremental_project() {
         tail -n 30 "${PERF_WORK_DIR}/incremental-prepare.log" | sed 's/^/  /'
         return 40
     fi
-    [[ -f "${project}/build/bench.jar" ]] || {
+    ant_container_exec test -f "${project}/build/bench.jar" || {
         log_message "ERROR: incremental project preparation did not produce a jar"
         return 40
     }
@@ -112,9 +114,10 @@ measure_incremental() {
 
 run_ant_benchmarks() {
     initialize_runtime || return $?
-    export_java_env
+    check_ant_container || return $?
+    load_container_jdk
     validate_reps || return $?
-    [[ -x "${ANT_BIN}" ]] || {
+    ant_container_exec test -x "${ANT_BIN}" || {
         log_message "ERROR: Ant launcher is unavailable: ${ANT_BIN}"
         return 40
     }

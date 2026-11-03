@@ -8,7 +8,8 @@
 | 版本 | `1.10.18` |
 | 制品 | `apache-ant-1.10.18-bin.tar.gz`（Apache 官方二进制发行版） |
 | 制品 SHA-256 | `b45db2fdd76d639301550930d33dd7bc672c9d4fdea0fe8cfd2e6a3518388d59` |
-| JDK 基线 | Eclipse Temurin `21.0.13+9`（与 `maven`/`scala` 共用同一份固定 JDK） |
+| JDK 基线 | 容器内 `java-21-openjdk-headless`（openEuler 24.03 LTS SP4 固定为 `21.0.12.8-4.oe2403sp4`） |
+| 执行环境 | 私有 openEuler 24.03 LTS SP4 容器 `boostkit-ant-<arch>-<run-id>` |
 | 分类 | Toolchain |
 
 Ant 是纯 Java 构建工具，本身不编译；用例测量的是"用 Ant 驱动 javac + jar"的构建
@@ -16,29 +17,32 @@ Ant 是纯 Java 构建工具，本身不编译；用例测量的是"用 Ant 驱�
 
 ## 2. 安装与构建
 
-build 阶段（不编译 Ant 源码，使用官方二进制发行版）：
+build 阶段（不编译 Ant 源码，使用官方二进制发行版；全部构建动作在私有容器内完成）：
 
-1. 依赖命令自检：`curl tar python3 sha256sum awk`，`dnf`/`apt-get` 双分支安装，
-   装后再次 `command -v` 自检（缺失仍返回 30）。
-2. 固定 Temurin JDK `OpenJDK21U-jdk_*_linux_hotspot_21.0.13_9.tar.gz`：离线目录 →
-   清华/华为云 Adoptium 镜像 → 官方 GitHub，每源校验同一 SHA-256；解包后检查
-   `bin/java`/`bin/javac` 且版本为 `21.0.13`。
-3. 取 `apache-ant-1.10.18-bin.tar.gz`：离线目录 → 清华/华为云/`dlcdn.apache.org`
-   → `archive.apache.org`，每源校验同一 SHA-256；解包后检查 `bin/ant`。
-4. `bin/ant -version` 读取实际版本写入 `PERF_ACTUAL_VERSION_FILE`，与请求版本不一致
-   返回 40（框架记为 build 30）。
-5. 用 `scripts/generate_project.py` 确定性生成 50/100/200 个 Java 类的工程
-   （`src/bench/*.java` + 同一份 `build.xml`），无第三方依赖、不访问网络。
-6. 写 `build_variant.json`。
+1. 启动本 run 的私有 openEuler 24.03 LTS SP4 容器（见第 7 节），宿主机只保留
+   docker 与下载/校验工具。
+2. 容器内 `dnf install -y java-21-openjdk-headless java-21-openjdk-devel tar gzip
+   coreutils findutils which`，装后 `command -v java javac` 自检（沙箱已把仓库切到
+   华为云 openEuler 镜像）。
+3. 宿主机下载并校验 `apache-ant-1.10.18-bin.tar.gz`：离线目录 → 清华/华为云/
+   `dlcdn.apache.org` → `archive.apache.org`，每源校验同一 SHA-256；压缩包在容器内
+   解包到 `${PERF_WORK_DIR}/ant-install` 并检查 `bin/ant`。
+4. 容器内 `readlink -f $(command -v javac)` 解析 `JAVA_HOME`，写入
+   `PERF_WORK_DIR/container-jdk-home.txt` 供 start/test 复用；校验 JDK 主版本为 21。
+5. 容器内 `ant -version` 读取实际版本写入 `PERF_ACTUAL_VERSION_FILE`，与请求版本
+   不一致返回 40（框架记为 build 30）。
+6. 容器内 `python3 scripts/generate_project.py` 确定性生成 50/100/200 个 Java 类的
+   工程（`src/bench/*.java` + 同一份 `build.xml`），无第三方依赖、不访问网络。
+7. 写 `build_variant.json`。
 
 `build.xml` 的 target：`clean`（删除 build/）、`compile`（javac）、`jar`
 （打包 `build/bench.jar`）、`clean_jar`（clean 后 jar）。用例直接调用 `jar`/
 `compile`，输出目录由测试脚本在计时前清空，因此"clean 构建"包含真实的
 javac + jar 全量工作，但不包含 Ant 自己的 `delete` 目标开销。
 
-离线目录：`PERF_ANT_OFFLINE_DIR`（默认 `/home/runner/software/ant/`），可放
-`apache-ant-1.10.18-bin.tar.gz` 和 JDK 压缩包；JDK 也会回退查找
-`/home/runner/software/maven/`。
+离线目录：`PERF_ANT_OFFLINE_DIR`（默认 `/home/runner/software/ant/`），只需放
+`apache-ant-1.10.18-bin.tar.gz`；JDK 不再从宿主下载，而是由容器内
+`dnf install java-21-openjdk-*` 提供（镜像与包版本随固定的 openEuler 镜像确定）。
 
 ## 3. 完整测试口径
 
@@ -99,7 +103,32 @@ software/Toolchain/ant/ant_test.sh --version 1.10.18 --results-dir /tmp/ant-resu
 PERF_VARIANT=optimized python3 framework/run_case.py ... --stage build   # 期望 30
 ```
 
-## 7. 故障排查
+## 7. 容器化执行
+
+- **容器**：每个 run 一个 `boostkit-ant-<arch>-<run-id>`，标签
+  `boostkit.ant.run-id=<run-id>`；`start_ant_container` 拒绝复用已存在的同名容器，
+  `sweep_ant_stale_containers` 只清理同前缀且标签不属于本 run 的残留容器。
+- **镜像**：优先使用本地归档
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz`，
+  缺失时从 `repo.openeuler.org` 下载；校验同名 `.sha256sum`、镜像架构
+  （`x86_64→amd64`/`aarch64→arm64`）与 `/etc/os-release` 的 `24.03` 标识后
+  `docker load`。
+- **挂载**：`PERF_WORK_DIR`（容器 `HOME=$PERF_WORK_DIR/home`、`TMPDIR` 同宿主）、
+  `RESULTS_DIR`、用例目录（结果目录在用例目录内时去掉 `readonly`，以便独立入口写
+  结果）、`/etc/passwd`、`/etc/group`；网络为 host；容器以宿主 uid:gid 运行，
+  不需要 `--privileged`。
+- **JDK 与 PATH**：`JAVA_HOME` 来自容器内解析并持久化；所有 Java/Ant 调用都通过
+  `ant_container_java_exec(_at)`，显式注入 `JAVA_HOME` 与
+  `${JDK_HOME}/bin:${ANT_HOME}/bin:...`，不依赖宿主环境。
+- **宿主职责**：docker、下载并校验 Ant 发行包、framework、严格解析器；解包、工程
+  生成、版本探测、`run_timed.py` 计时驱动与全部测量子进程都在容器内执行，因此
+  `docker exec` 的开销不进入采样窗口。
+- **与整机执行的差异**：宿主不再安装 JDK，`java`/`javac`/`ant` 只在容器内可见；
+  独立运行 `ant_test.sh` 需要可用的 docker daemon，否则 build 返回 30。
+- **清理**：stop 阶段先 `remove_ant_container`（仅本 run 标签，幂等）再清理临时文件；
+  test 阶段不启动常驻服务。
+
+## 8. 故障排查
 
 | 现象 | 原因 / 处理 |
 |---|---|
@@ -109,9 +138,13 @@ PERF_VARIANT=optimized python3 framework/run_case.py ... --stage build   # 期�
 | build 40 → 框架 30，`Ant launcher is not executable` | 解包不完整，检查 `tar` 与磁盘空间 |
 | test 50，`scenario ... did not produce build/bench.jar` | 构建失败但被脚本吞掉；看 `runs/<scenario>/rep<i>.log` |
 | test 50，`wall time must be positive` | Ant 启动即失败（如 `JAVA_HOME` 无效），日志首行是完整命令 |
-| javac `invalid source release: 21` | JDK 不是 21；build 阶段已强校验 |
+| javac `invalid source release: 21` | 容器 JDK 不是 21；build 阶段已强校验 |
+| build 30，`an accessible Docker daemon is required` | 宿主机 docker 未安装/未启动 |
+| build 30，`container image checksum mismatch` | 镜像归档与 `.sha256sum` 不匹配，删除后重载 |
+| 40，`managed container is not running` | 容器被外部删除；重跑 run（新 run-id） |
+| 40，`cannot resolve javac inside the private container` | 容器内 JDK 包安装不完整，看 build 日志的 dnf 输出 |
 
-## 8. 许可证
+## 9. 许可证
 
 Apache Ant 使用 Apache License 2.0；Eclipse Temurin（OpenJDK）使用 GPLv2 +
 Classpath Exception。本用例只下载并运行官方发行版，不修改其源码。
