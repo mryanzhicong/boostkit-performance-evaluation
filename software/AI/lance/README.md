@@ -15,9 +15,31 @@
 
 ## 构建与容器
 
-脚本读取 `openEuler-docker.<架构>.tar.xz` 和对应 `.sha256sum`，校验后 `docker load`，再核对镜像架构与容器内系统版本。容器名包含架构和本次运行 ID。`${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以原路径挂载，使用当前 Runner 用户的 UID/GID 和宿主机网络；不向宿主机安装 Lance、Rust 或 Python 包。
+脚本读取 `openEuler-docker.<架构>.tar.xz` 和对应 `.sha256sum`，校验后执行 `docker load --input "${ARCHIVE}"`，再核对镜像架构与容器内系统版本。`${LANCE_CONTAINER_IMAGE}` 是实际加载出的镜像名，不从 Docker Hub 拉取。容器名为 `boostkit-lance-<架构>-<运行 ID>`。`${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以原路径挂载，使用当前 Runner 用户的 UID/GID 和宿主机网络；不限制 CPU 或内存，也不向宿主机安装 Lance、Rust 或 Python 包。
 
 如果正式工作流设置 `PERF_PROXY`，容器会只读挂载 `/home/runner/software/anchors/` 到容器信任库，运行 `update-ca-trust extract`，并在容器的 `dnf` 中使用该代理。容器内的 openEuler 仓库地址改为 `repo.huaweicloud.com/openeuler`；这些修改不触及宿主机。无代理时不挂载证书，也不为命令设置代理。Runner 必须能够访问 Docker daemon。
+
+下面是启用代理时的容器启动命令形态；没有代理时去掉证书目录的 `--mount` 和证书更新命令。`${LANCE_CA_ANCHORS_DIR}` 默认是 `/home/runner/software/anchors`，`${LANCE_CONTAINER_IMAGE}` 来自上面的 `docker load`：
+
+```bash
+docker run --detach --name "${LANCE_CONTAINER_NAME}" \
+  --label "boostkit.lance.run-id=${PERF_RUN_ID}" --network=host \
+  --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  --mount "type=bind,source=${LANCE_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly" \
+  "${LANCE_CONTAINER_IMAGE}" sleep infinity
+
+docker exec --user 0 "${LANCE_CONTAINER_NAME}" update-ca-trust extract
+docker exec --user 0 "${LANCE_CONTAINER_NAME}" sed -i \
+  -e '/^meta/ s/^\(.*\)$/#\1/g' \
+  -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+  /etc/yum.repos.d/openEuler.repo
+```
+
+脚本只在该容器存在 `/etc/yum.repos.d/openEuler.repo` 时执行上述换源命令。随后用 `docker exec --user 0` 在容器内安装系统依赖，再用 `docker exec` 以 Runner 的 UID/GID 构建和测试。执行结束后先 `docker stop`，再 `docker rm`；删除前核对 `boostkit.lance.run-id` 与本次运行 ID 一致。宿主机挂载的工作目录和结果目录不会随容器删除。
 
 基础版的关键命令形态如下，均在私有容器中执行：
 
