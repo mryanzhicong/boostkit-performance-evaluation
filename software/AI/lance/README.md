@@ -15,7 +15,7 @@
 
 ## 构建与容器
 
-脚本读取 `openEuler-docker.<架构>.tar.xz` 和对应 `.sha256sum`，校验后执行 `docker load --input "${ARCHIVE}"`，再核对镜像架构与容器内系统版本。`${LANCE_CONTAINER_IMAGE}` 是实际加载出的镜像名，不从 Docker Hub 拉取。容器名为 `boostkit-lance-<架构>-<运行 ID>`。`${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以原路径挂载，使用当前 Runner 用户的 UID/GID 和宿主机网络；不限制 CPU 或内存，也不向宿主机安装 Lance、Rust 或 Python 包。
+脚本读取 `openEuler-docker.<架构>.tar.xz` 和对应 `.sha256sum`，校验后执行 `docker load --input "${ARCHIVE}"`，再核对镜像架构与容器内系统版本。`${LANCE_CONTAINER_IMAGE}` 是实际加载出的镜像名，不从 Docker Hub 拉取。容器名为 `boostkit-lance-<架构>-<运行 ID>`。`${PERF_WORK_DIR}` 与 `${RESULTS_DIR}` 以原路径挂载，使用当前 Runner 用户的 UID/GID 和宿主机网络；容器的 `nofile` 软、硬上限均设为 65535，不限制 CPU 或内存，也不向宿主机安装 Lance、Rust 或 Python 包。
 
 Runner 上存在 `/home/runner/.gitconfig` 时，脚本将它只读挂载到容器内同一路径，
 并设置 `GIT_CONFIG_GLOBAL=/home/runner/.gitconfig`，使容器内的 Git 读取该配置。
@@ -32,6 +32,7 @@ Runner 上存在 `/home/runner/.gitconfig` 时，脚本将它只读挂载到容�
 ```bash
 docker run --detach --name "${LANCE_CONTAINER_NAME}" \
   --label "boostkit.lance.run-id=${PERF_RUN_ID}" --network=host \
+  --ulimit nofile=65535:65535 \
   --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \

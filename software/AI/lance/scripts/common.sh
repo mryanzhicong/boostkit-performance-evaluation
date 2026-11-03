@@ -126,6 +126,7 @@ require_lance_container() {
     fi
     docker run --detach --name "${LANCE_CONTAINER_NAME}" \
         --label "boostkit.lance.run-id=${PERF_RUN_ID}" --network=host \
+        --ulimit nofile=65535:65535 \
         --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
