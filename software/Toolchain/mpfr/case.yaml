@@ -1,0 +1,56 @@
+name: mpfr
+category: Toolchain
+enabled: true
+versions:
+  - "4.2.2"
+test_tools:
+  mpfr-bench:
+    version: "fixed-workload harness following upstream tools/bench methodology"
+  gmp:
+    version: "6.3.0 (pinned private dependency)"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_mpfr
+    start:
+      script: scripts/stages/start.sh
+      function: start_mpfr_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_mpfr_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_mpfr_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  official_benchmark:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_mpfr.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
