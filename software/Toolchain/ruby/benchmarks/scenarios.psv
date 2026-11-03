@@ -1,0 +1,18 @@
+scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+arith_int_small|compute|ruby_script|bench.rb|2000000|int|794992328||integer add/multiply/modulo loop, 2M iterations
+arith_int_large|compute|ruby_script|bench.rb|8000000|int|179965187||integer add/multiply/modulo loop, 8M iterations
+arith_float_small|compute|ruby_script|bench.rb|2000000|float|287600047361.493164062500|1e-09|sqrt/divide/add loop, 2M iterations
+arith_float_large|compute|ruby_script|bench.rb|8000000|float|4586514088935.879882812500|1e-09|sqrt/divide/add loop, 8M iterations
+string_concat_small|strings|ruby_script|bench.rb|200000|int|3088895||formatted string concatenation, 200k appends
+string_concat_large|strings|ruby_script|bench.rb|800000|int|12688895||formatted string concatenation, 800k appends
+regex_subst_small|strings|ruby_script|bench.rb|20000|int|40000||regex substitution over 20k generated lines
+regex_subst_large|strings|ruby_script|bench.rb|80000|int|160000||regex substitution over 80k generated lines
+hash_ops_small|hashing|ruby_script|bench.rb|200000|int|279990||string hash insert/lookup/delete, 200k keys
+hash_ops_large|hashing|ruby_script|bench.rb|800000|int|1119840||string hash insert/lookup/delete, 800k keys
+array_sort_small|sorting|ruby_script|bench.rb|100000|int|1499120||LCG integer array numeric sort, 100k values
+array_sort_large|sorting|ruby_script|bench.rb|400000|int|1497949||LCG integer array numeric sort, 400k values
+method_calls_small|calls|ruby_script|bench.rb|2000000|int|95998893||two argument method calls, 2M calls
+method_calls_large|calls|ruby_script|bench.rb|8000000|int|383999197||two argument method calls, 8M calls
+block_yield_small|blocks|ruby_script|bench.rb|1000000|int|43999915||block/yield invocation, 1M calls
+block_yield_large|blocks|ruby_script|bench.rb|4000000|int|175999489||block/yield invocation, 4M calls
+upstream_benchmark|upstream|ruby_script|bench.rb|2|int|2||Ruby stdlib Benchmark.bm report
