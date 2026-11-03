@@ -1,0 +1,461 @@
+{
+  "benchmark": "npm_operation_matrix",
+  "software": "npm",
+  "version": "12.2.1",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-03T18:07:07Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "statistic": "median of independent repetitions",
+    "measured_flags": [
+      "--offline",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "npm_version": "12.2.1",
+    "node_version": "v22.23.4",
+    "npm_engines_node": "^22.22.2 || ^24.15.0 || >=26.0.0",
+    "registry_for_cache_warmup": "https://mirrors.huaweicloud.com/repository/npm",
+    "cache_layout": "explicit --cache under PERF_WORK_DIR/npm-cache (no ~/.npm)",
+    "extra_dependency": "is-odd@3.0.1",
+    "upstream_project": "mochajs/mocha v11.7.5 (commit-tagged release); package.json and package-lock.json copied verbatim from the tag via the jsDelivr GitHub mirror, including the test/compiler-fixtures/esm-only-loader directory that the lockfile links to",
+    "fixtures": {
+      "small": {
+        "direct_dependencies": 1,
+        "lockfile_version": 3,
+        "lockfile_packages": 69,
+        "lockfile_sha256": "bfedfb8024df82aa1ae28582a580af222072513bfdf58375cb59f9dc6621209b",
+        "committed_lockfile_sha256": "bfedfb8024df82aa1ae28582a580af222072513bfdf58375cb59f9dc6621209b",
+        "registry_origin": "https://mirrors.huaweicloud.com/repository/npm"
+      },
+      "medium": {
+        "direct_dependencies": 8,
+        "lockfile_version": 3,
+        "lockfile_packages": 569,
+        "lockfile_sha256": "7b78cac27616ad407044f25176e9b84c3183e0a91384b7eec92de533f51afa8c",
+        "committed_lockfile_sha256": "7b78cac27616ad407044f25176e9b84c3183e0a91384b7eec92de533f51afa8c",
+        "registry_origin": "https://mirrors.huaweicloud.com/repository/npm"
+      },
+      "large": {
+        "direct_dependencies": 12,
+        "lockfile_version": 3,
+        "lockfile_packages": 1630,
+        "lockfile_sha256": "1d94bd7e91997982673b46a22c22cf54c39c7c20696fa7fcd0b70792c2a43ec5",
+        "committed_lockfile_sha256": "1d94bd7e91997982673b46a22c22cf54c39c7c20696fa7fcd0b70792c2a43ec5",
+        "registry_origin": "https://mirrors.huaweicloud.com/repository/npm"
+      },
+      "upstream": {
+        "direct_dependencies": 82,
+        "lockfile_version": 2,
+        "lockfile_packages": 1455,
+        "lockfile_sha256": "166375e8b158c666df921db22a82d53dd2f6900db1567e11e2e83ad530601557",
+        "committed_lockfile_sha256": "1836897e9a8a8c4c39ab99be258beae2f548c96457c96f4d252da963390eb69f",
+        "registry_origin": "https://mirrors.huaweicloud.com/repository/npm"
+      }
+    },
+    "scenarios": {
+      "ci_clean_small": {
+        "fixture": "small",
+        "command": "npm ci --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "ci_clean_medium": {
+        "fixture": "medium",
+        "command": "npm ci --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "ci_clean_large": {
+        "fixture": "large",
+        "command": "npm ci --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "ci_upstream": {
+        "fixture": "upstream",
+        "command": "npm ci --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "install_resolve_small": {
+        "fixture": "small",
+        "command": "npm install --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "install_noop_medium": {
+        "fixture": "medium",
+        "command": "npm install --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "install_add_dep_medium": {
+        "fixture": "medium",
+        "command": "npm install --offline --no-audit --no-fund --ignore-scripts"
+      },
+      "query_prod_medium": {
+        "fixture": "medium",
+        "command": "npm query --offline .prod"
+      }
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "ci_clean_small": {
+      "source_name": "ci_clean_small",
+      "scenario": "ci_clean_small",
+      "fixture": "small",
+      "installed_packages": 69,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 0.515769,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.515769,
+      "mean": 0.516123,
+      "min": 0.515739,
+      "max": 0.517288,
+      "stdev": 0.000665,
+      "samples": [
+        0.516059,
+        0.515769,
+        0.517288,
+        0.515739,
+        0.515758
+      ]
+    },
+    "ci_clean_small_rss": {
+      "source_name": "ci_clean_small_rss",
+      "scenario": "ci_clean_small",
+      "fixture": "small",
+      "installed_packages": 69,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 115.996,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 115.996,
+      "mean": 117.196,
+      "min": 115.996,
+      "max": 121.996,
+      "stdev": 2.683282,
+      "samples": [
+        115.996,
+        121.996,
+        115.996,
+        115.996,
+        115.996
+      ]
+    },
+    "ci_clean_medium": {
+      "source_name": "ci_clean_medium",
+      "scenario": "ci_clean_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 2.680136,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.680136,
+      "mean": 2.698174,
+      "min": 2.677872,
+      "max": 2.727638,
+      "stdev": 0.026238,
+      "samples": [
+        2.727638,
+        2.680136,
+        2.677872,
+        2.679069,
+        2.726157
+      ]
+    },
+    "ci_clean_medium_rss": {
+      "source_name": "ci_clean_medium_rss",
+      "scenario": "ci_clean_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 323.348,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 323.348,
+      "mean": 322.7368,
+      "min": 319.996,
+      "max": 325.688,
+      "stdev": 2.319323,
+      "samples": [
+        323.348,
+        320.812,
+        325.688,
+        319.996,
+        323.84
+      ]
+    },
+    "ci_clean_large": {
+      "source_name": "ci_clean_large",
+      "scenario": "ci_clean_large",
+      "fixture": "large",
+      "installed_packages": 1566,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 11.336745,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 11.336745,
+      "mean": 11.307042,
+      "min": 11.082441,
+      "max": 11.482415,
+      "stdev": 0.144503,
+      "samples": [
+        11.336745,
+        11.082441,
+        11.341807,
+        11.482415,
+        11.291801
+      ]
+    },
+    "ci_clean_large_rss": {
+      "source_name": "ci_clean_large_rss",
+      "scenario": "ci_clean_large",
+      "fixture": "large",
+      "installed_packages": 1566,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 1061.23,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1061.23,
+      "mean": 1076.3274,
+      "min": 1059.348,
+      "max": 1100.688,
+      "stdev": 22.164854,
+      "samples": [
+        1100.688,
+        1061.23,
+        1100.504,
+        1059.348,
+        1059.867
+      ]
+    },
+    "ci_upstream": {
+      "source_name": "ci_upstream",
+      "scenario": "ci_upstream",
+      "fixture": "upstream",
+      "installed_packages": 1427,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 6.604825,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 6.604825,
+      "mean": 6.598143,
+      "min": 6.445474,
+      "max": 6.69581,
+      "stdev": 0.094375,
+      "samples": [
+        6.69581,
+        6.445474,
+        6.594301,
+        6.650304,
+        6.604825
+      ]
+    },
+    "ci_upstream_rss": {
+      "source_name": "ci_upstream_rss",
+      "scenario": "ci_upstream",
+      "fixture": "upstream",
+      "installed_packages": 1427,
+      "command": "npm ci --offline --no-audit --no-fund --ignore-scripts",
+      "value": 714.266,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 714.266,
+      "mean": 712.4086,
+      "min": 709.16,
+      "max": 714.922,
+      "stdev": 2.879961,
+      "samples": [
+        714.32,
+        709.375,
+        714.266,
+        709.16,
+        714.922
+      ]
+    },
+    "install_resolve_small": {
+      "source_name": "install_resolve_small",
+      "scenario": "install_resolve_small",
+      "fixture": "small",
+      "installed_packages": 69,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 0.766984,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.766984,
+      "mean": 0.767182,
+      "min": 0.765923,
+      "max": 0.76873,
+      "stdev": 0.001071,
+      "samples": [
+        0.767668,
+        0.765923,
+        0.766984,
+        0.766604,
+        0.76873
+      ]
+    },
+    "install_resolve_small_rss": {
+      "source_name": "install_resolve_small_rss",
+      "scenario": "install_resolve_small",
+      "fixture": "small",
+      "installed_packages": 69,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 139.984,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 139.984,
+      "mean": 139.3944,
+      "min": 136.996,
+      "max": 142.996,
+      "stdev": 2.508314,
+      "samples": [
+        142.996,
+        137.0,
+        136.996,
+        139.984,
+        139.996
+      ]
+    },
+    "install_noop_medium": {
+      "source_name": "install_noop_medium",
+      "scenario": "install_noop_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 0.868573,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.868573,
+      "mean": 0.868515,
+      "min": 0.867923,
+      "max": 0.869151,
+      "stdev": 0.000559,
+      "samples": [
+        0.868956,
+        0.869151,
+        0.867923,
+        0.86797,
+        0.868573
+      ]
+    },
+    "install_noop_medium_rss": {
+      "source_name": "install_noop_medium_rss",
+      "scenario": "install_noop_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 156.656,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 156.656,
+      "mean": 155.4148,
+      "min": 147.387,
+      "max": 159.07,
+      "stdev": 4.759122,
+      "samples": [
+        147.387,
+        159.07,
+        156.656,
+        158.762,
+        155.199
+      ]
+    },
+    "install_add_dep_medium": {
+      "source_name": "install_add_dep_medium",
+      "scenario": "install_add_dep_medium",
+      "fixture": "medium",
+      "installed_packages": 533,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 0.868625,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.868625,
+      "mean": 0.868524,
+      "min": 0.867626,
+      "max": 0.869003,
+      "stdev": 0.000556,
+      "samples": [
+        0.868422,
+        0.868946,
+        0.867626,
+        0.869003,
+        0.868625
+      ]
+    },
+    "install_add_dep_medium_rss": {
+      "source_name": "install_add_dep_medium_rss",
+      "scenario": "install_add_dep_medium",
+      "fixture": "medium",
+      "installed_packages": 533,
+      "command": "npm install --offline --no-audit --no-fund --ignore-scripts",
+      "value": 146.73,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 146.73,
+      "mean": 147.853,
+      "min": 143.926,
+      "max": 152.355,
+      "stdev": 3.276506,
+      "samples": [
+        146.73,
+        143.926,
+        146.418,
+        149.836,
+        152.355
+      ]
+    },
+    "query_prod_medium": {
+      "source_name": "query_prod_medium",
+      "scenario": "query_prod_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm query --offline .prod",
+      "value": 0.717473,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.717473,
+      "mean": 0.717355,
+      "min": 0.716251,
+      "max": 0.718334,
+      "stdev": 0.000766,
+      "samples": [
+        0.716251,
+        0.718334,
+        0.717473,
+        0.717636,
+        0.71708
+      ]
+    },
+    "query_prod_medium_rss": {
+      "source_name": "query_prod_medium_rss",
+      "scenario": "query_prod_medium",
+      "fixture": "medium",
+      "installed_packages": 531,
+      "command": "npm query --offline .prod",
+      "value": 143.016,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 143.016,
+      "mean": 143.557,
+      "min": 141.02,
+      "max": 146.238,
+      "stdev": 2.485429,
+      "samples": [
+        146.238,
+        146.07,
+        141.02,
+        143.016,
+        141.441
+      ]
+    }
+  }
+}
