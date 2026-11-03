@@ -1,0 +1,25 @@
+# Jenkins 2.588 controller workload matrix. Columns are pipe-separated (the
+# delimiter is not an IFS whitespace character, so empty fields are preserved
+# by both the Shell and Python readers):
+# scenario|dimension|action|scale|check|expected|workload
+#
+# action:
+#   startup_cold   fresh JENKINS_HOME, first controller boot until the REST API answers
+#   startup_warm   pre-initialized JENKINS_HOME, second controller boot until ready
+#   job_batch      start an initialized controller, create <scale> freestyle shell
+#                  jobs over REST, trigger them and wait for every build result
+#   api_list       initialized JENKINS_HOME with <scale> jobs, repeatedly read the
+#                  top-level job list through /api/json
+#   api_scan       initialized JENKINS_HOME with <scale> jobs, read every job's
+#                  detail document through /job/<name>/api/json
+# check:
+#   ready      controller reported the expected X-Jenkins version
+#   builds     builds_total and builds_success equal the scale
+#   api_jobs   api_jobs equals the scale and api_failures is zero
+startup_cold|startup|startup_cold|0|ready|1|fresh controller boot with an empty JENKINS_HOME
+startup_warm|startup|startup_warm|0|ready|1|second controller boot from a pre-initialized JENKINS_HOME
+job_single|job|job_batch|1|builds|1|single freestyle shell job: trigger to completion
+job_throughput_10|job|job_batch|10|builds|10|ten freestyle shell jobs: trigger to completion
+job_throughput_50|job|job_batch|50|builds|50|fifty freestyle shell jobs: trigger to completion
+api_list_200|api|api_list|200|api_jobs|200|twenty full job-list reads with 200 jobs
+api_scan_200|api|api_scan|200|api_jobs|200|sequential detail document reads for 200 jobs
