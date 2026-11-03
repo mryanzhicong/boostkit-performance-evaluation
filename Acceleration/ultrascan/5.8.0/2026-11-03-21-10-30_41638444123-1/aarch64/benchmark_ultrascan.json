@@ -1,0 +1,2967 @@
+{
+  "software": "ultrascan",
+  "category": "Acceleration",
+  "version": "5.8.0",
+  "architecture": "aarch64",
+  "run_id": "41638444123-1",
+  "parameters": {
+    "workload": "hsbench",
+    "corpus_kind": "intel_hsbench_samples",
+    "corpus_source": {
+      "sample_url": "https://cdrdv2.intel.com/v1/dl/getContent/739375",
+      "sample_zip_sha256": "1f356096e138dda0b5e7798b028b5da5a9b4d1f15d7ec88a91a764f45b1120e6",
+      "sample_zip": "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/.cache/hsbench-samples.zip",
+      "sample_dir": null
+    },
+    "corpus_db_sha256": "514468f2aefec5c4369722ebbc112c0c25ee7eacd16aabdb9becf75342c73561",
+    "corpus_files": {
+      "rules/snort_literals": {
+        "sha256": "ac54e9982237fdf81912b00e4bb182fb859b7b406d109f0593e5709eadac44ee",
+        "bytes": 127118
+      },
+      "rules/snort_pcres": {
+        "sha256": "b3bccdad742608de1f368fd1ff0fc308650d7f63daf4a93e00c970874c8091fa",
+        "bytes": 42284
+      },
+      "corpus/corpus.db": {
+        "sha256": "514468f2aefec5c4369722ebbc112c0c25ee7eacd16aabdb9becf75342c73561",
+        "bytes": 192055296
+      }
+    },
+    "rule_sets": [
+      "snort_literals",
+      "snort_pcres"
+    ],
+    "scan_modes": [
+      "block",
+      "stream"
+    ],
+    "core_counts": [
+      1,
+      4
+    ],
+    "multi_core_cpus": 4,
+    "cpu_affinity": "-T (hsbench thread pinning)",
+    "scan_iterations": 2,
+    "repetitions": 5,
+    "warmups": 1,
+    "database_load_scenarios": [
+      "snort_pcres_block",
+      "snort_pcres_stream"
+    ],
+    "statistics": {
+      "center": "median",
+      "spread": "sample stdev"
+    },
+    "hsbench_sha256": "40c0ea1ea83c59496c6f7fb72a6a8c592773b2d6758c7120b7634829bcb44399",
+    "build_state": {
+      "recorded_at": "2026-11-03T13:03:24Z",
+      "software": "ultrascan",
+      "requested_version": "5.8.0",
+      "actual_version": "5.8.0",
+      "architecture": "aarch64",
+      "source": {
+        "kind": "git_clone",
+        "origin": "https://gitcode.com/boostkit/Ultrascan.git",
+        "tag": "Ultrascan-v5.8.0",
+        "commit": "2a2ab98890e878b6ff297f2ffe4cd2e14330b498",
+        "archive_sha256": "b0ad7d0126585581e93f621d1295066e7becf6d59c2179916c74e84e67f29b9b"
+      },
+      "x86_64_build_fix": {
+        "applied": false,
+        "cmake_lists_sha256": null
+      },
+      "build": {
+        "system": "cmake",
+        "build_type": "Release",
+        "target": "hsbench",
+        "jobs": 16,
+        "examples": false,
+        "chimera": false,
+        "compiler": "c++ (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)"
+      },
+      "corpus_kind": "intel_hsbench_samples",
+      "hsbench_sha256": "40c0ea1ea83c59496c6f7fb72a6a8c592773b2d6758c7120b7634829bcb44399"
+    },
+    "generated_at": "2026-11-03T13:08:20Z"
+  },
+  "results": {
+    "snort_literals_block_1c__scan_throughput": {
+      "source_name": "snort_literals_block_1c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 4087.23,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        3983.49,
+        4087.23,
+        4104.4,
+        4116.92,
+        4027.14
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3983.49,
+        "max": 4116.92,
+        "mean": 4063.8360000000002,
+        "median": 4087.23,
+        "stdev": 56.59660882067057
+      }
+    },
+    "snort_literals_block_1c__block_rate": {
+      "source_name": "snort_literals_block_1c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 377815.57,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        368226.24,
+        377815.57,
+        379402.6,
+        380559.98,
+        372260.44
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 368226.24,
+        "max": 380559.98,
+        "mean": 375652.966,
+        "median": 377815.57,
+        "stdev": 5231.655792641556
+      }
+    },
+    "snort_literals_block_1c__matches_per_iteration": {
+      "source_name": "snort_literals_block_1c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 637380.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        637380.0,
+        637380.0,
+        637380.0,
+        637380.0,
+        637380.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 637380.0,
+        "max": 637380.0,
+        "mean": 637380.0,
+        "median": 637380.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_1c__expression_count": {
+      "source_name": "snort_literals_block_1c__expression_count",
+      "source_metric": "Expression count",
+      "value": 3116.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3116.0,
+        "max": 3116.0,
+        "mean": 3116.0,
+        "median": 3116.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_1c__database_size": {
+      "source_name": "snort_literals_block_1c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 921592.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        921592.0,
+        921592.0,
+        921592.0,
+        921592.0,
+        921592.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 921592.0,
+        "max": 921592.0,
+        "mean": 921592.0,
+        "median": 921592.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_1c__peak_rss": {
+      "source_name": "snort_literals_block_1c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 381640704.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        381644800.0,
+        381640704.0,
+        381640704.0,
+        381636608.0,
+        381644800.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 381636608.0,
+        "max": 381644800.0,
+        "mean": 381641523.2,
+        "median": 381640704.0,
+        "stdev": 3426.9594686835735
+      }
+    },
+    "snort_literals_block_1c__wall_time": {
+      "source_name": "snort_literals_block_1c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 1.257483918001526,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_1c",
+      "samples": [
+        1.2740584180137375,
+        1.257483918001526,
+        1.2508934530051192,
+        1.2499903360003373,
+        1.269441545009613
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1.2499903360003373,
+        "max": 1.2740584180137375,
+        "mean": 1.2603735340060667,
+        "median": 1.257483918001526,
+        "stdev": 0.010903411061776138
+      }
+    },
+    "snort_literals_block_4c__scan_throughput": {
+      "source_name": "snort_literals_block_4c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 9521.12,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        9445.36,
+        9450.19,
+        9644.33,
+        9521.12,
+        9611.97
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 9445.36,
+        "max": 9644.33,
+        "mean": 9534.594000000001,
+        "median": 9521.12,
+        "stdev": 91.23777413988088
+      }
+    },
+    "snort_literals_block_4c__block_rate": {
+      "source_name": "snort_literals_block_4c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 880113.68,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        873110.35,
+        873556.89,
+        891502.39,
+        880113.68,
+        888511.6
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 873110.35,
+        "max": 891502.39,
+        "mean": 881358.9820000001,
+        "median": 880113.68,
+        "stdev": 8433.742002033854
+      }
+    },
+    "snort_literals_block_4c__matches_per_iteration": {
+      "source_name": "snort_literals_block_4c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 637380.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        637380.0,
+        637380.0,
+        637380.0,
+        637380.0,
+        637380.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 637380.0,
+        "max": 637380.0,
+        "mean": 637380.0,
+        "median": 637380.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_4c__expression_count": {
+      "source_name": "snort_literals_block_4c__expression_count",
+      "source_metric": "Expression count",
+      "value": 3116.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3116.0,
+        "max": 3116.0,
+        "mean": 3116.0,
+        "median": 3116.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_4c__database_size": {
+      "source_name": "snort_literals_block_4c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 921592.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        921592.0,
+        921592.0,
+        921592.0,
+        921592.0,
+        921592.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 921592.0,
+        "max": 921592.0,
+        "mean": 921592.0,
+        "median": 921592.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_block_4c__peak_rss": {
+      "source_name": "snort_literals_block_4c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 937144320.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        938713088.0,
+        939360256.0,
+        937029632.0,
+        937144320.0,
+        937046016.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 937029632.0,
+        "max": 939360256.0,
+        "mean": 937858662.4,
+        "median": 937144320.0,
+        "stdev": 1100317.8047149833
+      }
+    },
+    "snort_literals_block_4c__wall_time": {
+      "source_name": "snort_literals_block_4c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 2.0381171100016218,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_literals_block_4c",
+      "samples": [
+        2.0416173770063324,
+        2.0414720669941744,
+        2.018796250995365,
+        2.0381171100016218,
+        2.0292310519871535
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2.018796250995365,
+        "max": 2.0416173770063324,
+        "mean": 2.0338467713969295,
+        "median": 2.0381171100016218,
+        "stdev": 0.00980543556284809
+      }
+    },
+    "snort_literals_stream_1c__scan_throughput": {
+      "source_name": "snort_literals_stream_1c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 4564.24,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        4460.35,
+        4573.21,
+        4504.6,
+        4564.24,
+        4568.61
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 4460.35,
+        "max": 4573.21,
+        "mean": 4534.202,
+        "median": 4564.24,
+        "stdev": 49.84529135234313
+      }
+    },
+    "snort_literals_stream_1c__block_rate": {
+      "source_name": "snort_literals_stream_1c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 421909.51,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        412305.64,
+        422738.28,
+        416396.67,
+        421909.51,
+        422313.73
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 412305.64,
+        "max": 422738.28,
+        "mean": 419132.766,
+        "median": 421909.51,
+        "stdev": 4607.722896293787
+      }
+    },
+    "snort_literals_stream_1c__matches_per_iteration": {
+      "source_name": "snort_literals_stream_1c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 81963.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        81963.0,
+        81963.0,
+        81963.0,
+        81963.0,
+        81963.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 81963.0,
+        "max": 81963.0,
+        "mean": 81963.0,
+        "median": 81963.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_1c__expression_count": {
+      "source_name": "snort_literals_stream_1c__expression_count",
+      "source_metric": "Expression count",
+      "value": 3116.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3116.0,
+        "max": 3116.0,
+        "mean": 3116.0,
+        "median": 3116.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_1c__database_size": {
+      "source_name": "snort_literals_stream_1c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 693880.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        693880.0,
+        693880.0,
+        693880.0,
+        693880.0,
+        693880.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 693880.0,
+        "max": 693880.0,
+        "mean": 693880.0,
+        "median": 693880.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_1c__peak_rss": {
+      "source_name": "snort_literals_stream_1c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 381411328.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        381399040.0,
+        381411328.0,
+        381411328.0,
+        381411328.0,
+        381411328.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 381399040.0,
+        "max": 381411328.0,
+        "mean": 381408870.4,
+        "median": 381411328.0,
+        "stdev": 5495.360661503483
+      }
+    },
+    "snort_literals_stream_1c__wall_time": {
+      "source_name": "snort_literals_stream_1c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 1.1317081209999742,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_1c",
+      "samples": [
+        1.1709723769890843,
+        1.1651700280053774,
+        1.1317081209999742,
+        1.1206002219987568,
+        1.120859759990708
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1.1206002219987568,
+        "max": 1.1709723769890843,
+        "mean": 1.14186210159678,
+        "median": 1.1317081209999742,
+        "stdev": 0.024428143430394372
+      }
+    },
+    "snort_literals_stream_4c__scan_throughput": {
+      "source_name": "snort_literals_stream_4c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 10488.07,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        10494.82,
+        10478.61,
+        10474.3,
+        10488.07,
+        10521.67
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 10474.3,
+        "max": 10521.67,
+        "mean": 10491.494,
+        "median": 10488.07,
+        "stdev": 18.674903748078695
+      }
+    },
+    "snort_literals_stream_4c__block_rate": {
+      "source_name": "snort_literals_stream_4c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 969496.16,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        970120.25,
+        968622.14,
+        968223.94,
+        969496.16,
+        972602.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 968223.94,
+        "max": 972602.0,
+        "mean": 969812.898,
+        "median": 969496.16,
+        "stdev": 1726.0192872097434
+      }
+    },
+    "snort_literals_stream_4c__matches_per_iteration": {
+      "source_name": "snort_literals_stream_4c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 81963.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        81963.0,
+        81963.0,
+        81963.0,
+        81963.0,
+        81963.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 81963.0,
+        "max": 81963.0,
+        "mean": 81963.0,
+        "median": 81963.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_4c__expression_count": {
+      "source_name": "snort_literals_stream_4c__expression_count",
+      "source_metric": "Expression count",
+      "value": 3116.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0,
+        3116.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3116.0,
+        "max": 3116.0,
+        "mean": 3116.0,
+        "median": 3116.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_4c__database_size": {
+      "source_name": "snort_literals_stream_4c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 693880.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        693880.0,
+        693880.0,
+        693880.0,
+        693880.0,
+        693880.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 693880.0,
+        "max": 693880.0,
+        "mean": 693880.0,
+        "median": 693880.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_literals_stream_4c__peak_rss": {
+      "source_name": "snort_literals_stream_4c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 938893312.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        939126784.0,
+        939642880.0,
+        938893312.0,
+        937852928.0,
+        938479616.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 937852928.0,
+        "max": 939642880.0,
+        "mean": 938799104.0,
+        "median": 938893312.0,
+        "stdev": 675560.6695478949
+      }
+    },
+    "snort_literals_stream_4c__wall_time": {
+      "source_name": "snort_literals_stream_4c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 1.8686887030053185,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_literals_stream_4c",
+      "samples": [
+        1.8575760329986224,
+        1.8726842070027487,
+        1.8725925680046203,
+        1.8676615860022139,
+        1.8686887030053185
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1.8575760329986224,
+        "max": 1.8726842070027487,
+        "mean": 1.8678406194027048,
+        "median": 1.8686887030053185,
+        "stdev": 0.006167543861962651
+      }
+    },
+    "snort_pcres_block_1c__scan_throughput": {
+      "source_name": "snort_pcres_block_1c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 1199.37,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        1185.52,
+        1148.53,
+        1199.37,
+        1205.35,
+        1201.27
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1148.53,
+        "max": 1205.35,
+        "mean": 1188.008,
+        "median": 1199.37,
+        "stdev": 23.293900918480766
+      }
+    },
+    "snort_pcres_block_1c__block_rate": {
+      "source_name": "snort_pcres_block_1c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 110867.37,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        109586.67,
+        106167.81,
+        110867.37,
+        111420.01,
+        111043.45
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 106167.81,
+        "max": 111420.01,
+        "mean": 109817.06199999999,
+        "median": 110867.37,
+        "stdev": 2153.2961562033206
+      }
+    },
+    "snort_pcres_block_1c__matches_per_iteration": {
+      "source_name": "snort_pcres_block_1c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 1522622.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1522622.0,
+        "max": 1522622.0,
+        "mean": 1522622.0,
+        "median": 1522622.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c__expression_count": {
+      "source_name": "snort_pcres_block_1c__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c__database_size": {
+      "source_name": "snort_pcres_block_1c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 2018136.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2018136.0,
+        "max": 2018136.0,
+        "mean": 2018136.0,
+        "median": 2018136.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c__peak_rss": {
+      "source_name": "snort_pcres_block_1c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 383041536.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        383041536.0,
+        383041536.0,
+        383045632.0,
+        383045632.0,
+        383041536.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 383041536.0,
+        "max": 383045632.0,
+        "mean": 383043174.4,
+        "median": 383041536.0,
+        "stdev": 2243.4715955411602
+      }
+    },
+    "snort_pcres_block_1c__wall_time": {
+      "source_name": "snort_pcres_block_1c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 7.114924960987992,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c",
+      "samples": [
+        7.123274639990996,
+        7.208576596996863,
+        7.093381780010532,
+        7.045819675011444,
+        7.114924960987992
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 7.045819675011444,
+        "max": 7.208576596996863,
+        "mean": 7.117195530599565,
+        "median": 7.114924960987992,
+        "stdev": 0.059275243211889136
+      }
+    },
+    "snort_pcres_block_4c__scan_throughput": {
+      "source_name": "snort_pcres_block_4c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 3402.64,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        3519.5,
+        3316.97,
+        3519.8,
+        3359.58,
+        3402.64
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 3316.97,
+        "max": 3519.8,
+        "mean": 3423.6979999999994,
+        "median": 3402.64,
+        "stdev": 92.6809593174349
+      }
+    },
+    "snort_pcres_block_4c__block_rate": {
+      "source_name": "snort_pcres_block_4c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 314533.67,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        325335.21,
+        306614.44,
+        325363.47,
+        310553.19,
+        314533.67
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 306614.44,
+        "max": 325363.47,
+        "mean": 316479.996,
+        "median": 314533.67,
+        "stdev": 8567.020117046532
+      }
+    },
+    "snort_pcres_block_4c__matches_per_iteration": {
+      "source_name": "snort_pcres_block_4c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 1522622.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1522622.0,
+        "max": 1522622.0,
+        "mean": 1522622.0,
+        "median": 1522622.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_4c__expression_count": {
+      "source_name": "snort_pcres_block_4c__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_4c__database_size": {
+      "source_name": "snort_pcres_block_4c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 2018136.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2018136.0,
+        "max": 2018136.0,
+        "mean": 2018136.0,
+        "median": 2018136.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_4c__peak_rss": {
+      "source_name": "snort_pcres_block_4c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 939536384.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        940945408.0,
+        938754048.0,
+        940843008.0,
+        939323392.0,
+        939536384.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 938754048.0,
+        "max": 940945408.0,
+        "mean": 939880448.0,
+        "median": 939536384.0,
+        "stdev": 969294.8388431665
+      }
+    },
+    "snort_pcres_block_4c__wall_time": {
+      "source_name": "snort_pcres_block_4c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 8.448987829004182,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_4c",
+      "samples": [
+        8.364624718000414,
+        8.658879637005157,
+        8.369589349997113,
+        8.448987829004182,
+        8.515442364005139
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 8.364624718000414,
+        "max": 8.658879637005157,
+        "mean": 8.471504779602402,
+        "median": 8.448987829004182,
+        "stdev": 0.12181642329112315
+      }
+    },
+    "snort_pcres_stream_1c__scan_throughput": {
+      "source_name": "snort_pcres_stream_1c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 716.16,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        718.59,
+        715.57,
+        716.16,
+        719.71,
+        715.35
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 715.35,
+        "max": 719.71,
+        "mean": 717.076,
+        "median": 716.16,
+        "stdev": 1.9568035159412478
+      }
+    },
+    "snort_pcres_stream_1c__block_rate": {
+      "source_name": "snort_pcres_stream_1c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 66200.04,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        66425.5,
+        66146.22,
+        66200.04,
+        66528.52,
+        66125.26
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 66125.26,
+        "max": 66528.52,
+        "mean": 66285.108,
+        "median": 66200.04,
+        "stdev": 180.99526214793886
+      }
+    },
+    "snort_pcres_stream_1c__matches_per_iteration": {
+      "source_name": "snort_pcres_stream_1c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 305637.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 305637.0,
+        "max": 305637.0,
+        "mean": 305637.0,
+        "median": 305637.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c__expression_count": {
+      "source_name": "snort_pcres_stream_1c__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c__database_size": {
+      "source_name": "snort_pcres_stream_1c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 1960864.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1960864.0,
+        "max": 1960864.0,
+        "mean": 1960864.0,
+        "median": 1960864.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c__peak_rss": {
+      "source_name": "snort_pcres_stream_1c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 382959616.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        382959616.0,
+        382963712.0,
+        382955520.0,
+        382955520.0,
+        382959616.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 382955520.0,
+        "max": 382963712.0,
+        "mean": 382958796.8,
+        "median": 382959616.0,
+        "stdev": 3426.9594686835735
+      }
+    },
+    "snort_pcres_stream_1c__wall_time": {
+      "source_name": "snort_pcres_stream_1c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 8.77948876399023,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c",
+      "samples": [
+        8.78038953000214,
+        8.909799134999048,
+        8.74843844800489,
+        8.771755131994723,
+        8.77948876399023
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 8.74843844800489,
+        "max": 8.909799134999048,
+        "mean": 8.797974201798207,
+        "median": 8.77948876399023,
+        "stdev": 0.06382980946182706
+      }
+    },
+    "snort_pcres_stream_4c__scan_throughput": {
+      "source_name": "snort_pcres_stream_4c__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 2129.14,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        2129.14,
+        2135.74,
+        2201.12,
+        2122.87,
+        2092.31
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2092.31,
+        "max": 2201.12,
+        "mean": 2136.236,
+        "median": 2129.14,
+        "stdev": 39.90199280737741
+      }
+    },
+    "snort_pcres_stream_4c__block_rate": {
+      "source_name": "snort_pcres_stream_4c__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 196813.32,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        196813.32,
+        197423.82,
+        203467.4,
+        196233.65,
+        193409.44
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 193409.44,
+        "max": 203467.4,
+        "mean": 197469.526,
+        "median": 196813.32,
+        "stdev": 3688.4575261049135
+      }
+    },
+    "snort_pcres_stream_4c__matches_per_iteration": {
+      "source_name": "snort_pcres_stream_4c__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 305637.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 305637.0,
+        "max": 305637.0,
+        "mean": 305637.0,
+        "median": 305637.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_4c__expression_count": {
+      "source_name": "snort_pcres_stream_4c__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_4c__database_size": {
+      "source_name": "snort_pcres_stream_4c__database_size",
+      "source_metric": "Bytecode size",
+      "value": 1960864.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1960864.0,
+        "max": 1960864.0,
+        "mean": 1960864.0,
+        "median": 1960864.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_4c__peak_rss": {
+      "source_name": "snort_pcres_stream_4c__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 940032000.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        940027904.0,
+        940994560.0,
+        939618304.0,
+        940032000.0,
+        940056576.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 939618304.0,
+        "max": 940994560.0,
+        "mean": 940145868.8,
+        "median": 940032000.0,
+        "stdev": 508295.28153938235
+      }
+    },
+    "snort_pcres_stream_4c__wall_time": {
+      "source_name": "snort_pcres_stream_4c__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 10.931183655004133,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_4c",
+      "samples": [
+        11.093878166997456,
+        10.975112444008118,
+        10.503270768007496,
+        10.733205033000559,
+        10.931183655004133
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 10.503270768007496,
+        "max": 11.093878166997456,
+        "mean": 10.847330013403553,
+        "median": 10.931183655004133,
+        "stdev": 0.23213522476992787
+      }
+    },
+    "snort_pcres_block_1c_db_load__scan_throughput": {
+      "source_name": "snort_pcres_block_1c_db_load__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 1200.58,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        1214.43,
+        1199.32,
+        1174.31,
+        1204.52,
+        1200.58
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1174.31,
+        "max": 1214.43,
+        "mean": 1198.632,
+        "median": 1200.58,
+        "stdev": 14.83301284297971
+      }
+    },
+    "snort_pcres_block_1c_db_load__block_rate": {
+      "source_name": "snort_pcres_block_1c_db_load__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 110979.43,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        112259.56,
+        110863.02,
+        108551.01,
+        111343.7,
+        110979.43
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 108551.01,
+        "max": 112259.56,
+        "mean": 110799.344,
+        "median": 110979.43,
+        "stdev": 1371.1350769818423
+      }
+    },
+    "snort_pcres_block_1c_db_load__matches_per_iteration": {
+      "source_name": "snort_pcres_block_1c_db_load__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 1522622.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0,
+        1522622.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1522622.0,
+        "max": 1522622.0,
+        "mean": 1522622.0,
+        "median": 1522622.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c_db_load__expression_count": {
+      "source_name": "snort_pcres_block_1c_db_load__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c_db_load__database_size": {
+      "source_name": "snort_pcres_block_1c_db_load__database_size",
+      "source_metric": "Bytecode size",
+      "value": 2018136.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0,
+        2018136.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2018136.0,
+        "max": 2018136.0,
+        "mean": 2018136.0,
+        "median": 2018136.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_block_1c_db_load__peak_rss": {
+      "source_name": "snort_pcres_block_1c_db_load__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 379637760.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        379625472.0,
+        379637760.0,
+        379637760.0,
+        379637760.0,
+        379633664.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 379625472.0,
+        "max": 379637760.0,
+        "mean": 379634483.2,
+        "median": 379637760.0,
+        "stdev": 5340.53061034201
+      }
+    },
+    "snort_pcres_block_1c_db_load__wall_time": {
+      "source_name": "snort_pcres_block_1c_db_load__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 2.7931530339992605,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_block_1c_db_load",
+      "samples": [
+        2.7356207459961297,
+        2.832325089999358,
+        2.9598116319975816,
+        2.757630585008883,
+        2.7931530339992605
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 2.7356207459961297,
+        "max": 2.9598116319975816,
+        "mean": 2.8157082174002426,
+        "median": 2.7931530339992605,
+        "stdev": 0.08851223829495311
+      }
+    },
+    "snort_pcres_stream_1c_db_load__scan_throughput": {
+      "source_name": "snort_pcres_stream_1c_db_load__scan_throughput",
+      "source_metric": "Mean throughput (overall)",
+      "value": 719.2,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        713.9,
+        719.2,
+        721.18,
+        706.4,
+        722.04
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 706.4,
+        "max": 722.04,
+        "mean": 716.544,
+        "median": 719.2,
+        "stdev": 6.493156397315561
+      }
+    },
+    "snort_pcres_stream_1c_db_load__block_rate": {
+      "source_name": "snort_pcres_stream_1c_db_load__block_rate",
+      "source_metric": "Overall block rate",
+      "value": 66481.1,
+      "unit": "blocks/s",
+      "direction": "higher_is_better",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        65991.95,
+        66481.1,
+        66664.26,
+        65298.45,
+        66743.88
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 65298.45,
+        "max": 66743.88,
+        "mean": 66235.928,
+        "median": 66481.1,
+        "stdev": 599.9964814646853
+      }
+    },
+    "snort_pcres_stream_1c_db_load__matches_per_iteration": {
+      "source_name": "snort_pcres_stream_1c_db_load__matches_per_iteration",
+      "source_metric": "Matches per iteration",
+      "value": 305637.0,
+      "unit": "matches",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0,
+        305637.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 305637.0,
+        "max": 305637.0,
+        "mean": 305637.0,
+        "median": 305637.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c_db_load__expression_count": {
+      "source_name": "snort_pcres_stream_1c_db_load__expression_count",
+      "source_metric": "Expression count",
+      "value": 847.0,
+      "unit": "patterns",
+      "direction": "neutral",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        847.0,
+        847.0,
+        847.0,
+        847.0,
+        847.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 847.0,
+        "max": 847.0,
+        "mean": 847.0,
+        "median": 847.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c_db_load__database_size": {
+      "source_name": "snort_pcres_stream_1c_db_load__database_size",
+      "source_metric": "Bytecode size",
+      "value": 1960864.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0,
+        1960864.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 1960864.0,
+        "max": 1960864.0,
+        "mean": 1960864.0,
+        "median": 1960864.0,
+        "stdev": 0.0
+      }
+    },
+    "snort_pcres_stream_1c_db_load__peak_rss": {
+      "source_name": "snort_pcres_stream_1c_db_load__peak_rss",
+      "source_metric": "/usr/bin/time Maximum resident set size",
+      "value": 379555840.0,
+      "unit": "bytes",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        379555840.0,
+        379555840.0,
+        379551744.0,
+        379555840.0,
+        379551744.0
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 379551744.0,
+        "max": 379555840.0,
+        "mean": 379554201.6,
+        "median": 379555840.0,
+        "stdev": 2243.4715955411602
+      }
+    },
+    "snort_pcres_stream_1c_db_load__wall_time": {
+      "source_name": "snort_pcres_stream_1c_db_load__wall_time",
+      "source_metric": "measured wall clock",
+      "value": 4.504930964001687,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "snort_pcres_stream_1c_db_load",
+      "samples": [
+        4.504930964001687,
+        4.521570882003289,
+        4.453806730991346,
+        4.580111597009818,
+        4.3713747750007315
+      ],
+      "statistics": {
+        "count": 5,
+        "min": 4.3713747750007315,
+        "max": 4.580111597009818,
+        "mean": 4.486358989801374,
+        "median": 4.504930964001687,
+        "stdev": 0.07851013651668255
+      }
+    },
+    "corpus__corpus_database_file_bytes": {
+      "source_name": "corpus__corpus_database_file_bytes",
+      "source_metric": "SQLite corpus database file size",
+      "value": 192055296,
+      "unit": "bytes",
+      "direction": "neutral",
+      "group": "corpus"
+    },
+    "corpus__corpus_data_bytes": {
+      "source_name": "corpus__corpus_data_bytes",
+      "source_metric": "Corpus size",
+      "value": 177087567,
+      "unit": "bytes",
+      "direction": "neutral",
+      "group": "corpus"
+    }
+  },
+  "scenarios": {
+    "snort_literals_block_1c": {
+      "rules": "snort_literals",
+      "mode": "block",
+      "cores": 1,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_literals",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-N",
+        "-n",
+        "2",
+        "-T",
+        "0"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            3983.49,
+            4087.23,
+            4104.4,
+            4116.92,
+            4027.14
+          ],
+          "count": 5,
+          "min": 3983.49,
+          "max": 4116.92,
+          "mean": 4063.8360000000002,
+          "median": 4087.23,
+          "stdev": 56.59660882067057
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            368226.24,
+            377815.57,
+            379402.6,
+            380559.98,
+            372260.44
+          ],
+          "count": 5,
+          "min": 368226.24,
+          "max": 380559.98,
+          "mean": 375652.966,
+          "median": 377815.57,
+          "stdev": 5231.655792641556
+        },
+        "matches_per_iteration": {
+          "samples": [
+            637380.0,
+            637380.0,
+            637380.0,
+            637380.0,
+            637380.0
+          ],
+          "count": 5,
+          "min": 637380.0,
+          "max": 637380.0,
+          "mean": 637380.0,
+          "median": 637380.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0
+          ],
+          "count": 5,
+          "min": 3116.0,
+          "max": 3116.0,
+          "mean": 3116.0,
+          "median": 3116.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            921592.0,
+            921592.0,
+            921592.0,
+            921592.0,
+            921592.0
+          ],
+          "count": 5,
+          "min": 921592.0,
+          "max": 921592.0,
+          "mean": 921592.0,
+          "median": 921592.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            381644800.0,
+            381640704.0,
+            381640704.0,
+            381636608.0,
+            381644800.0
+          ],
+          "count": 5,
+          "min": 381636608.0,
+          "max": 381644800.0,
+          "mean": 381641523.2,
+          "median": 381640704.0,
+          "stdev": 3426.9594686835735
+        },
+        "wall_time_s": {
+          "samples": [
+            1.2740584180137375,
+            1.257483918001526,
+            1.2508934530051192,
+            1.2499903360003373,
+            1.269441545009613
+          ],
+          "count": 5,
+          "min": 1.2499903360003373,
+          "max": 1.2740584180137375,
+          "mean": 1.2603735340060667,
+          "median": 1.257483918001526,
+          "stdev": 0.010903411061776138
+        }
+      }
+    },
+    "snort_literals_block_4c": {
+      "rules": "snort_literals",
+      "mode": "block",
+      "cores": 4,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_literals",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-N",
+        "-n",
+        "2",
+        "-T",
+        "0-3"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            9445.36,
+            9450.19,
+            9644.33,
+            9521.12,
+            9611.97
+          ],
+          "count": 5,
+          "min": 9445.36,
+          "max": 9644.33,
+          "mean": 9534.594000000001,
+          "median": 9521.12,
+          "stdev": 91.23777413988088
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            873110.35,
+            873556.89,
+            891502.39,
+            880113.68,
+            888511.6
+          ],
+          "count": 5,
+          "min": 873110.35,
+          "max": 891502.39,
+          "mean": 881358.9820000001,
+          "median": 880113.68,
+          "stdev": 8433.742002033854
+        },
+        "matches_per_iteration": {
+          "samples": [
+            637380.0,
+            637380.0,
+            637380.0,
+            637380.0,
+            637380.0
+          ],
+          "count": 5,
+          "min": 637380.0,
+          "max": 637380.0,
+          "mean": 637380.0,
+          "median": 637380.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0
+          ],
+          "count": 5,
+          "min": 3116.0,
+          "max": 3116.0,
+          "mean": 3116.0,
+          "median": 3116.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            921592.0,
+            921592.0,
+            921592.0,
+            921592.0,
+            921592.0
+          ],
+          "count": 5,
+          "min": 921592.0,
+          "max": 921592.0,
+          "mean": 921592.0,
+          "median": 921592.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            938713088.0,
+            939360256.0,
+            937029632.0,
+            937144320.0,
+            937046016.0
+          ],
+          "count": 5,
+          "min": 937029632.0,
+          "max": 939360256.0,
+          "mean": 937858662.4,
+          "median": 937144320.0,
+          "stdev": 1100317.8047149833
+        },
+        "wall_time_s": {
+          "samples": [
+            2.0416173770063324,
+            2.0414720669941744,
+            2.018796250995365,
+            2.0381171100016218,
+            2.0292310519871535
+          ],
+          "count": 5,
+          "min": 2.018796250995365,
+          "max": 2.0416173770063324,
+          "mean": 2.0338467713969295,
+          "median": 2.0381171100016218,
+          "stdev": 0.00980543556284809
+        }
+      }
+    },
+    "snort_literals_stream_1c": {
+      "rules": "snort_literals",
+      "mode": "stream",
+      "cores": 1,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_literals",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-n",
+        "2",
+        "-T",
+        "0"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            4460.35,
+            4573.21,
+            4504.6,
+            4564.24,
+            4568.61
+          ],
+          "count": 5,
+          "min": 4460.35,
+          "max": 4573.21,
+          "mean": 4534.202,
+          "median": 4564.24,
+          "stdev": 49.84529135234313
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            412305.64,
+            422738.28,
+            416396.67,
+            421909.51,
+            422313.73
+          ],
+          "count": 5,
+          "min": 412305.64,
+          "max": 422738.28,
+          "mean": 419132.766,
+          "median": 421909.51,
+          "stdev": 4607.722896293787
+        },
+        "matches_per_iteration": {
+          "samples": [
+            81963.0,
+            81963.0,
+            81963.0,
+            81963.0,
+            81963.0
+          ],
+          "count": 5,
+          "min": 81963.0,
+          "max": 81963.0,
+          "mean": 81963.0,
+          "median": 81963.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0
+          ],
+          "count": 5,
+          "min": 3116.0,
+          "max": 3116.0,
+          "mean": 3116.0,
+          "median": 3116.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            693880.0,
+            693880.0,
+            693880.0,
+            693880.0,
+            693880.0
+          ],
+          "count": 5,
+          "min": 693880.0,
+          "max": 693880.0,
+          "mean": 693880.0,
+          "median": 693880.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            381399040.0,
+            381411328.0,
+            381411328.0,
+            381411328.0,
+            381411328.0
+          ],
+          "count": 5,
+          "min": 381399040.0,
+          "max": 381411328.0,
+          "mean": 381408870.4,
+          "median": 381411328.0,
+          "stdev": 5495.360661503483
+        },
+        "wall_time_s": {
+          "samples": [
+            1.1709723769890843,
+            1.1651700280053774,
+            1.1317081209999742,
+            1.1206002219987568,
+            1.120859759990708
+          ],
+          "count": 5,
+          "min": 1.1206002219987568,
+          "max": 1.1709723769890843,
+          "mean": 1.14186210159678,
+          "median": 1.1317081209999742,
+          "stdev": 0.024428143430394372
+        }
+      }
+    },
+    "snort_literals_stream_4c": {
+      "rules": "snort_literals",
+      "mode": "stream",
+      "cores": 4,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_literals",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-n",
+        "2",
+        "-T",
+        "0-3"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            10494.82,
+            10478.61,
+            10474.3,
+            10488.07,
+            10521.67
+          ],
+          "count": 5,
+          "min": 10474.3,
+          "max": 10521.67,
+          "mean": 10491.494,
+          "median": 10488.07,
+          "stdev": 18.674903748078695
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            970120.25,
+            968622.14,
+            968223.94,
+            969496.16,
+            972602.0
+          ],
+          "count": 5,
+          "min": 968223.94,
+          "max": 972602.0,
+          "mean": 969812.898,
+          "median": 969496.16,
+          "stdev": 1726.0192872097434
+        },
+        "matches_per_iteration": {
+          "samples": [
+            81963.0,
+            81963.0,
+            81963.0,
+            81963.0,
+            81963.0
+          ],
+          "count": 5,
+          "min": 81963.0,
+          "max": 81963.0,
+          "mean": 81963.0,
+          "median": 81963.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0,
+            3116.0
+          ],
+          "count": 5,
+          "min": 3116.0,
+          "max": 3116.0,
+          "mean": 3116.0,
+          "median": 3116.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            693880.0,
+            693880.0,
+            693880.0,
+            693880.0,
+            693880.0
+          ],
+          "count": 5,
+          "min": 693880.0,
+          "max": 693880.0,
+          "mean": 693880.0,
+          "median": 693880.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            939126784.0,
+            939642880.0,
+            938893312.0,
+            937852928.0,
+            938479616.0
+          ],
+          "count": 5,
+          "min": 937852928.0,
+          "max": 939642880.0,
+          "mean": 938799104.0,
+          "median": 938893312.0,
+          "stdev": 675560.6695478949
+        },
+        "wall_time_s": {
+          "samples": [
+            1.8575760329986224,
+            1.8726842070027487,
+            1.8725925680046203,
+            1.8676615860022139,
+            1.8686887030053185
+          ],
+          "count": 5,
+          "min": 1.8575760329986224,
+          "max": 1.8726842070027487,
+          "mean": 1.8678406194027048,
+          "median": 1.8686887030053185,
+          "stdev": 0.006167543861962651
+        }
+      }
+    },
+    "snort_pcres_block_1c": {
+      "rules": "snort_pcres",
+      "mode": "block",
+      "cores": 1,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-N",
+        "-n",
+        "2",
+        "-T",
+        "0"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            1185.52,
+            1148.53,
+            1199.37,
+            1205.35,
+            1201.27
+          ],
+          "count": 5,
+          "min": 1148.53,
+          "max": 1205.35,
+          "mean": 1188.008,
+          "median": 1199.37,
+          "stdev": 23.293900918480766
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            109586.67,
+            106167.81,
+            110867.37,
+            111420.01,
+            111043.45
+          ],
+          "count": 5,
+          "min": 106167.81,
+          "max": 111420.01,
+          "mean": 109817.06199999999,
+          "median": 110867.37,
+          "stdev": 2153.2961562033206
+        },
+        "matches_per_iteration": {
+          "samples": [
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0
+          ],
+          "count": 5,
+          "min": 1522622.0,
+          "max": 1522622.0,
+          "mean": 1522622.0,
+          "median": 1522622.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0
+          ],
+          "count": 5,
+          "min": 2018136.0,
+          "max": 2018136.0,
+          "mean": 2018136.0,
+          "median": 2018136.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            383041536.0,
+            383041536.0,
+            383045632.0,
+            383045632.0,
+            383041536.0
+          ],
+          "count": 5,
+          "min": 383041536.0,
+          "max": 383045632.0,
+          "mean": 383043174.4,
+          "median": 383041536.0,
+          "stdev": 2243.4715955411602
+        },
+        "wall_time_s": {
+          "samples": [
+            7.123274639990996,
+            7.208576596996863,
+            7.093381780010532,
+            7.045819675011444,
+            7.114924960987992
+          ],
+          "count": 5,
+          "min": 7.045819675011444,
+          "max": 7.208576596996863,
+          "mean": 7.117195530599565,
+          "median": 7.114924960987992,
+          "stdev": 0.059275243211889136
+        }
+      }
+    },
+    "snort_pcres_block_4c": {
+      "rules": "snort_pcres",
+      "mode": "block",
+      "cores": 4,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-N",
+        "-n",
+        "2",
+        "-T",
+        "0-3"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            3519.5,
+            3316.97,
+            3519.8,
+            3359.58,
+            3402.64
+          ],
+          "count": 5,
+          "min": 3316.97,
+          "max": 3519.8,
+          "mean": 3423.6979999999994,
+          "median": 3402.64,
+          "stdev": 92.6809593174349
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            325335.21,
+            306614.44,
+            325363.47,
+            310553.19,
+            314533.67
+          ],
+          "count": 5,
+          "min": 306614.44,
+          "max": 325363.47,
+          "mean": 316479.996,
+          "median": 314533.67,
+          "stdev": 8567.020117046532
+        },
+        "matches_per_iteration": {
+          "samples": [
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0
+          ],
+          "count": 5,
+          "min": 1522622.0,
+          "max": 1522622.0,
+          "mean": 1522622.0,
+          "median": 1522622.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0
+          ],
+          "count": 5,
+          "min": 2018136.0,
+          "max": 2018136.0,
+          "mean": 2018136.0,
+          "median": 2018136.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            940945408.0,
+            938754048.0,
+            940843008.0,
+            939323392.0,
+            939536384.0
+          ],
+          "count": 5,
+          "min": 938754048.0,
+          "max": 940945408.0,
+          "mean": 939880448.0,
+          "median": 939536384.0,
+          "stdev": 969294.8388431665
+        },
+        "wall_time_s": {
+          "samples": [
+            8.364624718000414,
+            8.658879637005157,
+            8.369589349997113,
+            8.448987829004182,
+            8.515442364005139
+          ],
+          "count": 5,
+          "min": 8.364624718000414,
+          "max": 8.658879637005157,
+          "mean": 8.471504779602402,
+          "median": 8.448987829004182,
+          "stdev": 0.12181642329112315
+        }
+      }
+    },
+    "snort_pcres_stream_1c": {
+      "rules": "snort_pcres",
+      "mode": "stream",
+      "cores": 1,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-n",
+        "2",
+        "-T",
+        "0"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            718.59,
+            715.57,
+            716.16,
+            719.71,
+            715.35
+          ],
+          "count": 5,
+          "min": 715.35,
+          "max": 719.71,
+          "mean": 717.076,
+          "median": 716.16,
+          "stdev": 1.9568035159412478
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            66425.5,
+            66146.22,
+            66200.04,
+            66528.52,
+            66125.26
+          ],
+          "count": 5,
+          "min": 66125.26,
+          "max": 66528.52,
+          "mean": 66285.108,
+          "median": 66200.04,
+          "stdev": 180.99526214793886
+        },
+        "matches_per_iteration": {
+          "samples": [
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0
+          ],
+          "count": 5,
+          "min": 305637.0,
+          "max": 305637.0,
+          "mean": 305637.0,
+          "median": 305637.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0
+          ],
+          "count": 5,
+          "min": 1960864.0,
+          "max": 1960864.0,
+          "mean": 1960864.0,
+          "median": 1960864.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            382959616.0,
+            382963712.0,
+            382955520.0,
+            382955520.0,
+            382959616.0
+          ],
+          "count": 5,
+          "min": 382955520.0,
+          "max": 382963712.0,
+          "mean": 382958796.8,
+          "median": 382959616.0,
+          "stdev": 3426.9594686835735
+        },
+        "wall_time_s": {
+          "samples": [
+            8.78038953000214,
+            8.909799134999048,
+            8.74843844800489,
+            8.771755131994723,
+            8.77948876399023
+          ],
+          "count": 5,
+          "min": 8.74843844800489,
+          "max": 8.909799134999048,
+          "mean": 8.797974201798207,
+          "median": 8.77948876399023,
+          "stdev": 0.06382980946182706
+        }
+      }
+    },
+    "snort_pcres_stream_4c": {
+      "rules": "snort_pcres",
+      "mode": "stream",
+      "cores": 4,
+      "database_load": false,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-n",
+        "2",
+        "-T",
+        "0-3"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            2129.14,
+            2135.74,
+            2201.12,
+            2122.87,
+            2092.31
+          ],
+          "count": 5,
+          "min": 2092.31,
+          "max": 2201.12,
+          "mean": 2136.236,
+          "median": 2129.14,
+          "stdev": 39.90199280737741
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            196813.32,
+            197423.82,
+            203467.4,
+            196233.65,
+            193409.44
+          ],
+          "count": 5,
+          "min": 193409.44,
+          "max": 203467.4,
+          "mean": 197469.526,
+          "median": 196813.32,
+          "stdev": 3688.4575261049135
+        },
+        "matches_per_iteration": {
+          "samples": [
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0
+          ],
+          "count": 5,
+          "min": 305637.0,
+          "max": 305637.0,
+          "mean": 305637.0,
+          "median": 305637.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0
+          ],
+          "count": 5,
+          "min": 1960864.0,
+          "max": 1960864.0,
+          "mean": 1960864.0,
+          "median": 1960864.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            940027904.0,
+            940994560.0,
+            939618304.0,
+            940032000.0,
+            940056576.0
+          ],
+          "count": 5,
+          "min": 939618304.0,
+          "max": 940994560.0,
+          "mean": 940145868.8,
+          "median": 940032000.0,
+          "stdev": 508295.28153938235
+        },
+        "wall_time_s": {
+          "samples": [
+            11.093878166997456,
+            10.975112444008118,
+            10.503270768007496,
+            10.733205033000559,
+            10.931183655004133
+          ],
+          "count": 5,
+          "min": 10.503270768007496,
+          "max": 11.093878166997456,
+          "mean": 10.847330013403553,
+          "median": 10.931183655004133,
+          "stdev": 0.23213522476992787
+        }
+      }
+    },
+    "snort_pcres_block_1c_db_load": {
+      "rules": "snort_pcres",
+      "mode": "block",
+      "cores": 1,
+      "database_load": true,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-N",
+        "-n",
+        "2",
+        "-T",
+        "0",
+        "-i",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/hsbench-db/snort_pcres_block"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            1214.43,
+            1199.32,
+            1174.31,
+            1204.52,
+            1200.58
+          ],
+          "count": 5,
+          "min": 1174.31,
+          "max": 1214.43,
+          "mean": 1198.632,
+          "median": 1200.58,
+          "stdev": 14.83301284297971
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            112259.56,
+            110863.02,
+            108551.01,
+            111343.7,
+            110979.43
+          ],
+          "count": 5,
+          "min": 108551.01,
+          "max": 112259.56,
+          "mean": 110799.344,
+          "median": 110979.43,
+          "stdev": 1371.1350769818423
+        },
+        "matches_per_iteration": {
+          "samples": [
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0,
+            1522622.0
+          ],
+          "count": 5,
+          "min": 1522622.0,
+          "max": 1522622.0,
+          "mean": 1522622.0,
+          "median": 1522622.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0,
+            2018136.0
+          ],
+          "count": 5,
+          "min": 2018136.0,
+          "max": 2018136.0,
+          "mean": 2018136.0,
+          "median": 2018136.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            379625472.0,
+            379637760.0,
+            379637760.0,
+            379637760.0,
+            379633664.0
+          ],
+          "count": 5,
+          "min": 379625472.0,
+          "max": 379637760.0,
+          "mean": 379634483.2,
+          "median": 379637760.0,
+          "stdev": 5340.53061034201
+        },
+        "wall_time_s": {
+          "samples": [
+            2.7356207459961297,
+            2.832325089999358,
+            2.9598116319975816,
+            2.757630585008883,
+            2.7931530339992605
+          ],
+          "count": 5,
+          "min": 2.7356207459961297,
+          "max": 2.9598116319975816,
+          "mean": 2.8157082174002426,
+          "median": 2.7931530339992605,
+          "stdev": 0.08851223829495311
+        }
+      }
+    },
+    "snort_pcres_stream_1c_db_load": {
+      "rules": "snort_pcres",
+      "mode": "stream",
+      "cores": 1,
+      "database_load": true,
+      "command": [
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/build/bin/hsbench",
+        "-e",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/rules/snort_pcres",
+        "-c",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/corpus/corpus/corpus.db",
+        "-n",
+        "2",
+        "-T",
+        "0",
+        "-i",
+        "/home/runner/boostkit-perf/ultrascan/5.8.0/aarch64/41638444123-1/hsbench-db/snort_pcres_stream"
+      ],
+      "metrics": {
+        "scan_throughput_mbit_s": {
+          "samples": [
+            713.9,
+            719.2,
+            721.18,
+            706.4,
+            722.04
+          ],
+          "count": 5,
+          "min": 706.4,
+          "max": 722.04,
+          "mean": 716.544,
+          "median": 719.2,
+          "stdev": 6.493156397315561
+        },
+        "block_rate_blocks_s": {
+          "samples": [
+            65991.95,
+            66481.1,
+            66664.26,
+            65298.45,
+            66743.88
+          ],
+          "count": 5,
+          "min": 65298.45,
+          "max": 66743.88,
+          "mean": 66235.928,
+          "median": 66481.1,
+          "stdev": 599.9964814646853
+        },
+        "matches_per_iteration": {
+          "samples": [
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0,
+            305637.0
+          ],
+          "count": 5,
+          "min": 305637.0,
+          "max": 305637.0,
+          "mean": 305637.0,
+          "median": 305637.0,
+          "stdev": 0.0
+        },
+        "expression_count": {
+          "samples": [
+            847.0,
+            847.0,
+            847.0,
+            847.0,
+            847.0
+          ],
+          "count": 5,
+          "min": 847.0,
+          "max": 847.0,
+          "mean": 847.0,
+          "median": 847.0,
+          "stdev": 0.0
+        },
+        "database_size_bytes": {
+          "samples": [
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0,
+            1960864.0
+          ],
+          "count": 5,
+          "min": 1960864.0,
+          "max": 1960864.0,
+          "mean": 1960864.0,
+          "median": 1960864.0,
+          "stdev": 0.0
+        },
+        "peak_rss_bytes": {
+          "samples": [
+            379555840.0,
+            379555840.0,
+            379551744.0,
+            379555840.0,
+            379551744.0
+          ],
+          "count": 5,
+          "min": 379551744.0,
+          "max": 379555840.0,
+          "mean": 379554201.6,
+          "median": 379555840.0,
+          "stdev": 2243.4715955411602
+        },
+        "wall_time_s": {
+          "samples": [
+            4.504930964001687,
+            4.521570882003289,
+            4.453806730991346,
+            4.580111597009818,
+            4.3713747750007315
+          ],
+          "count": 5,
+          "min": 4.3713747750007315,
+          "max": 4.580111597009818,
+          "mean": 4.486358989801374,
+          "median": 4.504930964001687,
+          "stdev": 0.07851013651668255
+        }
+      }
+    }
+  }
+}
