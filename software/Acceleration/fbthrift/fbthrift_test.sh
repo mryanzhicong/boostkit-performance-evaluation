@@ -25,16 +25,18 @@ run_fbthrift_standalone() {
     local status=0 failed_stage="" cleanup_status="passed"
     local compiler_binary="${CXX:-c++}"
     local compiler_version
-    compiler_version="$("${compiler_binary}" --version 2>/dev/null | head -n 1)"
     initialize_runtime || return $?
     standalone_runtime system "${RESULTS_DIR}/system_info.json" || return $?
     standalone_runtime runtime "${RESULTS_DIR}/runtime_before.json" || return $?
     if ! build_fbthrift; then status=30; failed_stage="build"; fi
+    # The recorded compiler is the one that actually built folly/fbthrift; it lives
+    # in the private container, not on the host.
+    compiler_version="$(fbthrift_container_exec "${compiler_binary}" --version 2>/dev/null | head -n 1)"
     if [[ "${status}" -eq 0 ]]; then
         standalone_runtime build-info "${RESULTS_DIR}/build_info.json" \
             "${SOFTWARE_VERSION}" "${PERF_ACTUAL_VERSION_FILE}" \
             "$(normalize_architecture "${EXPECTED_ARCH}")" "${PERF_RUN_ID}" \
-            "${compiler_binary}" "${compiler_version:-unknown}" || { status=30; failed_stage="build"; }
+            "${compiler_binary} (container)" "${compiler_version:-unknown}" || { status=30; failed_stage="build"; }
     fi
     if [[ "${status}" -eq 0 ]] && ! start_fbthrift_runtime; then
         status=20

@@ -15,6 +15,50 @@ benchmark → folly → fbthrift 依赖链；调优版入口位于
 共用 `scripts/stages/` 下的脚本，`scripts/common.sh` 负责跨阶段一致的私有
 路径、pinned 版本表和多源下载，结果解析在 `scripts/results/`。
 
+## 容器化执行
+
+本用例的解包、依赖安装、folly/fbthrift 构建与 ProtocolBench 测量全部在每次任务专属的
+**openEuler 24.03 LTS SP4 私有容器**内完成，与 `software/Database/mysql`、
+`software/Bigdata/ray`、`software/Others/unixbench`、`software/Acceleration/eigen` 使用
+同一套容器契约。宿主机只需要 Docker、下载/校验工具与 Framework，不再安装编译器、CMake
+或 dnf 包。
+
+- 基础镜像：openEuler 24.03 LTS SP4 官方 Docker 归档，优先读取
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz` 与同名
+  `.sha256sum`，缺失时从
+  `https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/<arch>/` 下载；加载后校验
+  归档 SHA-256、镜像架构与镜像内 `/etc/os-release`（必须为 24.03）。
+- 容器：名字 `boostkit-fbthrift-<arch>-<运行ID>`，标签
+  `boostkit.fbthrift.run-id=<运行ID>`，使用宿主网络，以 Runner 用户身份运行；只读挂载用例
+  目录，读写挂载 `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}`，容器内路径与宿主完全相同。
+  ProtocolBench 是纯用户态基准，不需要额外 capability，因此不设置
+  `FBTHRIFT_CONTAINER_EXTRA_ARGS`。
+- 容器内：`dnf`（关闭弱依赖，避免 rpm scriptlet 触碰只读 `/etc/passwd`）安装
+  `gcc`、`gcc-c++`、`make`、`cmake`、`ninja-build`、`python3`、`tar`、`gzip`、
+  `coreutils`、`findutils`、`sed`、`gawk`、`grep`、`diffutils`、`which`、`binutils`、
+  `glibc-devel`、`time`、`boost-devel`、`glog-devel`、`gflags-devel`、`libevent-devel`、
+  `openssl-devel`、`zlib-devel`、`libzstd-devel`、`xxhash-devel`、`libicu-devel`
+  （不再保留宿主机的 apt 分支：镜像固定为 openEuler）。安装后逐个重探头文件与
+  `-licuuc -licui18n -licudata` 链接探针，探针是容器内的编译/链接，因此记录的是真正
+  参与构建的工具链。
+- 容器内还执行：五个 pinned 归档的解包（宿主机先校验 SHA-256 再复制到 `${PERF_WORK_DIR}`）、
+  源码指纹校验、`cmake` 生成与 `fmt`/`fast_float`/`google benchmark`/`folly`/`fbthrift`
+  五级构建、ProtocolBench 用例清单自检，以及每条测量样本的 ProtocolBench 进程与
+  GNU `time -v` 计时（墙钟 + 峰值 RSS）。`${PERF_WORK_DIR}/home` 作为容器内 `HOME`，
+  `dependencies.json` 里的 OS / 编译器 / CMake 版本都取自容器。
+- 宿主机：只负责下载并校验五个归档（优先 `/home/runner/software/fbthrift/`）、调用
+  Framework、严格解析 `runs/` 下的原始日志与计时工件
+  （`scripts/results/parse_benchmark.py` 不进入容器）、清理本任务的容器。
+- 测量：每条样本由容器内进程直接派生（`fbthrift_container_exec_at "${run_dir}"`），
+  `docker exec` 的管理开销不落在计时窗口内；raw 日志、Benchmark JSON 与 GNU time 记录
+  都写在共享的 `runs/<scenario>/` 下，宿主解析器读同一批文件。
+- 清理：`stop` 阶段幂等删除本任务容器（标签不符时拒绝删除并返回 60）；取消任务遗留的
+  同软件容器会在下一次 build 时按名字前缀 + 运行 ID 清理。
+- 本地验证：x86_64 WSL 上用 `PERF_REPS=1` 跑通六阶段（prepare/build/start/test/stop/
+  finalize 全部 0），容器删除后 `docker ps -a` 无残留；只验证链路，不作为性能证据。
+
+独立运行同样需要 Docker 与可访问的 Docker daemon；不满足时 build 阶段返回 30 并给出提示。
+
 ## 测试工具与源码
 
 ### 上游基准目标

@@ -11,8 +11,13 @@ run_single_benchmark() {
     local json="${run_dir}/${label}.json"
     local timing="${run_dir}/${label}.time"
     mkdir -p "${run_dir}"
-    log_message "scenario ${scenario} ${label}: filter=${filter} min_time=${min_time}"
-    if ! /usr/bin/time -v -o "${timing}" \
+    log_message "scenario ${scenario} ${label}: filter=${filter} min_time=${min_time} (in container)"
+    # The measured process is spawned inside the private container from the shared
+    # run directory; GNU time and ProtocolBench both live in the container, so the
+    # RSS record and the JSON report are container-native artifacts.
+    if ! fbthrift_container_exec_at "${run_dir}" \
+            env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" \
+            /usr/bin/time -v -o "${timing}" \
             "${PROTOCOL_BENCH_BIN}" \
             --benchmark_filter="${filter}" \
             --benchmark_min_time="${min_time}" \
@@ -52,14 +57,15 @@ concatenate_raw_logs() {
 
 run_fbthrift_benchmarks() {
     initialize_runtime || return $?
-    if [[ ! -x "${PROTOCOL_BENCH_BIN}" ]]; then
-        log_message "ERROR: private ProtocolBench is missing: ${PROTOCOL_BENCH_BIN}"
+    check_fbthrift_container || return $?
+    fbthrift_container_exec test -x "${PROTOCOL_BENCH_BIN}" || {
+        log_message "ERROR: private ProtocolBench is missing in the container: ${PROTOCOL_BENCH_BIN}"
         return 50
-    fi
-    if [[ ! -x /usr/bin/time ]]; then
-        log_message "ERROR: /usr/bin/time (GNU time) is required for peak RSS"
+    }
+    fbthrift_container_exec test -x /usr/bin/time || {
+        log_message "ERROR: /usr/bin/time (GNU time) is required for peak RSS inside the container"
         return 50
-    fi
+    }
     local actual_version
     actual_version="$(head -n 1 "${PERF_ACTUAL_VERSION_FILE}" 2>/dev/null || true)"
     if [[ -z "${actual_version}" ]]; then

@@ -208,18 +208,18 @@ resolve_arch_flags() {
 
 resolve_cmake_generator() {
     if [[ -z "${CMAKE_GENERATOR}" ]]; then
-        if command -v ninja >/dev/null 2>&1; then
+        if fbthrift_container_exec command -v ninja >/dev/null 2>&1; then
             CMAKE_GENERATOR="Ninja"
         else
             CMAKE_GENERATOR="Unix Makefiles"
         fi
     fi
-    log_message "cmake generator: ${CMAKE_GENERATOR}"
+    log_message "cmake generator (container): ${CMAKE_GENERATOR}"
 }
 
 cmake_version_ok() {
     local bin="$1" version major minor rest
-    version="$("${bin}" --version 2>/dev/null | head -n 1 | awk '{print $3}')"
+    version="$(fbthrift_container_exec "${bin}" --version 2>/dev/null | head -n 1 | awk '{print $3}')"
     [[ -n "${version}" ]] || return 1
     major="${version%%.*}"
     rest="${version#*.}"
@@ -230,16 +230,18 @@ cmake_version_ok() {
 
 compiler_major_version() {
     local out
-    out="$("${CXX:-c++}" -dumpversion 2>/dev/null || true)"
+    out="$(fbthrift_container_exec "${CXX:-c++}" -dumpversion 2>/dev/null || true)"
     out="${out%%.*}"
     [[ "${out}" =~ ^[0-9]+$ ]] || { printf '0\n'; return 0; }
     printf '%s\n' "${out}"
 }
 
 header_available() {
-    local header="$1"
-    printf '#include <%s>\nint main() { return 0; }\n' "${header}" | \
-        "${CXX:-c++}" -x c++ -fsyntax-only - >/dev/null 2>&1
+    local header="$1" probe
+    probe="${PERF_WORK_DIR}/probe/header-$(printf '%s' "${header}" | tr '/' '_').cc"
+    mkdir -p "$(dirname "${probe}")"
+    printf '#include <%s>\nint main() { return 0; }\n' "${header}" > "${probe}"
+    fbthrift_container_exec "${CXX:-c++}" -fsyntax-only "${probe}" >/dev/null 2>&1
 }
 
 # ICU is not referenced by folly/fbthrift CMake (there is no FindICU call), but
@@ -249,29 +251,23 @@ header_available() {
 # A header check is not enough: the unversioned .so development symlinks (which
 # the -devel package provides) are exactly what the linker needs.
 icu_link_available() {
-    local workdir probe
-    workdir="$(mktemp -d "${TMPDIR:-/tmp}/fbthrift-icu.XXXXXX" 2>/dev/null)" || return 1
-    probe="${workdir}/icu-probe"
-    if printf 'int main(void){return 0;}\n' | \
-            "${CC:-cc}" -x c - -licuuc -licui18n -licudata -o "${probe}" >/dev/null 2>&1; then
-        rm -rf -- "${workdir}"
-        return 0
-    fi
-    rm -rf -- "${workdir}"
-    return 1
+    local probe="${PERF_WORK_DIR}/probe/icu-link.c"
+    local binary="${PERF_WORK_DIR}/probe/icu-link"
+    mkdir -p "$(dirname "${probe}")"
+    printf 'int main(void){return 0;}\n' > "${probe}"
+    fbthrift_container_exec "${CC:-cc}" "${probe}" \
+        -licuuc -licui18n -licudata -o "${binary}" >/dev/null 2>&1
 }
 
 verify_icu_linkage() {
-    local workdir probe output
-    workdir="$(mktemp -d "${TMPDIR:-/tmp}/fbthrift-icu.XXXXXX" 2>/dev/null)" || {
-        log_message "ERROR: cannot create a temporary directory for the ICU link probe"
-        return 30
-    }
-    probe="${workdir}/icu-probe"
-    if output="$(printf 'int main(void){return 0;}\n' | \
-            "${CC:-cc}" -x c - -licuuc -licui18n -licudata -o "${probe}" 2>&1)"; then
+    local probe="${PERF_WORK_DIR}/probe/icu-verify.c"
+    local binary="${PERF_WORK_DIR}/probe/icu-verify"
+    local output
+    mkdir -p "$(dirname "${probe}")"
+    printf 'int main(void){return 0;}\n' > "${probe}"
+    if output="$(fbthrift_container_exec "${CC:-cc}" "${probe}" \
+            -licuuc -licui18n -licudata -o "${binary}" 2>&1)"; then
         log_message "ICU development libraries are usable (-licuuc -licui18n -licudata)"
-        rm -rf -- "${workdir}"
         return 0
     fi
     log_message "ERROR: ICU development libraries are not usable (-licuuc/-licui18n/-licudata)"
@@ -279,8 +275,7 @@ verify_icu_linkage() {
     while IFS= read -r line; do
         [[ -n "${line}" ]] && log_message "ERROR: ld: ${line}"
     done <<< "${output}"
-    log_message "ERROR: install the ICU development package (dnf: libicu-devel, apt: libicu-dev)"
-    rm -rf -- "${workdir}"
+    log_message "ERROR: the container image must provide the ICU development package (dnf: libicu-devel)"
     return 30
 }
 
@@ -292,8 +287,43 @@ log_inherited_build_environment() {
     done
 }
 
-# The runner uses dnf while the local evidence machine uses apt; both branches
-# are implemented and every required header is re-probed after installation.
+# The host keeps only Docker plus the download/verification tools; every
+# compiler, header and library is installed and probed inside the private
+# openEuler container.
+require_host_transfer_commands() {
+    local missing=()
+    local tool
+    for tool in curl sha256sum awk; do
+        command -v "${tool}" >/dev/null 2>&1 || missing+=("${tool}")
+    done
+    ((${#missing[@]} == 0)) && return 0
+    log_message "WARNING: host download/verification tools are incomplete: ${missing[*]}; the preset offline directory is the only usable source"
+    return 0
+}
+
+FBTHRIFT_BUILD_PACKAGES=(
+    gcc gcc-c++ make cmake ninja-build python3 tar gzip coreutils findutils
+    sed gawk grep diffutils which binutils glibc-devel time
+    boost-devel glog-devel gflags-devel libevent-devel openssl-devel
+    zlib-devel libzstd-devel xxhash-devel libicu-devel
+)
+
+prepare_fbthrift_build_container() {
+    local -a dnf_options=(--setopt=install_weak_deps=False)
+    require_host_transfer_commands
+    require_fbthrift_docker || return 30
+    start_fbthrift_container || return $?
+    [[ -z "${PERF_PROXY}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message "installing fbthrift build dependencies inside the private container"
+    fbthrift_container_exec_root dnf "${dnf_options[@]}" install -y \
+        "${FBTHRIFT_BUILD_PACKAGES[@]}" || {
+        log_message "ERROR: container build dependencies failed to install"
+        return 30
+    }
+}
+
+# Every required header is re-probed inside the container after installation, so
+# the check describes the toolchain that actually builds folly/fbthrift.
 install_system_dependencies() {
     local -a header_probes=(
         "boost/version.hpp"
@@ -306,179 +336,50 @@ install_system_dependencies() {
         "xxhash.h"
         "unicode/ucnv.h"
     )
-    local -a missing_headers=()
-    local header
+    local header missing=()
     for header in "${header_probes[@]}"; do
-        header_available "${header}" || missing_headers+=("${header}")
+        header_available "${header}" || missing+=("${header}")
     done
-    local need_time=0
-    [[ -x /usr/bin/time ]] || need_time=1
-    local need_ninja=0
-    command -v ninja >/dev/null 2>&1 || need_ninja=1
-    local icu_link_ok=0
-    icu_link_available && icu_link_ok=1
-
-    if (( ${#missing_headers[@]} == 0 && need_time == 0 && need_ninja == 0 && icu_link_ok == 1 )); then
-        log_message "all system build dependencies are already installed"
-        verify_icu_linkage || return 30
-        return 0
-    fi
-
-    local package_manager=""
-    if command -v dnf >/dev/null 2>&1; then
-        package_manager="dnf"
-    elif command -v apt-get >/dev/null 2>&1; then
-        package_manager="apt-get"
-    else
-        log_message "ERROR: neither dnf nor apt-get is available to install build dependencies"
+    if (( ${#missing[@]} > 0 )); then
+        log_message "ERROR: container build dependencies are missing headers: ${missing[*]}"
         return 30
     fi
-
-    local -a packages=()
-    local probes_packages_dnf=(
-        "boost/version.hpp:boost-devel"
-        "glog/logging.h:glog-devel"
-        "gflags/gflags.h:gflags-devel"
-        "event.h:libevent-devel"
-        "openssl/ssl.h:openssl-devel"
-        "zlib.h:zlib-devel"
-        "zstd.h:libzstd-devel"
-        "xxhash.h:xxhash-devel"
-        "unicode/ucnv.h:libicu-devel"
-    )
-    local probes_packages_apt=(
-        "boost/version.hpp:libboost-all-dev"
-        "glog/logging.h:libgoogle-glog-dev"
-        "gflags/gflags.h:libgflags-dev"
-        "event.h:libevent-dev"
-        "openssl/ssl.h:libssl-dev"
-        "zlib.h:zlib1g-dev"
-        "zstd.h:libzstd-dev"
-        "xxhash.h:libxxhash-dev"
-        "unicode/ucnv.h:libicu-dev"
-    )
-    local -a mapping=()
-    if [[ "${package_manager}" == "dnf" ]]; then
-        mapping=("${probes_packages_dnf[@]}")
-    else
-        mapping=("${probes_packages_apt[@]}")
-    fi
-    local entry entry_header entry_package missing
-    for entry in "${mapping[@]}"; do
-        entry_header="${entry%%:*}"
-        entry_package="${entry##*:}"
-        for missing in "${missing_headers[@]}"; do
-            if [[ "${missing}" == "${entry_header}" ]]; then
-                packages+=("${entry_package}")
-            fi
-        done
-    done
-    # ICU headers can be present while the development symlinks are not; the
-    # link probe is the authoritative check, so always request the ICU package
-    # when linking does not work yet.
-    if (( icu_link_ok == 0 )); then
-        if [[ "${package_manager}" == "dnf" ]]; then
-            packages+=("libicu-devel")
-        else
-            packages+=("libicu-dev")
-        fi
-    fi
-    (( need_time == 0 )) || packages+=("time")
-    (( need_ninja == 0 )) || packages+=("ninja-build")
-    if (( ${#packages[@]} == 0 )); then
-        log_message "ERROR: required headers are missing but no package mapping matched"
+    fbthrift_container_exec test -x /usr/bin/time || {
+        log_message "ERROR: GNU time (/usr/bin/time) is missing inside the container"
         return 30
-    fi
-    local -a deduped=()
-    local package seen
-    for package in "${packages[@]}"; do
-        seen=0
-        for entry in "${deduped[@]}"; do
-            if [[ "${entry}" == "${package}" ]]; then
-                seen=1
-                break
-            fi
-        done
-        if (( seen == 0 )); then
-            deduped+=("${package}")
-        fi
-    done
-    packages=("${deduped[@]}")
-
-    local -a dnf_options=() apt_options=()
-    if [[ -n "${PERF_PROXY}" ]]; then
-        dnf_options+=("--setopt=proxy=${PERF_PROXY}")
-        apt_options+=("-o" "Acquire::http::Proxy=${PERF_PROXY}"
-                      "-o" "Acquire::https::Proxy=${PERF_PROXY}")
-    fi
-    local -a runner=()
-    if [[ "$(id -u)" -eq 0 ]]; then
-        runner=()
-    elif command -v sudo >/dev/null 2>&1; then
-        runner=(sudo -n)
-    else
-        log_message "ERROR: root or passwordless sudo is required to install build dependencies"
-        return 30
-    fi
-    log_message "installing build dependencies with ${package_manager}: ${packages[*]}"
-    local rc=0
-    if [[ "${package_manager}" == "dnf" ]]; then
-        "${runner[@]}" dnf "${dnf_options[@]}" install -y "${packages[@]}" || rc=$?
-    else
-        DEBIAN_FRONTEND=noninteractive "${runner[@]}" apt-get update || rc=$?
-        if (( rc == 0 )); then
-            DEBIAN_FRONTEND=noninteractive "${runner[@]}" apt-get install -y \
-                --no-install-recommends "${apt_options[@]}" "${packages[@]}" || rc=$?
-        fi
-    fi
-    if (( rc != 0 )); then
-        log_message "ERROR: package installation failed with exit code ${rc}"
-        return 30
-    fi
-
-    local still_missing=()
-    for header in "${header_probes[@]}"; do
-        header_available "${header}" || still_missing+=("${header}")
-    done
-    [[ -x /usr/bin/time ]] || still_missing+=("/usr/bin/time")
-    if (( ${#still_missing[@]} > 0 )); then
-        log_message "ERROR: build dependencies still missing after installation: ${still_missing[*]}"
-        return 30
-    fi
+    }
     verify_icu_linkage || return 30
-    log_message "system build dependencies are ready"
+    log_message "container build dependencies are ready"
 }
 
 resolve_cmake_binary() {
     cmake_version_ok "${PERF_CMAKE_BIN}" && return 0
     if [[ -n "${PERF_CMAKE_BIN_EXPLICIT}" ]]; then
-        log_message "ERROR: PERF_CMAKE_BIN=${PERF_CMAKE_BIN} is missing or older than 3.24"
+        log_message "ERROR: PERF_CMAKE_BIN=${PERF_CMAKE_BIN} is missing or older than 3.24 inside the container"
         return 30
     fi
-    log_message "WARNING: ${PERF_CMAKE_BIN} is missing or older than 3.24; trying a private pip install"
-    local -a pip_options=(--user --disable-pip-version-check --quiet)
+    log_message "WARNING: container cmake is missing or older than 3.24; trying a pip install inside the container"
+    local -a pip_options=(--disable-pip-version-check --quiet)
     [[ -n "${PERF_PROXY}" ]] && pip_options+=(--proxy "${PERF_PROXY}")
-    python3 -m pip install "${pip_options[@]}" "cmake>=3.24,<4" >/dev/null 2>&1 || true
+    fbthrift_container_exec_root python3 -m pip install "${pip_options[@]}" "cmake>=3.24,<4" \
+        >/dev/null 2>&1 || true
     local candidate
-    for candidate in "${HOME}/.local/bin/cmake" \
-                     "$(dirname "$(command -v python3 2>/dev/null || printf '/usr/bin/python3')")/cmake" \
-                     "$(command -v cmake 2>/dev/null || true)"; do
-        [[ -n "${candidate}" && -x "${candidate}" ]] || continue
+    for candidate in /usr/local/bin/cmake /usr/bin/cmake; do
         if cmake_version_ok "${candidate}"; then
             PERF_CMAKE_BIN="${candidate}"
-            log_message "using pip-installed cmake: ${PERF_CMAKE_BIN}"
+            log_message "using pip-installed container cmake: ${PERF_CMAKE_BIN}"
             return 0
         fi
     done
-    log_message "ERROR: cannot obtain cmake >= 3.24; install it or set PERF_CMAKE_BIN"
+    log_message "ERROR: cannot obtain cmake >= 3.24 inside the container; install it or set PERF_CMAKE_BIN"
     return 30
 }
 
 require_build_tools() {
     local tool
     for tool in cc c++ python3 curl tar gzip sha256sum awk; do
-        command -v "${tool}" >/dev/null 2>&1 || {
-            log_message "ERROR: required build command is missing: ${tool}"
+        fbthrift_container_exec command -v "${tool}" >/dev/null 2>&1 || {
+            log_message "ERROR: required build command is missing inside the container: ${tool}"
             return 30
         }
     done
@@ -494,7 +395,7 @@ require_build_tools() {
         log_message "ERROR: GCC >= 11 is required for folly/fbthrift C++20 builds (found ${compiler_version})"
         return 30
     fi
-    log_message "cmake $("${PERF_CMAKE_BIN}" --version | head -n 1 | awk '{print $3}'), $("${CXX:-c++}" --version | head -n 1)"
+    log_message "container cmake $(fbthrift_container_exec "${PERF_CMAKE_BIN}" --version | head -n 1 | awk '{print $3}'), $(fbthrift_container_exec "${CXX:-c++}" --version | head -n 1)"
 }
 
 sha256_of() {
@@ -583,12 +484,13 @@ extract_verified_archive() {
     fi
     rm -rf -- "${stage_dir}" "${destination}"
     mkdir -p "${stage_dir}"
-    tar -xzf "${archive}" -C "${stage_dir}" --no-same-owner || {
+    log_message "extracting ${label} inside the private container"
+    fbthrift_container_exec tar -xzf "${archive}" -C "${stage_dir}" --no-same-owner || {
         log_message "ERROR: failed to extract ${label} archive ${archive}"
         return 30
     }
     local top=""
-    top="$(find "${stage_dir}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+    top="$(fbthrift_container_exec find "${stage_dir}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
     if [[ -z "${top}" || "$(basename "${top}")" != "${expected_top}" ]]; then
         log_message "ERROR: ${label} archive top-level directory is $(basename "${top:-<none>}"), expected ${expected_top}"
         rm -rf -- "${stage_dir}"
@@ -618,5 +520,237 @@ verify_file_fingerprint() {
 
 run_cmake() {
     log_message "cmake $*"
-    "${PERF_CMAKE_BIN}" "$@"
+    fbthrift_container_exec "${PERF_CMAKE_BIN}" "$@"
 }
+
+# >>> container-runtime:begin
+# ==============================================================================
+# Private openEuler container runtime
+# ==============================================================================
+# Every stage of this case runs inside a per-run openEuler 24.03 LTS SP4
+# container.  The host keeps only Docker, download/verification tooling, the
+# framework and the strict result parser; package installation, source
+# extraction, builds, the measured process tree and cleanup happen inside the
+# container.  The contract mirrors software/Database/mysql,
+# software/Bigdata/ray and software/Others/unixbench.
+#
+# Generated by adaptation/scripts/add-container-block.py -- do not hand edit the
+# region between the markers; change the template instead.
+FBTHRIFT_IMAGE_ARCHIVE_DIR="${FBTHRIFT_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
+FBTHRIFT_CA_ANCHORS_DIR="${FBTHRIFT_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
+FBTHRIFT_CONTAINER_IMAGE="${FBTHRIFT_CONTAINER_IMAGE:-}"
+FBTHRIFT_CONTAINER_NAME="${FBTHRIFT_CONTAINER_NAME:-}"
+FBTHRIFT_CONTAINER_HOME="${FBTHRIFT_CONTAINER_HOME:-}"
+declare -p FBTHRIFT_CONTAINER_EXTRA_ARGS >/dev/null 2>&1 || FBTHRIFT_CONTAINER_EXTRA_ARGS=()
+
+fbthrift_normalize_arch() {
+    case "${1,,}" in
+        x86_64|amd64) printf 'x86_64\n' ;;
+        aarch64|arm64) printf 'aarch64\n' ;;
+        *) printf '%s\n' "${1,,}" ;;
+    esac
+}
+
+fbthrift_configure_container() {
+    local arch
+    arch="$(fbthrift_normalize_arch "${EXPECTED_ARCH:-$(uname -m)}")"
+    [ -n "${FBTHRIFT_CONTAINER_NAME}" ] || FBTHRIFT_CONTAINER_NAME="boostkit-fbthrift-${arch}-${PERF_RUN_ID}"
+    [ -n "${FBTHRIFT_CONTAINER_HOME}" ] || FBTHRIFT_CONTAINER_HOME="${PERF_WORK_DIR}/home"
+    export FBTHRIFT_CONTAINER_NAME FBTHRIFT_CONTAINER_HOME
+}
+
+fbthrift_with_proxy() {
+    if [ -n "${PERF_PROXY:-}" ]; then
+        http_proxy="${PERF_PROXY}" https_proxy="${PERF_PROXY}" no_proxy="localhost,127.0.0.1,::1" "$@"
+    else
+        "$@"
+    fi
+}
+
+require_fbthrift_docker() {
+    if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+        log_message 'ERROR: an accessible Docker daemon is required for the private container'
+        return 30
+    fi
+}
+
+verify_fbthrift_container_image_release() {
+    local release
+    release="$(docker run --rm --network=none "${FBTHRIFT_CONTAINER_IMAGE}" cat /etc/os-release 2>/dev/null)" || {
+        log_message 'ERROR: cannot read the loaded openEuler image release'
+        return 30
+    }
+    case "${release}" in
+        *'24.03'*) ;;
+        *) log_message 'ERROR: loaded container image is not openEuler 24.03 LTS SP4'; return 30 ;;
+    esac
+}
+
+prepare_fbthrift_container_image() {
+    local arch archive_name archive checksum image_url load_output image_architecture
+    arch="$(fbthrift_normalize_arch "${EXPECTED_ARCH}")"
+    archive_name="openEuler-docker.${arch}.tar.xz"
+    image_url="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${arch}/${archive_name}"
+    mkdir -p "${FBTHRIFT_IMAGE_ARCHIVE_DIR}" "${PERF_WORK_DIR}" || return 30
+    archive="${FBTHRIFT_IMAGE_ARCHIVE_DIR}/${archive_name}"
+    checksum="${archive}.sha256sum"
+    if [ ! -s "${archive}" ]; then
+        log_message "downloading openEuler container image archive: ${image_url}"
+        archive="${PERF_WORK_DIR}/${archive_name}"
+        fbthrift_with_proxy curl -fSL --retry 3 --connect-timeout 30 -o "${archive}.part" "${image_url}" || return 30
+        mv -f "${archive}.part" "${archive}" || return 30
+        fbthrift_with_proxy curl -fSL --retry 3 --connect-timeout 30 -o "${checksum}" "${image_url}.sha256sum" || return 30
+    fi
+    if [ -s "${checksum}" ]; then
+        ( cd "$(dirname "${archive}")" && sha256sum -c "$(basename "${checksum}")" ) >/dev/null || {
+            log_message "ERROR: container image checksum mismatch: ${archive}"
+            return 30
+        }
+    else
+        log_message "WARNING: no checksum file next to ${archive}; relying on the pinned path only"
+    fi
+    log_message "loading verified openEuler container image: ${archive}"
+    load_output="$(docker load --input "${archive}")" || return 30
+    FBTHRIFT_CONTAINER_IMAGE="$(printf '%s\n' "${load_output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+    if [ -z "${FBTHRIFT_CONTAINER_IMAGE}" ] || ! docker image inspect "${FBTHRIFT_CONTAINER_IMAGE}" >/dev/null 2>&1; then
+        log_message "ERROR: docker load did not report an inspectable image: ${load_output}"
+        return 30
+    fi
+    image_architecture="$(docker image inspect --format '{{.Architecture}}' "${FBTHRIFT_CONTAINER_IMAGE}")"
+    case "${arch}:${image_architecture}" in
+        x86_64:amd64|aarch64:arm64) ;;
+        *)
+            log_message "ERROR: loaded image architecture is ${image_architecture}, expected ${arch}"
+            return 30
+            ;;
+    esac
+    verify_fbthrift_container_image_release || return $?
+    export FBTHRIFT_CONTAINER_IMAGE
+    log_message "openEuler container image is ready: ${FBTHRIFT_CONTAINER_IMAGE} (${image_architecture})"
+}
+
+sweep_fbthrift_stale_containers() {
+    local name label names
+    command -v docker >/dev/null 2>&1 || return 0
+    names="$(docker ps -a --filter "name=^boostkit-fbthrift-" --format '{{.Names}}' 2>/dev/null || true)"
+    [ -n "${names}" ] || return 0
+    while IFS= read -r name; do
+        [ -n "${name}" ] || continue
+        [ "${name}" = "${FBTHRIFT_CONTAINER_NAME}" ] && continue
+        label="$(docker inspect --format '{{index .Config.Labels "boostkit.fbthrift.run-id"}}' "${name}" 2>/dev/null || true)"
+        [ -n "${label}" ] || continue
+        [ "${label}" = "${PERF_RUN_ID}" ] && continue
+        docker rm --force "${name}" >/dev/null 2>&1 || true
+        log_message "removed stale container from an earlier run: ${name}"
+    done <<< "${names}"
+}
+
+start_fbthrift_container() {
+    local -a cert_mount=()
+    local case_dir_mount_suffix=""
+    fbthrift_configure_container
+    require_fbthrift_docker || return $?
+    if docker container inspect "${FBTHRIFT_CONTAINER_NAME}" >/dev/null 2>&1; then
+        log_message "ERROR: refusing to reuse an existing container: ${FBTHRIFT_CONTAINER_NAME}"
+        return 40
+    fi
+    sweep_fbthrift_stale_containers || true
+    prepare_fbthrift_container_image || return $?
+    # The case directory carries the benchmark sources and the timing harness, so
+    # it is mounted read-only unless the standalone entry point keeps its results
+    # inside the case directory.
+    case "${RESULTS_DIR}" in
+        "${SCRIPT_DIR}"/*) ;;
+        *) case_dir_mount_suffix=",readonly" ;;
+    esac
+    if [ -n "${PERF_PROXY:-}" ]; then
+        [ -d "${FBTHRIFT_CA_ANCHORS_DIR}" ] || {
+            log_message "ERROR: proxy CA directory is missing: ${FBTHRIFT_CA_ANCHORS_DIR}"
+            return 30
+        }
+        cert_mount+=(--mount "type=bind,source=${FBTHRIFT_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
+    fi
+    mkdir -p "${FBTHRIFT_CONTAINER_HOME}" || return 40
+    log_message "starting private container ${FBTHRIFT_CONTAINER_NAME} (host network, shared work and result directories)"
+    docker run --detach --name "${FBTHRIFT_CONTAINER_NAME}" \
+        --label "boostkit.fbthrift.run-id=${PERF_RUN_ID}" \
+        --network=host \
+        --user "$(id -u):$(id -g)" \
+        --ulimit nofile=1048576:1048576 \
+        --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+        --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+        --mount "type=bind,source=${SCRIPT_DIR},target=${SCRIPT_DIR}${case_dir_mount_suffix}" \
+        --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+        --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+        "${cert_mount[@]}" "${FBTHRIFT_CONTAINER_EXTRA_ARGS[@]}" \
+        "${FBTHRIFT_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if [ -n "${PERF_PROXY:-}" ]; then
+        docker exec --user 0 "${FBTHRIFT_CONTAINER_NAME}" update-ca-trust extract || {
+            log_message 'ERROR: failed to update CA trust in the container'
+            return 30
+        }
+    fi
+    if docker exec --user 0 "${FBTHRIFT_CONTAINER_NAME}" test -f /etc/yum.repos.d/openEuler.repo; then
+        log_message 'switching private container repositories to the Huawei openEuler mirror'
+        docker exec --user 0 "${FBTHRIFT_CONTAINER_NAME}" sed -i \
+            -e '/^meta/ s/^\(.*\)$/#\1/g' \
+            -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+            /etc/yum.repos.d/openEuler.repo || {
+            log_message 'ERROR: failed to switch the container repositories to the Huawei mirror'
+            return 30
+        }
+    fi
+    log_message "private container is running: ${FBTHRIFT_CONTAINER_NAME}"
+}
+
+check_fbthrift_container() {
+    fbthrift_configure_container
+    [ "$(docker inspect --format '{{.State.Running}}' "${FBTHRIFT_CONTAINER_NAME}" 2>/dev/null)" = "true" ] || {
+        log_message "ERROR: managed container is not running: ${FBTHRIFT_CONTAINER_NAME}"
+        return 40
+    }
+}
+
+fbthrift_docker_exec() {
+    local workdir="$1" user="$2"
+    shift 2
+    fbthrift_configure_container
+    local -a options=()
+    local -a proxy=()
+    [ -z "${PERF_PROXY:-}" ] || proxy=(-e "http_proxy=${PERF_PROXY}" -e "https_proxy=${PERF_PROXY}" -e 'no_proxy=localhost,127.0.0.1,::1')
+    options+=("${proxy[@]}")
+    options+=(-e "HOME=${FBTHRIFT_CONTAINER_HOME}" -e "TMPDIR=${TMPDIR:-/tmp}" -e "PERF_RUN_ID=${PERF_RUN_ID}")
+    [ -z "${workdir}" ] || options+=(--workdir "${workdir}")
+    [ "${user}" != "root" ] || options+=(--user 0)
+    docker exec "${options[@]}" "${FBTHRIFT_CONTAINER_NAME}" "$@"
+}
+
+fbthrift_container_exec() { fbthrift_docker_exec '' '' "$@"; }
+
+fbthrift_container_exec_at() {
+    local workdir="$1"
+    shift
+    fbthrift_docker_exec "${workdir}" '' "$@"
+}
+
+fbthrift_container_exec_root() { fbthrift_docker_exec '' root "$@"; }
+
+fbthrift_container_exec_root_at() {
+    local workdir="$1"
+    shift
+    fbthrift_docker_exec "${workdir}" root "$@"
+}
+
+remove_fbthrift_container() {
+    fbthrift_configure_container
+    command -v docker >/dev/null 2>&1 || return 0
+    docker container inspect "${FBTHRIFT_CONTAINER_NAME}" >/dev/null 2>&1 || return 0
+    if [ "$(docker inspect --format '{{index .Config.Labels "boostkit.fbthrift.run-id"}}' "${FBTHRIFT_CONTAINER_NAME}" 2>/dev/null)" != "${PERF_RUN_ID}" ]; then
+        log_message "ERROR: refusing to remove a container without this task's run-id label: ${FBTHRIFT_CONTAINER_NAME}"
+        return 60
+    fi
+    docker stop --time 30 "${FBTHRIFT_CONTAINER_NAME}" >/dev/null || return 60
+    docker rm "${FBTHRIFT_CONTAINER_NAME}" >/dev/null || return 60
+    log_message "removed managed container ${FBTHRIFT_CONTAINER_NAME}"
+}
+# >>> container-runtime:end

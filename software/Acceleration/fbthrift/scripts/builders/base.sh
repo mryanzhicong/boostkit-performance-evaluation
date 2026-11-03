@@ -125,12 +125,14 @@ build_fbthrift() {
 }
 
 verify_protocol_bench() {
-    [[ -x "${PROTOCOL_BENCH_BIN}" ]] || {
+    fbthrift_container_exec test -x "${PROTOCOL_BENCH_BIN}" || {
         log_message "ERROR: ProtocolBench was not installed at ${PROTOCOL_BENCH_BIN}"
         return 30
     }
     local listing="${BUILD_ROOT}/ProtocolBench-cases.txt"
-    "${PROTOCOL_BENCH_BIN}" --benchmark_list_tests=true > "${listing}" 2>&1 || {
+    log_message "listing ProtocolBench cases inside the private container"
+    fbthrift_container_exec env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" \
+        "${PROTOCOL_BENCH_BIN}" --benchmark_list_tests=true > "${listing}" 2>&1 || {
         log_message "ERROR: ProtocolBench cannot list its benchmarks"
         return 30
     }
@@ -152,15 +154,13 @@ verify_protocol_bench() {
 
 write_dependencies_json() {
     local output="${RESULTS_DIR}/dependencies.json"
-    local os_name="" os_version="" compiler="" cmake_version=""
-    if [[ -r /etc/os-release ]]; then
-        os_name="$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-${ID:-unknown}}")"
-    fi
-    compiler="$("${CXX:-c++}" --version 2>/dev/null | head -n 1)"
-    cmake_version="$("${PERF_CMAKE_BIN}" --version 2>/dev/null | head -n 1 | awk '{print $3}')"
+    local os_name="" compiler="" cmake_version=""
+    os_name="$(fbthrift_container_exec sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | tr -d '"' | head -n 1)"
+    compiler="$(fbthrift_container_exec "${CXX:-c++}" --version 2>/dev/null | head -n 1)"
+    cmake_version="$(fbthrift_container_exec "${PERF_CMAKE_BIN}" --version 2>/dev/null | head -n 1 | awk '{print $3}')"
     local -a packages=()
     local cpu_model=""
-    [[ -r /proc/cpuinfo ]] && cpu_model="$(awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo)"
+    cpu_model="$(fbthrift_container_exec awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo 2>/dev/null)"
     python3 - "${output}" "${SOFTWARE_VERSION}" "${FBTHRIFT_TAG}" "${FBTHRIFT_COMMIT}" \
         "${os_name:-unknown}" "${compiler:-unknown}" "${cmake_version:-unknown}" \
         "${cpu_model:-unknown}" "${PERF_BUILD_JOBS}" "${DEPENDENCY_RECORDS[@]}" <<'PY'
@@ -231,10 +231,11 @@ write_actual_version() {
 build_fbthrift_base() {
     validate_variant || return $?
     initialize_runtime || return $?
+    prepare_fbthrift_build_container || return 30
     require_build_tools || return 30
     install_system_dependencies || return 30
-    # Resolve the generator after installing dependencies: the dnf/apt branch may
-    # install ninja-build, and picking it up keeps the aarch64/runner build fast
+    # Resolve the generator after installing dependencies: the dnf branch inside
+    # the container installs ninja-build, and picking it up keeps the build fast
     # instead of falling back to Unix Makefiles on the first run of a fresh image.
     resolve_cmake_generator
     fetch_all_sources || return 30
