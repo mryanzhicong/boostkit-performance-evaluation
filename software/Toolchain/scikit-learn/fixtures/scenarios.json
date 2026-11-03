@@ -1,0 +1,170 @@
+{
+  "software": "scikit-learn",
+  "version": "1.9.1",
+  "upstream": {
+    "project": "scikit-learn",
+    "repository": "https://github.com/scikit-learn/scikit-learn",
+    "tag": "1.9.1",
+    "tag_commit": "866c0f51e7560ef0303cbcc5f159df5382ea9e3f",
+    "suite": "asv_benchmarks/benchmarks"
+  },
+  "asv": {
+    "profile": "regular",
+    "n_jobs": 1,
+    "benchmark_dir": "benchmarks"
+  },
+  "selection": {
+    "criteria": [
+      "benchmark definitions are the upstream asv benchmarks of scikit-learn 1.9.1",
+      "the benchmark data are generated locally (no download at measurement time)",
+      "one fixed parameter combination per scenario so every sample runs the same code",
+      "wall-clock runtime of one repetition below 40 s on the validation machine",
+      "stable across repetitions (the median is representative of all samples)"
+    ],
+    "excluded": {
+      "benchmarks.DictionaryLearningBenchmark": "needs the Olivetti faces dataset downloaded from the network",
+      "benchmarks.PCABenchmark": "needs the MNIST dataset downloaded from the network",
+      "benchmarks.RandomForestBenchmark": "needs the 20 newsgroups dataset downloaded from the network",
+      "benchmarks.KNeighborsClassifierBenchmark": "needs the 20 newsgroups dataset downloaded from the network",
+      "benchmarks.GridSearchBenchmark": "one repetition takes about 145 s, outside the one-repetition budget",
+      "benchmarks.PairwiseDistancesBenchmark": "peak RSS above 1 GiB, outside the memory budget of the shared Runner"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "svc_fit_linear",
+      "module": "benchmarks.svm",
+      "class": "SVCBenchmark",
+      "kind": "estimator",
+      "params": ["linear"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 900,
+        "n_features": 10000,
+        "score_kind": "balanced_accuracy",
+        "min_score": 0.5
+      }
+    },
+    {
+      "name": "svc_fit_rbf",
+      "module": "benchmarks.svm",
+      "class": "SVCBenchmark",
+      "kind": "estimator",
+      "params": ["rbf"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 900,
+        "n_features": 10000,
+        "score_kind": "balanced_accuracy",
+        "min_score": 0.5
+      }
+    },
+    {
+      "name": "svc_predict_rbf",
+      "module": "benchmarks.svm",
+      "class": "SVCBenchmark",
+      "kind": "estimator",
+      "params": ["rbf"],
+      "method": "time_predict",
+      "metric": "predict",
+      "expected": {
+        "n_samples": 900,
+        "n_features": 10000,
+        "score_kind": "balanced_accuracy",
+        "min_score": 0.5
+      }
+    },
+    {
+      "name": "hist_gbdt_fit",
+      "module": "benchmarks.ensemble",
+      "class": "HistGradientBoostingClassifierBenchmark",
+      "kind": "estimator",
+      "params": [],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 9000,
+        "n_features": 100,
+        "score_kind": "balanced_accuracy",
+        "min_score": 0.9
+      }
+    },
+    {
+      "name": "kmeans_fit_blobs_dense",
+      "module": "benchmarks.cluster",
+      "class": "KMeansBenchmark",
+      "kind": "estimator",
+      "params": ["dense", "lloyd", "k-means++"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 450000,
+        "n_features": 3,
+        "score_kind": "neg_inertia",
+        "max_score": 0.0
+      }
+    },
+    {
+      "name": "minibatch_kmeans_fit_blobs_dense",
+      "module": "benchmarks.cluster",
+      "class": "MiniBatchKMeansBenchmark",
+      "kind": "estimator",
+      "params": ["dense", "k-means++"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 450000,
+        "n_features": 3,
+        "score_kind": "neg_inertia",
+        "max_score": 0.0
+      }
+    },
+    {
+      "name": "sgd_regressor_fit_synth",
+      "module": "benchmarks.linear_model",
+      "class": "SGDRegressorBenchmark",
+      "kind": "estimator",
+      "params": ["dense"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 90000,
+        "n_features": 200,
+        "score_kind": "r2",
+        "min_score": 0.5
+      }
+    },
+    {
+      "name": "ridge_fit_synth_auto",
+      "module": "benchmarks.linear_model",
+      "class": "RidgeBenchmark",
+      "kind": "estimator",
+      "params": ["dense", "auto"],
+      "method": "time_fit",
+      "metric": "fit",
+      "expected": {
+        "n_samples": 450000,
+        "n_features": 100,
+        "score_kind": "r2",
+        "min_score": 0.8
+      }
+    },
+    {
+      "name": "crossval_rf_50k",
+      "module": "benchmarks.model_selection",
+      "class": "CrossValidationBenchmark",
+      "kind": "plain",
+      "params": [1],
+      "method": "time_crossval",
+      "metric": "cross_validation",
+      "expected": {
+        "n_samples": 45000,
+        "n_features": 100,
+        "score_kind": "accuracy",
+        "min_score": 0.8
+      }
+    }
+  ]
+}
