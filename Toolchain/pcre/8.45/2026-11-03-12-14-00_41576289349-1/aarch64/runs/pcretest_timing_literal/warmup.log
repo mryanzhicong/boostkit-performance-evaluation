@@ -1,0 +1,65 @@
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/41576289349-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/41576289349-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-03T04:10:29Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0010 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0008 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0007 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0008 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0002 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0006 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0007 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
