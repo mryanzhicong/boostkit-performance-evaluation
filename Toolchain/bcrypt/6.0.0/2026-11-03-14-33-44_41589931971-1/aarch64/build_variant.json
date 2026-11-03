@@ -1,0 +1,116 @@
+{
+  "fixtures": {
+    "suite": "bcrypt-cost-load",
+    "upstream_suite": false
+  },
+  "measurement_protocol": {
+    "environment": {
+      "LC_ALL": "C",
+      "TZ": "UTC",
+      "UV_THREADPOOL_SIZE": "1"
+    },
+    "offline": true,
+    "processes_per_sample": 1,
+    "repetitions": 5,
+    "statistic": "median",
+    "timing": "per-operation process.hrtime.bigint(), salt generated before the timed window",
+    "warmups": 1
+  },
+  "package": {
+    "dependency_tree_sha256": "ac85950fb1fc53fefb774b9272e15313bf05d0e508173fb02727122ae7949329",
+    "name": "bcrypt",
+    "tarball_sha256": "3b2478cda06f066c744e06cd0b68f55e14cc546c19ee2b80be600dfc65b5ae20",
+    "version": "6.0.0"
+  },
+  "runtime": {
+    "bcrypt": {
+      "files": {
+        "bcrypt.js": "427843f9f572915536dffb47cbeddfdeb8f1c24ddf5db75d76021c1efa522c48",
+        "binding.gyp": "b55c2f501c320237f9a2340994b4645a471d641af3d341b9d9f3eb404b3bda5d",
+        "package.json": "33510b2b8859265a413ab101cdf961b1c9b076d93496f52d8ac7eacc007859a4"
+      },
+      "native": {
+        "binary": "prebuilds/linux-arm64/bcrypt.glibc.node",
+        "napi": "10",
+        "sha256": "68f3cf61756809c6d466c186aaa2bc1cbc17911f248c361a5284aa4e769fcc52"
+      },
+      "version": "6.0.0"
+    },
+    "dependencies": {
+      "node-addon-api": {
+        "version": "8.9.2"
+      },
+      "node-gyp-build": {
+        "version": "4.8.4"
+      }
+    },
+    "machine": "aarch64",
+    "node": {
+      "version": "v22.23.4"
+    },
+    "scenarios": [
+      "hash_sync_cost10",
+      "hash_async_cost10",
+      "compare_sync_cost10",
+      "compare_async_cost10",
+      "hash_sync_cost12",
+      "compare_async_cost12"
+    ],
+    "suite": "bcrypt-cost-load"
+  },
+  "scenarios": [
+    {
+      "api": "sync",
+      "cost": 10,
+      "id": "hash_sync_cost10",
+      "op": "hash",
+      "ops": 10
+    },
+    {
+      "api": "async",
+      "cost": 10,
+      "id": "hash_async_cost10",
+      "op": "hash",
+      "ops": 10
+    },
+    {
+      "api": "sync",
+      "cost": 10,
+      "id": "compare_sync_cost10",
+      "op": "compare",
+      "ops": 10
+    },
+    {
+      "api": "async",
+      "cost": 10,
+      "id": "compare_async_cost10",
+      "op": "compare",
+      "ops": 10
+    },
+    {
+      "api": "sync",
+      "cost": 12,
+      "id": "hash_sync_cost12",
+      "op": "hash",
+      "ops": 10
+    },
+    {
+      "api": "async",
+      "cost": 12,
+      "id": "compare_async_cost12",
+      "op": "compare",
+      "ops": 10
+    }
+  ],
+  "software": "bcrypt",
+  "toolchain": {
+    "native_module": "prebuilt N-API binary shipped in the release tarball",
+    "node": {
+      "archive_sha256": "6287aa46b6c375d816e63ae66d024fbbfd70404825aabdfdf898a970871d2f4b",
+      "version": "v22.23.4"
+    },
+    "package_manager": "vendored node_modules (no registry access during measurement)"
+  },
+  "variant": "base",
+  "version": "6.0.0"
+}
