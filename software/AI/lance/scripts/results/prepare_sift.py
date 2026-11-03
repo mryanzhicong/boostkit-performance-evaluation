@@ -32,7 +32,12 @@ def write_vectors(path: Path, out: Path, count: int) -> None:
         ],
         names=["id", "vector"],
     )
-    lance.write_dataset(table, str(out))
+    lance.write_dataset(
+        table,
+        str(out),
+        max_rows_per_group=8192,
+        max_rows_per_file=1024 * 1024,
+    )
     if lance.dataset(str(out)).count_rows() != count:
         raise ValueError(f"Lance row count mismatch: {out}")
 

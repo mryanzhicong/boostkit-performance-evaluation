@@ -44,7 +44,7 @@ cd "${PERF_WORK_DIR}/lance-13.0.0/python"
 
 本地 `sift.tar.gz` 是优先来源。缺失时脚本先尝试 TexMex HTTPS 地址，失败后尝试上游文档给出的 FTP 地址。下载文件只存于本任务私有目录。解压前检查归档路径，并核对 `sift_base.fvecs` 与 `sift_query.fvecs`。脚本记录两个原始文件的 SHA-256；跨架构汇总要求它们相同。
 
-`prepare_sift.py` 按 TexMex `.fvecs` 的逐记录维度头读取 100 万条 128 维底库向量和 1000 条查询向量，然后调用上游 `lance.write_dataset` 生成 `sift1m.lance`、`sift_query.lance`。没有直接调用仓库的 `datagen.py`：它只跳过文件开头的一个维度头，后续记录的维度头会被当作向量值。这一步只修正输入格式转换，不修改上游 Lance 或 `index.py`、`metrics.py` 的测试逻辑。
+`prepare_sift.py` 按 TexMex `.fvecs` 的逐记录维度头读取 100 万条 128 维底库向量和 1000 条查询向量，然后调用上游 `lance.write_dataset` 生成 `sift1m.lance`、`sift_query.lance`。没有直接调用仓库的 `datagen.py`：它只跳过文件开头的一个维度头，后续记录的维度头会被当作向量值。写入时沿用上游的 `max_rows_per_group=8192` 和 `max_rows_per_file=1048576`，避免解析修正之外再引入存储布局差异。不修改上游 Lance 或 `index.py`、`metrics.py` 的测试逻辑。
 
 正式命令在上游 `benchmarks/sift` 目录执行：
 
@@ -56,6 +56,19 @@ python metrics.py "${PERF_WORK_DIR}/data/sift1m.lance" \
 ```
 
 `metrics.py` 使用上游固定的 6 个 `nprobes` 值（1、10、25、50、75、100）和 7 个 `refine_factor` 值（无、1、10、20、30、40、50），共 42 个场景；每个场景查询 1000 个向量，计算 `Recall@1` 和平均查询时间。索引建立与真值计算是测试准备，不计入查询时间。上游脚本对这 42 个场景各执行一次，当前用例不额外重复或筛选结果。
+
+### 与上游示例的差异
+
+| 差异 | 当前做法与原因 |
+|---|---|
+| 源码版本 | 你提供的链接指向会持续更新的 `main`；固定同一仓库的 `v13.0.0`，使两架构构建相同版本。 |
+| 测试范围 | 上游示例还包含 GIST-1M；这里只选择 SIFT-1M，避免把不同数据集混入同一测试口径。 |
+| 数据转换 | 用 `prepare_sift.py` 代替上游 `datagen.py`，因为 `.fvecs` 的每条向量都有维度头，而上游脚本只跳过首条维度头。保留原始向量值、`id`/`vector` 字段及上游写入布局参数。由此得到的数据不同于直接运行上游 `datagen.py` 的结果，不能与后者产生的性能数字直接比较。 |
+| 真值文件 | 上游示例单独运行 `gt.py`；本用例不生成该文件，因为实际执行的原版 `metrics.py` 会自行计算真值，且不读取 `gt.py` 的输出。 |
+| 执行环境 | 在每次任务的私有容器中构建、测试，隔离两台 Runner 的软件依赖；不修改被测 Lance 源码。 |
+| 结果整理 | 原版 `metrics.py` 的 CSV 完整保留；额外解析为 Framework 使用的 JSON，校验 42 个场景，便于两架构按同名指标比较。 |
+
+索引和查询仍执行 `v13.0.0` 的原版 `index.py`、`metrics.py`；命令中的 `-c vector`、`-s 1000` 是显式写出上游默认值，不改变上游示例的索引与查询参数。
 
 ## 结果与报告
 
