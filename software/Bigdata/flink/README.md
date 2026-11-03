@@ -14,11 +14,16 @@ standalone session，使用原版 Nexmark V1 OA 查询做开箱对比。两架�
 |---|---|---|
 | Flink | [Apache 历史归档](https://archive.apache.org/dist/flink/flink-1.16.3/)的 `flink-1.16.3-bin-scala_2.12.tgz` | `${PERF_WORK_DIR}/flink-1.16.3` |
 | Nexmark | [上游仓库](https://github.com/nexmark/nexmark)，固定提交 `6b3646c3baec701f1fa74baf938d235f742e5d3c` | `${PERF_WORK_DIR}/nexmark-source`，部署副本在 `${PERF_WORK_DIR}/nexmark` |
-| JDK | openEuler `java-11-openjdk-devel` | 系统 RPM 提供的 JDK 11；实际路径记录在 `${PERF_WORK_DIR}/java-home.txt` |
+| JDK | 毕昇 JDK `8u472-b11`，两架构使用对应的官方预编译包 | `${PERF_WORK_DIR}/bisheng-jdk/`；实际 `JAVA_HOME` 记录在 `${PERF_WORK_DIR}/java-home.txt` |
 | Maven | openEuler `maven` | 系统 RPM；依赖下载到 `${PERF_WORK_DIR}/maven-repository` |
 
-构建阶段通过 `dnf` 确保 JDK 11、Maven、curl、git、tar、gzip、unzip 已安装。
-只有 Flink 二进制包可离线提供：优先读取
+构建阶段通过 `dnf` 确保 Maven、curl、git、tar、gzip、unzip 已安装。毕昇 JDK
+优先读取 `/home/runner/software/bishengjdk/bisheng-jdk-8u472-b11-linux-x64.tar.gz`
+或 `bisheng-jdk-8u472-b11-linux-aarch64.tar.gz`，缺失时从
+[毕昇 JDK 发布目录](https://repo.huaweicloud.com/kunpeng/archive/compiler/bisheng_jdk/)
+下载对应架构的归档。脚本使用发布的 SHA-256 固定值校验后，仅解压到本次私有目录，
+不切换系统 Java；`BISHENG_JDK_OFFLINE_DIR` 可更改离线包目录。
+Flink 二进制包同样可离线提供：优先读取
 `/home/runner/software/flink/flink-1.16.3-bin-scala_2.12.tgz`；不存在时下载到本次
 任务目录。无论从哪里取包，均按 Apache 发布的 SHA-512 校验。`FLINK_ARCHIVE_DIR`
 可更改离线包目录。Nexmark 使用固定提交从上游 Git 仓库获取，构建过程中 Maven
@@ -60,7 +65,8 @@ SQL Client 和 TaskManager 加载 `nexmark` connector。Nexmark 的 `bin/`、`co
 JobManager + 2 个 TaskManager**，每个 TaskManager 8 槽，默认并行度 8。
 端口由运行 ID 派生，不占用固定的 8081/9098。RocksDB、checkpoint 和 Flink
 临时数据均放在 `${PERF_WORK_DIR}/data/`，不写 `/tmp`。配置保留附件实测的
-RocksDB 后端、mini-batch `2s/50000`、关闭 checkpoint；不加载优化插件。
+RocksDB 后端、mini-batch `2s/50000`、checkpoint 间隔 **180 秒**，与附件的
+10M 历史测试配置一致；不加载 native/Omni 插件。
 
 脚本启动 Nexmark 自带的 `CpuMetricSender`，并调用其原始
 `SideInputGenerator --num 10000` 生成 q13 的输入。随后 `test` 阶段按附件的
