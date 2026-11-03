@@ -38,7 +38,7 @@ prepare_apr_util_build_container() {
     log_message 'installing APR and APR-util build dependencies inside the private container'
     # APR-util 1.6.5 always compiles its XML support and needs expat headers;
     # the container image only ships the runtime library.
-    apr_util_container_exec_root dnf "${dnf_options[@]}" install -y \
+    apr_util_container_exec_root dnf "${dnf_options[@]}" --setopt=install_weak_deps=False install -y \
         gcc gcc-c++ make tar bzip2 diffutils coreutils findutils sed gawk grep \
         util-linux file glibc-devel expat-devel binutils python3 || {
         fail_message "container build dependencies failed"

@@ -72,6 +72,7 @@ def test_container_name_and_labels(tmp_path: Path) -> None:
     assert f"source={tmp_path / 'results'},target={tmp_path / 'results'}" in calls
     assert "sleep infinity" in calls
     assert "--cap-add=SYS_ADMIN" in calls
+    assert "--cap-add=NET_ADMIN" in calls
 
 
 def test_start_refuses_existing_container(tmp_path: Path) -> None:

@@ -533,7 +533,7 @@ export SCRIPT_DIR
 # APR-util's offline measurement runs every sample inside a fresh network
 # namespace (`unshare -n`), which requires CAP_SYS_ADMIN inside the container.
 declare -p APR_UTIL_CONTAINER_EXTRA_ARGS >/dev/null 2>&1 || \
-    APR_UTIL_CONTAINER_EXTRA_ARGS=(--cap-add=SYS_ADMIN)
+    APR_UTIL_CONTAINER_EXTRA_ARGS=(--cap-add=SYS_ADMIN --cap-add=NET_ADMIN)
 
 # >>> container-runtime:begin
 # ==============================================================================

@@ -203,9 +203,12 @@ Docker、源码包的下载/SHA-256 校验、Framework 与严格解析器。容�
   `boostkit.apr_util.run-id=<run-id>`；删除前校验标签，拒绝删除其他任务的容器（返回 60）。
 - **挂载**：`PERF_WORK_DIR`、`RESULTS_DIR` 与用例目录（只读）按**相同绝对路径**挂入，
   因此容器内外路径一致；另挂 `/etc/passwd`、`/etc/group` 以保留 runner 的 UID/GID。
-- **特权**：`APR_UTIL_CONTAINER_EXTRA_ARGS=(--cap-add=SYS_ADMIN)`。测量要求每条样本在
-  `unshare -n` 新建的网络命名空间里运行，容器内需要该 capability 才能创建命名空间；
-  若仍不可用，start 阶段记录 `network mode=unavailable` 并按既有语义处理。
+- **特权**：`APR_UTIL_CONTAINER_EXTRA_ARGS=(--cap-add=SYS_ADMIN --cap-add=NET_ADMIN)`。
+  测量要求每条样本在 `unshare -n` 新建的网络命名空间里运行：创建命名空间需要
+  `CAP_SYS_ADMIN`，而新命名空间里 `lo` 默认是 DOWN，拉起它（`SIOCSIFFLAGS`）还需要
+  `CAP_NET_ADMIN`——两者缺一都会让上游 `testall` 的连接错误路径用例静默失败。start 阶段
+  用容器内实际启动器 `unshare -n ${APR_UTIL_NETNS_PREP}` 探测 `lo` 的 `IFF_UP` 位，
+  只有真正可用时才记录 `network mode=unshare`；若仍不可用，按既有语义处理。
 - **宿主/容器职责**：宿主机做源码下载与校验、解析器与结果校验；容器内做 `dnf` 安装、
   解包、`configure`/`make`/`make install`、`testall` 与 harness 编译、负载生成、版本探测、
   `unshare -n` 探测，以及**整个计时驱动**（`run_timed.py` 在容器内启动被测子进程，

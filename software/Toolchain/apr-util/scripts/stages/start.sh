@@ -9,10 +9,23 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/common.sh"
 detect_network_mode() {
     # Probe inside the private container: that is exactly where the measured
     # process tree will be created, so the recorded mode describes the measured
-    # environment rather than the host.
-    if apr_util_container_exec unshare -n true >/dev/null 2>&1; then
+    # environment rather than the host.  The probe uses the case-owned launcher
+    # and verifies that the fresh namespace really has loopback up; creating a
+    # netns needs CAP_SYS_ADMIN and raising ``lo`` inside it needs CAP_NET_ADMIN,
+    # so a container missing either capability must not be reported as usable.
+    if apr_util_container_exec unshare -n "${APR_UTIL_NETNS_PREP}" python3 -c '
+import sys
+try:
+    flags = int(open("/sys/class/net/lo/flags").read().strip(), 16)
+except OSError:
+    sys.exit(2)
+sys.exit(0 if flags & 1 else 1)
+' >/dev/null 2>&1; then
         printf 'unshare\n'
         return 0
+    fi
+    if apr_util_container_exec unshare -n true >/dev/null 2>&1; then
+        log_message "WARNING: a network namespace can be created but loopback cannot be raised (CAP_NET_ADMIN missing?); refusing to measure with an unusable namespace"
     fi
     printf 'unavailable\n'
 }
