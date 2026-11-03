@@ -1,0 +1,58 @@
+name: libmpc
+category: Toolchain
+enabled: true
+versions:
+  - "1.4.1"
+test_tools:
+  mpc-bench:
+    version: "fixed-workload harness following upstream tools/bench methodology"
+  gmp:
+    version: "6.3.0 (pinned private dependency)"
+  mpfr:
+    version: "4.2.2 (pinned private dependency)"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_mpc
+    start:
+      script: scripts/stages/start.sh
+      function: start_mpc_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_mpc_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_mpc_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  official_benchmark:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_mpc.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
