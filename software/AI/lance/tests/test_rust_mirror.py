@@ -60,3 +60,26 @@ install_pinned_rust_toolchain
     )
     assert "rustup toolchain install 1.98.1 --profile minimal" in output
     assert "rustc" in output
+
+
+def test_protoc_is_checked_before_cloning_source() -> None:
+    command = """
+source "$1"
+PERF_PROXY=
+initialize_runtime() { :; }
+require_lance_container() { :; }
+container_exec_root() { printf 'root: %s\\n' "$*"; }
+container_exec() { printf 'exec: %s\\n' "$*"; return 1; }
+build_lance_base
+"""
+    result = subprocess.run(
+        ["bash", "-c", command, "bash", str(SCRIPTS / "builders/base.sh")],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 30
+    assert "dnf install -y" in result.stdout
+    assert "protobuf-compiler" in result.stdout
+    assert "exec: protoc --version" in result.stdout
+    assert "git clone" not in result.stdout

@@ -55,7 +55,9 @@ docker exec --user 0 "${LANCE_CONTAINER_NAME}" sed -i \
 
 ```bash
 dnf install -y gcc gcc-c++ make cmake pkgconf-pkg-config openssl-devel \
-  python3 python3-devel python3-pip tar gzip curl ca-certificates git zlib-devel
+  python3 python3-devel python3-pip tar gzip curl ca-certificates git zlib-devel \
+  protobuf-compiler
+protoc --version
 git clone --depth 1 --branch v13.0.0 \
   https://github.com/lance-format/lance.git "${PERF_WORK_DIR}/lance-13.0.0"
 python3 -m venv "${PERF_WORK_DIR}/venv"
@@ -71,7 +73,16 @@ cd "${PERF_WORK_DIR}/lance-13.0.0/python"
 "${PERF_WORK_DIR}/venv/bin/maturin" develop --release
 ```
 
-实际脚本还设置私有 `CARGO_HOME`、`RUSTUP_HOME`，使 Rust 工具链及编译缓存留在 `${PERF_WORK_DIR}`。`--no-modify-path` 阻止安装器修改容器内 `/home/runner/.profile`；构建命令会自行把私有 Cargo 目录加入 `PATH`。脚本从上游 `rust-toolchain.toml` 读取版本，显式安装并检查 `rustc --version`，成功后才调用 Maturin；工具链下载失败会停在该步骤并显示 rustup 的原始错误，而不是只显示 Maturin 的概括性报错。不启用额外的 `fp16kernels`、GPU 或架构专用选项。构建后检查 `pylance` 的实际版本为 `13.0.0`，记录上游提交到 `source-commit.txt`，并将实际 Python 依赖版本写入 `python-dependencies.txt`。
+`protobuf-compiler` 在私有容器内提供 `protoc`，供 Lance 上游 Rust 构建脚本生成
+protobuf 代码。安装后立即检查 `protoc --version`；缺失时不进入耗时的编译。
+
+实际脚本还设置私有 `CARGO_HOME`、`RUSTUP_HOME`，使 Rust 工具链及编译缓存留在
+`${PERF_WORK_DIR}`。`--no-modify-path` 阻止安装器修改容器内 `/home/runner/.profile`；
+构建命令会自行把私有 Cargo 目录加入 `PATH`。脚本从上游 `rust-toolchain.toml`
+读取版本，显式安装并检查 `rustc --version`，成功后才调用 Maturin；工具链下载
+失败会停在该步骤并显示 rustup 的原始错误。构建后检查 `pylance` 的实际版本为
+`13.0.0`，记录上游提交到 `source-commit.txt`，并将实际 Python 依赖版本写入
+`python-dependencies.txt`。不启用额外的 `fp16kernels`、GPU 或架构专用选项。
 
 Rust 下载使用 [RsProxy](https://rsproxy.cn/)：容器内执行命令时固定设置
 `RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup`、`RUSTUP_DIST_SERVER=https://rsproxy.cn`，

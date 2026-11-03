@@ -41,8 +41,11 @@ build_lance_base() {
     log 'installing build dependencies inside the private container'
     container_exec_root dnf "${dnf_options[@]}" install -y \
         gcc gcc-c++ make cmake pkgconf-pkg-config openssl-devel python3 python3-devel \
-        python3-pip tar gzip curl ca-certificates git zlib-devel || {
+        python3-pip tar gzip curl ca-certificates git zlib-devel protobuf-compiler || {
         log 'ERROR: container build dependencies failed'; return 30;
+    }
+    container_exec protoc --version || {
+        log 'ERROR: protoc is unavailable inside the Lance container'; return 30;
     }
     log 'cloning unmodified upstream Lance v13.0.0 inside the private container'
     container_exec git clone --depth 1 --branch v13.0.0 \
