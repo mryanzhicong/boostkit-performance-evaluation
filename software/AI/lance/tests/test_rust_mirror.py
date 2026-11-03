@@ -69,7 +69,11 @@ PERF_PROXY=
 initialize_runtime() { :; }
 require_lance_container() { :; }
 container_exec_root() { printf 'root: %s\\n' "$*"; }
-container_exec() { printf 'exec: %s\\n' "$*"; return 1; }
+container_exec() {
+    printf 'exec: %s\\n' "$*"
+    if [[ "$1" == protoc && "$2" == --version ]]; then return 0; fi
+    return 1
+}
 build_lance_base
 """
     result = subprocess.run(
@@ -81,5 +85,9 @@ build_lance_base
     assert result.returncode == 30
     assert "dnf install -y" in result.stdout
     assert "protobuf-compiler" in result.stdout
+    assert "protobuf-devel" in result.stdout
     assert "exec: protoc --version" in result.stdout
+    assert "exec: protoc --proto_path=/usr/include --descriptor_set_out=/dev/null" in result.stdout
+    assert "/usr/include/google/protobuf/any.proto" in result.stdout
+    assert "/usr/include/google/protobuf/empty.proto" in result.stdout
     assert "git clone" not in result.stdout

@@ -56,8 +56,11 @@ docker exec --user 0 "${LANCE_CONTAINER_NAME}" sed -i \
 ```bash
 dnf install -y gcc gcc-c++ make cmake pkgconf-pkg-config openssl-devel \
   python3 python3-devel python3-pip tar gzip curl ca-certificates git zlib-devel \
-  protobuf-compiler
+  protobuf-compiler protobuf-devel
 protoc --version
+protoc --proto_path=/usr/include --descriptor_set_out=/dev/null \
+  /usr/include/google/protobuf/any.proto \
+  /usr/include/google/protobuf/empty.proto
 git clone --depth 1 --branch v13.0.0 \
   https://github.com/lance-format/lance.git "${PERF_WORK_DIR}/lance-13.0.0"
 python3 -m venv "${PERF_WORK_DIR}/venv"
@@ -73,8 +76,9 @@ cd "${PERF_WORK_DIR}/lance-13.0.0/python"
 "${PERF_WORK_DIR}/venv/bin/maturin" develop --release
 ```
 
-`protobuf-compiler` 在私有容器内提供 `protoc`，供 Lance 上游 Rust 构建脚本生成
-protobuf 代码。安装后立即检查 `protoc --version`；缺失时不进入耗时的编译。
+`protobuf-compiler` 在私有容器内提供 `protoc`，`protobuf-devel` 提供 Lance 上游
+Rust 构建脚本引用的 `google/protobuf/any.proto`、`empty.proto`。安装后检查版本并
+实际编译这两个定义文件；缺失时不进入耗时的 Rust 编译。
 
 实际脚本还设置私有 `CARGO_HOME`、`RUSTUP_HOME`，使 Rust 工具链及编译缓存留在
 `${PERF_WORK_DIR}`。`--no-modify-path` 阻止安装器修改容器内 `/home/runner/.profile`；
