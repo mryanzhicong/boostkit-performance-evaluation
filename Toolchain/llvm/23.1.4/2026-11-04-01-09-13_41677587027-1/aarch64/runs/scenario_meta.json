@@ -1,0 +1,105 @@
+{
+  "reps": 5,
+  "parameters": {
+    "ir_functions": 200,
+    "modules": [
+      "arith.ll",
+      "mem.ll",
+      "branch.ll"
+    ],
+    "native_target": "AArch64",
+    "jdk": null
+  },
+  "scenarios": [
+    {
+      "scenario": "opt_o0_arith",
+      "description": "opt -O0 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "opt_o2_arith",
+      "description": "opt -O2 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "opt_o3_arith",
+      "description": "opt -O3 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "opt_multi_pass_arith",
+      "description": "opt with default<O2>,loop-vectorize,instcombine,gvn,simplifycfg over arith.ll",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "opt_o2_mem",
+      "description": "opt -O2 over the 200-function memory IR module",
+      "workload": "mem.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "opt_o2_branch",
+      "description": "opt -O2 over the 200-function branchy IR module",
+      "workload": "branch.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "llc_o0_arith",
+      "description": "llc -O0 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "llc_o2_arith",
+      "description": "llc -O2 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    },
+    {
+      "scenario": "pipeline_o2_arith",
+      "description": "opt -O2 then llc -O2 in one measured pipeline",
+      "workload": "arith.ll",
+      "throughput": {
+        "name": "functions_per_second",
+        "items": 200,
+        "unit": "functions/s"
+      }
+    }
+  ]
+}
