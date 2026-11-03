@@ -1,152 +1,147 @@
-# Daft 0.7.2 TPC-H 性能测试
+# Daft 0.7.2 性能测试
 
-本用例在当前这一台 Runner 上，按其实际架构运行官方 Daft 0.7.2。
-测试依据为随用例提供的《Daft 0.7.2 开箱性能对比测试指导（TPC-H）》；
-正式口径为 **SF100、native runner、22 条查询、4 轮**，第 1 轮预热，
-每条查询取其余 3 轮墙钟时间的中位数，单位为秒，越低越好。
-TPC-H 数据在当前 Runner 的持久目录生成一次，后续任务复用；每次测试前逐文件核验 SHA-256。
-容器不设置 CPU/内存限额，也不绑核或修改 Daft 引擎。
+本用例在 x86_64、aarch64 Runner 上分别运行 Daft 0.7.2 TPC-H 测试。
+安装和测试均在本次任务的 openEuler 24.03 LTS SP4 私有容器内完成；
+容器不限制 CPU、内存或 NUMA，也不绑核。每台 Runner 使用自己的持久数据目录；
+本机数据不存在时由脚本在本机生成，不需要从另一台机器复制。
 
-## 软件与工具
+软件入口为 `daft_test.sh`。Framework 根据 `case.yaml` 依次调用构建、启动、
+测试和停止函数；独立入口也调用同一组函数。`scripts/builders/base.sh` 负责
+基础版的完整部署，`scripts/stages/` 负责检查、测试和清理，`scripts/results/`
+负责数据校验与结果解析。`optimized` 构建入口尚未实现，选择后在构建阶段失败。
 
-| 项目 | 来源与版本 | 本次任务的位置 |
+## 软件与测试工具
+
+| 项目 | 来源与版本 | 本次任务中的位置 |
 |---|---|---|
-| Daft | 官方 PyPI wheel `daft==0.7.2` | `${PERF_WORK_DIR}/venv` |
-| TPC-H 查询 | [Daft 上游](https://github.com/Eventual-Inc/Daft) `v0.7.2` 的 `benchmarking/tpch/` | `${PERF_WORK_DIR}/daft-source/benchmarking/tpch/` |
-| 多轮测试驱动 | 附件原版 `tpch_driver.py`，仓库内[副本](scripts/reference/tpch_driver.py) | `${PERF_WORK_DIR}/tpch_driver.py` |
-| 依赖 | 附件原版 [requirements.txt](scripts/reference/requirements.txt) | 私有虚拟环境 |
-| 系统镜像 | openEuler 24.03 LTS SP4 官方 Docker 归档 | 本次私有容器 |
+| Daft | 官方 PyPI `daft[ray]==0.7.2` wheel | `${PERF_WORK_DIR}/venv` |
+| TPC-H 查询源码 | [Daft 上游](https://github.com/Eventual-Inc/Daft) `v0.7.2` 的 `benchmarking/tpch/` | `${PERF_WORK_DIR}/daft-source/benchmarking/tpch/` |
+| 测试驱动 | 附件原版 [`tpch_driver.py`](scripts/reference/tpch_driver.py) | `${PERF_WORK_DIR}/tpch_driver.py` |
+| Python 依赖 | 附件原版 [`requirements.txt`](scripts/reference/requirements.txt) | 本次私有 venv |
+| 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/`；缺失时下载到 `${PERF_WORK_DIR}` |
 
-只稀疏检出上游 `benchmarking/`，避免未构建的 `daft/` 源码遮蔽已安装的 wheel。
-按照附件，在**测试查询源码**的 q13 中将
-`col("O_COMMENT").match(` 改为语义相同的 `.regexp(`；Daft wheel 不打补丁。
-该变更作为 `daft-source-patch.txt` 归档，报告参数也明确标记。
+本用例**不编译 Daft 源码，也不构建 Docker 镜像**。“构建阶段”指加载基础镜像、
+启动容器、安装官方 wheel 和测试依赖、准备 TPC-H 数据。宿主机若缺少下载和
+校验所需的基本命令，脚本用 `dnf` 安装缺失的包。
 
-`base` 使用上述官方 wheel；`optimized` 尚未实现，选择后会明确失败。
-工作流只需选择当前 Runner 对应的一个架构；本次没有第二台 Runner。
+## Daft 获取、安装与容器启动
 
-## 目录与环境
+脚本先检查 Docker daemon，并从公共目录读取
+`openEuler-docker.<架构>.tar.xz` 及同名 `.sha256sum`；缺失时从官方目录下载。
+校验 SHA-256 后执行 `docker load --input <归档>`，核对镜像架构和容器内的
+openEuler 版本，不访问 Docker Hub。
 
-| 内容 | 目录或变量 | 说明 |
-|---|---|---|
-| 本次任务 | `PERF_WORK_DIR=/home/runner/boostkit-perf/daft/<版本>/<架构>/<run-id>` | Framework 提供；源码、虚拟环境、临时文件在此 |
-| 正式结果 | `RESULTS_DIR=.perf-output/Bigdata/daft/<版本>/<架构>/<run-id>` | Framework 提供；日志、JSON 和报告在此 |
-| 持久数据 | `DAFT_DATA_ROOT=/home/runner/software/daft/tpch-data` | 当前 Runner 保存一次；已有完整数据时容器只读挂载 |
-| 官方镜像缓存 | `/home/runner/software/openEuler-24.03-LTS-SP4/` | 优先本地归档及 `.sha256sum`，缺失时下载 |
-| 代理证书 | `/home/runner/software/anchors/` | 仅配置 `PERF_PROXY` 时挂载入容器 |
-| 可选离线 wheel | `/home/runner/software/daft/wheels/<架构>/` | 同架构、同 Python 版本的完整依赖集；缺包时回退 PyPI 镜像 |
-
-需要可用的 Docker daemon、容器镜像、GitHub/PyPI 访问及持久磁盘。
-默认数据 SF100 的 Parquet 约 31 GB；首次生成还需约 110 GB 中间 CSV 空间，
-脚本在生成前要求数据盘至少有 150 GB 空余。容器使用宿主网络，测试只读取本地数据。
-宿主机需有 `curl`、`sha256sum`、`docker`、`python3`；容器内用 `dnf` 安装
-Python、Git、gcc、make 等，不修改宿主机 Python 或仓库配置。
-
-## 数据准备：当前 Runner 自动完成
-
-正常运行 Framework 工作流或下文的 `daft_test.sh` 即可，无需另行运行数据准备命令。
-`build` 阶段先检查本机持久数据目录：
-
-| 当前状态 | 行为 |
-|---|---|
-| Parquet 与 `parquet.sha256` 均不存在 | 在本次私有容器内调用上游数据生成模块，随后生成清单；正式测试前校验 |
-| 两者均存在 | 复用；正式测试前逐文件校验 SHA-256 |
-| 只存在其中之一，或留下未完成的中间数据 | 报错并保留现场，不覆盖或当作完整数据使用 |
-
-首次生成使用上游原始命令：
+每次运行创建名为 `boostkit-daft-<架构>-<运行 ID>` 的私有容器。
+本次工作目录、结果目录和持久数据目录均挂载到容器内的相同路径。
+数据首次生成时可写挂载；已有完整数据时只读挂载。容器启动命令形态如下：
 
 ```bash
-python -m benchmarking.tpch.data_generation \
-  --tpch_gen_folder /home/runner/software/daft/tpch-data \
-  --scale_factor 100 --generate_parquet
-```
-
-产物位于 `/home/runner/software/daft/tpch-data/100_0/100/parquet/`，
-清单位于同级 `parquet.sha256`，生成日志写入本次结果目录的 `data-generation.log`。
-清单写出后，脚本清理本次生成的中间 `.tbl` 文件；不删除 Parquet 和清单。
-如需在当前 Runner 手动复核数据，可执行：
-
-```bash
-python3 software/Bigdata/daft/scripts/results/verify_data.py \
-  /home/runner/software/daft/tpch-data/100_0/100/parquet \
-  /home/runner/software/daft/tpch-data/100_0/100/parquet.sha256
-```
-
-校验脚本检查 8 张表、文件集合及逐文件 SHA-256。清单签名写入本次结果参数。
-首次生成可能耗时较长；以后复用本机持久数据，无需重复生成。
-
-## 构建与启动
-
-`build` 调用 `scripts/builders/dispatch.sh` 的 `build_daft`。
-基础版在本次私有目录中加载 openEuler 24.03 LTS SP4 镜像，校验镜像的
-SHA-256、架构及系统版本后启动容器：
-
-```bash
-docker run --detach --network=host --user "$(id -u):$(id -g)" \
+docker run --detach --name "${DAFT_CONTAINER_NAME}" \
+  --label "boostkit.daft.run-id=${PERF_RUN_ID}" \
+  --network=host --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
-  --mount "type=bind,source=/home/runner/software/daft/tpch-data,target=/home/runner/software/daft/tpch-data" \
-  <已验证的openEuler镜像> sleep infinity
+  --mount "type=bind,source=${DAFT_DATA_ROOT},target=${DAFT_DATA_ROOT}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${DAFT_CONTAINER_IMAGE}" sleep infinity
 ```
 
-上例展示首次生成数据时的可写挂载；复用完整数据时脚本加 `readonly`。
-实际脚本还设置本次运行 ID 的容器名和标签，并在配置 `PERF_PROXY` 时挂载代理 CA。
-随后在容器内执行 `dnf install`、稀疏检出上游 `v0.7.2`、
-`python3 -m venv`、`pip install -r requirements.txt`。
-容器内的 openEuler 软件源改为华为镜像站；代理仅用于安装和下载阶段。
-构建完成后从已安装的 `daft.__version__` 读取实际版本，必须为 `0.7.2`。
+上例的数据挂载是首次生成时的形式；复用数据时脚本加 `readonly`。
+正式工作流设置 `PERF_PROXY` 时，还把 `/home/runner/software/anchors/`
+只读挂载到容器内的 `/etc/pki/ca-trust/source/anchors/`，先执行
+`update-ca-trust extract`。随后仅在本次容器内把 openEuler 软件源改为
+`repo.huaweicloud.com/openeuler`。没有配置代理时跳过证书挂载和更新。
 
-`start` 阶段重新定位私有容器，确认数据和清单存在；`test` 开始前逐文件校验。
-`stop` 只删除带有本次运行 ID 标签的容器，不清理或修改持久数据。
-
-## 正式测试与结果
-
-`test` 阶段再次校验数据后，在容器内从上游源码目录调用**附件原版驱动**：
+容器内以 root 执行 `dnf install -y python3 python3-pip git gcc make coreutils
+findutils tar gzip procps-ng`，然后以 Runner 用户执行以下安装命令：
 
 ```bash
-DAFT_RUNNER=native python /home/runner/boostkit-perf/daft/<本次任务>/tpch_driver.py \
-  --parquet /home/runner/software/daft/tpch-data/100_0/100/parquet \
-  --out "${RESULTS_DIR}" --rounds 4
+git clone --depth 1 --branch v0.7.2 --filter=blob:none --sparse \
+  https://github.com/Eventual-Inc/Daft.git "${PERF_WORK_DIR}/daft-source"
+git -C "${PERF_WORK_DIR}/daft-source" sparse-checkout set benchmarking
+python3 -m venv "${PERF_WORK_DIR}/venv"
+"${PERF_WORK_DIR}/venv/bin/python" -m pip install \
+  -i https://mirrors.aliyun.com/pypi/simple/ --only-binary=daft \
+  -r "${PERF_WORK_DIR}/requirements.txt"
+"${PERF_WORK_DIR}/venv/bin/python" -c 'import daft; print(daft.__version__)'
 ```
 
-实际使用私有 venv 的 Python，不继承代理、`DAFT_*` 或 `RAY_*` 调优变量；
-只显式设置 `DAFT_RUNNER=native` 和 `DAFT_PROGRESS_BAR=0`。
-驱动复用上游 `answers.py` 查询及 `MetricsBuilder.collect_metrics` 计时，
-每条查询结束即写 `timings.jsonl`。某查询失败会继续记录其余查询，
-但整个阶段最终失败，不会生成缺项的成功报告。
+`requirements.txt` 和 `tpch_driver.py` 在安装前从 `scripts/reference/` 复制到
+本次工作目录。若 `/home/runner/software/daft/wheels/<架构>/` 有完整离线依赖集，
+脚本先从本地安装；缺包时回退到上面的 PyPI 镜像。最后一条命令必须输出
+`0.7.2`，并保存实际安装列表 `pip-freeze.txt`。
 
-| 输出 | 内容 |
+脚本只稀疏检出上游 `benchmarking/`，避免未构建的 `daft/` 源码遮蔽 wheel。
+按照附件，在查询源码的 q13 中将 `col("O_COMMENT").match(` 改为语义相同的
+`.regexp(`；差异保存为 `daft-source-patch.txt`。Daft wheel 本身不打补丁。
+
+## 数据与运行顺序
+
+1. `build` 检查本机持久目录 `/home/runner/software/daft/tpch-data/100_0/100/`
+   的 `parquet/` 和 `parquet.sha256`。两者均存在则复用；均不存在则在本次容器内
+   生成；只有一项或存在未完成的中间数据时，拒绝覆盖并报错。
+2. 首次生成数据时，脚本先检查数据盘至少有 150 GB 空余，再从上游源码目录执行：
+
+   ```bash
+   "${PERF_WORK_DIR}/venv/bin/python" -m benchmarking.tpch.data_generation \
+     --tpch_gen_folder /home/runner/software/daft/tpch-data \
+     --scale_factor 100 --generate_parquet
+   ```
+
+   生成后写出逐文件 SHA-256 清单，清理本次生成的中间 `.tbl` 文件；不删除
+   Parquet 和清单。数据生成日志保存为 `data-generation.log`。
+3. `start` 确认私有容器、venv、Parquet 和清单就绪。`test` 再运行
+   `scripts/results/verify_data.py`，检查 8 张表、文件集合及逐文件 SHA-256。
+4. `test` 在容器内进入 `${PERF_WORK_DIR}/daft-source`，使用私有 venv 执行
+   附件原版驱动。测试命令形态如下：
+
+   ```bash
+   DAFT_RUNNER=native DAFT_PROGRESS_BAR=0 \
+     "${PERF_WORK_DIR}/venv/bin/python" "${PERF_WORK_DIR}/tpch_driver.py" \
+     --parquet /home/runner/software/daft/tpch-data/100_0/100/parquet \
+     --out "${RESULTS_DIR}" --rounds 4
+   ```
+
+5. 同一驱动随后以 `--mode answers` 导出 22 个查询答案。脚本解析
+   `timings.jsonl`，要求 22 条查询均完成 4 轮；第 1 轮预热，每条查询取
+  第 2–4 轮墙钟时间的中位数。`stop` 只移除本次私有容器，不删除持久数据。
+
+测试不继承代理或 `DAFT_*`、`RAY_*` 调优变量；只设置
+`DAFT_RUNNER=native` 和 `DAFT_PROGRESS_BAR=0`。数据集优先使用本机已有文件，
+不会在每次运行时重新生成。
+
+## 指标与产物
+
+| 指标 | 来源 | 单位 | 方向 |
+|---|---|---|---|
+| `q01/wall_time` 至 `q22/wall_time` | `timings.jsonl` 中第 2–4 轮的中位数 | 秒 | 越小越好 |
+
+报告列出 22 条查询各自的耗时，不把它们合并为单一总分。
+
+| 产物 | 内容 |
 |---|---|
-| `benchmark_daft_raw.log` | 驱动的完整控制台输出 |
-| `timings.jsonl` | 4 轮 × 22 条原始墙钟时间及错误 |
-| `round_1.csv` 至 `round_4.csv` | 附件驱动生成的上游格式 CSV |
-| `answers/q01.parquet` 至 `q22.parquet` | 附件驱动导出的查询结果，供结果留存与正确性核对 |
-| `benchmark_daft.json` | 22 项正式指标与数据签名 |
-| `pip-freeze.txt` | 容器内实际安装的 Python 包版本 |
-| `daft-source-revision.txt`、`daft-source-patch.txt` | 上游提交与 q13 兼容补丁原文 |
-| `normalized_result.json`、`report.md` | Framework 生成的归一化结果与单架构报告 |
+| `benchmark_daft_raw.log`、`timings.jsonl` | 完整控制台输出及 4 轮原始计时、错误 |
+| `round_1.csv` 至 `round_4.csv` | 附件驱动生成的逐轮 CSV |
+| `answers/q01.parquet` 至 `answers/q22.parquet` | 查询答案，供结果留存和正确性核对 |
+| `benchmark_daft.json` | 22 项正式指标和数据签名 |
+| `data-generation.log` | 首次生成数据时的日志；复用数据时不生成 |
+| `daft-source-revision.txt`、`daft-source-patch.txt`、`pip-freeze.txt` | 实际源码提交、q13 差异及 Python 包版本 |
+| `results.json`、`report.md` | 独立入口生成的结果与报告；流水线由 Framework 生成正式结果 |
 
-指标名为 `q01/wall_time` 至 `q22/wall_time`，每项取第 2–4 轮中位数，
-单位为秒，`lower_is_better`。当前单架构报告列出 22 项查询用时。
-仓库保留附件 `report.py` 的[原版副本](scripts/reference/report.py)供核对；
-Framework 不把双机倍率混进本次单架构指标。
-附件的 [`oob.sh`](scripts/reference/oob.sh) 也原样保留供核对；
-其宿主机 venv 部署命令不用于本容器工作流。
-
-## 独立运行与检查
-
-在当前 Runner 的仓库根目录执行：
+在当前 Runner 的仓库根目录执行完整流程：
 
 ```bash
 bash software/Bigdata/daft/daft_test.sh \
-  --version 0.7.2 --variant base \
+  --version 0.7.2 \
+  --variant base \
   --results-dir /home/runner/daft-results/0.7.2
 ```
 
-独立入口与 Framework 调用同一组阶段函数，产生 `results.json`、
-`status.json` 和 `report.md`。排障时加 `--keep-workdir` 保留容器以外的工作文件。
-正常结束时仅删除本次 `local-<run-id>` 工作目录，不删除数据目录。
+结果位于 `/home/runner/daft-results/0.7.2/`。独立运行可加 `--keep-workdir`
+保留本次私有工作目录排查问题；容器仍会停止并移除。默认清理本次工作目录，
+但保留传入的结果目录和 `/home/runner/software/daft/tpch-data/`。
 
-本用例与附件的区别仅在执行载体和结果接入：正式安装、测试均在私有
-openEuler 容器内；附件是在宿主机私有 venv 中执行。上游查询、驱动、
-SF100、轮数、预热和中位数口径保持一致。可选的 Ray runner 不在本次正式矩阵中。
+本用例随仓库保留附件原版 [`report.py`](scripts/reference/report.py) 和
+[`oob.sh`](scripts/reference/oob.sh) 供核对；正式测试使用原版
+`tpch_driver.py`，不执行附件 `oob.sh` 的宿主机 venv 部署命令。
