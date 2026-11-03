@@ -108,7 +108,7 @@ prepare_lance_image() {
 }
 
 require_lance_container() {
-    local -a cert_mount=()
+    local -a cert_mount=() git_mount=()
     require_docker || return $?
     docker container inspect "${LANCE_CONTAINER_NAME}" >/dev/null 2>&1 && {
         log 'ERROR: refusing to reuse an existing container'; return 40;
@@ -118,6 +118,9 @@ require_lance_container() {
         [[ -d "${LANCE_CA_ANCHORS_DIR}" ]] || { log 'ERROR: proxy CA anchors missing'; return 30; }
         cert_mount+=(--mount "type=bind,source=${LANCE_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        git_mount+=(--mount type=bind,source=/home/runner/.gitconfig,target=/home/runner/.gitconfig,readonly)
+    fi
     docker run --detach --name "${LANCE_CONTAINER_NAME}" \
         --label "boostkit.lance.run-id=${PERF_RUN_ID}" --network=host \
         --user "$(id -u):$(id -g)" \
@@ -125,7 +128,7 @@ require_lance_container() {
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
-        "${cert_mount[@]}" "${LANCE_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+        "${cert_mount[@]}" "${git_mount[@]}" "${LANCE_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
     if [[ -n "${PERF_PROXY:-}" ]]; then
         docker exec --user 0 "${LANCE_CONTAINER_NAME}" update-ca-trust extract || return 30
     fi
@@ -144,11 +147,15 @@ check_lance_container() {
 }
 
 container_exec() {
-    local -a proxy=()
+    local -a proxy=() git_config=()
     if [[ -n "${PERF_PROXY:-}" ]]; then
         proxy=(-e "http_proxy=${PERF_PROXY}" -e "https_proxy=${PERF_PROXY}")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        git_config=(-e GIT_CONFIG_GLOBAL=/home/runner/.gitconfig)
+    fi
     docker exec "${proxy[@]}" -e "TMPDIR=${TMPDIR}" \
+        "${git_config[@]}" \
         -e "CARGO_HOME=${PERF_WORK_DIR}/cargo" \
         -e "RUSTUP_HOME=${PERF_WORK_DIR}/rustup" \
         -e "PIP_INDEX_URL=${LANCE_PYPI_INDEX_URL}" \
