@@ -18,7 +18,7 @@ require_host_transfer_commands() {
 # Dependency installation happens inside the container; the host never runs dnf
 # or apt-get for this case.
 prepare_eigen_build_container() {
-    local -a dnf_options=()
+    local -a dnf_options=(--setopt=install_weak_deps=False)
     require_host_transfer_commands
     require_eigen_docker || return 30
     start_eigen_container || return $?
