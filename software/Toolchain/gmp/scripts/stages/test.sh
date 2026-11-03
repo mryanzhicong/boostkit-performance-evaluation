@@ -3,16 +3,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 run_timed() {
     local scenario="$1" label="$2" attempt="$3"
-    local directory="${RUNS_DIR}/${scenario}"
+    local directory="${RUNS_DIR}/${scenario}" size routine
     mkdir -p "${directory}"
-    (
-        cd "${GMP_SOURCE_DIR}/tune" || exit 1
+    size="$(scenario_size "${scenario}")" || return 1
+    routine="$(scenario_routine "${scenario}")" || return 1
+    gmp_container_exec_at "${GMP_SOURCE_DIR}/tune" \
         python3 "${SCRIPT_DIR}/scripts/run_timed.py" \
-            --json "${directory}/${label}.attempt${attempt}.json" \
-            --log "${directory}/${label}.attempt${attempt}.log" \
-            --timeout 900 \
-            -- ./speed -s "$(scenario_size "${scenario}")" "$(scenario_routine "${scenario}")"
-    ) >/dev/null 2>&1
+        --json "${directory}/${label}.attempt${attempt}.json" \
+        --log "${directory}/${label}.attempt${attempt}.log" \
+        --timeout 900 \
+        -- ./speed -s "${size}" "${routine}" >/dev/null 2>&1
 }
 
 # Run one sample, retrying only when upstream tune/speed itself failed to produce
@@ -87,8 +87,9 @@ verify_samples() {
 run_gmp_benchmarks() {
     local scenario rep directory label
     initialize_runtime || return $?
-    [[ -x "${GMP_SPEED_BIN}" ]] || {
-        log_message "ERROR: upstream tune/speed is unavailable: ${GMP_SPEED_BIN}"
+    check_gmp_container || return 50
+    gmp_container_exec test -x "${GMP_SPEED_BIN}" || {
+        log_message "ERROR: upstream tune/speed is unavailable in the container: ${GMP_SPEED_BIN}"
         return 50
     }
     rm -rf -- "${RUNS_DIR}"

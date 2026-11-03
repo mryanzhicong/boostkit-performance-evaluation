@@ -4,11 +4,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 start_gmp_runtime() {
     local output
     initialize_runtime || return $?
-    [[ -x "${GMP_SPEED_BIN}" ]] || {
-        log_message "ERROR: upstream tune/speed is unavailable: ${GMP_SPEED_BIN}"
+    check_gmp_container || return $?
+    gmp_container_exec test -x "${GMP_SPEED_BIN}" || {
+        log_message "ERROR: upstream tune/speed is unavailable in the container: ${GMP_SPEED_BIN}"
         return 40
     }
-    output="$( cd "${GMP_SOURCE_DIR}/tune" && ./speed -s 512 mpn_mul_n 2>&1 )" || {
+    gmp_container_exec test -f "${GMP_PREFIX}/include/gmp.h" || {
+        log_message "ERROR: GMP headers were not installed in the container: ${GMP_PREFIX}/include/gmp.h"
+        return 40
+    }
+    output="$( gmp_container_exec_at "${GMP_SOURCE_DIR}/tune" ./speed -s 512 mpn_mul_n 2>&1 )" || {
         log_message "ERROR: tune/speed smoke run failed"
         return 40
     }

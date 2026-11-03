@@ -21,6 +21,33 @@
 
 全部来源失败时 `build` 退出 **30**，并把每个尝试过的 URL（以及失败原因）打印到 job 日志。
 
+## 容器化执行
+
+本用例的构建、启动、测试与清理全部在每次任务专属的 openEuler 24.03 LTS SP4 私有容器内
+完成，与 `software/Database/mysql`、`software/Bigdata/ray`、`software/Others/unixbench`
+使用同一套容器契约。宿主机只需要 Docker、下载/校验工具与 Framework，不再需要编译器与
+`dnf` 包。
+
+- 基础镜像：openEuler 24.03 LTS SP4 官方 Docker 归档，优先读取
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz` 与同名
+  `.sha256sum`，缺失时从
+  `https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/<arch>/` 下载；加载后校验
+  归档 SHA-256、镜像架构与镜像内 `/etc/os-release`。
+- 容器：名字 `boostkit-gmp-<arch>-<运行ID>`，标签 `boostkit.gmp.run-id=<运行ID>`，使用宿主
+  网络；读写挂载 `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}`，只读挂载用例目录（独立运行时例外），
+  容器内路径与宿主完全相同，`${PERF_WORK_DIR}/home` 作为容器内 `HOME`。
+- 容器内：`dnf` 安装 `gcc`、`gcc-c++`、`make`、`m4`、`tar`、`xz`、`diffutils`、
+  `findutils`、`coreutils`、`sed`、`gawk`、`grep`、`util-linux`、`file`、`binutils`、
+  `glibc-devel` 与 `python3`；解包、`configure`、`make`、`make -C tune speed`、
+  `make install`、版本探测、固定负载与计时包装（`scripts/run_timed.py`）都在容器内执行。
+- 宿主机：只负责下载并校验源码包（优先 `/home/runner/software/gmp/`）、检查构建产物路径、
+  严格解析 `benchmark_gmp.json` 与清理本任务的容器。结果解析器不进入容器。
+- 测量：每条样本由容器内进程直接派生，`docker exec` 的管理开销不进入计时窗口。
+- 清理：`stop` 阶段幂等删除本任务容器（标签不符拒绝删除）；取消任务遗留的同软件容器会在
+  下一次 build 时按名字前缀清理。
+
+独立运行同样需要 Docker 与可访问的 Docker daemon；不满足时 build 阶段返回 30 并给出提示。
+
 ## 3. 安装与构建
 
 构建全程在 `PERF_WORK_DIR` 内完成，**不写系统目录、不修改宿主 GMP**：
