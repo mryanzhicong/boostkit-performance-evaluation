@@ -33,7 +33,7 @@ prepare_bcrypt_build_container() {
     start_bcrypt_container || return $?
     [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     log_message 'installing Node.js runtime prerequisites inside the private container'
-    bcrypt_container_exec_root dnf "${dnf_options[@]}" install -y \
+    bcrypt_container_exec_root dnf "${dnf_options[@]}" --setopt=install_weak_deps=False install -y \
         tar xz gzip coreutils findutils glibc libstdc++ python3 || {
         log_message "ERROR: container build dependencies failed"
         return 30
