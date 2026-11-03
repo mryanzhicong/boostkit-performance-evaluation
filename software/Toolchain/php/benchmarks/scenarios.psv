@@ -1,0 +1,13 @@
+# PHP 8.5.12 deterministic workload matrix.
+# scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+# runner php_script: <php> -n -d memory_limit=512M benchmarks/<target> <scenario> <scale>
+# runner php_upstream_bench: <php> -n <php-src>/<target> (marker check on the log)
+cli_startup|startup|php_script|cli_startup.php|0|int|1||single-process CLI bootstrap plus one small file compilation
+compute_nbody_100000|compute|php_script|nbody.php|100000|float|-0.169228805296|1e-9|n-body energy after 100000 integration steps
+compute_spectral_norm_400|compute|php_script|spectral_norm.php|400|float|1.274224081392|1e-9|10 A^T A power iterations at N=400
+compute_fannkuch_9|compute|php_script|fannkuch.php|9|int|30911505||Heap permutation enumeration for n=9 (max flips x 1e6 + sum flips mod 1e6)
+string_churn_400000|strings|php_script|string_churn.php|400000|int|1259483823||400000 formatted strings, implode and crc32
+array_hash_400000|hashing|php_script|array_hash.php|400000|int|480001400000||400000 string-keyed hash inserts, iteration and mutation
+include_modules_1000|compile|php_script|include_all.php|1000|int|1075312348280||include 1000 generated modules of 100 functions and a 500-element array each
+upstream_zend_bench|upstream|php_upstream_bench|Zend/bench.php|0|marker|nestedloop||php-src Zend/bench.php from the official php-8.5.12 tarball
+upstream_micro_bench|upstream|php_upstream_bench|Zend/micro_bench.php|0|marker|undef_func()||php-src Zend/micro_bench.php from the official php-8.5.12 tarball
