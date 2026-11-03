@@ -1,0 +1,47 @@
+name: ray
+category: Bigdata
+enabled: true
+versions:
+  - "2.55.1"
+test_tools:
+  ray_official_shuffle:
+    version: "2.55.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_ray
+    start:
+      script: scripts/stages/start.sh
+      function: start_ray_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_ray_benchmark
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_ray_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_ray_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_ray.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  definitions:
+    shuffle_time:
+      path: results.shuffle_time
+      unit: s
+      direction: lower_is_better
