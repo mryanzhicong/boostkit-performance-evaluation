@@ -1,0 +1,89 @@
+{
+  "software": "catj",
+  "version": "1.0.4",
+  "suite": "catj-cli-flatten",
+  "description": "Deterministic JSON flattening through the upstream catj CLI with Node.js startup and full stdout capture included in the wall time.",
+  "inputs": [
+    {
+      "name": "objects-5000.json",
+      "objects": 5000,
+      "bytes": 621271,
+      "sha256": "e34897a7c6b6759a0b33600c78bf7b7b8fde4f40c406e1f77c2dcfe7a83defa3",
+      "output_lines": 45000,
+      "output_sha256": "99246fc77db1f80f82b1d1b5e446c40e9e6eefaa2e4d8d7ded2a3cdca7b34e6a"
+    },
+    {
+      "name": "objects-25000.json",
+      "objects": 25000,
+      "bytes": 3166334,
+      "sha256": "01a77b0b0bb8fded9fbf444baea8ffa54cf5b73ec4ec35fbec7786747ecb4576",
+      "output_lines": 225000,
+      "output_sha256": "f5d0e76415a3909fb050bc82e06a1a8c39c02baa6b36d98155a242c39629ffa3"
+    },
+    {
+      "name": "objects-100000.json",
+      "objects": 100000,
+      "bytes": 12785306,
+      "sha256": "c67dfc01b6bfe5ec75cefaa7ee18495504f027d8dfce5b3f78af0f8bfabbcc13",
+      "output_lines": 900000,
+      "output_sha256": "d96bbd89dce36ff2d50e463f8af04a9d0d97fd14a153f66a6576ac51be1b99f0"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "flatten_file_5000",
+      "input": "objects-5000.json",
+      "mode": "file",
+      "iterations": 1,
+      "expected_last_token": ".[4999].id = 4999",
+      "expected_value_token": ".[4999].nested.ratio = 714.142857"
+    },
+    {
+      "id": "flatten_stdin_5000",
+      "input": "objects-5000.json",
+      "mode": "stdin",
+      "iterations": 1,
+      "expected_last_token": ".[4999].id = 4999",
+      "expected_value_token": ".[4999].nested.ratio = 714.142857"
+    },
+    {
+      "id": "flatten_file_25000",
+      "input": "objects-25000.json",
+      "mode": "file",
+      "iterations": 1,
+      "expected_last_token": ".[24999].id = 24999",
+      "expected_value_token": ".[24999].nested.ratio = 3571.285714"
+    },
+    {
+      "id": "flatten_stdin_25000",
+      "input": "objects-25000.json",
+      "mode": "stdin",
+      "iterations": 1,
+      "expected_last_token": ".[24999].id = 24999",
+      "expected_value_token": ".[24999].nested.ratio = 3571.285714"
+    },
+    {
+      "id": "flatten_file_100000",
+      "input": "objects-100000.json",
+      "mode": "file",
+      "iterations": 1,
+      "expected_last_token": ".[99999].id = 99999",
+      "expected_value_token": ".[99999].nested.ratio = 14285.571429"
+    },
+    {
+      "id": "flatten_stdin_100000",
+      "input": "objects-100000.json",
+      "mode": "stdin",
+      "iterations": 1,
+      "expected_last_token": ".[99999].id = 99999",
+      "expected_value_token": ".[99999].nested.ratio = 14285.571429"
+    }
+  ],
+  "selection": {
+    "upstream_suite": false,
+    "reason": "catj ships no performance benchmark suite; the release manual defines a fixed JSON flatten CLI load. This case keeps that representative load and extends it to three input scales and both input modes.",
+    "excluded": [
+      "interactive terminal output (colours/TTY detection) because it is not reproducible in a capture pipeline; the case forces FORCE_COLOR=0 so stdout is byte-identical on both architectures"
+    ]
+  }
+}
