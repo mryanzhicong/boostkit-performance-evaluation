@@ -5,6 +5,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 stop_bcrypt_runtime() {
     initialize_runtime || return $?
+    # Removing the container first terminates every measured process it owns.
+    remove_bcrypt_container || return $?
     local pid killed=0
     for pid in /proc/[0-9]*; do
         pid="${pid##*/}"

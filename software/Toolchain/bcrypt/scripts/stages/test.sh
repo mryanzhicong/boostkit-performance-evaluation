@@ -8,7 +8,19 @@ run_one_sample() {
     local scenario="$1" mode="$2" log_path="$3" timeout_seconds
     timeout_seconds="$(scenario_timeout "${scenario}")"
     mkdir -p "$(dirname "${log_path}")"
-    if ! timeout --signal=TERM --kill-after=10 "${timeout_seconds}" \
+    # The measured process is started inside the private container.  The offline
+    # environment is re-asserted there explicitly because `docker exec` does not
+    # inherit the host stage environment.
+    local -a measured_env=(
+        env
+        "UV_THREADPOOL_SIZE=1" "TZ=UTC" "LANG=C" "LC_ALL=C" "NODE_ENV=production"
+        "HOME=${BCRYPT_CONTAINER_HOME}" "TMPDIR=${TMPDIR:-/tmp}" "DEBUGINFOD_URLS="
+        "http_proxy=http://127.0.0.1:9" "https_proxy=http://127.0.0.1:9"
+        "HTTP_PROXY=http://127.0.0.1:9" "HTTPS_PROXY=http://127.0.0.1:9"
+        "no_proxy=" "NO_PROXY="
+    )
+    if ! bcrypt_container_exec "${measured_env[@]}" \
+        timeout --signal=TERM --kill-after=10 "${timeout_seconds}" \
         "${NODE_BIN}" "${SCRIPT_DIR}/fixtures/bcrypt_runner.js" \
         --scenarios "${SCENARIOS_FILE}" --scenario "${scenario}" --mode "${mode}" \
         --module-dir "${APP_DIR}/node_modules" >"${log_path}" 2>&1; then
@@ -26,8 +38,11 @@ run_one_sample() {
 
 run_bcrypt_benchmarks() {
     initialize_runtime || return $?
+    check_bcrypt_container || return $?
     bcrypt_measurement_env || return $?
     validate_reps || return $?
+    bcrypt_container_exec test -x "${NODE_BIN}" || {
+        log_message "ERROR: Node.js runtime is missing; run the build stage first"; return 50; }
     local measurement_log="${RESULTS_DIR}/measurement.log"
     : >"${measurement_log}"
     local scenario index

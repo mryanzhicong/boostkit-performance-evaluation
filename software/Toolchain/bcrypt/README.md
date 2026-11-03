@@ -10,10 +10,10 @@ path and the work-factor scaling are covered.
 
 | Item | Pinned value | Verification |
 | --- | --- | --- |
-| bcrypt | `6.0.0` (npm release tarball) | `tarball sha256 3b2478cd…b5ae20`; `package.json`, `bcrypt.js`, `binding.gyp` hash-pinned; version re-read before the measurement |
-| Node.js | `v22.23.4` (official archive) | x86_64 `1805bcd3…37e9ce`, aarch64 `6287aa46…d2f4b`; `node --version` checked at build/start |
-| Native module | prebuilt N-API binary shipped in the release | linux-x64 `prebuilds/linux-x64/bcrypt.glibc.node` `d6406498…bb5e3`, linux-arm64 `prebuilds/linux-arm64/bcrypt.glibc.node` `68f3cf61…fcc52` |
-| Dependencies | `node-addon-api 8.9.2`, `node-gyp-build 4.8.4` | vendored `bcrypt-node_modules-6.0.0.tar.gz` `ac85950f…949329`, every version re-read at build/start |
+| bcrypt | `6.0.0` (npm release tarball) | `tarball sha256 3b2478cd鈥5ae20`; `package.json`, `bcrypt.js`, `binding.gyp` hash-pinned; version re-read before the measurement |
+| Node.js | `v22.23.4` (official archive) | x86_64 `1805bcd3鈥?7e9ce`, aarch64 `6287aa46鈥2f4b`; `node --version` checked at build/start |
+| Native module | prebuilt N-API binary shipped in the release | linux-x64 `prebuilds/linux-x64/bcrypt.glibc.node` `d6406498鈥b5e3`, linux-arm64 `prebuilds/linux-arm64/bcrypt.glibc.node` `68f3cf61鈥cc52` |
+| Dependencies | `node-addon-api 8.9.2`, `node-gyp-build 4.8.4` | vendored `bcrypt-node_modules-6.0.0.tar.gz` `ac85950f鈥?49329`, every version re-read at build/start |
 | Password | fixed literal `BoostKit-bcrypt-benchmark-2026` | defined in `fixtures/scenarios.json` and copied into `parameters` |
 | Salt | generated once per sample, **before** the timed window | recorded as `salt_seconds` in every sample, never inside the timing |
 | Samples | 1 warm-up + `PERF_REPS` samples (default 5) | one isolated Node.js process per sample |
@@ -28,8 +28,8 @@ and compares correctly; the prebuilt-binary hash is pinned per architecture.
 
 ```
 /home/runner/software/bcrypt/
-├── node-v22.23.4-linux-x64.tar.xz     # sha256 1805bcd3…37e9ce
-└── node-v22.23.4-linux-arm64.tar.xz   # sha256 6287aa46…d2f4b
+鈹溾攢鈹€ node-v22.23.4-linux-x64.tar.xz     # sha256 1805bcd3鈥?7e9ce
+鈹斺攢鈹€ node-v22.23.4-linux-arm64.tar.xz   # sha256 6287aa46鈥2f4b
 ```
 
 `PERF_BCRYPT_OFFLINE_DIR` overrides the directory.  The bcrypt tarball and the
@@ -68,7 +68,7 @@ Correctness gates (enforced by the runner and re-checked by the parser):
 
 | Stage | Function | Failure exit code | Purpose |
 | --- | --- | --- | --- |
-| prepare | Framework built-in | – | records the system and pre-run runtime information |
+| prepare | Framework built-in | 鈥?| records the system and pre-run runtime information |
 | build | `build_bcrypt` | 30 | installs Node.js, stages bcrypt and its dependencies, verifies the prebuilt N-API binary, loads the module, prefetches every scenario |
 | start | `start_bcrypt_runtime` | 40 | re-verifies the runtime, the native binary hash and a hash/compare self-check |
 | test | `run_bcrypt_benchmarks` | 50 | runs warm-up + `PERF_REPS` samples per scenario and parses them strictly |
@@ -84,7 +84,7 @@ Every run writes to `.perf-output/Toolchain/bcrypt/<version>/<arch>/<run_id>/`:
 
 - `build_variant.json`: Node.js version and archive hash, bcrypt tarball hash,
   dependency-tree hash, native-binary hash, measurement protocol, scenario list.
-- `results.json`: 18 metrics (6 scenarios × ms/op, op/s, peak RSS) plus full
+- `results.json`: 18 metrics (6 scenarios 脳 ms/op, op/s, peak RSS) plus full
   sample statistics.
 - `runs/<scenario>/{warmup.log,rep<i>.log}`: environment line, per-operation
   timings, batch/salt/warm-up durations and the correctness record.
@@ -117,7 +117,12 @@ failed correctness gate, and non-positive metric values.
   values (versions, hashes, costs, operation counts, environment), no host name,
   path or timestamp.
 
-## 8. Local validation
+## 8. Containerized execution
+
+姣忎竴涓樁娈甸兘鍦?*鏈浠诲姟涓撳睘鐨?openEuler 24.03 LTS SP4 瀹瑰櫒**鍐呮墽琛岋紙瀹瑰櫒杩愯鏃跺潡鐢?`adaptation/scripts/add-container-block.py` 鍐欏叆 `scripts/common.sh`锛屽嬁鎵嬫敼鏍囪鍖猴級锛?
+- **闀滃儚**锛歚/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz`锛?  鏈湴褰掓。浼樺厛锛岀己澶辨椂鎵嶄粠 `repo.openeuler.org` 涓嬭浇锛涘姞杞藉墠鏍￠獙 `.sha256sum`銆侀暅鍍忔灦鏋?  锛坄x86_64`鈫抈amd64`銆乣aarch64`鈫抈arm64`锛変笌 `/etc/os-release` 鐨?`24.03`銆?- **瀹瑰櫒鍚?鏍囩**锛歚boostkit-bcrypt-<arch>-<run-id>`锛屾爣绛?`boostkit.bcrypt.run-id=<run-id>`锛?  鍒犻櫎鍓嶆牎楠屾爣绛撅紝鎷掔粷鍒犻櫎鍏朵粬浠诲姟鐨勫鍣紙杩斿洖 60锛夛紱鍚姩鏃舵竻鐞嗗悓鍓嶇紑銆乺un-id 涓嶅悓鐨勯檲鏃у鍣ㄣ€?- **鎸傝浇**锛歚PERF_WORK_DIR`銆乣RESULTS_DIR`銆佺敤渚嬬洰褰曪紙鍙锛夋寜鐩稿悓缁濆璺緞鎸傚叆锛屽鍣ㄥ唴澶?  璺緞涓€鑷达紱鍙︽寕 `/etc/passwd`銆乣/etc/group`銆傚鍣ㄥ唴浠?`dnf` 瀹夎 `tar`銆乣xz`銆乣gzip`銆?  `coreutils`銆乣findutils`銆乣glibc`銆乣libstdc++`銆乣python3`锛屽涓绘満鍙繚鐣?Docker 涓?  涓嬭浇/SHA-256 鏍￠獙宸ュ叿銆?- **鑱岃矗鍒掑垎**锛氬涓绘満鍋?Node.js/bcrypt/渚濊禆褰掓。鐨勪笅杞戒笌 SHA-256 鏍￠獙銆佷弗鏍艰В鏋愬櫒涓庣粨鏋?  鏍￠獙锛涘鍣ㄥ唴鍋氬綊妗ｈВ鍖呫€佹殏瀛?`node_modules`銆乣node --version`銆佸師鐢熸ā鍧楀姞杞借嚜妫€銆?  鍦烘櫙 prefetch銆佽繍琛屾椂璁板綍锛坄write_runtime.py`锛夛紝浠ュ強**鍏ㄩ儴璁℃椂鏍锋湰**鈥斺€擿test` 闃舵鐢?  `docker exec` 鍦ㄥ鍣ㄥ唴鍚姩 `node`锛屽苟鎶?`UV_THREADPOOL_SIZE=1`銆乣TZ=UTC`銆乣LANG=C`銆?  `HOME`/`TMPDIR`銆佺绾夸唬鐞嗭紙`127.0.0.1:9`锛夌瓑鐜閲嶆柊鏄惧紡浼犵粰琚祴閲忚繘绋嬨€?- **娓呯悊**锛歚stop` 鍏堝湪 `initialize_runtime` 涔嬪悗璋冪敤 `remove_bcrypt_container`锛堝箓绛夛紝
+  瀹瑰櫒涓嶅瓨鍦ㄨ繑鍥?0锛夛紝鍐嶇粓姝㈡湰鐢ㄤ緥 `APP_DIR` 涓嬬殑娈嬬暀杩涚▼銆?- **鐙珛杩愯**锛氬繀椤昏兘璁块棶 Docker daemon锛涗笉鍐嶉渶瑕佸湪瀹夸富鏈哄畨瑁?Node.js 鎴栫紪璇戝伐鍏枫€?
+## 9. Local validation
 
 ```bash
 SOFTWARE_VERSION=6.0.0 PERF_REPS=1 PERF_BUILD_JOBS=4 \
@@ -139,7 +144,7 @@ PERF_VARIANT=optimized python3 framework/run_case.py \
 # expects exit code 30 and no build_variant.json in the output directory
 ```
 
-## 9. Known limitations
+## 10. Known limitations
 
 - node.bcrypt.js ships no benchmark suite, so the release manual's fixed cost=10
   hash/compare load is the reference; this case keeps that load and adds the
