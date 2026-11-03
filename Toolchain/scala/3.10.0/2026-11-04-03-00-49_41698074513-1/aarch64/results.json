@@ -1,0 +1,405 @@
+{
+  "benchmark": "scala_compile_and_run",
+  "software": "scala",
+  "version": "3.10.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-03T18:58:29Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "scenarios": [
+      "compile_20",
+      "compile_100",
+      "compile_300",
+      "run_arith",
+      "run_collections",
+      "run_strings",
+      "pipeline_compile_and_run"
+    ],
+    "extra_parameters": {
+      "compile_scales": [
+        20,
+        100,
+        300
+      ],
+      "run_workloads": [
+        "arith",
+        "collections",
+        "strings"
+      ],
+      "jdk_release": "openEuler 24.03 LTS SP4 java-21-openjdk"
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "compile_20__wall_seconds": {
+      "source_name": "compile_20__wall_seconds",
+      "scenario": "compile_20",
+      "description": "scalac clean compile of the generated 20-class project",
+      "workload": "20 generated Scala 3 sources",
+      "value": 2.829677,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.829677,
+      "mean": 2.829664,
+      "min": 2.778736,
+      "max": 2.881438,
+      "stdev": 0.036353,
+      "samples": [
+        2.829677,
+        2.881438,
+        2.778736,
+        2.826822,
+        2.831646
+      ]
+    },
+    "compile_20__peak_rss_mib": {
+      "source_name": "compile_20__peak_rss_mib",
+      "scenario": "compile_20",
+      "description": "scalac clean compile of the generated 20-class project",
+      "workload": "20 generated Scala 3 sources",
+      "value": 282.711,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 282.711,
+      "mean": 283.5492,
+      "min": 272.508,
+      "max": 293.004,
+      "stdev": 8.180931,
+      "samples": [
+        293.004,
+        282.711,
+        272.508,
+        279.625,
+        289.898
+      ]
+    },
+    "compile_20__classes_per_second": {
+      "source_name": "compile_20__classes_per_second",
+      "scenario": "compile_20",
+      "description": "scalac clean compile of the generated 20-class project",
+      "workload": "20 generated Scala 3 sources",
+      "value": 7.067945,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 7.067945,
+      "mean": 7.068911,
+      "min": 6.940979,
+      "max": 7.197517,
+      "stdev": 0.090802,
+      "samples": [
+        7.067945,
+        6.940979,
+        7.197517,
+        7.075083,
+        7.06303
+      ]
+    },
+    "compile_100__wall_seconds": {
+      "source_name": "compile_100__wall_seconds",
+      "scenario": "compile_100",
+      "description": "scalac clean compile of the generated 100-class project",
+      "workload": "100 generated Scala 3 sources",
+      "value": 3.835198,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 3.835198,
+      "mean": 3.84503,
+      "min": 3.680562,
+      "max": 3.983412,
+      "stdev": 0.110103,
+      "samples": [
+        3.890825,
+        3.680562,
+        3.835198,
+        3.983412,
+        3.835151
+      ]
+    },
+    "compile_100__peak_rss_mib": {
+      "source_name": "compile_100__peak_rss_mib",
+      "scenario": "compile_100",
+      "description": "scalac clean compile of the generated 100-class project",
+      "workload": "100 generated Scala 3 sources",
+      "value": 407.609,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 407.609,
+      "mean": 407.8702,
+      "min": 393.086,
+      "max": 423.578,
+      "stdev": 12.948228,
+      "samples": [
+        423.578,
+        397.414,
+        417.664,
+        393.086,
+        407.609
+      ]
+    },
+    "compile_100__classes_per_second": {
+      "source_name": "compile_100__classes_per_second",
+      "scenario": "compile_100",
+      "description": "scalac clean compile of the generated 100-class project",
+      "workload": "100 generated Scala 3 sources",
+      "value": 26.074273,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 26.074273,
+      "mean": 26.024845,
+      "min": 25.104107,
+      "max": 27.169764,
+      "stdev": 0.753006,
+      "samples": [
+        25.70149,
+        27.169764,
+        26.074273,
+        25.104107,
+        26.074593
+      ]
+    },
+    "compile_300__wall_seconds": {
+      "source_name": "compile_300__wall_seconds",
+      "scenario": "compile_300",
+      "description": "scalac clean compile of the generated 300-class project",
+      "workload": "300 generated Scala 3 sources",
+      "value": 5.591843,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 5.591843,
+      "mean": 5.624874,
+      "min": 5.342745,
+      "max": 5.946623,
+      "stdev": 0.247433,
+      "samples": [
+        5.591843,
+        5.946623,
+        5.447423,
+        5.342745,
+        5.795736
+      ]
+    },
+    "compile_300__peak_rss_mib": {
+      "source_name": "compile_300__peak_rss_mib",
+      "scenario": "compile_300",
+      "description": "scalac clean compile of the generated 300-class project",
+      "workload": "300 generated Scala 3 sources",
+      "value": 487.887,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 487.887,
+      "mean": 484.7166,
+      "min": 464.973,
+      "max": 499.555,
+      "stdev": 12.725352,
+      "samples": [
+        487.887,
+        464.973,
+        499.555,
+        489.203,
+        481.965
+      ]
+    },
+    "compile_300__classes_per_second": {
+      "source_name": "compile_300__classes_per_second",
+      "scenario": "compile_300",
+      "description": "scalac clean compile of the generated 300-class project",
+      "workload": "300 generated Scala 3 sources",
+      "value": 53.649575,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "median": 53.649575,
+      "mean": 53.416678,
+      "min": 50.448801,
+      "max": 56.150911,
+      "stdev": 2.335363,
+      "samples": [
+        53.649575,
+        50.448801,
+        55.071912,
+        56.150911,
+        51.762192
+      ]
+    },
+    "run_arith__wall_seconds": {
+      "source_name": "run_arith__wall_seconds",
+      "scenario": "run_arith",
+      "description": "JVM execution of the precompiled arith workload",
+      "workload": "scala3-library workload: arith",
+      "value": 0.466071,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.466071,
+      "mean": 0.446034,
+      "min": 0.415646,
+      "max": 0.466395,
+      "stdev": 0.027632,
+      "samples": [
+        0.415646,
+        0.466071,
+        0.415885,
+        0.466395,
+        0.466173
+      ]
+    },
+    "run_arith__peak_rss_mib": {
+      "source_name": "run_arith__peak_rss_mib",
+      "scenario": "run_arith",
+      "description": "JVM execution of the precompiled arith workload",
+      "workload": "scala3-library workload: arith",
+      "value": 70.887,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 70.887,
+      "mean": 71.3882,
+      "min": 67.91,
+      "max": 75.152,
+      "stdev": 2.611994,
+      "samples": [
+        75.152,
+        72.109,
+        70.887,
+        67.91,
+        70.883
+      ]
+    },
+    "run_collections__wall_seconds": {
+      "source_name": "run_collections__wall_seconds",
+      "scenario": "run_collections",
+      "description": "JVM execution of the precompiled collections workload",
+      "workload": "scala3-library workload: collections",
+      "value": 0.767105,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.767105,
+      "mean": 0.767499,
+      "min": 0.766844,
+      "max": 0.769173,
+      "stdev": 0.000954,
+      "samples": [
+        0.769173,
+        0.767018,
+        0.767355,
+        0.767105,
+        0.766844
+      ]
+    },
+    "run_collections__peak_rss_mib": {
+      "source_name": "run_collections__peak_rss_mib",
+      "scenario": "run_collections",
+      "description": "JVM execution of the precompiled collections workload",
+      "workload": "scala3-library workload: collections",
+      "value": 161.516,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 161.516,
+      "mean": 161.6938,
+      "min": 158.477,
+      "max": 164.734,
+      "stdev": 2.817744,
+      "samples": [
+        161.516,
+        159.414,
+        164.734,
+        164.328,
+        158.477
+      ]
+    },
+    "run_strings__wall_seconds": {
+      "source_name": "run_strings__wall_seconds",
+      "scenario": "run_strings",
+      "description": "JVM execution of the precompiled strings workload",
+      "workload": "scala3-library workload: strings",
+      "value": 1.571705,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.571705,
+      "mean": 1.552635,
+      "min": 1.52189,
+      "max": 1.574362,
+      "stdev": 0.027749,
+      "samples": [
+        1.571705,
+        1.522623,
+        1.574362,
+        1.52189,
+        1.572595
+      ]
+    },
+    "run_strings__peak_rss_mib": {
+      "source_name": "run_strings__peak_rss_mib",
+      "scenario": "run_strings",
+      "description": "JVM execution of the precompiled strings workload",
+      "workload": "scala3-library workload: strings",
+      "value": 726.855,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 726.855,
+      "mean": 726.6786,
+      "min": 721.867,
+      "max": 731.363,
+      "stdev": 3.490321,
+      "samples": [
+        726.855,
+        721.867,
+        727.996,
+        725.312,
+        731.363
+      ]
+    },
+    "pipeline_compile_and_run__wall_seconds": {
+      "source_name": "pipeline_compile_and_run__wall_seconds",
+      "scenario": "pipeline_compile_and_run",
+      "description": "compile the 100-class project and run it in one measured pipeline",
+      "workload": "100 generated sources + JVM execution",
+      "value": 4.087326,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 4.087326,
+      "mean": 4.07583,
+      "min": 3.933446,
+      "max": 4.238754,
+      "stdev": 0.121518,
+      "samples": [
+        3.933446,
+        4.087326,
+        3.983641,
+        4.135983,
+        4.238754
+      ]
+    },
+    "pipeline_compile_and_run__peak_rss_mib": {
+      "source_name": "pipeline_compile_and_run__peak_rss_mib",
+      "scenario": "pipeline_compile_and_run",
+      "description": "compile the 100-class project and run it in one measured pipeline",
+      "workload": "100 generated sources + JVM execution",
+      "value": 396.125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 396.125,
+      "mean": 401.2874,
+      "min": 388.148,
+      "max": 428.266,
+      "stdev": 15.740582,
+      "samples": [
+        388.148,
+        400.574,
+        396.125,
+        428.266,
+        393.324
+      ]
+    }
+  }
+}
