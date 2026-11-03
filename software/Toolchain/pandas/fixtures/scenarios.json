@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "software": "pandas",
+  "version": "3.1.0",
+  "upstream": {
+    "project": "pandas",
+    "repository": "https://github.com/pandas-dev/pandas",
+    "tag": "v3.1.0",
+    "tag_commit": "c6f46769b808eb60218189d089dd67841b44f1b9",
+    "suite": "asv_bench/benchmarks"
+  },
+  "seed": 1234,
+  "description": "Scenarios selected from the upstream pandas asv benchmark suite (tag v3.1.0). Each scenario runs one upstream class/parameter combination with a fixed random seed and a pinned iteration count, so the published wall time is the per-call mean of an asv-style batch.",
+  "runtime_modules": [
+    "benchmarks.groupby",
+    "benchmarks.join_merge",
+    "benchmarks.stat_ops",
+    "benchmarks.rolling",
+    "benchmarks.reindex",
+    "benchmarks.reshape",
+    "benchmarks.strings"
+  ],
+  "selection": {
+    "criteria": [
+      "benchmark definitions are the upstream asv benchmarks of pandas 3.1.0",
+      "the benchmark data are generated locally (no download at measurement time)",
+      "one fixed parameter combination per scenario so every sample runs the same code",
+      "one timed call stays well below one second so a batch of iterations measures a stable mean",
+      "distinct pandas subsystems are covered"
+    ],
+    "excluded": {
+      "benchmarks.io.parsers": "the upstream parser benchmark only ships datetime-inference micro cases",
+      "benchmarks.io.csv": "the CSV benchmarks synthesise files under /tmp and spend most of their time in file system calls",
+      "benchmarks.io.excel": "requires openpyxl/xlsxwriter, which are not part of the pinned runtime",
+      "benchmarks.io.sql": "requires SQLAlchemy and a database server",
+      "benchmarks.arithmetic": "mostly numexpr-gated and imports optional acceleration packages",
+      "benchmarks.plotting": "requires matplotlib",
+      "benchmarks.categoricals": "its largest cases are sub-millisecond and duplicate the groupby coverage",
+      "benchmarks.libs": "benchmarks third-party libraries rather than pandas itself"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "groupby_sort_high_cardinality",
+      "module": "benchmarks.groupby",
+      "class": "SortHighCardinality",
+      "params": [true],
+      "method": "time_sum",
+      "iterations": 10,
+      "subsystem": "groupby",
+      "verification": { "kind": "groupby_sum_total", "frame": "df", "key": "key", "value": "value" },
+      "notes": "1e6 rows, one million distinct keys, groupby sum with sort=True; exercises the hash table plus the unique-key safe sort."
+    },
+    {
+      "id": "groupby_int64_overflow",
+      "module": "benchmarks.groupby",
+      "class": "Int64",
+      "params": [],
+      "method": "time_overflow",
+      "iterations": 8,
+      "subsystem": "groupby",
+      "verification": { "kind": "groupby_max_columns", "frame": "df", "group_keys": ["a", "b", "c", "d", "e"] },
+      "notes": "~650k rows with duplicated integer index columns; groupby max over five columns, a regression guard for the int64 overflow path."
+    },
+    {
+      "id": "join_single_key",
+      "module": "benchmarks.join_merge",
+      "class": "Join",
+      "params": [true],
+      "method": "time_join_dataframe_index_single_key_bigger",
+      "iterations": 130,
+      "subsystem": "join",
+      "verification": { "kind": "join_row_count", "frame": "df", "lookup": "df_key2", "key": "key2", "minimum_columns": 6 },
+      "notes": "100k row frame joined against a 1000 row indexed lookup table on a single key, sorted output."
+    },
+    {
+      "id": "merge_asof_int",
+      "module": "benchmarks.join_merge",
+      "class": "MergeAsof",
+      "params": ["backward", null],
+      "method": "time_on_int",
+      "iterations": 240,
+      "subsystem": "join",
+      "verification": { "kind": "merge_asof_rows", "left": "df1a", "right": "df2a", "key": "time", "direction": "backward", "tolerance": null },
+      "notes": "200k vs 1e6 row frames, asof join on integer time keys with backward direction; exercises the merge_asof search path."
+    },
+    {
+      "id": "stat_ops_frame_skew",
+      "module": "benchmarks.stat_ops",
+      "class": "FrameOps",
+      "params": ["skew", "float", 0],
+      "method": "time_op",
+      "iterations": 1800,
+      "subsystem": "statistics",
+      "verification": { "kind": "frame_skew", "axis": 0, "columns": 4 },
+      "notes": "100k x 4 float frame, per-column skew over axis 0; the slowest of the upstream frame reduction kernels."
+    },
+    {
+      "id": "rolling_mean_window",
+      "module": "benchmarks.rolling",
+      "class": "Methods",
+      "params": ["DataFrame", ["rolling", { "window": 1000 }], "float", "mean"],
+      "method": "time_method",
+      "iterations": 1100,
+      "subsystem": "rolling",
+      "verification": { "kind": "rolling_mean_last", "window_attribute": "window", "window_size": 1000 },
+      "notes": "100k row float frame, rolling window of 1000, mean reduction; checks the rolling kernel against a numpy window mean."
+    },
+    {
+      "id": "drop_duplicates_int",
+      "module": "benchmarks.reindex",
+      "class": "DropDuplicates",
+      "params": [false],
+      "method": "time_frame_drop_dups_int",
+      "iterations": 220,
+      "subsystem": "deduplication",
+      "verification": { "kind": "dropdup_unique_count", "frame": "df_int", "column": "key1" },
+      "notes": "1e6 row single integer column with 10k distinct values; drop_duplicates keeps the first occurrence of every key."
+    },
+    {
+      "id": "reshape_unstack",
+      "module": "benchmarks.reshape",
+      "class": "SimpleReshape",
+      "params": [],
+      "method": "time_unstack",
+      "iterations": 1100,
+      "subsystem": "reshape",
+      "verification": { "kind": "reshape_unstack", "frame": "df", "level": 1, "roll": 25, "rows": 100, "columns": 400 },
+      "notes": "10k x 4 frame on a two-level MultiIndex, unstack of the second level into a 100 x 400 wide frame."
+    },
+    {
+      "id": "strings_upper",
+      "module": "benchmarks.strings",
+      "class": "Methods",
+      "params": ["str"],
+      "method": "time_upper",
+      "iterations": 800,
+      "subsystem": "strings",
+      "verification": { "kind": "string_upper", "series": "s" },
+      "notes": "10k element object-dtype string series, vectorised str.upper; representative of the pandas 3 string dtype path."
+    }
+  ]
+}
