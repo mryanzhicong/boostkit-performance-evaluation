@@ -1,0 +1,924 @@
+{
+  "software": "busybox",
+  "category": "Toolchain",
+  "version": "1.38.0",
+  "architecture": "aarch64",
+  "run_id": "41592097784-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-03T06:55:16Z",
+    "category": "Toolchain",
+    "software": "busybox",
+    "requested_version": "1.38.0",
+    "actual_version": "1.38.0",
+    "architecture": "aarch64",
+    "run_id": "41592097784-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "variant": "base",
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "busybox_version": "1.38.0",
+      "build_configuration": "defconfig",
+      "cflags": "-O2 -DNDEBUG",
+      "build_parallel_jobs": 8,
+      "source_archive": "busybox-1.38.0.tar.bz2",
+      "source_sha256": "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+      "required_applets": "sort sha256sum grep tar gzip sed awk cut",
+      "sha256sum_arguments": 8,
+      "corpus_lines": 900000,
+      "corpus_bytes": 53259531,
+      "gzip_input_lines": 400000,
+      "gzip_input_bytes": 23667205,
+      "sort_input_lines": 1000000,
+      "sort_input_bytes": 14000000,
+      "tar_tree_files": 16000,
+      "tar_tree_bytes": 56000000,
+      "tar_archive_entries": 16001,
+      "expected_grep_matches": 87913,
+      "expected_awk_aggregate": 52359531,
+      "fixture_sha256": {
+        "corpus_text.txt": "bc19c8c081631054f1b9eeb00e7aaa216ca3f48464dd300adf19180f44d9ccc6",
+        "gzip_input.txt": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280",
+        "sort_input.txt": "8b1700b34099bc29eb860d4fc031bc4809d5518615da40ca12a4d0ec15e2ab3f",
+        "tar_tree": "db57e877c451b5c02265f5536b38605e47e80e76f6781d3adabbd4c18fd9997d"
+      },
+      "expected_output_sha256": {
+        "sed_substitute": "f95546057b16fc3117f1405029399152b1616790db86ba38ce8f748cd3ccc09f",
+        "cut_fields": "fc5000daaba27a9190e8ddd2379d5c0f5f6a57de75328ce03c32e35e4a0ec1ab",
+        "gzip_roundtrip": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280"
+      }
+    }
+  },
+  "parameter_signature": "bf5462eeeff598e83de25fe562a908811d7b6be72ef9b15e22f21c576f883f46",
+  "test_tools": {
+    "busybox_applets": {
+      "version": "1.38.0 (built from the pinned source archive with the upstream defconfig)"
+    },
+    "sha256sum": {
+      "version": "1.38.0 applet"
+    },
+    "sort": {
+      "version": "1.38.0 applet"
+    },
+    "grep": {
+      "version": "1.38.0 applet"
+    },
+    "sed": {
+      "version": "1.38.0 applet"
+    },
+    "awk": {
+      "version": "1.38.0 applet"
+    },
+    "gzip": {
+      "version": "1.38.0 applet"
+    },
+    "tar": {
+      "version": "1.38.0 applet"
+    },
+    "cut": {
+      "version": "1.38.0 applet"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-03T06:49:57Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 379596 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 385412 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 376303 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 382535 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-03T06:49:57Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 13036486656 1597869920256    80580608 12395593728 1603300577280\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-03T06:57:24Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 13380145152 1597272428544    82808832 12666388480 1602956918784\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "busybox_raw_output": {
+      "path": "raw-output.log",
+      "size": 43115
+    },
+    "benchmark_result": {
+      "benchmark": "busybox_applet_matrix",
+      "software": "busybox",
+      "version": "1.38.0",
+      "architecture": "aarch64",
+      "variant": "base",
+      "timestamp": "2026-11-03T06:56:53Z",
+      "parameters": {
+        "variant": "base",
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "busybox_version": "1.38.0",
+        "build_configuration": "defconfig",
+        "cflags": "-O2 -DNDEBUG",
+        "build_parallel_jobs": 8,
+        "source_archive": "busybox-1.38.0.tar.bz2",
+        "source_sha256": "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+        "required_applets": "sort sha256sum grep tar gzip sed awk cut",
+        "sha256sum_arguments": 8,
+        "corpus_lines": 900000,
+        "corpus_bytes": 53259531,
+        "gzip_input_lines": 400000,
+        "gzip_input_bytes": 23667205,
+        "sort_input_lines": 1000000,
+        "sort_input_bytes": 14000000,
+        "tar_tree_files": 16000,
+        "tar_tree_bytes": 56000000,
+        "tar_archive_entries": 16001,
+        "expected_grep_matches": 87913,
+        "expected_awk_aggregate": 52359531,
+        "fixture_sha256": {
+          "corpus_text.txt": "bc19c8c081631054f1b9eeb00e7aaa216ca3f48464dd300adf19180f44d9ccc6",
+          "gzip_input.txt": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280",
+          "sort_input.txt": "8b1700b34099bc29eb860d4fc031bc4809d5518615da40ca12a4d0ec15e2ab3f",
+          "tar_tree": "db57e877c451b5c02265f5536b38605e47e80e76f6781d3adabbd4c18fd9997d"
+        },
+        "expected_output_sha256": {
+          "sed_substitute": "f95546057b16fc3117f1405029399152b1616790db86ba38ce8f748cd3ccc09f",
+          "cut_fields": "fc5000daaba27a9190e8ddd2379d5c0f5f6a57de75328ce03c32e35e4a0ec1ab",
+          "gzip_roundtrip": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280"
+        }
+      },
+      "runtime_context": {
+        "c_compiler": "cc (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+        "measurement_network_mode": "unavailable",
+        "actual_version_string": "1.38.0",
+        "applet_count": 408
+      },
+      "metric_contract": {
+        "wall_time": {
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "peak_rss": {
+          "unit": "MiB",
+          "direction": "lower_is_better"
+        },
+        "throughput": {
+          "unit": "MiB/s or lines/s",
+          "direction": "higher_is_better"
+        },
+        "statistic": "median of independent repetitions"
+      },
+      "results": {
+        "sha256sum_hash_hash_mib_per_second": {
+          "source_name": "sha256sum_hash_hash_mib_per_second",
+          "scenario": "sha256sum_hash",
+          "group": "hashing",
+          "value": 179.742278,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 179.742278,
+          "mean": 179.7129,
+          "min": 179.403892,
+          "max": 179.868466,
+          "stdev": 0.181648,
+          "samples": [
+            179.403892,
+            179.742278,
+            179.818161,
+            179.868466,
+            179.731704
+          ]
+        },
+        "sha256sum_hash_wall_s": {
+          "source_name": "sha256sum_hash_wall_s",
+          "scenario": "sha256sum_hash",
+          "group": "hashing",
+          "value": 2.26067,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.26067,
+          "mean": 2.261041,
+          "min": 2.259084,
+          "max": 2.264934,
+          "stdev": 0.002288,
+          "samples": [
+            2.264934,
+            2.26067,
+            2.259716,
+            2.259084,
+            2.260803
+          ]
+        },
+        "sha256sum_hash_rss_mib": {
+          "source_name": "sha256sum_hash_rss_mib",
+          "scenario": "sha256sum_hash",
+          "group": "hashing",
+          "value": 1.707,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.707,
+          "mean": 1.7046,
+          "min": 1.695,
+          "max": 1.707,
+          "stdev": 0.005367,
+          "samples": [
+            1.695,
+            1.707,
+            1.707,
+            1.707,
+            1.707
+          ]
+        },
+        "sort_numeric_sorted_lines": {
+          "source_name": "sort_numeric_sorted_lines",
+          "scenario": "sort_numeric",
+          "group": "sorting",
+          "value": 1000000.0,
+          "unit": "lines",
+          "direction": "higher_is_better",
+          "median": 1000000.0,
+          "mean": 1000000.0,
+          "min": 1000000.0,
+          "max": 1000000.0,
+          "stdev": 0.0,
+          "samples": [
+            1000000.0,
+            1000000.0,
+            1000000.0,
+            1000000.0,
+            1000000.0
+          ]
+        },
+        "sort_numeric_sorted_lines_per_second": {
+          "source_name": "sort_numeric_sorted_lines_per_second",
+          "scenario": "sort_numeric",
+          "group": "sorting",
+          "value": 392975.021329,
+          "unit": "lines/s",
+          "direction": "higher_is_better",
+          "median": 392975.021329,
+          "mean": 392849.937281,
+          "min": 392112.115833,
+          "max": 393619.119183,
+          "stdev": 601.009854,
+          "samples": [
+            392975.021329,
+            392112.115833,
+            393619.119183,
+            393146.512731,
+            392396.91733
+          ]
+        },
+        "sort_numeric_wall_s": {
+          "source_name": "sort_numeric_wall_s",
+          "scenario": "sort_numeric",
+          "group": "sorting",
+          "value": 2.544691,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.544691,
+          "mean": 2.545506,
+          "min": 2.540527,
+          "max": 2.550291,
+          "stdev": 0.003894,
+          "samples": [
+            2.544691,
+            2.550291,
+            2.540527,
+            2.543581,
+            2.54844
+          ]
+        },
+        "sort_numeric_rss_mib": {
+          "source_name": "sort_numeric_rss_mib",
+          "scenario": "sort_numeric",
+          "group": "sorting",
+          "value": 47.488,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 47.488,
+          "mean": 47.4858,
+          "min": 47.477,
+          "max": 47.492,
+          "stdev": 0.006943,
+          "samples": [
+            47.477,
+            47.48,
+            47.492,
+            47.492,
+            47.488
+          ]
+        },
+        "grep_count_matched_lines": {
+          "source_name": "grep_count_matched_lines",
+          "scenario": "grep_count",
+          "group": "text_scan",
+          "value": 87913.0,
+          "unit": "lines",
+          "direction": "higher_is_better",
+          "median": 87913.0,
+          "mean": 87913.0,
+          "min": 87913.0,
+          "max": 87913.0,
+          "stdev": 0.0,
+          "samples": [
+            87913.0,
+            87913.0,
+            87913.0,
+            87913.0,
+            87913.0
+          ]
+        },
+        "grep_count_scan_mib_per_second": {
+          "source_name": "grep_count_scan_mib_per_second",
+          "scenario": "grep_count",
+          "group": "text_scan",
+          "value": 90.167326,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 90.167326,
+          "mean": 90.231422,
+          "min": 90.150043,
+          "max": 90.367694,
+          "stdev": 0.09966,
+          "samples": [
+            90.163965,
+            90.308084,
+            90.367694,
+            90.167326,
+            90.150043
+          ]
+        },
+        "grep_count_wall_s": {
+          "source_name": "grep_count_wall_s",
+          "scenario": "grep_count",
+          "group": "text_scan",
+          "value": 0.563311,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.563311,
+          "mean": 0.562911,
+          "min": 0.562062,
+          "max": 0.563419,
+          "stdev": 0.000621,
+          "samples": [
+            0.563332,
+            0.562433,
+            0.562062,
+            0.563311,
+            0.563419
+          ]
+        },
+        "grep_count_rss_mib": {
+          "source_name": "grep_count_rss_mib",
+          "scenario": "grep_count",
+          "group": "text_scan",
+          "value": 1.648,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.648,
+          "mean": 1.649,
+          "min": 1.645,
+          "max": 1.652,
+          "stdev": 0.003,
+          "samples": [
+            1.648,
+            1.652,
+            1.648,
+            1.645,
+            1.652
+          ]
+        },
+        "sed_substitute_sed_mib_per_second": {
+          "source_name": "sed_substitute_sed_mib_per_second",
+          "scenario": "sed_substitute",
+          "group": "text_transform",
+          "value": 53.217808,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 53.217808,
+          "mean": 53.534468,
+          "min": 52.906386,
+          "max": 55.048784,
+          "stdev": 0.883753,
+          "samples": [
+            53.217808,
+            53.5446,
+            52.906386,
+            55.048784,
+            52.95476
+          ]
+        },
+        "sed_substitute_wall_s": {
+          "source_name": "sed_substitute_wall_s",
+          "scenario": "sed_substitute",
+          "group": "text_transform",
+          "value": 0.954422,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.954422,
+          "mean": 0.94898,
+          "min": 0.922677,
+          "max": 0.96004,
+          "stdev": 0.015392,
+          "samples": [
+            0.954422,
+            0.948597,
+            0.96004,
+            0.922677,
+            0.959163
+          ]
+        },
+        "sed_substitute_rss_mib": {
+          "source_name": "sed_substitute_rss_mib",
+          "scenario": "sed_substitute",
+          "group": "text_transform",
+          "value": 1.711,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.711,
+          "mean": 1.711,
+          "min": 1.707,
+          "max": 1.715,
+          "stdev": 0.002828,
+          "samples": [
+            1.711,
+            1.715,
+            1.711,
+            1.707,
+            1.711
+          ]
+        },
+        "awk_aggregate_aggregate_mib_per_second": {
+          "source_name": "awk_aggregate_aggregate_mib_per_second",
+          "scenario": "awk_aggregate",
+          "group": "text_transform",
+          "value": 143.509301,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 143.509301,
+          "mean": 144.183566,
+          "min": 143.137635,
+          "max": 145.537775,
+          "stdev": 1.201918,
+          "samples": [
+            143.509301,
+            143.287445,
+            143.137635,
+            145.445672,
+            145.537775
+          ]
+        },
+        "awk_aggregate_aggregate_value": {
+          "source_name": "awk_aggregate_aggregate_value",
+          "scenario": "awk_aggregate",
+          "group": "text_transform",
+          "value": 52359531.0,
+          "unit": "bytes",
+          "direction": "higher_is_better",
+          "median": 52359531.0,
+          "mean": 52359531.0,
+          "min": 52359531.0,
+          "max": 52359531.0,
+          "stdev": 0.0,
+          "samples": [
+            52359531.0,
+            52359531.0,
+            52359531.0,
+            52359531.0,
+            52359531.0
+          ]
+        },
+        "awk_aggregate_wall_s": {
+          "source_name": "awk_aggregate_wall_s",
+          "scenario": "awk_aggregate",
+          "group": "text_transform",
+          "value": 0.35393,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.35393,
+          "mean": 0.352294,
+          "min": 0.348997,
+          "max": 0.354849,
+          "stdev": 0.002929,
+          "samples": [
+            0.35393,
+            0.354478,
+            0.354849,
+            0.349218,
+            0.348997
+          ]
+        },
+        "awk_aggregate_rss_mib": {
+          "source_name": "awk_aggregate_rss_mib",
+          "scenario": "awk_aggregate",
+          "group": "text_transform",
+          "value": 1.703,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.703,
+          "mean": 1.7014,
+          "min": 1.695,
+          "max": 1.707,
+          "stdev": 0.004561,
+          "samples": [
+            1.703,
+            1.699,
+            1.703,
+            1.707,
+            1.695
+          ]
+        },
+        "gzip_compress_gzip_mib_per_second": {
+          "source_name": "gzip_compress_gzip_mib_per_second",
+          "scenario": "gzip_compress",
+          "group": "compression",
+          "value": 16.907388,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 16.907388,
+          "mean": 16.919682,
+          "min": 16.903185,
+          "max": 16.964153,
+          "stdev": 0.025365,
+          "samples": [
+            16.903185,
+            16.906856,
+            16.916829,
+            16.907388,
+            16.964153
+          ]
+        },
+        "gzip_compress_wall_s": {
+          "source_name": "gzip_compress_wall_s",
+          "scenario": "gzip_compress",
+          "group": "compression",
+          "value": 1.334967,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.334967,
+          "mean": 1.333999,
+          "min": 1.3305,
+          "max": 1.335299,
+          "stdev": 0.001996,
+          "samples": [
+            1.335299,
+            1.335009,
+            1.334222,
+            1.334967,
+            1.3305
+          ]
+        },
+        "gzip_compress_rss_mib": {
+          "source_name": "gzip_compress_rss_mib",
+          "scenario": "gzip_compress",
+          "group": "compression",
+          "value": 1.805,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.805,
+          "mean": 1.801,
+          "min": 1.789,
+          "max": 1.805,
+          "stdev": 0.006928,
+          "samples": [
+            1.805,
+            1.805,
+            1.801,
+            1.789,
+            1.805
+          ]
+        },
+        "tar_gzip_create_archive_entries": {
+          "source_name": "tar_gzip_create_archive_entries",
+          "scenario": "tar_gzip_create",
+          "group": "compression",
+          "value": 16001.0,
+          "unit": "files",
+          "direction": "higher_is_better",
+          "median": 16001.0,
+          "mean": 16001.0,
+          "min": 16001.0,
+          "max": 16001.0,
+          "stdev": 0.0,
+          "samples": [
+            16001.0,
+            16001.0,
+            16001.0,
+            16001.0,
+            16001.0
+          ]
+        },
+        "tar_gzip_create_archive_mib_per_second": {
+          "source_name": "tar_gzip_create_archive_mib_per_second",
+          "scenario": "tar_gzip_create",
+          "group": "compression",
+          "value": 28.081781,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 28.081781,
+          "mean": 28.005528,
+          "min": 27.687762,
+          "max": 28.115546,
+          "stdev": 0.179646,
+          "samples": [
+            28.081781,
+            27.687762,
+            28.099126,
+            28.043427,
+            28.115546
+          ]
+        },
+        "tar_gzip_create_wall_s": {
+          "source_name": "tar_gzip_create_wall_s",
+          "scenario": "tar_gzip_create",
+          "group": "compression",
+          "value": 1.901794,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.901794,
+          "mean": 1.907035,
+          "min": 1.89951,
+          "max": 1.928858,
+          "stdev": 0.012333,
+          "samples": [
+            1.901794,
+            1.928858,
+            1.90062,
+            1.904395,
+            1.89951
+          ]
+        },
+        "tar_gzip_create_rss_mib": {
+          "source_name": "tar_gzip_create_rss_mib",
+          "scenario": "tar_gzip_create",
+          "group": "compression",
+          "value": 1.926,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.926,
+          "mean": 1.9228,
+          "min": 1.914,
+          "max": 1.926,
+          "stdev": 0.005215,
+          "samples": [
+            1.926,
+            1.926,
+            1.922,
+            1.914,
+            1.926
+          ]
+        },
+        "cut_fields_cut_mib_per_second": {
+          "source_name": "cut_fields_cut_mib_per_second",
+          "scenario": "cut_fields",
+          "group": "text_transform",
+          "value": 91.926178,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 91.926178,
+          "mean": 92.026733,
+          "min": 90.887897,
+          "max": 93.777689,
+          "stdev": 1.178008,
+          "samples": [
+            91.047396,
+            92.494504,
+            93.777689,
+            90.887897,
+            91.926178
+          ]
+        },
+        "cut_fields_wall_s": {
+          "source_name": "cut_fields_wall_s",
+          "scenario": "cut_fields",
+          "group": "text_transform",
+          "value": 0.552533,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.552533,
+          "mean": 0.552001,
+          "min": 0.541624,
+          "max": 0.558845,
+          "stdev": 0.007025,
+          "samples": [
+            0.557866,
+            0.549138,
+            0.541624,
+            0.558845,
+            0.552533
+          ]
+        },
+        "cut_fields_rss_mib": {
+          "source_name": "cut_fields_rss_mib",
+          "scenario": "cut_fields",
+          "group": "text_transform",
+          "value": 1.887,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.887,
+          "mean": 1.883,
+          "min": 1.867,
+          "max": 1.887,
+          "stdev": 0.008944,
+          "samples": [
+            1.887,
+            1.887,
+            1.887,
+            1.867,
+            1.887
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 144
+    }
+  },
+  "metrics": {
+    "sha256sum_hash_hash_mib_per_second": {
+      "value": 179.742278,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "hashing"
+    },
+    "sha256sum_hash_wall_s": {
+      "value": 2.26067,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "hashing"
+    },
+    "sha256sum_hash_rss_mib": {
+      "value": 1.707,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "hashing"
+    },
+    "sort_numeric_sorted_lines": {
+      "value": 1000000.0,
+      "unit": "lines",
+      "direction": "higher_is_better",
+      "group": "sorting"
+    },
+    "sort_numeric_sorted_lines_per_second": {
+      "value": 392975.021329,
+      "unit": "lines/s",
+      "direction": "higher_is_better",
+      "group": "sorting"
+    },
+    "sort_numeric_wall_s": {
+      "value": 2.544691,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sorting"
+    },
+    "sort_numeric_rss_mib": {
+      "value": 47.488,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "sorting"
+    },
+    "grep_count_matched_lines": {
+      "value": 87913.0,
+      "unit": "lines",
+      "direction": "higher_is_better",
+      "group": "text_scan"
+    },
+    "grep_count_scan_mib_per_second": {
+      "value": 90.167326,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "text_scan"
+    },
+    "grep_count_wall_s": {
+      "value": 0.563311,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "text_scan"
+    },
+    "grep_count_rss_mib": {
+      "value": 1.648,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "text_scan"
+    },
+    "sed_substitute_sed_mib_per_second": {
+      "value": 53.217808,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "text_transform"
+    },
+    "sed_substitute_wall_s": {
+      "value": 0.954422,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    },
+    "sed_substitute_rss_mib": {
+      "value": 1.711,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    },
+    "awk_aggregate_aggregate_mib_per_second": {
+      "value": 143.509301,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "text_transform"
+    },
+    "awk_aggregate_aggregate_value": {
+      "value": 52359531.0,
+      "unit": "bytes",
+      "direction": "higher_is_better",
+      "group": "text_transform"
+    },
+    "awk_aggregate_wall_s": {
+      "value": 0.35393,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    },
+    "awk_aggregate_rss_mib": {
+      "value": 1.703,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    },
+    "gzip_compress_gzip_mib_per_second": {
+      "value": 16.907388,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "compression"
+    },
+    "gzip_compress_wall_s": {
+      "value": 1.334967,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "compression"
+    },
+    "gzip_compress_rss_mib": {
+      "value": 1.805,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "compression"
+    },
+    "tar_gzip_create_archive_entries": {
+      "value": 16001.0,
+      "unit": "files",
+      "direction": "higher_is_better",
+      "group": "compression"
+    },
+    "tar_gzip_create_archive_mib_per_second": {
+      "value": 28.081781,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "compression"
+    },
+    "tar_gzip_create_wall_s": {
+      "value": 1.901794,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "compression"
+    },
+    "tar_gzip_create_rss_mib": {
+      "value": 1.926,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "compression"
+    },
+    "cut_fields_cut_mib_per_second": {
+      "value": 91.926178,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "text_transform"
+    },
+    "cut_fields_wall_s": {
+      "value": 0.552533,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    },
+    "cut_fields_rss_mib": {
+      "value": 1.887,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "text_transform"
+    }
+  }
+}
