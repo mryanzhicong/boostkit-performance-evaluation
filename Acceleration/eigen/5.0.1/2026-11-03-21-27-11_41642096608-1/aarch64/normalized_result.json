@@ -1,0 +1,1832 @@
+{
+  "software": "eigen",
+  "category": "Acceleration",
+  "version": "5.0.1",
+  "architecture": "aarch64",
+  "run_id": "41642096608-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-03T13:14:44Z",
+    "category": "Acceleration",
+    "software": "eigen",
+    "requested_version": "5.0.1",
+    "actual_version": "5.0.1",
+    "architecture": "aarch64",
+    "run_id": "41642096608-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "variant": "base",
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "upstream_entry": "bench/btl built with -DEIGEN_BUILD_BTL=ON",
+      "upstream_sweep": {
+        "btl_config": "-t 1 --overwrite",
+        "nb_point": 100,
+        "min_time_seconds": 0.2,
+        "metrics": [
+          "wall",
+          "rss"
+        ]
+      },
+      "upstream_single_point": {
+        "driver": "scripts/btl_single_point.cpp (unmodified upstream BTL actions + Portable_Perf_Analyzer, measured dimension pinned)",
+        "btl_config": "-t 1",
+        "dimensions": [
+          128,
+          512,
+          1024
+        ],
+        "metrics": [
+          "gflops"
+        ]
+      },
+      "groups": [
+        "o3",
+        "native"
+      ],
+      "actions": [
+        "gemm",
+        "gemv",
+        "trisolve_matrix",
+        "cholesky",
+        "axpy"
+      ],
+      "reference_dimensions": [
+        128,
+        512,
+        1024
+      ],
+      "archive_name": "eigen-5.0.1.tar.gz",
+      "archive_sha256": "e9c326dc8c05cd1e044c71f30f1b2e34a6161a3b6ecf445d56b53ff1669e3dec",
+      "archive_url": "https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.gz",
+      "cmake_policy_version_minimum": "3.5"
+    }
+  },
+  "parameter_signature": "b68d0fe8a7eadade32795da949ed76e6520ac4ae4d8093f287884881724dfae1",
+  "test_tools": {
+    "eigen_btl": {
+      "version": "5.0.1",
+      "revision": "bench/btl that ships inside the pinned Eigen 5.0.1 release archive, built with -DEIGEN_BUILD_BTL=ON"
+    },
+    "system_cxx_compiler": {
+      "version": "unpinned Runner c++; the exact compiler string is recorded per run in build_info.json and results.json"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-03T13:12:25Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 379282 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 385204 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 368486 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 381099 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-03T13:12:25Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 16354025472 1587619614720    80629760 19352031232 1599983038464\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-03T13:25:27Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 12697317376 1591212371968    82976768 19419971584 1603639746560\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "benchmark_raw": {
+      "path": "raw-output.log",
+      "size": 37147
+    },
+    "benchmark_result": {
+      "benchmark": "eigen_5.0.1_upstream_btl_matrix",
+      "software": "eigen",
+      "version": "5.0.1",
+      "architecture": "aarch64",
+      "variant": "base",
+      "timestamp": "2026-11-03T13:24:56Z",
+      "parameters": {
+        "variant": "base",
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "upstream_entry": "bench/btl built with -DEIGEN_BUILD_BTL=ON",
+        "upstream_sweep": {
+          "btl_config": "-t 1 --overwrite",
+          "nb_point": 100,
+          "min_time_seconds": 0.2,
+          "metrics": [
+            "wall",
+            "rss"
+          ]
+        },
+        "upstream_single_point": {
+          "driver": "scripts/btl_single_point.cpp (unmodified upstream BTL actions + Portable_Perf_Analyzer, measured dimension pinned)",
+          "btl_config": "-t 1",
+          "dimensions": [
+            128,
+            512,
+            1024
+          ],
+          "metrics": [
+            "gflops"
+          ]
+        },
+        "groups": [
+          "o3",
+          "native"
+        ],
+        "actions": [
+          "gemm",
+          "gemv",
+          "trisolve_matrix",
+          "cholesky",
+          "axpy"
+        ],
+        "reference_dimensions": [
+          128,
+          512,
+          1024
+        ],
+        "archive_name": "eigen-5.0.1.tar.gz",
+        "archive_sha256": "e9c326dc8c05cd1e044c71f30f1b2e34a6161a3b6ecf445d56b53ff1669e3dec",
+        "archive_url": "https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.gz",
+        "cmake_policy_version_minimum": "3.5"
+      },
+      "runtime_context": {
+        "group_cxx_flags": {
+          "o3": "-g0 -O3 -DNDEBUG (upstream BTL default, no extra flag)",
+          "native": "-mcpu=native"
+        },
+        "group_isa_macros": {
+          "o3": [
+            "EIGEN_VECTORIZE",
+            "EIGEN_VECTORIZE_FMA",
+            "EIGEN_VECTORIZE_NEON",
+            "__ARM_NEON"
+          ],
+          "native": [
+            "EIGEN_VECTORIZE",
+            "EIGEN_VECTORIZE_FMA",
+            "EIGEN_VECTORIZE_NEON",
+            "__ARM_FEATURE_ATOMICS",
+            "__ARM_FEATURE_SVE",
+            "__ARM_NEON"
+          ]
+        },
+        "cxx_compiler": "c++ (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+        "cmake": "cmake version 3.31.12",
+        "build_parallel_jobs": 6,
+        "clock": "wall clock around one measured process (scripts/run_timed.py)",
+        "btl_internal_timer": "Portable_Timer CPU time, MIN_TIME=0.2 s per point",
+        "upstream_sweep_note": "the BTL sweep times only its largest size and derives the remaining curve from it, so sweep MFlops are not reported"
+      },
+      "metric_contract": {
+        "wall": {
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "peak_rss": {
+          "unit": "MiB",
+          "direction": "lower_is_better"
+        },
+        "gflops": {
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better"
+        },
+        "statistic": "median of independent repetitions"
+      },
+      "results": {
+        "o3_gemm_wall": {
+          "source_name": "o3_gemm_wall",
+          "scenario": "o3_gemm",
+          "group": "o3",
+          "action": "gemm",
+          "metric": "wall",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 22.362899,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 22.362899,
+          "mean": 22.355635,
+          "min": 22.321255,
+          "max": 22.375335,
+          "stdev": 0.020751,
+          "samples": [
+            22.375335,
+            22.365345,
+            22.321255,
+            22.362899,
+            22.353341
+          ],
+          "upstream_binary": "btl_eigen3_matmat",
+          "repetitions": 5
+        },
+        "o3_gemm_rss": {
+          "source_name": "o3_gemm_rss",
+          "scenario": "o3_gemm",
+          "group": "o3",
+          "action": "gemm",
+          "metric": "rss",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 961.777,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 961.777,
+          "mean": 961.7764,
+          "min": 961.77,
+          "max": 961.781,
+          "stdev": 0.004879,
+          "samples": [
+            961.777,
+            961.781,
+            961.773,
+            961.77,
+            961.781
+          ],
+          "upstream_binary": "btl_eigen3_matmat",
+          "repetitions": 5
+        },
+        "o3_gemm_gflops_128": {
+          "source_name": "o3_gemm_gflops_128",
+          "scenario": "o3_gemm",
+          "group": "o3",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 47.928646,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 47.928646,
+          "mean": 47.697104,
+          "min": 45.967713,
+          "max": 48.86746,
+          "stdev": 1.07601,
+          "samples": [
+            45.967713,
+            48.86746,
+            47.928646,
+            47.574995,
+            48.146708
+          ],
+          "size": 128,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_gemm_gflops_512": {
+          "source_name": "o3_gemm_gflops_512",
+          "scenario": "o3_gemm",
+          "group": "o3",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 44.679703,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 44.679703,
+          "mean": 44.670712,
+          "min": 44.592227,
+          "max": 44.719091,
+          "stdev": 0.053965,
+          "samples": [
+            44.592227,
+            44.643555,
+            44.679703,
+            44.718982,
+            44.719091
+          ],
+          "size": 512,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_gemm_gflops_1024": {
+          "source_name": "o3_gemm_gflops_1024",
+          "scenario": "o3_gemm",
+          "group": "o3",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 44.780388,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 44.780388,
+          "mean": 44.77316,
+          "min": 44.67856,
+          "max": 44.856826,
+          "stdev": 0.068968,
+          "samples": [
+            44.813861,
+            44.856826,
+            44.780388,
+            44.67856,
+            44.736166
+          ],
+          "size": 1024,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_gemv_wall": {
+          "source_name": "o3_gemv_wall",
+          "scenario": "o3_gemv",
+          "group": "o3",
+          "action": "gemv",
+          "metric": "wall",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 5.405214,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.405214,
+          "mean": 5.48197,
+          "min": 5.399751,
+          "max": 5.797388,
+          "stdev": 0.176346,
+          "samples": [
+            5.401042,
+            5.406453,
+            5.405214,
+            5.399751,
+            5.797388
+          ],
+          "upstream_binary": "btl_eigen3_vecmat",
+          "repetitions": 5
+        },
+        "o3_gemv_rss": {
+          "source_name": "o3_gemv_rss",
+          "scenario": "o3_gemv",
+          "group": "o3",
+          "action": "gemv",
+          "metric": "rss",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 289.48,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 289.48,
+          "mean": 289.4802,
+          "min": 289.477,
+          "max": 289.484,
+          "stdev": 0.00249,
+          "samples": [
+            289.48,
+            289.48,
+            289.48,
+            289.484,
+            289.477
+          ],
+          "upstream_binary": "btl_eigen3_vecmat",
+          "repetitions": 5
+        },
+        "o3_gemv_gflops_128": {
+          "source_name": "o3_gemv_gflops_128",
+          "scenario": "o3_gemv",
+          "group": "o3",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 25.947859,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 25.947859,
+          "mean": 26.047987,
+          "min": 25.478537,
+          "max": 26.950932,
+          "stdev": 0.567359,
+          "samples": [
+            25.947859,
+            26.166619,
+            25.69599,
+            25.478537,
+            26.950932
+          ],
+          "size": 128,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_gemv_gflops_512": {
+          "source_name": "o3_gemv_gflops_512",
+          "scenario": "o3_gemv",
+          "group": "o3",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 15.284348,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 15.284348,
+          "mean": 15.646816,
+          "min": 15.115093,
+          "max": 16.48991,
+          "stdev": 0.642774,
+          "samples": [
+            16.1854,
+            16.48991,
+            15.159331,
+            15.284348,
+            15.115093
+          ],
+          "size": 512,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_gemv_gflops_1024": {
+          "source_name": "o3_gemv_gflops_1024",
+          "scenario": "o3_gemv",
+          "group": "o3",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 10.533378,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 10.533378,
+          "mean": 10.568465,
+          "min": 10.276217,
+          "max": 10.99602,
+          "stdev": 0.262735,
+          "samples": [
+            10.533378,
+            10.276217,
+            10.99602,
+            10.547108,
+            10.4896
+          ],
+          "size": 1024,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_trisolve_matrix_wall": {
+          "source_name": "o3_trisolve_matrix_wall",
+          "scenario": "o3_trisolve_matrix",
+          "group": "o3",
+          "action": "trisolve_matrix",
+          "metric": "wall",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 5.298785,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.298785,
+          "mean": 5.336968,
+          "min": 5.294339,
+          "max": 5.496746,
+          "stdev": 0.089348,
+          "samples": [
+            5.294339,
+            5.298785,
+            5.496746,
+            5.299766,
+            5.295204
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "o3_trisolve_matrix_rss": {
+          "source_name": "o3_trisolve_matrix_rss",
+          "scenario": "o3_trisolve_matrix",
+          "group": "o3",
+          "action": "trisolve_matrix",
+          "metric": "rss",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 348.094,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 348.094,
+          "mean": 348.0916,
+          "min": 348.082,
+          "max": 348.098,
+          "stdev": 0.006066,
+          "samples": [
+            348.094,
+            348.098,
+            348.094,
+            348.082,
+            348.09
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "o3_trisolve_matrix_gflops_128": {
+          "source_name": "o3_trisolve_matrix_gflops_128",
+          "scenario": "o3_trisolve_matrix",
+          "group": "o3",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 19.833328,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 19.833328,
+          "mean": 19.811936,
+          "min": 19.554057,
+          "max": 20.098383,
+          "stdev": 0.201835,
+          "samples": [
+            20.098383,
+            19.554057,
+            19.866614,
+            19.833328,
+            19.7073
+          ],
+          "size": 128,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_trisolve_matrix_gflops_512": {
+          "source_name": "o3_trisolve_matrix_gflops_512",
+          "scenario": "o3_trisolve_matrix",
+          "group": "o3",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 32.068165,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 32.068165,
+          "mean": 31.899214,
+          "min": 31.349845,
+          "max": 32.318442,
+          "stdev": 0.439197,
+          "samples": [
+            31.349845,
+            32.243622,
+            32.068165,
+            32.318442,
+            31.515994
+          ],
+          "size": 512,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_trisolve_matrix_gflops_1024": {
+          "source_name": "o3_trisolve_matrix_gflops_1024",
+          "scenario": "o3_trisolve_matrix",
+          "group": "o3",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 37.39678,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 37.39678,
+          "mean": 37.395097,
+          "min": 37.281361,
+          "max": 37.5133,
+          "stdev": 0.097799,
+          "samples": [
+            37.281361,
+            37.31676,
+            37.467286,
+            37.5133,
+            37.39678
+          ],
+          "size": 1024,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_cholesky_wall": {
+          "source_name": "o3_cholesky_wall",
+          "scenario": "o3_cholesky",
+          "group": "o3",
+          "action": "cholesky",
+          "metric": "wall",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 2.177508,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 2.177508,
+          "mean": 2.196654,
+          "min": 2.175762,
+          "max": 2.22788,
+          "stdev": 0.027562,
+          "samples": [
+            2.22788,
+            2.175762,
+            2.225774,
+            2.176344,
+            2.177508
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "o3_cholesky_rss": {
+          "source_name": "o3_cholesky_rss",
+          "scenario": "o3_cholesky",
+          "group": "o3",
+          "action": "cholesky",
+          "metric": "rss",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 178.039,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 178.039,
+          "mean": 178.0406,
+          "min": 178.039,
+          "max": 178.043,
+          "stdev": 0.002191,
+          "samples": [
+            178.039,
+            178.043,
+            178.039,
+            178.039,
+            178.043
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "o3_cholesky_gflops_128": {
+          "source_name": "o3_cholesky_gflops_128",
+          "scenario": "o3_cholesky",
+          "group": "o3",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 19.33927,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 19.33927,
+          "mean": 19.376596,
+          "min": 19.292618,
+          "max": 19.492511,
+          "stdev": 0.081203,
+          "samples": [
+            19.426617,
+            19.33927,
+            19.292618,
+            19.492511,
+            19.331965
+          ],
+          "size": 128,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_cholesky_gflops_512": {
+          "source_name": "o3_cholesky_gflops_512",
+          "scenario": "o3_cholesky",
+          "group": "o3",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 35.167425,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 35.167425,
+          "mean": 35.273109,
+          "min": 34.718193,
+          "max": 35.731433,
+          "stdev": 0.400388,
+          "samples": [
+            35.731433,
+            35.588284,
+            35.167425,
+            34.718193,
+            35.160212
+          ],
+          "size": 512,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_cholesky_gflops_1024": {
+          "source_name": "o3_cholesky_gflops_1024",
+          "scenario": "o3_cholesky",
+          "group": "o3",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 39.58526,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 39.58526,
+          "mean": 39.581881,
+          "min": 39.410352,
+          "max": 39.746928,
+          "stdev": 0.149595,
+          "samples": [
+            39.455302,
+            39.58526,
+            39.410352,
+            39.711565,
+            39.746928
+          ],
+          "size": 1024,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_axpy_wall": {
+          "source_name": "o3_axpy_wall",
+          "scenario": "o3_axpy",
+          "group": "o3",
+          "action": "axpy",
+          "metric": "wall",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 1.974701,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.974701,
+          "mean": 1.845383,
+          "min": 1.62356,
+          "max": 2.027496,
+          "stdev": 0.202424,
+          "samples": [
+            2.027496,
+            1.974925,
+            1.62356,
+            1.974701,
+            1.626233
+          ],
+          "upstream_binary": "btl_eigen3_linear",
+          "repetitions": 5
+        },
+        "o3_axpy_rss": {
+          "source_name": "o3_axpy_rss",
+          "scenario": "o3_axpy",
+          "group": "o3",
+          "action": "axpy",
+          "metric": "rss",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 83.242,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 83.242,
+          "mean": 83.2388,
+          "min": 83.23,
+          "max": 83.242,
+          "stdev": 0.005215,
+          "samples": [
+            83.242,
+            83.242,
+            83.23,
+            83.242,
+            83.238
+          ],
+          "upstream_binary": "btl_eigen3_linear",
+          "repetitions": 5
+        },
+        "o3_axpy_gflops_128": {
+          "source_name": "o3_axpy_gflops_128",
+          "scenario": "o3_axpy",
+          "group": "o3",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 15.270241,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 15.270241,
+          "mean": 15.326937,
+          "min": 15.24136,
+          "max": 15.46271,
+          "stdev": 0.097856,
+          "samples": [
+            15.270241,
+            15.46271,
+            15.24136,
+            15.26196,
+            15.398413
+          ],
+          "size": 128,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_axpy_gflops_512": {
+          "source_name": "o3_axpy_gflops_512",
+          "scenario": "o3_axpy",
+          "group": "o3",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 12.406637,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 12.406637,
+          "mean": 12.393362,
+          "min": 12.350312,
+          "max": 12.418659,
+          "stdev": 0.029287,
+          "samples": [
+            12.418659,
+            12.414985,
+            12.376216,
+            12.406637,
+            12.350312
+          ],
+          "size": 512,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "o3_axpy_gflops_1024": {
+          "source_name": "o3_axpy_gflops_1024",
+          "scenario": "o3_axpy",
+          "group": "o3",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 15.534223,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 15.534223,
+          "mean": 15.520221,
+          "min": 15.461853,
+          "max": 15.548405,
+          "stdev": 0.034594,
+          "samples": [
+            15.534223,
+            15.516935,
+            15.461853,
+            15.548405,
+            15.539689
+          ],
+          "size": 1024,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemm_wall": {
+          "source_name": "native_gemm_wall",
+          "scenario": "native_gemm",
+          "group": "native",
+          "action": "gemm",
+          "metric": "wall",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 22.574376,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 22.574376,
+          "mean": 22.608191,
+          "min": 22.509427,
+          "max": 22.720115,
+          "stdev": 0.083914,
+          "samples": [
+            22.720115,
+            22.666101,
+            22.509427,
+            22.574376,
+            22.570934
+          ],
+          "upstream_binary": "btl_eigen3_matmat",
+          "repetitions": 5
+        },
+        "native_gemm_rss": {
+          "source_name": "native_gemm_rss",
+          "scenario": "native_gemm",
+          "group": "native",
+          "action": "gemm",
+          "metric": "rss",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 961.785,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 961.785,
+          "mean": 961.7828,
+          "min": 961.77,
+          "max": 961.789,
+          "stdev": 0.007362,
+          "samples": [
+            961.785,
+            961.789,
+            961.785,
+            961.77,
+            961.785
+          ],
+          "upstream_binary": "btl_eigen3_matmat",
+          "repetitions": 5
+        },
+        "native_gemm_gflops_128": {
+          "source_name": "native_gemm_gflops_128",
+          "scenario": "native_gemm",
+          "group": "native",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 45.507499,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 45.507499,
+          "mean": 45.206476,
+          "min": 43.875384,
+          "max": 45.825461,
+          "stdev": 0.812966,
+          "samples": [
+            45.807997,
+            45.825461,
+            43.875384,
+            45.016039,
+            45.507499
+          ],
+          "size": 128,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemm_gflops_512": {
+          "source_name": "native_gemm_gflops_512",
+          "scenario": "native_gemm",
+          "group": "native",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 41.72115,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 41.72115,
+          "mean": 41.709715,
+          "min": 41.513818,
+          "max": 41.90492,
+          "stdev": 0.183141,
+          "samples": [
+            41.72115,
+            41.513818,
+            41.534796,
+            41.90492,
+            41.873891
+          ],
+          "size": 512,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemm_gflops_1024": {
+          "source_name": "native_gemm_gflops_1024",
+          "scenario": "native_gemm",
+          "group": "native",
+          "action": "gemm",
+          "metric": "gflops",
+          "workload": "dense matrix-matrix product (BTL matrix_matrix)",
+          "value": 40.973817,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 40.973817,
+          "mean": 40.979151,
+          "min": 40.864866,
+          "max": 41.082005,
+          "stdev": 0.088029,
+          "samples": [
+            40.927586,
+            40.864866,
+            41.082005,
+            41.047479,
+            40.973817
+          ],
+          "size": 1024,
+          "btl_action": "matrix_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemv_wall": {
+          "source_name": "native_gemv_wall",
+          "scenario": "native_gemv",
+          "group": "native",
+          "action": "gemv",
+          "metric": "wall",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 5.406701,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.406701,
+          "mean": 5.420098,
+          "min": 5.397048,
+          "max": 5.453045,
+          "stdev": 0.026328,
+          "samples": [
+            5.453045,
+            5.397048,
+            5.406701,
+            5.399824,
+            5.443873
+          ],
+          "upstream_binary": "btl_eigen3_vecmat",
+          "repetitions": 5
+        },
+        "native_gemv_rss": {
+          "source_name": "native_gemv_rss",
+          "scenario": "native_gemv",
+          "group": "native",
+          "action": "gemv",
+          "metric": "rss",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 289.48,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 289.48,
+          "mean": 289.4816,
+          "min": 289.48,
+          "max": 289.484,
+          "stdev": 0.002191,
+          "samples": [
+            289.48,
+            289.48,
+            289.484,
+            289.48,
+            289.484
+          ],
+          "upstream_binary": "btl_eigen3_vecmat",
+          "repetitions": 5
+        },
+        "native_gemv_gflops_128": {
+          "source_name": "native_gemv_gflops_128",
+          "scenario": "native_gemv",
+          "group": "native",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 25.970221,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 25.970221,
+          "mean": 26.082829,
+          "min": 25.760741,
+          "max": 26.391151,
+          "stdev": 0.286097,
+          "samples": [
+            25.760741,
+            25.913707,
+            25.970221,
+            26.391151,
+            26.378327
+          ],
+          "size": 128,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemv_gflops_512": {
+          "source_name": "native_gemv_gflops_512",
+          "scenario": "native_gemv",
+          "group": "native",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 16.168148,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 16.168148,
+          "mean": 16.110992,
+          "min": 15.6401,
+          "max": 16.524946,
+          "stdev": 0.396121,
+          "samples": [
+            15.6401,
+            16.168148,
+            16.524946,
+            15.770822,
+            16.450943
+          ],
+          "size": 512,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_gemv_gflops_1024": {
+          "source_name": "native_gemv_gflops_1024",
+          "scenario": "native_gemv",
+          "group": "native",
+          "action": "gemv",
+          "metric": "gflops",
+          "workload": "dense matrix-vector product (BTL matrix_vector)",
+          "value": 10.615806,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 10.615806,
+          "mean": 10.632129,
+          "min": 10.439549,
+          "max": 10.817947,
+          "stdev": 0.154388,
+          "samples": [
+            10.817947,
+            10.751361,
+            10.615806,
+            10.535983,
+            10.439549
+          ],
+          "size": 1024,
+          "btl_action": "matrix_vector",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_trisolve_matrix_wall": {
+          "source_name": "native_trisolve_matrix_wall",
+          "scenario": "native_trisolve_matrix",
+          "group": "native",
+          "action": "trisolve_matrix",
+          "metric": "wall",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 5.354208,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.354208,
+          "mean": 5.367981,
+          "min": 5.345336,
+          "max": 5.397483,
+          "stdev": 0.025374,
+          "samples": [
+            5.354208,
+            5.397483,
+            5.393558,
+            5.345336,
+            5.34932
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "native_trisolve_matrix_rss": {
+          "source_name": "native_trisolve_matrix_rss",
+          "scenario": "native_trisolve_matrix",
+          "group": "native",
+          "action": "trisolve_matrix",
+          "metric": "rss",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 348.098,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 348.098,
+          "mean": 348.0996,
+          "min": 348.098,
+          "max": 348.102,
+          "stdev": 0.002191,
+          "samples": [
+            348.098,
+            348.102,
+            348.098,
+            348.098,
+            348.102
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "native_trisolve_matrix_gflops_128": {
+          "source_name": "native_trisolve_matrix_gflops_128",
+          "scenario": "native_trisolve_matrix",
+          "group": "native",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 20.026722,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 20.026722,
+          "mean": 20.041796,
+          "min": 19.894529,
+          "max": 20.18377,
+          "stdev": 0.106022,
+          "samples": [
+            20.026722,
+            19.894529,
+            20.015347,
+            20.18377,
+            20.088611
+          ],
+          "size": 128,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_trisolve_matrix_gflops_512": {
+          "source_name": "native_trisolve_matrix_gflops_512",
+          "scenario": "native_trisolve_matrix",
+          "group": "native",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 32.119056,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 32.119056,
+          "mean": 32.224713,
+          "min": 31.902197,
+          "max": 32.522853,
+          "stdev": 0.276456,
+          "samples": [
+            32.119056,
+            32.522853,
+            32.505587,
+            32.073871,
+            31.902197
+          ],
+          "size": 512,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_trisolve_matrix_gflops_1024": {
+          "source_name": "native_trisolve_matrix_gflops_1024",
+          "scenario": "native_trisolve_matrix",
+          "group": "native",
+          "action": "trisolve_matrix",
+          "metric": "gflops",
+          "workload": "dense triangular solve with matrix right-hand side (BTL trisolve_matrix)",
+          "value": 38.007913,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 38.007913,
+          "mean": 37.988384,
+          "min": 37.864476,
+          "max": 38.067305,
+          "stdev": 0.077262,
+          "samples": [
+            38.007913,
+            37.972911,
+            38.029316,
+            37.864476,
+            38.067305
+          ],
+          "size": 1024,
+          "btl_action": "trisolve_matrix",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_cholesky_wall": {
+          "source_name": "native_cholesky_wall",
+          "scenario": "native_cholesky",
+          "group": "native",
+          "action": "cholesky",
+          "metric": "wall",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 1.623706,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.623706,
+          "mean": 1.633594,
+          "min": 1.622642,
+          "max": 1.673237,
+          "stdev": 0.022194,
+          "samples": [
+            1.673237,
+            1.623706,
+            1.625642,
+            1.622744,
+            1.622642
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "native_cholesky_rss": {
+          "source_name": "native_cholesky_rss",
+          "scenario": "native_cholesky",
+          "group": "native",
+          "action": "cholesky",
+          "metric": "rss",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 178.043,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 178.043,
+          "mean": 178.0438,
+          "min": 178.039,
+          "max": 178.047,
+          "stdev": 0.003347,
+          "samples": [
+            178.047,
+            178.043,
+            178.047,
+            178.039,
+            178.043
+          ],
+          "upstream_binary": "btl_eigen3_adv",
+          "repetitions": 5
+        },
+        "native_cholesky_gflops_128": {
+          "source_name": "native_cholesky_gflops_128",
+          "scenario": "native_cholesky",
+          "group": "native",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 19.012661,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 19.012661,
+          "mean": 19.03135,
+          "min": 18.938227,
+          "max": 19.163498,
+          "stdev": 0.092285,
+          "samples": [
+            19.012661,
+            19.081907,
+            18.960459,
+            18.938227,
+            19.163498
+          ],
+          "size": 128,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_cholesky_gflops_512": {
+          "source_name": "native_cholesky_gflops_512",
+          "scenario": "native_cholesky",
+          "group": "native",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 34.282167,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 34.282167,
+          "mean": 34.292853,
+          "min": 33.971943,
+          "max": 34.598233,
+          "stdev": 0.228647,
+          "samples": [
+            34.598233,
+            34.282167,
+            34.227161,
+            33.971943,
+            34.384762
+          ],
+          "size": 512,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_cholesky_gflops_1024": {
+          "source_name": "native_cholesky_gflops_1024",
+          "scenario": "native_cholesky",
+          "group": "native",
+          "action": "cholesky",
+          "metric": "gflops",
+          "workload": "dense Cholesky factorization (BTL cholesky)",
+          "value": 38.174013,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 38.174013,
+          "mean": 38.13893,
+          "min": 37.820726,
+          "max": 38.293121,
+          "stdev": 0.186084,
+          "samples": [
+            38.174013,
+            38.247772,
+            38.293121,
+            38.159019,
+            37.820726
+          ],
+          "size": 1024,
+          "btl_action": "cholesky",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_axpy_wall": {
+          "source_name": "native_axpy_wall",
+          "scenario": "native_axpy",
+          "group": "native",
+          "action": "axpy",
+          "metric": "wall",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 1.974953,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.974953,
+          "mean": 1.854575,
+          "min": 1.622755,
+          "max": 2.024733,
+          "stdev": 0.211195,
+          "samples": [
+            1.622755,
+            1.625838,
+            2.024596,
+            1.974953,
+            2.024733
+          ],
+          "upstream_binary": "btl_eigen3_linear",
+          "repetitions": 5
+        },
+        "native_axpy_rss": {
+          "source_name": "native_axpy_rss",
+          "scenario": "native_axpy",
+          "group": "native",
+          "action": "axpy",
+          "metric": "rss",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 83.242,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 83.242,
+          "mean": 83.2404,
+          "min": 83.23,
+          "max": 83.246,
+          "stdev": 0.006066,
+          "samples": [
+            83.242,
+            83.242,
+            83.23,
+            83.242,
+            83.246
+          ],
+          "upstream_binary": "btl_eigen3_linear",
+          "repetitions": 5
+        },
+        "native_axpy_gflops_128": {
+          "source_name": "native_axpy_gflops_128",
+          "scenario": "native_axpy",
+          "group": "native",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 15.477653,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 15.477653,
+          "mean": 15.475238,
+          "min": 15.450192,
+          "max": 15.496211,
+          "stdev": 0.019597,
+          "samples": [
+            15.496211,
+            15.450192,
+            15.491261,
+            15.460871,
+            15.477653
+          ],
+          "size": 128,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_axpy_gflops_512": {
+          "source_name": "native_axpy_gflops_512",
+          "scenario": "native_axpy",
+          "group": "native",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 12.967923,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 12.967923,
+          "mean": 12.610459,
+          "min": 12.056267,
+          "max": 12.980105,
+          "stdev": 0.499246,
+          "samples": [
+            12.967923,
+            12.070961,
+            12.980105,
+            12.977041,
+            12.056267
+          ],
+          "size": 512,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        },
+        "native_axpy_gflops_1024": {
+          "source_name": "native_axpy_gflops_1024",
+          "scenario": "native_axpy",
+          "group": "native",
+          "action": "axpy",
+          "metric": "gflops",
+          "workload": "BLAS-1 scaled vector addition (BTL axpy)",
+          "value": 16.446462,
+          "unit": "GFLOP/s",
+          "direction": "higher_is_better",
+          "median": 16.446462,
+          "mean": 16.163779,
+          "min": 15.250254,
+          "max": 16.983953,
+          "stdev": 0.855714,
+          "samples": [
+            16.983953,
+            15.250254,
+            15.255496,
+            16.882728,
+            16.446462
+          ],
+          "size": 1024,
+          "btl_action": "axpy",
+          "btl_driver": "scripts/btl_single_point.cpp",
+          "repetitions": 5
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 480
+    }
+  },
+  "metrics": {
+    "o3_gemm_wall": {
+      "value": 22.362899,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "o3_gemm"
+    },
+    "o3_gemm_rss": {
+      "value": 961.777,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "o3_gemm"
+    },
+    "o3_gemm_gflops_128": {
+      "value": 47.928646,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemm"
+    },
+    "o3_gemm_gflops_512": {
+      "value": 44.679703,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemm"
+    },
+    "o3_gemm_gflops_1024": {
+      "value": 44.780388,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemm"
+    },
+    "o3_gemv_wall": {
+      "value": 5.405214,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "o3_gemv"
+    },
+    "o3_gemv_rss": {
+      "value": 289.48,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "o3_gemv"
+    },
+    "o3_gemv_gflops_128": {
+      "value": 25.947859,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemv"
+    },
+    "o3_gemv_gflops_512": {
+      "value": 15.284348,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemv"
+    },
+    "o3_gemv_gflops_1024": {
+      "value": 10.533378,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_gemv"
+    },
+    "o3_trisolve_matrix_wall": {
+      "value": 5.298785,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "o3_trisolve_matrix"
+    },
+    "o3_trisolve_matrix_rss": {
+      "value": 348.094,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "o3_trisolve_matrix"
+    },
+    "o3_trisolve_matrix_gflops_128": {
+      "value": 19.833328,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_trisolve_matrix"
+    },
+    "o3_trisolve_matrix_gflops_512": {
+      "value": 32.068165,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_trisolve_matrix"
+    },
+    "o3_trisolve_matrix_gflops_1024": {
+      "value": 37.39678,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_trisolve_matrix"
+    },
+    "o3_cholesky_wall": {
+      "value": 2.177508,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "o3_cholesky"
+    },
+    "o3_cholesky_rss": {
+      "value": 178.039,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "o3_cholesky"
+    },
+    "o3_cholesky_gflops_128": {
+      "value": 19.33927,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_cholesky"
+    },
+    "o3_cholesky_gflops_512": {
+      "value": 35.167425,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_cholesky"
+    },
+    "o3_cholesky_gflops_1024": {
+      "value": 39.58526,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_cholesky"
+    },
+    "o3_axpy_wall": {
+      "value": 1.974701,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "o3_axpy"
+    },
+    "o3_axpy_rss": {
+      "value": 83.242,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "o3_axpy"
+    },
+    "o3_axpy_gflops_128": {
+      "value": 15.270241,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_axpy"
+    },
+    "o3_axpy_gflops_512": {
+      "value": 12.406637,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_axpy"
+    },
+    "o3_axpy_gflops_1024": {
+      "value": 15.534223,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "o3_axpy"
+    },
+    "native_gemm_wall": {
+      "value": 22.574376,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "native_gemm"
+    },
+    "native_gemm_rss": {
+      "value": 961.785,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "native_gemm"
+    },
+    "native_gemm_gflops_128": {
+      "value": 45.507499,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemm"
+    },
+    "native_gemm_gflops_512": {
+      "value": 41.72115,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemm"
+    },
+    "native_gemm_gflops_1024": {
+      "value": 40.973817,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemm"
+    },
+    "native_gemv_wall": {
+      "value": 5.406701,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "native_gemv"
+    },
+    "native_gemv_rss": {
+      "value": 289.48,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "native_gemv"
+    },
+    "native_gemv_gflops_128": {
+      "value": 25.970221,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemv"
+    },
+    "native_gemv_gflops_512": {
+      "value": 16.168148,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemv"
+    },
+    "native_gemv_gflops_1024": {
+      "value": 10.615806,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_gemv"
+    },
+    "native_trisolve_matrix_wall": {
+      "value": 5.354208,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "native_trisolve_matrix"
+    },
+    "native_trisolve_matrix_rss": {
+      "value": 348.098,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "native_trisolve_matrix"
+    },
+    "native_trisolve_matrix_gflops_128": {
+      "value": 20.026722,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_trisolve_matrix"
+    },
+    "native_trisolve_matrix_gflops_512": {
+      "value": 32.119056,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_trisolve_matrix"
+    },
+    "native_trisolve_matrix_gflops_1024": {
+      "value": 38.007913,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_trisolve_matrix"
+    },
+    "native_cholesky_wall": {
+      "value": 1.623706,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "native_cholesky"
+    },
+    "native_cholesky_rss": {
+      "value": 178.043,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "native_cholesky"
+    },
+    "native_cholesky_gflops_128": {
+      "value": 19.012661,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_cholesky"
+    },
+    "native_cholesky_gflops_512": {
+      "value": 34.282167,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_cholesky"
+    },
+    "native_cholesky_gflops_1024": {
+      "value": 38.174013,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_cholesky"
+    },
+    "native_axpy_wall": {
+      "value": 1.974953,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "native_axpy"
+    },
+    "native_axpy_rss": {
+      "value": 83.242,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "native_axpy"
+    },
+    "native_axpy_gflops_128": {
+      "value": 15.477653,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_axpy"
+    },
+    "native_axpy_gflops_512": {
+      "value": 12.967923,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_axpy"
+    },
+    "native_axpy_gflops_1024": {
+      "value": 16.446462,
+      "unit": "GFLOP/s",
+      "direction": "higher_is_better",
+      "group": "native_axpy"
+    }
+  }
+}
