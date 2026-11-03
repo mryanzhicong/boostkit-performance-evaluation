@@ -7,7 +7,10 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/common.sh"
 
 detect_network_mode() {
-    if command -v unshare >/dev/null 2>&1 && unshare -n true >/dev/null 2>&1; then
+    # Probe inside the private container: that is exactly where the measured
+    # process tree will be created, so the recorded mode describes the measured
+    # environment rather than the host.
+    if apr_util_container_exec unshare -n true >/dev/null 2>&1; then
         printf 'unshare\n'
         return 0
     fi
@@ -89,13 +92,14 @@ PY
 }
 
 verify_harnesses() {
-    if [[ ! -x "${APR_UTIL_BENCH_BIN}" || ! -x "${APR_UTIL_TESTALL_BIN}" || \
-          ! -x "${APR_UTIL_NETNS_PREP}" ]]; then
+    if ! apr_util_container_exec test -x "${APR_UTIL_BENCH_BIN}" || \
+        ! apr_util_container_exec test -x "${APR_UTIL_TESTALL_BIN}" || \
+        ! apr_util_container_exec test -x "${APR_UTIL_NETNS_PREP}"; then
         fail_message "benchmark harness, upstream testall or netns launcher are missing"
         return 20
     fi
     local reported
-    reported="$("${APR_UTIL_BENCH_BIN}" --version 2>/dev/null || true)"
+    reported="$(apr_util_container_exec "${APR_UTIL_BENCH_BIN}" --version 2>/dev/null || true)"
     if [[ -z "${reported}" ]]; then
         fail_message "the harness does not report its APR-util/APR versions"
         return 20
@@ -110,11 +114,9 @@ verify_harnesses() {
         return 20
     fi
 
-    log_message "running the upstream testall self-check"
-    (
-        cd "${APR_UTIL_TESTALL_CWD}" || exit 1
-        "${APR_UTIL_TESTALL_BIN}"
-    ) > "${APR_UTIL_STATE_DIR}/testall-selftest.log" 2>&1 || {
+    log_message "running the upstream testall self-check inside the private container"
+    apr_util_container_exec_at "${APR_UTIL_TESTALL_CWD}" "${APR_UTIL_TESTALL_BIN}" \
+        > "${APR_UTIL_STATE_DIR}/testall-selftest.log" 2>&1 || {
         fail_message "the upstream testall self-check failed, see ${APR_UTIL_STATE_DIR}/testall-selftest.log"
         tail -40 "${APR_UTIL_STATE_DIR}/testall-selftest.log" >&2 || true
         return 20
@@ -140,14 +142,16 @@ start_apr_util_runtime() {
     configure_runtime_paths || return $?
     initialize_runtime || return $?
 
-    verify_harnesses || return $?
-    if ! command -v python3 >/dev/null 2>&1; then
-        fail_message "python3 is required for payload generation and result parsing"
-        return 20
-    fi
+    check_apr_util_container || return $?
 
-    log_message "generating deterministic base64 payloads in ${APR_UTIL_FIXTURES_DIR}"
-    python3 "${SCRIPTS_DIR}/fixtures/generate_payloads.py" "${APR_UTIL_FIXTURES_DIR}" > \
+    verify_harnesses || return $?
+    apr_util_container_exec python3 -c 'import sys' || {
+        fail_message "python3 is required for payload generation inside the container"
+        return 20
+    }
+
+    log_message "generating deterministic base64 payloads in ${APR_UTIL_FIXTURES_DIR} inside the private container"
+    apr_util_container_exec python3 "${SCRIPTS_DIR}/fixtures/generate_payloads.py" "${APR_UTIL_FIXTURES_DIR}" > \
         "${APR_UTIL_STATE_DIR}/fixtures.log" 2>&1 || {
         fail_message "payload generation failed, see ${APR_UTIL_STATE_DIR}/fixtures.log"
         return 20

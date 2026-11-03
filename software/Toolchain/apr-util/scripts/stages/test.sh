@@ -39,8 +39,13 @@ run_scenario_once() {
         timing_args+=(--offline --offline-prep "${APR_UTIL_NETNS_PREP}")
     fi
 
-    log_message "scenario ${scenario} ${label} starting (network mode ${network_mode})"
-    python3 "${SCRIPTS_DIR}/run_timed.py" "${timing_args[@]}" -- "${SCENARIO_CMD[@]}" || {
+    log_message "scenario ${scenario} ${label} starting (network mode ${network_mode}, inside the private container)"
+    # The timing harness runs inside the private container, so every sample is
+    # produced by a container-native child process and docker's management
+    # overhead never lands inside a measurement window.
+    local exec_dir="${scenario_cwd:-${PERF_WORK_DIR}}"
+    apr_util_container_exec_at "${exec_dir}" \
+        python3 "${SCRIPTS_DIR}/run_timed.py" "${timing_args[@]}" -- "${SCENARIO_CMD[@]}" || {
         local rc=$?
         fail_message "scenario ${scenario} ${label} failed with exit code ${rc}"
         if [[ -f "${log_path}" ]]; then
@@ -100,7 +105,9 @@ run_apr_util_benchmarks() {
     validate_reps || return $?
     configure_runtime_paths || return $?
     initialize_runtime || return $?
-    if [[ ! -x "${APR_UTIL_BENCH_BIN}" || ! -x "${APR_UTIL_TESTALL_BIN}" ]]; then
+    check_apr_util_container || return $?
+    if ! apr_util_container_exec test -x "${APR_UTIL_BENCH_BIN}" || \
+        ! apr_util_container_exec test -x "${APR_UTIL_TESTALL_BIN}"; then
         fail_message "the benchmark harness or upstream testall is missing; run the build and start stages first"
         return 50
     fi

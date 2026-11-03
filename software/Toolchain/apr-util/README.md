@@ -34,9 +34,11 @@ APR-util 1.6.5 无法关闭 expat，因此使用源码包内**自带的 expat**�
 | 离线命名空间启动器 | 本用例自带 `bench/netns_loopback_up.c`，在 `unshare -n` 内拉起 `lo` 后 `exec` 被测命令 | `${PERF_WORK_DIR}/apr-util-bench/netns_loopback_up` |
 | 负载生成器 | 本用例自带 `scripts/fixtures/generate_payloads.py`（固定种子 splitmix64） | `${PERF_WORK_DIR}/fixtures/` |
 
-Runner 通过 `dnf`（Debian/Ubuntu 上为 `apt-get`）安装缺失的 `gcc`、`make`、`tar`、
-`bzip2`、`coreutils`、`python3`，以及 `curl`/`wget` 之一；安装后会再次自检这些命令，
-失败则 build 阶段返回 30。构建只需要 C 工具链与系统 C 库，不需要任何外部服务或数据库。
+所有构建依赖都由任务专属容器内的 `dnf` 安装：`gcc`、`gcc-c++`、`make`、`tar`、
+`bzip2`、`diffutils`、`coreutils`、`findutils`、`sed`、`gawk`、`grep`、`util-linux`、
+`file`、`glibc-devel`、`expat-devel`、`binutils`、`python3`；安装失败则 build 阶段返回 30。
+宿主机只保留 Docker、下载/校验工具（`curl`、`sha256sum`、`tar`、`python3`）与结果解析器。
+构建只需要 C 工具链与系统 C 库，不需要任何外部服务或数据库。
 
 以下称 Framework 传给脚本的工作目录为 `${PERF_WORK_DIR}`；独立运行时默认位于
 `/home/runner/boostkit-perf/apr-util/<运行ID>/`。源码、构建、负载与临时文件都放在该
@@ -187,6 +189,32 @@ bash software/Toolchain/apr-util/apr-util_test.sh --version 1.6.5 \
 `PERF_APR_UTIL_MIRROR`、`PERF_APR_UTIL_ALLOW_ONLINE_MEASUREMENT`（仅在 `unshare -n`
 不可用时用于本地诊断，默认 0，即测量期必须离线）。`--keep-workdir` 可保留工作目录排查。
 
+## 容器化执行
+
+每个阶段都在**本次任务专属的 openEuler 24.03 LTS SP4 容器**内执行，宿主机只负责
+Docker、源码包的下载/SHA-256 校验、Framework 与严格解析器。容器由
+`scripts/common.sh` 里的统一运行时块管理（由 `adaptation/scripts/add-container-block.py`
+生成，勿手工编辑标记区）：
+
+- **镜像**：`/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz`；
+  本地归档优先，缺失时才从 `repo.openeuler.org` 下载。加载前校验 `.sha256sum`、镜像
+  架构（`x86_64`→`amd64`、`aarch64`→`arm64`）与 `/etc/os-release` 中的 `24.03`。
+- **容器名/标签**：`boostkit-apr-util-<arch>-<run-id>`，标签
+  `boostkit.apr_util.run-id=<run-id>`；删除前校验标签，拒绝删除其他任务的容器（返回 60）。
+- **挂载**：`PERF_WORK_DIR`、`RESULTS_DIR` 与用例目录（只读）按**相同绝对路径**挂入，
+  因此容器内外路径一致；另挂 `/etc/passwd`、`/etc/group` 以保留 runner 的 UID/GID。
+- **特权**：`APR_UTIL_CONTAINER_EXTRA_ARGS=(--cap-add=SYS_ADMIN)`。测量要求每条样本在
+  `unshare -n` 新建的网络命名空间里运行，容器内需要该 capability 才能创建命名空间；
+  若仍不可用，start 阶段记录 `network mode=unavailable` 并按既有语义处理。
+- **宿主/容器职责**：宿主机做源码下载与校验、解析器与结果校验；容器内做 `dnf` 安装、
+  解包、`configure`/`make`/`make install`、`testall` 与 harness 编译、负载生成、版本探测、
+  `unshare -n` 探测，以及**整个计时驱动**（`run_timed.py` 在容器内启动被测子进程，
+  `docker exec` 的开销不进入采样窗口）。
+- **清理**：stop 阶段先 `remove_apr_util_container`（幂等，容器不存在返回 0），再做残留
+  进程检查与临时文件清理；启动时会清理同前缀、run-id 不同的陈旧容器。
+- **独立运行**：不再要求在宿主机安装编译器或依赖，但必须能访问 Docker daemon；
+  Framework 方式与独立入口方式都需要 docker。`test/testall` 仍在容器内 `test/` 目录运行。
+
 ## 本机验证结果
 
 本机为 WSL2 Ubuntu 22.04、x86_64、20 核、23 GiB 内存、gcc 11.4.0，与其他适配任务并行
@@ -231,9 +259,10 @@ build 9 s、start 9 s、test 96 s、stop 1 s、finalize 1 s（`final6` 为 9/10/
 2. **`testall` 的墙钟时间不是性能指标**：它包含上游 memcache/redis 连接失败的重试等待
    （约 6–13 s，随内核连接超时与调度波动），有效指标是 `tests_passed=19`；正式比较不应
    把 `upstream_testall_wall_s` 当作吞吐结论。
-3. **`unshare -n` 依赖**：测量期要求网络命名空间可用；不可用时 start 阶段返回 20，除非
-   显式设置 `PERF_APR_UTIL_ALLOW_ONLINE_MEASUREMENT=1` 做本地诊断。命名空间内 `lo` 被
-   启动器拉起，断言“离线”指的是不经过命名空间外的任何接口。
+3. **`unshare -n` 依赖**：测量期要求在**任务专属容器内**能够创建网络命名空间（容器需要
+   `--cap-add=SYS_ADMIN`）；不可用时 start 阶段记录 `unavailable` 并在结果上下文中注明，
+   除非显式设置 `PERF_APR_UTIL_ALLOW_ONLINE_MEASUREMENT=1` 做本地诊断。命名空间内 `lo`
+   被启动器拉起，断言“离线”指的是不经过命名空间外的任何接口。
 4. **短场景的进程启动占比**：64 B / 1 KiB 场景单次运行约 0.36–0.67 s，进程启动与
    harness 初始化（APR 初始化、读负载、roundtrip 自检）约占几毫秒，计入墙钟；这是
    “一次进程调用”的真实成本，未做扣除。

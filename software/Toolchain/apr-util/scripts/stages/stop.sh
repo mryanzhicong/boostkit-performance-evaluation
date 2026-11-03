@@ -10,6 +10,10 @@ stop_apr_util_runtime() {
     validate_variant || return $?
     configure_runtime_paths || return $?
 
+    # Removing the container first stops every process it owns, which keeps the
+    # leftover scan below from racing the cleanup.
+    remove_apr_util_container || return $?
+
     local leftover=0
     local pid
     local -a pids=()
