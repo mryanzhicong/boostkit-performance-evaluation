@@ -48,14 +48,14 @@ python3 -m venv "${PERF_WORK_DIR}/annb-venv"
 本地 wheel 必须匹配上表 SHA-256；不匹配时失败，不回退到下载。脚本把已校验的 wheel 复制到本次私有构建上下文的 `wheelhouse/`。镜像使用 `python:3.9-slim`，由 `scripts/Dockerfile.scann` 安装 ScaNN 及其固定版本依赖。它只替换 ann-benchmarks 的镜像构建方式，不修改上游 ScaNN 算法模块。
 
 ```bash
-docker build --rm -t "${SCANN_IMAGE_TAG}" \
+docker build --rm --network=host -t "${SCANN_IMAGE_TAG}" \
   -f "${PERF_WORK_DIR}/ann-benchmarks/Dockerfile.scann" \
   "${PERF_WORK_DIR}/ann-benchmarks"
 docker run --rm --entrypoint python "${SCANN_IMAGE_TAG}" -c \
   'from importlib.metadata import version; import scann; print(version("scann"))'
 ```
 
-第二条命令必须输出 `1.4.2`。镜像名带本次运行 ID；生成的 `config.yml` 使用相同名称，避免并行任务共用镜像。镜像内安装固定版本的 NumPy 2.0.2、h5py 3.12.1 等依赖；不会编译 ScaNN 源码。
+构建使用宿主机网络，以便容器内的 `pip` 使用宿主机的 DNS 和网络出口。第二条命令必须输出 `1.4.2`。镜像名带本次运行 ID；生成的 `config.yml` 使用相同名称，避免并行任务共用镜像。镜像内安装固定版本的 NumPy 2.0.2、h5py 3.12.1 等依赖；不会编译 ScaNN 源码。
 
 测试阶段不直接执行固定的 `docker run` 命令。上游 `run.py` 通过 Docker SDK 创建并清理测试容器，挂载本次任务的 `ann_benchmarks/`、数据目录和结果目录，使用宿主网络。适配脚本不另设 CPU 或内存限制；上游 `run.py` 默认单 worker，把测试容器固定到 CPU 1，并按宿主机可用内存设置容器内存上限。这是上游工具的行为，两个架构均不额外绑核。停止阶段移除本次任务的镜像 tag。
 

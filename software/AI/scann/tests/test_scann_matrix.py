@@ -70,6 +70,11 @@ def test_stage_scripts_can_source_common_more_than_once() -> None:
     )
 
 
+def test_docker_image_build_uses_host_network() -> None:
+    builder = (CASE_DIR / "scripts" / "builders" / "base.sh").read_text(encoding="utf-8")
+    assert 'docker build --rm --network=host "${proxy_args[@]}"' in builder
+
+
 def test_parses_one_official_hdf5_result_and_preserves_raw(tmp_path: Path) -> None:
     h5py = pytest.importorskip("h5py")
     np = pytest.importorskip("numpy")
