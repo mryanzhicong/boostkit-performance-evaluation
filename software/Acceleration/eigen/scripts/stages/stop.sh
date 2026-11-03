@@ -2,11 +2,13 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 # Eigen starts no background service; the measured BTL processes are children of
-# the measurement wrapper, which always waits for them.  stop only removes the
-# private scratch state so a repeated invocation (including the failure path)
+# the measurement wrapper, which always waits for them.  stop removes this task's
+# private container first (which also terminates anything it still owns), then the
+# private scratch state, so a repeated invocation (including the failure path)
 # always succeeds and no stale BTL result file can influence the next run.
 stop_eigen_runtime() {
     configure_runtime_paths || return $?
+    remove_eigen_container || return $?
     if [[ -d "${SCRATCH_DIR}" ]]; then
         rm -rf -- "${SCRATCH_DIR}" || {
             log_message "ERROR: failed to remove the measurement scratch directory: ${SCRATCH_DIR}"

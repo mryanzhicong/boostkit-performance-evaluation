@@ -39,6 +39,43 @@ aarch64 Runner 不保证能访问 github.com / 公网，正式流水线以离线
 `gitcode.com` 返回的是 5 792 字节 HTML 而非归档，因此只有官方 gitlab.com 与
 离线目录能提供字节一致的归档；脚本对候选逐个做 SHA-256 校验来兜住这一点。
 
+## 容器化执行
+
+本用例的解包、编译、自检、固定负载与计时包装全部在每次任务专属的 **openEuler 24.03
+LTS SP4 私有容器**内完成，与 `software/Database/mysql`、`software/Bigdata/ray`、
+`software/Others/unixbench` 使用同一套容器契约。宿主机只需要 Docker、下载/校验工具与
+Framework，不再安装编译器、CMake 或 dnf 包。
+
+- 基础镜像：openEuler 24.03 LTS SP4 官方 Docker 归档，优先读取
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz` 与同名
+  `.sha256sum`，缺失时从
+  `https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/<arch>/` 下载；加载后校验
+  归档 SHA-256、镜像架构与镜像内 `/etc/os-release`（必须为 24.03）。
+- 容器：名字 `boostkit-eigen-<arch>-<运行ID>`，标签 `boostkit.eigen.run-id=<运行ID>`，使用
+  宿主网络，以 Runner 用户身份运行；只读挂载用例目录，读写挂载 `${PERF_WORK_DIR}` 与
+  `${RESULTS_DIR}`，容器内路径与宿主完全相同。Eigen 本身不需要额外 capability，因此
+  不设置 `EIGEN_CONTAINER_EXTRA_ARGS`。
+- 容器内：`dnf` 安装 `gcc`、`gcc-c++`、`make`、`cmake`、`tar`、`gzip`、`coreutils`、
+  `findutils`、`sed`、`gawk`、`grep`、`util-linux`、`file`、`glibc-devel`、`binutils`、
+  `python3`、`which`；源码解包、`Eigen/Version` 版本自证、原生指令集探测、两组 BTL
+  构建（`btl_eigen3_{matmat,vecmat,adv,linear}`）、自检程序
+  （`scripts/eigen_probe.cpp`）与固定维度驱动（`scripts/btl_single_point.cpp`）的编译和
+  冒烟运行、以及 `scripts/run_timed.py` 计时包装都在容器内执行。`${PERF_WORK_DIR}/home`
+  作为容器内 `HOME`，`compiler.txt` / `cmake.txt` 记录的是容器内实际使用的工具链。
+- 宿主机：只负责下载并校验归档（优先 `/home/runner/software/eigen/`）、调用 Framework、
+  严格解析 `results.json`（`scripts/results/parse_benchmark.py` 不进入容器）、清理本任务的
+  容器。宿主机缺少 `curl`/`sha256sum` 只告警，因为离线归档仍是可用来源。
+- 测量：每条样本由容器内进程直接派生（`eigen_container_exec_at "${SCENARIO_WORKDIR}"`），
+  `docker exec` 的管理开销不落在计时窗口内；BTL 扫描与固定维度驱动都以容器内 `c++`
+  编译产物运行，不混入宿主工具链。
+- 清理：`stop` 阶段幂等删除本任务容器（标签不符时拒绝删除并返回 60），随后清理私有
+  scratch 目录；取消任务遗留的同软件容器会在下一次 build 时按名字前缀 + 运行 ID 清理。
+- 本地验证：x86_64 WSL 上用 `PERF_REPS=1` 跑通六阶段（prepare/build/start/test/stop/
+  finalize 全部 0），构建阶段约 40 秒装依赖、45 秒编译两组 BTL，容器删除后
+  `docker ps -a` 无残留；只验证链路，不作为性能证据。
+
+独立运行同样需要 Docker 与可访问的 Docker daemon；不满足时 build 阶段返回 30 并给出提示。
+
 ## 安装与构建
 
 构建阶段在本次任务私有目录
@@ -217,6 +254,9 @@ bash software/Acceleration/eigen/eigen_test.sh \
 | `-mcpu=native` 不被支持 | 脚本自动回退 `-march=armv8-a+simd`，实际开关见 `<work>/native-flag.txt` |
 | 测试阶段退出码 50 且提示缺少日志/证据 | 检查 `runs/<场景>/` 是否缺少 `warmup` 或某个 `rep<i>`，以及 `raw-output.log` 里最后一次失败进程的尾部输出（脚本会打印最后 40 行） |
 | 测量数值抖动大 | 确认没有其他编译/测试任务抢占 CPU；本用例不绑核，中位数对偶发噪声不敏感，但 `stdev` 会如实反映 |
+| 构建阶段报 Docker daemon 不可用 | 私有容器是唯一的构建环境：需要 `docker` 命令与可访问的 daemon（退出码 30）；确认当前用户有权限操作 Docker |
+| 容器内 `dnf install` 失败 | 检查容器网络与 `repo.huaweicloud.com`（脚本已把 `openEuler.repo` 的 `metalink` 注释掉并改指华为镜像）；`PERF_PROXY` 存在时会同时配置 dnf 代理，失败返回 30 |
+| 残留 `boostkit-eigen-*` 容器 | `stop` 会按运行 ID 标签删除本任务容器；被取消的历史容器在下一次 build 时按名字前缀与运行 ID 清理。手工清理时只删除自己运行 ID 的容器，勿批量删除 |
 
 ## 许可证
 

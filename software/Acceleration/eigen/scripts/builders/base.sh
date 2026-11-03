@@ -1,68 +1,43 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
-package_for_command() {
-    case "$1" in
-        awk) printf 'gawk\n' ;;
-        sha256sum|nproc|basename|dirname|stat|head) printf 'coreutils\n' ;;
-        c++|g++) printf 'gcc-c++\n' ;;
-        make) printf 'make\n' ;;
-        tar) printf 'tar\n' ;;
-        curl) printf 'curl\n' ;;
-        python3) printf 'python3\n' ;;
-        cmake) printf 'cmake\n' ;;
-        *) printf '%s\n' "$1" ;;
-    esac
-}
-
-# Map a command to the Debian/Ubuntu package that provides it.
-apt_package_for_command() {
-    case "$1" in
-        awk) printf 'gawk\n' ;;
-        c++|g++) printf 'g++\n' ;;
-        *) printf '%s\n' "$1" ;;
-    esac
-}
-
-require_commands() {
-    local missing=() packages=() cmd
-    for cmd in "$@"; do
+# Every compiler and build dependency lives inside the private openEuler
+# container.  The host keeps only Docker plus the download/verification tools, so
+# this helper never installs packages on the runner; a missing host tool is
+# reported as a warning because the pre-placed offline archive can still be used.
+require_host_transfer_commands() {
+    local missing=() cmd
+    for cmd in curl sha256sum awk; do
         command -v "${cmd}" >/dev/null 2>&1 || missing+=("${cmd}")
     done
     ((${#missing[@]} == 0)) && return 0
-    log_message "missing commands: ${missing[*]}"
-    if command -v dnf >/dev/null 2>&1; then
-        for cmd in "${missing[@]}"; do
-            packages+=("$(package_for_command "${cmd}")")
-        done
-        local dnf_options=()
-        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
-        if [[ "$(id -u)" -eq 0 ]]; then
-            dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
-        else
-            sudo -n dnf "${dnf_options[@]}" install -y "${packages[@]}" || return 30
-        fi
-    elif command -v apt-get >/dev/null 2>&1; then
-        packages=()
-        for cmd in "${missing[@]}"; do
-            packages+=("$(apt_package_for_command "${cmd}")")
-        done
-        export DEBIAN_FRONTEND=noninteractive
-        if [[ "$(id -u)" -eq 0 ]]; then
-            apt-get install -y --no-install-recommends "${packages[@]}" || return 30
-        else
-            sudo -n apt-get install -y --no-install-recommends "${packages[@]}" || return 30
-        fi
-    else
-        log_message "ERROR: neither dnf nor apt-get is available to install: ${missing[*]}"
+    log_message "WARNING: host download/verification tools are incomplete: ${missing[*]}; the pre-placed offline archive is the only usable source"
+    return 0
+}
+
+# Dependency installation happens inside the container; the host never runs dnf
+# or apt-get for this case.
+prepare_eigen_build_container() {
+    local -a dnf_options=()
+    require_host_transfer_commands
+    require_eigen_docker || return 30
+    start_eigen_container || return $?
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message "installing Eigen build dependencies inside the private container"
+    eigen_container_exec_root dnf "${dnf_options[@]}" install -y \
+        gcc gcc-c++ make cmake tar gzip coreutils findutils sed gawk grep \
+        util-linux file glibc-devel binutils python3 which || {
+        log_message "ERROR: container build dependencies failed to install"
         return 30
-    fi
-    for cmd in "${missing[@]}"; do
-        if ! command -v "${cmd}" >/dev/null 2>&1; then
-            log_message "ERROR: required command is still unavailable: ${cmd}"
-            return 30
-        fi
-    done
+    }
+    eigen_container_exec cmake --version >/dev/null 2>&1 || {
+        log_message "ERROR: cmake is not usable inside the private container"
+        return 30
+    }
+    eigen_container_exec c++ --version >/dev/null 2>&1 || {
+        log_message "ERROR: c++ is not usable inside the private container"
+        return 30
+    }
 }
 
 verify_sha256() {
@@ -160,29 +135,35 @@ materialize_archive() {
 }
 
 extract_source() {
-    if [[ -f "${SOURCE_DIR}/Eigen/Version" && -f "${SOURCE_DIR}/bench/btl/CMakeLists.txt" ]]; then
+    if eigen_container_exec test -f "${SOURCE_DIR}/Eigen/Version" >/dev/null 2>&1 &&
+        eigen_container_exec test -f "${SOURCE_DIR}/bench/btl/CMakeLists.txt" >/dev/null 2>&1; then
         log_message "reusing extracted Eigen sources at ${SOURCE_DIR}"
         return 0
     fi
     rm -rf -- "${SOURCE_DIR}"
     mkdir -p "${SOURCE_DIR}"
-    log_message "extracting $(basename "${SOURCE_ARCHIVE}") to ${SOURCE_DIR}"
-    tar -xzf "${SOURCE_ARCHIVE}" -C "${SOURCE_DIR}" --strip-components=1 || {
+    log_message "extracting $(basename "${SOURCE_ARCHIVE}") inside the private container"
+    eigen_container_exec tar -xzf "${SOURCE_ARCHIVE}" -C "${SOURCE_DIR}" --strip-components=1 || {
         log_message "ERROR: failed to extract the Eigen archive"
         return 30
     }
-    if [[ ! -f "${SOURCE_DIR}/Eigen/Version" || ! -f "${SOURCE_DIR}/bench/btl/CMakeLists.txt" ]]; then
+    eigen_container_exec test -f "${SOURCE_DIR}/Eigen/Version" || {
         log_message "ERROR: extracted Eigen sources have an unexpected layout"
         return 30
-    fi
-    if [[ ! -f "${SOURCE_DIR}/bench/spbench/CMakeLists.txt" ]]; then
+    }
+    eigen_container_exec test -f "${SOURCE_DIR}/bench/btl/CMakeLists.txt" || {
+        log_message "ERROR: the extracted archive does not contain bench/btl"
+        return 30
+    }
+    if ! eigen_container_exec test -f "${SOURCE_DIR}/bench/spbench/CMakeLists.txt"; then
         log_message "WARNING: bench/spbench is not present in the archive"
     fi
 }
 
 verify_source_version() {
     local extracted
-    extracted="$(source_version_string)" || extracted=""
+    extracted="$(eigen_container_exec sed -n 's/^#define EIGEN_VERSION_STRING "\(.*\)"$/\1/p' \
+        "${SOURCE_DIR}/Eigen/Version" | head -n 1)" || extracted=""
     if [[ "${extracted}" != "${SOFTWARE_VERSION}" ]]; then
         log_message "ERROR: the archive reports Eigen ${extracted:-unknown}, requested ${SOFTWARE_VERSION}"
         return 30
@@ -210,7 +191,8 @@ resolve_native_flag() {
     mkdir -p "${PROBE_DIR}"
     printf 'int main() { return 0; }\n' > "${PROBE_DIR}/flag-probe.cc"
     for flag in "${candidates[@]}"; do
-        if c++ -x c++ "${PROBE_DIR}/flag-probe.cc" -o "${PROBE_DIR}/flag-probe" "${flag}" \
+        if eigen_container_exec_at "${PROBE_DIR}" \
+            c++ -x c++ flag-probe.cc -o flag-probe "${flag}" \
             > "${PROBE_DIR}/flag-probe.log" 2>&1; then
             EIGEN_NATIVE_FLAG="${flag}"
             printf '%s\n' "${flag}" > "${NATIVE_FLAG_FILE}"
@@ -233,15 +215,16 @@ configure_group() {
     build_dir="$(build_dir_for_group "${group}")"
     log="${PERF_WORK_DIR}/logs/configure-${group}.log"
     mkdir -p "${PERF_WORK_DIR}/logs"
-    if [[ -f "${build_dir}/CMakeCache.txt" ]]; then
+    if eigen_container_exec test -f "${build_dir}/CMakeCache.txt" >/dev/null 2>&1; then
         log_message "reusing existing ${group} build tree: ${build_dir}"
         return 0
     fi
     rm -rf -- "${build_dir}"
-    log_message "configuring ${group} BTL build tree (CMAKE_CXX_FLAGS='${flags}')"
+    log_message "configuring ${group} BTL build tree inside the private container (CMAKE_CXX_FLAGS='${flags}')"
     # Eigen 5.0.1 still declares bench/btl with a pre-3.5 cmake_minimum_required;
     # CMake 4.x rejects that unless the policy floor is raised explicitly.
-    cmake -S "${SOURCE_DIR}" -B "${build_dir}" \
+    eigen_container_exec_at "${SOURCE_DIR}" \
+        cmake -S "${SOURCE_DIR}" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_FLAGS="${flags}" \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
@@ -257,7 +240,8 @@ configure_group() {
         print_log_tail "${log}"
         return 30
     }
-    if ! grep -q "btl_eigen3_matmat" "${build_dir}/bench/btl/libs/eigen3/Makefile" 2>/dev/null; then
+    if ! eigen_container_exec grep -q "btl_eigen3_matmat" \
+        "${build_dir}/bench/btl/libs/eigen3/Makefile" >/dev/null 2>&1; then
         log_message "WARNING: the ${group} build tree does not list btl_eigen3_matmat in its generated Makefile"
     fi
 }
@@ -266,8 +250,9 @@ build_group() {
     local group="$1" build_dir log target
     build_dir="$(build_dir_for_group "${group}")"
     log="${PERF_WORK_DIR}/logs/build-${group}.log"
-    log_message "building upstream BTL targets for group ${group} with -j${EIGEN_JOBS}"
-    cmake --build "${build_dir}" -j "${EIGEN_JOBS}" \
+    log_message "building upstream BTL targets for group ${group} with -j${EIGEN_JOBS} inside the private container"
+    eigen_container_exec_at "${build_dir}" \
+        cmake --build "${build_dir}" -j "${EIGEN_JOBS}" \
         --target btl_eigen3_matmat btl_eigen3_vecmat btl_eigen3_adv btl_eigen3_linear \
         > "${log}" 2>&1 || {
         log_message "ERROR: BTL build failed for group ${group}; see ${log}"
@@ -275,7 +260,7 @@ build_group() {
         return 30
     }
     for target in btl_eigen3_matmat btl_eigen3_vecmat btl_eigen3_adv btl_eigen3_linear; do
-        if [[ ! -x "${build_dir}/bench/btl/libs/eigen3/${target}" ]]; then
+        if ! eigen_container_exec test -x "${build_dir}/bench/btl/libs/eigen3/${target}"; then
             log_message "ERROR: the ${group} build did not produce ${target}"
             return 30
         fi
@@ -284,21 +269,20 @@ build_group() {
 }
 
 compile_probe() {
-    local group="$1" flags build_dir probe_binary log
+    local group="$1" flags probe_binary log
     flags="$(group_cxx_flags "${group}")"
-    build_dir="$(build_dir_for_group "${group}")"
     mkdir -p "${PROBE_DIR}"
     probe_binary="${PROBE_DIR}/eigen_probe_${group}"
     log="${PROBE_DIR}/compile-${group}.log"
-    log_message "compiling the Eigen self-check program with the ${group} flags"
+    log_message "compiling the Eigen self-check program with the ${group} flags inside the private container"
     # shellcheck disable=SC2086
-    c++ -std=c++17 -O3 ${flags} -I "${SOURCE_DIR}" \
+    eigen_container_exec c++ -std=c++17 -O3 ${flags} -I "${SOURCE_DIR}" \
         "${SCRIPT_DIR}/scripts/eigen_probe.cpp" -o "${probe_binary}" > "${log}" 2>&1 || {
         log_message "ERROR: the Eigen self-check program does not compile with the ${group} flags"
         print_log_tail "${log}"
         return 30
     }
-    "${probe_binary}" > "${PROBE_DIR}/${group}.txt" 2>&1 || {
+    eigen_container_exec_at "${PROBE_DIR}" "${probe_binary}" > "${PROBE_DIR}/${group}.txt" 2>&1 || {
         log_message "ERROR: the Eigen self-check program failed at runtime for group ${group}"
         print_log_tail "${PROBE_DIR}/${group}.txt"
         return 30
@@ -310,16 +294,15 @@ compile_probe() {
 # the upstream Portable_Perf_Analyzer, with the measured dimension pinned.  The
 # upstream sweep is measured as well, but it only times its largest size (see
 # scripts/btl_single_point.cpp), so the per-dimension GFLOPS values come from
-# this driver.
+# this driver.  It is compiled and smoke-tested inside the private container.
 compile_single_point() {
-    local group="$1" flags build_dir binary log
+    local group="$1" flags binary log
     flags="$(group_cxx_flags "${group}")"
-    build_dir="$(build_dir_for_group "${group}")"
     binary="$(single_point_binary_path "${group}")"
     log="${PROBE_DIR}/compile-single-point-${group}.log"
     mkdir -p "${PROBE_DIR}"
     # shellcheck disable=SC2086
-    c++ -std=c++17 -O3 -DNDEBUG -fno-exceptions ${flags} \
+    eigen_container_exec c++ -std=c++17 -O3 -DNDEBUG -fno-exceptions ${flags} \
         -I "${SOURCE_DIR}/bench/btl/actions" \
         -I "${SOURCE_DIR}/bench/btl/generic_bench" \
         -I "${SOURCE_DIR}/bench/btl/generic_bench/utils" \
@@ -331,7 +314,8 @@ compile_single_point() {
         print_log_tail "${log}"
         return 30
     }
-    "${binary}" matrix_matrix 64 > "${PROBE_DIR}/single-point-smoke-${group}.log" 2>&1 || {
+    eigen_container_exec_at "${PROBE_DIR}" "${binary}" matrix_matrix 64 \
+        > "${PROBE_DIR}/single-point-smoke-${group}.log" 2>&1 || {
         log_message "ERROR: the fixed-dimension BTL driver failed its smoke run for group ${group}"
         print_log_tail "${PROBE_DIR}/single-point-smoke-${group}.log"
         return 30
@@ -380,17 +364,15 @@ btl_runtime_self_check() {
     local binary="${BUILD_ROOT}/${group}/bench/btl/libs/eigen3/btl_eigen3_adv"
     local scratch="${SCRATCH_DIR}/selfcheck"
     local log="${PERF_WORK_DIR}/logs/selfcheck-btl.log"
-    [[ -x "${binary}" ]] || {
+    eigen_container_exec test -x "${binary}" || {
         log_message "ERROR: BTL self-check binary is missing: ${binary}"
         return 30
     }
     rm -rf -- "${scratch}"
     mkdir -p "${scratch}"
-    log_message "runtime self-check: one upstream BTL sweep (btl_eigen3_adv, action cholesky)"
-    if ! (
-        cd "${scratch}" || exit 1
-        env BTL_CONFIG="-a cholesky ${EIGEN_BTL_CONFIG}" "${binary}"
-    ) > "${log}" 2>&1; then
+    log_message "runtime self-check: one upstream BTL sweep (btl_eigen3_adv, action cholesky) inside the private container"
+    if ! eigen_container_exec_at "${scratch}" \
+        env BTL_CONFIG="-a cholesky ${EIGEN_BTL_CONFIG}" "${binary}" > "${log}" 2>&1; then
         log_message "ERROR: the upstream BTL self-check run failed; see ${log}"
         print_log_tail "${log}"
         return 30
@@ -421,18 +403,23 @@ record_actual_version() {
     log_message "recorded actual Eigen version: ${value}"
 }
 
+# The compiler that actually built the case lives inside the private container;
+# the provenance record must describe it, not the host toolchain.
+compiler_identity() {
+    eigen_container_exec c++ --version 2>/dev/null | head -n 1
+}
+
 build_eigen_base() {
     initialize_runtime || return $?
-    require_commands cmake make c++ tar gzip sha256sum awk curl python3 head || return $?
-    require_expected_arch_tools || return $?
+    prepare_eigen_build_container || return $?
     materialize_archive || return $?
     extract_source || return $?
     verify_source_version || return $?
     resolve_native_flag || return $?
-    COMPILER_IDENTITY="$(c++ --version 2>&1 | head -n 1)" || COMPILER_IDENTITY="unknown"
-    CMAKE_IDENTITY="$(cmake --version 2>&1 | head -n 1)" || CMAKE_IDENTITY="unknown"
-    log_message "compiler: ${COMPILER_IDENTITY}"
-    log_message "build tool: ${CMAKE_IDENTITY}"
+    COMPILER_IDENTITY="$(compiler_identity)" || COMPILER_IDENTITY="unknown"
+    CMAKE_IDENTITY="$(eigen_container_exec cmake --version 2>/dev/null | head -n 1)" || CMAKE_IDENTITY="unknown"
+    log_message "compiler (container): ${COMPILER_IDENTITY:-unknown}"
+    log_message "build tool (container): ${CMAKE_IDENTITY:-unknown}"
     local group
     for group in "${EIGEN_GROUPS[@]}"; do
         configure_group "${group}" || return $?
@@ -446,5 +433,7 @@ build_eigen_base() {
     record_actual_version || return $?
     printf '%s\n' "${COMPILER_IDENTITY}" > "${PERF_WORK_DIR}/compiler.txt"
     printf '%s\n' "${CMAKE_IDENTITY}" > "${PERF_WORK_DIR}/cmake.txt"
+    printf 'container_image=%s\n' "$(eigen_container_exec sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | tr -d '"' || true)" \
+        > "${PERF_WORK_DIR}/container-image.txt"
     log_message "base build completed: Eigen ${SOFTWARE_VERSION} BTL in $((${#EIGEN_GROUPS[@]})) build groups, $((${#EIGEN_ACTIONS[@]})) actions, ${EIGEN_REPS} repetitions"
 }

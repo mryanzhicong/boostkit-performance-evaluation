@@ -16,20 +16,20 @@ join_by_comma() {
 
 # One measured process: the complete stdout/stderr is kept in
 # <evidence_dir>/<label>.log and its wall time / exit code / peak RSS in
-# <evidence_dir>/<label>.json.
+# <evidence_dir>/<label>.json.  The timing harness itself runs inside the private
+# container, so every sample is produced by a container-native child process and
+# docker's management overhead never lands inside a measurement window.
 run_timed() {
     local evidence_dir="$1" label="$2" workdir="$3"
     shift 3
     mkdir -p "${evidence_dir}"
     local rc=0
-    (
-        cd "${workdir}" || exit 1
+    eigen_container_exec_at "${workdir}" \
         python3 "${SCRIPT_DIR}/scripts/run_timed.py" \
-            --json "${evidence_dir}/${label}.json" \
-            --log "${evidence_dir}/${label}.log" \
-            --timeout "${EIGEN_RUN_TIMEOUT}" \
-            -- "$@"
-    ) || rc=$?
+        --json "${evidence_dir}/${label}.json" \
+        --log "${evidence_dir}/${label}.log" \
+        --timeout "${EIGEN_RUN_TIMEOUT}" \
+        -- "$@" || rc=$?
     if ((rc != 0)); then
         # Surface the reason in the job log: a CI failure must be diagnosable
         # without downloading the result artifact.
@@ -61,7 +61,7 @@ measure_sweep() {
     local binary filter label scratch
     binary="$(btl_binary_path "${group}" "${action}")"
     filter="$(action_filter "${action}")"
-    if [[ ! -x "${binary}" ]]; then
+    if ! eigen_container_exec test -x "${binary}"; then
         log_message "ERROR: measured BTL executable is missing: ${binary}"
         return 40
     fi
@@ -85,7 +85,7 @@ measure_fixed_dimension() {
     local binary filter label scratch
     binary="$(single_point_binary_path "${group}")"
     filter="$(action_filter "${action}")"
-    if [[ ! -x "${binary}" ]]; then
+    if ! eigen_container_exec test -x "${binary}"; then
         log_message "ERROR: fixed-dimension BTL driver is missing: ${binary}"
         return 40
     fi
@@ -120,13 +120,14 @@ read_identity_file() {
 
 run_eigen_benchmarks() {
     initialize_runtime || return $?
+    check_eigen_container || return $?
     validate_reps || return $?
-    [[ -d "${SOURCE_DIR}" ]] || {
+    eigen_container_exec test -d "${SOURCE_DIR}" || {
         log_message "ERROR: the pinned Eigen source tree is missing: ${SOURCE_DIR}"
         return 40
     }
-    command -v python3 >/dev/null 2>&1 || {
-        log_message "ERROR: python3 is required by the measurement wrapper"
+    eigen_container_exec python3 --version >/dev/null 2>&1 || {
+        log_message "ERROR: python3 is required by the measurement wrapper inside the container"
         return 40
     }
     rm -rf -- "${RUNS_DIR}"
@@ -138,8 +139,8 @@ run_eigen_benchmarks() {
         done
     done
 
-    COMPILER_IDENTITY="$(read_identity_file "${PERF_WORK_DIR}/compiler.txt" "$(c++ --version 2>&1 | head -n 1)")"
-    CMAKE_IDENTITY="$(read_identity_file "${PERF_WORK_DIR}/cmake.txt" "$(cmake --version 2>&1 | head -n 1)")"
+    COMPILER_IDENTITY="$(read_identity_file "${PERF_WORK_DIR}/compiler.txt" "$(eigen_container_exec c++ --version 2>/dev/null | head -n 1)")"
+    CMAKE_IDENTITY="$(read_identity_file "${PERF_WORK_DIR}/cmake.txt" "$(eigen_container_exec cmake --version 2>/dev/null | head -n 1)")"
     export EIGEN_COMPILER="${COMPILER_IDENTITY}"
     export EIGEN_CMAKE="${CMAKE_IDENTITY}"
     EIGEN_GROUPS_CSV="$(join_by_comma "${EIGEN_GROUPS[@]}")"
