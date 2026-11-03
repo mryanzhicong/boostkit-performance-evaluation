@@ -18,13 +18,16 @@ PRODUCER = re.compile(
 
 
 def producer_result(text: str, expected_records: int) -> float:
-    rows = list(PRODUCER.finditer(text))
-    if len(rows) != 1:
-        raise ValueError(f"expected one Kafka producer summary, found {len(rows)}")
-    row = rows[0]
-    if int(row["records"]) != expected_records:
-        raise ValueError("Kafka producer did not send the expected record count")
-    return positive(float(row["mbps"]))
+    summaries = [
+        row for row in PRODUCER.finditer(text)
+        if int(row["records"]) == expected_records
+    ]
+    if len(summaries) != 1:
+        raise ValueError(
+            f"expected one Kafka producer final summary for {expected_records} "
+            f"records, found {len(summaries)}"
+        )
+    return positive(float(summaries[0]["mbps"]))
 
 
 def consumer_result(text: str, expected_records: int) -> float:

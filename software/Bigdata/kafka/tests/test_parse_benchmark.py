@@ -30,6 +30,28 @@ def test_extracts_exactly_two_original_throughputs() -> None:
     assert result["parameters"]["record_count"] == 10_000_000
 
 
+def test_ignores_producer_progress_before_final_summary() -> None:
+    progress = (
+        "4429073 records sent, 885283.4 records/sec (864.53 MB/sec), "
+        "141.2 ms avg latency, 804.0 ms max latency."
+    )
+    final = (
+        "10000000 records sent, 1008878.127522 records/sec (985.23 MB/sec), "
+        "104.31 ms avg latency, 804.00 ms max latency, 78 ms 50th, "
+        "302 ms 95th, 464 ms 99th, 720 ms 99.9th."
+    )
+    consumer = (
+        "start.time, end.time, data.consumed.in.MB, MB.sec, data.consumed.in.nMsg, "
+        "nMsg.sec, rebalance.time.ms, fetch.time.ms, fetch.MB.sec, fetch.nMsg.sec\n"
+        "2026-11-03 14:28:26:635, 2026-11-03 14:28:56:152, 9765.6250, "
+        "330.8475, 10000000, 338787.8172, 1793687307529, -1793687278012, "
+        "-0.0000, -0.0056\n"
+    )
+    result = MODULE.build_result(f"{progress}\n{final}\n", consumer, 10_000_000)
+    assert result["results"]["producer/throughput"]["value"] == 985.23
+    assert result["results"]["consumer/throughput"]["value"] == 330.8475
+
+
 @pytest.mark.parametrize(
     "producer,consumer,records",
     [
