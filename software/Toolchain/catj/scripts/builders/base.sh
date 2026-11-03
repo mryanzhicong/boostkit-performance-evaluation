@@ -2,10 +2,32 @@
 #
 # Build stage for the catj case.
 #
-# The stage installs the pinned Node.js runtime, stages the vendored catj
-# release and dependency tree, regenerates and verifies the fixed JSON inputs,
-# and runs every scenario once as a cold-cache correctness gate.
+# The pinned Node.js archive is downloaded and SHA-256 verified on the host and
+# extracted inside the task's private openEuler container; staging the vendored
+# catj release, regenerating the fixed JSON inputs and running every scenario
+# once as a cold-cache correctness gate all execute in that container.
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
+
+prepare_catj_build_container() {
+    local -a dnf_options=(--setopt=install_weak_deps=False)
+    require_catj_docker || return 30
+    start_catj_container || return $?
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message "installing the Node.js runtime and build prerequisites inside the private container"
+    catj_container_exec_root dnf "${dnf_options[@]}" install -y \
+        tar xz gzip coreutils findutils sed gawk grep glibc libstdc++ python3 || {
+        log_message "ERROR: container build dependencies failed to install"
+        return 30
+    }
+}
+
+catj_node() {
+    catj_container_exec "${NODE_BIN}" "$@"
+}
+
+catj_node_eval() {
+    catj_container_exec "${NODE_BIN}" -e "$1"
+}
 
 install_pinned_node() {
     local tarball sha256 url candidate downloaded=0
@@ -46,19 +68,31 @@ install_pinned_node() {
         while IFS= read -r url; do log_message "  ${url}"; done < <(node_urls)
         return 30
     fi
-    log_message "extracting Node.js ${NODE_VERSION}"
-    tar -xJf "${candidate}" -C "${NODE_HOME}" || return 30
-    if [[ ! -x "${NODE_BIN}" ]]; then
+    # The private container only sees the case directory, ${PERF_WORK_DIR} and
+    # ${RESULTS_DIR}, so the verified archive is staged into the work directory
+    # before the container extracts it.
+    local archive="${PERF_WORK_DIR}/downloads/${tarball}"
+    mkdir -p "${PERF_WORK_DIR}/downloads"
+    if [[ "${candidate}" != "${archive}" ]]; then
+        cp -f -- "${candidate}" "${archive}" || {
+            log_message "ERROR: cannot stage the Node.js archive into ${PERF_WORK_DIR}"
+            return 30
+        }
+    fi
+    log_message "extracting Node.js ${NODE_VERSION} inside the private container"
+    catj_container_exec rm -rf "${NODE_DIR}"
+    catj_container_exec tar -xJf "${archive}" -C "${NODE_HOME}" || return 30
+    if ! catj_container_exec test -x "${NODE_BIN}"; then
         log_message "ERROR: Node.js binary is missing after extraction: ${NODE_BIN}"
         return 30
     fi
     local reported
-    reported="$("${NODE_BIN}" --version 2>/dev/null || true)"
+    reported="$(catj_node --version 2>/dev/null || true)"
     if [[ "${reported}" != "${NODE_VERSION}" ]]; then
         log_message "ERROR: expected node ${NODE_VERSION}, extracted ${reported:-unknown}"
         return 30
     fi
-    log_message "Node.js ${NODE_VERSION} installed at ${NODE_DIR}"
+    log_message "Node.js ${NODE_VERSION} installed at ${NODE_DIR} and runnable inside the private container"
 }
 
 stage_application() {
@@ -108,14 +142,14 @@ stage_application() {
     for entry in "${CATJ_DEPENDENCIES[@]}"; do
         name="${entry%%=*}"
         expected="${entry#*=}"
-        actual="$("${NODE_BIN}" -e "process.stdout.write(require('${APP_DIR}/node_modules/${name}/package.json').version)")"
+        actual="$(catj_node_eval "process.stdout.write(require('${APP_DIR}/node_modules/${name}/package.json').version)")"
         if [[ "${actual}" != "${expected}" ]]; then
             log_message "ERROR: dependency ${name} is ${actual}, expected ${expected}"
             return 30
         fi
     done
     local catj_version
-    catj_version="$("${NODE_BIN}" -e "process.stdout.write(require('${package_json}').version)")"
+    catj_version="$(catj_node_eval "process.stdout.write(require('${package_json}').version)")"
     if [[ "${catj_version}" != "${SOFTWARE_VERSION}" ]]; then
         log_message "ERROR: staged catj is ${catj_version}, expected ${SOFTWARE_VERSION}"
         return 30
@@ -127,8 +161,9 @@ stage_application() {
 generate_inputs() {
     rm -rf "${INPUT_DIR}"
     mkdir -p "${INPUT_DIR}"
-    log_message "generating the fixed JSON inputs"
-    if ! "${NODE_BIN}" "${SCRIPT_DIR}/fixtures/generate_inputs.js" \
+    log_message "generating the fixed JSON inputs inside the private container"
+    if ! catj_container_exec_at "${PERF_WORK_DIR}" \
+        "${NODE_BIN}" "${SCRIPT_DIR}/fixtures/generate_inputs.js" \
         --scenarios "${SCENARIOS_FILE}" --out "${INPUT_DIR}" >"${TMPDIR}/generate-inputs.log" 2>&1; then
         log_message "ERROR: JSON input generation failed"
         tail -n 20 "${TMPDIR}/generate-inputs.log" >&2 || true
@@ -161,10 +196,14 @@ prefetch_scenarios() {
             --scenarios "${SCENARIOS_FILE}" --scenario "${scenario}" --fields)
         log_message "prefetching scenario ${scenario} (${mode} mode, ${iterations} call(s))"
         if [[ "${mode}" == stdin ]]; then
-            FORCE_COLOR=0 "${NODE_BIN}" "${APP_DIR}/node_modules/catj/catj.js" \
-                <"${INPUT_DIR}/${input_file}" >"${warmup_dir}/${scenario}.out" 2>"${warmup_dir}/${scenario}.err"
+            # `docker exec` does not forward the host's stdin, so the input file
+            # is read with a redirection inside the container.
+            catj_container_exec_at "${PERF_WORK_DIR}" sh -c \
+                "FORCE_COLOR=0 '${NODE_BIN}' '${APP_DIR}/node_modules/catj/catj.js' < '${INPUT_DIR}/${input_file}'" \
+                >"${warmup_dir}/${scenario}.out" 2>"${warmup_dir}/${scenario}.err"
         else
-            FORCE_COLOR=0 "${NODE_BIN}" "${APP_DIR}/node_modules/catj/catj.js" "${INPUT_DIR}/${input_file}" \
+            catj_container_exec_at "${PERF_WORK_DIR}" \
+                env FORCE_COLOR=0 "${NODE_BIN}" "${APP_DIR}/node_modules/catj/catj.js" "${INPUT_DIR}/${input_file}" \
                 >"${warmup_dir}/${scenario}.out" 2>"${warmup_dir}/${scenario}.err"
         fi
         if ! python3 "${SCRIPT_DIR}/scripts/results/verify_output.py" \
@@ -178,7 +217,8 @@ prefetch_scenarios() {
 }
 
 write_runtime_record() {
-    python3 "${SCRIPT_DIR}/scripts/results/write_runtime.py" \
+    catj_container_exec_at "${PERF_WORK_DIR}" \
+        python3 "${SCRIPT_DIR}/scripts/results/write_runtime.py" \
         --scenarios "${SCENARIOS_FILE}" \
         --output "${RUNTIME_JSON}" \
         --node-bin "${NODE_BIN}" \
@@ -203,6 +243,7 @@ build_catj_base() {
     initialize_runtime || return $?
     validate_reps || return $?
     check_architecture || return $?
+    prepare_catj_build_container || return $?
     install_pinned_node || return 30
     stage_application || return 30
     generate_inputs || return 30

@@ -6,6 +6,51 @@ objects flattened to `.<index>.<path> = value` lines), extended to three input
 scales and both input modes (`file` argument and `stdin`).  Node.js start-up and
 the complete stdout capture are part of the wall time.
 
+## Containerized execution
+
+The build, start, test and stop stages of this case all run in a per-run
+openEuler 24.03 LTS SP4 container, using the same container contract as
+`software/Database/mysql`, `software/Bigdata/ray` and
+`software/Others/unixbench`.  The host only needs Docker, the
+download/verification tools and the Framework; no Node.js toolchain is
+installed on the host.
+
+- Image: the official openEuler 24.03 LTS SP4 Docker archive, read from
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz`
+  with its `.sha256sum` when present and downloaded from
+  `https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/<arch>/`
+  otherwise; archive SHA-256, image architecture and the image's
+  `/etc/os-release` are verified after loading.
+- Container: named `boostkit-catj-<arch>-<run id>` and labelled
+  `boostkit.catj.run-id=<run id>`, host network, runs as the Runner user, mounts
+  the case directory read-only and `${PERF_WORK_DIR}` / `${RESULTS_DIR}`
+  read-write; no `--privileged`.
+- Node.js: the official `node-v22.23.4-linux-<arch>.tar.xz` archive is still
+  downloaded and SHA-256 verified on the host (pre-placed offline copy first),
+  extracted into `${PERF_WORK_DIR}` and **executed inside the container**.  The
+  openEuler 24.03 LTS SP4 userland (glibc 2.38) satisfies the archive's glibc
+  requirement, so no distribution Node.js package is installed; the runtime is
+  pinned and identical on both architectures.  `tar`, `xz`, `libstdc++` and
+  `python3` come from the container's `dnf` (with
+  `--setopt=install_weak_deps=False`, because the read-only `/etc/passwd` and
+  `/etc/group` mounts break `useradd`/`groupadd` scriptlets).
+- Container-side work: Node.js extraction, the dependency/version probes,
+  fixed-input generation, the runtime record, the cold-cache prefetch of every
+  scenario, and each timed sample through
+  `scripts/results/run_measure.py`.
+- Host-side work: downloading and verifying the pinned archives, the strict
+  parser (`results.json`), `scripts/results/verify_output.py` and removing this
+  task's container.
+- Measurement: each sample is a container-native child of `run_measure.py`, so
+  `docker exec` overhead never enters a measurement window; sample counts,
+  warm-ups, the `FORCE_COLOR=0`/locale/thread-pool environment and the parser
+  strictness are unchanged.
+- Cleanup: `stop` removes the container first and then proves no measured
+  process of this run survives; it is idempotent and safe to call on failure.
+
+Running the case standalone also requires Docker and an accessible Docker
+daemon; otherwise the build stage returns 30 with a clear message.
+
 ## 1. Pinned inputs
 
 | Input | Pinned value | Verification |

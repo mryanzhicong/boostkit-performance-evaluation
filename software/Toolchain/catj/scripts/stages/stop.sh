@@ -16,6 +16,11 @@ find_case_processes() {
 
 stop_catj_runtime() {
     initialize_runtime || return $?
+
+    # Removing this task's container terminates every process it owns; the scan
+    # below then only has to prove that nothing of this run survives outside it.
+    remove_catj_container || return $?
+
     local -a pids=()
     local pid attempt survivors
     mapfile -t pids < <(find_case_processes "${PERF_WORK_DIR}")
