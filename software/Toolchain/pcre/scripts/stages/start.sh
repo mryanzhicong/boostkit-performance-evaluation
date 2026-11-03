@@ -22,19 +22,25 @@ verify_fixture() {
 start_pcre_runtime() {
     initialize_runtime || return $?
 
+    check_pcre_container || return $?
+
     local tool
     for tool in pcretest pcregrep pcre-config; do
-        [[ -x "$(pcre_tool "${tool}")" ]] || {
+        pcre_container_exec test -x "$(pcre_tool "${tool}")" || {
             fail_message "required tool is missing: $(pcre_tool "${tool}")"
             return 20
         }
     done
-    [[ -x "${PCRE_BENCH_BIN}" ]] || {
+    pcre_container_exec test -x "${PCRE_BENCH_BIN}" || {
         fail_message "benchmark harness is missing: ${PCRE_BENCH_BIN}"
         return 20
     }
-    [[ -f "${PCRE_SRC_DIR}/RunTest" && -d "${PCRE_SRC_DIR}/testdata" ]] || {
+    pcre_container_exec test -f "${PCRE_SRC_DIR}/RunTest" || {
         fail_message "upstream RunTest suite is not available under ${PCRE_SRC_DIR}"
+        return 20
+    }
+    pcre_container_exec test -d "${PCRE_SRC_DIR}/testdata" || {
+        fail_message "upstream RunTest data is not available under ${PCRE_SRC_DIR}"
         return 20
     }
     [[ -s "${PERF_ACTUAL_VERSION_FILE}" ]] || {
@@ -42,10 +48,10 @@ start_pcre_runtime() {
         return 20
     }
 
-    log_message "generating deterministic fixtures"
+    log_message "generating deterministic fixtures inside the private container"
     rm -rf -- "${PCRE_FIXTURES_DIR}"
     mkdir -p "${PCRE_FIXTURES_DIR}"
-    python3 "${SCRIPT_DIR}/scripts/fixtures/generate_fixtures.py" \
+    pcre_container_exec python3 "${SCRIPT_DIR}/scripts/fixtures/generate_fixtures.py" \
         "${PCRE_FIXTURES_DIR}" > "${PCRE_STATE_DIR}/fixtures.log" 2>&1 || {
         fail_message "fixture generation failed; log:"
         tail -n 40 -- "${PCRE_STATE_DIR}/fixtures.log" >&2 || true
@@ -95,17 +101,19 @@ PY
     # available proof that the measured stage needs no network at all; the case
     # requires it unless the operator explicitly opts out for a restricted
     # runner, in which case the fallback is recorded in the result runtime
-    # context (never in the cross-architecture parameter set).
+    # context (never in the cross-architecture parameter set).  The probe runs
+    # inside the private container so it describes exactly where the measured
+    # process tree will run.
     local network_mode="none"
-    if command -v unshare >/dev/null 2>&1 && unshare -n true >/dev/null 2>&1; then
+    if pcre_container_exec unshare -n true >/dev/null 2>&1; then
         network_mode="unshare"
     fi
     printf '%s\n' "${network_mode}" > "${PCRE_OFFLINE_DIR_MODE_FILE}"
     if [[ "${network_mode}" != "unshare" ]]; then
-        log_message "WARNING: network namespace isolation (unshare -n) is unavailable on this runner (unprivileged user namespaces disabled); continuing with network mode '${network_mode}'"
+        log_message "WARNING: network namespace isolation (unshare -n) is unavailable inside the container (unprivileged user namespaces disabled); continuing with network mode '${network_mode}'"
         log_message "WARNING: the measured workload uses no network and all fixtures are pinned by SHA-256, so results remain reproducible; recorded in the run context"
     else
-        log_message "offline measurement verified: unshare -n is available"
+        log_message "offline measurement verified: unshare -n is available inside the private container"
     fi
 
     local actual_version

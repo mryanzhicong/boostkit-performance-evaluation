@@ -31,10 +31,10 @@ run_measured() {
     if [[ "${offline_flag}" == "1" ]]; then
         wrapper+=(--offline)
     fi
-    (
-        cd "${SCENARIO_WORKDIR}" || exit 1
-        "${wrapper[@]}" -- "${SCENARIO_CMD[@]}"
-    ) || rc=$?
+    # The timing harness runs inside the private container, so every sample is
+    # produced by a container-native child process and docker's management
+    # overhead never lands inside a measurement window.
+    pcre_container_exec_at "${SCENARIO_WORKDIR}" "${wrapper[@]}" -- "${SCENARIO_CMD[@]}" || rc=$?
     if (( rc != 0 )); then
         fail_message "scenario ${scenario} ${label} failed with exit code ${rc}"
         if [[ -f "${directory}/${label}.log" ]]; then
@@ -51,12 +51,13 @@ run_measured() {
 
 run_pcre_benchmarks() {
     initialize_runtime || return $?
+    check_pcre_container || return $?
 
-    [[ -x "$(pcre_tool pcretest)" ]] || {
+    pcre_container_exec test -x "$(pcre_tool pcretest)" || {
         fail_message "pcretest is missing; build stage did not complete"
         return 50
     }
-    [[ -x "${PCRE_BENCH_BIN}" ]] || {
+    pcre_container_exec test -x "${PCRE_BENCH_BIN}" || {
         fail_message "benchmark harness is missing; build stage did not complete"
         return 50
     }
@@ -120,7 +121,7 @@ run_pcre_benchmarks() {
 
     export PCRE_NETWORK_MODE="${network_mode}"
     export PCRE_C_COMPILER="$(compiler_identity)"
-    export PCRE_PCRETEST_FEATURES="$("$(pcre_tool pcretest)" -C 2>/dev/null | tr '\n' ';' || true)"
+    export PCRE_PCRETEST_FEATURES="$(pcre_container_exec "$(pcre_tool pcretest)" -C 2>/dev/null | tr '\n' ';' || true)"
     export PCRE_ACTUAL_VERSION_STRING="$(cat "${PERF_ACTUAL_VERSION_FILE}")"
     export PCRE_SOURCE_SHA256 PCRE_SOURCE_NAME PCRE_BUILD_JOBS PCRE_CFLAGS
     export PCRE_CONFIGURE_OPTIONS_TEXT="${PCRE_CONFIGURE_OPTIONS[*]}"

@@ -15,6 +15,34 @@ Expressions）8.45 的 8-bit 库，再运行上游 `pcretest`、`pcregrep` 与 `
 PCRE1（8.45）与 PCRE2 是两条独立的代码线。本用例只测 PCRE1 8.45：构建、`pcretest`
 与 `pcregrep` 都来自该源码包，不使用系统预装的 PCRE2。
 
+## 容器化执行
+
+本用例的构建、启动、测试与清理全部在每次任务专属的 openEuler 24.03 LTS SP4 私有容器内
+完成，与 `software/Database/mysql`、`software/Bigdata/ray`、`software/Others/unixbench`
+使用同一套容器契约。宿主机只需要 Docker、下载/校验工具与 Framework，不再安装编译器和
+`dnf` 包。
+
+- 基础镜像：openEuler 24.03 LTS SP4 官方 Docker 归档，优先读取
+  `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz` 与同名
+  `.sha256sum`，缺失时从
+  `https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/<arch>/` 下载；加载后校验
+  归档 SHA-256、镜像架构与镜像内 `/etc/os-release`。
+- 容器：名字 `boostkit-pcre-<arch>-<运行ID>`，标签 `boostkit.pcre.run-id=<运行ID>`，使用宿主
+  网络，以 Runner 用户身份运行；只读挂载用例目录，读写挂载 `${PERF_WORK_DIR}` 与
+  `${RESULTS_DIR}`，容器内路径与宿主完全相同。
+- 容器内：`dnf` 安装 `gcc`、`gcc-c++`、`make`、`python3` 等构建依赖；解包、`configure`、
+  `make`、版本探测、固定负载与计时包装（`scripts/run_timed.py`）都在容器内执行，
+  `${PERF_WORK_DIR}/home` 作为容器内 `HOME`。
+- 宿主机：只负责下载并校验源码包（优先 `/home/runner/software/pcre/`）、严格解析
+  `results.json`、清理本任务的容器。结果解析器不进入容器。
+- 测量：每条样本由容器内进程直接派生，`docker exec` 的管理开销不进入计时窗口。若容器内
+  不允许 `unshare -n`，用例沿用既有的降级路径，把实际网络模式写入结果
+  `runtime_context`；输入全部按 SHA-256 固定，测量本身不使用网络。
+- 清理：`stop` 阶段幂等删除本任务容器（标签不符拒绝删除）；取消任务遗留的同软件容器会在
+  下一次 build 时按名字前缀清理。
+
+独立运行同样需要 Docker 与可访问的 Docker daemon；不满足时 build 阶段返回 30 并给出提示。
+
 ## 软件与测试工具
 
 | 项目 | 来源与版本 | 位置 |
@@ -25,16 +53,18 @@ PCRE1（8.45）与 PCRE2 是两条独立的代码线。本用例只测 PCRE1 8.4
 | `RunTest` | 源码包自带的上游测试套件 | `${PERF_WORK_DIR}/pcre-src/RunTest` |
 | `pcre_bench` | 本用例自带的 MIT 许可固定负载（`benchmark/pcre_bench.c`） | `${PERF_WORK_DIR}/pcre-bench/pcre_bench` |
 
-Runner 通过 `dnf`（Debian/Ubuntu 上为 `apt-get`）安装缺失的 `gcc`、`make`、`tar`、
-`coreutils`、`python3`，以及 `curl`/`wget` 之一；安装后会再次自检这些命令，失败则
-build 阶段返回 30。构建只需要 C 编译器与系统 C 库，不需要 readline、libedit 或 zlib：
-配置时已关闭它们，`pcretest` 的读入、编辑与 `pcregrep` 的压缩支持因此不可用，但不影响
-本用例的命令行与计时行为。
+容器内通过 `dnf` 安装构建与运行所需的 `gcc`、`gcc-c++`、`make`、`tar`、`file`、
+`coreutils`、`findutils`、`sed`、`gawk`、`grep`、`util-linux`、`glibc-devel`、`binutils`
+与 `python3`；安装失败则 build 阶段返回 30。宿主机不再安装这些包，也不需要 `sudo`。构建
+只需要 C 编译器与系统 C 库，不需要 readline、libedit 或 zlib：配置时已关闭它们，
+`pcretest` 的读入、编辑与 `pcregrep` 的压缩支持因此不可用，但不影响本用例的命令行与计时
+行为。
 
 Framework 将本次任务的工作目录传给脚本，以下称为 `${PERF_WORK_DIR}`。独立运行时默认位于
 `/home/runner/boostkit-perf/pcre/<运行ID>/`。源码、构建、安装、fixtures 与临时文件都放在
-该目录下；结果写入单独的 `${RESULTS_DIR}`。测量命令在 `unshare -n` 新建的网络命名空间内
-执行，构建期已把源码包下载并校验完毕，测量期不需要网络。
+该目录下（容器内看到的是同一路径）；结果写入单独的 `${RESULTS_DIR}`。测量命令在容器内
+执行，`unshare -n` 可用时还会新建网络命名空间；构建期已把源码包下载并校验完毕，测量期
+不需要网络。
 
 ## PCRE 获取、构建与安装
 
