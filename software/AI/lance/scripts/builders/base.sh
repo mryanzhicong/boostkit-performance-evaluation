@@ -39,7 +39,8 @@ build_lance_base() {
     log 'installing upstream pinned Rust toolchain inside the private container'
     container_exec curl -fSL --retry 3 --connect-timeout 30 \
         -o "${PERF_WORK_DIR}/rustup-init.sh" https://sh.rustup.rs || return 40
-    container_exec sh "${PERF_WORK_DIR}/rustup-init.sh" -y --profile minimal --default-toolchain none || return 40
+    container_exec sh "${PERF_WORK_DIR}/rustup-init.sh" -y --no-modify-path \
+        --profile minimal --default-toolchain none || return 40
     log 'building unmodified upstream pylance with maturin --release inside the container'
     container_exec sh -c 'cd "$1" && PATH="$2:$PATH" VIRTUAL_ENV="$3" \
         "$3/bin/maturin" develop --release' sh \
