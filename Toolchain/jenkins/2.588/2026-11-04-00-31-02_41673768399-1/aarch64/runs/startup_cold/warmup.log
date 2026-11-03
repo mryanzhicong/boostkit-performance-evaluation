@@ -1,0 +1,75 @@
+[jenkins-driver] 2026-11-04 00:25:50 hard timeout armed: 300s
+[jenkins-driver] 2026-11-04 00:25:50 scenario startup_cold action=startup_cold scale=0 home=/home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/homes/startup_cold-warmup template=/home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/jenkins-home-template
+[jenkins-driver] 2026-11-04 00:25:50 reset empty JENKINS_HOME: /home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/homes/startup_cold-warmup
+[jenkins-driver] 2026-11-04 00:25:50 starting controller: /usr/lib/jvm/java-21-openjdk-21.0.12.8-4.oe2403sp4.aarch64/bin/java -Xms512m -Xmx512m -Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true -Dhudson.model.UpdateCenter.updateCenterUrl=http://127.0.0.1:1/update-center.json -Djenkins.model.DownloadService.noSignatureCheck=true -Dhudson.model.UsageStatistics.disabled=true -jar /home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/jenkins.war --httpPort=19213 --httpListenAddress=127.0.0.1
+Running from: /home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/jenkins.war
+webroot: /home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/homes/startup_cold-warmup/war
+2026-11-03 16:25:50.599+0000 [id=1]	INFO	winstone.Logger#logInternal: Beginning extraction from war file
+2026-11-03 16:25:51.056+0000 [id=1]	WARNING	o.e.j.ee9.nested.ContextHandler#setContextPath: Empty contextPath
+2026-11-03 16:25:51.097+0000 [id=1]	INFO	org.eclipse.jetty.server.Server#doStart: jetty-12.1.14; built: 2026-10-02T05:48:05.032Z; git: 15cecbd757a2f6b0fdc6a8944f4c6d0020b17da0; jvm 21.0.12+8
+2026-11-03 16:25:51.452+0000 [id=1]	INFO	o.e.j.e.w.StandardDescriptorProcessor#visitServlet: NO JSP Support for /, did not find org.eclipse.jetty.ee9.jsp.JettyJspServlet
+2026-11-03 16:25:51.486+0000 [id=1]	INFO	o.e.j.s.DefaultSessionIdManager#doStart: Session workerName=node0
+2026-11-03 16:25:51.743+0000 [id=1]	INFO	hudson.WebAppMain#contextInitialized: Jenkins home directory: /home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/homes/startup_cold-warmup found at: EnvVars.masterEnvVars.get("JENKINS_HOME")
+2026-11-03 16:25:51.836+0000 [id=1]	INFO	o.e.j.s.handler.ContextHandler#doStart: Started oeje9n.ContextHandler$CoreContextHandler@77010a30{Jenkins v2.588,/,b=file:///home/runner/boostkit-perf/jenkins/2.588/aarch64/41673768399-1/homes/startup_cold-warmup/war/,a=AVAILABLE,h=oeje9n.ContextHandler$CoreContextHandler$CoreToNestedHandler@4bb003e9{STARTED}}
+2026-11-03 16:25:51.847+0000 [id=143]	INFO	hudson.model.UpdateCenter#<clinit>: Using a custom update center defined by the system property: http://127.0.0.1:1/update-center.json
+2026-11-03 16:25:51.850+0000 [id=1]	INFO	o.e.j.server.AbstractConnector#doStart: Started oejs.ServerConnector@7495699f{HTTP/1.1, (http/1.1)}{127.0.0.1:19213}
+2026-11-03 16:25:51.851+0000 [id=1]	INFO	org.eclipse.jetty.server.Server#doStart: Started oejs.Server@7c2312fa{STARTING}[12.1.14,sto=0] @755ms
+2026-11-03 16:25:51.852+0000 [id=149]	INFO	winstone.Logger#logInternal: Winstone Servlet Engine running: controlPort=disabled
+2026-11-03 16:25:51.947+0000 [id=143]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.588
+2026-11-03 16:25:52.027+0000 [id=159]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+2026-11-03 16:25:52.042+0000 [id=179]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+2026-11-03 16:25:52.657+0000 [id=188]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+2026-11-03 16:25:52.663+0000 [id=216]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+2026-11-03 16:25:52.670+0000 [id=224]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+2026-11-03 16:25:52.799+0000 [id=243]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+2026-11-03 16:25:52.802+0000 [id=247]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+2026-11-03 16:25:52.805+0000 [id=253]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+2026-11-03 16:25:52.809+0000 [id=260]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+2026-11-03 16:25:52.825+0000 [id=279]	INFO	hudson.util.Retrier#start: Attempt #1 to do the action check updates server
+2026-11-03 16:25:52.834+0000 [id=279]	INFO	hudson.util.Retrier#start: The attempt #1 to do the action check updates server failed with an allowed exception:
+java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.Net.pollConnect(Native Method)
+	at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:694)
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:542)
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592)
+	at java.base/java.net.Socket.connect(Socket.java:751)
+	at java.base/sun.net.NetworkClient.doConnect(NetworkClient.java:178)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:539)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:644)
+	at java.base/sun.net.www.http.HttpClient.<init>(HttpClient.java:290)
+	at java.base/sun.net.www.http.HttpClient.New(HttpClient.java:394)
+	at java.base/sun.net.www.http.HttpClient.New(HttpClient.java:416)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getNewHttpClient(HttpURLConnection.java:1327)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect0(HttpURLConnection.java:1260)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:1146)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.connect(HttpURLConnection.java:1075)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632)
+	at hudson.model.DownloadService.loadJSON(DownloadService.java:122)
+	at hudson.model.UpdateSite.updateDirectlyNow(UpdateSite.java:235)
+	at hudson.model.UpdateSite.updateDirectlyNow(UpdateSite.java:230)
+	at hudson.PluginManager.checkUpdatesServer(PluginManager.java:2152)
+	at hudson.util.Retrier.start(Retrier.java:62)
+	at hudson.PluginManager.doCheckUpdatesServer(PluginManager.java:2123)
+	at jenkins.DailyCheck.execute(DailyCheck.java:93)
+	at hudson.model.AsyncPeriodicWork.lambda$doRun$0(AsyncPeriodicWork.java:110)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-11-03 16:25:52.834+0000 [id=279]	INFO	hudson.util.Retrier#start: Calling the listener of the allowed exception 'Connection refused' at the attempt #1 to do the action check updates server
+2026-11-03 16:25:52.836+0000 [id=279]	INFO	hudson.util.Retrier#start: Attempted the action check updates server for 1 time(s) with no success
+2026-11-03 16:25:52.836+0000 [id=279]	SEVERE	hudson.PluginManager#doCheckUpdatesServer: Error checking update sites for 1 attempt(s). Last exception was: ConnectException: Connection refused
+2026-11-03 16:25:52.941+0000 [id=281]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+2026-11-03 16:25:53.010+0000 [id=143]	INFO	hudson.lifecycle.Lifecycle#onReady: Jenkins is fully up and running
+[jenkins-driver] 2026-11-04 00:25:53 controller ready after 2.934s (X-Jenkins 2.588)
+2026-11-03 16:25:53.145+0000 [id=150]	INFO	winstone.Logger#logInternal: JVM is terminating. Shutting down Jetty
+2026-11-03 16:25:53.146+0000 [id=150]	INFO	org.eclipse.jetty.server.Server#doStop: Stopped oejs.Server@7c2312fa{STOPPING}[12.1.14,sto=0]
+2026-11-03 16:25:53.154+0000 [id=150]	INFO	o.e.j.server.AbstractConnector#doStop: Stopped oejs.ServerConnector@7495699f{HTTP/1.1, (http/1.1)}{127.0.0.1:19213}
+2026-11-03 16:25:53.157+0000 [id=150]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+2026-11-03 16:25:53.158+0000 [id=150]	INFO	jenkins.model.Jenkins$13#onAttained: Started termination
+2026-11-03 16:25:53.164+0000 [id=150]	INFO	jenkins.model.Jenkins$13#onAttained: Completed termination
+2026-11-03 16:25:53.164+0000 [id=150]	INFO	jenkins.model.Jenkins#_cleanUpDisconnectComputers: Starting node disconnection
+2026-11-03 16:25:53.175+0000 [id=150]	INFO	jenkins.model.Jenkins#_cleanUpShutdownPluginManager: Stopping plugin manager
+2026-11-03 16:25:53.175+0000 [id=150]	INFO	jenkins.model.Jenkins#_cleanUpPersistQueue: Persisting build queue
+2026-11-03 16:25:53.180+0000 [id=150]	INFO	jenkins.model.Jenkins#_cleanUpAwaitDisconnects: Waiting for node disconnection completion
+2026-11-03 16:25:53.181+0000 [id=150]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+2026-11-03 16:25:53.186+0000 [id=150]	INFO	winstone.Logger#logInternal: Jetty shutdown successfully
+RESULT scenario=startup_cold wall=2.933505 rss_kib=344528 checks={"jenkins_version": "2.588", "ready": true}
