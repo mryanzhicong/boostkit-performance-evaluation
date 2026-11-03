@@ -38,6 +38,8 @@ cd "${PERF_WORK_DIR}/lance-13.0.0/python"
 
 实际脚本还设置私有 `CARGO_HOME`、`RUSTUP_HOME`，使 Rust 工具链及编译缓存留在 `${PERF_WORK_DIR}`。Rust 版本由上游 `rust-toolchain.toml` 固定；不启用额外的 `fp16kernels`、GPU 或架构专用选项。构建后检查 `pylance` 的实际版本为 `13.0.0`，记录上游提交到 `source-commit.txt`，并将实际 Python 依赖版本写入 `python-dependencies.txt`。
 
+容器内所有 `pip` 命令默认使用华为云 PyPI 镜像 `https://repo.huaweicloud.com/repository/pypi/simple`，缓存位于本次任务的 `${PERF_WORK_DIR}/pip-cache`。如需指定其他 PyPI 源，在启动前设置 `LANCE_PYPI_INDEX_URL`。该设置仅影响 Python 包下载；Git 源码、Rust 工具链与 Cargo 依赖仍使用各自的下载地址。
+
 ## 数据准备与测试
 
 本地 `sift.tar.gz` 是优先来源。缺失时脚本先尝试 TexMex HTTPS 地址，失败后尝试上游文档给出的 FTP 地址。下载文件只存于本任务私有目录。解压前检查归档路径，并核对 `sift_base.fvecs` 与 `sift_query.fvecs`。脚本记录两个原始文件的 SHA-256；跨架构汇总要求它们相同。
