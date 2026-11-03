@@ -68,6 +68,10 @@ build_ray_base() {
     [[ -s "${wheel}" ]] || { log_message "ERROR: official Ray wheel is missing: ${wheel_name}"; return 30; }
     printf '%s  %s\n' "${wheel_checksum}" "${wheel}" | sha256sum -c - || return 30
     ray_container_exec "${RAY_VENV}/bin/python" -m pip install "${wheel}" || return 30
+    log_message 'installing official Shuffle runtime dependencies into the private Ray environment'
+    ray_container_exec "${RAY_VENV}/bin/python" -m pip install --only-binary=:all: \
+        "numpy==${RAY_NUMPY_VERSION}" "tqdm==${RAY_TQDM_VERSION}" || return 30
+    verify_shuffle_python_dependencies || return 30
     local actual
     actual="$(ray_container_exec "${RAY_VENV}/bin/python" -c 'import ray; print(ray.__version__)')" || return 30
     [[ "${actual}" == "${SOFTWARE_VERSION}" ]] || { log_message "ERROR: installed Ray version is ${actual}"; return 30; }

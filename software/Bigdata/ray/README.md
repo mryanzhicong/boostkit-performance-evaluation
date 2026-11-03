@@ -12,12 +12,13 @@
 | Shuffle 用例 | [Ray `ray-2.55.1` 标签的原始 `shuffle_test.py`](https://github.com/ray-project/ray/blob/ray-2.55.1/release/nightly_tests/shuffle/shuffle_test.py)，SHA-256 为 `38bac871b718d2192e325054bb0fadaad2c29b07263c893a083e15de564c55f6` | `${PERF_WORK_DIR}/shuffle_test.py` |
 | 基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/` |
 | Python | 容器内 openEuler `python3` 3.11 与 `python3-pip` | 容器内 `${PERF_WORK_DIR}/ray-venv` |
+| Shuffle 运行依赖 | `numpy==1.26.4`、`tqdm==4.67.1`；上游 `ray.experimental.shuffle` 在运行时导入 | 同一私有虚拟环境 |
 
 宿主机只需 Docker 和下载、校验工具。构建阶段先校验基础镜像归档及同名 `.sha256sum`，执行 `docker load`，再核对镜像架构和 openEuler 版本。每次任务创建带运行 ID 标签的独立容器，挂载 `${PERF_WORK_DIR}` 与 `${RESULTS_DIR}`。容器使用宿主网络，不限制 CPU 或内存；额外设置 `--shm-size=20g`，供 16 GiB Ray object store 使用。只移除带本次任务标签的容器。
 
 正式工作流设置 `PERF_PROXY` 时，容器只读挂载 `/home/runner/software/anchors/` 到证书锚点目录，并在容器内更新 CA；同时只在该容器内将 openEuler 仓库地址换为华为镜像。容器内通过 `dnf` 安装 Python 3.11、pip 和 `coreutils`。没有配置代理时不挂载证书，也不更新 CA。
 
-Ray wheel 和测试脚本优先读取宿主机 `/home/runner/software/ray/` 下的 `ray-2.55.1-cp311-cp311-manylinux2014_<架构>.whl` 与 `shuffle_test.py`，复制到本次任务目录；缺失时下载。两架构 wheel 分别按 PyPI 发布的 SHA-256 校验，脚本也按固定 SHA-256 校验。随后在容器内创建私有虚拟环境并安装 wheel 及其依赖。不会在宿主机安装 Ray 或 Python。
+Ray wheel 和测试脚本优先读取宿主机 `/home/runner/software/ray/` 下的 `ray-2.55.1-cp311-cp311-manylinux2014_<架构>.whl` 与 `shuffle_test.py`，复制到本次任务目录；缺失时下载。两架构 wheel 分别按 PyPI 发布的 SHA-256 校验，脚本也按固定 SHA-256 校验。随后在容器内创建私有虚拟环境，安装 Ray wheel 和上表中 Shuffle 实际需要的 NumPy、tqdm，并核对版本。`start` 再次检查这些依赖，避免进入正式测试后才因缺包失败。不会在宿主机安装 Ray 或 Python。
 
 ## 构建与测试
 

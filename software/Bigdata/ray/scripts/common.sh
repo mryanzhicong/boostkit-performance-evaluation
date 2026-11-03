@@ -26,6 +26,8 @@ RAY_PARTITION_SIZE=80000000
 RAY_OBJECT_STORE_BYTES=17179869184
 RAY_WARMUP_ROUNDS=1
 RAY_FORMAL_ROUNDS=7
+RAY_NUMPY_VERSION=1.26.4
+RAY_TQDM_VERSION=4.67.1
 
 log_message() { printf '[ray] [%s] %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*"; }
 
@@ -180,6 +182,15 @@ ray_container_exec() {
 
 ray_container_exec_root() {
     docker exec --user 0 "${RAY_CONTAINER_NAME}" "$@"
+}
+
+verify_shuffle_python_dependencies() {
+    ray_container_exec "${RAY_VENV}/bin/python" -c \
+        'import numpy, tqdm, sys; assert numpy.__version__ == sys.argv[1], numpy.__version__; assert tqdm.__version__ == sys.argv[2], tqdm.__version__' \
+        "${RAY_NUMPY_VERSION}" "${RAY_TQDM_VERSION}" || {
+        log_message 'ERROR: official Shuffle Python dependencies are missing or have unexpected versions'
+        return 40
+    }
 }
 
 remove_ray_container() {
