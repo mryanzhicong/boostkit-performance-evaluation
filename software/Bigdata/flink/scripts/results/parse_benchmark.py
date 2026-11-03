@@ -75,7 +75,7 @@ def parse_benchmark(result_dir: Path) -> dict:
             "warmup_events": 500_000, "warmup_tps": 5_000,
             "benchmark_events": BENCH_EVENTS, "benchmark_tps": 1_000_000,
             "query_count": len(QUERIES), "parallelism": 8, "taskmanagers": 2,
-            "slots_per_taskmanager": 8, "checkpoint_interval": 0,
+            "slots_per_taskmanager": 8, "checkpoint_interval": 180000,
             "state_backend": "rocksdb", "mini_batch": True,
         },
         "measurements": measurements, "results": results,
