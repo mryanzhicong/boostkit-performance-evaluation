@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+if [[ "${SCANN_COMMON_SH_SOURCED:-0}" == 1 ]]; then
+    return 0
+fi
+SCANN_COMMON_SH_SOURCED=1
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

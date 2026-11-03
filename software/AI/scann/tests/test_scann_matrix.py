@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import math
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -50,6 +51,23 @@ def test_case_declares_split_stages_and_official_tool() -> None:
     assert case["execution"]["stages"]["build"]["script"] == "scripts/builders/dispatch.sh"
     assert case["metrics"]["collection"]["group_path"] == "group"
     assert case["test_tools"]["ann_benchmarks"]["version"] == MODULE.REVISION
+
+
+def test_stage_scripts_can_source_common_more_than_once() -> None:
+    scripts = CASE_DIR / "scripts"
+    command = (
+        'source "$1/builders/dispatch.sh"; '
+        'source "$1/builders/base.sh"; '
+        'source "$1/builders/optimized.sh"; '
+        'source "$1/stages/start.sh"; '
+        'source "$1/stages/test.sh"; '
+        'source "$1/stages/stop.sh"; '
+        'test "$ANNB_REVISION" = "$2"'
+    )
+    subprocess.run(
+        ["bash", "-c", command, "bash", str(scripts), MODULE.REVISION],
+        check=True,
+    )
 
 
 def test_parses_one_official_hdf5_result_and_preserves_raw(tmp_path: Path) -> None:
