@@ -24,10 +24,6 @@ METRICS = {
     "recall_at_10": ("ratio", "higher_is_better"),
     "qps": ("queries/s", "higher_is_better"),
     "build_time_s": ("s", "lower_is_better"),
-    "p50_ms": ("ms", "lower_is_better"),
-    "p95_ms": ("ms", "lower_is_better"),
-    "p99_ms": ("ms", "lower_is_better"),
-    "p999_ms": ("ms", "lower_is_better"),
     "candidates": ("count", "neutral"),
     "index_size_kb": ("kB", "neutral"),
 }
@@ -115,7 +111,7 @@ def dataset_info(directory: Path, dataset: str) -> dict[str, object]:
 def run_official(source: Path, venv_python: Path, dataset: str, results: Path) -> None:
     command = [str(venv_python), "run.py", "--dataset", dataset,
                "--definitions", f"os-configs/{dataset}", "--algorithm", "scann",
-               "--runs", "1", "--timeout", "86400", "--force"]
+               "--runs", "1", "--timeout", "86400", "--batch", "--force"]
     logfile = results / "ann-benchmarks-logs" / f"{dataset}.log"
     logfile.parent.mkdir(parents=True, exist_ok=True)
     print(f"[scann] running {' '.join(command)}", flush=True)
@@ -127,6 +123,7 @@ def run_official(source: Path, venv_python: Path, dataset: str, results: Path) -
         assert process.stdout is not None
         for line in process.stdout:
             log.write(line)
+            log.flush()
             print(line, end="", flush=True)
         code = process.wait()
     if code:
@@ -151,7 +148,9 @@ def parse_official_result(source: Path, data: Path, dataset: str, results: Path)
     with h5py.File(data / f"{dataset}.hdf5", "r") as original, h5py.File(path, "r") as result:
         if result.attrs.get("algo") != "scann" or result.attrs.get("dataset") != dataset:
             raise RuntimeError(f"result identity differs: {path}")
-        if result.attrs.get("batch_mode") or int(result.attrs.get("run_count", 0)) != 1:
+        batch_mode = result.attrs.get("batch_mode")
+        if (not isinstance(batch_mode, (bool, np.bool_)) or not batch_mode
+                or int(result.attrs.get("run_count", 0)) != 1):
             raise RuntimeError(f"unexpected query mode or run count: {path}")
         if int(result.attrs.get("count", 0)) != 10:
             raise RuntimeError(f"unexpected nearest-neighbor count: {path}")
@@ -162,17 +161,14 @@ def parse_official_result(source: Path, data: Path, dataset: str, results: Path)
         threshold = official[:, 9] + 1e-3
         recall = float(np.mean(np.sum(returned <= threshold[:, None], axis=1) / 10.0))
         times = result["times"][:]
-        if len(times) != original["test"].shape[0] or not np.all(np.isfinite(times)):
+        if (len(times) != original["test"].shape[0]
+                or not np.all(np.isfinite(times)) or not np.all(times > 0)):
             raise RuntimeError(f"invalid query times: {path}")
         best_search_time = finite(result.attrs.get("best_search_time"), "best_search_time", positive=True)
         values = {
             "recall_at_10": recall,
             "qps": 1.0 / best_search_time,
             "build_time_s": finite(result.attrs.get("build_time"), "build_time", positive=True),
-            "p50_ms": float(np.percentile(times, 50) * 1000),
-            "p95_ms": float(np.percentile(times, 95) * 1000),
-            "p99_ms": float(np.percentile(times, 99) * 1000),
-            "p999_ms": float(np.percentile(times, 99.9) * 1000),
             "candidates": finite(result.attrs.get("candidates"), "candidates"),
             "index_size_kb": finite(result.attrs.get("index_size"), "index_size"),
         }
@@ -226,7 +222,7 @@ def main() -> int:
         },
         "nearest_neighbors": 10,
         "runs": 1,
-        "batch": False,
+        "batch": True,
     }
     payload = {"benchmark": "ann-benchmarks_scann", "software": "scann",
                "version": args.wheel_version, "architecture": args.architecture,

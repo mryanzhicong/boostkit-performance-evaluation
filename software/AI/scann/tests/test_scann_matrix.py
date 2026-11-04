@@ -42,7 +42,33 @@ def test_metric_names_and_directions_are_complete() -> None:
     assert MODULE.METRICS["recall_at_10"] == ("ratio", "higher_is_better")
     assert MODULE.METRICS["qps"] == ("queries/s", "higher_is_better")
     assert MODULE.METRICS["build_time_s"] == ("s", "lower_is_better")
-    assert len(MODULE.METRICS) == 9
+    assert len(MODULE.METRICS) == 5
+    assert not any(name.startswith("p") and name.endswith("_ms") for name in MODULE.METRICS)
+
+
+def test_official_run_uses_batch_and_flushes_its_log(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    commands = []
+    logfile = tmp_path / "ann-benchmarks-logs" / "sift-128-euclidean.log"
+
+    class FakeProcess:
+        def __init__(self) -> None:
+            self.stdout = self.lines()
+
+        def lines(self):
+            yield "one line\n"
+            assert logfile.read_text() == "one line\n"
+
+        def wait(self) -> int:
+            return 0
+
+    def fake_popen(command: list[str], **kwargs: object) -> FakeProcess:
+        commands.append(command)
+        return FakeProcess()
+
+    monkeypatch.setattr(MODULE.subprocess, "Popen", fake_popen)
+    MODULE.run_official(tmp_path, Path("/venv/bin/python"), "sift-128-euclidean", tmp_path)
+    assert "--batch" in commands[0]
+    assert logfile.read_text() == "one line\n"
 
 
 def test_case_declares_split_stages_and_official_tool() -> None:
@@ -73,6 +99,15 @@ def test_stage_scripts_can_source_common_more_than_once() -> None:
 def test_docker_image_build_uses_host_network() -> None:
     builder = (CASE_DIR / "scripts" / "builders" / "base.sh").read_text(encoding="utf-8")
     assert 'docker build --rm --network=host "${proxy_args[@]}"' in builder
+    assert '--build-arg "RUN_UID=$(id -u)" --build-arg "RUN_GID=$(id -g)"' in builder
+
+
+def test_scann_container_writes_results_as_runner() -> None:
+    dockerfile = (CASE_DIR / "scripts" / "Dockerfile.scann").read_text(encoding="utf-8")
+    common = (CASE_DIR / "scripts" / "common.sh").read_text(encoding="utf-8")
+    assert "USER ${RUN_UID}:${RUN_GID}" in dockerfile
+    assert "ENV HOME=/home/app" in dockerfile
+    assert '"1.4.2 $(id -u):$(id -g)"' in common
 
 
 def test_parses_one_official_hdf5_result_and_preserves_raw(tmp_path: Path) -> None:
@@ -89,17 +124,34 @@ def test_parses_one_official_hdf5_result_and_preserves_raw(tmp_path: Path) -> No
         file.create_dataset("test", data=np.zeros((2, 128)))
         file.create_dataset("distances", data=np.tile(np.arange(10), (2, 1)))
     with h5py.File(result_dir / "test.hdf5", "w") as file:
-        file.attrs.update({"algo": "scann", "dataset": dataset, "batch_mode": False,
+        file.attrs.update({"algo": "scann", "dataset": dataset, "batch_mode": True,
                            "run_count": 1, "count": 10, "best_search_time": 0.01,
                            "build_time": 2.5, "candidates": 10.0, "index_size": 100.0})
         file.create_dataset("distances", data=np.tile(np.arange(10), (2, 1)))
-        file.create_dataset("times", data=np.array([0.001, 0.002]))
+        file.create_dataset("times", data=np.array([0.01, 0.01]))
     parsed = MODULE.parse_official_result(source, data, dataset, output)
     assert parsed["recall_at_10"] == 1.0
     assert parsed["qps"] == 100.0
     assert parsed["build_time_s"] == 2.5
-    assert parsed["p50_ms"] == 1.5
+    assert len(parsed) == 5
     assert (output / "ann-benchmarks-results" / dataset / "test.hdf5").is_file()
+
+
+def test_non_batch_result_is_rejected(tmp_path: Path) -> None:
+    h5py = pytest.importorskip("h5py")
+    np = pytest.importorskip("numpy")
+    dataset = "sift-128-euclidean"
+    data = tmp_path / "data"
+    result_dir = tmp_path / "results" / dataset / "10" / "scann"
+    data.mkdir()
+    result_dir.mkdir(parents=True)
+    with h5py.File(data / f"{dataset}.hdf5", "w") as file:
+        file.create_dataset("test", data=np.zeros((2, 128)))
+        file.create_dataset("distances", data=np.tile(np.arange(10), (2, 1)))
+    with h5py.File(result_dir / "test.hdf5", "w") as file:
+        file.attrs.update({"algo": "scann", "dataset": dataset, "batch_mode": False, "run_count": 1})
+    with pytest.raises(RuntimeError, match="unexpected query mode"):
+        MODULE.parse_official_result(tmp_path, data, dataset, tmp_path)
 
 
 def test_missing_official_hdf5_result_fails(tmp_path: Path) -> None:

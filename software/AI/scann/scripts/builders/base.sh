@@ -76,7 +76,9 @@ build_scann_base() {
         proxy_args+=(--build-arg "HTTP_PROXY=${PERF_PROXY}" --build-arg "HTTPS_PROXY=${PERF_PROXY}")
     fi
     log "building official ScaNN 1.4.2 wheel image ${SCANN_IMAGE_TAG}"
-    docker build --rm --network=host "${proxy_args[@]}" -t "${SCANN_IMAGE_TAG}" \
+    docker build --rm --network=host "${proxy_args[@]}" \
+        --build-arg "RUN_UID=$(id -u)" --build-arg "RUN_GID=$(id -g)" \
+        -t "${SCANN_IMAGE_TAG}" \
         -f "${ANN_ROOT}/Dockerfile.scann" "${ANN_ROOT}" || return 30
     verify_scann_image || return 30
     printf '1.4.2\n' > "${PERF_ACTUAL_VERSION_FILE}"

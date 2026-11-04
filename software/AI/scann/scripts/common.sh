@@ -106,6 +106,8 @@ verify_scann_image() {
     }
     local actual
     actual="$(docker run --rm --entrypoint python "${SCANN_IMAGE_TAG}" -c \
-        'from importlib.metadata import version; import scann; print(version("scann"))')" || return 40
-    [[ "${actual}" == 1.4.2 ]] || { log "ERROR: image contains ScaNN ${actual}"; return 40; }
+        'import os, scann; from importlib.metadata import version; print(version("scann"), f"{os.getuid()}:{os.getgid()}")')" || return 40
+    [[ "${actual}" == "1.4.2 $(id -u):$(id -g)" ]] || {
+        log "ERROR: ScaNN image version or runtime UID/GID differs: ${actual}"; return 40;
+    }
 }

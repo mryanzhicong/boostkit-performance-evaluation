@@ -16,4 +16,11 @@ RUN if ls /wheelhouse/scann-1.4.2-*.whl >/dev/null 2>&1; then \
     fi
 RUN python -c 'import scann, h5py, numpy; from importlib.metadata import version; assert version("scann") == "1.4.2"'
 
+ARG RUN_UID
+ARG RUN_GID
+RUN test -n "${RUN_UID}" && test -n "${RUN_GID}" && \
+    chown "${RUN_UID}:${RUN_GID}" /home/app
+ENV HOME=/home/app
+USER ${RUN_UID}:${RUN_GID}
+
 ENTRYPOINT ["python", "-u", "run_algorithm.py"]
