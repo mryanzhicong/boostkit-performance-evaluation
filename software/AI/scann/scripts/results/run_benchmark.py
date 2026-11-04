@@ -141,7 +141,7 @@ def parse_official_result(source: Path, data: Path, dataset: str, results: Path)
     import h5py
     import numpy as np
 
-    files = list((source / "results" / dataset / "10" / "scann").glob("*.hdf5"))
+    files = list((source / "results" / dataset / "10" / "scann-batch").glob("*.hdf5"))
     if len(files) != 1:
         raise RuntimeError(f"expected exactly one ScaNN result for {dataset}, found {len(files)}")
     path = files[0]

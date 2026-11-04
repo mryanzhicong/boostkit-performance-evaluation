@@ -159,7 +159,7 @@ ScaNN HDF5 结果；仅有 `run.py` 退出码为 0 不算成功。
 ### 3. 读取结果并清理
 
 上游原始结果保存在本次任务的
-`${PERF_WORK_DIR}/ann-benchmarks/results/<数据集>/10/scann/*.hdf5`。
+`${PERF_WORK_DIR}/ann-benchmarks/results/<数据集>/10/scann-batch/*.hdf5`。
 脚本逐一校验五份结果、复制到 `${RESULTS_DIR}/ann-benchmarks-results/`，
 再生成 `${RESULTS_DIR}/benchmark_scann.json`。运行中的控制台输出同时写入
 `${RESULTS_DIR}/ann-benchmarks-logs/<数据集>.log`；单项日志逐行刷新。
@@ -167,7 +167,7 @@ ScaNN HDF5 结果；仅有 `run.py` 退出码为 0 不算成功。
 
 ## 指标与产物
 
-每个数据集的原始结果由上游写在 `results/<数据集>/10/scann/*.hdf5`。解析器读取这份文件的属性，并生成以下五项指标：
+每个数据集的原始结果由上游写在 `results/<数据集>/10/scann-batch/*.hdf5`。解析器读取这份文件的属性，并生成以下五项指标：
 
 | 指标 | 原始结果来源或计算方式 | 单位 | 方向 |
 |---|---|---|---|

@@ -117,7 +117,7 @@ def test_parses_one_official_hdf5_result_and_preserves_raw(tmp_path: Path) -> No
     source = tmp_path / "source"
     data = tmp_path / "data"
     output = tmp_path / "output"
-    result_dir = source / "results" / dataset / "10" / "scann"
+    result_dir = source / "results" / dataset / "10" / "scann-batch"
     data.mkdir()
     result_dir.mkdir(parents=True)
     with h5py.File(data / f"{dataset}.hdf5", "w") as file:
@@ -142,7 +142,7 @@ def test_non_batch_result_is_rejected(tmp_path: Path) -> None:
     np = pytest.importorskip("numpy")
     dataset = "sift-128-euclidean"
     data = tmp_path / "data"
-    result_dir = tmp_path / "results" / dataset / "10" / "scann"
+    result_dir = tmp_path / "results" / dataset / "10" / "scann-batch"
     data.mkdir()
     result_dir.mkdir(parents=True)
     with h5py.File(data / f"{dataset}.hdf5", "w") as file:
