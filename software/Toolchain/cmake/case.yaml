@@ -1,0 +1,56 @@
+name: cmake
+category: Toolchain
+enabled: true
+versions:
+  - "4.4.5"
+test_tools:
+  cmake:
+    version: "4.4.5"
+  system_c_compiler:
+    version: "unpinned Runner cc; the exact compiler string is recorded per run in build_info.json and results.json"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_cmake
+    start:
+      script: scripts/stages/start.sh
+      function: start_cmake_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_cmake_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_cmake_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  cmake_raw_output:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
