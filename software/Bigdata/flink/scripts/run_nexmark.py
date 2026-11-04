@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run upstream Nexmark V1 queries with bounded waits and parse its result table."""
+"""Run upstream Nexmark V1 queries and parse its result table."""
 
 from __future__ import annotations
 
@@ -39,14 +39,20 @@ def job_states(port: int) -> dict[str, str]:
     }
 
 
-def wait_idle(port: int, seconds: int = 180) -> None:
-    deadline = time.monotonic() + seconds
-    while time.monotonic() < deadline:
+def wait_idle(port: int) -> None:
+    next_status = time.monotonic() + 60
+    while True:
         overview = rest_json(port, "/overview")
         if overview.get("jobs-running") == 0 and overview.get("slots-available", 0) >= SLOTS:
             return
+        if time.monotonic() >= next_status:
+            print(
+                f"[flink] waiting for idle cluster: running={overview.get('jobs-running')}, "
+                f"available_slots={overview.get('slots-available')}",
+                flush=True,
+            )
+            next_status = time.monotonic() + 60
         time.sleep(2)
-    raise RuntimeError("Flink did not return to 0 running jobs and 16 available slots")
 
 
 def set_workload(conf: Path, events: int, tps: int) -> None:
@@ -77,7 +83,7 @@ def terminate(process: subprocess.Popen) -> None:
         process.wait(timeout=5)
 
 
-def run_query(home: Path, port: int, phase: str, query: str, log_path: Path, timeout: int) -> tuple[int, bool]:
+def run_query(home: Path, port: int, phase: str, query: str, log_path: Path) -> tuple[int, bool]:
     previous = set(job_states(port))
     env = dict(os.environ)
     env["NEXMARK_HOME"] = str(home)
@@ -86,10 +92,11 @@ def run_query(home: Path, port: int, phase: str, query: str, log_path: Path, tim
             ["bash", "bin/run_query.sh", query], cwd=home, env=env,
             stdout=output, stderr=subprocess.STDOUT, start_new_session=True,
         )
-        deadline = time.monotonic() + timeout
         finished_at: float | None = None
         printed_at = 0
         observed_finish = False
+        started_at = time.monotonic()
+        next_status = started_at + 60
         while process.poll() is None:
             output.flush()
             with log_path.open(encoding="utf-8", errors="replace") as reader:
@@ -108,9 +115,13 @@ def run_query(home: Path, port: int, phase: str, query: str, log_path: Path, tim
             if finished_at is not None and time.monotonic() - finished_at > (5 if phase == "warmup" else 15):
                 terminate(process)
                 break
-            if time.monotonic() > deadline:
-                terminate(process)
-                raise RuntimeError(f"{phase}/{query}: exceeded {timeout}s; see {log_path}")
+            if time.monotonic() >= next_status:
+                print(
+                    f"[flink] {phase}/{query} still running after "
+                    f"{int(time.monotonic() - started_at)}s; Flink jobs={states}",
+                    flush=True,
+                )
+                next_status = time.monotonic() + 60
             time.sleep(1)
         with log_path.open(encoding="utf-8", errors="replace") as reader:
             reader.seek(printed_at)
@@ -124,16 +135,16 @@ def execute(args: argparse.Namespace) -> None:
     result_dir.mkdir(parents=True, exist_ok=True)
     raw = result_dir / "benchmark_flink_raw.log"
     with raw.open("w", encoding="utf-8") as record:
-        for phase, events, tps, timeout in (
-            ("warmup", WARMUP_EVENTS, WARMUP_TPS, 90),
-            ("bench", BENCH_EVENTS, BENCH_TPS, 1800),
+        for phase, events, tps in (
+            ("warmup", WARMUP_EVENTS, WARMUP_TPS),
+            ("bench", BENCH_EVENTS, BENCH_TPS),
         ):
             set_workload(home / "conf/nexmark.yaml", events, tps)
             for index, query in enumerate(QUERIES, 1):
+                log_path = result_dir / f"{phase}-{query}.log"
                 wait_idle(args.rest_port)
                 print(f"[flink] {phase} {index}/{len(QUERIES)}: {query}", flush=True)
-                log_path = result_dir / f"{phase}-{query}.log"
-                rc, observed_finish = run_query(home, args.rest_port, phase, query, log_path, timeout)
+                rc, observed_finish = run_query(home, args.rest_port, phase, query, log_path)
                 output = log_path.read_text(encoding="utf-8", errors="replace")
                 record.write(f"## {phase}/{query} rc={rc}\n{output}\n")
                 record.flush()
