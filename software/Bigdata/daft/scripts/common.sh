@@ -124,6 +124,9 @@ start_container() {
     if [[ -d "${DAFT_WHEEL_DIR}/${EXPECTED_ARCH}" ]]; then
         mounts+=(--mount "type=bind,source=${DAFT_WHEEL_DIR}/${EXPECTED_ARCH},target=${DAFT_WHEEL_DIR}/${EXPECTED_ARCH},readonly")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        mounts+=(--mount type=bind,source=/home/runner/.gitconfig,target=/home/runner/.gitconfig,readonly)
+    fi
     docker run --detach --name "${DAFT_CONTAINER_NAME}" \
         --label "boostkit.daft.run-id=${PERF_RUN_ID}" --network=host \
         --user "$(id -u):$(id -g)" \
@@ -142,11 +145,15 @@ start_container() {
         /etc/yum.repos.d/openEuler.repo || return 30
 }
 container_exec() {
-    local -a proxy=()
+    local -a proxy=() git_config=()
     if [[ -n "${PERF_PROXY:-}" ]]; then
         proxy=(-e "http_proxy=${PERF_PROXY}" -e "https_proxy=${PERF_PROXY}")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        git_config=(-e GIT_CONFIG_GLOBAL=/home/runner/.gitconfig)
+    fi
     docker exec "${proxy[@]}" -e "HOME=${PERF_WORK_DIR}" -e "TMPDIR=${TMPDIR}" \
+        "${git_config[@]}" \
         "${DAFT_CONTAINER_NAME}" "$@"
 }
 container_exec_clean() {

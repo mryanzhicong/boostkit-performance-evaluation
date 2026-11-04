@@ -52,6 +52,9 @@ docker run --detach --name "${DAFT_CONTAINER_NAME}" \
 只读挂载到容器内的 `/etc/pki/ca-trust/source/anchors/`，先执行
 `update-ca-trust extract`。随后仅在本次容器内把 openEuler 软件源改为
 `repo.huaweicloud.com/openeuler`。没有配置代理时跳过证书挂载和更新。
+若宿主机存在 `/home/runner/.gitconfig`，还会只读挂载到容器内同一路径，
+并让容器内的 Git 命令通过 `GIT_CONFIG_GLOBAL` 读取它；不存在则跳过，
+不要求修改 Runner 的 Git 配置。
 
 容器内以 root 执行 `dnf install -y python3 python3-pip git gcc make coreutils
 findutils tar gzip procps-ng`，然后以 Runner 用户执行以下安装命令：
