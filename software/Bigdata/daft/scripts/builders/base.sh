@@ -119,12 +119,12 @@ build_daft_base() {
         else
             log 'local wheel set is incomplete; falling back to the configured PyPI mirror'
             container_exec "${DAFT_VENV}/bin/python" -m pip install \
-                -i https://mirrors.aliyun.com/pypi/simple/ "${wheel_options[@]}" \
+                -i https://mirrors.huaweicloud.com/repository/pypi/simple/ "${wheel_options[@]}" \
                 --only-binary=daft -r "${PERF_WORK_DIR}/requirements.txt" || return 30
         fi
     else
         container_exec "${DAFT_VENV}/bin/python" -m pip install \
-            -i https://mirrors.aliyun.com/pypi/simple/ --only-binary=daft \
+            -i https://mirrors.huaweicloud.com/repository/pypi/simple/ --only-binary=daft \
             -r "${PERF_WORK_DIR}/requirements.txt" || return 30
     fi
     container_exec_clean "${DAFT_VENV}/bin/python" -m pip freeze > "${RESULTS_DIR}/pip-freeze.txt" || return 30

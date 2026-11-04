@@ -62,7 +62,7 @@ git clone --depth 1 --branch v0.7.2 --filter=blob:none --sparse \
 git -C "${PERF_WORK_DIR}/daft-source" sparse-checkout set benchmarking
 python3 -m venv "${PERF_WORK_DIR}/venv"
 "${PERF_WORK_DIR}/venv/bin/python" -m pip install \
-  -i https://mirrors.aliyun.com/pypi/simple/ --only-binary=daft \
+  -i https://mirrors.huaweicloud.com/repository/pypi/simple/ --only-binary=daft \
   -r "${PERF_WORK_DIR}/requirements.txt"
 "${PERF_WORK_DIR}/venv/bin/python" -c 'import daft; print(daft.__version__)'
 ```
