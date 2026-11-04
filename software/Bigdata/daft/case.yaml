@@ -1,0 +1,69 @@
+name: daft
+category: Bigdata
+enabled: true
+versions:
+  - "0.7.2"
+test_tools:
+  daft_tpch:
+    version: "0.7.2"
+    revision: "v0.7.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_daft
+    start:
+      script: scripts/stages/start.sh
+      function: start_daft_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_daft_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_daft_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  source_revision:
+    path: daft-source-revision.txt
+    stage: build
+    format: text
+    required: true
+  source_patch:
+    path: daft-source-patch.txt
+    stage: build
+    format: text
+    required: true
+  benchmark_raw:
+    path: benchmark_daft_raw.log
+    stage: test
+    format: text
+    required: true
+  timings:
+    path: timings.jsonl
+    stage: test
+    format: text
+    required: true
+  answers:
+    path: answers
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_daft.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
