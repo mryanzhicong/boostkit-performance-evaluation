@@ -1,0 +1,53 @@
+name: lance
+category: AI
+enabled: true
+versions:
+  - "13.0.0"
+test_tools:
+  lance_sift:
+    version: "13.0.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_lance
+    start:
+      script: scripts/stages/start.sh
+      function: start_lance_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_lance_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_lance_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_sift.csv
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_lance.json
+    stage: test
+    format: json
+    required: true
+  benchmark_log:
+    path: benchmark_sift.log
+    stage: test
+    format: text
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
