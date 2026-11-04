@@ -105,7 +105,7 @@ jobs:
         run: |
           echo '::error::optimized results cannot update the base baseline.json'
           exit 2
-      - name: Install framework runtime dependencies from PyPI
+      - name: Install framework runtime dependencies from Huawei mirror
         shell: bash
         run: |
           framework_deps="${RUNNER_TEMP}/boostkit-framework-deps"
@@ -113,6 +113,7 @@ jobs:
             --disable-pip-version-check \
             --no-input \
             --no-cache-dir \
+            -i https://mirrors.huaweicloud.com/repository/pypi/simple \
             --target "${framework_deps}" \
             "PyYAML==6.0.2"
           echo "PYTHONPATH=${framework_deps}" >> "${GITHUB_ENV}"
