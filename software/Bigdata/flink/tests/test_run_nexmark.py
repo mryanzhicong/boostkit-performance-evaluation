@@ -123,6 +123,37 @@ def test_workload_changes_only_expected_keys(tmp_path: Path) -> None:
     assert "other.key: unchanged" in contents
 
 
+def test_wait_idle_does_not_fail_after_previous_180_second_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    checks = 0
+    elapsed = 0
+
+    def overview(_port: int, _endpoint: str) -> dict[str, int]:
+        nonlocal checks
+        checks += 1
+        if checks <= 100:
+            return {"jobs-running": 1, "slots-available": 0}
+        return {"jobs-running": 0, "slots-available": RUNNER.SLOTS}
+
+    def advance(seconds: int) -> None:
+        nonlocal elapsed
+        elapsed += seconds
+
+    monkeypatch.setattr(RUNNER, "rest_json", overview)
+    monkeypatch.setattr(RUNNER.time, "monotonic", lambda: elapsed)
+    monkeypatch.setattr(RUNNER.time, "sleep", advance)
+    RUNNER.wait_idle(8081)
+    assert checks == 101
+    assert elapsed == 200
+
+
+def test_job_timeout_keeps_flink_within_self_hosted_five_day_limit() -> None:
+    import yaml
+
+    case = yaml.safe_load((SCRIPT.parents[1] / "case.yaml").read_text(encoding="utf-8"))
+    assert case["execution"]["timeout_minutes"] == 7000
+    assert case["execution"]["timeout_minutes"] + 30 < 5 * 24 * 60
+
+
 def test_maven_settings_keep_proxy_in_private_file(tmp_path: Path) -> None:
     target = tmp_path / "settings.xml"
     env = dict(os.environ, PERF_PROXY="http://user:secret@proxy.example:8080")

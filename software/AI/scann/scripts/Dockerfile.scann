@@ -1,0 +1,26 @@
+FROM python:3.9-slim
+
+WORKDIR /home/app
+COPY requirements.txt run_algorithm.py ./
+COPY wheelhouse/ /wheelhouse/
+COPY ca-anchors/ /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
+    ansicolors==1.1.8 docker==7.1.0 h5py==3.12.1 numpy==2.0.2 \
+    pyyaml==6.0.2 psutil==7.0.0
+RUN if ls /wheelhouse/scann-1.4.2-*.whl >/dev/null 2>&1; then \
+      pip install --no-cache-dir /wheelhouse/scann-1.4.2-*.whl; \
+    else \
+      pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ scann==1.4.2; \
+    fi
+RUN python -c 'import scann, h5py, numpy; from importlib.metadata import version; assert version("scann") == "1.4.2"'
+
+ARG RUN_UID
+ARG RUN_GID
+RUN test -n "${RUN_UID}" && test -n "${RUN_GID}" && \
+    chown "${RUN_UID}:${RUN_GID}" /home/app
+ENV HOME=/home/app
+USER ${RUN_UID}:${RUN_GID}
+
+ENTRYPOINT ["python", "-u", "run_algorithm.py"]

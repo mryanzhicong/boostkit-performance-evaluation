@@ -89,7 +89,9 @@ bash bin/run_query.sh q1
 每条查询独占集群；下一条提交前，脚本等待无运行中作业且 16 个槽全部可用。
 对附件指出的 V1 runner 卡在“等待 RUNNING”问题，测试编排会在作业已经
 `FINISHED` 后结束仍未退出的 runner；正式阶段仍必须取得该查询的 Nexmark
-结果行，否则该架构测试失败。每条正式查询的上限为 1800 秒，避免无期限等待。
+结果行，否则该架构测试失败。查询和作业槽位恢复不再设固定耗时上限；
+单架构任务的工作流超时设置为 7030 分钟（测试配置 7000 分钟，另加框架预留的
+30 分钟），仍受 GitHub Actions 自托管 Runner 最长 5 天的硬限制。
 原始查询输出由 `scripts/run_nexmark.py` 保存；随后
 `scripts/results/parse_benchmark.py` 逐条校验 23 条正式结果行并生成指标 JSON。
 

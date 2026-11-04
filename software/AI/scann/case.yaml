@@ -1,0 +1,56 @@
+name: scann
+category: AI
+enabled: true
+versions:
+  - "1.4.2"
+test_tools:
+  ann_benchmarks:
+    version: "2e081ad32c1eccab72dcb739ad886c310b90f715"
+  scann:
+    version: "1.4.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_scann
+    start:
+      script: scripts/stages/start.sh
+      function: start_scann_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_scann_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_scann_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: benchmark_scann.json
+    stage: test
+    format: json
+    required: true
+  benchmark_logs:
+    path: ann-benchmarks-logs
+    stage: test
+    format: directory
+    required: true
+  raw_results:
+    path: ann-benchmarks-results
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
