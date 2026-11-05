@@ -1,0 +1,66 @@
+name: go
+category: Toolchain
+enabled: true
+versions:
+  - "1.23.0"
+test_tools:
+  go:
+    version: "1.23.0 (official linux-<amd64|arm64> binary release at /usr/local/go)"
+  go-optimized:
+    version: "1.24.6 (openEuler golang, gitcode.com/openeuler/golang branch go1.24.6, built at /home/local/golang)"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_go
+    start:
+      script: scripts/stages/start.sh
+      function: start_go_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_go_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_go_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_official_raw:
+    path: benchmark_official.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_optimized_raw:
+    path: benchmark_optimized.txt
+    stage: test
+    format: text
+    required: true
+  benchstat_report:
+    path: benchstat.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_go.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
