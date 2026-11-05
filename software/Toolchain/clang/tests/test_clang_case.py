@@ -1,0 +1,564 @@
+"""Keep the SQLite/Clang metric contract, wiring and cross-architecture pairing stable."""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+import yaml
+
+CASE_DIR = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = CASE_DIR / "scripts"
+FRAMEWORK_DIR = CASE_DIR.parents[2] / "framework"
+sys.path.insert(0, str(FRAMEWORK_DIR))
+
+from generate_comparison import compare_pair  # noqa: E402
+from reporting import render_comparison  # noqa: E402
+
+COLLECT_SPEC = importlib.util.spec_from_file_location(
+    "clang_collect_benchmark", SCRIPT_DIR / "results" / "collect_clang_benchmark.py"
+)
+assert COLLECT_SPEC is not None and COLLECT_SPEC.loader is not None
+collector = importlib.util.module_from_spec(COLLECT_SPEC)
+COLLECT_SPEC.loader.exec_module(collector)
+
+STANDALONE_SPEC = importlib.util.spec_from_file_location(
+    "clang_standalone_runtime", SCRIPT_DIR / "results" / "standalone_runtime.py"
+)
+assert STANDALONE_SPEC is not None and STANDALONE_SPEC.loader is not None
+standalone = importlib.util.module_from_spec(STANDALONE_SPEC)
+STANDALONE_SPEC.loader.exec_module(standalone)
+
+
+def raw_log_text(rounds: int = 5) -> str:
+    lines = []
+    for index in range(rounds):
+        for option in ("-O0", "-O2", "-Os"):
+            lines.append(
+                f"result scenario=compile workload={option} round={index + 1} "
+                f"wall_seconds={10.0 + index + len(option)} artifact_bytes={1000000 + index * 7}"
+            )
+        for size in (100, 500):
+            lines.append(
+                f"result scenario=speedtest1 workload={size} round={index + 1} "
+                f"wall_seconds={2.0 + index + size / 1000000} artifact_bytes={500000 + index}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+@pytest.fixture()
+def raw_log(tmp_path: Path) -> Path:
+    path = tmp_path / "sqlite_clang_raw.log"
+    path.write_text(raw_log_text(), encoding="utf-8")
+    return path
+
+
+def test_collector_extracts_fifteen_metrics(raw_log: Path) -> None:
+    payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
+    assert len(payload["results"]) == 15
+    metric = payload["results"]["compile sqlite3.c --opt=-O2: median wall time"]
+    assert metric["value"] == pytest.approx(15.0)
+    assert metric["unit"] == "s"
+    assert metric["direction"] == "lower_is_better"
+    assert metric["group"] == "compile"
+    assert metric["workload"] == "-O2"
+    assert metric["source_field"] == "median wall time"
+    artifact = payload["results"]["speedtest1 --size=100: artifact size"]
+    assert artifact["unit"] == "KiB"
+    assert payload["parameters"]["sqlite_version"] == "3.54.1"
+    assert payload["parameters"]["rounds"] == 5
+    assert payload["parameters"]["compile_options"] == ["-O0", "-O2", "-Os"]
+    assert payload["parameters"]["speedtest_sizes"] == [100, 500]
+    assert payload["parameters"]["speedtest_testset"] == "mix1"
+    assert payload["parameters"]["speedtest_database_mode"] == "memory"
+    assert "architecture" not in payload["parameters"]
+
+
+def test_collector_rejects_missing_workload(raw_log: Path) -> None:
+    text = raw_log.read_text(encoding="utf-8")
+    kept = "\n".join(
+        line for line in text.splitlines() if "workload=-Os" not in line
+    ) + "\n"
+    raw_log.write_text(kept, encoding="utf-8")
+    with pytest.raises(ValueError, match="missing results"):
+        collector.collect(raw_log, "23.1.4", "x86_64", 5)
+
+
+def test_collector_rejects_unexpected_round_count(raw_log: Path) -> None:
+    raw_log.write_text(raw_log_text(rounds=3), encoding="utf-8")
+    with pytest.raises(ValueError, match="expected 5 rounds"):
+        collector.collect(raw_log, "23.1.4", "x86_64", 5)
+
+
+def test_collector_rejects_unknown_scenario(raw_log: Path) -> None:
+    with raw_log.open("a", encoding="utf-8") as handle:
+        handle.write(
+            "result scenario=other workload=x round=1 wall_seconds=1.0 artifact_bytes=1\n"
+        )
+    with pytest.raises(ValueError, match="unknown benchmark scenario"):
+        collector.collect(raw_log, "23.1.4", "x86_64", 5)
+
+
+@pytest.mark.parametrize("old,new", [
+    ("round=2", "round=1"),
+    ("round=5", "round=6"),
+    ("artifact_bytes=1000000", "artifact_bytes=0"),
+])
+def test_collector_rejects_corrupt_rounds(raw_log: Path, old: str, new: str) -> None:
+    raw_log.write_text(raw_log.read_text().replace(old, new), encoding="utf-8")
+    with pytest.raises(ValueError):
+        collector.collect(raw_log, "23.1.4", "x86_64", 5)
+
+
+@pytest.mark.parametrize("failure", ["none", "compile", "run"])
+def test_toolchain_preflight_checks_compile_link_and_run(tmp_path: Path, failure: str) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/common.sh"
+PERF_WORK_DIR="{tmp_path}"
+CLANG_BIN=/llvm/bin/clang
+container_exec() {{
+    if [[ "$1" == gcc ]]; then
+        printf '%s\\n' /usr/lib/gcc/example/12/crtbeginS.o
+    elif [[ "$1" == test ]]; then
+        return 0
+    elif [[ "$1" == /llvm/bin/clang ]]; then
+        printf 'compile %s\\n' "$*"
+        [[ '{failure}' != compile ]]
+    else
+        printf 'run %s\\n' "$*"
+        [[ '{failure}' != run ]]
+    fi
+}}
+validate_clang_toolchain
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert "--gcc-install-dir=/usr/lib/gcc/example/12" in result.stdout
+    assert "-lm -ldl -pthread" in result.stdout
+    if failure == "none":
+        assert result.returncode == 0, result.stderr
+        assert "run " in result.stdout
+        assert not (tmp_path / "toolchain-check").exists()
+    else:
+        assert result.returncode == 40
+        assert "preflight failed" in result.stderr
+        if failure == "compile":
+            assert "run " not in result.stdout
+
+
+def test_standalone_validation_accepts_payload(raw_log: Path) -> None:
+    payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
+    metrics = standalone.validate_metrics(payload)
+    assert len(metrics) == 15
+
+
+def test_smoke_and_formal_runs_share_memory_database_arguments(tmp_path: Path) -> None:
+    fixture = tmp_path / "speedtest1-fixture"
+    fixture.write_text("""#!/bin/sh
+test "$#" -eq 5 || exit 91
+test "$1" = --size || exit 92
+case "$2" in 100|500) ;; *) exit 93 ;; esac
+test "$3" = --testset || exit 94
+test "$4" = mix1 || exit 95
+test "$5" = --memdb || exit 96
+printf 'memory-testset-ok size=%s\\n' "$2"
+""", encoding="utf-8")
+    fixture.chmod(0o755)
+    script = f"""
+source "{SCRIPT_DIR}/stages/test.sh"
+RESULTS_DIR="{tmp_path}"
+BENCHMARK_DIR="{tmp_path}/benchmark"
+SPEEDTEST1_BIN="$BENCHMARK_DIR/speedtest1"
+CLANG_BIN=/llvm/bin/clang
+CLANGXX_BIN=/llvm/bin/clang++
+CLANG_ROUNDS=1
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+build_speedtest1_binary() {{ cp "{fixture}" "$1"; }}
+container_exec() {{
+    if [[ "$1" == test ]]; then return 0; fi
+    "$@"
+}}
+start_clang_runtime || exit $?
+run_speedtest_scenario
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert "memory-testset-ok size=100" in (tmp_path / "speedtest1-smoke.log").read_text()
+    assert "memory-testset-ok size=100" in result.stdout
+    assert "memory-testset-ok size=500" in result.stdout
+
+
+def test_smoke_failure_preserves_diagnostics(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+RESULTS_DIR="{tmp_path}"
+BENCHMARK_DIR="{tmp_path}/benchmark"
+CLANG_BIN=/llvm/bin/clang
+CLANGXX_BIN=/llvm/bin/clang++
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+build_speedtest1_binary() {{ :; }}
+container_exec() {{
+    if [[ "$1" == test ]]; then return 0; fi
+    printf '%s\\n' 'loader: missing shared library' >&2
+    return 127
+}}
+start_clang_runtime
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 40
+    assert "loader: missing shared library" in result.stderr
+    assert "loader: missing shared library" in (tmp_path / "speedtest1-smoke.log").read_text()
+
+
+def test_benchmark_failure_is_not_hidden_by_tee(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/test.sh"
+RESULTS_DIR="{tmp_path}"
+CLANG_BIN=/llvm/bin/clang
+initialize_runtime() {{ :; }}
+check_clang_container() {{ :; }}
+prepare_benchmark_sources() {{ :; }}
+container_exec() {{ :; }}
+run_compile_scenario() {{ printf '%s\\n' 'compile failed'; return 50; }}
+run_speedtest_scenario() {{ printf '%s\\n' 'must not run'; return 0; }}
+run_clang_benchmarks
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 50
+    assert "must not run" not in result.stdout
+    assert "compile failed" in (tmp_path / "sqlite_clang_raw.log").read_text()
+
+
+def test_standalone_validation_rejects_incomplete_payload(raw_log: Path) -> None:
+    payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
+    del payload["results"]["speedtest1 --size=500: artifact size"]
+    with pytest.raises(RuntimeError, match="expected 15 Clang metrics"):
+        standalone.validate_metrics(payload)
+
+
+def normalized_clang_result(architecture: str, factor: float, payload: dict) -> dict:
+    metrics = {}
+    for name, metric in payload["results"].items():
+        metrics[name] = {
+            "value": metric["value"] * factor,
+            "unit": metric["unit"],
+            "direction": metric["direction"],
+            "group": metric["group"],
+            "matrix": {
+                "group": metric["group"],
+                "row": metric["workload"],
+                "column": metric["source_field"],
+                "row_label": "负载档位",
+                "column_order": list(collector.FIELDS[0:3]),
+            },
+        }
+        metrics[name]["matrix"]["column_order"] = [
+            field for field, _unit in collector.FIELDS
+        ]
+    return {
+        "category": "Toolchain",
+        "software": "clang",
+        "version": "23.1.4",
+        "architecture": architecture,
+        "status": "passed",
+        "cleanup_status": "passed",
+        "build_info": {
+            "requested_version": "23.1.4",
+            "actual_version": "23.1.4",
+            "recorded_at": "2026-10-31T00:00:00Z",
+        },
+        "parameters": {
+            "benchmark_clang.json": json.loads(json.dumps(payload["parameters"]))
+        },
+        "parameter_signature": "same-parameters",
+        "test_tools": {"sqlite": {"version": "3.54.1"}},
+        "system_info": {
+            "architecture": architecture,
+            "cpu_model": "Example CPU",
+            "cpu_count": 64 if architecture == "x86_64" else 96,
+        },
+        "runtime_before": {"memory": "before"},
+        "runtime_after": {"memory": "after"},
+        "metrics": metrics,
+    }
+
+
+def test_cross_architecture_report_pairs_same_workloads(raw_log: Path) -> None:
+    payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
+    x86 = normalized_clang_result("x86_64", 1.0, payload)
+    arm = normalized_clang_result("aarch64", 1.25, payload)
+    comparison = compare_pair(x86, arm)
+    assert len(comparison["metrics"]) == 15
+    sample = comparison["metrics"]["compile sqlite3.c --opt=-O2: median wall time"]
+    assert sample["raw_ratio"] == pytest.approx(1.25, abs=1e-3)
+    assert sample["relative_performance"] == pytest.approx(0.8, abs=1e-3)
+    markdown = render_comparison(comparison)
+    assert "## compile" in markdown
+    assert "## speedtest1" in markdown
+    assert ">−Os<" in markdown or "-Os" in markdown
+    assert ">500<" in markdown or "500" in markdown
+    assert "median wall time" in markdown
+    assert "artifact size" in markdown
+    assert "越小越好" in markdown
+
+
+def test_cross_architecture_report_rejects_parameter_drift(raw_log: Path) -> None:
+    payload = collector.collect(raw_log, "23.1.4", "x86_64", 5)
+    x86 = normalized_clang_result("x86_64", 1.0, payload)
+    arm = normalized_clang_result("aarch64", 1.25, payload)
+    arm["parameters"]["benchmark_clang.json"]["rounds"] = 3
+    with pytest.raises(ValueError, match="parameters differ"):
+        compare_pair(x86, arm)
+
+
+def test_case_yaml_wiring_matches_scripts() -> None:
+    case = yaml.safe_load((CASE_DIR / "case.yaml").read_text(encoding="utf-8"))
+    assert case["name"] == "clang"
+    assert case["category"] == "Toolchain"
+    assert case["versions"] == ["23.1.4"]
+    assert case["test_tools"]["sqlite"]["version"] == "3.54.1"
+    stages = case["execution"]["stages"]
+    assert stages["build"] == {
+        "script": "scripts/builders/dispatch.sh", "function": "build_clang",
+    }
+    assert stages["start"]["function"] == "start_clang_runtime"
+    assert stages["test"]["function"] == "run_clang_benchmarks"
+    assert stages["stop"]["function"] == "stop_clang_runtime"
+    for stage in ("start", "test", "stop"):
+        assert (CASE_DIR / stages[stage]["script"]).is_file()
+    assert case["outputs"]["benchmark_result"]["path"] == "benchmark_clang.json"
+    assert case["outputs"]["sqlite_benchmark_output"]["path"] == "sqlite_clang_raw.log"
+    matrix = case["metrics"]["collection"]["matrix"]
+    assert matrix["group_path"] == "group"
+    assert matrix["row_path"] == "workload"
+    assert matrix["column_path"] == "source_field"
+    assert matrix["column_order"] == [
+        "median wall time", "fastest wall time", "artifact size",
+    ]
+
+
+def test_optimized_builder_fails_explicitly() -> None:
+    content = (SCRIPT_DIR / "builders" / "optimized.sh").read_text(encoding="utf-8")
+    assert "not implemented" in content
+    assert "return 30" in content
+
+
+def test_logs_go_to_stderr_so_fetch_helpers_return_clean_paths(tmp_path: Path) -> None:
+    # The CI failure came from log output being captured together with the
+    # archive path returned on stdout by fetch_llvm_archive.
+    result = subprocess.run(
+        ["bash", "-c", f'source "{SCRIPT_DIR}/common.sh"; log_message hello'],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.stdout == ""
+    assert "hello" in result.stderr
+
+
+def test_fetch_llvm_archive_returns_only_the_path(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    payload = b"fake llvm archive"
+    content_sha = hashlib.sha256(payload).hexdigest()
+    archive = work / "LLVM-23.1.4-Linux-X64.tar.xz"
+    archive.write_bytes(payload)
+    script = f"""
+source "{SCRIPT_DIR}/builders/base.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+configure_runtime_paths
+LLVM_ARCHIVE_NAME="LLVM-23.1.4-Linux-X64.tar.xz"
+LLVM_ARCHIVE_SHA256="{content_sha}"
+fetch_llvm_archive
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(archive)
+    assert "using cached LLVM archive" in result.stderr
+
+
+def test_llvm_archive_url_selects_mirror_by_network_mode(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/common.sh"
+export PERF_WORK_DIR="{tmp_path}/work"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+configure_runtime_paths
+printf "%s\\n" "$LLVM_ARCHIVE_URL"
+"""
+    direct = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert "mirrors.tuna.tsinghua.edu.cn/github-release/llvm/llvm-project/LLVM%2023.1.4" in direct.stdout
+    assert direct.stdout.strip().endswith("LLVM-23.1.4-Linux-X64.tar.xz")
+    proxied = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.stdout.strip().startswith(
+        "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.4/"
+    )
+
+
+def test_sqlite_base_requires_offline_archives_on_direct_network(tmp_path: Path) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/builders/base.sh"
+export PERF_WORK_DIR="{tmp_path}/work"
+export RESULTS_DIR="{tmp_path}/results"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+configure_runtime_paths
+printf "%s\\n" "$SQLITE_BENCHMARK_BASE"
+"""
+    direct = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert direct.stdout.strip() == ""
+    proxied = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": "http://proxy.example"},
+    )
+    assert proxied.stdout.strip() == "https://www.sqlite.org/2026"
+
+
+@pytest.mark.parametrize("source", ["offline", "download"])
+def test_fetch_sqlite_archive_creates_missing_benchmark_dir(tmp_path: Path, source: str) -> None:
+    work = tmp_path / "work"
+    offline = tmp_path / "offline"
+    offline.mkdir()
+    package = "sqlite-amalgamation-3540100.zip"
+    payload = b"sqlite archive fixture"
+    fixture = tmp_path / "archive.zip"
+    fixture.write_bytes(payload)
+    if source == "offline":
+        (offline / package).write_bytes(payload)
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{tmp_path}/results"
+export CLANG_ARCHIVE_DIR="{offline}"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+initialize_runtime || exit $?
+[[ ! -e "$BENCHMARK_DIR" ]] || exit 99
+SQLITE_BENCHMARK_BASE=https://sqlite.example
+with_network_proxy() {{
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == -o ]]; then
+            cp "{fixture}" "$2"
+            return $?
+        fi
+        shift
+    done
+    return 98
+}}
+fetch_sqlite_archive "{package}" "{hashlib.sha3_256(payload).hexdigest()}"
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    archive = work / "benchmark" / package
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == str(archive)
+    assert archive.read_bytes() == payload
+
+
+def test_fetch_sqlite_archive_fails_fast_without_source(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    results = tmp_path / "results"
+    empty_archive = tmp_path / "offline"
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+export PERF_WORK_DIR="{work}"
+export RESULTS_DIR="{results}"
+export CLANG_ARCHIVE_DIR="{empty_archive}"
+export EXPECTED_ARCH=x86_64
+export SOFTWARE_VERSION=23.1.4
+initialize_runtime
+fetch_sqlite_archive sqlite-amalgamation-3540100.zip 92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30
+"""
+    result = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={**os.environ, "PERF_PROXY": ""},
+    )
+    assert result.returncode != 0
+    assert "no SQLite download base is configured" in result.stderr
+
+
+@pytest.mark.parametrize("crt_path", [
+    "/usr/lib/gcc/aarch64-openEuler-linux/12/crtbeginS.o",
+    "/usr/lib/gcc/x86_64-openEuler-linux/12/crtbeginS.o",
+    "crtbeginS.o",
+])
+def test_speedtest_build_selects_container_gcc_runtime(crt_path: str) -> None:
+    script = f"""
+source "{SCRIPT_DIR}/stages/start.sh"
+CLANG_BIN=/llvm/bin/clang
+SQLITE3_H=/sqlite/sqlite3.h
+SQLITE3_C=/sqlite/sqlite3.c
+SPEEDTEST1_C=/sqlite/speedtest1.c
+container_exec() {{
+    if [[ "$1" == gcc ]]; then
+        [[ "$2" == -print-file-name=crtbeginS.o ]] || return 98
+        printf '%s\\n' '{crt_path}'
+    elif [[ "$1" == test ]]; then
+        [[ "$2" == -f && "$3" == '{crt_path}' ]]
+    else
+        printf '%s\\n' "$@"
+    fi
+}}
+build_speedtest1_binary /output/speedtest1
+"""
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
+    if crt_path == "crtbeginS.o":
+        assert result.returncode == 40
+        assert "GCC startup object is missing" in result.stderr
+        assert result.stdout == ""
+    else:
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.splitlines() == [
+            "/llvm/bin/clang", f"--gcc-install-dir={Path(crt_path).parent}",
+            "-O2", "-I/sqlite", "/sqlite/speedtest1.c", "/sqlite/sqlite3.c",
+            "-lm", "-o", "/output/speedtest1",
+        ]
+
+
+def test_container_runs_without_pinning_and_mounts_results() -> None:
+    content = (SCRIPT_DIR / "common.sh").read_text(encoding="utf-8")
+    assert "--network=host" in content
+    assert "--cpuset-cpus" not in content
+    assert "--cpuset-mems" not in content
+    assert "--cpus=" not in content
+    assert 'type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in content
+    assert 'type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}' in content
+    assert "boostkit.clang.run-id=${PERF_RUN_ID}" in content
+    assert "openEuler-24.03-LTS-SP4" in content
+    assert "docker load" in content
+    assert "update-ca-trust extract" in content
+    assert "repo.huaweicloud.com" in content
+
+
+def test_build_and_test_run_inside_container() -> None:
+    base = (SCRIPT_DIR / "builders" / "base.sh").read_text(encoding="utf-8")
+    start = (SCRIPT_DIR / "stages" / "start.sh").read_text(encoding="utf-8")
+    test_stage = (SCRIPT_DIR / "stages" / "test.sh").read_text(encoding="utf-8")
+    stop = (SCRIPT_DIR / "stages" / "stop.sh").read_text(encoding="utf-8")
+    assert "require_clang_container" in base
+    assert "container_exec_root dnf" in base
+    assert "container_exec tar" in base
+    assert "container_exec" in start
+    assert "container_exec unzip" in start
+    assert "container_exec sh -c" in test_stage
+    assert "run_compile_scenario" in test_stage
+    assert "run_speedtest_scenario" in test_stage
+    assert "remove_clang_container" in stop

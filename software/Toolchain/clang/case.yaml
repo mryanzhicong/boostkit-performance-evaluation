@@ -1,0 +1,58 @@
+name: clang
+category: Toolchain
+enabled: true
+versions:
+  - "23.1.4"
+test_tools:
+  sqlite:
+    version: "3.54.1"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_clang
+    start:
+      script: scripts/stages/start.sh
+      function: start_clang_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_clang_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_clang_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  sqlite_benchmark_output:
+    path: sqlite_clang_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_clang.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: group
+      row_path: workload
+      row_label: 负载档位
+      column_path: source_field
+      column_order:
+        - median wall time
+        - fastest wall time
+        - artifact size
+      single_note: 编译耗时、运行耗时与产物大小均为越小越好。
