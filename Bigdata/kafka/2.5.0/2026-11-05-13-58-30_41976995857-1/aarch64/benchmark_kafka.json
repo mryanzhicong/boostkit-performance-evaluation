@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "record_count": 10000000,
+    "record_size_bytes": 1024,
+    "partitions": 72,
+    "replication_factor": 1,
+    "producer": {
+      "compression.type": "lz4",
+      "acks": "1",
+      "linger.ms": 500,
+      "batch.size": 65536,
+      "buffer.memory": 134217728,
+      "throughput_limit": -1
+    },
+    "consumer": {
+      "fetch_size_bytes": 1024
+    }
+  },
+  "results": {
+    "producer/throughput": {
+      "value": 932.19,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "生产者"
+    },
+    "consumer/throughput": {
+      "value": 277.7877,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "消费者"
+    }
+  }
+}
