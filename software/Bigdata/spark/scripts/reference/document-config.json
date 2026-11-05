@@ -1,0 +1,67 @@
+{
+  "core-site": {
+    "fs.defaultFS": "hdfs://server1:9000",
+    "hadoop.tmp.dir": "/home/hadoop_tmp_dir",
+    "ipc.client.connect.max.retries": "100",
+    "ipc.client.connect.retry.interval": "10000",
+    "hadoop.proxyuser.root.hosts": "*",
+    "hadoop.proxyuser.root.groups": "*"
+  },
+  "hdfs-site": {
+    "dfs.replication": "1",
+    "dfs.namenode.name.dir": "/data/data1/hadoop/nn",
+    "dfs.datanode.data.dir": "/data/data1/hadoop/dn",
+    "dfs.http.address": "server1:50070",
+    "dfs.namenode.http-bind-host": "0.0.0.0",
+    "dfs.datanode.handler.count": "600",
+    "dfs.namenode.handler.count": "600",
+    "dfs.namenode.service.handler.count": "600",
+    "ipc.server.handler.queue.size": "300",
+    "dfs.webhdfs.enabled": "true"
+  },
+  "mapred-site": {
+    "mapreduce.framework.name": "yarn",
+    "mapreduce.job.reduce.slowstart.completedmaps": "0.88",
+    "mapreduce.application.classpath": "/usr/local/hadoop/etc/hadoop,\n/usr/local/hadoop/share/hadoop/common/*,\n/usr/local/hadoop/share/hadoop/common/lib/*,\n/usr/local/hadoop/share/hadoop/hdfs/*,\n/usr/local/hadoop/share/hadoop/hdfs/lib/*,\n/usr/local/hadoop/share/hadoop/mapreduce/*,\n/usr/local/hadoop/share/hadoop/mapreduce/lib/*,\n/usr/local/hadoop/share/hadoop/yarn/*,\n/usr/local/hadoop/share/hadoop/yarn/lib/*",
+    "mapreduce.map.memory.mb": "6144",
+    "mapreduce.reduce.memory.mb": "6144",
+    "mapreduce.map.java.opts": "-Xmx5530m",
+    "mapreduce.reduce.java.opts": "-Xmx2765m",
+    "mapred.child.java.opts": "-Xmx2048m -Xms2048m",
+    "mapred.reduce.parallel.copies": "20",
+    "yarn.app.mapreduce.am.env": "HADOOP_MAPRED_HOME=/usr/local/hadoop",
+    "mapreduce.map.env": "HADOOP_MAPRED_HOME=/usr/local/hadoop",
+    "mapreduce.reduce.env": "HADOOP_MAPRED_HOME=/usr/local/hadoop",
+    "mapreduce.job.counters.max": "1000"
+  },
+  "yarn-site": {
+    "yarn.nodemanager.aux-services": "mapreduce_shuffle",
+    "yarn.resourcemanager.hostname": "server1",
+    "yarn.resourcemanager.bind-host": "0.0.0.0",
+    "yarn.nodemanager.resource.memory-mb": "371200",
+    "yarn.scheduler.maximum-allocation-mb": "371200",
+    "yarn.scheduler.minimum-allocation-mb": "1024",
+    "yarn.nodemanager.resource.cpu-vcores": "64",
+    "yarn.scheduler.maximum-allocation-vcores": "64",
+    "yarn.scheduler.minimum-allocation-vcores": "1",
+    "yarn.log-aggregation-enable": "true",
+    "yarn.client.nodemanager-connect.max-wait-ms": "300000",
+    "yarn.nodemanager.vmem-pmem-ratio": "2.1",
+    "yarn.nodemanager.vmem-check-enabled": "false",
+    "yarn.nodemanager.pmem-check-enabled": "false",
+    "yarn.application.classpath": "/usr/local/hadoop/etc/hadoop,\n/usr/local/hadoop/share/hadoop/common/*,\n/usr/local/hadoop/share/hadoop/common/lib/*,\n/usr/local/hadoop/share/hadoop/hdfs/*,\n/usr/local/hadoop/share/hadoop/hdfs/lib/*,\n/usr/local/hadoop/share/hadoop/mapreduce/*,\n/usr/local/hadoop/share/hadoop/mapreduce/lib/*,\n/usr/local/hadoop/share/hadoop/yarn/*,\n/usr/local/hadoop/share/hadoop/yarn/lib/*",
+    "yarn.nodemanager.local-dirs": "/data/data1/hadoop/yarn/local",
+    "yarn.nodemanager.log-dirs": "/data/data1/hadoop/yarn/log",
+    "yarn.timeline-service.enabled": "true",
+    "yarn.timeline-service.hostname": "server1",
+    "yarn.timeline-service.http-cross-origin.enabled": "true",
+    "yarn.resourcemanager.system-metrics-publisher.enabled": "true"
+  },
+  "tez-site": {
+    "tez.lib.uris": "${fs.defaultFS}/apps/tez/tez.tar.gz",
+    "tez.use.cluster.hadoop-libs": "false",
+    "tez.history.logging.service.class": "org.apache.tez.dag.history.logging.ats.ATSHistoryLoggingService",
+    "tez.allow.disabled.timeline-domains": "true",
+    "tez.tez-ui.history-url.base": "http://server1:8822/tez-ui"
+  }
+}
