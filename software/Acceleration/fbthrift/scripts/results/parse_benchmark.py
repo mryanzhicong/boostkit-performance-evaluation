@@ -287,14 +287,14 @@ def normalize(args: argparse.Namespace) -> dict:
             f"{scenario}__peak_rss_mb", group, summarize(rss_samples)["median"],
             "MiB", "lower_is_better", benchmark, rss_samples,
         )
+        # Only the declared scenario identity belongs to "parameters"; the
+        # measured values already live in "results" and would otherwise make
+        # the resolved parameters differ between architectures.
         matrix.append(
             {
                 "scenario": scenario,
                 "group": group,
                 "benchmark_case": benchmark,
-                "ns_per_op": ns_median,
-                "objects_per_second": 1_000_000_000.0 / ns_median,
-                "peak_rss_mb": summarize(rss_samples)["median"],
             }
         )
 
