@@ -1,0 +1,298 @@
+{
+  "benchmark": "ann-benchmarks_scann",
+  "software": "scann",
+  "version": "1.4.2",
+  "architecture": "x86_64",
+  "parameters": {
+    "ann_benchmarks_revision": "2e081ad32c1eccab72dcb739ad886c310b90f715",
+    "datasets": {
+      "fashion-mnist-784-euclidean": {
+        "sha256": "7f24e5122b71346346686a6ea80e08d9145b9c020f9f2db4c4c799dfcfc96a07",
+        "bytes": 227528288,
+        "train_shape": [
+          60000,
+          784
+        ],
+        "queries": 10000
+      },
+      "sift-128-euclidean": {
+        "sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+        "bytes": 525128288,
+        "train_shape": [
+          1000000,
+          128
+        ],
+        "queries": 10000
+      },
+      "glove-100-angular": {
+        "sha256": "544af1d5e84e112cd4749571dcfd8ca109818a572f850af75a3a09e093a953c4",
+        "bytes": 485413888,
+        "train_shape": [
+          1183514,
+          100
+        ],
+        "queries": 10000
+      },
+      "gist-960-euclidean": {
+        "sha256": "8e95831936bfdbfa0a56086942e2cf98cd703517c67f985914183eb4cdbf026a",
+        "bytes": 3844648288,
+        "train_shape": [
+          1000000,
+          960
+        ],
+        "queries": 1000
+      },
+      "deep-image-96-angular": {
+        "sha256": "a0a44dfe80c58e63860862eeea2d34e62cff958dc3aec14fd65263d1d3c751f8",
+        "bytes": 3848008288,
+        "train_shape": [
+          9990000,
+          96
+        ],
+        "queries": 10000
+      }
+    },
+    "scenarios": {
+      "fashion-mnist-784-euclidean": {
+        "constructor_args": [
+          500,
+          null,
+          4,
+          "squared_l2"
+        ],
+        "query_args": [
+          11,
+          75
+        ]
+      },
+      "sift-128-euclidean": {
+        "constructor_args": [
+          2000,
+          null,
+          2,
+          "squared_l2"
+        ],
+        "query_args": [
+          33,
+          235
+        ]
+      },
+      "glove-100-angular": {
+        "constructor_args": [
+          2000,
+          0.2,
+          2,
+          "dot_product"
+        ],
+        "query_args": [
+          180,
+          230
+        ]
+      },
+      "gist-960-euclidean": {
+        "constructor_args": [
+          2000,
+          null,
+          4,
+          "squared_l2"
+        ],
+        "query_args": [
+          221,
+          670
+        ]
+      },
+      "deep-image-96-angular": {
+        "constructor_args": [
+          2000,
+          0.2,
+          2,
+          "dot_product"
+        ],
+        "query_args": [
+          18,
+          230
+        ]
+      }
+    },
+    "nearest_neighbors": 10,
+    "runs": 1,
+    "batch": true
+  },
+  "results": {
+    "fashion-mnist-784-euclidean/recall_at_10": {
+      "source_name": "fashion-mnist-784-euclidean/recall_at_10",
+      "group": "fashion-mnist-784-euclidean",
+      "value": 0.9837,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "fashion-mnist-784-euclidean/qps": {
+      "source_name": "fashion-mnist-784-euclidean/qps",
+      "group": "fashion-mnist-784-euclidean",
+      "value": 56147.59562738236,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "fashion-mnist-784-euclidean/build_time_s": {
+      "source_name": "fashion-mnist-784-euclidean/build_time_s",
+      "group": "fashion-mnist-784-euclidean",
+      "value": 6.768923759460449,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "fashion-mnist-784-euclidean/candidates": {
+      "source_name": "fashion-mnist-784-euclidean/candidates",
+      "group": "fashion-mnist-784-euclidean",
+      "value": 10.0,
+      "unit": "count",
+      "direction": "neutral"
+    },
+    "fashion-mnist-784-euclidean/index_size_kb": {
+      "source_name": "fashion-mnist-784-euclidean/index_size_kb",
+      "group": "fashion-mnist-784-euclidean",
+      "value": 229704.0,
+      "unit": "kB",
+      "direction": "neutral"
+    },
+    "sift-128-euclidean/recall_at_10": {
+      "source_name": "sift-128-euclidean/recall_at_10",
+      "group": "sift-128-euclidean",
+      "value": 0.9607,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "sift-128-euclidean/qps": {
+      "source_name": "sift-128-euclidean/qps",
+      "group": "sift-128-euclidean",
+      "value": 42184.8859511657,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "sift-128-euclidean/build_time_s": {
+      "source_name": "sift-128-euclidean/build_time_s",
+      "group": "sift-128-euclidean",
+      "value": 9.05025053024292,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "sift-128-euclidean/candidates": {
+      "source_name": "sift-128-euclidean/candidates",
+      "group": "sift-128-euclidean",
+      "value": 10.0,
+      "unit": "count",
+      "direction": "neutral"
+    },
+    "sift-128-euclidean/index_size_kb": {
+      "source_name": "sift-128-euclidean/index_size_kb",
+      "group": "sift-128-euclidean",
+      "value": 662996.0,
+      "unit": "kB",
+      "direction": "neutral"
+    },
+    "glove-100-angular/recall_at_10": {
+      "source_name": "glove-100-angular/recall_at_10",
+      "group": "glove-100-angular",
+      "value": 0.97178,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "glove-100-angular/qps": {
+      "source_name": "glove-100-angular/qps",
+      "group": "glove-100-angular",
+      "value": 41291.3794495313,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "glove-100-angular/build_time_s": {
+      "source_name": "glove-100-angular/build_time_s",
+      "group": "glove-100-angular",
+      "value": 6.09151029586792,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "glove-100-angular/candidates": {
+      "source_name": "glove-100-angular/candidates",
+      "group": "glove-100-angular",
+      "value": 10.0,
+      "unit": "count",
+      "direction": "neutral"
+    },
+    "glove-100-angular/index_size_kb": {
+      "source_name": "glove-100-angular/index_size_kb",
+      "group": "glove-100-angular",
+      "value": 518452.0,
+      "unit": "kB",
+      "direction": "neutral"
+    },
+    "gist-960-euclidean/recall_at_10": {
+      "source_name": "gist-960-euclidean/recall_at_10",
+      "group": "gist-960-euclidean",
+      "value": 0.9847,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "gist-960-euclidean/qps": {
+      "source_name": "gist-960-euclidean/qps",
+      "group": "gist-960-euclidean",
+      "value": 5702.4396080094075,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "gist-960-euclidean/build_time_s": {
+      "source_name": "gist-960-euclidean/build_time_s",
+      "group": "gist-960-euclidean",
+      "value": 39.653669118881226,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "gist-960-euclidean/candidates": {
+      "source_name": "gist-960-euclidean/candidates",
+      "group": "gist-960-euclidean",
+      "value": 10.0,
+      "unit": "count",
+      "direction": "neutral"
+    },
+    "gist-960-euclidean/index_size_kb": {
+      "source_name": "gist-960-euclidean/index_size_kb",
+      "group": "gist-960-euclidean",
+      "value": 4311344.0,
+      "unit": "kB",
+      "direction": "neutral"
+    },
+    "deep-image-96-angular/recall_at_10": {
+      "source_name": "deep-image-96-angular/recall_at_10",
+      "group": "deep-image-96-angular",
+      "value": 0.9675300000000001,
+      "unit": "ratio",
+      "direction": "higher_is_better"
+    },
+    "deep-image-96-angular/qps": {
+      "source_name": "deep-image-96-angular/qps",
+      "group": "deep-image-96-angular",
+      "value": 35675.40625251705,
+      "unit": "queries/s",
+      "direction": "higher_is_better"
+    },
+    "deep-image-96-angular/build_time_s": {
+      "source_name": "deep-image-96-angular/build_time_s",
+      "group": "deep-image-96-angular",
+      "value": 35.68984031677246,
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "deep-image-96-angular/candidates": {
+      "source_name": "deep-image-96-angular/candidates",
+      "group": "deep-image-96-angular",
+      "value": 10.0,
+      "unit": "count",
+      "direction": "neutral"
+    },
+    "deep-image-96-angular/index_size_kb": {
+      "source_name": "deep-image-96-angular/index_size_kb",
+      "group": "deep-image-96-angular",
+      "value": 3832688.0,
+      "unit": "kB",
+      "direction": "neutral"
+    }
+  }
+}
