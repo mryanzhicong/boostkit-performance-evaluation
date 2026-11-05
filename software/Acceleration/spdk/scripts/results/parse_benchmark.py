@@ -620,6 +620,7 @@ def report(args: argparse.Namespace) -> int:
     runtime_profile, build_versions = load_runtime_inputs(work_dir)
 
     scenario_entries: list[dict[str, Any]] = []
+    observations: list[dict[str, Any]] = []
     metric_samples: dict[str, list[float]] = {}
     raw_sections: list[str] = []
 
@@ -696,6 +697,15 @@ def report(args: argparse.Namespace) -> int:
                 "bdev_count": scenario.bdev_count,
                 "read_percentage": scenario.read_percentage,
                 "cpu_mask": scenario.cpu_mask,
+            }
+        )
+        # Per-run observations (absolute paths, wall time, peak RSS, the exact
+        # container command) are recorded outside "parameters": they differ
+        # between architectures by nature and must never take part in the
+        # cross-architecture resolved-parameter comparison.
+        observations.append(
+            {
+                "key": scenario.key,
                 "raw_logs": {"warmup": str(warmup_log), "reps": rep_logs},
                 "timings": rep_timings,
             }
@@ -757,6 +767,7 @@ def report(args: argparse.Namespace) -> int:
             "runtime_profile": runtime_profile.get("profile"),
             "cpu_count": os.cpu_count(),
             "build": build_versions,
+            "observations": observations,
         },
         "results": results,
     }
