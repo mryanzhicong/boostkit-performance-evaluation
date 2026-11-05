@@ -1,0 +1,1138 @@
+{
+  "software": "fbthrift",
+  "category": "Acceleration",
+  "version": "2026.10.26.00",
+  "architecture": "x86_64",
+  "run_id": "41986198492-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-05T07:37:10Z",
+    "category": "Acceleration",
+    "software": "fbthrift",
+    "requested_version": "2026.10.26.00",
+    "actual_version": "2026.10.26.00",
+    "architecture": "x86_64",
+    "run_id": "41986198492-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "benchmark_target": "ProtocolBench (Google Benchmark)",
+      "scenario_count": 10,
+      "scenarios": [
+        "binary_write_complex_struct",
+        "binary_read_complex_struct",
+        "binary_write_big_binary",
+        "binary_read_big_binary",
+        "binary_read_large_map_int",
+        "compact_write_complex_struct",
+        "compact_read_complex_struct",
+        "compact_write_big_binary",
+        "compact_read_big_binary",
+        "compact_read_large_map_int"
+      ],
+      "matrix": [
+        {
+          "scenario": "binary_write_complex_struct",
+          "group": "Binary / write",
+          "benchmark_case": "BinaryProtocol_write_ComplexStruct"
+        },
+        {
+          "scenario": "binary_read_complex_struct",
+          "group": "Binary / read",
+          "benchmark_case": "BinaryProtocol_read_ComplexStruct"
+        },
+        {
+          "scenario": "binary_write_big_binary",
+          "group": "Binary / write",
+          "benchmark_case": "BinaryProtocol_write_BigBinary"
+        },
+        {
+          "scenario": "binary_read_big_binary",
+          "group": "Binary / read",
+          "benchmark_case": "BinaryProtocol_read_BigBinary"
+        },
+        {
+          "scenario": "binary_read_large_map_int",
+          "group": "Binary / read",
+          "benchmark_case": "BinaryProtocol_read_LargeMapInt"
+        },
+        {
+          "scenario": "compact_write_complex_struct",
+          "group": "Compact / write",
+          "benchmark_case": "CompactProtocol_write_ComplexStruct"
+        },
+        {
+          "scenario": "compact_read_complex_struct",
+          "group": "Compact / read",
+          "benchmark_case": "CompactProtocol_read_ComplexStruct"
+        },
+        {
+          "scenario": "compact_write_big_binary",
+          "group": "Compact / write",
+          "benchmark_case": "CompactProtocol_write_BigBinary"
+        },
+        {
+          "scenario": "compact_read_big_binary",
+          "group": "Compact / read",
+          "benchmark_case": "CompactProtocol_read_BigBinary"
+        },
+        {
+          "scenario": "compact_read_large_map_int",
+          "group": "Compact / read",
+          "benchmark_case": "CompactProtocol_read_LargeMapInt"
+        }
+      ],
+      "warmup_runs_per_scenario": 1,
+      "measured_repetitions": 5,
+      "repetition_target": 5,
+      "repetition_target_met": true,
+      "benchmark_min_time": "5s",
+      "warmup_min_time": "1s",
+      "serialized_bytes_per_object": null,
+      "serialized_bytes_unavailable_reason": "upstream ProtocolBench does not report bytes processed and was not patched, so serialized size is not derived"
+    }
+  },
+  "parameter_signature": "d059c76283dbbaa2de10b8c4557627b8de3dd8dd2bf481beab57d555339473e3",
+  "test_tools": {
+    "ProtocolBench": {
+      "version": "2026.10.26.00",
+      "revision": "c7fdfc9a80aa162c3934bf325c8e6ba56d15e845"
+    },
+    "GoogleBenchmark": {
+      "version": "1.9.5"
+    },
+    "folly": {
+      "version": "2026.10.26.00"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-05T07:29:21Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 8 nodes (0-7)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215\nnode 0 size: 192622 MB\nnode 0 free: 127052 MB\nnode 1 cpus: 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239\nnode 1 size: 193523 MB\nnode 1 free: 168727 MB\nnode 2 cpus: 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263\nnode 2 size: 193523 MB\nnode 2 free: 170150 MB\nnode 3 cpus: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 3 size: 193523 MB\nnode 3 free: 162475 MB\nnode 4 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311\nnode 4 size: 193523 MB\nnode 4 free: 151543 MB\nnode 5 cpus: 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335\nnode 5 size: 193481 MB\nnode 5 free: 157471 MB\nnode 6 cpus: 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359\nnode 6 size: 193523 MB\nnode 6 free: 169289 MB\nnode 7 cpus: 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 7 size: 193455 MB\nnode 7 free: 165368 MB\nnode distances:\nnode   0   1   2   3   4   5   6   7 \n  0:  10  12  12  12  32  32  32  32 \n  1:  12  10  12  12  32  32  32  32 \n  2:  12  12  10  12  32  32  32  32 \n  3:  12  12  12  10  32  32  32  32 \n  4:  32  32  32  32  10  12  12  12 \n  5:  32  32  32  32  12  10  12  12 \n  6:  32  32  32  32  12  12  10  12 \n  7:  32  32  32  32  12  12  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-05T07:29:21Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 201226063872 1333871640576 11154616320 106388062208 1421108080640\nSwap:     4294963200  4263972864    30990336",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-05T07:46:35Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 201425395712 1331013533696 11156860928 109049065472 1420908748800\nSwap:     4294963200  4263972864    30990336",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "benchmark_raw": {
+      "path": "benchmark_raw.txt",
+      "size": 41854
+    },
+    "benchmark_result": {
+      "software": "fbthrift",
+      "category": "Acceleration",
+      "version": "2026.10.26.00",
+      "architecture": "x86_64",
+      "generated_at": "2026-11-05T07:46:04Z",
+      "source": "thrift/lib/cpp2/test/ProtocolBench.cpp",
+      "source_tag": "v2026.10.26.00",
+      "source_commit": "c7fdfc9a80aa162c3934bf325c8e6ba56d15e845",
+      "dependencies": [
+        {
+          "name": "fbthrift v2026.10.26.00",
+          "source_kind": "url",
+          "source": "https://codeload.github.com/facebook/fbthrift/tar.gz/refs/tags/v2026.10.26.00",
+          "sha256": "6ad18cfc24297120a536a0ef9c5a84f409c9aa4376057328e8dca9d45587d5a1"
+        },
+        {
+          "name": "folly v2026.10.26.00",
+          "source_kind": "url",
+          "source": "https://codeload.github.com/facebook/folly/tar.gz/refs/tags/v2026.10.26.00",
+          "sha256": "b47fe04b804adfb51c65cda6b171505e67b9d1d69621106e54697821d1bf7ebc"
+        },
+        {
+          "name": "fmt 12.1.0",
+          "source_kind": "url",
+          "source": "https://codeload.github.com/fmtlib/fmt/tar.gz/refs/tags/12.1.0",
+          "sha256": "ea7de4299689e12b6dddd392f9896f08fb0777ac7168897a244a6d6085043fea"
+        },
+        {
+          "name": "fast_float v8.0.0",
+          "source_kind": "url",
+          "source": "https://codeload.github.com/fastfloat/fast_float/tar.gz/refs/tags/v8.0.0",
+          "sha256": "f312f2dc34c61e665f4b132c0307d6f70ad9420185fa831911bc24408acf625d"
+        },
+        {
+          "name": "google benchmark v1.9.5",
+          "source_kind": "url",
+          "source": "https://codeload.github.com/google/benchmark/tar.gz/refs/tags/v1.9.5",
+          "sha256": "9631341c82bac4a288bef951f8b26b41f69021794184ece969f8473977eaa340"
+        }
+      ],
+      "parameters": {
+        "benchmark_target": "ProtocolBench (Google Benchmark)",
+        "scenario_count": 10,
+        "scenarios": [
+          "binary_write_complex_struct",
+          "binary_read_complex_struct",
+          "binary_write_big_binary",
+          "binary_read_big_binary",
+          "binary_read_large_map_int",
+          "compact_write_complex_struct",
+          "compact_read_complex_struct",
+          "compact_write_big_binary",
+          "compact_read_big_binary",
+          "compact_read_large_map_int"
+        ],
+        "matrix": [
+          {
+            "scenario": "binary_write_complex_struct",
+            "group": "Binary / write",
+            "benchmark_case": "BinaryProtocol_write_ComplexStruct"
+          },
+          {
+            "scenario": "binary_read_complex_struct",
+            "group": "Binary / read",
+            "benchmark_case": "BinaryProtocol_read_ComplexStruct"
+          },
+          {
+            "scenario": "binary_write_big_binary",
+            "group": "Binary / write",
+            "benchmark_case": "BinaryProtocol_write_BigBinary"
+          },
+          {
+            "scenario": "binary_read_big_binary",
+            "group": "Binary / read",
+            "benchmark_case": "BinaryProtocol_read_BigBinary"
+          },
+          {
+            "scenario": "binary_read_large_map_int",
+            "group": "Binary / read",
+            "benchmark_case": "BinaryProtocol_read_LargeMapInt"
+          },
+          {
+            "scenario": "compact_write_complex_struct",
+            "group": "Compact / write",
+            "benchmark_case": "CompactProtocol_write_ComplexStruct"
+          },
+          {
+            "scenario": "compact_read_complex_struct",
+            "group": "Compact / read",
+            "benchmark_case": "CompactProtocol_read_ComplexStruct"
+          },
+          {
+            "scenario": "compact_write_big_binary",
+            "group": "Compact / write",
+            "benchmark_case": "CompactProtocol_write_BigBinary"
+          },
+          {
+            "scenario": "compact_read_big_binary",
+            "group": "Compact / read",
+            "benchmark_case": "CompactProtocol_read_BigBinary"
+          },
+          {
+            "scenario": "compact_read_large_map_int",
+            "group": "Compact / read",
+            "benchmark_case": "CompactProtocol_read_LargeMapInt"
+          }
+        ],
+        "warmup_runs_per_scenario": 1,
+        "measured_repetitions": 5,
+        "repetition_target": 5,
+        "repetition_target_met": true,
+        "benchmark_min_time": "5s",
+        "warmup_min_time": "1s",
+        "serialized_bytes_per_object": null,
+        "serialized_bytes_unavailable_reason": "upstream ProtocolBench does not report bytes processed and was not patched, so serialized size is not derived"
+      },
+      "results": {
+        "binary_write_complex_struct__ns_per_op": {
+          "name": "binary_write_complex_struct__ns_per_op",
+          "group": "Binary / write",
+          "value": 25619651.150170647,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_write_ComplexStruct",
+          "samples": [
+            25602307.837931033,
+            25240340.402027026,
+            25619651.150170647,
+            27477347.814545456,
+            25848768.85365854
+          ],
+          "statistics": {
+            "median": 25619651.150170647,
+            "min": 25240340.402027026,
+            "max": 27477347.814545456,
+            "mean": 25957683.21166654,
+            "stdev": 876980.7409546912,
+            "sample_count": 5
+          }
+        },
+        "binary_write_complex_struct__objects_per_second": {
+          "name": "binary_write_complex_struct__objects_per_second",
+          "group": "Binary / write",
+          "value": 39.032537724204694,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "BinaryProtocol_write_ComplexStruct",
+          "samples": [
+            39.05897883621462,
+            39.61911701950307,
+            39.032537724204694,
+            36.393614360067104,
+            38.68656204330071
+          ],
+          "statistics": {
+            "median": 39.032537724204694,
+            "min": 36.393614360067104,
+            "max": 39.61911701950307,
+            "mean": 38.55816199665804,
+            "stdev": 1.2553115590579702,
+            "sample_count": 5
+          }
+        },
+        "binary_write_complex_struct__peak_rss_mb": {
+          "name": "binary_write_complex_struct__peak_rss_mb",
+          "group": "Binary / write",
+          "value": 210.890625,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_write_ComplexStruct",
+          "samples": [
+            210.8984375,
+            210.890625,
+            210.8125,
+            210.9140625,
+            210.76953125
+          ],
+          "statistics": {
+            "median": 210.890625,
+            "min": 210.76953125,
+            "max": 210.9140625,
+            "mean": 210.85703125,
+            "stdev": 0.0627193416763322,
+            "sample_count": 5
+          }
+        },
+        "binary_read_complex_struct__ns_per_op": {
+          "name": "binary_read_complex_struct__ns_per_op",
+          "group": "Binary / read",
+          "value": 83194491.04477613,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_ComplexStruct",
+          "samples": [
+            83194491.04477613,
+            83112786.38235295,
+            83544984.80597016,
+            84608453.14925373,
+            82571710.38805969
+          ],
+          "statistics": {
+            "median": 83194491.04477613,
+            "min": 82571710.38805969,
+            "max": 84608453.14925373,
+            "mean": 83406485.15408254,
+            "stdev": 756960.7975109124,
+            "sample_count": 5
+          }
+        },
+        "binary_read_complex_struct__objects_per_second": {
+          "name": "binary_read_complex_struct__objects_per_second",
+          "group": "Binary / read",
+          "value": 12.02002665611344,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "BinaryProtocol_read_ComplexStruct",
+          "samples": [
+            12.02002665611344,
+            12.031843035553992,
+            11.969599399921604,
+            11.819150011358177,
+            12.110685309778994
+          ],
+          "statistics": {
+            "median": 12.02002665611344,
+            "min": 11.819150011358177,
+            "max": 12.110685309778994,
+            "mean": 11.990260882545241,
+            "stdev": 0.10819305257517317,
+            "sample_count": 5
+          }
+        },
+        "binary_read_complex_struct__peak_rss_mb": {
+          "name": "binary_read_complex_struct__peak_rss_mb",
+          "group": "Binary / read",
+          "value": 368.93359375,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_ComplexStruct",
+          "samples": [
+            368.8359375,
+            368.9765625,
+            368.9375,
+            368.93359375,
+            368.79296875
+          ],
+          "statistics": {
+            "median": 368.93359375,
+            "min": 368.79296875,
+            "max": 368.9765625,
+            "mean": 368.8953125,
+            "stdev": 0.07721145567024851,
+            "sample_count": 5
+          }
+        },
+        "binary_write_big_binary__ns_per_op": {
+          "name": "binary_write_big_binary__ns_per_op",
+          "group": "Binary / write",
+          "value": 76.86024042448302,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_write_BigBinary",
+          "samples": [
+            94.26695659075604,
+            78.59784648240262,
+            76.13147378097715,
+            76.86024042448302,
+            76.25997330253678
+          ],
+          "statistics": {
+            "median": 76.86024042448302,
+            "min": 76.13147378097715,
+            "max": 94.26695659075604,
+            "mean": 80.42329811623112,
+            "stdev": 7.801082671181918,
+            "sample_count": 5
+          }
+        },
+        "binary_write_big_binary__objects_per_second": {
+          "name": "binary_write_big_binary__objects_per_second",
+          "group": "Binary / write",
+          "value": 13010628.05004524,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "BinaryProtocol_write_BigBinary",
+          "samples": [
+            10608171.051297752,
+            12722994.900679518,
+            13135171.96418531,
+            13010628.05004524,
+            13113038.946825007
+          ],
+          "statistics": {
+            "median": 13010628.05004524,
+            "min": 10608171.051297752,
+            "max": 13135171.96418531,
+            "mean": 12518000.982606566,
+            "stdev": 1080176.4323372426,
+            "sample_count": 5
+          }
+        },
+        "binary_write_big_binary__peak_rss_mb": {
+          "name": "binary_write_big_binary__peak_rss_mb",
+          "group": "Binary / write",
+          "value": 10.98046875,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_write_BigBinary",
+          "samples": [
+            11.0625,
+            10.9765625,
+            10.82421875,
+            10.98046875,
+            11.03125
+          ],
+          "statistics": {
+            "median": 10.98046875,
+            "min": 10.82421875,
+            "max": 11.0625,
+            "mean": 10.975,
+            "stdev": 0.09163466386195647,
+            "sample_count": 5
+          }
+        },
+        "binary_read_big_binary__ns_per_op": {
+          "name": "binary_read_big_binary__ns_per_op",
+          "group": "Binary / read",
+          "value": 38.98825967231225,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_BigBinary",
+          "samples": [
+            38.70661742039446,
+            38.98825967231225,
+            39.79939233814423,
+            38.68769489569179,
+            39.50529976709369
+          ],
+          "statistics": {
+            "median": 38.98825967231225,
+            "min": 38.68769489569179,
+            "max": 39.79939233814423,
+            "mean": 39.13745281872728,
+            "stdev": 0.49589193114917574,
+            "sample_count": 5
+          }
+        },
+        "binary_read_big_binary__objects_per_second": {
+          "name": "binary_read_big_binary__objects_per_second",
+          "group": "Binary / read",
+          "value": 25648746.786975875,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "BinaryProtocol_read_BigBinary",
+          "samples": [
+            25835375.619082164,
+            25648746.786975875,
+            25126011.761782292,
+            25848011.95047055,
+            25313059.40963798
+          ],
+          "statistics": {
+            "median": 25648746.786975875,
+            "min": 25126011.761782292,
+            "max": 25848011.95047055,
+            "mean": 25554241.10558977,
+            "stdev": 322419.84630012704,
+            "sample_count": 5
+          }
+        },
+        "binary_read_big_binary__peak_rss_mb": {
+          "name": "binary_read_big_binary__peak_rss_mb",
+          "group": "Binary / read",
+          "value": 10.95703125,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_BigBinary",
+          "samples": [
+            11.11328125,
+            10.95703125,
+            10.9296875,
+            11.08984375,
+            10.9296875
+          ],
+          "statistics": {
+            "median": 10.95703125,
+            "min": 10.9296875,
+            "max": 11.11328125,
+            "mean": 11.00390625,
+            "stdev": 0.09022507392539919,
+            "sample_count": 5
+          }
+        },
+        "binary_read_large_map_int__ns_per_op": {
+          "name": "binary_read_large_map_int__ns_per_op",
+          "group": "Binary / read",
+          "value": 25145619.35379061,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_LargeMapInt",
+          "samples": [
+            24973093.067375883,
+            25131060.0,
+            25145619.35379061,
+            25226415.262589924,
+            25628544.94202898
+          ],
+          "statistics": {
+            "median": 25145619.35379061,
+            "min": 24973093.067375883,
+            "max": 25628544.94202898,
+            "mean": 25220946.52515708,
+            "stdev": 245637.6819680626,
+            "sample_count": 5
+          }
+        },
+        "binary_read_large_map_int__objects_per_second": {
+          "name": "binary_read_large_map_int__objects_per_second",
+          "group": "Binary / read",
+          "value": 39.768358294553344,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "BinaryProtocol_read_LargeMapInt",
+          "samples": [
+            40.04309747703502,
+            39.79139757734055,
+            39.768358294553344,
+            39.640987020576496,
+            39.01899238766659
+          ],
+          "statistics": {
+            "median": 39.768358294553344,
+            "min": 39.01899238766659,
+            "max": 40.04309747703502,
+            "mean": 39.6525665514344,
+            "stdev": 0.3829968968242818,
+            "sample_count": 5
+          }
+        },
+        "binary_read_large_map_int__peak_rss_mb": {
+          "name": "binary_read_large_map_int__peak_rss_mb",
+          "group": "Binary / read",
+          "value": 110.5078125,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "BinaryProtocol_read_LargeMapInt",
+          "samples": [
+            110.5078125,
+            110.44140625,
+            110.6953125,
+            110.51171875,
+            110.48828125
+          ],
+          "statistics": {
+            "median": 110.5078125,
+            "min": 110.44140625,
+            "max": 110.6953125,
+            "mean": 110.52890625,
+            "stdev": 0.09713140211766609,
+            "sample_count": 5
+          }
+        },
+        "compact_write_complex_struct__ns_per_op": {
+          "name": "compact_write_complex_struct__ns_per_op",
+          "group": "Compact / write",
+          "value": 33026455.718750004,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_write_ComplexStruct",
+          "samples": [
+            32551673.73214286,
+            32946026.76681614,
+            34125324.800904974,
+            33133156.828054298,
+            33026455.718750004
+          ],
+          "statistics": {
+            "median": 33026455.718750004,
+            "min": 32551673.73214286,
+            "max": 34125324.800904974,
+            "mean": 33156527.569333654,
+            "stdev": 584421.0181853926,
+            "sample_count": 5
+          }
+        },
+        "compact_write_complex_struct__objects_per_second": {
+          "name": "compact_write_complex_struct__objects_per_second",
+          "group": "Compact / write",
+          "value": 30.278756174016976,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "CompactProtocol_write_ComplexStruct",
+          "samples": [
+            30.72038655304409,
+            30.35267369500285,
+            29.303750391658713,
+            30.181247298273924,
+            30.278756174016976
+          ],
+          "statistics": {
+            "median": 30.278756174016976,
+            "min": 29.303750391658713,
+            "max": 30.72038655304409,
+            "mean": 30.16736282239931,
+            "stdev": 0.5240713343968469,
+            "sample_count": 5
+          }
+        },
+        "compact_write_complex_struct__peak_rss_mb": {
+          "name": "compact_write_complex_struct__peak_rss_mb",
+          "group": "Compact / write",
+          "value": 191.34375,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_write_ComplexStruct",
+          "samples": [
+            191.21875,
+            191.359375,
+            191.34375,
+            191.2109375,
+            191.36328125
+          ],
+          "statistics": {
+            "median": 191.34375,
+            "min": 191.2109375,
+            "max": 191.36328125,
+            "mean": 191.29921875,
+            "stdev": 0.07741868213648434,
+            "sample_count": 5
+          }
+        },
+        "compact_read_complex_struct__ns_per_op": {
+          "name": "compact_read_complex_struct__ns_per_op",
+          "group": "Compact / read",
+          "value": 117849655.56666666,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_ComplexStruct",
+          "samples": [
+            116995636.83050846,
+            118646340.29310347,
+            117565203.84745763,
+            117849655.56666666,
+            118314562.49152544
+          ],
+          "statistics": {
+            "median": 117849655.56666666,
+            "min": 116995636.83050846,
+            "max": 118646340.29310347,
+            "mean": 117874279.80585234,
+            "stdev": 643831.1150084717,
+            "sample_count": 5
+          }
+        },
+        "compact_read_complex_struct__objects_per_second": {
+          "name": "compact_read_complex_struct__objects_per_second",
+          "group": "Compact / read",
+          "value": 8.485387549005669,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "CompactProtocol_read_ComplexStruct",
+          "samples": [
+            8.547327294339187,
+            8.428409991657592,
+            8.505918139669225,
+            8.485387549005669,
+            8.452044946467408
+          ],
+          "statistics": {
+            "median": 8.485387549005669,
+            "min": 8.428409991657592,
+            "max": 8.547327294339187,
+            "mean": 8.483817584227817,
+            "stdev": 0.04637856305270491,
+            "sample_count": 5
+          }
+        },
+        "compact_read_complex_struct__peak_rss_mb": {
+          "name": "compact_read_complex_struct__peak_rss_mb",
+          "group": "Compact / read",
+          "value": 349.53125,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_ComplexStruct",
+          "samples": [
+            349.47265625,
+            349.61328125,
+            349.65234375,
+            349.515625,
+            349.53125
+          ],
+          "statistics": {
+            "median": 349.53125,
+            "min": 349.47265625,
+            "max": 349.65234375,
+            "mean": 349.55703125,
+            "stdev": 0.07373402567993118,
+            "sample_count": 5
+          }
+        },
+        "compact_write_big_binary__ns_per_op": {
+          "name": "compact_write_big_binary__ns_per_op",
+          "group": "Compact / write",
+          "value": 77.04541332651175,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_write_BigBinary",
+          "samples": [
+            79.24518137616141,
+            77.04541332651175,
+            76.51874323566993,
+            76.70349091727348,
+            77.5315327036643
+          ],
+          "statistics": {
+            "median": 77.04541332651175,
+            "min": 76.51874323566993,
+            "max": 79.24518137616141,
+            "mean": 77.40887231185619,
+            "stdev": 1.0964797842973777,
+            "sample_count": 5
+          }
+        },
+        "compact_write_big_binary__objects_per_second": {
+          "name": "compact_write_big_binary__objects_per_second",
+          "group": "Compact / write",
+          "value": 12979357.976341655,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "CompactProtocol_write_BigBinary",
+          "samples": [
+            12619063.804689841,
+            12979357.976341655,
+            13068693.46926023,
+            13037216.273227036,
+            12897977.959782265
+          ],
+          "statistics": {
+            "median": 12979357.976341655,
+            "min": 12619063.804689841,
+            "max": 13068693.46926023,
+            "mean": 12920461.896660205,
+            "stdev": 180568.04051778986,
+            "sample_count": 5
+          }
+        },
+        "compact_write_big_binary__peak_rss_mb": {
+          "name": "compact_write_big_binary__peak_rss_mb",
+          "group": "Compact / write",
+          "value": 11.046875,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_write_BigBinary",
+          "samples": [
+            10.89453125,
+            11.046875,
+            11.1640625,
+            11.16796875,
+            10.97265625
+          ],
+          "statistics": {
+            "median": 11.046875,
+            "min": 10.89453125,
+            "max": 11.16796875,
+            "mean": 11.04921875,
+            "stdev": 0.11946357357017347,
+            "sample_count": 5
+          }
+        },
+        "compact_read_big_binary__ns_per_op": {
+          "name": "compact_read_big_binary__ns_per_op",
+          "group": "Compact / read",
+          "value": 40.79563121272934,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_BigBinary",
+          "samples": [
+            40.79563121272934,
+            40.32301217198781,
+            40.868067231114594,
+            41.30753522178243,
+            40.625763650617266
+          ],
+          "statistics": {
+            "median": 40.79563121272934,
+            "min": 40.32301217198781,
+            "max": 41.30753522178243,
+            "mean": 40.78400189764629,
+            "stdev": 0.36015282614709954,
+            "sample_count": 5
+          }
+        },
+        "compact_read_big_binary__objects_per_second": {
+          "name": "compact_read_big_binary__objects_per_second",
+          "group": "Compact / read",
+          "value": 24512428.666331626,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "CompactProtocol_read_BigBinary",
+          "samples": [
+            24512428.666331626,
+            24799734.596580926,
+            24468981.964448214,
+            24208658.16928909,
+            24614921.915069185
+          ],
+          "statistics": {
+            "median": 24512428.666331626,
+            "min": 24208658.16928909,
+            "max": 24799734.596580926,
+            "mean": 24520945.06234381,
+            "stdev": 216131.35436929847,
+            "sample_count": 5
+          }
+        },
+        "compact_read_big_binary__peak_rss_mb": {
+          "name": "compact_read_big_binary__peak_rss_mb",
+          "group": "Compact / read",
+          "value": 11.2578125,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_BigBinary",
+          "samples": [
+            11.3515625,
+            11.2578125,
+            11.21875,
+            11.30078125,
+            11.203125
+          ],
+          "statistics": {
+            "median": 11.2578125,
+            "min": 11.203125,
+            "max": 11.3515625,
+            "mean": 11.26640625,
+            "stdev": 0.06079209414831422,
+            "sample_count": 5
+          }
+        },
+        "compact_read_large_map_int__ns_per_op": {
+          "name": "compact_read_large_map_int__ns_per_op",
+          "group": "Compact / read",
+          "value": 35242434.780612245,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_LargeMapInt",
+          "samples": [
+            34605221.580000006,
+            35242434.780612245,
+            35727610.288659796,
+            34699959.6281407,
+            35320204.0
+          ],
+          "statistics": {
+            "median": 35242434.780612245,
+            "min": 34605221.580000006,
+            "max": 35727610.288659796,
+            "mean": 35119086.05548255,
+            "stdev": 465211.9783553761,
+            "sample_count": 5
+          }
+        },
+        "compact_read_large_map_int__objects_per_second": {
+          "name": "compact_read_large_map_int__objects_per_second",
+          "group": "Compact / read",
+          "value": 28.37488403469006,
+          "unit": "objects/s",
+          "direction": "higher_is_better",
+          "benchmark_case": "CompactProtocol_read_LargeMapInt",
+          "samples": [
+            28.89737312296094,
+            28.37488403469006,
+            27.989557429689253,
+            28.818477333011874,
+            28.312407255631932
+          ],
+          "statistics": {
+            "median": 28.37488403469006,
+            "min": 27.989557429689253,
+            "max": 28.89737312296094,
+            "mean": 28.478539835196813,
+            "stdev": 0.3769705483282512,
+            "sample_count": 5
+          }
+        },
+        "compact_read_large_map_int__peak_rss_mb": {
+          "name": "compact_read_large_map_int__peak_rss_mb",
+          "group": "Compact / read",
+          "value": 110.58203125,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "benchmark_case": "CompactProtocol_read_LargeMapInt",
+          "samples": [
+            110.69140625,
+            110.55859375,
+            110.7109375,
+            110.58203125,
+            110.578125
+          ],
+          "statistics": {
+            "median": 110.58203125,
+            "min": 110.55859375,
+            "max": 110.7109375,
+            "mean": 110.62421875,
+            "stdev": 0.07114309757124193,
+            "sample_count": 5
+          }
+        }
+      }
+    }
+  },
+  "metrics": {
+    "binary_write_complex_struct__ns_per_op": {
+      "value": 25619651.150170647,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Binary / write"
+    },
+    "binary_write_complex_struct__objects_per_second": {
+      "value": 39.032537724204694,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Binary / write"
+    },
+    "binary_write_complex_struct__peak_rss_mb": {
+      "value": 210.890625,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Binary / write"
+    },
+    "binary_read_complex_struct__ns_per_op": {
+      "value": 83194491.04477613,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_complex_struct__objects_per_second": {
+      "value": 12.02002665611344,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_complex_struct__peak_rss_mb": {
+      "value": 368.93359375,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "binary_write_big_binary__ns_per_op": {
+      "value": 76.86024042448302,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Binary / write"
+    },
+    "binary_write_big_binary__objects_per_second": {
+      "value": 13010628.05004524,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Binary / write"
+    },
+    "binary_write_big_binary__peak_rss_mb": {
+      "value": 10.98046875,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Binary / write"
+    },
+    "binary_read_big_binary__ns_per_op": {
+      "value": 38.98825967231225,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_big_binary__objects_per_second": {
+      "value": 25648746.786975875,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_big_binary__peak_rss_mb": {
+      "value": 10.95703125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_large_map_int__ns_per_op": {
+      "value": 25145619.35379061,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_large_map_int__objects_per_second": {
+      "value": 39.768358294553344,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Binary / read"
+    },
+    "binary_read_large_map_int__peak_rss_mb": {
+      "value": 110.5078125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Binary / read"
+    },
+    "compact_write_complex_struct__ns_per_op": {
+      "value": 33026455.718750004,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Compact / write"
+    },
+    "compact_write_complex_struct__objects_per_second": {
+      "value": 30.278756174016976,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Compact / write"
+    },
+    "compact_write_complex_struct__peak_rss_mb": {
+      "value": 191.34375,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Compact / write"
+    },
+    "compact_read_complex_struct__ns_per_op": {
+      "value": 117849655.56666666,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_complex_struct__objects_per_second": {
+      "value": 8.485387549005669,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_complex_struct__peak_rss_mb": {
+      "value": 349.53125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    },
+    "compact_write_big_binary__ns_per_op": {
+      "value": 77.04541332651175,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Compact / write"
+    },
+    "compact_write_big_binary__objects_per_second": {
+      "value": 12979357.976341655,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Compact / write"
+    },
+    "compact_write_big_binary__peak_rss_mb": {
+      "value": 11.046875,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Compact / write"
+    },
+    "compact_read_big_binary__ns_per_op": {
+      "value": 40.79563121272934,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_big_binary__objects_per_second": {
+      "value": 24512428.666331626,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_big_binary__peak_rss_mb": {
+      "value": 11.2578125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_large_map_int__ns_per_op": {
+      "value": 35242434.780612245,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_large_map_int__objects_per_second": {
+      "value": 28.37488403469006,
+      "unit": "objects/s",
+      "direction": "higher_is_better",
+      "group": "Compact / read"
+    },
+    "compact_read_large_map_int__peak_rss_mb": {
+      "value": 110.58203125,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "Compact / read"
+    }
+  }
+}
