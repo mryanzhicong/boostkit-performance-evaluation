@@ -1,0 +1,18 @@
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+                                        │ benchmark_official.txt │      benchmark_optimized.txt       │
+                                        │         sec/op         │   sec/op     vs base               │
+CRC32/poly=Castagnoli/size=4kB/align=0               452.3n ± 0%   149.3n ± 0%  -66.99% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=4kB/align=1               452.2n ± 0%   152.4n ± 0%  -66.30% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=0              3.575µ ± 0%   1.123µ ± 0%  -68.60% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=1              3.575µ ± 0%   1.150µ ± 0%  -67.83% (p=0.002 n=6)
+geomean                                              1.271µ        414.0n       -67.44%
+
+                                        │ benchmark_official.txt │        benchmark_optimized.txt        │
+                                        │          B/s           │      B/s       vs base                │
+CRC32/poly=Castagnoli/size=4kB/align=0              8.434Gi ± 0%   25.554Gi ± 0%  +202.98% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=4kB/align=1              8.435Gi ± 0%   25.023Gi ± 0%  +196.64% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=0             8.537Gi ± 0%   27.186Gi ± 0%  +218.44% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=1             8.538Gi ± 0%   26.545Gi ± 0%  +210.93% (p=0.002 n=6)
+geomean                                             8.486Gi         26.06Gi       +207.14%

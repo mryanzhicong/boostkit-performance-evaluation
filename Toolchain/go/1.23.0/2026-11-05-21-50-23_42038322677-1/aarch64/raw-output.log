@@ -1,0 +1,87 @@
+[go] [2026-11-05 21:46:49] warmup: official Go 1.23.0 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 1
+[go] [2026-11-05 21:46:57] measurement: official Go 1.23.0 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 6
+[go] [2026-11-05 21:47:32] warmup: openEuler golang 1.24.6 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 1
+[go] [2026-11-05 21:47:39] measurement: openEuler golang 1.24.6 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 6
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2653718	       452.3 ns/op	9055.02 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2653476	       452.3 ns/op	9055.33 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2652726	       452.2 ns/op	9057.88 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2653123	       452.3 ns/op	9056.63 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2653035	       452.3 ns/op	9056.52 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 2653232	       452.3 ns/op	9055.53 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2652312	       452.4 ns/op	9053.64 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2654578	       452.2 ns/op	9058.17 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2651158	       452.2 ns/op	9058.45 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2652864	       452.2 ns/op	9058.00 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2653819	       452.3 ns/op	9056.89 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 2654049	       452.4 ns/op	9053.79 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335502	      3574 ns/op	9167.51 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335671	      3574 ns/op	9168.23 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335704	      3574 ns/op	9168.46 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335640	      3575 ns/op	9166.10 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335536	      3575 ns/op	9166.21 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	  335812	      3576 ns/op	9163.95 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335570	      3575 ns/op	9166.65 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335685	      3574 ns/op	9167.19 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335089	      3575 ns/op	9166.50 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335623	      3574 ns/op	9169.51 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335781	      3574 ns/op	9168.86 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	  335552	      3575 ns/op	9166.98 MB/s
+PASS
+ok  	hash/crc32	34.798s
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8025974	       149.3 ns/op	27439.22 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8041298	       149.2 ns/op	27447.25 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8040789	       149.3 ns/op	27437.03 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8040114	       149.2 ns/op	27444.43 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8034808	       149.3 ns/op	27435.81 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8038532	       149.3 ns/op	27432.13 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7871438	       152.5 ns/op	26862.53 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7867058	       152.5 ns/op	26866.05 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7871869	       152.4 ns/op	26868.59 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7873836	       152.4 ns/op	26867.97 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7874968	       152.4 ns/op	26873.36 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7872046	       152.4 ns/op	26871.29 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1126 ns/op	29103.69 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1121 ns/op	29221.37 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1124 ns/op	29141.91 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1123 ns/op	29174.91 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1122 ns/op	29206.12 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1120 ns/op	29246.44 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1150 ns/op	28492.81 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1149 ns/op	28520.99 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1150 ns/op	28504.99 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1150 ns/op	28500.80 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1148 ns/op	28545.54 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1152 ns/op	28435.95 MB/s
+PASS
+ok  	hash/crc32	30.102s
+[go] [2026-11-05 21:48:10] comparing both result sets with benchstat
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+                                        │ benchmark_official.txt │      benchmark_optimized.txt       │
+                                        │         sec/op         │   sec/op     vs base               │
+CRC32/poly=Castagnoli/size=4kB/align=0               452.3n ± 0%   149.3n ± 0%  -66.99% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=4kB/align=1               452.2n ± 0%   152.4n ± 0%  -66.30% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=0              3.575µ ± 0%   1.123µ ± 0%  -68.60% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=1              3.575µ ± 0%   1.150µ ± 0%  -67.83% (p=0.002 n=6)
+geomean                                              1.271µ        414.0n       -67.44%
+
+                                        │ benchmark_official.txt │        benchmark_optimized.txt        │
+                                        │          B/s           │      B/s       vs base                │
+CRC32/poly=Castagnoli/size=4kB/align=0              8.434Gi ± 0%   25.554Gi ± 0%  +202.98% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=4kB/align=1              8.435Gi ± 0%   25.023Gi ± 0%  +196.64% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=0             8.537Gi ± 0%   27.186Gi ± 0%  +218.44% (p=0.002 n=6)
+CRC32/poly=Castagnoli/size=32kB/align=1             8.538Gi ± 0%   26.545Gi ± 0%  +210.93% (p=0.002 n=6)
+geomean                                             8.486Gi         26.06Gi       +207.14%
+4kB/align=0: official 452.300 ns/op, optimized 149.300 ns/op, speedup 3.029x (6 samples each)
+4kB/align=1: official 452.250 ns/op, optimized 152.400 ns/op, speedup 2.968x (6 samples each)
+32kB/align=0: official 3574.500 ns/op, optimized 1122.500 ns/op, speedup 3.184x (6 samples each)
+32kB/align=1: official 3574.500 ns/op, optimized 1150.000 ns/op, speedup 3.108x (6 samples each)
+wrote /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Toolchain/go/1.23.0/aarch64/42038322677-1/benchmark_go.json and /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Toolchain/go/1.23.0/aarch64/42038322677-1/runs
+[go] [2026-11-05 21:48:10] measured Go CRC32 Castagnoli with official 1.23.0 and openEuler golang 1.24.6 (base)
