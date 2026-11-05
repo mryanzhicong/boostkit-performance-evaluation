@@ -1,0 +1,56 @@
+[go] [2026-11-05 22:27:03] warmup: openEuler golang 1.24.6 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 1
+[go] [2026-11-05 22:27:10] measurement: openEuler golang 1.24.6 go test hash/crc32 -bench 'CRC32/poly=Castagnoli/size=(4|32)kB' -cpu 1 -count 6
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 7984075	       149.3 ns/op	27431.98 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8042952	       149.3 ns/op	27438.94 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8039956	       149.2 ns/op	27453.46 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8036283	       149.3 ns/op	27438.88 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8036386	       149.2 ns/op	27456.71 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0 	 8035966	       149.3 ns/op	27440.02 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7861275	       153.1 ns/op	26757.69 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7869213	       152.4 ns/op	26868.55 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7870395	       152.5 ns/op	26867.45 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7872716	       152.6 ns/op	26834.38 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7869190	       152.5 ns/op	26865.66 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1 	 7866261	       152.5 ns/op	26866.64 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1122 ns/op	29212.64 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1121 ns/op	29227.29 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1126 ns/op	29113.64 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1121 ns/op	29235.69 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1121 ns/op	29227.62 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0         	 1000000	      1122 ns/op	29197.44 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1150 ns/op	28505.30 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1152 ns/op	28442.78 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1148 ns/op	28532.35 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1150 ns/op	28498.70 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1153 ns/op	28416.14 MB/s
+BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1         	 1000000	      1151 ns/op	28461.24 MB/s
+PASS
+ok  	hash/crc32	30.108s
+[go] [2026-11-05 22:27:41] summarising the samples with benchstat
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+                                        │ benchmark_go1.24.6.txt │
+                                        │         sec/op         │
+CRC32/poly=Castagnoli/size=4kB/align=0               149.3n ± 0%
+CRC32/poly=Castagnoli/size=4kB/align=1               152.5n ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=0              1.122µ ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=1              1.151µ ± 0%
+geomean                                              414.0n
+
+                                        │ benchmark_go1.24.6.txt │
+                                        │          B/s           │
+CRC32/poly=Castagnoli/size=4kB/align=0              25.56Gi ± 0%
+CRC32/poly=Castagnoli/size=4kB/align=1              25.02Gi ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=0             27.21Gi ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=1             26.52Gi ± 0%
+geomean                                             26.06Gi
+4kB/align=0: 149.300 ns/op (6 samples)
+4kB/align=1: 152.500 ns/op (6 samples)
+32kB/align=0: 1121.500 ns/op (6 samples)
+32kB/align=1: 1150.500 ns/op (6 samples)
+wrote /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Toolchain/go/1.24.6/aarch64/42044633448-1/benchmark_go.json and /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Toolchain/go/1.24.6/aarch64/42044633448-1/runs
+[go] [2026-11-05 22:27:41] measured Go CRC32 Castagnoli with openEuler golang 1.24.6 (base)
