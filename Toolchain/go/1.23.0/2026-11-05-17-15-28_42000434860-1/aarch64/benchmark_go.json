@@ -1,0 +1,109 @@
+{
+  "software": "go",
+  "version": "1.23.0",
+  "go_version": "1.23.0",
+  "variant": "base",
+  "architecture": "aarch64",
+  "run_id": "42000434860-1",
+  "generated_at": "2026-11-05T09:14:21Z",
+  "benchmark": {
+    "package": "hash/crc32",
+    "pattern": "CRC32/poly=Castagnoli/size=(4|32)kB",
+    "cpu": 1,
+    "scenarios": [
+      {
+        "size_kb": 4,
+        "align": 0,
+        "metric": "crc32_castagnoli_4kb_align0"
+      },
+      {
+        "size_kb": 4,
+        "align": 1,
+        "metric": "crc32_castagnoli_4kb_align1"
+      },
+      {
+        "size_kb": 32,
+        "align": 0,
+        "metric": "crc32_castagnoli_32kb_align0"
+      },
+      {
+        "size_kb": 32,
+        "align": 1,
+        "metric": "crc32_castagnoli_32kb_align1"
+      }
+    ],
+    "warmup_reps": 1,
+    "measure_reps": 5,
+    "time_basis": "ns/op"
+  },
+  "results": {
+    "crc32_castagnoli_4kb_align0": {
+      "source_name": "crc32_castagnoli_4kb_align0",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0",
+      "source_field": "ns/op",
+      "value": 452.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        452.4,
+        452.4,
+        452.2,
+        452.3,
+        452.4
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_4kb_align1": {
+      "source_name": "crc32_castagnoli_4kb_align1",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1",
+      "source_field": "ns/op",
+      "value": 452.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        452.4,
+        452.4,
+        452.4,
+        452.7,
+        452.4
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_32kb_align0": {
+      "source_name": "crc32_castagnoli_32kb_align0",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0",
+      "source_field": "ns/op",
+      "value": 3576.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        3576.0,
+        3576.0,
+        3576.0,
+        3577.0,
+        3579.0
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_32kb_align1": {
+      "source_name": "crc32_castagnoli_32kb_align1",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1",
+      "source_field": "ns/op",
+      "value": 3578.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        3577.0,
+        3576.0,
+        3578.0,
+        3579.0,
+        3578.0
+      ],
+      "group": "crc32/castagnoli"
+    }
+  }
+}
