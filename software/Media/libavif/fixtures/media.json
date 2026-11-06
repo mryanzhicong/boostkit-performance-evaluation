@@ -1,0 +1,92 @@
+{
+  "benchmark": "libavif_0.9.3_aom_encode",
+  "resolution": "1920x1080",
+  "color_format": "I420_8bit",
+  "media_directory": "/home/runner/software/media/video",
+  "media_override_env": "LIBAVIF_MEDIA_DIR",
+  "codec": "aom 3.2.0",
+  "notes": [
+    "Full YUV inputs are archived by the case documentation and never committed.",
+    "Input validation only requires the file to be at least 1920*1080*3//2 bytes; source and generated-PNG sha256 are no longer verified.",
+    "The single warm-up encode/decode records encoded_sha256 and decoded_yuv_sha256 as evidence only; later iterations are not compared against them.",
+    "BQTerrace is published upstream as BQTerrace_1920x1080_60-dianbo.yuv; runners that only archive BQTerrace_1920x1080_60.yuv are accepted via alternate_filenames."
+  ],
+  "videos": {
+    "BQTerrace": {
+      "filename": "BQTerrace_1920x1080_60-dianbo.yuv",
+      "alternate_filenames": [
+        "BQTerrace_1920x1080_60.yuv"
+      ],
+      "bytes": 1866240000,
+      "frames": 600
+    },
+    "Film2012": {
+      "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+      "alternate_filenames": [],
+      "bytes": 4665600000,
+      "frames": 1500
+    },
+    "messi": {
+      "filename": "messi_1920x1080_25_1000.yuv",
+      "alternate_filenames": [],
+      "bytes": 3110400000,
+      "frames": 1000
+    }
+  },
+  "scenarios": [
+    {
+      "name": "BQTerrace_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "BQTerrace",
+      "video": "BQTerrace",
+      "qp": 20
+    },
+    {
+      "name": "BQTerrace_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "BQTerrace",
+      "video": "BQTerrace",
+      "qp": 32
+    },
+    {
+      "name": "Film2012_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "Film2012",
+      "video": "Film2012",
+      "qp": 20
+    },
+    {
+      "name": "Film2012_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "Film2012",
+      "video": "Film2012",
+      "qp": 32
+    },
+    {
+      "name": "messi_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "messi",
+      "video": "messi",
+      "qp": 20
+    },
+    {
+      "name": "messi_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "messi",
+      "video": "messi",
+      "qp": 32
+    }
+  ],
+  "encoder_options": [
+    "--codec", "aom",
+    "--yuv", "420",
+    "--speed", "8",
+    "--jobs", "8",
+    "--tilerowslog2", "0",
+    "--tilecolslog2", "2"
+  ],
+  "native_threads": 8,
+  "unit": "ms",
+  "direction": "lower_is_better",
+  "description": "avifenc 用 AOM 编码 1920x1080 首帧（QP20/32，speed 8，8 jobs，1x4 tile），1 次预热 + N 次计时，上报均值；预热阶段的编码/解码摘要仅记录不比对，也不观测线程数。"
+}
