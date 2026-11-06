@@ -58,10 +58,9 @@ main() {
     hash="$(sha256sum "${bin}")"
     hash="${hash%% *}"
     command -v docker >/dev/null && docker info >/dev/null || { jemalloc_log 'ERROR: Docker is unavailable'; return 30; }
-    jemalloc_load_image "${arch}" "${work_dir}" || return $?
+    jemalloc_existing_container "${arch}" "${run_id}" || return $?
     JEMALLOC_CLEANUP_RUN_ID="${run_id}"
     trap 'jemalloc_stop_container "${JEMALLOC_CLEANUP_RUN_ID}"' EXIT
-    jemalloc_start_container "${work_dir}" "${run_id}" || return $?
     jemalloc_container_exec env "LD_PRELOAD=${lib}" bash -c 'grep -F "$LD_PRELOAD" "/proc/$$/maps" >/dev/null' || {
         jemalloc_log 'ERROR: private jemalloc library is not loaded by LD_PRELOAD'; return 40;
     }
@@ -78,6 +77,7 @@ main() {
     done
     python3 "$(dirname "${BASH_SOURCE[0]}")/../results/parse_benchmark.py" \
         --results-dir "${results_dir}" --threads "${threads}" --binary-sha256 "${hash}" || return 50
+    trap - EXIT
     jemalloc_log "three-mode result: ${results_dir}/benchmark_jemalloc.json"
 }
 

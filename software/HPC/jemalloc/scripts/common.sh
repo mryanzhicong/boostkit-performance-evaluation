@@ -80,16 +80,34 @@ jemalloc_start_container() {
         --label "boostkit.jemalloc.run-id=${run_id}" \
         --network=host --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${work_dir},target=${work_dir}" \
-        "${cert_mount[@]}" "${JEMALLOC_IMAGE}" sleep infinity >/dev/null
+        "${cert_mount[@]}" "${JEMALLOC_IMAGE}" sleep infinity >/dev/null || return 40
     if [[ -n "${PERF_PROXY:-}" ]]; then
-        docker exec --user 0 "${JEMALLOC_CONTAINER}" update-ca-trust extract
+        docker exec --user 0 "${JEMALLOC_CONTAINER}" update-ca-trust extract || {
+            jemalloc_stop_container "${run_id}" || true
+            return 30
+        }
     fi
     if docker exec --user 0 "${JEMALLOC_CONTAINER}" test -f /etc/yum.repos.d/openEuler.repo; then
         docker exec --user 0 "${JEMALLOC_CONTAINER}" sed -i \
             -e '/^meta/ s/^\(.*\)$/#\1/g' \
             -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
-            /etc/yum.repos.d/openEuler.repo
+            /etc/yum.repos.d/openEuler.repo || {
+            jemalloc_stop_container "${run_id}" || true
+            return 30
+        }
     fi
+}
+
+jemalloc_existing_container() {
+    local arch="$1" run_id="$2" label running
+    [[ "${run_id}" =~ ^[A-Za-z0-9._-]+$ ]] || { jemalloc_log 'ERROR: unsafe run ID'; return 10; }
+    JEMALLOC_CONTAINER="boostkit-jemalloc-${arch}-${run_id}"
+    running="$(docker inspect --format '{{.State.Running}}' "${JEMALLOC_CONTAINER}" 2>/dev/null)" || {
+        jemalloc_log "ERROR: managed container is missing: ${JEMALLOC_CONTAINER}"; return 40;
+    }
+    [[ "${running}" == true ]] || { jemalloc_log "ERROR: managed container is not running: ${JEMALLOC_CONTAINER}"; return 40; }
+    label="$(docker inspect --format '{{index .Config.Labels "boostkit.jemalloc.run-id"}}' "${JEMALLOC_CONTAINER}")" || return 40
+    [[ "${label}" == "${run_id}" ]] || { jemalloc_log "ERROR: container ownership label differs: ${JEMALLOC_CONTAINER}"; return 40; }
 }
 
 jemalloc_container_exec() {

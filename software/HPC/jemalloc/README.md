@@ -60,11 +60,13 @@ make install
 
 不加架构专用编译选项，不修改源码。构建后核对私有目录中的
 `jemalloc-config --version` 为 5.4.0，且 `lib/libjemalloc.so.2` 存在。
-构建容器随后移除；编译产物和源码保留在本次私有工作目录，供测试阶段使用。
+构建成功后保留同一个容器和本次私有工作目录。start 阶段检查该容器仍在运行、
+任务标签匹配、库文件可在容器内访问；test 阶段直接复用它，
+不会重新执行 `docker load` 或 `docker run`。构建失败时脚本清理已创建的容器。
 
 ## 数据与运行顺序
 
-本用例不需要外部数据集。测试阶段重新创建同规格私有容器，把预置工具复制到
+本用例不需要外部数据集。测试阶段复用 build 创建的容器，把预置工具复制到
 本次工作目录；先验证 `LD_PRELOAD` 确实加载本次构建的 `libjemalloc.so.2`，
 再在容器内依次执行：
 
@@ -80,8 +82,9 @@ LD_PRELOAD="${PERF_WORK_DIR}/jemalloc-install/lib/libjemalloc.so.2" \
 三种模式分别是工具输出标示的 All-To-All、Producer & Consumer、Isolated
 Threads。每种模式只跑一轮，使用工具默认的对象数量、大小范围、epochs、ages
 等参数；`-affinity 0` 不由工具绑核。任一模式退出失败或缺少最终汇总行时，
-整个测试失败，不生成部分成功的报告。测试脚本退出时只移除带本次任务标签的
-容器，保留原始日志；Framework 的 stop 阶段无需停止后台服务。
+整个测试失败，不生成部分成功的报告。测试成功后容器保持运行，Framework 的
+stop 阶段只移除带本次任务标签的容器；测试失败时脚本提前清理该容器。
+原始日志保留在结果目录。
 
 ## 指标与产物
 
@@ -117,6 +120,9 @@ bash software/HPC/jemalloc/scripts/builders/base.sh \
 bash software/HPC/jemalloc/scripts/stages/test.sh \
   --architecture aarch64 --run-id local-check-1 \
   --results-dir /home/runner/boostkit-perf/jemalloc/5.4.0/aarch64/local-check-1/results
+
+PERF_RUN_ID=local-check-1 EXPECTED_ARCH=aarch64 \
+  bash software/HPC/jemalloc/scripts/stages/stop.sh
 ```
 
 这些是构建、测试阶段的独立核查入口，不会自动生成 Framework 报告；正式报告由

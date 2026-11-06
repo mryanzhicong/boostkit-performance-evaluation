@@ -30,9 +30,9 @@ main() {
     command -v docker >/dev/null && docker info >/dev/null || { jemalloc_log 'ERROR: Docker is unavailable'; return 30; }
     mkdir -p "${work_dir}"
     jemalloc_load_image "${arch}" "${work_dir}" || return $?
+    jemalloc_start_container "${work_dir}" "${run_id}" || return $?
     JEMALLOC_CLEANUP_RUN_ID="${run_id}"
     trap 'jemalloc_stop_container "${JEMALLOC_CLEANUP_RUN_ID}"' EXIT
-    jemalloc_start_container "${work_dir}" "${run_id}" || return $?
     [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
     jemalloc_log 'installing build dependencies inside the private container'
     docker exec --user 0 "${JEMALLOC_CONTAINER}" dnf "${dnf_options[@]}" install -y gcc make tar bzip2 coreutils
@@ -70,7 +70,8 @@ main() {
         printf '{"variant":"base","parameters":{"variant":"base"}}\n' > "${RESULTS_DIR}/build_variant.json"
     fi
     jemalloc_log "verified jemalloc ${version}: ${prefix}/lib/libjemalloc.so.2"
-    jemalloc_log "private build retained at ${work_dir}"
+    trap - EXIT
+    jemalloc_log "private build and container retained for start/test: ${work_dir}"
 }
 
 main "$@"

@@ -4,6 +4,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 start_jemalloc_runtime() {
     local arch="$(jemalloc_arch "${EXPECTED_ARCH:-$(uname -m)}")"
     local bin=/home/runner/software/jemalloc/malloc_benchmark
+    jemalloc_existing_container "${arch}" "${PERF_RUN_ID}" || return $?
+    jemalloc_container_exec test -s "${PERF_WORK_DIR}/jemalloc-install/lib/libjemalloc.so.2" || {
+        jemalloc_log 'ERROR: private jemalloc library is unavailable inside the container'; return 40;
+    }
     [[ -s "${PERF_WORK_DIR}/jemalloc-install/lib/libjemalloc.so.2" ]] || {
         jemalloc_log 'ERROR: private jemalloc library is missing'; return 40;
     }
