@@ -1,0 +1,16 @@
+835: --conf spark.sql.sources.parallelPartitionDiscovery.parallelism=60
+836: --databases tpcds_bin_partitioned_varchar_orc_1000 -f q1.sql
+837: hudi数据湖测试
+838: 下载jar包和脚本
+839: 下载地址：https://onebox.huawei.com/#eSpaceGroupFile/1/23050/16321144
+840: 将下载的jar包放置在spark/jars
+841: cp hudi-spark3.5-bundle_2.12-0.15.0.jar /usr/local/spark/jars
+842: 将orc表迁移到iceberg数据湖
+843: 普通表迁移成hudi表(支持orc/parquet)：
+844: 单表：
+845: bash hivespark2hudi.sh tpcds_bin_partitioned_varchar_orc_2 tpcds_hudi_orc_2 --debug-table r3r_zf_2(表名)
+846: 数据库下所有表：
+847: orc:bash hivespark2hudi.sh tpcds_bin_partitioned_varchar_orc_2 tpcds_hudi_orc_2
+849: 测试参数
+850: spark-sql --master yarn --deploy-mode client --driver-cores 8 --driver-memory 20G --num-executors 2 --executor-cores 8 --executor-memory 32g --conf "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:ActiveProcessorCount=8" --conf "spark.task.cpus=1" --conf "spark.sql.orc.impl=native" --conf "spark.sql.autoBroadcastJoinThreshold=100M" --conf "spark.default.parallelism=100" --conf "spark.sql.shuffle.partitions=100" --conf "spark.sql.adaptive.enabled=true" --conf "spark.sql.adaptive.join.enabled=true" --conf "spark.sql.adaptive.skewedJoin.enabled=true" --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" --conf "spark.network.timeout=600" --conf "spark.sql.broadcastTimeout=600" --conf "spark.locality.wait=0" --conf "spark.sql.sources.parallelPartitionDiscovery.parallelism=60" --jars "/home/ln/iceberg-hudi-delta/hudi-spark3.5-bundle_2.12-0.15.0.jar" --conf "spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog" --conf "spark.hadoop.hoodie.metadata.enable=false" --conf "hoodie.datasource.write.partitionpath.urlencode=true" --conf "hoodie.datasource.write.hive_style_partitioning=true" --conf "spark.sql.hive.convertMetastoreOrc=false" --conf "spark.sql.hive.convertMetastoreParquet=false" --conf "spark.sql.parquet.datetimeRebaseModeInRead=LEGACY" --conf "spark.sql.parquet.datetimeRebaseModeInWrite=LEGACY" --conf "spark.sql.parquet.int96RebaseModeInRead=LEGACY" --conf "spark.sql.parquet.int96RebaseModeInWrite=LEGACY"
+851: --databases tpcds_hudi_orc_1000 -f q1.sql

@@ -1,0 +1,35 @@
+{
+  "name": "hudi",
+  "version": "0.15.0",
+  "kind": "hudi",
+  "spark_version": "3.5.2",
+  "scale_factor": 10000,
+  "jar_filename": "hudi-spark3.5-bundle_2.12-0.15.0.jar",
+  "resources": {
+    "requested_executors": 2,
+    "executor_cores": 8,
+    "executor_memory": "32g",
+    "driver_cores": 8,
+    "driver_memory": "20G"
+  },
+  "spark_conf": {
+    "spark.sql.warehouse.dir": "hdfs://server1:9000/user/hive/warehouse",
+    "spark.default.parallelism": "100",
+    "spark.sql.shuffle.partitions": "100",
+    "spark.sql.parquet.datetimeRebaseModeInRead": "LEGACY",
+    "spark.sql.parquet.datetimeRebaseModeInWrite": "LEGACY",
+    "spark.sql.parquet.int96RebaseModeInRead": "LEGACY",
+    "spark.sql.parquet.int96RebaseModeInWrite": "LEGACY",
+    "spark.sql.extensions": "org.apache.spark.sql.hudi.HoodieSparkSessionExtension",
+    "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.hudi.catalog.HoodieCatalog",
+    "spark.hadoop.hoodie.metadata.enable": "false",
+    "hoodie.datasource.write.partitionpath.urlencode": "true",
+    "hoodie.datasource.write.hive_style_partitioning": "true",
+    "spark.sql.hive.convertMetastoreOrc": "false",
+    "spark.sql.hive.convertMetastoreParquet": "false"
+  },
+  "document": {
+    "filename": "大数据单机环境部署+tpcds+hudi.docx",
+    "sha256": "503a9b2bc301842e7d29280232684058e7992ee08a741cd1bd2186f13efcbc04"
+  }
+}
