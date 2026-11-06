@@ -505,7 +505,16 @@ class Runtime:
 
 if __name__ == "__main__":
     try:
-        getattr(Runtime(), sys.argv[1])()
+        runtime = Runtime()
+        disk_stop = threading.Event()
+        disk_thread = threading.Thread(target=runtime.extension.disk_monitor,
+                                       args=(disk_stop, sys.argv[1]), daemon=True)
+        disk_thread.start()
+        try:
+            getattr(runtime, sys.argv[1])()
+        finally:
+            disk_stop.set()
+            disk_thread.join(timeout=5)
     except Exception as error:
         print(f"[spark] ERROR: {error}", file=sys.stderr, flush=True)
         raise

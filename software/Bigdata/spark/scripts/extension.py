@@ -10,6 +10,8 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+import time
 import zipfile
 
 
@@ -109,6 +111,33 @@ class Extension:
         self.target_db = f"tpcds_{self.name}_decimal_orc_{self.scale}"
         self.query_db = ("iceberg." if self.kind == "iceberg" else "") + self.target_db if self.kind in ("hudi", "iceberg") else self.source_db
         self.native = self.r.work / "extension-native"
+
+    def record_disk(self, stage: str):
+        filesystems = {}
+        for label, path in (("work", self.r.work), ("results", self.r.results)):
+            usage = shutil.disk_usage(path)
+            filesystems[label] = {"path": str(path), "device": path.stat().st_dev,
+                                  "total_bytes": usage.total, "used_bytes": usage.used,
+                                  "free_bytes": usage.free}
+        with (self.r.results / "disk-usage.jsonl").open("a") as stream:
+            stream.write(json.dumps({"time_unix": time.time(), "stage": stage,
+                                     "filesystems": filesystems}) + "\n")
+
+    def disk_monitor(self, stop, stage: str):
+        if not self.cfg:
+            return
+        while True:
+            try:
+                self.record_disk(stage)
+            except OSError as error:
+                print(f"[{self.name}] Cannot record disk usage: {error}", file=sys.stderr, flush=True)
+                return
+            if stop.wait(10):
+                try:
+                    self.record_disk(stage)
+                except OSError:
+                    pass
+                return
 
     def asset(self, name: str) -> Path:
         return Path(self.r.sources["extension_" + name]["path"])

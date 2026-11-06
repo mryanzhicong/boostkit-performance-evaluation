@@ -59,7 +59,9 @@ def preflight(work: Path, results: Path) -> None:
     limit = Path("/sys/fs/cgroup/memory.max")
     if limit.exists() and limit.read_text().strip().isdigit():
         available = min(available, int(limit.read_text()))
-    free = shutil.disk_usage(work).free
+    disk = shutil.disk_usage(work)
+    result_disk = shutil.disk_usage(results)
+    free = disk.free
     from extension import adapter_config
     cfg = adapter_config()
     profile = cfg.get("resources", {})
@@ -69,11 +71,18 @@ def preflight(work: Path, results: Path) -> None:
             "driver_cores": 8, "driver_memory": "20G", "requested_executors": 200,
             "executor_cores": 8, "executor_memory": "23g",
             "required_memory_bytes": 416 * 1024**3,
-            "required_disk_bytes": 500_000_000_000 * scale // 100 * (2 if cfg.get("kind") in ("hudi", "iceberg") else 1)}
+            "required_disk_bytes": None if cfg else 500_000_000_000,
+            "disk_check_policy": "record_only" if cfg else "required_minimum",
+            "work_filesystem_total_bytes": disk.total,
+            "results_filesystem_free_bytes": result_disk.free,
+            "results_filesystem_total_bytes": result_disk.total}
     info.update(profile)
     info["scale_factor"] = scale
     write_json(results / "preflight.json", info)
-    if cpus < 64 or available < info["required_memory_bytes"] or free < info["required_disk_bytes"]:
+    if cfg:
+        print(f"[{cfg['name']}] Disk space recorded only: work={free} bytes, results={result_disk.free} bytes; no minimum enforced", flush=True)
+    disk_insufficient = info["required_disk_bytes"] is not None and free < info["required_disk_bytes"]
+    if cpus < 64 or available < info["required_memory_bytes"] or disk_insufficient:
         raise RuntimeError("Insufficient resources for the unchanged document configuration; see preflight.json")
 
 def download(work: Path, results: Path, arch: str) -> None:
