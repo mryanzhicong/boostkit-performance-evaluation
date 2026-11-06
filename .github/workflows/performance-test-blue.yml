@@ -251,7 +251,10 @@ jobs:
           --output-dir .perf-output/report
       - name: Publish report in workflow summary
         shell: bash
-        run: cat .perf-output/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+        run: |
+          python3 framework/write_step_summary.py \
+            --report .perf-output/report/combined-report.md \
+            --compact .perf-output/report/combined-report-summary.md
       - name: Upload consolidated report to GitHub Actions
         uses: actions/upload-artifact@v4
         with:
