@@ -1,0 +1,28 @@
+{
+  "name": "celeborn",
+  "version": "0.5.3",
+  "kind": "celeborn",
+  "spark_version": "3.5.2",
+  "scale_factor": 10000,
+  "jar_filename": "gluten-velox-bundle-spark3.5_2.12-openEuler_24.03_aarch_64-1.3.0.jar",
+  "resources": {
+    "requested_executors": 200,
+    "executor_cores": 8,
+    "executor_memory": "23g",
+    "driver_cores": 8,
+    "driver_memory": "20G"
+  },
+  "spark_conf": {
+    "spark.sql.warehouse.dir": "hdfs://server1:9000/user/hive/warehouse",
+    "spark.shuffle.manager": "org.apache.spark.shuffle.gluten.celeborn.CelebornShuffleManager",
+    "spark.celeborn.master.endpoints": "server1:9097",
+    "spark.celeborn.client.spark.shuffle.writer": "hash",
+    "spark.celeborn.client.shuffle.compression.codec": "lz4",
+    "spark.celeborn.client.push.replicate.enabled": "false",
+    "spark.sql.adaptive.localShuffleReader.enabled": "false"
+  },
+  "document": {
+    "filename": "大数据单机环境部署+tpcds+celeborn.docx",
+    "sha256": "af5a172ed56d26aee15cdfbf47e8babdd47735677b7a44daac649e3273e3c408"
+  }
+}
