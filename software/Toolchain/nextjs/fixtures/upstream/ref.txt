@@ -1,0 +1,15 @@
+project: vercel/next.js
+example: examples/with-typescript
+tag: v16.4.3
+source: https://github.com/vercel/next.js/tree/v16.4.3/examples/with-typescript
+raw: https://raw.githubusercontent.com/vercel/next.js/v16.4.3/examples/with-typescript
+license: MIT (Copyright (c) 2025 Vercel, Inc.); full text in LICENSE
+vendored_at: 2026-10-31
+changes:
+  - package.json rewritten: the example's floating dependency ranges are replaced by the exact
+    versions of the shared dependency tree of this case (next 16.4.3, react 19.3.1) so the
+    build is reproducible; the example's other files are unmodified.
+  - next.config.js added: pins experimental.cpus=2 and the Turbopack workspace root so the
+    static generation parallelism and module resolution are identical on every runner.
+  - LICENSE added (verbatim copy of the repository license at this tag).
+excluded: .gitignore (irrelevant to the measurement)
