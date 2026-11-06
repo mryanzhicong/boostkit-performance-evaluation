@@ -1,0 +1,38 @@
+{
+  "benchmark": "libwebp_1.2.1_lossy_decode",
+  "resolution": "1920x1080",
+  "color_format": "I420_8bit",
+  "media_directory": "/home/runner/software/media/video",
+  "media_override_env": "LIBWEBP_MEDIA_DIR",
+  "notes": [
+    "Full YUV inputs are archived by the case documentation and never committed.",
+    "The harness verifies size and sha256 of the whole source file before slicing frame 0.",
+    "Pinned digests come from the untouched reference bench.py of the open-box task material."
+  ],
+  "videos": {
+    "Film2012_1920x1080_25_8bit_8Mbps": {
+      "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+      "bytes": 4665600000,
+      "frames": 1500,
+      "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc",
+      "rgb_frame0_sha256": "93a3575fed46b08bf70492bbf6aba4f0ea8d1d0272deafe64467fa773fc6ee6d",
+      "png_sha256": "2274fd1b7c25e5c2cd1d4621211426fb5acb1d40ff75da2d5a37f8291a1c1c03",
+      "webp_sha256": "bda353b918d67e7071bc1e2753aa783b46cdec44e99110377b52a60e053b0930",
+      "decoded_pam_sha256": "1db78c8e0f0ae3208c129b00b9c3e8917e614958981de66b4b2071b9de04983a"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "Film2012_lossy_decode_pam_c2",
+      "group": "RGB解码",
+      "subgroup": "Film2012",
+      "video": "Film2012_1920x1080_25_8bit_8Mbps",
+      "encoder_options": ["-q", "85", "-m", "4"],
+      "decoder_options": ["-mt", "-pam"],
+      "native_threads": 2,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "description": "cwebp 质量85/method4 生成输入，dwebp -mt 解码为 RGBA PAM 写 /dev/null；1 次预热 + N 次计时，上报中位数。"
+    }
+  ]
+}
