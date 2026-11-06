@@ -2,7 +2,6 @@
 """Strict parser for the fixed, unmodified 103-query Spark SQL workload."""
 from __future__ import annotations
 import hashlib
-import json
 import math
 from pathlib import Path
 import re

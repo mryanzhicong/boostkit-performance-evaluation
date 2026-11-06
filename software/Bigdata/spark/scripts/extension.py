@@ -213,6 +213,19 @@ class Extension:
                 for path in (prefix / "lib").glob("libboost*.so*"):
                     check_elf(path)
                     shutil.copy2(path, self.native / path.name)
+            if "extension_abseil" in r.sources:
+                r.run(["dnf", "install", "-y", "cmake"], "cmake-install.log", as_user=False)
+                abseil = extract_tar(self.asset("abseil"), r.packages / "abseil-source")
+                build, prefix = r.work / "abseil-build", r.work / "abseil-20230802.3"
+                r.run(["cmake", "-S", str(abseil), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release",
+                       "-DCMAKE_CXX_STANDARD=17", "-DBUILD_SHARED_LIBS=ON", "-DABSL_BUILD_TESTING=OFF",
+                       "-DABSL_ENABLE_INSTALL=ON", f"-DCMAKE_INSTALL_PREFIX={prefix}",
+                       "-DCMAKE_INSTALL_LIBDIR=lib"], "abseil-configure.log", as_user=False)
+                r.run(["cmake", "--build", str(build), "--parallel", "8"], "abseil-build.log", as_user=False, timeout=7200)
+                r.run(["cmake", "--install", str(build)], "abseil-install.log", as_user=False)
+                for path in (prefix / "lib").glob("libabsl*.so*"):
+                    check_elf(path)
+                    shutil.copy2(path, self.native / path.name)
             for key in r.sources:
                 if key.startswith("extension_lib_"):
                     path = Path(r.sources[key]["path"])
