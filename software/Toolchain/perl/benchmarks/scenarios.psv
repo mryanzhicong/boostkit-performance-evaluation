@@ -1,0 +1,16 @@
+scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+arith_int_small|compute|perl_script|bench.pl|2000000|int|794992328||integer add/multiply/modulo loop, 2M iterations
+arith_int_large|compute|perl_script|bench.pl|8000000|int|179965187||integer add/multiply/modulo loop, 8M iterations
+arith_float_small|compute|perl_script|bench.pl|2000000|float|287600047361.493164062500|1e-09|sqrt/divide/add loop, 2M iterations
+arith_float_large|compute|perl_script|bench.pl|8000000|float|4586514088935.879882812500|1e-09|sqrt/divide/add loop, 8M iterations
+string_concat_small|strings|perl_script|bench.pl|200000|int|3088895||formatted string concatenation, 200k appends
+string_concat_large|strings|perl_script|bench.pl|800000|int|12688895||formatted string concatenation, 800k appends
+regex_subst_small|strings|perl_script|bench.pl|20000|int|40000||regex substitution over 20k generated lines
+regex_subst_large|strings|perl_script|bench.pl|80000|int|160000||regex substitution over 80k generated lines
+hash_ops_small|hashing|perl_script|bench.pl|200000|int|233324||string hash insert/lookup/delete, 200k keys
+hash_ops_large|hashing|perl_script|bench.pl|800000|int|933174||string hash insert/lookup/delete, 800k keys
+array_sort_small|sorting|perl_script|bench.pl|100000|int|1499120||LCG integer array numeric sort, 100k values
+array_sort_large|sorting|perl_script|bench.pl|400000|int|1497949||LCG integer array numeric sort, 400k values
+sub_calls_small|calls|perl_script|bench.pl|2000000|int|95998893||two argument subroutine calls, 2M calls
+sub_calls_large|calls|perl_script|bench.pl|8000000|int|383999197||two argument subroutine calls, 8M calls
+upstream_benchmark|upstream|perl_script|bench.pl|2|int|2||Perl core Benchmark module timethese report
