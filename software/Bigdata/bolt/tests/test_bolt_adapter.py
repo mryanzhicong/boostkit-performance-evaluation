@@ -16,7 +16,7 @@ def test_document_profile_and_sql_command(monkeypatch, tmp_path):
     r = SimpleNamespace(work=tmp_path, env={}, paths={'application_java': '/private/java17'})
     e = Extension(r)
     args = e.sql_args()
-    assert e.scale == 10000 and e.source_db.endswith('_decimal_orc_10000')
+    assert e.scale == 100 and e.source_db.endswith('_decimal_orc_100')
     assert args[args.index('--num-executors')+1] == str(cfg['resources']['requested_executors'])
     assert args[args.index('--executor-memory')+1] == cfg['resources']['executor_memory']
     assert cfg['spark_version'] == '3.5.2'
