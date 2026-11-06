@@ -1,0 +1,18 @@
+goos: linux
+goarch: arm64
+pkg: hash/crc32
+                                        │ benchmark_go1.24.6.txt │
+                                        │         sec/op         │
+CRC32/poly=Castagnoli/size=4kB/align=0               149.4n ± 0%
+CRC32/poly=Castagnoli/size=4kB/align=1               152.6n ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=0              1.124µ ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=1              1.152µ ± 0%
+geomean                                              414.5n
+
+                                        │ benchmark_go1.24.6.txt │
+                                        │          B/s           │
+CRC32/poly=Castagnoli/size=4kB/align=0              25.53Gi ± 0%
+CRC32/poly=Castagnoli/size=4kB/align=1              25.00Gi ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=0             27.16Gi ± 0%
+CRC32/poly=Castagnoli/size=32kB/align=1             26.50Gi ± 0%
+geomean                                             26.03Gi
