@@ -1,0 +1,102 @@
+{
+  "software": "ultrascan",
+  "version": "5.8.0",
+  "variant": "base",
+  "architecture": "x86_64",
+  "run_id": "42145364216-1",
+  "generated_at": "2026-11-06T01:47:45Z",
+  "toolchain": {
+    "compiler": "c++ (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)"
+  },
+  "benchmark": {
+    "workload": "upstream hsbench block-mode scan of pcre/snort_literals over corpora/gutenberg.db (Mean throughput)",
+    "iterations": 1,
+    "warmups": 1,
+    "measure_reps": 5,
+    "samples_package": {
+      "rules": "pcre/snort_literals",
+      "corpus": "corpora/gutenberg.db"
+    },
+    "scenarios": [
+      "hsbench_rules_block",
+      "hsbench_ubc_block"
+    ]
+  },
+  "results": {
+    "hsbench_rules_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_rules_block_mean_throughput_mbit_s",
+      "source_benchmark": "without universal bytecode (-e pcre/snort_literals)",
+      "source_field": "Mean throughput (overall)",
+      "value": 6520.42,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        6520.42,
+        6536.34,
+        6507.8,
+        6521.7,
+        6510.58
+      ],
+      "sample_summary": {
+        "median": 6520.42,
+        "mean": 6519.368,
+        "min": 6507.8,
+        "max": 6536.34
+      },
+      "wall_seconds_sample_values": [
+        0.190414,
+        0.188969,
+        0.188719,
+        0.19064,
+        0.189533
+      ],
+      "max_rss_kib_sample_values": [
+        39364,
+        38580,
+        38124,
+        39396,
+        39344
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_ubc_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_ubc_block_mean_throughput_mbit_s",
+      "source_benchmark": "with universal bytecode (-U dump/db.raw)",
+      "source_field": "Mean throughput (overall)",
+      "value": 6559.88,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        6559.88,
+        6437.4,
+        6573.89,
+        6565.57,
+        6551.15
+      ],
+      "sample_summary": {
+        "median": 6559.88,
+        "mean": 6537.578,
+        "min": 6437.4,
+        "max": 6573.89
+      },
+      "wall_seconds_sample_values": [
+        0.027004,
+        0.027132,
+        0.027125,
+        0.02625,
+        0.027183
+      ],
+      "max_rss_kib_sample_values": [
+        20472,
+        20504,
+        20500,
+        20468,
+        20472
+      ],
+      "group": "hsbench"
+    }
+  },
+  "runs_dir": "runs"
+}
