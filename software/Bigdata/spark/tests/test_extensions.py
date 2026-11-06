@@ -93,3 +93,48 @@ def test_extension_paths_and_network_cleanup_guard(tmp_path):
     assert "boostkit-sample-" in p.stdout and "/boostkit-perf/sample/" in p.stdout
     p = subprocess.run(["bash", "-c", code + 'docker() { if [[ "$*" == *--format* ]]; then echo unrelated; fi; }; remove_spark_network'], env=env)
     assert p.returncode == 70
+
+@pytest.mark.parametrize('adapter,cpus,should_fail', [(True,64,False),(True,63,True),(False,64,True)])
+def test_disk_observational_for_adapters_but_cpu_guard_remains(tmp_path, monkeypatch, adapter, cpus, should_fail):
+    import assets
+    if adapter:
+        configuration(tmp_path, monkeypatch, scale_factor=100)
+    else:
+        monkeypatch.delenv('PERF_ADAPTER_DIR', raising=False)
+    original_read, original_exists = Path.read_text, Path.exists
+    monkeypatch.setattr(Path, 'read_text', lambda p, *a, **kw: 'MemAvailable: 1073741824 kB\n' if str(p)=='/proc/meminfo' else original_read(p,*a,**kw))
+    monkeypatch.setattr(Path, 'exists', lambda p: False if str(p)=='/sys/fs/cgroup/memory.max' else original_exists(p))
+    monkeypatch.setattr(os, 'sched_getaffinity', lambda _: set(range(cpus)), raising=False)
+    monkeypatch.setattr(assets.shutil, 'disk_usage', lambda _: SimpleNamespace(total=1000,used=999,free=1))
+    if should_fail:
+        with pytest.raises(RuntimeError,match='Insufficient resources'):
+            assets.preflight(tmp_path,tmp_path)
+    else:
+        assets.preflight(tmp_path,tmp_path)
+    info=json.loads((tmp_path/'preflight.json').read_text())
+    assert info['free_disk_bytes']==1
+    assert info['disk_check_policy']==('record_only' if adapter else 'required_minimum')
+    assert info['required_disk_bytes'] is None if adapter else info['required_disk_bytes']==500_000_000_000
+
+
+def test_disk_monitor_records_both_filesystems_without_interfering(tmp_path,monkeypatch):
+    import threading
+    configuration(tmp_path,monkeypatch,scale_factor=100)
+    r=SimpleNamespace(work=tmp_path,results=tmp_path)
+    stop=threading.Event();stop.set()
+    Extension(r).disk_monitor(stop,'test')
+    rows=[json.loads(s) for s in (tmp_path/'disk-usage.jsonl').read_text().splitlines()]
+    assert len(rows)==2
+    assert all(row['stage']=='test' for row in rows)
+    assert set(rows[0]['filesystems'])=={'work','results'}
+    assert rows[0]['filesystems']['work']['free_bytes']>=0
+
+
+def test_disk_monitor_survives_full_log_filesystem(tmp_path,monkeypatch,capsys):
+    import errno,threading
+    configuration(tmp_path,monkeypatch,scale_factor=100)
+    e=Extension(SimpleNamespace(work=tmp_path,results=tmp_path))
+    def full(_): raise OSError(errno.ENOSPC,'No space left on device')
+    monkeypatch.setattr(e,'record_disk',full)
+    e.disk_monitor(threading.Event(),'start')
+    assert 'No space left' in capsys.readouterr().err
