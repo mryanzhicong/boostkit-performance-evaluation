@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 JEMALLOC_VERSION=5.4.0
 JEMALLOC_IMAGE_DIR=/home/runner/software/openEuler-24.03-LTS-SP4
 JEMALLOC_SOURCE_DIR=/home/runner/software/jemalloc

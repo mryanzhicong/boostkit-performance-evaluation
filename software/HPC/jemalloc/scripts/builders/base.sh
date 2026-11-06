@@ -7,8 +7,9 @@ usage() {
 }
 
 main() {
-    local arch="$(jemalloc_arch "$(uname -m)")" run_id="local-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
-    local work_dir="" archive local_archive source_dir prefix version sha
+    local arch="$(jemalloc_arch "${EXPECTED_ARCH:-$(uname -m)}")"
+    local run_id="${PERF_RUN_ID:-local-$(date -u '+%Y%m%dT%H%M%SZ')-$$}"
+    local work_dir="${PERF_WORK_DIR:-}" archive local_archive source_dir prefix version sha
     local -a dnf_options=()
     while (($#)); do
         case "$1" in
@@ -20,6 +21,7 @@ main() {
         esac
     done
     [[ "${arch}" == "$(jemalloc_arch "$(uname -m)")" ]] || { jemalloc_log 'ERROR: requested architecture differs from host'; return 20; }
+    [[ "${SOFTWARE_VERSION:-5.4.0}" == 5.4.0 ]] || { jemalloc_log 'ERROR: only jemalloc 5.4.0 is supported'; return 10; }
     [[ "${run_id}" =~ ^[A-Za-z0-9._-]+$ ]] || { jemalloc_log 'ERROR: unsafe run ID'; return 10; }
     work_dir="${work_dir:-/home/runner/boostkit-perf/jemalloc/5.4.0/${arch}/${run_id}}"
     [[ "${work_dir}" == /home/runner/boostkit-perf/jemalloc/5.4.0/${arch}/* && "${work_dir}" != *'/../'* ]] || {
@@ -59,8 +61,16 @@ main() {
     version="$(jemalloc_container_exec "${prefix}/bin/jemalloc-config" --version)"
     [[ "${version%%-*}" == 5.4.0 ]] || { jemalloc_log "ERROR: built version is ${version}"; return 40; }
     jemalloc_container_exec test -s "${prefix}/lib/libjemalloc.so.2"
+    if [[ -n "${PERF_ACTUAL_VERSION_FILE:-}" ]]; then
+        mkdir -p "$(dirname "${PERF_ACTUAL_VERSION_FILE}")"
+        printf '%s\n' "${version%%-*}" > "${PERF_ACTUAL_VERSION_FILE}"
+    fi
+    if [[ -n "${RESULTS_DIR:-}" ]]; then
+        mkdir -p "${RESULTS_DIR}"
+        printf '{"variant":"base","parameters":{"variant":"base"}}\n' > "${RESULTS_DIR}/build_variant.json"
+    fi
     jemalloc_log "verified jemalloc ${version}: ${prefix}/lib/libjemalloc.so.2"
-    jemalloc_log "private build retained at ${work_dir}; benchmark tool not yet supplied"
+    jemalloc_log "private build retained at ${work_dir}"
 }
 
 main "$@"
