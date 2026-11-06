@@ -1,0 +1,52 @@
+name: pandas
+category: Toolchain
+enabled: true
+versions:
+  - "3.1.0"
+test_tools:
+  asv_bench:
+    version: "3.1.0"
+    revision: "c6f46769b808eb60218189d089dd67841b44f1b9"
+  cpython:
+    version: "3.12.16"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_pandas
+    start:
+      script: scripts/stages/start.sh
+      function: start_pandas_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_pandas_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_pandas_runtime
+  timeout_minutes: 300
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
