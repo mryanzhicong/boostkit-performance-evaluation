@@ -205,6 +205,12 @@ def generate(input_root: Path, output_dir: Path) -> dict:
     (output_dir / "combined-report.md").write_text(
         render_summary(summary, comparisons), encoding="utf-8"
     )
+    # GitHub aborts a step summary larger than 1 MiB, so the run page gets a
+    # compact variant: overview + environment only, with the metric tables left
+    # to combined-report.md / combined-report.json (artifact and results branch).
+    (output_dir / "combined-report-summary.md").write_text(
+        render_summary(summary, comparisons, detail=False), encoding="utf-8"
+    )
     (output_dir / "junit.xml").write_text(render_junit(results), encoding="utf-8")
     return summary
 
