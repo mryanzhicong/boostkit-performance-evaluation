@@ -107,3 +107,33 @@ def test_single_runner_data_mode_generates_once_and_rejects_partial(tmp_path: Pa
     assert mode().returncode == 30
     manifest.write_text("manifest")
     assert "MODE=0" in mode().stdout
+
+
+def test_data_generation_uses_network_aware_container_exec(tmp_path: Path) -> None:
+    data_root = tmp_path / "data"
+    results = tmp_path / "results"
+    data_root.mkdir()
+    results.mkdir()
+    script = r'''
+        source "$1"
+        df() { printf 'Filesystem 1B-blocks Used Available Use%% Mounted on\nfs 200000000000 0 200000000000 0%% /\n'; }
+        docker() { echo 'unexpected direct docker exec'; return 90; }
+        container_exec() { printf 'wrapped: %s\n' "$*"; return 79; }
+        prepare_daft_dataset
+    '''
+    env = {
+        **os.environ,
+        "DAFT_DATA_ROOT": str(data_root),
+        "DAFT_SF": "1",
+        "DAFT_SOURCE": str(tmp_path / "source"),
+        "DAFT_VENV": str(tmp_path / "venv"),
+        "RESULTS_DIR": str(results),
+    }
+    completed = subprocess.run(
+        ["bash", "-c", script, "bash", str(BASE)],
+        env=env, capture_output=True, text=True, check=False,
+    )
+    assert completed.returncode == 40
+    output = (results / "data-generation.log").read_text(encoding="utf-8")
+    assert "wrapped: env DAFT_PROGRESS_BAR=0 sh -c" in output
+    assert "unexpected direct docker exec" not in output

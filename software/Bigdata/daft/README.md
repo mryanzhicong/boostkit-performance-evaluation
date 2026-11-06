@@ -94,6 +94,8 @@ python3 -m venv "${PERF_WORK_DIR}/venv"
 
    生成后写出逐文件 SHA-256 清单，清理本次生成的中间 `.tbl` 文件；不删除
    Parquet 和清单。数据生成日志保存为 `data-generation.log`。
+   数据生成器若需克隆 `tpch-dbgen`，也通过容器执行封装继承构建阶段的代理和
+   Git 配置；失败时保留部分数据供排查，不会在下次运行中当成完整数据复用。
 3. `start` 确认私有容器、venv、Parquet 和清单就绪。`test` 再运行
    `scripts/results/verify_data.py`，检查 8 张表、文件集合及逐文件 SHA-256。
 4. `test` 在容器内进入 `${PERF_WORK_DIR}/daft-source`，使用私有 venv 执行

@@ -48,8 +48,7 @@ prepare_daft_dataset() {
     }
     mkdir "${lock}" || { log "ERROR: another data generation is active: ${lock}"; return 30; }
     log "generating TPC-H SF${DAFT_SF} data on this Runner with the original upstream generator"
-    docker exec -e "HOME=${PERF_WORK_DIR}" -e "TMPDIR=${TMPDIR}" \
-        -e DAFT_PROGRESS_BAR=0 "${DAFT_CONTAINER_NAME}" \
+    container_exec env DAFT_PROGRESS_BAR=0 \
         sh -c 'cd "$1" && exec "$2" -m benchmarking.tpch.data_generation --tpch_gen_folder "$3" --scale_factor "$4" --generate_parquet' \
         sh "${DAFT_SOURCE}" "${DAFT_VENV}/bin/python" "${DAFT_DATA_ROOT}" "${DAFT_SF}" \
         2>&1 | tee "${RESULTS_DIR}/data-generation.log" || status="${PIPESTATUS[0]}"
