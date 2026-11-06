@@ -1,0 +1,53 @@
+name: react
+category: Toolchain
+enabled: true
+versions:
+  - "19.3.1"
+test_tools:
+  react:
+    version: "19.3.1"
+  react-dom:
+    version: "19.3.1"
+  scheduler:
+    version: "0.28.0"
+  node:
+    version: "20.19.0"
+  yarn:
+    version: "1.22.22"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_react
+    start:
+      script: scripts/stages/start.sh
+      function: start_react_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_react_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_react_runtime
+  timeout_minutes: 360
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: scenario
+    subgroup_path: task
