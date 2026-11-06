@@ -1,0 +1,74 @@
+name: iceberg
+category: Bigdata
+enabled: true
+versions:
+- 1.5.0
+test_tools:
+  hive_testbench:
+    version: tpcds release 2026-10-15
+    revision: 5bd9edd86452ca27d9d2a34812f34d626168c449
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/adapter.sh
+      function: build_iceberg
+    start:
+      script: scripts/adapter.sh
+      function: start_iceberg
+    test:
+      script: scripts/adapter.sh
+      function: test_iceberg
+    stop:
+      script: scripts/adapter.sh
+      function: stop_iceberg
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  versions:
+    path: versions.json
+    stage: build
+    format: json
+    required: true
+  dataset:
+    path: dataset.json
+    stage: start
+    format: json
+    required: true
+  timings:
+    path: timings.jsonl
+    stage: test
+    format: text
+    required: true
+  benchmark_raw:
+    path: benchmark_iceberg_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_iceberg.json
+    stage: test
+    format: json
+    required: true
+  extension_sources:
+    path: extension-sources.json
+    stage: build
+    format: json
+    required: true
+  extension_installed:
+    path: extension-installed.json
+    stage: build
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
