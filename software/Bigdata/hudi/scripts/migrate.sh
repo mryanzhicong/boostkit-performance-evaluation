@@ -741,7 +741,7 @@ generate_hudi_sql() {
   effective_pk="$(cut -d'|' -f1 "${key_file}")"
   effective_precombine="$(cut -d'|' -f2 "${key_file}")"
   if [ -z "${effective_pk}" ]; then
-  	log "WARN: building NON-PK Hudi table for ${SRC_DB}.${tbl}"
+    log "WARN: building NON-PK Hudi table for ${SRC_DB}.${tbl}"
   fi
   col_defs=()
   select_exprs=()
