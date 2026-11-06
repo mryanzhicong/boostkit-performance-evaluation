@@ -6,7 +6,7 @@
 
 - openEuler 24.03 LTS-SP4；基础栈沿用 [Spark 手册](../spark/README.md)：OpenJDK 8u252-b09、ZooKeeper 3.4.6、Hadoop 3.2.0、Tez 0.10.0、Hive 3.1.0、MySQL JDBC 5.1.49；MariaDB 记录发行源实际版本。
 - Spark 固定 3.5.2；本组件固定 0.5.3。依赖来源、固定校验值见 [assets.json](assets.json)，不会下载 latest 或替换旧 Spark。
-- 默认 **SF10000**。文档生成示例 SF10000 与查询示例 SF1000 不一致，按已确认约定统一为 SF10000。实际源库为 `tpcds_bin_partitioned_decimal_orc_10000`，不能将 decimal schema 称为 varchar。
+- 默认 **SF100**。按本轮要求从原文生成示例 SF10000 缩小为 SF100；查询库名和迁移目标随规模同步变化。实际源库为 `tpcds_bin_partitioned_decimal_orc_100`，不能将 decimal schema 称为 varchar。
 - 24 张 ORC 表；冻结基础附件全部 103 个 SQL 文件（99 模板及四组 a/b），沿用 Spark 的 queries.sha256.json；自然顺序串行执行，1 轮预热 + 3 轮测量，共 412 次 SQL 文件执行。
 - driver 8 核/20G；申请 200 个 executor，每个 8 核/23g；YARN 64 vcore/371200MB。其他参数完整列于 [profile.json](profile.json)，不自动缩减。
 
@@ -16,8 +16,8 @@
 
 1. 安装宿主 Docker、Python 3.9+、curl、GNU coreutils、Bash 4+；不得替换宿主 Java/Hadoop/Hive。
 2. 按 assets.json 将离线文件放到 `/home/runner/software/celeborn/packages`，或通过 PERF_ASSET_DIR 指向同样布局的只读来源目录。具备公开地址的资产自动下载并核验；无公开地址的资产必须使用文档附件。
-3. 原始附件来源为当前任务提供的 `大数据/` 目录；不要提交 JAR/so 或 SF10000 数据到 Git。离线文件包括：gluten-velox-bundle-spark3.5_2.12-openEuler_24.03_aarch_64-1.3.0.jar。
-4. 预检要求 ≥64 可用 CPU、≥416GiB 可用内存。磁盘保护阈值沿用 SF100 的 500GB 保守比例放大：本项 50TB；这是预留策略，不是实测数据大小。预检不足明确失败，不缩小数据或调整资源。
+3. 原始附件来源为当前任务提供的 `大数据/` 目录；不要提交 JAR/so 或 SF100 数据到 Git。离线文件包括：gluten-velox-bundle-spark3.5_2.12-openEuler_24.03_aarch_64-1.3.0.jar。
+4. CPU/内存预检仍要求 ≥64 可用 CPU、≥416GiB 可用内存。磁盘仅记录工作目录和结果目录所在文件系统的剩余空间，不设置最低容量、不因空间偏少拦截。实际写入出现磁盘不足时本阶段失败，停止后续测试并尽力保留已有日志和清理资源。
 
 ```bash
 export PERF_ASSET_DIR=/home/runner/software/celeborn/packages
@@ -39,6 +39,7 @@ bash software/Bigdata/celeborn/celeborn_test.sh \
 - `benchmark_celeborn.json`：103 项 SQL 耗时三轮中位数，单位秒，越低越好；不是官方 TPC-DS 分数。
 - `timings.jsonl`：全部执行命令、轮次、退出码、SQL 原始耗时、墙钟时间、行数和分配采样。安装、数据生成与迁移耗时不混入指标。
 - `versions.json`、`sources.json`、`extension-sources.json`、`extension-installed.json`：实际版本、来源、摘要、已安装 JAR 和原生库清单。
+- `preflight.json`：启动时的剩余磁盘信息；`disk-usage.jsonl`：安装、启动/生成/迁移、查询和收集阶段每 10 秒采样，以及阶段结束采样。数据是文件系统整体占用，可能包含其他进程，不等同于本组件数据大小；不会按采样值强制停止。
 - `dataset.json`、`ddl/`、`table-counts/`、`data-files.log`；湖表另含 migration/ 和 migration-validation/。
 - `effective-config/`、`services/`、`spark-events/` 与逐查询日志；不会归档完整数据集。
 - 独立入口另输出 results.json、status.json、report.md。框架入口沿用仓库通用报告合同。
