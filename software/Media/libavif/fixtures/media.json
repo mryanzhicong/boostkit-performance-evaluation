@@ -1,0 +1,92 @@
+{
+  "benchmark": "libavif_0.9.3_aom_encode",
+  "resolution": "1920x1080",
+  "color_format": "I420_8bit",
+  "media_directory": "/home/runner/software/media/video",
+  "media_override_env": "LIBAVIF_MEDIA_DIR",
+  "codec": "aom 3.2.0",
+  "notes": [
+    "Full YUV inputs are archived by the case documentation and never committed.",
+    "The harness verifies size and sha256 of the whole source file before slicing frame 0.",
+    "Pinned PNG digests come from the untouched reference bench.py of the open-box material."
+  ],
+  "videos": {
+    "BQTerrace": {
+      "filename": "BQTerrace_1920x1080_60.yuv",
+      "bytes": 1866240000,
+      "frames": 600,
+      "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+      "png_sha256": "876ed491d59c60994e6720de409b58dc320c7f1e4df4849ebdc1af5d94e9adb9"
+    },
+    "Film2012": {
+      "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+      "bytes": 4665600000,
+      "frames": 1500,
+      "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc",
+      "png_sha256": "2274fd1b7c25e5c2cd1d4621211426fb5acb1d40ff75da2d5a37f8291a1c1c03"
+    },
+    "messi": {
+      "filename": "messi_1920x1080_25_1000.yuv",
+      "bytes": 3110400000,
+      "frames": 1000,
+      "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b",
+      "png_sha256": "1933cba6ba825d6b3b217614e3d4bfdcb98d36cebe5586e1865ccf94f072d068"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "BQTerrace_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "BQTerrace",
+      "video": "BQTerrace",
+      "qp": 20
+    },
+    {
+      "name": "BQTerrace_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "BQTerrace",
+      "video": "BQTerrace",
+      "qp": 32
+    },
+    {
+      "name": "Film2012_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "Film2012",
+      "video": "Film2012",
+      "qp": 20
+    },
+    {
+      "name": "Film2012_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "Film2012",
+      "video": "Film2012",
+      "qp": 32
+    },
+    {
+      "name": "messi_qp20_c8",
+      "group": "AV1编码",
+      "subgroup": "messi",
+      "video": "messi",
+      "qp": 20
+    },
+    {
+      "name": "messi_qp32_c8",
+      "group": "AV1编码",
+      "subgroup": "messi",
+      "video": "messi",
+      "qp": 32
+    }
+  ],
+  "encoder_options": [
+    "--codec", "aom",
+    "--yuv", "420",
+    "--speed", "8",
+    "--jobs", "8",
+    "--tilerowslog2", "0",
+    "--tilecolslog2", "2"
+  ],
+  "native_threads": 8,
+  "unit": "ms",
+  "direction": "lower_is_better",
+  "description": "avifenc 用 AOM 编码 1920x1080 首帧（QP20/32，speed 8，8 jobs，1x4 tile），1 次预热 + N 次计时，上报中位数；每次编码结果与被测后解码像素都做稳定性校验。"
+}
