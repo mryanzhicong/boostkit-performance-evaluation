@@ -1,0 +1,67 @@
+835: --databases tpcds_bin_partitioned_varchar_orc_1000 -f q1.sql
+836: bolt测试步骤
+837: 部署bolt
+838: 从https://gitcode.com/helloxteen_/OmniOperatorDebugAgent/releases/获取bolt在目标架构下的下载链接。
+839: 将下载好的bolt包放在/opt目录下进行解压，以arm为例：
+840: cd /opt
+841: unzip bolt_arm.zip
+842: 安装时区库
+843: mkdir -p /home/tzdata_install && cd /home/tzdata_install
+844: wget https://ftp.iana.org/tz/releases/tzdata2025b.tar.gz
+845: wget https://ftp.iana.org/tz/releases/tzcode2025b.tar.gz
+846: tar -xzf tzdata2025b.tar.gz && tar -xzf tzcode2025b.tar.gz
+847: make && make install
+848: ls -l /usr/share/zoneinfo/Africa/El_Aaiun
+849: Bolt测试参数
+850: 说明：bolt依赖jdk17，在测试前要把jdk切换到17版本
+851: 1.复制jdk17到/usr/local/
+852: cp -r /opt/bolt_arm/bisheng-jdk-17.0.16 /usr/local/
+853: 2.更改java版本
+854: cd  /usr/local/
+855: ln -snf bisheng-jdk-17.0.16 java
+856: 测试参数
+857: spark-sql \
+858: --deploy-mode client \
+859: --driver-cores 8 \
+860: --driver-memory 20G \
+861: --num-executors 200 \
+862: --executor-cores 8 \
+863: --executor-memory 23g \
+864: --master yarn \
+865: spark.memory.offHeap.enabled=true
+866: spark.memory.offHeap.size=35g
+867: spark.executor.memoryOverhead=1g
+868: spark.task.cpus=1
+869: spark.sql.orc.impl=native
+870: spark.locality.wait=0
+871: spark.driver.extraClassPath=/opt/bolt_arm/gluten-spark3.5_2.12-1.0.0-SNAPSHOT-jar-with-dependencies.jar
+872: spark.executor.extraClassPath=/opt/bolt_arm/gluten-spark3.5_2.12-1.0.0-SNAPSHOT-jar-with-dependencies.jar
+873: spark.sql.adaptive.coalescePartitions.initialPartitionNum=48
+874: spark.plugins=org.apache.gluten.GlutenPlugin
+875: spark.default.parallelism=144
+876: spark.sql.shuffle.partitions=144
+877: spark.gluten.loadLibFromJar=false
+878: spark.gluten.sql.columnar.backend.lib=bolt
+879: spark.gluten.sql.columnar.maxBatchSize=8192
+880: spark.sql.adaptive.join.enabled=true
+881: spark.serializer=org.apache.spark.serializer.KryoSerializer
+882: spark.shuffle.manager=org.apache.spark.shuffle.sort.ColumnarShuffleManager
+883: spark.sql.sources.parallelPartitionDiscovery.parallelism=60
+884: spark.network.timeout=600
+885: spark.sql.broadcastTimeout=600
+886: spark.gluten.sql.orc.charint32_type.scan.fallback.enabled=false
+887: spark.sql.adaptive.enabled=true
+888: spark.gluten.sql.columnar.physicalJoinOptimizeEnable=true
+889: spark.gluten.sql.columnar.physicalJoinOptimizationLevel=19
+890: spark.sql.sources.useV1SourceList=avro
+891: spark.sql.optimizer.runtime.bloomFilter.enabled=true
+892: spark.gluten.sql.columnar.backend.velox.resizeBatches.shuffleInput=false
+893: spark.gluten.sql.columnar.backend.bolt.resizeBatches.shuffleInput=false
+894: spark.hadoop.fs.defaultFS=file:///
+895: spark.driver.extraJavaOptions='-XX:+UseG1GC -XX:ActiveProcessorCount=8 -Dio.netty.tryReflectionSetAccessible=true -Duser.timezone=Asia/Shanghai'
+896: spark.executor.extraJavaOptions="-XX:+UseG1GC -XX:ActiveProcessorCount=8 -Dio.netty.tryReflectionSetAccessible=true -Duser.timezone=Asia/Shanghai"
+897: spark.sql.session.timeZone=Asia/Shanghai
+898: spark.yarn.appMasterEnv.JAVA_HOME="/opt/bolt_arm/bisheng-jdk-17.0.16"
+899: spark.executorEnv.JAVA_HOME="/opt/bolt_arm/bisheng-jdk-17.0.16"
+900: spark.executorEnv.LD_LIBRARY_PATH="/opt/bolt_arm/releases"
+901: --databases tpcds_bin_partitioned_varchar_orc_1000 -f q1.sql
