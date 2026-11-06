@@ -85,7 +85,7 @@ def test_native_library_rejects_wrong_elf(tmp_path):
 
 def test_extension_paths_and_network_cleanup_guard(tmp_path):
     env = os.environ | {"PERF_ADAPTER_DIR": str(tmp_path), "PERF_COMPONENT": "sample",
-                        "PERF_COMPONENT_VERSION": "1.0", "SOFTWARE_VERSION": "1.0", "PERF_RUN_ID": "unit"}
+                        "PERF_COMPONENT_VERSION": "1.0", "SOFTWARE_VERSION": "1.0", "PERF_RUN_ID": "unit", "EXPECTED_ARCH": "aarch64"}
     common = SCRIPTS / "common.sh"
     code = f'source "{common}"; configure_runtime_paths; '
     p = subprocess.run(["bash", "-c", code + 'echo "$SPARK_CONTAINER $PERF_WORK_DIR"'], env=env, capture_output=True, text=True)

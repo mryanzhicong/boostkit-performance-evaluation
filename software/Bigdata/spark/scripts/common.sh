@@ -12,11 +12,14 @@ configure_runtime_paths() {
     }
     case "$EXPECTED_ARCH" in arm64) EXPECTED_ARCH=aarch64 ;; amd64) EXPECTED_ARCH=x86_64 ;; esac
     [[ "$EXPECTED_ARCH" == aarch64 || "$EXPECTED_ARCH" == x86_64 ]] || return 20
+    if [[ -n "${PERF_ADAPTER_DIR:-}" && "$EXPECTED_ARCH" != aarch64 ]]; then
+        echo "Document-pinned adapters currently require aarch64"; return 20
+    fi
     PERF_RUN_ID="${PERF_RUN_ID:-local-$(date -u '+%Y%m%dT%H%M%SZ')-$$}"
     [[ "$PERF_RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || return 10
     PERF_WORK_DIR="${PERF_WORK_DIR:-/home/runner/boostkit-perf/$PERF_COMPONENT/local-$PERF_RUN_ID}"
     [[ "$PERF_WORK_DIR" == /home/runner/boostkit-perf/$PERF_COMPONENT/* && "$PERF_WORK_DIR" != *'/../'* ]] || return 10
-    RESULTS_DIR="${RESULTS_DIR:-$SCRIPT_DIR/results/$SOFTWARE_VERSION/$PERF_RUN_ID}"
+    RESULTS_DIR="${RESULTS_DIR:-${PERF_ADAPTER_DIR:-$SCRIPT_DIR}/results/$SOFTWARE_VERSION/$PERF_RUN_ID}"
     [[ "$RESULTS_DIR" == /* ]] || RESULTS_DIR="$(pwd -P)/$RESULTS_DIR"
     [[ "$RESULTS_DIR/" != "$PERF_WORK_DIR/"* ]] || { echo 'Results must be outside the disposable work directory'; return 10; }
     PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-$PERF_WORK_DIR/actual-version.txt}"

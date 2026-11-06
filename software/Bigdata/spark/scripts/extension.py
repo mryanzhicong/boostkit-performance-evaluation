@@ -132,7 +132,7 @@ class Extension:
             env["LIBHDFS3_CONF"] = str(self.r.work / "hdfs-client.xml")
         if self.kind == "bolt":
             env["JAVA_HOME"] = self.r.paths["application_java"]
-            env["PATH"] = env["JAVA_HOME"] + "/bin:" + env["PATH"]
+            env["PATH"] = env["JAVA_HOME"] + "/bin:" + env.get("PATH", os.defpath)
             env["TZ"] = "Asia/Shanghai"
         return env
 
@@ -199,10 +199,20 @@ class Extension:
         if self.kind == "velox":
             with zipfile.ZipFile(self.asset("jar")) as z:
                 for name in z.namelist():
-                    if name.endswith(".so") and (name.startswith("linux/aarch64/") or name.startswith("aarch_64/")):
+                    if name.endswith(".so") and (name.startswith("linux/aarch64/")):
                         path = self.native / Path(name).name
                         path.write_bytes(z.read(name))
                         check_elf(path)
+            if "extension_boost" in r.sources:
+                boost = extract_tar(self.asset("boost"), r.packages / "boost-source")
+                prefix = r.work / "boost-1.84.0"
+                r.run(["bash", "bootstrap.sh", "--with-libraries=context,filesystem,program_options,regex,system,thread,atomic,chrono,date_time"],
+                      "boost-bootstrap.log", as_user=False, cwd=boost)
+                r.run(["./b2", "-j8", "variant=release", "link=shared", "threading=multi",
+                       f"--prefix={prefix}", "install"], "boost-build.log", as_user=False, cwd=boost, timeout=7200)
+                for path in (prefix / "lib").glob("libboost*.so*"):
+                    check_elf(path)
+                    shutil.copy2(path, self.native / path.name)
             for key in r.sources:
                 if key.startswith("extension_lib_"):
                     path = Path(r.sources[key]["path"])

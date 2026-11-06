@@ -54,7 +54,7 @@ build_spark_base() {
         /etc/yum.repos.d/openEuler.repo || return 30
     docker exec "$SPARK_CONTAINER" dnf install -y python3 mariadb-server mariadb \
         procps-ng util-linux coreutils findutils tar gzip unzip hostname shadow \
-        libaio openssl-libs zlib snappy which make gcc gcc-c++ binutils lz4 zstd-libs numactl-libs libatomic libstdc++ || return 30
+        libaio openssl-libs zlib snappy which make gcc gcc-c++ binutils lz4 zstd-libs numactl-libs libatomic libstdc++ libicu double-conversion libsodium libevent xz-libs bzip2 || return 30
     docker image inspect --format '{{json .}}' "$image" > "$RESULTS_DIR/container-image.json"
     container_exec install || return 30
 }
