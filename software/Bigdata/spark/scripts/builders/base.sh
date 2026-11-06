@@ -30,16 +30,21 @@ build_spark_base() {
     grep -Eq '^ID="?openEuler"?$' <<< "$release" &&
         grep -Eq '^VERSION=.*24\.03.*LTS-SP4' <<< "$release" || return 30
     docker container inspect "$SPARK_CONTAINER" >/dev/null 2>&1 && { echo 'Container already exists'; return 30; }
+    local network=bridge
+    if [[ -n "${PERF_ADAPTER_DIR:-}" ]]; then
+        network="$SPARK_CONTAINER-net"
+        docker network create --label "boostkit.spark.run-id=$PERF_RUN_ID" "$network" >/dev/null || return 30
+    fi
     local -a proxy=() mounts=()
     if [[ -n "${PERF_PROXY:-}" ]]; then
         proxy=(-e "http_proxy=$PERF_PROXY" -e "https_proxy=$PERF_PROXY")
         mounts=(--mount type=bind,source=/home/runner/software/anchors,target=/etc/pki/ca-trust/source/anchors,readonly)
     fi
-    docker run --detach --name "$SPARK_CONTAINER" --hostname server1 --network bridge \
+    docker run --detach --name "$SPARK_CONTAINER" --hostname server1 --network "$network" \
         --label "boostkit.spark.run-id=$PERF_RUN_ID" \
         --mount "type=bind,source=$PERF_WORK_DIR,target=$PERF_WORK_DIR" \
         --mount "type=bind,source=$RESULTS_DIR,target=$RESULTS_DIR" \
-        --mount "type=bind,source=$SCRIPT_DIR,target=$SCRIPT_DIR,readonly" \
+        --mount "type=bind,source=$(dirname "$SCRIPT_DIR"),target=$(dirname "$SCRIPT_DIR"),readonly" \
         "${mounts[@]}" "${proxy[@]}" "$image" sleep infinity >/dev/null || return 30
     if [[ -n "${PERF_PROXY:-}" ]]; then
         docker exec "$SPARK_CONTAINER" update-ca-trust extract || return 30
@@ -49,7 +54,7 @@ build_spark_base() {
         /etc/yum.repos.d/openEuler.repo || return 30
     docker exec "$SPARK_CONTAINER" dnf install -y python3 mariadb-server mariadb \
         procps-ng util-linux coreutils findutils tar gzip unzip hostname shadow \
-        libaio openssl-libs zlib snappy which make gcc || return 30
+        libaio openssl-libs zlib snappy which make gcc gcc-c++ binutils lz4 zstd-libs numactl-libs libatomic libstdc++ || return 30
     docker image inspect --format '{{json .}}' "$image" > "$RESULTS_DIR/container-image.json"
     container_exec install || return 30
 }

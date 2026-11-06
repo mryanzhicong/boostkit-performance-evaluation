@@ -60,11 +60,18 @@ def preflight(work: Path, results: Path) -> None:
     if limit.exists() and limit.read_text().strip().isdigit():
         available = min(available, int(limit.read_text()))
     free = shutil.disk_usage(work).free
+    from extension import adapter_config
+    cfg = adapter_config()
+    profile = cfg.get("resources", {})
+    scale = cfg.get("scale_factor", 100)
     info = {"available_cpus": cpus, "available_memory_bytes": available,
             "free_disk_bytes": free, "yarn_vcores": 64, "yarn_memory_mb": 371200,
             "driver_cores": 8, "driver_memory": "20G", "requested_executors": 200,
             "executor_cores": 8, "executor_memory": "23g",
-            "required_memory_bytes": 416 * 1024**3, "required_disk_bytes": 500_000_000_000}
+            "required_memory_bytes": 416 * 1024**3,
+            "required_disk_bytes": 500_000_000_000 * scale // 100 * (2 if cfg.get("kind") in ("hudi", "iceberg") else 1)}
+    info.update(profile)
+    info["scale_factor"] = scale
     write_json(results / "preflight.json", info)
     if cpus < 64 or available < info["required_memory_bytes"] or free < info["required_disk_bytes"]:
         raise RuntimeError("Insufficient resources for the unchanged document configuration; see preflight.json")
@@ -91,6 +98,8 @@ def download(work: Path, results: Path, arch: str) -> None:
             raise RuntimeError(f"{key}: checksum mismatch")
         records[key] = {"url": url, "path": str(target), "algorithm": algorithm,
                         "expected": expected, "sha256": digest(target)}
+    from extension import prepare_assets
+    records.update(prepare_assets(work, results, arch))
     write_json(results / "sources.json", records)
     write_json(work / "sources.json", records)
 

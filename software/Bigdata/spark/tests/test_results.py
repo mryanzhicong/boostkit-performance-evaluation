@@ -86,6 +86,7 @@ def test_generated_configs_preserve_resources_and_hive_client(tmp_path):
     for name, relative in (("hadoop", "etc/hadoop"), ("spark", "conf"), ("zookeeper", "conf")):
         (Path(r.paths[name]) / relative).mkdir(parents=True)
     r.work.mkdir(); r.results.mkdir()
+    r.extension = module.Extension(r)
     r.configure()
     yarn = ET.parse(Path(r.paths["hadoop"]) / "etc/hadoop/yarn-site.xml")
     props = {p.findtext("name"): p.findtext("value") for p in yarn.findall("property")}
@@ -103,7 +104,8 @@ def test_timeout_preserves_failure_and_stops_later_queries(tmp_path, monkeypatch
     import signal
     module = load_runtime()
     r = object.__new__(module.Runtime)
-    r.results, r.home, r.env = tmp_path, tmp_path, {}
+    r.work, r.results, r.home, r.env = tmp_path, tmp_path, tmp_path, {}
+    r.extension = module.Extension(r)
     r.paths = {"tpcds": str(tmp_path)}
     r.command = lambda args: args
     r.allocation_monitor = lambda stop, samples: None

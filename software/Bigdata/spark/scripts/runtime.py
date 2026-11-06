@@ -19,8 +19,10 @@ import urllib.request
 from xml.etree import ElementTree as ET
 import zipfile
 
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "results"))
 from parse_benchmark import parse_log, summarize, verify_queries
+from extension import Extension
 
 REFERENCE = Path(__file__).parent / "reference"
 SPARK_CONF = {
@@ -83,6 +85,7 @@ class Runtime:
         self.env.update({"HOME": str(self.home), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
                          "NO_PROXY": "localhost,127.0.0.1,server1", "no_proxy": "localhost,127.0.0.1,server1"})
         self.env.pop("JAVA_TOOL_OPTIONS", None)
+        self.extension = Extension(self)
         if self.paths:
             self.environment()
 
@@ -107,12 +110,12 @@ class Runtime:
     def command(self, args: list[str], as_user: bool = True) -> list[str]:
         return ["runuser", "-u", self.user, "--", *map(str, args)] if as_user else list(map(str, args))
 
-    def run(self, args, log: str, *, as_user=True, timeout=1800, input=None, cwd=None, check=True):
+    def run(self, args, log: str, *, as_user=True, timeout=1800, input=None, cwd=None, check=True, env=None):
         path = self.results / log
         path.parent.mkdir(parents=True, exist_ok=True)
         print("[spark]", log, " ".join(map(str, args[:4])), flush=True)
         with path.open("a") as out:
-            proc = subprocess.run(self.command(args, as_user), env=self.env,
+            proc = subprocess.run(self.command(args, as_user), env=env or self.env,
                                   cwd=cwd or self.home, input=input, text=True,
                                   stdout=out, stderr=subprocess.STDOUT, timeout=timeout)
         if proc.returncode and check:
@@ -191,6 +194,7 @@ class Runtime:
             old.unlink()
         shutil.copy2(guavas[0], hive / "lib" / guavas[0].name)
         write_json(self.state, self.paths)
+        self.extension.install()
         self.configure()
         subprocess.run(["chown", "-R", f"{self.uid}:{self.gid}", str(self.work), str(self.results)], check=True)
         versions = {}
@@ -207,9 +211,10 @@ class Runtime:
             versions[name] = text
         versions.update({"zookeeper": "3.4.6", "tez": "0.10.0", "jdbc": "5.1.49",
                          "guava_compatibility": guavas[0].name})
+        versions.update(self.extension.versions())
         write_json(self.results / "versions.json", versions)
         self.run(["rpm", "-qa"], "rpm-packages.txt")
-        Path(os.environ["PERF_ACTUAL_VERSION_FILE"]).write_text("3.5.2\n")
+        Path(os.environ["PERF_ACTUAL_VERSION_FILE"]).write_text(self.extension.version + "\n")
 
     def configure(self):
         doc = json.loads((REFERENCE / "document-config.json").read_text())
@@ -294,13 +299,17 @@ class Runtime:
         dirs += [hadoop / f"share/hadoop/{n}/{s}" for n in ("common", "hdfs", "mapreduce", "yarn") for s in ("*", "lib/*")]
         conf["spark.sql.hive.metastore.jars.path"] = ",".join("file://" + str(p) for p in dirs)
         sconf = Path(self.paths["spark"]) / "conf"
+        conf = self.extension.configure(conf)
         (sconf / "spark-defaults.conf").write_text("".join(f"{k} {v}\n" for k, v in conf.items()))
         for n in ("core-site.xml", "hdfs-site.xml"):
             shutil.copy2(hconf / n, sconf / n)
         # Spark's Hive client uses an isolated dependency loader, not its bundled 2.3.9 client.
         xml_config(sconf / "hive-site.xml", {"hive.metastore.uris": "thrift://server1:9083"})
         write_json(self.results / "runtime-context.json",
-                   {"resource_profile": PROFILE, "spark_conf": conf, "container_network": "bridge",
+                   {"resource_profile": self.extension.resources, "spark_conf": conf,
+                    "software": self.extension.name, "version": self.extension.version,
+                    "scale_factor": self.extension.scale,
+                    "container_network": "private bridge" if self.extension.cfg else "bridge",
                     "container_resource_limits": "none", "hadoop_user": self.user})
 
     def start(self):
@@ -356,9 +365,10 @@ class Runtime:
                          "--showHeader=false", "--outputformat=tsv2", "-e", smoke], "hive-tez-smoke.log", timeout=1800)
         if "zhangsan" not in text or "lisi" not in text or re.search(r"Error:|FAILED:", text):
             raise RuntimeError("Hive-on-Tez functional verification failed")
+        self.extension.start_services()
         bench = Path(self.paths["tpcds"])
-        self.run(["bash", "tpcds-setup.sh", "100"], "data-generation.log", timeout=12 * 3600, cwd=bench)
-        db = "tpcds_bin_partitioned_decimal_orc_100"
+        self.run(["bash", "tpcds-setup.sh", str(self.extension.scale)], "data-generation.log", timeout=12 * 3600, cwd=bench)
+        db = self.extension.source_db
         tables = self.run(["hive", "-S", "--database", db, "-e", "show tables;"], "tables.log")
         expected = {"call_center", "catalog_page", "catalog_returns", "catalog_sales", "customer",
                     "customer_address", "customer_demographics", "date_dim", "household_demographics",
@@ -380,18 +390,21 @@ class Runtime:
                 raise RuntimeError(f"Missing or empty table count: {t}")
             checks[t] = int(numbers[-1])
         self.run(["hdfs", "dfs", "-ls", "-R", f"/user/hive/warehouse/{db}.db"], "data-files.log")
-        write_json(self.results / "dataset.json", {"scale_factor": 100, "database": db, "format": "orc",
+        write_json(self.results / "dataset.json", {"scale_factor": self.extension.scale, "database": db, "format": "orc",
                    "schema": "decimal", "table_count": 24, "tables": sorted(expected), "row_count_logs": checks,
                    "data_files_sha256": hashlib.sha256((self.results / "data-files.log").read_bytes()).hexdigest()})
         self.run(["hadoop", "checknative", "-a"], "native-libraries.log", check=False)
         self.run(["hdfs", "dfsadmin", "-report"], "hdfs-report.log")
         self.run(["yarn", "node", "-list", "-all"], "yarn-ready.log")
-        print("[spark] complete SF100 stack and 24 ORC tables ready", flush=True)
+        self.extension.prepare_dataset()
+        self.extension.verify_engine()
+        print(f"[{self.extension.name}] SF{self.extension.scale} stack and 24 tables ready", flush=True)
 
     def allocation_monitor(self, stop: threading.Event, samples: list):
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         while not stop.is_set():
             try:
+                self.extension.sample_services()
                 with opener.open("http://server1:8088/ws/v1/cluster/apps?states=RUNNING&applicationTypes=SPARK", timeout=2) as response:
                     apps = json.load(response).get("apps") or {}
                     for app in apps.get("app", []):
@@ -408,21 +421,18 @@ class Runtime:
         folder = Path(self.paths["tpcds"]) / "spark-queries-tpcds"
         queries = verify_queries(folder, manifest)
         runtime = json.loads((self.results / "runtime-context.json").read_text())
-        raw = self.results / "benchmark_spark_raw.log"
+        raw = self.results / f"benchmark_{self.extension.name}_raw.log"
         timings = self.results / "timings.jsonl"
         if timings.exists():
             raise RuntimeError("Refusing to overwrite measurement records")
         records, allocations = [], []
-        raw.write_text("Native Spark 3.5.2, TPC-DS SF100, 103 SQL files; 1 warmup + 3 measurement rounds\n")
+        raw.write_text(f"{self.extension.name} {self.extension.version}, Spark 3.5.2, TPC-DS SF{self.extension.scale}, 103 SQL files; 1 warmup + 3 measurement rounds\n")
         for round_id in range(4):
             for name in queries:
                 log = self.results / "queries" / f"round-{round_id}" / (name + ".log")
                 log.parent.mkdir(parents=True, exist_ok=True)
-                args = ["spark-sql", "--master", "yarn", "--deploy-mode", "client",
-                        "--name", f"spark-tpcds-r{round_id}-{name}", "--driver-cores", "8",
-                        "--driver-memory", "20G", "--num-executors", "200", "--executor-cores", "8",
-                        "--executor-memory", "23g", "--database", "tpcds_bin_partitioned_decimal_orc_100",
-                        "-f", str(folder / name)]
+                args = self.extension.sql_args() + ["--name", f"spark-tpcds-r{round_id}-{name}",
+                        "--database", self.extension.query_db, "-f", str(folder / name)]
                 print(f"[spark] round={round_id} query={name}", flush=True)
                 row = {"query": name, "round": round_id, "phase": "warmup" if round_id == 0 else "measurement",
                        "command": args, "status": "failed"}
@@ -433,7 +443,7 @@ class Runtime:
                 started = time.monotonic()
                 try:
                     with log.open("w") as f:
-                        proc = subprocess.Popen(self.command(args), env=self.env, cwd=self.home,
+                        proc = subprocess.Popen(self.command(args), env=self.extension.application_env(), cwd=self.home,
                                                 stdout=f, stderr=subprocess.STDOUT, start_new_session=True)
                         try:
                             code = proc.wait(timeout=1800)
@@ -468,7 +478,8 @@ class Runtime:
         runtime["actual_executors_max"] = max((max(0, s["running_containers"] - 1)
                                               for s in allocations if isinstance(s["running_containers"], int)), default=None)
         write_json(self.results / "runtime-context.json", runtime)
-        write_json(self.results / "benchmark_spark.json", summarize(records, manifest, runtime))
+        self.extension.verify_results()
+        write_json(self.results / f"benchmark_{self.extension.name}.json", summarize(records, manifest, runtime))
 
     def collect(self):
         # Only this container is disposable; Docker stop below terminates every remaining daemon.
@@ -483,6 +494,7 @@ class Runtime:
                     src = Path(self.paths[component]) / folder
                     if src.exists():
                         shutil.copytree(src, self.results / "effective-config" / component, dirs_exist_ok=True)
+            self.extension.collect()
             if self.logs.exists():
                 shutil.copytree(self.logs, self.results / "services", dirs_exist_ok=True)
             for path in (self.results / "effective-config").rglob("hive-site.xml"):

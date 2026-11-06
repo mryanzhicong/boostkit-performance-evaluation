@@ -25,13 +25,14 @@ def write(path: Path, value: dict) -> None:
 def main() -> int:
     root, version, arch, run_id, stage, cleanup, failed = sys.argv[1:]
     directory = Path(root)
-    benchmark = load(directory / "benchmark_spark.json")
+    software = os.environ.get("PERF_COMPONENT", "spark")
+    benchmark = load(directory / f"benchmark_{software}.json")
     metrics = benchmark.get("results", {}) if stage == "passed" else {}
     if stage == "passed" and (not isinstance(metrics, dict) or len(metrics) != 103):
         stage, failed, metrics = "failed", "test", {}
     status = "passed" if stage == cleanup == "passed" else "failed"
     result = {
-        "category": "Bigdata", "software": "spark", "version": version,
+        "category": "Bigdata", "software": software, "version": version,
         "architecture": arch, "run_id": run_id, "status": status,
         "cleanup_status": cleanup, "failed_stage": failed or None,
         "error": None if status == "passed" else "Spark test or cleanup failed",
@@ -41,7 +42,7 @@ def main() -> int:
     write(directory / "results.json", result)
     write(directory / "status.json", {key: result[key] for key in (
         "software", "category", "version", "architecture", "run_id", "status", "failed_stage", "cleanup_status", "error")})
-    lines = [f"# Spark {version} TPC-DS SF100 独立测试报告", "", f"- 架构：`{arch}`", f"- 状态：`{status}`", "",
+    lines = [f"# {software} {version} TPC-DS SF{benchmark.get('parameters', {}).get('scale_factor', 100)} 独立测试报告", "", f"- 架构：`{arch}`", f"- 状态：`{status}`", "",
              "| 查询 | 正式轮次中位数 (s) |", "|---|---:|"]
     for name, item in metrics.items():
         lines.append(f"| {name} | {item['value']:.4f} |")

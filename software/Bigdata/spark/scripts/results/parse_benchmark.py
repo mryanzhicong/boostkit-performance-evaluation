@@ -72,12 +72,12 @@ def summarize(records: list[dict], manifest: dict, runtime: dict) -> dict:
         samples = [groups[name][r]["query_time_seconds"] for r in (1, 2, 3)]
         metrics[f"{name[:-4]}/query_time"] = {
             "value": statistics.median(samples), "unit": "s", "direction": "lower_is_better",
-            "group": "TPC-DS SF100 / native Spark / partitioned ORC", "samples": samples,
+            "group": f"TPC-DS SF{runtime.get('scale_factor', 100)} / {runtime.get('software', 'spark')} / ORC", "samples": samples,
             "warmup_seconds": groups[name][0]["query_time_seconds"],
             "row_counts": [groups[name][r]["row_count"] for r in range(4)],
         }
-    return {"software": "spark", "version": "3.5.2", "results": metrics,
-            "parameters": {"scale_factor": 100, "format": "orc", "schema": "decimal",
+    return {"software": runtime.get("software", "spark"), "version": runtime.get("version", "3.5.2"), "results": metrics,
+            "parameters": {"scale_factor": runtime.get("scale_factor", 100), "format": "orc", "schema": "decimal",
                            "query_count": 103, "warmup_rounds": 1, "measurement_rounds": 3,
                            "query_manifest": manifest, "resource_profile": runtime["resource_profile"],
                            "spark_conf": runtime["spark_conf"], "variant": "base"},
