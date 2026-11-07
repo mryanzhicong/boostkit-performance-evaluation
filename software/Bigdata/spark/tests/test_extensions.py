@@ -139,3 +139,17 @@ def test_disk_monitor_survives_full_log_filesystem(tmp_path,monkeypatch,capsys):
     monkeypatch.setattr(e,'record_disk',full)
     e.disk_monitor(threading.Event(),'start')
     assert 'No space left' in capsys.readouterr().err
+
+
+def test_download_fallback_keeps_checksum_and_rejects_corrupt_mirror(tmp_path,monkeypatch):
+    import assets
+    good=b'fixed official bytes';expected=hashlib.sha256(good).hexdigest();calls=[]
+    target=tmp_path/'spark.tgz'
+    def curl(args,check):
+        calls.append(args[-1]);Path(args[args.index('-o')+1]).write_bytes(b'corrupt' if len(calls)==1 else good)
+    monkeypatch.setattr(assets.subprocess,'run',curl)
+    url='https://archive.apache.org/dist/spark/spark-3.5.2/file.tgz'
+    assert assets.fetch_verified(target,url,'sha256',expected)==url
+    assert len(calls)==2 and calls[0].startswith('https://mirrors.huaweicloud.com/apache/')
+    assert target.read_bytes()==good
+    assert not target.with_name('spark.tgz.part').exists()

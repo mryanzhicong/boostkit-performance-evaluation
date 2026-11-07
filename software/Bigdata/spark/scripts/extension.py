@@ -60,18 +60,20 @@ def prepare_assets(work: Path, results: Path, arch: str) -> dict:
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists():
             source = cache / relative
+            content_cache = Path("/home/runner/software/boostkit-download-cache") / spec.get("algorithm", "sha256") / spec["digest"] / relative.name
+            if not source.is_file() and content_cache.is_file():
+                source = content_cache
             if source.is_file():
                 validate_asset(source, spec)
                 shutil.copyfile(source, target)
             elif spec.get("url"):
-                part = target.with_name(target.name + ".part")
-                subprocess.run(["curl", "-fSL", "--retry", "3", "--connect-timeout", "20",
-                                "--max-time", "1800", "-o", str(part), spec["url"]], check=True)
-                validate_asset(part, spec)
-                part.rename(target)
+                from assets import fetch_verified
+                fetch_verified(target, spec["url"], spec.get("algorithm", "sha256"), spec["digest"])
             else:
                 raise FileNotFoundError(f"Stage document asset at {source}; see adapter README")
         validate_asset(target, spec)
+        from assets import cache_asset
+        cache_asset(target, spec.get("algorithm", "sha256"), spec["digest"])
         records["extension_" + key] = spec | {"path": str(target), "sha256": sha256(target)}
     (results / "extension-sources.json").write_text(json.dumps(records, indent=2) + "\n")
     return records

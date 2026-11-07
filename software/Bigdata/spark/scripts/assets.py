@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 import sys
 
 APACHE = "https://archive.apache.org/dist/"
@@ -51,6 +52,53 @@ def digest(path: Path, algorithm: str = "sha256") -> str:
 def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
 
+def source_urls(url: str) -> list[str]:
+    if url.startswith(APACHE):
+        return ["https://mirrors.huaweicloud.com/apache/" + url[len(APACHE):], url]
+    prefix = "https://repo.maven.apache.org/maven2/"
+    if url.startswith(prefix):
+        return ["https://mirrors.huaweicloud.com/repository/maven/" + url[len(prefix):], url]
+    return [url]
+
+
+def fetch_verified(target: Path, url: str, algorithm: str, expected: str) -> str:
+    errors = []
+    part = target.with_name(target.name + ".part")
+    for candidate in source_urls(url):
+        part.unlink(missing_ok=True)
+        print(f"[download] {candidate}", flush=True)
+        try:
+            subprocess.run(["curl", "-fSL", "--retry", "1", "--connect-timeout", "20",
+                            "--max-time", "1800", "--speed-limit", "1024", "--speed-time", "60",
+                            "-o", str(part), candidate], check=True)
+            if digest(part, algorithm) != expected:
+                raise ValueError("checksum mismatch")
+            part.replace(target)
+            return candidate
+        except (OSError, ValueError, subprocess.CalledProcessError) as error:
+            errors.append(f"{candidate}: {error}")
+            print(f"[download] failed; trying next verified source: {error}", flush=True)
+    part.unlink(missing_ok=True)
+    raise RuntimeError("All fixed-content download sources failed: " + "; ".join(errors))
+
+
+def cache_asset(target: Path, algorithm: str, expected: str) -> None:
+    cache = Path("/home/runner/software/boostkit-download-cache") / algorithm / expected / target.name
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        if cache.exists() and digest(cache, algorithm) == expected:
+            return
+        with tempfile.NamedTemporaryFile(dir=cache.parent, prefix="download-", delete=False) as stream:
+            temporary = Path(stream.name)
+        try:
+            shutil.copyfile(target, temporary)
+            temporary.replace(cache)
+        finally:
+            temporary.unlink(missing_ok=True)
+    except OSError as error:
+        print(f"[download] cache unavailable; verified work copy retained: {error}", flush=True)
+
+
 def preflight(work: Path, results: Path) -> None:
     mem = {line.split(":")[0]: int(line.split()[1]) * 1024
            for line in Path("/proc/meminfo").read_text().splitlines() if line.split()[1].isdigit()}
@@ -91,21 +139,19 @@ def download(work: Path, results: Path, arch: str) -> None:
     records = {}
     for key, (url, algorithm, expected) in (SOURCES | ARCH_SOURCES[arch]).items():
         target = archives / url.rsplit("/", 1)[-1]
-        cached = Path("/home/runner/software/spark/packages") / target.name
+        caches = [Path("/home/runner/software/spark/packages") / target.name,
+                  Path("/home/runner/software/boostkit-download-cache") / algorithm / expected / target.name]
+        actual_url = None
         if not target.exists():
-            if cached.is_file() and digest(cached, algorithm) == expected:
+            cached = next((p for p in caches if p.is_file() and digest(p, algorithm) == expected), None)
+            if cached:
                 shutil.copyfile(cached, target)
             else:
-                part = target.with_name(target.name + ".part")
-                print(f"[spark] downloading {key}: {url}", flush=True)
-                subprocess.run(["curl", "-fSL", "--retry", "3", "--connect-timeout", "20",
-                                "--max-time", "1800", "-o", str(part), url], check=True)
-                if digest(part, algorithm) != expected:
-                    raise RuntimeError(f"{key}: checksum mismatch")
-                part.rename(target)
+                actual_url = fetch_verified(target, url, algorithm, expected)
         if digest(target, algorithm) != expected:
             raise RuntimeError(f"{key}: checksum mismatch")
-        records[key] = {"url": url, "path": str(target), "algorithm": algorithm,
+        cache_asset(target, algorithm, expected)
+        records[key] = {"url": url, "download_url": actual_url, "path": str(target), "algorithm": algorithm,
                         "expected": expected, "sha256": digest(target)}
     from extension import prepare_assets
     records.update(prepare_assets(work, results, arch))

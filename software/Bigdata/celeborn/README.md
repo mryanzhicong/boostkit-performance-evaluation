@@ -59,3 +59,5 @@ bash software/Bigdata/celeborn/celeborn_test.sh \
 - [Hudi 0.15.0 文档](https://hudi.apache.org/docs/0.15.0/overview/)、[Iceberg 1.5.0 Spark 配置](https://iceberg.apache.org/docs/1.5.0/spark-configuration/)
 
 双架构 Action 选择 `architecture=all`；只重试单侧可选 `aarch64` 或 `x86_64`。修复后需要从新提交触发新运行，rerun 旧运行仍然使用旧代码。
+
+下载策略：Apache/Maven 优先使用华为镜像，始终核验原始发行摘要，失败才尝试原地址；网络停滞设超时。已核验安装包缓存到 `/home/runner/software/boostkit-download-cache/<算法>/<摘要>/`，后续修复重跑可复用；缓存写入失败不阻止任务。缓存是安装包，不包含测试数据，不修改宿主软件或服务。
