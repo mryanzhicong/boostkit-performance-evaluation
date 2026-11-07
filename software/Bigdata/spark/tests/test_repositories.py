@@ -48,3 +48,11 @@ def test_unreachable_sources_fail_without_changing_configuration(tmp_path):
     assert repo.read_text() == 'unchanged'
     evidence = json.loads((tmp_path / 'results/container-repository-network.json').read_text())
     assert len(evidence['probes']) == 3 and evidence['chosen_base'] is None
+
+
+def test_explicit_selected_baseurl_overrides_metalink_but_keeps_cache_policy():
+    text = 'metalink=https://mirrors.openeuler.org/metalink?repo=OS\nmetadata_expire=1h\nmirrorlist=https://example.com/list\nbaseurl=https://repo.openeuler.org/openEuler-24.03-LTS-SP4/OS/$basearch/\ngpgcheck=1\n'
+    result = m.rewrite(text, 'https://mirrors.huaweicloud.com/openeuler')
+    assert '# metalink=' in result and '# mirrorlist=' in result
+    assert '\nmetadata_expire=1h\n' in result
+    assert '\ngpgcheck=1\n' in result

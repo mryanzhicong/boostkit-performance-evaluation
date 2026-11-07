@@ -13,6 +13,7 @@ PATTERN = r'https?://(?:repo\.openeuler\.org|(?:repo|mirrors)\.huaweicloud\.com/
 
 def rewrite(text, base):
     # Preserve release paths, repository IDs, enabled flags, and signature settings.
+    text = re.sub(r"(?m)^(\s*)(metalink|mirrorlist)(\s*=.*)$", r"\1# \2\3", text)
     return re.sub(PATTERN, base, text)
 
 
