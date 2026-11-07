@@ -41,6 +41,7 @@ build_spark_base() {
         mounts=(--mount type=bind,source=/home/runner/software/anchors,target=/etc/pki/ca-trust/source/anchors,readonly)
     fi
     docker run --detach --name "$SPARK_CONTAINER" --hostname server1 --network "$network" \
+        --ulimit nofile=1048576:1048576 \
         --label "boostkit.spark.run-id=$PERF_RUN_ID" \
         --mount "type=bind,source=$PERF_WORK_DIR,target=$PERF_WORK_DIR" \
         --mount "type=bind,source=$RESULTS_DIR,target=$RESULTS_DIR" \

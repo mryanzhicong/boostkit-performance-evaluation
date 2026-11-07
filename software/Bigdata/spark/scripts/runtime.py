@@ -108,7 +108,7 @@ class Runtime:
         self.env["TMPDIR"] = str(self.work / "tmp")
 
     def command(self, args: list[str], as_user: bool = True) -> list[str]:
-        return ["runuser", "-u", self.user, "--", *map(str, args)] if as_user else list(map(str, args))
+        return ["runuser", "-u", self.user, "--", "prlimit", "--nofile=1048576:1048576", "--", *map(str, args)] if as_user else list(map(str, args))
 
     def run(self, args, log: str, *, as_user=True, timeout=1800, input=None, cwd=None, check=True, env=None):
         path = self.results / log
@@ -214,6 +214,10 @@ class Runtime:
         versions.update(self.extension.versions())
         write_json(self.results / "versions.json", versions)
         self.run(["rpm", "-qa"], "rpm-packages.txt")
+        self.run(["python3", "-c", "import resource,json,sys; limits=resource.getrlimit(resource.RLIMIT_NOFILE); "
+                  "print(json.dumps({'nofile_soft':limits[0],'nofile_hard':limits[1]})); "
+                  "sys.exit(0 if limits[0]>=1048576 else 70)"],
+                 "process-limits.json")
         Path(os.environ["PERF_ACTUAL_VERSION_FILE"]).write_text(self.extension.version + "\n")
 
     def configure(self):
@@ -312,6 +316,25 @@ class Runtime:
                     "container_network": "private bridge" if self.extension.cfg else "bridge",
                     "container_resource_limits": "none", "hadoop_user": self.user})
 
+    def wait_yarn(self):
+        # The HTTP UI becomes reachable before the application-client RPC listener.
+        for port in (8088, 8031, 8030, 8032):
+            self.wait_port(port)
+        deadline = time.monotonic() + 600
+        while True:
+            try:
+                text = self.run(["yarn", "node", "-list"], "yarn-nodes.log", timeout=30)
+            except subprocess.TimeoutExpired:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("YARN NodeManager readiness timed out")
+                time.sleep(3)
+                continue
+            if re.search(r"Total Nodes:\s*[1-9]", text):
+                return
+            if time.monotonic() >= deadline:
+                raise RuntimeError("YARN NodeManager did not register")
+            time.sleep(3)
+
     def start(self):
         self.env["HADOOP_MAPRED_HOME"] = self.paths["hadoop"]
         self.env["JMXDISABLE"] = "true"
@@ -325,15 +348,7 @@ class Runtime:
         self.run(["hdfs", "dfsadmin", "-safemode", "wait"], "hdfs-ready.log", timeout=600)
         for n in ("resourcemanager", "nodemanager", "timelineserver"):
             self.run(["yarn", "--daemon", "start", n], f"start-{n}.log")
-        self.wait_port(8088)
-        deadline = time.monotonic() + 600
-        while True:
-            text = self.run(["yarn", "node", "-list"], "yarn-nodes.log", timeout=30)
-            if re.search(r"Total Nodes:\s*[1-9]", text):
-                break
-            if time.monotonic() >= deadline:
-                raise RuntimeError("YARN NodeManager did not register")
-            time.sleep(3)
+        self.wait_yarn()
         mysql = self.work / "mysql"
         mysql.mkdir()
         subprocess.run(["chown", "mysql:mysql", str(mysql)], check=True)
