@@ -108,8 +108,10 @@ YARN、driver、服务和 SF100 临时数据留空间。资源不足直接失败
   实际 Hadoop native 库可用性另行记录，不冒充原文定制包。
 - 容器内直接启动 Hadoop 守护进程，不依赖宿主机 SSH 免密或修改防火墙。
 - 修正 Spark 解压目录、JAVA_HOME 空格、--databases 参数为 --database，以及 Hadoop 3 的 HTTP 配置名。
-- 对 Hive3.1.0/Hadoop3.2.0 的 Guava 不兼容，采用 Hadoop 随包 Guava 替换 Hive 的旧 Guava，
-  实际文件名记录在 versions.json；不改变 SQL 或 Spark 代码。
+- Hive3.1.0 自带 Guava 19，Hadoop3.2.0 自带 Guava 11.0.2。保留 Hive 的 Guava 19：
+  Calcite 1.16（Hive 的 CBO 规划器）要求 ImmutableSortedMap 实现 NavigableMap，
+  Guava 11 不满足（回退到 Hadoop 的 Guava 会让 HiveServer2 查询在 Calcite 初始化时
+  抛 IncompatibleClassChangeError）；实际使用的文件名记录在 versions.json。
 - Spark 显式使用 Hive3.1.0 Metastore 及其本地依赖路径，避免默认内置 Hive2.3.9 客户端混用。
 - 原包实际生成 tpcds_bin_partitioned_decimal_orc_100，使用该真实 schema/数据库，
   不伪称文档示例中的 varchar schema。生成规模统一为已确认的 SF100。

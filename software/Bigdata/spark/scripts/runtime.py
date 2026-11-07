@@ -62,6 +62,12 @@ def strip_tez_hadoop_jars(tez: Path) -> list[str]:
         removed.append(stale.name)
     return removed
 
+def hive_guava_jar(hive: Path) -> Path:
+    jars = sorted((hive / "lib").glob("guava-*.jar"))
+    if len(jars) != 1:
+        raise RuntimeError("Ambiguous Hive Guava dependency")
+    return jars[0]
+
 def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
 
@@ -209,13 +215,10 @@ class Runtime:
         jdbc = Path(self.sources["jdbc"]["path"])
         for folder in (hive / "lib", spark / "jars"):
             shutil.copy2(jdbc, folder / jdbc.name)
-        # Hive 3.1.0 ships Guava 19, incompatible with Hadoop 3.2's Preconditions calls.
-        guavas = list((hadoop / "share/hadoop/common/lib").glob("guava-*.jar"))
-        if len(guavas) != 1:
-            raise RuntimeError("Ambiguous Hadoop Guava dependency")
-        for old in (hive / "lib").glob("guava-*.jar"):
-            old.unlink()
-        shutil.copy2(guavas[0], hive / "lib" / guavas[0].name)
+        # Hive 3.1.0 ships Guava 19 and Hadoop 3.2.0 ships Guava 11.0.2. Keep
+        # Hive's own jar: Calcite 1.16 (Hive's planner) requires
+        # ImmutableSortedMap to implement NavigableMap, which Guava 11 lacks.
+        guava = hive_guava_jar(hive)
         write_json(self.state, self.paths)
         self.extension.install()
         self.configure()
@@ -233,7 +236,7 @@ class Runtime:
                 raise RuntimeError(f"Unexpected installed {name} version")
             versions[name] = text
         versions.update({"zookeeper": "3.4.6", "tez": "0.10.0", "jdbc": "5.1.49",
-                         "guava_compatibility": guavas[0].name,
+                         "hive_guava": guava.name,
                          "tez_bundled_hadoop_jars_removed": tez_hadoop_jars})
         versions.update(self.extension.versions())
         write_json(self.results / "versions.json", versions)

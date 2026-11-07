@@ -80,6 +80,17 @@ def test_strip_tez_hadoop_jars_keeps_tez_jars(tmp_path):
     assert runtime_module.strip_tez_hadoop_jars(tmp_path / "tez") == []
 
 
+def test_hive_keeps_its_own_guava(tmp_path):
+    lib = tmp_path / "hive/lib"
+    lib.mkdir(parents=True)
+    (lib / "guava-19.0.jar").write_text("")
+    (lib / "jersey-guava-2.25.1.jar").write_text("")
+    assert runtime_module.hive_guava_jar(tmp_path / "hive").name == "guava-19.0.jar"
+    (lib / "guava-11.0.2.jar").write_text("")
+    with pytest.raises(RuntimeError):
+        runtime_module.hive_guava_jar(tmp_path / "hive")
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []

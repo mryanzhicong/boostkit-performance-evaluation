@@ -66,3 +66,10 @@
 - 复现：本地 hadoop-3.2.0 + hive-3.1.0 + tez-0.10.0 按同一顺序构造 classpath（hive/lib → tez/conf、tez/*、tez/lib/* → hadoop 3.2.0），`DfsClientConf` 构造即抛同一 NoSuchMethodError；删除 tez/lib/hadoop-*.jar 后同一 classpath 输出 `DFS_CONF_OK`。
 - 修复：安装时删除 tez/lib 下的 hadoop-*.jar，并把删除清单写入 versions.json 的 `tez_bundled_hadoop_jars_removed`；tez-site 增加 `tez.use.cluster.hadoop-libs=true`，让 Tez AM 与容器使用集群 Hadoop 3.2.0 库。tez.tar.gz 因此只含 Tez 自身 jar，仍通过 `$PWD/tezlib/*`、`tezlib/lib/*` 进入 AM classpath。
 - 复核：新增 2 项单测（tez-site 配置、tez 旧 jar 清理），Spark 与 Celeborn 测试 81 项、合计 169 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
+
+## 2026-11-07 #276 Hive-on-Tez 冒烟测试 Guava 版本修复
+
+- #276 双架构通过安装、离线 RPM、版本检查、YARN/TimelineServer/MariaDB、schema 初始化、Metastore（9083）与 HiveServer2（10000）启动，Tez 包上传与 `create table student` 也成功；随后 `insert into student values ...` 失败，beeline 与 `services/hive/hive.log` 均为 `java.lang.IncompatibleClassChangeError: Class com.google.common.collect.ImmutableSortedMap does not implement the requested interface java.util.NavigableMap`，栈位于 `org.apache.calcite.schema.Schemas.gatherLattices`。
+- 根因：安装阶段把 Hive 自带的 Guava 19 换成了 Hadoop 3.2.0 随包的 Guava 11.0.2。`javap` 对比确认 Guava 11.0.2 的 `ImmutableSortedMap` 只实现 `SortedMap`，Guava 19/27 才实现 `NavigableMap`；Hive 3.1.0 的 Calcite 1.16 规划器按 Guava 19 编译，连接初始化时要求 `ImmutableSortedMap` 实现 `NavigableMap`，与 11.0.2 的类定义不符即抛 ICCE。DDL 不经过 Calcite，因此建表成功、插入失败。
+- 修复：取消 Guava 替换，保留 Hive 3.1.0 自带 Guava 19，并校验 hive/lib 中恰好只有一个 `guava-*.jar`（实际文件名写入 versions.json 的 `hive_guava`）；同时说明 Hadoop 3.2 与 Guava 19 是 Hive-on-Hadoop 的常规组合。
+- 复核：新增 1 项单测（Hive 保留自身 Guava、重复 Guava 报错），Spark 与 Celeborn 测试 82 项、合计 170 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
