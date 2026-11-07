@@ -1,0 +1,91 @@
+from __future__ import annotations
+import subprocess
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import runtime as runtime_module
+
+
+def make_runtime(tmp_path):
+    runtime = runtime_module.Runtime.__new__(runtime_module.Runtime)
+    runtime.work = tmp_path / "work"
+    runtime.results = tmp_path / "results"
+    runtime.home = runtime.work / "home"
+    runtime.logs = runtime.work / "logs"
+    for path in (runtime.work, runtime.results, runtime.home, runtime.logs):
+        path.mkdir(parents=True)
+    runtime.uid = runtime.gid = 1000
+    runtime.user = "bench"
+    packages = {}
+    for name in ("java", "hadoop", "hive", "spark", "tez", "zookeeper"):
+        package = tmp_path / "packages" / name
+        (package / "etc/hadoop").mkdir(parents=True)
+        (package / "conf").mkdir()
+        (package / "bin").mkdir()
+        packages[name] = str(package)
+    packages["tpcds"] = str(tmp_path / "testbench")
+    runtime.paths = packages
+    runtime.env = {"JAVA_HOME": packages["java"], "PATH": "/usr/bin:/bin"}
+    runtime.extension = SimpleNamespace(configure=lambda conf: conf, install=lambda: None,
+                                        resources={}, name="celeborn", version="0.5.3",
+                                        scale=100, cfg={})
+    return runtime
+
+
+def test_yarn_site_overrides_timeline_store(tmp_path):
+    runtime = make_runtime(tmp_path)
+    runtime.configure()
+    yarn_site = (Path(runtime.paths["hadoop"]) / "etc/hadoop/yarn-site.xml").read_text()
+    assert "yarn.timeline-service.store-class" in yarn_site
+    assert "org.apache.hadoop.yarn.server.timeline.MemoryTimelineStore" in yarn_site
+
+
+def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
+    runtime = make_runtime(tmp_path)
+    calls = []
+    monkeypatch.setattr(runtime_module.subprocess, "run",
+                        lambda args, **kwargs: calls.append((args, kwargs)) or subprocess.CompletedProcess(args, 0))
+    runtime.run = Mock(return_value="")
+    runtime.background = Mock()
+    runtime.wait_port = Mock()
+
+    runtime.bootstrap_mysql()
+
+    mysql = runtime.work / "mysql"
+    tmp = mysql / "tmp"
+    assert tmp.is_dir()
+    chown = [args for args, _ in calls if args[0] == "chown"]
+    assert chown and chown[0][:3] == ["chown", "-R", "mysql:mysql"]
+    assert chown[0][3] == str(mysql)
+    install = runtime.run.call_args_list[0]
+    assert f"--datadir={mysql}" in install.args[0]
+    assert f"--tmpdir={tmp}" in install.args[0]
+    assert install.kwargs["env"]["TMPDIR"] == str(tmp)
+    server = runtime.background.call_args_list[0]
+    assert f"--tmpdir={tmp}" in server.args[0]
+    assert server.kwargs["env"]["TMPDIR"] == str(tmp)
+    runtime.wait_port.assert_called_once_with(3306)
+
+
+def test_failed_bootstrap_copies_mariadb_error_log(tmp_path, monkeypatch):
+    runtime = make_runtime(tmp_path)
+    source = tmp_path / "mariadb.log"
+    source.write_text("InnoDB: Unable to create temporary file; errno: 13\n")
+    monkeypatch.setattr(runtime_module, "MARIADB_ERROR_LOG", source)
+    monkeypatch.setattr(runtime_module.subprocess, "run",
+                        lambda args, **kwargs: subprocess.CompletedProcess(args, 0))
+    runtime.run = Mock(side_effect=RuntimeError("mysql-init.log: exit 1"))
+    runtime.background = Mock()
+    runtime.wait_port = Mock()
+
+    with pytest.raises(RuntimeError):
+        runtime.bootstrap_mysql()
+
+    assert "errno: 13" in (runtime.results / "mysql-init-details.log").read_text()
+    assert runtime.background.call_count == 0

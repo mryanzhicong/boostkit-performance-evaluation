@@ -39,6 +39,7 @@ SPARK_CONF = {
 PROFILE = {"yarn_vcores": 64, "yarn_memory_mb": 371200, "driver_cores": 8,
            "driver_memory": "20G", "requested_executors": 200,
            "executor_cores": 8, "executor_memory": "23g"}
+MARIADB_ERROR_LOG = Path("/var/log/mariadb/mariadb.log")
 
 def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
@@ -123,11 +124,11 @@ class Runtime:
             raise RuntimeError(f"{log}: exit {proc.returncode}")
         return path.read_text(errors="replace")
 
-    def background(self, args, log: str, as_user=True):
+    def background(self, args, log: str, as_user=True, env=None):
         path = self.logs / log
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a") as out:
-            p = subprocess.Popen(self.command(args, as_user), env=self.env, cwd=self.home,
+            p = subprocess.Popen(self.command(args, as_user), env=env or self.env, cwd=self.home,
                                  stdout=out, stderr=subprocess.STDOUT, start_new_session=True)
         with (self.work / "services.jsonl").open("a") as f:
             f.write(json.dumps({"pid": p.pid, "log": str(path)}) + "\n")
@@ -240,6 +241,11 @@ class Runtime:
                 fixed["dfs.journalnode.edits.dir"] = str(self.work / "hdfs/journal")
             if component == "yarn-site":
                 fixed["yarn.nodemanager.env-whitelist"] = "JAVA_HOME,HADOOP_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME,PATH,LANG,TZ"
+                # Hadoop 3.2.0's default LeveldbTimelineStore needs a bundled native
+                # leveldbjni library that does not exist for aarch64; the in-memory
+                # store needs no native code, works on both architectures and is
+                # sufficient because the case never queries application history.
+                fixed["yarn.timeline-service.store-class"] = "org.apache.hadoop.yarn.server.timeline.MemoryTimelineStore"
             xml_config(hconf / f"{component}.xml", fixed)
         for name in ("hadoop", "yarn"):
             with (hconf / f"{name}-env.sh").open("a") as f:
@@ -335,6 +341,40 @@ class Runtime:
                 raise RuntimeError("YARN NodeManager did not register")
             time.sleep(3)
 
+    def collect_mariadb_log(self) -> None:
+        # bootstrap wrapper only writes a generic hint; the real reason lives here.
+        if MARIADB_ERROR_LOG.exists():
+            destination = self.results / "mysql-init-details.log"
+            destination.write_text(MARIADB_ERROR_LOG.read_text(errors="replace")[-20000:])
+            print("[spark]", destination.name, "captured", flush=True)
+
+    def bootstrap_mysql(self) -> None:
+        # TMPDIR points at a runner-owned directory but mariadbd runs as the mysql
+        # user; without an explicit mysql-owned --tmpdir InnoDB cannot create its
+        # bootstrap temp files (EACCES) and the system-table install aborts.
+        mysql = self.work / "mysql"
+        tmp = mysql / "tmp"
+        mysql.mkdir(exist_ok=True)
+        tmp.mkdir(exist_ok=True)
+        subprocess.run(["chown", "-R", "mysql:mysql", str(mysql)], check=True)
+        env = self.env | {"TMPDIR": str(tmp)}
+        try:
+            self.run(["mariadb-install-db", "--user=mysql", f"--datadir={mysql}",
+                      f"--tmpdir={tmp}"], "mysql-init.log", as_user=False, env=env)
+        except RuntimeError:
+            self.collect_mariadb_log()
+            raise
+        self.background(["mariadbd", "--user=mysql", f"--datadir={mysql}",
+                         f"--tmpdir={tmp}", f"--socket={mysql}/mysql.sock",
+                         f"--pid-file={mysql}/mysql.pid",
+                         "--bind-address=0.0.0.0", "--skip-name-resolve"],
+                        "mariadb/server.log", as_user=False, env=env)
+        self.wait_port(3306)
+        self.run(["mariadb", "--protocol=socket", f"--socket={mysql}/mysql.sock", "-u", "root"],
+                 "mysql-schema.log", as_user=False, env=env, input=
+                 "CREATE DATABASE hive; CREATE USER 'hive'@'%' IDENTIFIED BY 'isolated-container-only'; "
+                 "GRANT ALL ON hive.* TO 'hive'@'%'; FLUSH PRIVILEGES;\n")
+
     def start(self):
         self.env["HADOOP_MAPRED_HOME"] = self.paths["hadoop"]
         self.env["JMXDISABLE"] = "true"
@@ -349,19 +389,7 @@ class Runtime:
         for n in ("resourcemanager", "nodemanager", "timelineserver"):
             self.run(["yarn", "--daemon", "start", n], f"start-{n}.log")
         self.wait_yarn()
-        mysql = self.work / "mysql"
-        mysql.mkdir()
-        subprocess.run(["chown", "mysql:mysql", str(mysql)], check=True)
-        self.run(["mariadb-install-db", "--user=mysql", f"--datadir={mysql}"],
-                 "mysql-init.log", as_user=False)
-        self.background(["mariadbd", "--user=mysql", f"--datadir={mysql}",
-                         f"--socket={mysql}/mysql.sock", f"--pid-file={mysql}/mysql.pid",
-                         "--bind-address=0.0.0.0", "--skip-name-resolve"], "mariadb/server.log", as_user=False)
-        self.wait_port(3306)
-        self.run(["mariadb", "--protocol=socket", f"--socket={mysql}/mysql.sock", "-u", "root"],
-                 "mysql-schema.log", as_user=False, input=
-                 "CREATE DATABASE hive; CREATE USER 'hive'@'%' IDENTIFIED BY 'isolated-container-only'; "
-                 "GRANT ALL ON hive.* TO 'hive'@'%'; FLUSH PRIVILEGES;\n")
+        self.bootstrap_mysql()
         self.run(["schematool", "-dbType", "mysql", "-initSchema"], "hive-schema.log")
         self.background(["hive", "--service", "metastore", "-p", "9083"], "hive/metastore.log")
         self.wait_port(9083)

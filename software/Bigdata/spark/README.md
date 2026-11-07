@@ -57,6 +57,17 @@ spark-queries-tpcds/。跳过附带的旧 Spark JAR、旧 metastore、Git 历史
 缺失则下载到本次目录。配置 PERF_PROXY 时沿用仓库证书目录的只读挂载，
 仅在容器中更新信任和使用华为 openEuler 软件源。测量不通过外部代理访问内部服务。
 
+### 容器内服务注意事项
+
+- MariaDB 数据目录位于工作目录、属 runner 用户，而 mariadbd 以 mysql 用户运行。
+  datadir 下单独创建 mysql 所有的 tmp 子目录，并同时作为 mariadb-install-db 与
+  mariadbd 的 --tmpdir 传入，避免 InnoDB 建系统表时因 EACCES 中止。MariaDB 自己的
+  错误只写容器的 /var/log/mariadb/mariadb.log，初始化失败时该日志复制到结果目录的
+  mysql-init-details.log。
+- Hadoop 3.2.0 默认的 LeveldbTimelineStore 依赖只随 x86 提供的 native 库，aarch64 上
+  启动 TimelineServer 会报 UnsatisfiedLinkError；yarn-site 固定使用
+  MemoryTimelineStore，两架构一致。本用例不查询 Application History，不影响指标。
+
 ## 资源及文档差异
 
 | 项目 | 保留的文档值 |

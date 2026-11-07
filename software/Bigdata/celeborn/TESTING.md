@@ -42,3 +42,11 @@
 - #271 ARM 已能访问软件源，因发行包名 `zstd-libs` 不存在而失败；核验 SP4 目录后改用 `zstd`。x86 三个源均在私有桥接容器超时，DNS 正常；新增可清理的下载专用容器，仅下载 RPM、不启动服务，运行容器保留独立网络并离线安装，校验 SHA-256 和 GPG 签名。增加错误架构、摘要错误、路径越界、空清单、缺环境入口及下载容器清理检查；组件与 Spark 子集 72 项通过。实际网络及安装效果仍需后续 Action 验证。
 
 - #272 双架构均通过安装和版本检查，x86 下载专用容器的 RPM 签名和离线安装成功。ARM 服务日志为 DataNode/NodeManager Too many open files；x86 服务正常注册，但 node -list 在 8032 刚就绪前触发 30 秒 CLI 超时。增加容器/bench 用户文件句柄额度与实际值验证、RPC 就绪等待及有期限的超时重试，保留原资源规格；相关子集 75 项通过。
+
+## 2026-11-07 #273 服务启动失败定位与修复
+
+- #273 双架构通过安装、离线 RPM 与版本检查；YARN 正常注册（x86 `node -list` 显示 1 个 RUNNING 节点，TimelineServer 启动完成），随后 x86 在 MariaDB 系统表初始化失败、aarch64 在 TimelineServer 启动失败。finalize 报 `dataset.json` 缺失只是 start 失败的下游结果。
+- x86 根因：mariadbd 以 mysql 用户运行，但继承属 runner 用户的 TMPDIR；InnoDB 无法在该目录创建临时文件（EACCES），mariadb-install-db 57ms 内中止。原生 `mysql-init.log` 只有通用提示，真实错误写容器内 `/var/log/mariadb/mariadb.log`。已在同镜像、同 MariaDB 4:10.11.19-2.oe2403sp4 的容器内复现（`mariadbd: Can't create/write to file ... Errcode: 13`）。
+- aarch64 根因：Hadoop 3.2.0 默认 LeveldbTimelineStore 无 aarch64 native 库，ApplicationHistoryServer 以 `UnsatisfiedLinkError` 退出；`start-timelineserver.log` 的 `Cannot set priority` 只是对已退出 PID 执行 renice 的副作用，不是独立故障。
+- 修复：MariaDB 在 datadir 下使用 mysql 所有的 tmp 作为 `--tmpdir` 与 TMPDIR，初始化失败时把容器内 mariadb 日志复制到结果目录 `mysql-init-details.log`；yarn-site 固定 `MemoryTimelineStore`，两架构一致且不需要 native 库。未改动指标口径、资源参数与 SF100 规模。
+- 复核：新增 3 项单测，Spark 与 Celeborn 测试 78 项通过；同版本 SP4 容器内修复后的 `mariadb-install-db` 返回 0，mariadbd 启动后 `select version()` 返回 10.11.19-MariaDB。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
