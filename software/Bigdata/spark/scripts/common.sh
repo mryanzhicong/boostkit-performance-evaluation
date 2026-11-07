@@ -43,9 +43,10 @@ container_exec() {
 }
 remove_spark_container() {
     configure_runtime_paths || return $?
-    docker container inspect "$SPARK_CONTAINER" >/dev/null 2>&1 || { remove_spark_network; return $?; }
-    [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.spark.run-id"}}' "$SPARK_CONTAINER")" == "$PERF_RUN_ID" ]] || return 70
     local rc=0
+    remove_spark_fetch_container || rc=70
+    docker container inspect "$SPARK_CONTAINER" >/dev/null 2>&1 || { remove_spark_network || rc=70; return "$rc"; }
+    [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.spark.run-id"}}' "$SPARK_CONTAINER")" == "$PERF_RUN_ID" ]] || return 70
     container_exec collect || rc=70
     docker stop --time 30 "$SPARK_CONTAINER" >/dev/null || rc=70
     docker rm "$SPARK_CONTAINER" >/dev/null || rc=70
@@ -59,4 +60,11 @@ remove_spark_network() {
     docker network inspect "$network" >/dev/null 2>&1 || return 0
     [[ "$(docker network inspect --format '{{index .Labels "boostkit.spark.run-id"}}' "$network")" == "$PERF_RUN_ID" ]] || return 70
     docker network rm "$network" >/dev/null || return 70
+}
+
+remove_spark_fetch_container() {
+    local fetch="$SPARK_CONTAINER-rpm-fetch"
+    docker container inspect "$fetch" >/dev/null 2>&1 || return 0
+    [[ "$(docker inspect --format '{{index .Config.Labels "boostkit.spark.run-id"}}' "$fetch")" == "$PERF_RUN_ID" ]] || return 70
+    docker rm --force "$fetch" >/dev/null || return 70
 }

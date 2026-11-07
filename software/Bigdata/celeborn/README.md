@@ -66,4 +66,6 @@ x86 附件的表结构和查询文件与 ARM 一致，但原生成脚本使用 `
 
 固定公开的 AdoptOpenJDK/Apache Gluten GitHub Release 文件下载过慢时，下载器优先尝试公开文件加速镜像，最后保留原地址；只转发这两个已知公开仓库的无凭据 URL。版本及预期摘要不变，所有内容在安装和缓存前核验，实际下载地址记录于 sources.json/extension-sources.json。私有仓库 URL 与带查询凭据的 URL 不转发。
 
-容器软件源：安装前从容器内部探测同一 openEuler 24.03 LTS-SP4 的华为镜像/官方源元数据，选择可达地址。仅改本任务容器的 repo 配置，保留发行版路径与 GPG 设置；`container-repository-network.json`、`openEuler.repo.original`、`openEuler.repo.selected` 保存选择及失败证据。所有地址均不可达时明确失败，不绕过独立网络或修改宿主机防火墙。
+容器软件源：安装前从容器内部探测同一 openEuler 24.03 LTS-SP4 的华为镜像/官方源元数据，选择可达地址。仅改本任务容器的 repo 配置，保留发行版路径与 GPG 设置；`container-repository-network.json`、`openEuler.repo.original`、`openEuler.repo.selected` 保存选择及失败证据。若运行容器无法访问三处软件源，使用同一已校验基础镜像启动临时的下载专用容器，仅该容器使用 host 网络执行 `dnf --downloadonly`，不启动服务、不安装到宿主机。导出发行签名密钥、验证 RPM 签名并记录 SHA-256 清单后，在原私有容器中强制本地 GPG 检查完成离线安装。下载容器由退出处理和 stop 阶段重复清理；服务、HDFS、查询和数据始终留在独立网络。不修改宿主机防火墙、Docker 配置或系统软件。下载专用网络也不可达时明确失败。
+
+离线下载与签名配置依据 [DNF 命令说明](https://dnf.readthedocs.io/en/latest/command_ref.html)及 [localpkg_gpgcheck 配置](https://dnf.readthedocs.io/en/latest/conf_ref.html)。`system-dependency-manifest.json` 保存 RPM/密钥摘要和传输方式，`dependency-fetch-network/` 保存下载容器的源探测证据。openEuler SP4 的压缩库包名为 `zstd`，采用发行版包名替代其他发行版的 `zstd-libs`。

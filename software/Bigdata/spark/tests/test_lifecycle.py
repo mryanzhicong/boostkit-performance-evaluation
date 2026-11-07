@@ -46,3 +46,30 @@ def test_cleanup_removes_owned_container_even_when_collection_fails(tmp_path):
 def test_private_path_guard(work):
     p = shell("configure_runtime_paths", PERF_WORK_DIR=work)
     assert p.returncode == 10
+
+
+def test_fetch_cleanup_refuses_foreign_container():
+    p = shell('SPARK_CONTAINER=unit; PERF_RUN_ID=ours; docker() { if [[ "$1" == container ]]; then return 0; fi; echo foreign; }; remove_spark_fetch_container')
+    assert p.returncode == 70
+
+
+def test_offline_dependency_fallback_only_downloads_on_host_network(tmp_path):
+    code = '''
+    source "$SCRIPT_DIR/scripts/builders/dependencies.sh"
+    SPARK_CONTAINER=unit
+    docker() {
+        echo "$*" >> "$CALLS"
+        if [[ "$1 $2" == 'container inspect' ]]; then return 1; fi
+        if [[ "$*" == *configure_repositories.py* ]]; then return 1; fi
+        return 0
+    }
+    timeout() { shift 3; "$@"; }
+    install_spark_dependencies pinned-image
+    '''
+    p = shell(code, PERF_WORK_DIR=str(tmp_path), RESULTS_DIR=str(tmp_path), PERF_RUN_ID='ours', CALLS=str(tmp_path/'calls'))
+    assert p.returncode == 0, p.stderr
+    calls = (tmp_path/'calls').read_text()
+    assert 'run --rm --name unit-rpm-fetch --network host' in calls
+    assert 'exec python3 "$1" fetch' in calls
+    assert 'unit python3' in calls and 'system_dependencies.py offline' in calls
+    assert '--publish' not in calls and 'system_dependencies.py online' not in calls
