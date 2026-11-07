@@ -36,3 +36,5 @@
 - #267 x86 在 JDK 下载阶段失败：原 GitHub 地址 30 分钟仅收到约 21MB/102MB 后超时；其他 Apache 组件经华为镜像成功下载。增加仅针对已知公开 Release 的备用下载地址，完整流式核验本地 JDK 镜像 102170196 字节，其 SHA-256 与原固定值完全一致，不更改 JDK 构建。新增私有 URL/查询凭据不转发回归，相关子集 73 项通过。
 
 - 新双架构运行 #269 中，x86 的所有固定下载通过，失败转移到私有容器软件源连接超时（repo.huaweicloud.com）。新增容器内部的同版本软件源探测：依次测试 mirrors.huaweicloud.com、repo.huaweicloud.com 和 repo.openeuler.org 的 SP4 元数据，选择实际可达源，并保留地址解析、失败原因及原/新配置。保留 GPG 检查、发行版路径和独立网络，不改宿主机网络。相关组件与 Spark 测试 61 项通过。
+
+- #269 ARM 在 Gluten 下载至约 94% 时出现 HTTP/2 PROTOCOL_ERROR，备用源随后出现 INTERNAL_ERROR/停滞，最终失败。新增 HTTP/1.1、每源最多两次断点续传；不支持 Range 时从零重试，摘要错误立即丢弃部分内容。增加中断续传与 Range 拒绝回归，组件和 Spark 子集 64 项通过。ARM JDK 镜像也完成本地全文件校验（102238546 字节，SHA-256 与固定源一致），不将本地结果冒充 runner 安装成功。

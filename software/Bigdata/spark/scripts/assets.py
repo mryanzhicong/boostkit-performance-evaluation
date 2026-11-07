@@ -71,18 +71,27 @@ def fetch_verified(target: Path, url: str, algorithm: str, expected: str) -> str
     part = target.with_name(target.name + ".part")
     for candidate in source_urls(url):
         part.unlink(missing_ok=True)
-        print(f"[download] {candidate}", flush=True)
-        try:
-            subprocess.run(["curl", "-fSL", "--retry", "1", "--connect-timeout", "20",
-                            "--max-time", "1800", "--speed-limit", "1024", "--speed-time", "60",
-                            "-o", str(part), candidate], check=True)
-            if digest(part, algorithm) != expected:
-                raise ValueError("checksum mismatch")
-            part.replace(target)
-            return candidate
-        except (OSError, ValueError, subprocess.CalledProcessError) as error:
-            errors.append(f"{candidate}: {error}")
-            print(f"[download] failed; trying next verified source: {error}", flush=True)
+        for attempt in range(2):
+            print(f"[download] {candidate} attempt={attempt + 1} resume_bytes={part.stat().st_size if part.exists() else 0}", flush=True)
+            try:
+                subprocess.run(["curl", "--http1.1", "-fSL", "--continue-at", "-",
+                                "--connect-timeout", "20", "--max-time", "1800",
+                                "--speed-limit", "1024", "--speed-time", "60",
+                                "-o", str(part), candidate], check=True)
+                if digest(part, algorithm) != expected:
+                    raise ValueError("checksum mismatch")
+                part.replace(target)
+                return candidate
+            except ValueError as error:
+                # Untrusted/corrupt contents must never become a resume prefix.
+                errors.append(f"{candidate}: {error}")
+                part.unlink(missing_ok=True)
+                break
+            except (OSError, subprocess.CalledProcessError) as error:
+                errors.append(f"{candidate}: {error}")
+                if isinstance(error, subprocess.CalledProcessError) and error.returncode in (22, 33, 36):
+                    part.unlink(missing_ok=True)  # HTTP/range rejection: retry from zero.
+                print(f"[download] transfer failed; bounded resume/fallback: {error}", flush=True)
     part.unlink(missing_ok=True)
     raise RuntimeError("All fixed-content download sources failed: " + "; ".join(errors))
 

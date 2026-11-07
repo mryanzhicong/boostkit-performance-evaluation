@@ -164,3 +164,43 @@ def test_github_mirrors_only_forward_known_public_release_urls():
     assert assets.source_urls(private)==[private]
     with_query=public+'?token=example'
     assert assets.source_urls(with_query)==[with_query]
+
+
+def test_interrupted_transfer_resumes_same_source_and_verifies_digest(tmp_path, monkeypatch):
+    import assets
+    import subprocess
+    good = b'fixed official content'
+    target = tmp_path / 'jdk.tgz'
+    calls = []
+    def curl(args, check):
+        calls.append(args)
+        part = Path(args[args.index('-o') + 1])
+        assert '--http1.1' in args and args[args.index('--continue-at') + 1] == '-'
+        if len(calls) == 1:
+            part.write_bytes(good[:10])
+            raise subprocess.CalledProcessError(56, args)
+        assert part.read_bytes() == good[:10]
+        part.write_bytes(good)
+    monkeypatch.setattr(assets.subprocess, 'run', curl)
+    assets.fetch_verified(target, 'https://example.org/jdk.tgz', 'sha256', hashlib.sha256(good).hexdigest())
+    assert len(calls) == 2 and calls[0][-1] == calls[1][-1]
+    assert target.read_bytes() == good
+
+
+def test_range_rejection_restarts_cleanly(tmp_path, monkeypatch):
+    import assets
+    import subprocess
+    good = b'correct package'
+    target = tmp_path / 'p.tgz'
+    calls = []
+    def curl(args, check):
+        part = Path(args[args.index('-o') + 1])
+        calls.append(args)
+        if len(calls) == 1:
+            part.write_bytes(b'partial')
+            raise subprocess.CalledProcessError(33, args)
+        assert not part.exists()
+        part.write_bytes(good)
+    monkeypatch.setattr(assets.subprocess, 'run', curl)
+    assets.fetch_verified(target, 'https://example.org/p.tgz', 'sha256', hashlib.sha256(good).hexdigest())
+    assert target.read_bytes() == good and len(calls) == 2
