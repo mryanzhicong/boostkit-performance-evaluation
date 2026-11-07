@@ -121,6 +121,30 @@ def test_collect_yarn_logs_fetches_aggregated_application_logs(tmp_path):
     assert (runtime.results / "yarn-logs/application_1794041753670_0002.log").read_text() == "aggregated AM log"
 
 
+def test_generate_tpcds_text_writes_chunk_script(tmp_path, monkeypatch):
+    runtime = make_runtime(tmp_path)
+    monkeypatch.setattr(runtime_module.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0))
+    calls = []
+    runtime.run = lambda args, log, **kwargs: calls.append((args, log, kwargs)) or ""
+    runtime.generate_tpcds_text()
+    script = (runtime.work / "tpcds-generate.sh").read_text()
+    for table in runtime_module.TPCDS_TABLES:
+        assert table in script
+    assert "PARALLEL=100" in script
+    assert "-parallel \"$PARALLEL\" -child" in script
+    assert "hdfs dfs -put -f" in script
+    assert calls == [(["bash", str(runtime.work / "tpcds-generate.sh")], "data-generation.log",
+                      {"timeout": 12 * 3600})]
+
+
+def test_aarch64_snappy_replaces_hadoop_native_jar():
+    import assets
+    url, algorithm, expected = assets.ARCH_SOURCES["aarch64"]["snappy_java"]
+    assert url.endswith("snappy-java-1.1.8.4.jar")
+    assert algorithm == "sha1" and len(expected) == 40
+    assert "snappy_java" not in assets.ARCH_SOURCES["x86_64"]
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []

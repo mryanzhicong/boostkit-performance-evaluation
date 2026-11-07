@@ -87,3 +87,12 @@
 - aarch64 仍在 Tez AM 容器 `exitCode: 1` 失败。本轮新增的 NodeManager 本地日志采集为空：参考 `yarn-site.xml` 打开 `yarn.log-aggregation-enable=true`，应用结束后 NM 会立即删除本地容器日志（`hdfs/yarn/log/application_*/container_*`），真正内容已聚合到 HDFS `/tmp/logs/...`。
 - 改动（仍为诊断）：`collect_yarn_logs()` 在本地目录之外，按失败日志里的 `application_*` 用 `yarn logs -applicationId` 抓取聚合日志（重试等待聚合完成）；Tez 冒烟失败与数据生成失败都会触发；start 阶段新增 `dsdgen` 原生生成器探针（容器内以 bench 用户直接生成 1 GB call_center 分片），可直接判断二进制是否在当前容器可用。
 - 复核：Spark 与 Celeborn 测试 84 项、合计 172 项通过；根因待下一轮产物中的 `yarn-logs/` 与 `dsdgen-smoke.log` 判定。
+
+## 2026-11-07 #279 aarch64 Snappy 根因 / x86 数据生成绕过
+
+- aarch64 聚合日志定位到 Tez AM 的真实异常：`org.xerial.snappy.SnappyError: [FAILED_TO_LOAD_NATIVE_LIBRARY] no native library is found for os.name=Linux and os.arch=aarch64`，抛在 `TezUtils.createByteStringFromConf`（DAGAppMaster.serviceInit 序列化 AM payload），AM 捕获后 exit 1。原因：Hadoop 3.2.0 自带 snappy-java 1.0.4.1，无 Linux/aarch64 native；Tez 自身不发 snappy。
+- x86_64 的 `dsdgen` 探针（容器内以 bench 直接执行）exit 0，说明二进制与环境可用；但 GenTable MR 作业里同一二进制仍全部 SIGSEGV（16 次 `status code 139`），且 `tpcds-setup.sh` 只看 `/tmp/tpcds-generate/<sf>` 是否存在，会继续打印 “complete”，24 张 ORC 表为空。
+- 改动：
+  - aarch64 资产新增 snappy-java 1.1.8.4（含 `Linux/aarch64/libsnappyjava.so`，Maven 经华为镜像），安装时放入 Tez 目录，随 tez.tar.gz 进入 `tezlib/*`，AM classpath 优先于集群旧 jar；`versions.json` 记录 `snappy_java`。
+  - 文本数据改为 runtime 直接调用 testbench 的 `dsdgen`（与 GenTable 相同的 scale/parallel/child 参数），按表并行生成后 `hdfs dfs -put` 到 `/tmp/tpcds-generate/<sf>/<table>/`，再让 `tpcds-setup.sh` 只做文本表注册与 24 张表 ORC 优化。
+- 复核：Spark 与 Celeborn 测试 86 项、合计 174 项通过；双架构下一轮验证。

@@ -79,6 +79,14 @@ spark-queries-tpcds/。跳过附带的旧 Spark JAR、旧 metastore、Git 历史
   NoSuchMethodError: Configuration.getTimeDuration。安装时删除 tez/lib/hadoop-*.jar，
   tez-site 设置 tez.use.cluster.hadoop-libs=true 改用集群库；tez.tar.gz 只含 Tez 自身
   jar，仍按 $PWD/tezlib/* 与 tezlib/lib/* 进入 AM classpath。
+- aarch64 上 Tez AM 启动时用 snappy-java 压缩 AM payload，而 Hadoop 3.2.0 自带的
+  snappy-java 1.0.4.1 没有 Linux/aarch64 native 库（SnappyError: no native library），
+  AM 直接退出。安装时把带 aarch64 native 的 snappy-java 1.1.8.4 放进 Tez 目录，
+  它随 tez.tar.gz 进入 tezlib/*，在 AM classpath 上先于集群 Hadoop 的旧 jar 生效。
+- TPC-DS 文本数据由 runtime 直接调用 testbench 自带的 dsdgen 生成：参考脚本
+  tpcds-setup.sh 通过 GenTable MapReduce 作业启动 dsdgen，其子进程在本容器内一启动
+  就 SIGSEGV（exit 139），而同一二进制直接执行正常。生成的文件仍上传到
+  /tmp/tpcds-generate/<sf>/<table>/，随后 tpcds-setup.sh 只做文本表注册与 ORC 优化。
 
 ## 资源及文档差异
 

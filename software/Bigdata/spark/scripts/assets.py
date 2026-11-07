@@ -33,6 +33,10 @@ ARCH_SOURCES = {
                  "536bf397d98174b376da9ed49d2f659d65c7310318d8211444f4b7ba7c15e453"),
         "tpcds": (GITCODE + "hive-testbench-hdp3-arm.zip", "sha256",
                   "11f5ea3a6a7d68fba7bca1543e1454109ced69bc134192da1d8d659e456c60de"),
+        # Tez serializes the AM payload with snappy-java; Hadoop 3.2.0 bundles
+        # snappy-java 1.0.4.1, which ships no Linux/aarch64 native library.
+        "snappy_java": ("https://repo.maven.apache.org/maven2/org/xerial/snappy/snappy-java/1.1.8.4/snappy-java-1.1.8.4.jar",
+                        "sha1", "66f0d56454509f6e36175f2331572e250e04a6cc"),
     },
     "x86_64": {
         "java": (JDK + "OpenJDK8U-jdk_x64_linux_hotspot_8u252b09.tar.gz", "sha256",

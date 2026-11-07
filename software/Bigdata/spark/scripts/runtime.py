@@ -40,6 +40,11 @@ PROFILE = {"yarn_vcores": 64, "yarn_memory_mb": 371200, "driver_cores": 8,
            "driver_memory": "20G", "requested_executors": 200,
            "executor_cores": 8, "executor_memory": "23g"}
 MARIADB_ERROR_LOG = Path("/var/log/mariadb/mariadb.log")
+TPCDS_TABLES = ("call_center", "catalog_page", "catalog_returns", "catalog_sales", "customer",
+                "customer_address", "customer_demographics", "date_dim", "household_demographics",
+                "income_band", "inventory", "item", "promotion", "reason", "ship_mode", "store",
+                "store_returns", "store_sales", "time_dim", "warehouse", "web_page", "web_returns",
+                "web_sales", "web_site")
 # Settings written into hadoop-env.sh so daemons and command-line clients see
 # them. HADOOP_CLASSPATH is intentionally absent: Hive's launcher prepends its
 # own classpath to HADOOP_CLASSPATH and then starts hadoop, whose shell sources
@@ -219,6 +224,14 @@ class Runtime:
         # Hive's own jar: Calcite 1.16 (Hive's planner) requires
         # ImmutableSortedMap to implement NavigableMap, which Guava 11 lacks.
         guava = hive_guava_jar(hive)
+        snappy = "hadoop-bundled"
+        if os.environ["EXPECTED_ARCH"] == "aarch64":
+            # Tez writes its AM payload with snappy-java, and Hadoop 3.2.0's
+            # snappy-java 1.0.4.1 has no Linux/aarch64 native library. The Tez
+            # archive comes first on the AM classpath, so a newer jar there wins.
+            jar = Path(self.sources["snappy_java"]["path"])
+            shutil.copy2(jar, Path(self.paths["tez"]) / jar.name)
+            snappy = jar.name
         write_json(self.state, self.paths)
         self.extension.install()
         self.configure()
@@ -236,7 +249,7 @@ class Runtime:
                 raise RuntimeError(f"Unexpected installed {name} version")
             versions[name] = text
         versions.update({"zookeeper": "3.4.6", "tez": "0.10.0", "jdbc": "5.1.49",
-                         "hive_guava": guava.name,
+                         "hive_guava": guava.name, "snappy_java": snappy,
                          "tez_bundled_hadoop_jars_removed": tez_hadoop_jars})
         versions.update(self.extension.versions())
         write_json(self.results / "versions.json", versions)
@@ -409,6 +422,52 @@ class Runtime:
         if (self.results / "yarn-logs").exists():
             print("[spark]", "yarn-logs", "captured", flush=True)
 
+    def generate_tpcds_text(self) -> None:
+        # tpcds-setup.sh runs GenTable, whose map tasks start the prebuilt dsdgen
+        # binary out of a localized jar archive; in this container that child dies
+        # with SIGSEGV (exit 139) while the very same binary succeeds when started
+        # directly. Produce the identical text chunks ourselves, upload them where
+        # the external text tables look, and let tpcds-setup.sh only load them.
+        scale = int(self.extension.scale)
+        tools = Path(self.paths["tpcds"]) / "tpcds-gen/target/tools"
+        local = self.work / "tpcds-generate" / str(scale)
+        script = self.work / "tpcds-generate.sh"
+        target = f"/tmp/tpcds-generate/{scale}"
+        lines = [
+            "#!/bin/bash",
+            "set -u",
+            f"TOOLS='{tools}'",
+            f"OUT='{local}'",
+            f"TARGET='{target}'",
+            f"SCALE={scale}",
+            f"PARALLEL={scale}",
+            "run_child() {",
+            '  local table="$1" child="$2"',
+            '  mkdir -p "$OUT/$table"',
+            '  ( cd "$TOOLS" && ./dsdgen -dir "$OUT/$table" -table "$table" -force Y '
+            '-scale "$SCALE" -parallel "$PARALLEL" -child "$child" >/dev/null 2>&1 ) '
+            '|| echo "$table $child" >> "$OUT/.failures"',
+            "}",
+            "export -f run_child",
+            "export TOOLS OUT SCALE PARALLEL",
+            'rm -f "$OUT/.failures"',
+            'hdfs dfs -mkdir -p "$TARGET"',
+            "for table in " + " ".join(TPCDS_TABLES) + "; do",
+            '  seq 1 "$PARALLEL" | xargs -P 64 -I{} bash -c \'run_child "$1" "$2"\' _ "$table" {}',
+            '  if [ -s "$OUT/.failures" ]; then',
+            '    echo "dsdgen failures:"; cat "$OUT/.failures"; exit 1',
+            "  fi",
+            '  hdfs dfs -put -f "$OUT/$table" "$TARGET/" || exit 1',
+            '  rm -rf "$OUT/$table"',
+            "done",
+            'hdfs dfs -ls "$TARGET"',
+            f'echo "TPC-DS text data generation complete."',
+        ]
+        script.write_text("\n".join(lines) + "\n")
+        script.chmod(0o755)
+        subprocess.run(["chown", f"{self.uid}:{self.gid}", str(script)], check=True)
+        self.run(["bash", str(script)], "data-generation.log", timeout=12 * 3600)
+
     def bootstrap_mysql(self) -> None:
         # TMPDIR points at a runner-owned directory but mariadbd runs as the mysql
         # user; without an explicit mysql-owned --tmpdir InnoDB cannot create its
@@ -474,28 +533,13 @@ class Runtime:
         if "zhangsan" not in text or "lisi" not in text or re.search(r"Error:|FAILED:", text):
             raise RuntimeError("Hive-on-Tez functional verification failed")
         self.extension.start_services()
-        bench = Path(self.paths["tpcds"])
-        tools = bench / "tpcds-gen/target/tools"
-        generator = self.work / "dsdgen-smoke"
-        probe = self.run(["bash", "-c",
-                          f"rm -rf {generator}; mkdir -p {generator}; ./dsdgen -scale 1 -parallel 2 -child 1 "
-                          f"-force Y -dir {generator}; echo dsdgen-smoke-exit=$?"],
-                         "dsdgen-smoke.log", cwd=tools, check=False)
-        if "dsdgen-smoke-exit=0" not in probe:
-            raise RuntimeError("TPC-DS native generator failed in the container: " + probe[-2000:])
-        try:
-            self.run(["bash", "tpcds-setup.sh", str(self.extension.scale)], "data-generation.log", timeout=12 * 3600, cwd=bench)
-        except RuntimeError:
-            self.collect_yarn_logs(("data-generation.log",))
-            raise
+        self.generate_tpcds_text()
+        self.run(["bash", "tpcds-setup.sh", str(self.extension.scale)], "data-generation.log", timeout=12 * 3600,
+                 cwd=Path(self.paths["tpcds"]))
 
         db = self.extension.source_db
         tables = self.run(["hive", "-S", "--database", db, "-e", "show tables;"], "tables.log")
-        expected = {"call_center", "catalog_page", "catalog_returns", "catalog_sales", "customer",
-                    "customer_address", "customer_demographics", "date_dim", "household_demographics",
-                    "income_band", "inventory", "item", "promotion", "reason", "ship_mode", "store",
-                    "store_returns", "store_sales", "time_dim", "warehouse", "web_page", "web_returns",
-                    "web_sales", "web_site"}
+        expected = set(TPCDS_TABLES)
         found = {line.strip() for line in tables.splitlines()} & expected
         if found != expected:
             raise RuntimeError(f"Incomplete 24-table dataset: missing {expected-found}")
