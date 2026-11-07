@@ -49,10 +49,9 @@ build_spark_base() {
     if [[ -n "${PERF_PROXY:-}" ]]; then
         docker exec "$SPARK_CONTAINER" update-ca-trust extract || return 30
     fi
-    docker exec "$SPARK_CONTAINER" sed -i \
-        -e '/^meta/ s/^/#/' -e 's,repo.openeuler.org,repo.huaweicloud.com/openeuler,g' \
-        /etc/yum.repos.d/openEuler.repo || return 30
-    docker exec "$SPARK_CONTAINER" dnf install -y python3 mariadb-server mariadb \
+    docker exec -e "RESULTS_DIR=$RESULTS_DIR" -e "EXPECTED_ARCH=$EXPECTED_ARCH" "$SPARK_CONTAINER" \
+        python3 "$SCRIPT_DIR/scripts/configure_repositories.py" || return 30
+    docker exec "$SPARK_CONTAINER" dnf --setopt=timeout=20 --setopt=retries=2 install -y python3 mariadb-server mariadb \
         procps-ng util-linux coreutils findutils tar gzip unzip hostname shadow \
         libaio openssl-libs zlib snappy which make gcc gcc-c++ binutils lz4 zstd-libs numactl-libs libatomic libstdc++ libicu double-conversion libsodium libevent xz-libs bzip2 || return 30
     docker image inspect --format '{{json .}}' "$image" > "$RESULTS_DIR/container-image.json"
