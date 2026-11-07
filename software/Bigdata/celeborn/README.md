@@ -61,3 +61,5 @@ bash software/Bigdata/celeborn/celeborn_test.sh \
 双架构 Action 选择 `architecture=all`；只重试单侧可选 `aarch64` 或 `x86_64`。修复后需要从新提交触发新运行，rerun 旧运行仍然使用旧代码。
 
 下载策略：Apache/Maven 优先使用华为镜像，始终核验原始发行摘要，失败才尝试原地址；网络停滞设超时。已核验安装包缓存到 `/home/runner/software/boostkit-download-cache/<算法>/<摘要>/`，后续修复重跑可复用；缓存写入失败不阻止任务。缓存是安装包，不包含测试数据，不修改宿主软件或服务。
+
+x86 附件的表结构和查询文件与 ARM 一致，但原生成脚本使用 `varchar` 库名并关闭约束加载；x86 启动时仅对齐这两处设置，生成脚本及 30 份模式/加载文件必须逐字节匹配已冻结 ARM 元数据。x86 原生生成器保留，原始脚本及校验报告写入 `workload-normalization/` 和 `workload-normalization.json`。ARM 启动路径保持原样。

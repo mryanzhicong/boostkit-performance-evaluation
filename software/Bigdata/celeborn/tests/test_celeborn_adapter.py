@@ -129,3 +129,36 @@ def test_celeborn_installs_public_bridge_without_native_or_offline_assets(tmp_pa
     assert json.loads((tmp_path/'celeborn-java-bridge.json').read_text())['sha256']==expected
     with ZipFile(jars/cfg['jar_filename']) as z:
         assert not any(n.endswith('.so') for n in z.namelist())
+
+
+def test_x86_metadata_normalization_is_exact_idempotent_and_checks_schema(tmp_path):
+    import runpy
+    normalize=runpy.run_path(str(ROOT/'scripts/normalize_x86_workload.py'))['normalize']
+    bench=tmp_path/'bench';bench.mkdir();results=tmp_path/'results';results.mkdir()
+    source=('DATABASE=tpcds_bin_partitioned_varchar_${FORMAT}_${SCALE}\n'
+            '#echo "Loading constraints"\n'
+            '#runcommand "$HIVE -f ddl-tpcds/bin_partitioned/add_constraints.sql --hivevar DB=${DATABASE}"\n').encode()
+    expected=source.replace(b'partitioned_varchar_',b'partitioned_decimal_').replace(b'#echo',b'echo').replace(b'#runcommand',b'runcommand')
+    schema=b'CREATE TABLE t (n DECIMAL(7,2));'
+    (bench/'tpcds-setup.sh').write_bytes(source);(bench/'schema.sql').write_bytes(schema)
+    ref={'source_setup_sha256':hashlib.sha256(source).hexdigest(),'canonical_files':{'tpcds-setup.sh':hashlib.sha256(expected).hexdigest(),'schema.sql':hashlib.sha256(schema).hexdigest()}}
+    normalize(bench,results,ref)
+    assert (bench/'tpcds-setup.sh').read_bytes()==expected
+    assert (results/'workload-normalization/tpcds-setup.original.sh').read_bytes()==source
+    normalize(bench,results,ref)
+    (bench/'schema.sql').write_text('changed schema')
+    with pytest.raises(ValueError,match='metadata mismatch'):
+        normalize(bench,results,ref)
+
+@pytest.mark.parametrize('arch,expected',[('aarch64',['start']),('x86_64',['normalize','start'])])
+def test_startup_normalization_only_runs_on_x86(tmp_path,arch,expected):
+    import os
+    code=f'''source "{ROOT/'scripts/adapter.sh'}"
+initialize_runtime() {{ SPARK_CONTAINER=unit; }}
+docker() {{ echo normalize; }}
+start_spark_runtime() {{ echo start; }}
+start_celeborn
+'''
+    p=subprocess.run(['bash','-c',code],env=os.environ|{'EXPECTED_ARCH':arch,'PERF_WORK_DIR':'/home/runner/boostkit-perf/celeborn/unit','RESULTS_DIR':str(tmp_path)},capture_output=True,text=True)
+    assert p.returncode==0,p.stderr
+    assert p.stdout.splitlines()==expected
