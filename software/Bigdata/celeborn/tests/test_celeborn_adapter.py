@@ -99,3 +99,33 @@ def test_public_assets_can_be_resolved_for_each_architecture(tmp_path,monkeypatc
     specs=json.loads((ROOT/'assets.json').read_text())
     assert all(item.get('url') for item in specs.values())
     assert specs['bridge_tar']['url'].startswith('https://github.com/apache/gluten/')
+
+def test_celeborn_installs_public_bridge_without_native_or_offline_assets(tmp_path,monkeypatch):
+    import runtime,extension,tarfile
+    from io import BytesIO
+    from zipfile import ZipFile
+    monkeypatch.setenv('PERF_ADAPTER_DIR',str(ROOT))
+    cfg=json.loads((ROOT/'profile.json').read_text())
+    distribution=tmp_path/'celeborn';(distribution/'spark').mkdir(parents=True)
+    (distribution/'spark/celeborn-client-spark-3-shaded_2.12-0.5.3.jar').write_bytes(b'client')
+    jars=tmp_path/'spark/jars';jars.mkdir(parents=True)
+    source=BytesIO()
+    with ZipFile(source,'w') as z:
+        z.writestr('org/apache/spark/shuffle/gluten/celeborn/CelebornShuffleManager.class',b'class')
+        z.writestr('linux/amd64/libgluten.so',b'\x7fELFwrong arch native')
+    archive=tmp_path/'bundle.tar.gz'
+    with tarfile.open(archive,'w:gz') as t:
+        info=tarfile.TarInfo(cfg['upstream_bridge_jar_filename']);info.size=len(source.getvalue())
+        t.addfile(info,BytesIO(source.getvalue()))
+    reference=tmp_path/'reference.jar'
+    expected=extension.build_java_bridge(source.getvalue(),reference)['sha256']
+    r=SimpleNamespace(work=tmp_path,results=tmp_path,env={},sources={'extension_bridge_tar':{'path':str(archive)},'extension_server':{'path':str(tmp_path/'server.tar.gz')}},
+        paths={'spark':str(tmp_path/'spark')},packages=tmp_path/'packages',state=tmp_path/'runtime.json')
+    e=Extension(r);e.cfg=cfg | {'upstream_bridge_sha256':hashlib.sha256(source.getvalue()).hexdigest(),'bridge_sha256':expected}
+    monkeypatch.setattr(runtime,'extract_tar',lambda *args:distribution)
+    e.install()
+    assert r.paths['celeborn']==str(distribution)
+    assert (jars/cfg['jar_filename']).is_file()
+    assert json.loads((tmp_path/'celeborn-java-bridge.json').read_text())['sha256']==expected
+    with ZipFile(jars/cfg['jar_filename']) as z:
+        assert not any(n.endswith('.so') for n in z.namelist())

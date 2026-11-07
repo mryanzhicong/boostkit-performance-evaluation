@@ -229,7 +229,6 @@ class Extension:
             tz = r.packages / "tzdata2025b"
             tz.mkdir()
             # Both IANA archives have multiple top-level files; validate all paths before extraction.
-            import tarfile
             for key in ("tzdata", "tzcode"):
                 with tarfile.open(self.asset(key)) as tar:
                     for entry in tar.getmembers():
