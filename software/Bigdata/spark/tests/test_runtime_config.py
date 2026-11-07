@@ -91,6 +91,17 @@ def test_hive_keeps_its_own_guava(tmp_path):
         runtime_module.hive_guava_jar(tmp_path / "hive")
 
 
+def test_collect_yarn_logs_copies_container_logs(tmp_path):
+    runtime = make_runtime(tmp_path)
+    runtime.collect_yarn_logs()
+    assert not (runtime.results / "yarn-logs").exists()
+    container = runtime.work / "hdfs/yarn/log/application_1/container_1"
+    container.mkdir(parents=True)
+    (container / "container_1_stdout").write_text("AM log")
+    runtime.collect_yarn_logs()
+    assert (runtime.results / "yarn-logs/application_1/container_1/container_1_stdout").read_text() == "AM log"
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []

@@ -375,6 +375,26 @@ class Runtime:
             destination.write_text(MARIADB_ERROR_LOG.read_text(errors="replace")[-20000:])
             print("[spark]", destination.name, "captured", flush=True)
 
+    def collect_yarn_logs(self, limit: int = 50 * 1024 * 1024) -> None:
+        # A failed Tez AM only explains itself in the container stdout log, which
+        # YARN keeps under the NodeManager log dir until the work tree is removed.
+        source = self.work / "hdfs/yarn/log"
+        if not source.is_dir():
+            return
+        destination = self.results / "yarn-logs"
+        copied = 0
+        for path in sorted(source.rglob("*")):
+            if not path.is_file():
+                continue
+            copied += path.stat().st_size
+            if copied > limit:
+                break
+            target = destination / path.relative_to(source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
+        if destination.exists():
+            print("[spark]", destination.name, "captured", flush=True)
+
     def bootstrap_mysql(self) -> None:
         # TMPDIR points at a runner-owned directory but mariadbd runs as the mysql
         # user; without an explicit mysql-owned --tmpdir InnoDB cannot create its
@@ -431,8 +451,12 @@ class Runtime:
         self.run(["hdfs", "dfs", "-chmod", "1777", "/tmp"], "hdfs-permissions.log")
         self.run(["hdfs", "dfs", "-put", str(tez), "/apps/tez/tez.tar.gz"], "tez-upload.log")
         smoke = "set hive.execution.engine=tez; create table student(id int,name string); insert into student values(1,'zhangsan'),(2,'lisi'); select * from student order by id; drop table student;"
-        text = self.run(["beeline", "-u", "jdbc:hive2://server1:10000", "-n", self.user,
-                         "--showHeader=false", "--outputformat=tsv2", "-e", smoke], "hive-tez-smoke.log", timeout=1800)
+        try:
+            text = self.run(["beeline", "-u", "jdbc:hive2://server1:10000", "-n", self.user,
+                             "--showHeader=false", "--outputformat=tsv2", "-e", smoke], "hive-tez-smoke.log", timeout=1800)
+        except RuntimeError:
+            self.collect_yarn_logs()
+            raise
         if "zhangsan" not in text or "lisi" not in text or re.search(r"Error:|FAILED:", text):
             raise RuntimeError("Hive-on-Tez functional verification failed")
         self.extension.start_services()

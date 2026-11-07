@@ -73,3 +73,10 @@
 - 根因：安装阶段把 Hive 自带的 Guava 19 换成了 Hadoop 3.2.0 随包的 Guava 11.0.2。`javap` 对比确认 Guava 11.0.2 的 `ImmutableSortedMap` 只实现 `SortedMap`，Guava 19/27 才实现 `NavigableMap`；Hive 3.1.0 的 Calcite 1.16 规划器按 Guava 19 编译，连接初始化时要求 `ImmutableSortedMap` 实现 `NavigableMap`，与 11.0.2 的类定义不符即抛 ICCE。DDL 不经过 Calcite，因此建表成功、插入失败。
 - 修复：取消 Guava 替换，保留 Hive 3.1.0 自带 Guava 19，并校验 hive/lib 中恰好只有一个 `guava-*.jar`（实际文件名写入 versions.json 的 `hive_guava`）；同时说明 Hadoop 3.2 与 Guava 19 是 Hive-on-Hadoop 的常规组合。
 - 复核：新增 1 项单测（Hive 保留自身 Guava、重复 Guava 报错），Spark 与 Celeborn 测试 82 项、合计 170 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
+
+## 2026-11-07 #277 Tez AM 启动失败与容器日志采集
+
+- #277 双架构通过安装、schema 初始化、Metastore、HiveServer2 与 Tez 包上传；Guava 修复生效，`create table student` 与 `insert into student values ...` 的 Calcite 规划均通过，随后 Tez session 启动失败：`SessionNotRunning: ... AM Container for appattempt ... exited with exitCode: 1`，`tez.tar.gz` 已正常 localize（AM stderr 只有 SLF4J 多绑定告警）。
+- 现象：AM 容器 stdout/stderr 里没有栈信息（Tez AM 的异常走 log4j，不写 stderr），而 `yarn.nodemanager.log-dirs` 位于本次工作目录、stop 阶段随工作目录一起清理，旧产物无法定位。
+- 改动（仅诊断，不改链路）：start 阶段 Tez 冒烟测试失败时调用 `collect_yarn_logs()`，把 NodeManager 日志目录（容器 stdout/stderr）限量复制到结果目录 `yarn-logs/`，便于产物复核；新增 1 项单测。
+- 复核：Spark 与 Celeborn 测试 83 项、合计 171 项通过；AM 根因待下一轮双架构产物的 `yarn-logs/` 判定。
