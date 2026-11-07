@@ -1,0 +1,64 @@
+name: spark
+category: Bigdata
+enabled: true
+versions:
+  - "3.5.2"
+test_tools:
+  hive_testbench:
+    version: "tpcds release 2026-10-15"
+    revision: "5bd9edd86452ca27d9d2a34812f34d626168c449"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_spark
+    start:
+      script: scripts/stages/start.sh
+      function: start_spark_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_spark_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_spark_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  versions:
+    path: versions.json
+    stage: build
+    format: json
+    required: true
+  dataset:
+    path: dataset.json
+    stage: start
+    format: json
+    required: true
+  timings:
+    path: timings.jsonl
+    stage: test
+    format: text
+    required: true
+  benchmark_raw:
+    path: benchmark_spark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_spark.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
