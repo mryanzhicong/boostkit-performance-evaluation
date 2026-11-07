@@ -1,0 +1,57 @@
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/fashion.faiss
+  num_threads = 32
+  nloop = 5
+  metric = L2
+  efc = 300
+  save_or_load = save
+  efs = 30
+  k_f = 18
+base vector size: 60000
+query vector size: 10000
+Index build+prepare time: 3.24165 s
+Loop 1/5:
+  wall_time = 4.02471 s (broadcast->join)
+  thread_time: min=2.69779 s, avg=3.55864 s, max=4.02445 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 79508.8
+  QPS_avg_thread  = 2810.06
+Loop 2/5:
+  wall_time = 3.91865 s (broadcast->join)
+  thread_time: min=2.67411 s, avg=3.57326 s, max=3.91843 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 81660.8
+  QPS_avg_thread  = 2798.56
+Loop 3/5:
+  wall_time = 3.93993 s (broadcast->join)
+  thread_time: min=2.16138 s, avg=3.54322 s, max=3.93977 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 81219.8
+  QPS_avg_thread  = 2822.29
+Loop 4/5:
+  wall_time = 3.89507 s (broadcast->join)
+  thread_time: min=2.13492 s, avg=3.54843 s, max=3.8948 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 82155.2
+  QPS_avg_thread  = 2818.15
+Loop 5/5:
+  wall_time = 3.92142 s (broadcast->join)
+  thread_time: min=2.42255 s, avg=3.63517 s, max=3.92116 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 81603
+  QPS_avg_thread  = 2750.91
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 3.24165 s
+  recall = 0.99224
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 3.93996 s
+  avg_thread_time(min/avg/max) = 2.41815 / 3.57174 / 3.93972 s
+  mid50_sorted_wall_mean = 3.92004 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 81631.9
+  QPS_from_avg_thread_time * threads = 89592.1
