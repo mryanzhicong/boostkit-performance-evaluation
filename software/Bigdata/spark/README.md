@@ -67,6 +67,11 @@ spark-queries-tpcds/。跳过附带的旧 Spark JAR、旧 metastore、Git 历史
 - Hadoop 3.2.0 默认的 LeveldbTimelineStore 依赖只随 x86 提供的 native 库，aarch64 上
   启动 TimelineServer 会报 UnsatisfiedLinkError；yarn-site 固定使用
   MemoryTimelineStore，两架构一致。本用例不查询 Application History，不影响指标。
+- 写入 hadoop-env.sh 的变量不能包含 HADOOP_CLASSPATH。Hive 启动脚本会把自己的 jar
+  前置到 HADOOP_CLASSPATH 再调用 hadoop，而 hadoop 又会 source hadoop-env.sh；若在该
+  文件里固定 HADOOP_CLASSPATH，Hive 计算出的 classpath 会被整段替换掉，schematool、
+  metastore 和 hive CLI 会因缺少 hive-beeline/hive-* jar 报 ClassNotFoundException。
+  Tez classpath 直接放在进程环境变量里即可被 Hive 脚本继承。
 
 ## 资源及文档差异
 

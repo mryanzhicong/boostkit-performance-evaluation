@@ -50,3 +50,11 @@
 - aarch64 根因：Hadoop 3.2.0 默认 LeveldbTimelineStore 无 aarch64 native 库，ApplicationHistoryServer 以 `UnsatisfiedLinkError` 退出；`start-timelineserver.log` 的 `Cannot set priority` 只是对已退出 PID 执行 renice 的副作用，不是独立故障。
 - 修复：MariaDB 在 datadir 下使用 mysql 所有的 tmp 作为 `--tmpdir` 与 TMPDIR，初始化失败时把容器内 mariadb 日志复制到结果目录 `mysql-init-details.log`；yarn-site 固定 `MemoryTimelineStore`，两架构一致且不需要 native 库。未改动指标口径、资源参数与 SF100 规模。
 - 复核：新增 3 项单测，Spark 与 Celeborn 测试 78 项通过；同版本 SP4 容器内修复后的 `mariadb-install-db` 返回 0，mariadbd 启动后 `select version()` 返回 10.11.19-MariaDB。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
+
+## 2026-11-07 #274 启动链路继续定位与修复
+
+- #274 双架构通过安装、离线 RPM、版本检查与 YARN/TimelineServer 启动；上一轮两处修复已生效：x86 与 aarch64 的 `mysql-init.log` 均为 `Installing MariaDB/MySQL system tables ... OK`，aarch64 `start-timelineserver.log` 不再出现 `UnsatisfiedLinkError`。随后双架构都在 `schematool -dbType mysql -initSchema` 失败，`hive-schema.log` 为 `java.lang.ClassNotFoundException: org.apache.hive.beeline.HiveSchemaTool`。
+- 根因：`configure()` 把 `HADOOP_CLASSPATH`（只含 Tez 路径）写进 hadoop-env.sh。Hive 3.1.0 的 `bin/ext/cli.sh` 默认 `USE_DEPRECATED_CLI=true`，schematool 实际执行 `hadoop jar hive-cli-*.jar org.apache.hive.beeline.HiveSchemaTool`；Hive 启动脚本先把 hive/lib 全部 jar 前置进 HADOOP_CLASSPATH，但 hadoop 启动时会重新 source hadoop-env.sh，把该变量覆盖成只剩 Tez 路径，因此含 `HiveSchemaTool` 的 hive-beeline jar 不在 classpath 上。
+- 复现：本地用 apache-hive-3.1.0-bin + hadoop-3.2.0 + 同一组环境变量运行 `bin/schematool`，在 hadoop-env.sh 含该 export 时复现相同 CNFE；删除该 export 后 schematool 正常输出 usage（hive/lib 恢复进入 classpath）。
+- 修复：hadoop-env.sh 只导出 `JAVA_HOME`、`TEZ_CONF_DIR`、`HADOOP_MAPRED_HOME`，不再导出 `HADOOP_CLASSPATH`；Tez classpath 仍通过进程环境变量传入并被 Hive 脚本继承。新增 1 项回归测试，断言 hadoop-env.sh 不含 HADOOP_CLASSPATH 且其余导出保留。
+- 复核：Spark 与 Celeborn 测试 79 项通过，Spark/Celeborn/框架合计 167 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。

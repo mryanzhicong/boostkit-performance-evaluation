@@ -40,6 +40,16 @@ PROFILE = {"yarn_vcores": 64, "yarn_memory_mb": 371200, "driver_cores": 8,
            "driver_memory": "20G", "requested_executors": 200,
            "executor_cores": 8, "executor_memory": "23g"}
 MARIADB_ERROR_LOG = Path("/var/log/mariadb/mariadb.log")
+# Settings written into hadoop-env.sh so daemons and command-line clients see
+# them. HADOOP_CLASSPATH is intentionally absent: Hive's launcher prepends its
+# own classpath to HADOOP_CLASSPATH and then starts hadoop, whose shell sources
+# hadoop-env.sh again; a value written there would replace that classpath with
+# the Tez entries only, so hive tools (schematool, metastore, CLI) would miss
+# the hive-beeline and hive-* jars.
+HADOOP_ENV_EXPORT_KEYS = ("JAVA_HOME", "TEZ_CONF_DIR", "HADOOP_MAPRED_HOME")
+
+def hadoop_env_exports(env: dict) -> str:
+    return "\n".join(f"export {k}='{v}'" for k, v in env.items() if k in HADOOP_ENV_EXPORT_KEYS)
 
 def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
@@ -294,8 +304,7 @@ class Runtime:
             p.mkdir(parents=True, exist_ok=True)
         self.env["HADOOP_MAPRED_HOME"] = self.paths["hadoop"]
         # Pass the documented shell settings into MapReduce task environments.
-        env_lines = "\n".join(f"export {k}='{v}'" for k, v in self.env.items()
-                              if k in ("JAVA_HOME", "TEZ_CONF_DIR", "HADOOP_CLASSPATH", "HADOOP_MAPRED_HOME"))
+        env_lines = hadoop_env_exports(self.env)
         with (hconf / "hadoop-env.sh").open("a") as f:
             f.write("\n" + env_lines + "\n")
         conf = SPARK_CONF | {

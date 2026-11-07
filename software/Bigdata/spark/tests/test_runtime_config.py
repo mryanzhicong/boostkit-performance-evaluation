@@ -46,6 +46,20 @@ def test_yarn_site_overrides_timeline_store(tmp_path):
     assert "org.apache.hadoop.yarn.server.timeline.MemoryTimelineStore" in yarn_site
 
 
+def test_hadoop_env_does_not_pin_hadoop_classpath(tmp_path):
+    runtime = make_runtime(tmp_path)
+    runtime.env |= {"JAVA_HOME": "/opt/java", "TEZ_CONF_DIR": "/opt/tez/conf",
+                    "HADOOP_CLASSPATH": "/opt/tez/*", "HADOOP_MAPRED_HOME": "/opt/hadoop"}
+    runtime.configure()
+    env_text = (Path(runtime.paths["hadoop"]) / "etc/hadoop/hadoop-env.sh").read_text()
+    assert "export JAVA_HOME='/opt/java'" in env_text
+    assert "export TEZ_CONF_DIR='/opt/tez/conf'" in env_text
+    assert "export HADOOP_MAPRED_HOME=" in env_text
+    # Hive's launcher prepends its jars to HADOOP_CLASSPATH; a value written to
+    # hadoop-env.sh would replace it and break schematool/metastore classloading.
+    assert "HADOOP_CLASSPATH" not in env_text
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []
