@@ -1,0 +1,79 @@
+835: 10 部署Celeborn
+836: 准备安装包和 jar 包
+837: cd /opt
+838: # 没网的话从别的地方下载传到 opt 目录下
+839: wget https://downloads.apache.org/celeborn/celeborn-0.5.3/apache-celeborn-0.5.3-bin.tgz
+840: tar -xzf apache-celeborn-0.5.3-bin.tgz
+841: export CELEBORN_HOME=/opt/apache-celeborn-0.5.3-bin
+842: cp /opt/apache-celeborn-0.5.3-bin/spark/celeborn-client-spark-3-shaded_2.12-0.5.3.jar $SPARK_HOME/jars/
+843: 创建 Celeborn 写入目录
+844: # 以自定义格式列出所有块设备（磁盘、分区、LVM、loop 等）的详细信息
+845: lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,ROTA,MODEL
+846: # 根据机器的磁盘情况决定给 celeborn 划分多少个目录
+847: mkdir -p /data/data1/celeborn/shuffle
+848: mkdir -p /data/data2/celeborn/shuffle
+849: 编辑 celeborn-defaults.conf：
+850: vi $CELEBORN_HOME/conf/celeborn-defaults.conf
+851: 添加如下内容：
+852: # 把 90.91.179.181 改为你的机器 ip
+853: celeborn.master.host 90.91.179.181
+854: celeborn.master.port 9097
+855: celeborn.master.endpoints 90.91.179.181:9097
+856: celeborn.worker.storage.dirs /data/data1/celeborn/shuffle:disktype=SSD,/data/data2/celeborn/shuffle:disktype=SSD
+857: celeborn.metrics.enabled true
+858: 编辑 celeborn-env.sh：
+859: vi $CELEBORN_HOME/conf/celeborn-env.sh
+860: 添加如下内容：
+861: export CELEBORN_MASTER_MEMORY=4g
+862: export CELEBORN_WORKER_MEMORY=4g
+863: export CELEBORN_WORKER_OFFHEAP_MEMORY=8g
+864: 启动 Celeborn Master 和 Worker
+865: $CELEBORN_HOME/sbin/start-master.sh
+866: $CELEBORN_HOME/sbin/start-worker.sh
+867: # 查看是否启动成功
+868: jps | grep Master
+869: jps | grep Worker
+870: spark 启动命令参数配置
+871: # 把 90.91.179.181 改为你的机器 ip
+872: --conf spark.shuffle.manager=org.apache.spark.shuffle.gluten.celeborn.CelebornShuffleManager
+873: --conf spark.celeborn.master.endpoints=90.91.179.181:9097
+874: --conf spark.celeborn.client.spark.shuffle.writer=hash
+875: --conf spark.celeborn.client.shuffle.compression.codec=lz4
+876: --conf spark.celeborn.client.push.replicate.enabled=false
+877: --conf spark.sql.adaptive.localShuffleReader.enabled=false
+879: 启动参数如下:
+880: spark-sql
+881: --deploy-mode client
+882: --driver-cores 8
+883: --driver-memory 20G
+884: --num-executors 200
+885: --executor-cores 8
+886: --executor-memory 23g
+887: --master yarn
+888: --conf spark.executor.extraJavaOptions='-XX:+UseG1GC -XX:ActiveProcessorCount=8'
+889: --conf spark.task.cpus=1
+890: --conf spark.sql.orc.impl=native
+891: --conf spark.sql.autoBroadcastJoinThreshold=100M
+892: --conf spark.default.parallelism=960
+893: --conf spark.sql.shuffle.partitions=960
+894: --conf spark.sql.adaptive.enabled=true
+895: --conf spark.sql.adaptive.join.enabled=true
+896: --conf spark.sql.adaptive.skewedJoin.enabled=true
+897: --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
+898: --conf spark.network.timeout=600
+899: --conf spark.sql.broadcastTimeout=600
+900: --conf spark.locality.wait=0
+901: --conf spark.sql.sources.parallelPartitionDiscovery.parallelism=60
+902: --conf spark.shuffle.manager=org.apache.spark.shuffle.gluten.celeborn.CelebornShuffleManager
+903: --conf spark.celeborn.master.endpoints=90.91.179.181:9097
+904: --conf spark.celeborn.client.spark.shuffle.writer=hash
+905: --conf spark.celeborn.client.shuffle.compression.codec=lz4
+906: --conf spark.celeborn.client.push.replicate.enabled=false
+907: --conf spark.sql.adaptive.localShuffleReader.enabled=false
+908: --databases tpcds_bin_partitioned_varchar_orc_1000 -f q1.sql
+909: 判断 Celeborn 生效方式
+910: 方式一：
+911: sql 运行日志最后输出：WARN ShuffleClientImpl: Shuffle client has been shutdown!
+912: 原因：ShuffleClientImpl 是 Celeborn 自己的客户端类，只有 Spark 真正切换到 Celeborn ShuffleManager 后，才会实例化并运行这个类。 看到它打日志，就说明 Spark 的 shuffle 路径已经走 Celeborn，而不是原生 Spark shuffle。同时，ShuffleClient 是 Celeborn 客户端库（celeborn-client）的核心组件，运行在 Spark Executor 进程内，只存在于 Celeborn 的 shuffle 链路里。 原生 Spark shuffle 没有这个类。
+913: 方式二：
+914: webui 界面，shuffle 算子的 metrics 里面没有 local 字样，只有 remote
