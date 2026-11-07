@@ -153,3 +153,14 @@ def test_download_fallback_keeps_checksum_and_rejects_corrupt_mirror(tmp_path,mo
     assert len(calls)==2 and calls[0].startswith('https://mirrors.huaweicloud.com/apache/')
     assert target.read_bytes()==good
     assert not target.with_name('spark.tgz.part').exists()
+
+
+def test_github_mirrors_only_forward_known_public_release_urls():
+    import assets
+    public=assets.ARCH_SOURCES['x86_64']['java'][0]
+    assert assets.source_urls(public)[0]=='https://ghfast.top/'+public
+    assert assets.source_urls(public)[-1]==public
+    private='https://github.com/company/private/releases/download/v1/file.tgz'
+    assert assets.source_urls(private)==[private]
+    with_query=public+'?token=example'
+    assert assets.source_urls(with_query)==[with_query]

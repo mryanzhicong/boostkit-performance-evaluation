@@ -53,6 +53,11 @@ def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
 
 def source_urls(url: str) -> list[str]:
+    # Only these already-public release publishers may use URL mirrors; never forward private URLs or credentials.
+    public_releases = ("https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/",
+                       "https://github.com/apache/gluten/releases/download/")
+    if url.startswith(public_releases) and "?" not in url and "#" not in url:
+        return ["https://ghfast.top/" + url, "https://ghproxy.net/" + url, url]
     if url.startswith(APACHE):
         return ["https://mirrors.huaweicloud.com/apache/" + url[len(APACHE):], url]
     prefix = "https://repo.maven.apache.org/maven2/"

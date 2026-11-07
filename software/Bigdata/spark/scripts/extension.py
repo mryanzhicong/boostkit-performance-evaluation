@@ -58,6 +58,7 @@ def prepare_assets(work: Path, results: Path, arch: str) -> dict:
             raise ValueError("Unsafe extension asset path")
         target = dest / relative
         target.parent.mkdir(parents=True, exist_ok=True)
+        actual_url = None
         if not target.exists():
             source = cache / relative
             content_cache = Path("/home/runner/software/boostkit-download-cache") / spec.get("algorithm", "sha256") / spec["digest"] / relative.name
@@ -68,13 +69,13 @@ def prepare_assets(work: Path, results: Path, arch: str) -> dict:
                 shutil.copyfile(source, target)
             elif spec.get("url"):
                 from assets import fetch_verified
-                fetch_verified(target, spec["url"], spec.get("algorithm", "sha256"), spec["digest"])
+                actual_url = fetch_verified(target, spec["url"], spec.get("algorithm", "sha256"), spec["digest"])
             else:
                 raise FileNotFoundError(f"Stage document asset at {source}; see adapter README")
         validate_asset(target, spec)
         from assets import cache_asset
         cache_asset(target, spec.get("algorithm", "sha256"), spec["digest"])
-        records["extension_" + key] = spec | {"path": str(target), "sha256": sha256(target)}
+        records["extension_" + key] = spec | {"path": str(target), "sha256": sha256(target), "download_url": actual_url}
     (results / "extension-sources.json").write_text(json.dumps(records, indent=2) + "\n")
     return records
 
