@@ -58,3 +58,11 @@
 - 复现：本地用 apache-hive-3.1.0-bin + hadoop-3.2.0 + 同一组环境变量运行 `bin/schematool`，在 hadoop-env.sh 含该 export 时复现相同 CNFE；删除该 export 后 schematool 正常输出 usage（hive/lib 恢复进入 classpath）。
 - 修复：hadoop-env.sh 只导出 `JAVA_HOME`、`TEZ_CONF_DIR`、`HADOOP_MAPRED_HOME`，不再导出 `HADOOP_CLASSPATH`；Tez classpath 仍通过进程环境变量传入并被 Hive 脚本继承。新增 1 项回归测试，断言 hadoop-env.sh 不含 HADOOP_CLASSPATH 且其余导出保留。
 - 复核：Spark 与 Celeborn 测试 79 项通过，Spark/Celeborn/框架合计 167 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。
+
+## 2026-11-07 #275 Hive 元数据服务与 Tez 依赖冲突修复
+
+- #275 双架构通过安装、离线 RPM、版本检查、YARN/TimelineServer/MariaDB 启动与 `schematool -dbType mysql -initSchema`（上一轮修复生效：hadoop-env.sh 不再覆盖 HADOOP_CLASSPATH），随后双架构都在 `hive --service metastore` 启动时 `wait_port(9083)` 超时。
+- 根因：`services/hive/hive.log` 记录 `java.lang.NoSuchMethodError: org.apache.hadoop.conf.Configuration.getTimeDuration(Ljava/lang/String;JLjava/util/concurrent/TimeUnit;Ljava/util/concurrent/TimeUnit;)J`，栈中加载的是 `hadoop-hdfs-client-3.1.3.jar`。Tez 0.10.0 发行包自带 4 个 Hadoop 3.1.3 客户端 jar（hadoop-hdfs-client、hadoop-mapreduce-client-common/core、hadoop-yarn-server-timeline-pluginstorage）；Hive 启动脚本把 tez/lib 加入 HADOOP_CLASSPATH，且 hadoop 以用户 classpath 优先，3.1.3 的 hdfs-client 覆盖 Hadoop 3.2.0 的 hadoop-common，metastore 初始化 Warehouse 时崩溃。
+- 复现：本地 hadoop-3.2.0 + hive-3.1.0 + tez-0.10.0 按同一顺序构造 classpath（hive/lib → tez/conf、tez/*、tez/lib/* → hadoop 3.2.0），`DfsClientConf` 构造即抛同一 NoSuchMethodError；删除 tez/lib/hadoop-*.jar 后同一 classpath 输出 `DFS_CONF_OK`。
+- 修复：安装时删除 tez/lib 下的 hadoop-*.jar，并把删除清单写入 versions.json 的 `tez_bundled_hadoop_jars_removed`；tez-site 增加 `tez.use.cluster.hadoop-libs=true`，让 Tez AM 与容器使用集群 Hadoop 3.2.0 库。tez.tar.gz 因此只含 Tez 自身 jar，仍通过 `$PWD/tezlib/*`、`tezlib/lib/*` 进入 AM classpath。
+- 复核：新增 2 项单测（tez-site 配置、tez 旧 jar 清理），Spark 与 Celeborn 测试 81 项、合计 169 项通过；未改指标口径、资源参数与 SF100 规模。真实服务链路与性能结果以新提交的 Action 双架构产物为准。

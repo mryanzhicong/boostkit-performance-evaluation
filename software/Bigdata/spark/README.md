@@ -72,6 +72,13 @@ spark-queries-tpcds/。跳过附带的旧 Spark JAR、旧 metastore、Git 历史
   文件里固定 HADOOP_CLASSPATH，Hive 计算出的 classpath 会被整段替换掉，schematool、
   metastore 和 hive CLI 会因缺少 hive-beeline/hive-* jar 报 ClassNotFoundException。
   Tez classpath 直接放在进程环境变量里即可被 Hive 脚本继承。
+- Tez 0.10.0 的发行包自带 Hadoop 3.1.3 客户端 jar（hadoop-hdfs-client、
+  hadoop-mapreduce-client-common/core、hadoop-yarn-server-timeline-pluginstorage）。
+  Hive 会把 tez/lib 加入 HADOOP_CLASSPATH 且 hadoop 以用户 classpath 优先，这些 3.1.3
+  jar 会覆盖集群的 Hadoop 3.2.0，hive metastore 初始化时抛
+  NoSuchMethodError: Configuration.getTimeDuration。安装时删除 tez/lib/hadoop-*.jar，
+  tez-site 设置 tez.use.cluster.hadoop-libs=true 改用集群库；tez.tar.gz 只含 Tez 自身
+  jar，仍按 $PWD/tezlib/* 与 tezlib/lib/* 进入 AM classpath。
 
 ## 资源及文档差异
 

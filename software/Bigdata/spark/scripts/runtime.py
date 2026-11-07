@@ -51,6 +51,17 @@ HADOOP_ENV_EXPORT_KEYS = ("JAVA_HOME", "TEZ_CONF_DIR", "HADOOP_MAPRED_HOME")
 def hadoop_env_exports(env: dict) -> str:
     return "\n".join(f"export {k}='{v}'" for k, v in env.items() if k in HADOOP_ENV_EXPORT_KEYS)
 
+def strip_tez_hadoop_jars(tez: Path) -> list[str]:
+    # Tez 0.10.0 bundles Hadoop 3.1.3 client jars. Hive prepends HADOOP_CLASSPATH
+    # to hadoop's own classpath, so those old jars shadow Hadoop 3.2.0 and Hive's
+    # metastore fails with NoSuchMethodError on Configuration.getTimeDuration;
+    # the cluster libraries are used instead (tez.use.cluster.hadoop-libs).
+    removed = []
+    for stale in sorted((tez / "lib").glob("hadoop-*.jar")):
+        stale.unlink()
+        removed.append(stale.name)
+    return removed
+
 def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
 
@@ -167,6 +178,7 @@ class Runtime:
         self.paths["user"] = self.user
         for name in ("java", "spark", "hadoop", "hive", "tez", "zookeeper"):
             self.paths[name] = str(extract_tar(Path(self.sources[name]["path"]), self.packages / name))
+        tez_hadoop_jars = strip_tez_hadoop_jars(Path(self.paths["tez"]))
         self.paths["tpcds"] = str(self.work / "testbench")
         bench = Path(self.paths["tpcds"])
         bench.mkdir()
@@ -221,7 +233,8 @@ class Runtime:
                 raise RuntimeError(f"Unexpected installed {name} version")
             versions[name] = text
         versions.update({"zookeeper": "3.4.6", "tez": "0.10.0", "jdbc": "5.1.49",
-                         "guava_compatibility": guavas[0].name})
+                         "guava_compatibility": guavas[0].name,
+                         "tez_bundled_hadoop_jars_removed": tez_hadoop_jars})
         versions.update(self.extension.versions())
         write_json(self.results / "versions.json", versions)
         self.run(["rpm", "-qa"], "rpm-packages.txt")
@@ -292,7 +305,9 @@ class Runtime:
                                 log_template.read_text())
             (hive_conf / "hive-log4j2.properties").write_text(log_config)
         tez_conf = Path(self.paths["tez"]) / "conf/tez-site.xml"
-        xml_config(tez_conf, doc["tez-site"])
+        # The bundled Hadoop jars are removed from tez/lib, so the AM and its
+        # containers must take the cluster's Hadoop 3.2.0 libraries.
+        xml_config(tez_conf, doc["tez-site"] | {"tez.use.cluster.hadoop-libs": "true"})
         zkdir = self.work / "zookeeper-data"
         zkdir.mkdir()
         (zkdir / "myid").write_text("1\n")

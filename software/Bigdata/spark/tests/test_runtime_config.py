@@ -60,6 +60,26 @@ def test_hadoop_env_does_not_pin_hadoop_classpath(tmp_path):
     assert "HADOOP_CLASSPATH" not in env_text
 
 
+def test_tez_site_uses_cluster_hadoop_libraries(tmp_path):
+    runtime = make_runtime(tmp_path)
+    runtime.configure()
+    tez_site = (Path(runtime.paths["tez"]) / "conf/tez-site.xml").read_text()
+    assert "tez.use.cluster.hadoop-libs" in tez_site
+    assert ">true<" in tez_site
+
+
+def test_strip_tez_hadoop_jars_keeps_tez_jars(tmp_path):
+    lib = tmp_path / "tez/lib"
+    lib.mkdir(parents=True)
+    for name in ("hadoop-hdfs-client-3.1.3.jar", "hadoop-mapreduce-client-core-3.1.3.jar",
+                 "tez-api-0.10.0.jar", "tez-dag-0.10.0.jar"):
+        (lib / name).write_text("")
+    removed = runtime_module.strip_tez_hadoop_jars(tmp_path / "tez")
+    assert removed == ["hadoop-hdfs-client-3.1.3.jar", "hadoop-mapreduce-client-core-3.1.3.jar"]
+    assert sorted(p.name for p in lib.iterdir()) == ["tez-api-0.10.0.jar", "tez-dag-0.10.0.jar"]
+    assert runtime_module.strip_tez_hadoop_jars(tmp_path / "tez") == []
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []
