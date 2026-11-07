@@ -12,8 +12,8 @@ configure_runtime_paths() {
     }
     case "$EXPECTED_ARCH" in arm64) EXPECTED_ARCH=aarch64 ;; amd64) EXPECTED_ARCH=x86_64 ;; esac
     [[ "$EXPECTED_ARCH" == aarch64 || "$EXPECTED_ARCH" == x86_64 ]] || return 20
-    if [[ -n "${PERF_ADAPTER_DIR:-}" && "$EXPECTED_ARCH" != aarch64 ]]; then
-        echo "Document-pinned adapters currently require aarch64"; return 20
+    if [[ -n "${PERF_ADAPTER_DIR:-}" ]] && ! python3 -c 'import json,sys; cfg=json.load(open(sys.argv[1])); sys.exit(0 if sys.argv[2] in cfg.get("supported_architectures", ["aarch64"]) else 20)' "$PERF_ADAPTER_DIR/profile.json" "$EXPECTED_ARCH"; then
+        echo "This document-pinned adapter does not support $EXPECTED_ARCH"; return 20
     fi
     PERF_RUN_ID="${PERF_RUN_ID:-local-$(date -u '+%Y%m%dT%H%M%SZ')-$$}"
     [[ "$PERF_RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || return 10

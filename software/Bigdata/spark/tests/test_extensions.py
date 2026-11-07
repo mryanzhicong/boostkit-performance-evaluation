@@ -48,7 +48,7 @@ def test_offline_assets_and_architecture(tmp_path, monkeypatch):
     (cache / "test.jar").write_bytes(b"fixed")
     (root / "assets.json").write_text(json.dumps({"jar": {"filename": "test.jar", "digest": hashlib.sha256(b"fixed").hexdigest()}}))
     monkeypatch.setenv("PERF_ASSET_DIR", str(cache))
-    with pytest.raises(ValueError, match="aarch64"):
+    with pytest.raises(ValueError, match="architecture"):
         prepare_assets(work, results, "x86_64")
     assert prepare_assets(work, results, "aarch64")["extension_jar"]["sha256"] == hashlib.sha256(b"fixed").hexdigest()
 
@@ -86,6 +86,7 @@ def test_native_library_rejects_wrong_elf(tmp_path):
 def test_extension_paths_and_network_cleanup_guard(tmp_path):
     env = os.environ | {"PERF_ADAPTER_DIR": str(tmp_path), "PERF_COMPONENT": "sample",
                         "PERF_COMPONENT_VERSION": "1.0", "SOFTWARE_VERSION": "1.0", "PERF_RUN_ID": "unit", "EXPECTED_ARCH": "aarch64"}
+    (tmp_path / "profile.json").write_text('{"supported_architectures":["aarch64"]}')
     common = SCRIPTS / "common.sh"
     code = f'source "{common}"; configure_runtime_paths; '
     p = subprocess.run(["bash", "-c", code + 'echo "$SPARK_CONTAINER $PERF_WORK_DIR"'], env=env, capture_output=True, text=True)

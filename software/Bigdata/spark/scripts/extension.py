@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import csv
+from io import BytesIO
+import tarfile
 import hashlib
 import json
 import os
@@ -42,8 +44,8 @@ def prepare_assets(work: Path, results: Path, arch: str) -> dict:
     cfg = adapter_config()
     if not cfg:
         return {}
-    if arch != "aarch64":
-        raise ValueError("These document-pinned native adapters currently support only aarch64")
+    if arch not in cfg.get("supported_architectures", ["aarch64"]):
+        raise ValueError("This document-pinned adapter does not support architecture: " + arch)
     root = Path(os.environ["PERF_ADAPTER_DIR"])
     manifest = json.loads((root / "assets.json").read_text())
     cache = Path(os.environ.get("PERF_ASSET_DIR", f"/home/runner/software/{cfg['name']}/packages"))
@@ -73,6 +75,32 @@ def prepare_assets(work: Path, results: Path, arch: str) -> dict:
         records["extension_" + key] = spec | {"path": str(target), "sha256": sha256(target)}
     (results / "extension-sources.json").write_text(json.dumps(records, indent=2) + "\n")
     return records
+
+
+def build_java_bridge(jar_bytes: bytes, destination: Path) -> dict:
+    """Repackage public Gluten Java classes deterministically, without any native binary."""
+    removed, kept = [], []
+    with zipfile.ZipFile(BytesIO(jar_bytes)) as source, zipfile.ZipFile(destination, "w") as target:
+        for name in sorted(source.namelist(), key=lambda n: (n != "META-INF/MANIFEST.MF", n)):
+            if name.endswith("/"):
+                continue
+            data = source.read(name)
+            signature = name.startswith("META-INF/") and name.upper().endswith((".SF", ".RSA", ".DSA", ".EC"))
+            if (data[:4] == b"\x7fELF" or name.endswith((".so", ".dylib", ".dll", ".a"))
+                    or signature or name == "META-INF/INDEX.LIST"):
+                removed.append(name)
+                continue
+            entry = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+            entry.create_system = 3
+            entry.external_attr = 0o100644 << 16
+            entry.compress_type = zipfile.ZIP_STORED
+            target.writestr(entry, data)
+            kept.append(name)
+    manager = "org/apache/spark/shuffle/gluten/celeborn/CelebornShuffleManager.class"
+    if manager not in kept:
+        raise ValueError("Public Gluten bundle lacks the document CelebornShuffleManager")
+    return {"sha256": sha256(destination), "removed_native_or_signature_entries": removed,
+            "java_entries": len(kept), "manager": manager}
 
 
 def check_elf(path: Path, machine: int = 183) -> None:
@@ -219,10 +247,18 @@ class Extension:
             if not client.is_file():
                 raise ValueError("Missing pinned Celeborn Spark client")
             shutil.copy2(client, jars / client.name)
-            shutil.copy2(self.asset("bridge"), jars / self.asset("bridge").name)
-            with zipfile.ZipFile(self.asset("bridge")) as z:
-                if "org/apache/spark/shuffle/gluten/celeborn/CelebornShuffleManager.class" not in z.namelist():
-                    raise ValueError("Gluten bridge does not contain the document ShuffleManager")
+            with tarfile.open(self.asset("bridge_tar")) as tar:
+                entries = [m for m in tar.getmembers() if m.isfile() and m.name == self.cfg["upstream_bridge_jar_filename"]]
+                if len(entries) != 1:
+                    raise ValueError("Unexpected official Gluten bundle layout")
+                jar_bytes = tar.extractfile(entries[0]).read()
+            if hashlib.sha256(jar_bytes).hexdigest() != self.cfg["upstream_bridge_sha256"]:
+                raise ValueError("Official Gluten inner JAR checksum mismatch")
+            bridge = jars / self.cfg["jar_filename"]
+            report = build_java_bridge(jar_bytes, bridge)
+            if report["sha256"] != self.cfg["bridge_sha256"]:
+                raise ValueError("Generated Java bridge checksum mismatch")
+            write_json(r.results / "celeborn-java-bridge.json", report)
         else:
             shutil.copy2(self.asset("jar"), jars / self.asset("jar").name)
         if self.kind == "velox":

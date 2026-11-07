@@ -66,7 +66,36 @@ def test_effective_configuration_has_no_unexpanded_paths(monkeypatch, tmp_path):
 def test_x86_and_optimized_fail_before_services():
     import os
     adapter = ROOT / 'scripts/adapter.sh'
-    for architecture, variant, expected in [('x86_64','base',20), ('aarch64','optimized',10)]:
+    for architecture, variant, expected in [('x86_64','base',0), ('aarch64','base',0), ('aarch64','optimized',10), ('ppc64le','base',20)]:
         p = subprocess.run(['bash','-c',f'source "{adapter}"; configure_runtime_paths'],
             env=os.environ | {'EXPECTED_ARCH':architecture,'PERF_VARIANT':variant}, capture_output=True, text=True)
         assert p.returncode == expected
+
+
+def test_java_bridge_is_deterministic_and_excludes_native_code(tmp_path):
+    from io import BytesIO
+    from zipfile import ZipFile
+    from extension import build_java_bridge
+    source=BytesIO()
+    manager='org/apache/spark/shuffle/gluten/celeborn/CelebornShuffleManager.class'
+    with ZipFile(source,'w') as z:
+        z.writestr(manager,b'\xca\xfe\xba\xbeJava class')
+        z.writestr('linux/amd64/libvelox.so',b'\x7fELFnative')
+        z.writestr('META-INF/LICENSE','Apache license')
+        z.writestr('META-INF/OLD.RSA',b'old signature')
+    first,second=tmp_path/'one.jar',tmp_path/'two.jar'
+    a=build_java_bridge(source.getvalue(),first);b=build_java_bridge(source.getvalue(),second)
+    assert a['sha256']==b['sha256']
+    with ZipFile(first) as z:
+        assert manager in z.namelist() and 'META-INF/LICENSE' in z.namelist()
+        assert not any(n.endswith(('.so','.RSA')) for n in z.namelist())
+
+@pytest.mark.parametrize('arch',['aarch64','x86_64'])
+def test_public_assets_can_be_resolved_for_each_architecture(tmp_path,monkeypatch,arch):
+    from extension import prepare_assets
+    monkeypatch.setenv('PERF_ADAPTER_DIR',str(ROOT))
+    cfg=json.loads((ROOT/'profile.json').read_text())
+    assert arch in cfg['supported_architectures']
+    specs=json.loads((ROOT/'assets.json').read_text())
+    assert all(item.get('url') for item in specs.values())
+    assert specs['bridge_tar']['url'].startswith('https://github.com/apache/gluten/')
