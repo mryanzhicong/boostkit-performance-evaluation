@@ -1,0 +1,543 @@
+835: Iceberg数据湖测试
+836: 下载jar包和脚本
+837: 下载地址：https://onebox.huawei.com/#eSpaceGroupFile/1/23050/16321144
+838: 将下载的jar包放置在spark/jars
+839: cp iceberg-spark-runtime-3.5_2.12-1.5.0.jar /usr/local/spark/jars
+840: 在spark配置文件中加入Iceberg配置项
+841: 打开spark-defaults.conf
+842: vi /usr/local/spark/conf/spark-defaults.conf
+843: 添加相关配置项
+844: #iceberg 配置
+845: spark.sql.catalog.hive_prod = org.apache.iceberg.spark.SparkCatalog
+846: spark.sql.catalog.hive_prod.type = hive
+847: spark.sql.catalog.hive_prod.uri = thrift://server1:9083
+848: use iceberg.db;
+849: 将orc表迁移到iceberg数据湖
+850: 手动迁移
+851: spark-sql --master yarn  --deploy-mode client --driver-cores 8 --driver-memory 5g --num-executors 15 --executor-cores 6 --executor-memory 10g
+852: 进入sql-sql客户端后执行下面的命令
+853: --创建iceberg的数据库和表
+854: create database iceberg.tpcds_bin_partitioned_varchar_iceberg_1000;
+855: use iceberg.tpcds_bin_partitioned_varchar_iceberg_1000;
+857: --1 call_center
+858: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.call_center(
+859:   `cc_call_center_sk` bigint,
+860:   `cc_call_center_id` string,
+861:   `cc_rec_start_date` date,
+862:   `cc_rec_end_date` date,
+863:   `cc_closed_date_sk` bigint,
+864:   `cc_open_date_sk` bigint,
+865:   `cc_name` string,
+866:   `cc_class` string,
+867:   `cc_employees` int,
+868:   `cc_sq_ft` int,
+869:   `cc_hours` string,
+870:   `cc_manager` string,
+871:   `cc_mkt_id` int,
+872:   `cc_mkt_class` string,
+873:   `cc_mkt_desc` string,
+874:   `cc_market_manager` string,
+875:   `cc_division` int,
+876:   `cc_division_name` string,
+877:   `cc_company` int,
+878:   `cc_company_name` string,
+879:   `cc_street_number` string,
+880:   `cc_street_name` string,
+881:   `cc_street_type` string,
+882:   `cc_suite_number` string,
+883:   `cc_city` string,
+884:   `cc_county` string,
+885:   `cc_state` string,
+886:   `cc_zip` string,
+887:   `cc_country` string,
+888:   `cc_gmt_offset` decimal(5,2),
+889:   `cc_tax_percentage` decimal(5,2));
+891: --2 catalog_page
+892: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_page(
+893:   `cp_catalog_page_sk` bigint,
+894:   `cp_catalog_page_id` string,
+895:   `cp_start_date_sk` bigint,
+896:   `cp_end_date_sk` bigint,
+897:   `cp_department` string,
+898:   `cp_catalog_number` int,
+899:   `cp_catalog_page_number` int,
+900:   `cp_description` string,
+901:   `cp_type` string);
+904: --3 catalog_returns
+905: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_returns(
+906:   cr_returned_time_sk BIGINT,
+907: cr_item_sk BIGINT,
+908: cr_refunded_customer_sk BIGINT,
+909: cr_refunded_cdemo_sk BIGINT,
+910: cr_refunded_hdemo_sk BIGINT,
+911: cr_refunded_addr_sk BIGINT,
+912: cr_returning_customer_sk BIGINT,
+913: cr_returning_cdemo_sk BIGINT,
+914: cr_returning_hdemo_sk BIGINT,
+915: cr_returning_addr_sk BIGINT,
+916: cr_call_center_sk BIGINT,
+917: cr_catalog_page_sk BIGINT,
+918: cr_ship_mode_sk BIGINT,
+919: cr_warehouse_sk BIGINT,
+920: cr_reason_sk BIGINT,
+921: cr_order_number BIGINT,
+922: cr_return_quantity INT,
+923: cr_return_amount DECIMAL(7,2),
+924: cr_return_tax DECIMAL(7,2),
+925: cr_return_amt_inc_tax DECIMAL(7,2),
+926: cr_fee DECIMAL(7,2),
+927: cr_return_ship_cost DECIMAL(7,2),
+928: cr_refunded_cash DECIMAL(7,2),
+929: cr_reversed_charge DECIMAL(7,2),
+930: cr_store_credit DECIMAL(7,2),
+931: cr_net_loss DECIMAL(7,2),
+932: cr_returned_date_sk BIGINT)
+933: PARTITIONED BY (
+934:   `cr_returned_date_sk` );
+937: --4 catalog_sales
+938: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_sales(
+939:   cs_sold_time_sk BIGINT,
+940: cs_ship_date_sk BIGINT,
+941: cs_bill_customer_sk BIGINT,
+942: cs_bill_cdemo_sk BIGINT,
+943: cs_bill_hdemo_sk BIGINT,
+944: cs_bill_addr_sk BIGINT,
+945: cs_ship_customer_sk BIGINT,
+946: cs_ship_cdemo_sk BIGINT,
+947: cs_ship_hdemo_sk BIGINT,
+948: cs_ship_addr_sk BIGINT,
+949: cs_call_center_sk BIGINT,
+950: cs_catalog_page_sk BIGINT,
+951: cs_ship_mode_sk BIGINT,
+952: cs_warehouse_sk BIGINT,
+953: cs_item_sk BIGINT,
+954: cs_promo_sk BIGINT,
+955: cs_order_number BIGINT,
+956: cs_quantity INT,
+957: cs_wholesale_cost DECIMAL(7,2),
+958: cs_list_price DECIMAL(7,2),
+959: cs_sales_price DECIMAL(7,2),
+960: cs_ext_discount_amt DECIMAL(7,2),
+961: cs_ext_sales_price DECIMAL(7,2),
+962: cs_ext_wholesale_cost DECIMAL(7,2),
+963: cs_ext_list_price DECIMAL(7,2),
+964: cs_ext_tax DECIMAL(7,2),
+965: cs_coupon_amt DECIMAL(7,2),
+966: cs_ext_ship_cost DECIMAL(7,2),
+967: cs_net_paid DECIMAL(7,2),
+968: cs_net_paid_inc_tax DECIMAL(7,2),
+969: cs_net_paid_inc_ship DECIMAL(7,2),
+970: cs_net_paid_inc_ship_tax DECIMAL(7,2),
+971: cs_net_profit DECIMAL(7,2),
+972: cs_sold_date_sk BIGINT)
+973: PARTITIONED BY (
+974:   `cs_sold_date_sk` );
+977: --5 customer
+978: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer(
+979:   `c_customer_sk` bigint,
+980:   `c_customer_id` string,
+981:   `c_current_cdemo_sk` bigint,
+982:   `c_current_hdemo_sk` bigint,
+983:   `c_current_addr_sk` bigint,
+984:   `c_first_shipto_date_sk` bigint,
+985:   `c_first_sales_date_sk` bigint,
+986:   `c_salutation` string,
+987:   `c_first_name` string,
+988:   `c_last_name` string,
+989:   `c_preferred_cust_flag` string,
+990:   `c_birth_day` int,
+991:   `c_birth_month` int,
+992:   `c_birth_year` int,
+993:   `c_birth_country` string,
+994:   `c_login` string,
+995:   `c_email_address` string,
+996:   `c_last_review_date_sk` bigint);
+998: --6 customer_address
+1000: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer_address(
+1001:   `ca_address_sk` bigint,
+1002:   `ca_address_id` string,
+1003:   `ca_street_number` string,
+1004:   `ca_street_name` string,
+1005:   `ca_street_type` string,
+1006:   `ca_suite_number` string,
+1007:   `ca_city` string,
+1008:   `ca_county` string,
+1009:   `ca_state` string,
+1010:   `ca_zip` string,
+1011:   `ca_country` string,
+1012:   `ca_gmt_offset` decimal(5,2),
+1013:   `ca_location_type` string);
+1016: --7 customer_demographics
+1017: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer_demographics(
+1018:   `cd_demo_sk` bigint,
+1019:   `cd_gender` string,
+1020:   `cd_marital_status` string,
+1021:   `cd_education_status` string,
+1022:   `cd_purchase_estimate` int,
+1023:   `cd_credit_rating` string,
+1024:   `cd_dep_count` int,
+1025:   `cd_dep_employed_count` int,
+1026:   `cd_dep_college_count` int);
+1029: --8 date_dim
+1030: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.date_dim(
+1031:   `d_date_sk` bigint,
+1032:   `d_date_id` string,
+1033:   `d_date` date,
+1034:   `d_month_seq` int,
+1035:   `d_week_seq` int,
+1036:   `d_quarter_seq` int,
+1037:   `d_year` int,
+1038:   `d_dow` int,
+1039:   `d_moy` int,
+1040:   `d_dom` int,
+1041:   `d_qoy` int,
+1042:   `d_fy_year` int,
+1043:   `d_fy_quarter_seq` int,
+1044:   `d_fy_week_seq` int,
+1045:   `d_day_name` string,
+1046:   `d_quarter_name` string,
+1047:   `d_holiday` string,
+1048:   `d_weekend` string,
+1049:   `d_following_holiday` string,
+1050:   `d_first_dom` int,
+1051:   `d_last_dom` int,
+1052:   `d_same_day_ly` int,
+1053:   `d_same_day_lq` int,
+1054:   `d_current_day` string,
+1055:   `d_current_week` string,
+1056:   `d_current_month` string,
+1057:   `d_current_quarter` string,
+1058:   `d_current_year` string);
+1062: --9 household_demographics
+1064: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.household_demographics(
+1065:   `hd_demo_sk` bigint,
+1066:   `hd_income_band_sk` bigint,
+1067:   `hd_buy_potential` string,
+1068:   `hd_dep_count` int,
+1069:   `hd_vehicle_count` int);
+1072: --10 income_band
+1073: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.income_band(
+1074:   `ib_income_band_sk` bigint,
+1075:   `ib_lower_bound` int,
+1076:   `ib_upper_bound` int);
+1080: --11 inventory
+1082: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.inventory(
+1083:   `inv_date_sk` bigint,
+1084:   `inv_item_sk` bigint,
+1085:   `inv_warehouse_sk` bigint,
+1086:   `inv_quantity_on_hand` int);
+1091: --12 item
+1092: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.item(
+1093:   `i_item_sk` bigint,
+1094:   `i_item_id` string,
+1095:   `i_rec_start_date` date,
+1096:   `i_rec_end_date` date,
+1097:   `i_item_desc` string,
+1098:   `i_current_price` decimal(7,2),
+1099:   `i_wholesale_cost` decimal(7,2),
+1100:   `i_brand_id` int,
+1101:   `i_brand` string,
+1102:   `i_class_id` int,
+1103:   `i_class` string,
+1104:   `i_category_id` int,
+1105:   `i_category` string,
+1106:   `i_manufact_id` int,
+1107:   `i_manufact` string,
+1108:   `i_size` string,
+1109:   `i_formulation` string,
+1110:   `i_color` string,
+1111:   `i_units` string,
+1112:   `i_container` string,
+1113:   `i_manager_id` int,
+1114:   `i_product_name` string);
+1117: --13 promotion
+1118: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.promotion(
+1119:   `p_promo_sk` bigint,
+1120:   `p_promo_id` string,
+1121:   `p_start_date_sk` bigint,
+1122:   `p_end_date_sk` bigint,
+1123:   `p_item_sk` bigint,
+1124:   `p_cost` decimal(15,2),
+1125:   `p_response_target` int,
+1126:   `p_promo_name` string,
+1127:   `p_channel_dmail` string,
+1128:   `p_channel_email` string,
+1129:   `p_channel_catalog` string,
+1130:   `p_channel_tv` string,
+1131:   `p_channel_radio` string,
+1132:   `p_channel_press` string,
+1133:   `p_channel_event` string,
+1134:   `p_channel_demo` string,
+1135:   `p_channel_details` string,
+1136:   `p_purpose` string,
+1137:   `p_discount_active` string);
+1141: --14 reason
+1142: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.reason(
+1143:   `r_reason_sk` bigint,
+1144:   `r_reason_id` string,
+1145:   `r_reason_desc` string);
+1148: --15 ship_mode
+1150: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.ship_mode(
+1151:   `sm_ship_mode_sk` bigint,
+1152:   `sm_ship_mode_id` string,
+1153:   `sm_type` string,
+1154:   `sm_code` string,
+1155:   `sm_carrier` string,
+1156:   `sm_contract` string);
+1159: --16 store
+1160: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store(
+1161:   `s_store_sk` bigint,
+1162:   `s_store_id` string,
+1163:   `s_rec_start_date` date,
+1164:   `s_rec_end_date` date,
+1165:   `s_closed_date_sk` bigint,
+1166:   `s_store_name` string,
+1167:   `s_number_employees` int,
+1168:   `s_floor_space` int,
+1169:   `s_hours` string,
+1170:   `s_manager` string,
+1171:   `s_market_id` int,
+1172:   `s_geography_class` string,
+1173:   `s_market_desc` string,
+1174:   `s_market_manager` string,
+1175:   `s_division_id` int,
+1176:   `s_division_name` string,
+1177:   `s_company_id` int,
+1178:   `s_company_name` string,
+1179:   `s_street_number` string,
+1180:   `s_street_name` string,
+1181:   `s_street_type` string,
+1182:   `s_suite_number` string,
+1183:   `s_city` string,
+1184:   `s_county` string,
+1185:   `s_state` string,
+1186:   `s_zip` string,
+1187:   `s_country` string,
+1188:   `s_gmt_offset` decimal(5,2),
+1189:   `s_tax_percentage` decimal(5,2));
+1191: --17 store_returns
+1193: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store_returns(
+1194:   sr_return_time_sk BIGINT,
+1195: sr_item_sk BIGINT,
+1196: sr_customer_sk BIGINT,
+1197: sr_cdemo_sk BIGINT,
+1198: sr_hdemo_sk BIGINT,
+1199: sr_addr_sk BIGINT,
+1200: sr_store_sk BIGINT,
+1201: sr_reason_sk BIGINT,
+1202: sr_ticket_number BIGINT,
+1203: sr_return_quantity INT,
+1204: sr_return_amt DECIMAL(7,2),
+1205: sr_return_tax DECIMAL(7,2),
+1206: sr_return_amt_inc_tax DECIMAL(7,2),
+1207: sr_fee DECIMAL(7,2),
+1208: sr_return_ship_cost DECIMAL(7,2),
+1209: sr_refunded_cash DECIMAL(7,2),
+1210: sr_reversed_charge DECIMAL(7,2),
+1211: sr_store_credit DECIMAL(7,2),
+1212: sr_net_loss DECIMAL(7,2),
+1213: sr_returned_date_sk BIGINT)
+1214: PARTITIONED BY (
+1215:   `sr_returned_date_sk` );
+1217: --18 store_sales
+1218: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store_sales(
+1219:   ss_sold_time_sk BIGINT,
+1220: ss_item_sk BIGINT,
+1221: ss_customer_sk BIGINT,
+1222: ss_cdemo_sk BIGINT,
+1223: ss_hdemo_sk BIGINT,
+1224: ss_addr_sk BIGINT,
+1225: ss_store_sk BIGINT,
+1226: ss_promo_sk BIGINT,
+1227: ss_ticket_number BIGINT,
+1228: ss_quantity INT,
+1229: ss_wholesale_cost DECIMAL(7,2),
+1230: ss_list_price DECIMAL(7,2),
+1231: ss_sales_price DECIMAL(7,2),
+1232: ss_ext_discount_amt DECIMAL(7,2),
+1233: ss_ext_sales_price DECIMAL(7,2),
+1234: ss_ext_wholesale_cost DECIMAL(7,2),
+1235: ss_ext_list_price DECIMAL(7,2),
+1236: ss_ext_tax DECIMAL(7,2),
+1237: ss_coupon_amt DECIMAL(7,2),
+1238: ss_net_paid DECIMAL(7,2),
+1239: ss_net_paid_inc_tax DECIMAL(7,2),
+1240: ss_net_profit DECIMAL(7,2),
+1241: ss_sold_date_sk BIGINT)
+1242: PARTITIONED BY (
+1243:   `ss_sold_date_sk` );
+1247: --19 time_dim
+1248: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.time_dim(
+1249:   `t_time_sk` bigint,
+1250:   `t_time_id` string,
+1251:   `t_time` int,
+1252:   `t_hour` int,
+1253:   `t_minute` int,
+1254:   `t_second` int,
+1255:   `t_am_pm` string,
+1256:   `t_shift` string,
+1257:   `t_sub_shift` string,
+1258:   `t_meal_time` string);
+1260: --20 warehouse
+1261: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.warehouse(
+1262:   `w_warehouse_sk` bigint,
+1263:   `w_warehouse_id` string,
+1264:   `w_warehouse_name` string,
+1265:   `w_warehouse_sq_ft` int,
+1266:   `w_street_number` string,
+1267:   `w_street_name` string,
+1268:   `w_street_type` string,
+1269:   `w_suite_number` string,
+1270:   `w_city` string,
+1271:   `w_county` string,
+1272:   `w_state` string,
+1273:   `w_zip` string,
+1274:   `w_country` string,
+1275:   `w_gmt_offset` decimal(5,2));
+1278: --21 web_page
+1280: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_page(
+1281:   `wp_web_page_sk` bigint,
+1282:   `wp_web_page_id` string,
+1283:   `wp_rec_start_date` date,
+1284:   `wp_rec_end_date` date,
+1285:   `wp_creation_date_sk` bigint,
+1286:   `wp_access_date_sk` bigint,
+1287:   `wp_autogen_flag` string,
+1288:   `wp_customer_sk` bigint,
+1289:   `wp_url` string,
+1290:   `wp_type` string,
+1291:   `wp_char_count` int,
+1292:   `wp_link_count` int,
+1293:   `wp_image_count` int,
+1294:   `wp_max_ad_count` int);
+1298: --22 web_returns
+1299: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_returns(
+1300:    wr_returned_time_sk BIGINT,
+1301:  wr_item_sk BIGINT,
+1302:  wr_refunded_customer_sk BIGINT,
+1303:  wr_refunded_cdemo_sk BIGINT,
+1304:  wr_refunded_hdemo_sk BIGINT,
+1305:  wr_refunded_addr_sk BIGINT,
+1306:  wr_returning_customer_sk BIGINT,
+1307:  wr_returning_cdemo_sk BIGINT,
+1308:  wr_returning_hdemo_sk BIGINT,
+1309:  wr_returning_addr_sk BIGINT,
+1310:  wr_web_page_sk BIGINT,
+1311:  wr_reason_sk BIGINT,
+1312:  wr_order_number BIGINT,
+1313:  wr_return_quantity INT,
+1314:  wr_return_amt DECIMAL(7,2),
+1315:  wr_return_tax DECIMAL(7,2),
+1316:  wr_return_amt_inc_tax DECIMAL(7,2),
+1317:  wr_fee DECIMAL(7,2),
+1318:  wr_return_ship_cost DECIMAL(7,2),
+1319:  wr_refunded_cash DECIMAL(7,2),
+1320:  wr_reversed_charge DECIMAL(7,2),
+1321:  wr_account_credit DECIMAL(7,2),
+1322:  wr_net_loss DECIMAL(7,2),
+1323:  wr_returned_date_sk BIGINT)
+1324: PARTITIONED BY (
+1325:   `wr_returned_date_sk`);
+1328: --23 web_sales
+1329: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_sales(
+1330:   ws_sold_time_sk BIGINT,
+1331: ws_ship_date_sk BIGINT,
+1332: ws_item_sk BIGINT,
+1333: ws_bill_customer_sk BIGINT,
+1334: ws_bill_cdemo_sk BIGINT,
+1335: ws_bill_hdemo_sk BIGINT,
+1336: ws_bill_addr_sk BIGINT,
+1337: ws_ship_customer_sk BIGINT,
+1338: ws_ship_cdemo_sk BIGINT,
+1339: ws_ship_hdemo_sk BIGINT,
+1340: ws_ship_addr_sk BIGINT,
+1341: ws_web_page_sk BIGINT,
+1342: ws_web_site_sk BIGINT,
+1343: ws_ship_mode_sk BIGINT,
+1344: ws_warehouse_sk BIGINT,
+1345: ws_promo_sk BIGINT,
+1346: ws_order_number BIGINT,
+1347: ws_quantity INT,
+1348: ws_wholesale_cost DECIMAL(7,2),
+1349: ws_list_price DECIMAL(7,2),
+1350: ws_sales_price DECIMAL(7,2),
+1351: ws_ext_discount_amt DECIMAL(7,2),
+1352: ws_ext_sales_price DECIMAL(7,2),
+1353: ws_ext_wholesale_cost DECIMAL(7,2),
+1354: ws_ext_list_price DECIMAL(7,2),
+1355: ws_ext_tax DECIMAL(7,2),
+1356: ws_coupon_amt DECIMAL(7,2),
+1357: ws_ext_ship_cost DECIMAL(7,2),
+1358: ws_net_paid DECIMAL(7,2),
+1359: ws_net_paid_inc_tax DECIMAL(7,2),
+1360: ws_net_paid_inc_ship DECIMAL(7,2),
+1361: ws_net_paid_inc_ship_tax DECIMAL(7,2),
+1362: ws_net_profit DECIMAL(7,2),
+1363: ws_sold_date_sk BIGINT)
+1364: PARTITIONED BY (
+1365:   `ws_sold_date_sk` );
+1368: --24 web_site
+1369: CREATE TABLE iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_site(
+1370:   `web_site_sk` bigint,
+1371:   `web_site_id` string,
+1372:   `web_rec_start_date` date,
+1373:   `web_rec_end_date` date,
+1374:   `web_name` string,
+1375:   `web_open_date_sk` bigint,
+1376:   `web_close_date_sk` bigint,
+1377:   `web_class` string,
+1378:   `web_manager` string,
+1379:   `web_mkt_id` int,
+1380:   `web_mkt_class` string,
+1381:   `web_mkt_desc` string,
+1382:   `web_market_manager` string,
+1383:   `web_company_id` int,
+1384:   `web_company_name` string,
+1385:   `web_street_number` string,
+1386:   `web_street_name` string,
+1387:   `web_street_type` string,
+1388:   `web_suite_number` string,
+1389:   `web_city` string,
+1390:   `web_county` string,
+1391:   `web_state` string,
+1392:   `web_zip` string,
+1393:   `web_country` string,
+1394:   `web_gmt_offset` decimal(5,2),
+1395:   `web_tax_percentage` decimal(5,2));
+1399: --spark_catalog.tpcds_bin_partitioned_varchar_orc_1000  hive 生成的hdfs表
+1400: --iceberg.tpcds_bin_partitioned_varchar_iceberg_1000  iceberg数据库
+1401: --将hive hdfs表迁移插入覆盖iceberg表
+1403: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_returns partition (cr_returned_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.catalog_returns;
+1404: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_sales partition (cs_sold_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.catalog_sales;
+1405: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store_returns partition (sr_returned_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.store_returns;
+1406: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store_sales partition (ss_sold_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.store_sales;
+1407: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_returns partition (wr_returned_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.web_returns;
+1408: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_sales partition (ws_sold_date_sk) select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.web_sales;
+1409: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_site select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.web_site;
+1410: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.call_center select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.call_center;
+1411: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.catalog_page select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.catalog_page;
+1412: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.customer;
+1413: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer_address select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.customer_address;
+1414: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.customer_demographics select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.customer_demographics;
+1415: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.date_dim select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.date_dim;
+1416: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.household_demographics select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.household_demographics;
+1417: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.income_band select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.income_band;
+1418: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.inventory select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.inventory;
+1419: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.item select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.item;
+1420: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.promotion select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.promotion;
+1421: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.reason select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.reason;
+1422: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.ship_mode select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.ship_mode;
+1423: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.store select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.store;
+1424: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.time_dim select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.time_dim;
+1425: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.warehouse select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.warehouse;
+1426: insert overwrite iceberg.tpcds_bin_partitioned_varchar_iceberg_1000.web_page select * from spark_catalog.tpcds_bin_partitioned_varchar_orc_1000.web_page;
+1428: 脚本迁移
+1429: 普通表迁移成iceberg表(支持orc/parquet)：
+1430: 单表：
+1431: bash hivespark2iceburg.sh tpcds_bin_partitioned_varchar_parquet_2 tpcds_iceberg_parquet_2 r3r_zf_2(表名)
+1432: 数据库下所有表：
+1433: parquet:bash hivespark2iceburg.sh tpcds_bin_partitioned_varchar_parquet_2 tpcds_iceberg_parquet_2
+1434: orc：脚本默认生成为parquet格式数据表，生成完parquet后将生成的sql文件中格式批量修改为orc后执行所有sql生成orc表
+1435: 例：
+1437: 测试参数
+1438: spark-sql --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions --conf spark.sql.catalog.iceberg=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.iceberg.type=hive --conf spark.sql.catalog.iceberg.uri=thrift://localhost:9083 --master yarn --deploy-mode client --driver-cores 8 --driver-memory 20G --num-executors 2 --executor-cores 8 --executor-memory 23g --conf spark.executor.extraJavaOptions='-XX:+UseG1GC -XX:ActiveProcessorCount=8' --conf spark.task.cpus=1 --conf spark.sql.orc.impl=native --conf spark.sql.autoBroadcastJoinThreshold=100M --conf spark.default.parallelism=800 --conf spark.sql.shuffle.partitions=800 --conf spark.sql.adaptive.enabled=true --conf spark.sql.adaptive.join.enabled=true --conf spark.sql.adaptive.skewedJoin.enabled=true --conf spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.network.timeout=600 --conf spark.sql.broadcastTimeout=600 --conf spark.locality.wait=0 --conf spark.sql.sources.parallelPartitionDiscovery.parallelism=60 --conf spark.sql.parquet.datetimeRebaseModeInRead=LEGACY --conf spark.sql.parquet.datetimeRebaseModeInWrite=LEGACY --conf spark.sql.parquet.int96RebaseModeInRead=LEGACY --conf spark.sql.parquet.int96RebaseModeInWrite=LEGACY --databases tpcds_bin_partitioned_varchar_iceberg_1000 -f q1.sql
