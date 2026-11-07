@@ -80,3 +80,10 @@
 - 现象：AM 容器 stdout/stderr 里没有栈信息（Tez AM 的异常走 log4j，不写 stderr），而 `yarn.nodemanager.log-dirs` 位于本次工作目录、stop 阶段随工作目录一起清理，旧产物无法定位。
 - 改动（仅诊断，不改链路）：start 阶段 Tez 冒烟测试失败时调用 `collect_yarn_logs()`，把 NodeManager 日志目录（容器 stdout/stderr）限量复制到结果目录 `yarn-logs/`，便于产物复核；新增 1 项单测。
 - 复核：Spark 与 Celeborn 测试 83 项、合计 171 项通过；AM 根因待下一轮双架构产物的 `yarn-logs/` 判定。
+
+## 2026-11-07 #278 双架构分叉：aarch64 Tez AM / x86_64 数据生成
+
+- x86_64 首次越过 Tez 冒烟（AM 正常启动、`insert into student` 成功），Celeborn master/worker 启动，`tpcds-setup.sh` 运行到 24 张表 ORC 建表；但 MR 数据生成中 GenTable 调用原生 `dsdgen` 的子进程以 `Process failed with status code 139`（SIGSEGV）失败，脚本仍打印 “TPC-DS text data generation complete.”，24 张表行数为 0，被表行数校验拦截。同版本 `dsdgen` 在本地同镜像、同 scale/parallel 参数下可正常生成，说明与容器/Runner 环境相关，需在真实环境复现定位。
+- aarch64 仍在 Tez AM 容器 `exitCode: 1` 失败。本轮新增的 NodeManager 本地日志采集为空：参考 `yarn-site.xml` 打开 `yarn.log-aggregation-enable=true`，应用结束后 NM 会立即删除本地容器日志（`hdfs/yarn/log/application_*/container_*`），真正内容已聚合到 HDFS `/tmp/logs/...`。
+- 改动（仍为诊断）：`collect_yarn_logs()` 在本地目录之外，按失败日志里的 `application_*` 用 `yarn logs -applicationId` 抓取聚合日志（重试等待聚合完成）；Tez 冒烟失败与数据生成失败都会触发；start 阶段新增 `dsdgen` 原生生成器探针（容器内以 bench 用户直接生成 1 GB call_center 分片），可直接判断二进制是否在当前容器可用。
+- 复核：Spark 与 Celeborn 测试 84 项、合计 172 项通过；根因待下一轮产物中的 `yarn-logs/` 与 `dsdgen-smoke.log` 判定。

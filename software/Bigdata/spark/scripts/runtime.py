@@ -375,25 +375,39 @@ class Runtime:
             destination.write_text(MARIADB_ERROR_LOG.read_text(errors="replace")[-20000:])
             print("[spark]", destination.name, "captured", flush=True)
 
-    def collect_yarn_logs(self, limit: int = 50 * 1024 * 1024) -> None:
-        # A failed Tez AM only explains itself in the container stdout log, which
-        # YARN keeps under the NodeManager log dir until the work tree is removed.
+    def collect_yarn_logs(self, logs=("hive-tez-smoke.log",), limit: int = 50 * 1024 * 1024) -> None:
+        # A failed Tez AM only explains itself in the container stdout log. The
+        # NodeManager keeps that under the work tree, but log aggregation enabled
+        # by the reference yarn-site deletes it as soon as the application ends,
+        # so also pull the aggregated copy out of HDFS while it still exists.
         source = self.work / "hdfs/yarn/log"
-        if not source.is_dir():
-            return
-        destination = self.results / "yarn-logs"
-        copied = 0
-        for path in sorted(source.rglob("*")):
-            if not path.is_file():
-                continue
-            copied += path.stat().st_size
-            if copied > limit:
-                break
-            target = destination / path.relative_to(source)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(path, target)
-        if destination.exists():
-            print("[spark]", destination.name, "captured", flush=True)
+        if source.is_dir():
+            destination = self.results / "yarn-logs"
+            copied = 0
+            for path in sorted(source.rglob("*")):
+                if not path.is_file():
+                    continue
+                copied += path.stat().st_size
+                if copied > limit:
+                    break
+                target = destination / path.relative_to(source)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
+        applications = set()
+        for name in logs:
+            path = self.results / name
+            if path.exists():
+                applications.update(re.findall(r"application_\d+_\d+", path.read_text(errors="replace")))
+        for application in sorted(applications)[-4:]:
+            target = self.results / "yarn-logs" / f"{application}.log"
+            for _ in range(6):
+                self.run(["yarn", "logs", "-applicationId", application],
+                         f"yarn-logs/{application}.log", check=False, timeout=600)
+                if target.exists() and target.stat().st_size:
+                    break
+                time.sleep(5)
+        if (self.results / "yarn-logs").exists():
+            print("[spark]", "yarn-logs", "captured", flush=True)
 
     def bootstrap_mysql(self) -> None:
         # TMPDIR points at a runner-owned directory but mariadbd runs as the mysql
@@ -461,7 +475,20 @@ class Runtime:
             raise RuntimeError("Hive-on-Tez functional verification failed")
         self.extension.start_services()
         bench = Path(self.paths["tpcds"])
-        self.run(["bash", "tpcds-setup.sh", str(self.extension.scale)], "data-generation.log", timeout=12 * 3600, cwd=bench)
+        tools = bench / "tpcds-gen/target/tools"
+        generator = self.work / "dsdgen-smoke"
+        probe = self.run(["bash", "-c",
+                          f"rm -rf {generator}; mkdir -p {generator}; ./dsdgen -scale 1 -parallel 2 -child 1 "
+                          f"-force Y -dir {generator}; echo dsdgen-smoke-exit=$?"],
+                         "dsdgen-smoke.log", cwd=tools, check=False)
+        if "dsdgen-smoke-exit=0" not in probe:
+            raise RuntimeError("TPC-DS native generator failed in the container: " + probe[-2000:])
+        try:
+            self.run(["bash", "tpcds-setup.sh", str(self.extension.scale)], "data-generation.log", timeout=12 * 3600, cwd=bench)
+        except RuntimeError:
+            self.collect_yarn_logs(("data-generation.log",))
+            raise
+
         db = self.extension.source_db
         tables = self.run(["hive", "-S", "--database", db, "-e", "show tables;"], "tables.log")
         expected = {"call_center", "catalog_page", "catalog_returns", "catalog_sales", "customer",

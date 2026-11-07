@@ -102,6 +102,25 @@ def test_collect_yarn_logs_copies_container_logs(tmp_path):
     assert (runtime.results / "yarn-logs/application_1/container_1/container_1_stdout").read_text() == "AM log"
 
 
+def test_collect_yarn_logs_fetches_aggregated_application_logs(tmp_path):
+    runtime = make_runtime(tmp_path)
+    (runtime.results / "hive-tez-smoke.log").write_text(
+        "Application application_1794041753670_0002 failed 2 times")
+    fetched = []
+
+    def fake_run(args, log, **kwargs):
+        fetched.append(list(args))
+        path = runtime.results / log
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("aggregated AM log")
+        return "aggregated AM log"
+
+    runtime.run = fake_run
+    runtime.collect_yarn_logs()
+    assert fetched == [["yarn", "logs", "-applicationId", "application_1794041753670_0002"]]
+    assert (runtime.results / "yarn-logs/application_1794041753670_0002.log").read_text() == "aggregated AM log"
+
+
 def test_mysql_bootstrap_uses_mysql_owned_tmpdir(tmp_path, monkeypatch):
     runtime = make_runtime(tmp_path)
     calls = []
