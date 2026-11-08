@@ -1,0 +1,506 @@
+{
+  "software": "googletest",
+  "category": "Toolchain",
+  "version": "1.18.0",
+  "architecture": "x86_64",
+  "run_id": "42514717372-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-08T19:24:12Z",
+    "category": "Toolchain",
+    "software": "googletest",
+    "requested_version": "1.18.0",
+    "actual_version": "1.18.0",
+    "architecture": "x86_64",
+    "run_id": "42514717372-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": false,
+      "upstream_tests": 434,
+      "upstream_test_suites": 104,
+      "scenarios": {
+        "assertion_loop_5m": {
+          "task": "assertion_matrix",
+          "mode": "loop",
+          "registered_tests": 0,
+          "assertions": 5000000,
+          "repetitions": 5
+        },
+        "matrix_10k": {
+          "task": "assertion_matrix",
+          "mode": "registered",
+          "registered_tests": 10000,
+          "assertions": 0,
+          "repetitions": 5
+        },
+        "matrix_1k": {
+          "task": "assertion_matrix",
+          "mode": "registered",
+          "registered_tests": 1000,
+          "assertions": 0,
+          "repetitions": 5
+        },
+        "upstream_gtest_unittest": {
+          "task": "upstream_suite",
+          "tests": 434,
+          "test_suites": 104,
+          "repetitions": 5
+        }
+      }
+    }
+  },
+  "parameter_signature": "8c8c5ea5289150da1014100f50651fe88c8cb58755b05f41e228f9f29f897547",
+  "test_tools": {
+    "googletest": {
+      "version": "1.18.0"
+    },
+    "system_cmake": {
+      "version": "unpinned Runner cmake; the exact cmake version is recorded per run in build_info.json"
+    },
+    "system_c_compiler": {
+      "version": "unpinned Runner cc/c++; the exact compiler string is recorded per run in build_info.json and results.json"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-08T19:23:07Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 8 nodes (0-7)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215\nnode 0 size: 192622 MB\nnode 0 free: 61889 MB\nnode 1 cpus: 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239\nnode 1 size: 193523 MB\nnode 1 free: 140488 MB\nnode 2 cpus: 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263\nnode 2 size: 193523 MB\nnode 2 free: 167990 MB\nnode 3 cpus: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 3 size: 193523 MB\nnode 3 free: 166148 MB\nnode 4 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311\nnode 4 size: 193523 MB\nnode 4 free: 134588 MB\nnode 5 cpus: 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335\nnode 5 size: 193481 MB\nnode 5 free: 159742 MB\nnode 6 cpus: 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359\nnode 6 size: 193523 MB\nnode 6 free: 169243 MB\nnode 7 cpus: 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 7 size: 193455 MB\nnode 7 free: 163759 MB\nnode distances:\nnode   0   1   2   3   4   5   6   7 \n  0:  10  12  12  12  32  32  32  32 \n  1:  12  10  12  12  32  32  32  32 \n  2:  12  12  10  12  32  32  32  32 \n  3:  12  12  12  10  32  32  32  32 \n  4:  32  32  32  32  10  12  12  12 \n  5:  32  32  32  32  12  10  12  12 \n  6:  32  32  32  32  12  12  10  12 \n  7:  32  32  32  32  12  12  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-08T19:23:07Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 198347210752 1220384796672 14768869376 226350469120 1423986933760\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-08T19:24:56Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 199014744064 1219644375040 14778937344 226433441792 1423319400448\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "googletest_raw_output": {
+      "path": "raw-output.log",
+      "size": 7285206
+    },
+    "benchmark_result": {
+      "software": "googletest",
+      "version": "1.18.0",
+      "generated_at": "2026-11-08T19:24:25Z",
+      "parameters": {
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": false,
+        "upstream_tests": 434,
+        "upstream_test_suites": 104,
+        "scenarios": {
+          "assertion_loop_5m": {
+            "task": "assertion_matrix",
+            "mode": "loop",
+            "registered_tests": 0,
+            "assertions": 5000000,
+            "repetitions": 5
+          },
+          "matrix_10k": {
+            "task": "assertion_matrix",
+            "mode": "registered",
+            "registered_tests": 10000,
+            "assertions": 0,
+            "repetitions": 5
+          },
+          "matrix_1k": {
+            "task": "assertion_matrix",
+            "mode": "registered",
+            "registered_tests": 1000,
+            "assertions": 0,
+            "repetitions": 5
+          },
+          "upstream_gtest_unittest": {
+            "task": "upstream_suite",
+            "tests": 434,
+            "test_suites": 104,
+            "repetitions": 5
+          }
+        }
+      },
+      "results": {
+        "assertion_loop_5m": {
+          "scenario": "assertion_loop_5m",
+          "task": "assertion_matrix",
+          "source_name": "assertion_loop_5m",
+          "value": 0.015614,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "samples": [
+            0.015573,
+            0.015624,
+            0.015614,
+            0.015598,
+            0.015624
+          ]
+        },
+        "assertion_loop_5m_rss": {
+          "scenario": "assertion_loop_5m",
+          "task": "assertion_matrix",
+          "source_name": "assertion_loop_5m_rss",
+          "value": 12.465,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            12.465,
+            12.598,
+            12.461,
+            12.633,
+            12.461
+          ]
+        },
+        "assertion_loop_5m_aps": {
+          "scenario": "assertion_loop_5m",
+          "task": "assertion_matrix",
+          "source_name": "assertion_loop_5m_aps",
+          "value": 320225438.70885104,
+          "unit": "assertions/s",
+          "direction": "higher_is_better",
+          "samples": [
+            321068516.021319,
+            320020481.3108039,
+            320225438.70885104,
+            320553917.16886777,
+            320020481.3108039
+          ]
+        },
+        "assertion_loop_5m_ns_per_assert": {
+          "scenario": "assertion_loop_5m",
+          "task": "assertion_matrix",
+          "source_name": "assertion_loop_5m_ns_per_assert",
+          "value": 3.1228,
+          "unit": "ns/assertion",
+          "direction": "lower_is_better",
+          "samples": [
+            3.1146,
+            3.1248,
+            3.1228,
+            3.1196,
+            3.1248
+          ]
+        },
+        "matrix_10k": {
+          "scenario": "matrix_10k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_10k",
+          "value": 0.063772,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "samples": [
+            0.063828,
+            0.063744,
+            0.063798,
+            0.063761,
+            0.063772
+          ]
+        },
+        "matrix_10k_rss": {
+          "scenario": "matrix_10k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_10k_rss",
+          "value": 12.594,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            12.594,
+            12.602,
+            12.391,
+            12.438,
+            12.629
+          ]
+        },
+        "matrix_10k_tps": {
+          "scenario": "matrix_10k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_10k_tps",
+          "value": 156808.63074703634,
+          "unit": "tests/s",
+          "direction": "higher_is_better",
+          "samples": [
+            156671.05345616344,
+            156877.51004016065,
+            156744.7255399856,
+            156835.6832546541,
+            156808.63074703634
+          ]
+        },
+        "matrix_10k_us_per_test": {
+          "scenario": "matrix_10k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_10k_us_per_test",
+          "value": 6.377199999999999,
+          "unit": "us/test",
+          "direction": "lower_is_better",
+          "samples": [
+            6.3828,
+            6.3744,
+            6.3797999999999995,
+            6.3761,
+            6.377199999999999
+          ]
+        },
+        "matrix_1k": {
+          "scenario": "matrix_1k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_1k",
+          "value": 0.007536,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "samples": [
+            0.007531,
+            0.007536,
+            0.007518,
+            0.007548,
+            0.007537
+          ]
+        },
+        "matrix_1k_rss": {
+          "scenario": "matrix_1k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_1k_rss",
+          "value": 12.508,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            12.508,
+            12.555,
+            12.465,
+            12.457,
+            12.598
+          ]
+        },
+        "matrix_1k_tps": {
+          "scenario": "matrix_1k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_1k_tps",
+          "value": 132696.3906581741,
+          "unit": "tests/s",
+          "direction": "higher_is_better",
+          "samples": [
+            132784.4907714779,
+            132696.3906581741,
+            133014.09949454642,
+            132485.42660307366,
+            132678.7846623325
+          ]
+        },
+        "matrix_1k_us_per_test": {
+          "scenario": "matrix_1k",
+          "task": "assertion_matrix",
+          "source_name": "matrix_1k_us_per_test",
+          "value": 7.536,
+          "unit": "us/test",
+          "direction": "lower_is_better",
+          "samples": [
+            7.531,
+            7.536,
+            7.518,
+            7.548,
+            7.537
+          ]
+        },
+        "upstream_gtest_unittest": {
+          "scenario": "upstream_gtest_unittest",
+          "task": "upstream_suite",
+          "source_name": "upstream_gtest_unittest",
+          "value": 1.416408,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "samples": [
+            1.416422,
+            1.416408,
+            1.366379,
+            1.466634,
+            1.416148
+          ]
+        },
+        "upstream_gtest_unittest_rss": {
+          "scenario": "upstream_gtest_unittest",
+          "task": "upstream_suite",
+          "source_name": "upstream_gtest_unittest_rss",
+          "value": 12.516,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            12.461,
+            12.516,
+            12.566,
+            12.473,
+            12.562
+          ]
+        },
+        "upstream_gtest_unittest_tps": {
+          "scenario": "upstream_gtest_unittest",
+          "task": "upstream_suite",
+          "source_name": "upstream_gtest_unittest_tps",
+          "value": 306.40888783457876,
+          "unit": "tests/s",
+          "direction": "higher_is_better",
+          "samples": [
+            306.40585927075404,
+            306.40888783457876,
+            317.6278323949651,
+            295.9156817583664,
+            306.46514347370476
+          ]
+        },
+        "upstream_gtest_unittest_us_per_test": {
+          "scenario": "upstream_gtest_unittest",
+          "task": "upstream_suite",
+          "source_name": "upstream_gtest_unittest_us_per_test",
+          "value": 3263.6129032258063,
+          "unit": "us/test",
+          "direction": "lower_is_better",
+          "samples": [
+            3263.6451612903224,
+            3263.6129032258063,
+            3148.3387096774195,
+            3379.3410138248846,
+            3263.0138248847925
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 48
+    }
+  },
+  "metrics": {
+    "assertion_loop_5m": {
+      "value": 0.015614,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "assertion_loop_5m",
+      "subgroup": "assertion_matrix"
+    },
+    "assertion_loop_5m_rss": {
+      "value": 12.465,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "assertion_loop_5m",
+      "subgroup": "assertion_matrix"
+    },
+    "assertion_loop_5m_aps": {
+      "value": 320225438.70885104,
+      "unit": "assertions/s",
+      "direction": "higher_is_better",
+      "group": "assertion_loop_5m",
+      "subgroup": "assertion_matrix"
+    },
+    "assertion_loop_5m_ns_per_assert": {
+      "value": 3.1228,
+      "unit": "ns/assertion",
+      "direction": "lower_is_better",
+      "group": "assertion_loop_5m",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_10k": {
+      "value": 0.063772,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "matrix_10k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_10k_rss": {
+      "value": 12.594,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "matrix_10k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_10k_tps": {
+      "value": 156808.63074703634,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "group": "matrix_10k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_10k_us_per_test": {
+      "value": 6.377199999999999,
+      "unit": "us/test",
+      "direction": "lower_is_better",
+      "group": "matrix_10k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_1k": {
+      "value": 0.007536,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "matrix_1k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_1k_rss": {
+      "value": 12.508,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "matrix_1k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_1k_tps": {
+      "value": 132696.3906581741,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "group": "matrix_1k",
+      "subgroup": "assertion_matrix"
+    },
+    "matrix_1k_us_per_test": {
+      "value": 7.536,
+      "unit": "us/test",
+      "direction": "lower_is_better",
+      "group": "matrix_1k",
+      "subgroup": "assertion_matrix"
+    },
+    "upstream_gtest_unittest": {
+      "value": 1.416408,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_gtest_unittest",
+      "subgroup": "upstream_suite"
+    },
+    "upstream_gtest_unittest_rss": {
+      "value": 12.516,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_gtest_unittest",
+      "subgroup": "upstream_suite"
+    },
+    "upstream_gtest_unittest_tps": {
+      "value": 306.40888783457876,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "group": "upstream_gtest_unittest",
+      "subgroup": "upstream_suite"
+    },
+    "upstream_gtest_unittest_us_per_test": {
+      "value": 3263.6129032258063,
+      "unit": "us/test",
+      "direction": "lower_is_better",
+      "group": "upstream_gtest_unittest",
+      "subgroup": "upstream_suite"
+    }
+  }
+}
