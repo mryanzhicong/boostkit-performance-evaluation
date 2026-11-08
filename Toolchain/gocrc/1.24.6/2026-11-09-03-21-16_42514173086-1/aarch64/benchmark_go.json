@@ -1,0 +1,129 @@
+{
+  "software": "gocrc",
+  "version": "1.24.6",
+  "variant": "base",
+  "architecture": "aarch64",
+  "run_id": "42514173086-1",
+  "generated_at": "2026-11-08T19:19:48Z",
+  "toolchains": {
+    "bootstrap": {
+      "version": "1.23.0",
+      "goroot": "/usr/local/go",
+      "measured": false
+    },
+    "measured": {
+      "version": "1.24.6",
+      "goroot": "/home/local/golang",
+      "source_commit": "d222f2d94fcc375acd48d9752f1d89d0dc29770a"
+    }
+  },
+  "benchmark": {
+    "package": "hash/crc32",
+    "pattern": "CRC32/poly=Castagnoli/size=(4|32)kB",
+    "cpu": 1,
+    "warmup_reps": 1,
+    "measure_reps": 6,
+    "time_basis": "ns/op",
+    "scenarios": [
+      {
+        "size_kb": 4,
+        "align": 0,
+        "metric": "crc32_castagnoli_4kb_align0"
+      },
+      {
+        "size_kb": 4,
+        "align": 1,
+        "metric": "crc32_castagnoli_4kb_align1"
+      },
+      {
+        "size_kb": 32,
+        "align": 0,
+        "metric": "crc32_castagnoli_32kb_align0"
+      },
+      {
+        "size_kb": 32,
+        "align": 1,
+        "metric": "crc32_castagnoli_32kb_align1"
+      }
+    ]
+  },
+  "benchstat_path": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Toolchain/gocrc/1.24.6/aarch64/42514173086-1/benchstat.txt",
+  "results": {
+    "crc32_castagnoli_4kb_align0": {
+      "source_name": "crc32_castagnoli_4kb_align0",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=4kB/align=0",
+      "source_field": "ns/op",
+      "toolchain": "measured",
+      "value": 149.25,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 6,
+      "sample_values": [
+        149.2,
+        149.2,
+        149.3,
+        149.3,
+        149.3,
+        149.2
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_4kb_align1": {
+      "source_name": "crc32_castagnoli_4kb_align1",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=4kB/align=1",
+      "source_field": "ns/op",
+      "toolchain": "measured",
+      "value": 152.4,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 6,
+      "sample_values": [
+        155.2,
+        152.4,
+        152.4,
+        152.5,
+        152.4,
+        152.4
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_32kb_align0": {
+      "source_name": "crc32_castagnoli_32kb_align0",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=32kB/align=0",
+      "source_field": "ns/op",
+      "toolchain": "measured",
+      "value": 1123.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 6,
+      "sample_values": [
+        1122.0,
+        1125.0,
+        1122.0,
+        1123.0,
+        1124.0,
+        1124.0
+      ],
+      "group": "crc32/castagnoli"
+    },
+    "crc32_castagnoli_32kb_align1": {
+      "source_name": "crc32_castagnoli_32kb_align1",
+      "source_benchmark": "BenchmarkCRC32/poly=Castagnoli/size=32kB/align=1",
+      "source_field": "ns/op",
+      "toolchain": "measured",
+      "value": 1151.5,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "samples": 6,
+      "sample_values": [
+        1153.0,
+        1151.0,
+        1150.0,
+        1151.0,
+        1152.0,
+        1153.0
+      ],
+      "group": "crc32/castagnoli"
+    }
+  }
+}
