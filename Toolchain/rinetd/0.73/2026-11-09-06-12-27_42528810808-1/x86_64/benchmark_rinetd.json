@@ -1,0 +1,890 @@
+{
+  "software": "rinetd",
+  "category": "Toolchain",
+  "benchmark": "loopback TCP direct versus rinetd-forwarded, fixed matrix",
+  "parameters": {
+    "measurement_reps": 5,
+    "warmup_reps": 1,
+    "offline_measurement": true,
+    "strict_parser": true,
+    "invocation": "one client process per scenario, one server process per process",
+    "matrix": "4 MiB and 16 MiB single connection, 4 MiB x 8 connections, 64-byte round trips",
+    "client_clock": "CLOCK_MONOTONIC"
+  },
+  "scenarios": [
+    "throughput_4m_direct",
+    "throughput_4m_forwarded",
+    "throughput_16m_direct",
+    "throughput_16m_forwarded",
+    "throughput_4m_8conn_direct",
+    "throughput_4m_8conn_forwarded",
+    "latency_64b_direct",
+    "latency_64b_forwarded"
+  ],
+  "results": {
+    "throughput_4m_direct.throughput_mib_per_second": {
+      "source_name": "throughput_4m_direct.throughput_mib_per_second",
+      "scenario": "throughput_4m_direct",
+      "group": "throughput_4m_direct",
+      "path": "direct",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 1266.728365508,
+      "samples": [
+        1164.066707087,
+        1266.728365508,
+        1293.317755988,
+        1282.935335385,
+        1195.243228561
+      ],
+      "statistics": {
+        "min": 1164.066707087,
+        "max": 1293.317755988,
+        "mean": 1240.458278506,
+        "median": 1266.728365508,
+        "stdev": 57.377293238
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_direct.bytes_per_second": {
+      "source_name": "throughput_4m_direct.bytes_per_second",
+      "scenario": "throughput_4m_direct",
+      "group": "throughput_4m_direct",
+      "path": "direct",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 1328260962.591,
+      "samples": [
+        1220612411.45,
+        1328260962.591,
+        1356141959.303,
+        1345255202.237,
+        1253303363.632
+      ],
+      "statistics": {
+        "min": 1220612411.45,
+        "max": 1356141959.303,
+        "mean": 1300714779.8426,
+        "median": 1328260962.591,
+        "stdev": 60164452.634453826
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_direct.wall_seconds": {
+      "source_name": "throughput_4m_direct.wall_seconds",
+      "scenario": "throughput_4m_direct",
+      "group": "throughput_4m_direct",
+      "path": "direct",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.007538,
+      "samples": [
+        0.007538,
+        0.007525,
+        0.007552,
+        0.007531,
+        0.00759
+      ],
+      "statistics": {
+        "min": 0.007525,
+        "max": 0.00759,
+        "mean": 0.0075472,
+        "median": 0.007538,
+        "stdev": 2.5956e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_direct.peak_rss_mib": {
+      "source_name": "throughput_4m_direct.peak_rss_mib",
+      "scenario": "throughput_4m_direct",
+      "group": "throughput_4m_direct",
+      "path": "direct",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 12.562,
+      "samples": [
+        12.562,
+        12.461,
+        12.449,
+        12.578,
+        12.641
+      ],
+      "statistics": {
+        "min": 12.449,
+        "max": 12.641,
+        "mean": 12.5382,
+        "median": 12.562,
+        "stdev": 0.081600858
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_forwarded.throughput_mib_per_second": {
+      "source_name": "throughput_4m_forwarded.throughput_mib_per_second",
+      "scenario": "throughput_4m_forwarded",
+      "group": "throughput_4m_forwarded",
+      "path": "forwarded",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 874.287902043,
+      "samples": [
+        894.263851487,
+        830.523367325,
+        930.357458405,
+        816.415046901,
+        874.287902043
+      ],
+      "statistics": {
+        "min": 816.415046901,
+        "max": 930.357458405,
+        "mean": 869.169525232,
+        "median": 874.287902043,
+        "stdev": 46.573722909
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_forwarded.bytes_per_second": {
+      "source_name": "throughput_4m_forwarded.bytes_per_second",
+      "scenario": "throughput_4m_forwarded",
+      "group": "throughput_4m_forwarded",
+      "path": "forwarded",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 916757311.173,
+      "samples": [
+        937703612.337,
+        870866870.416,
+        975550502.304,
+        856073224.219,
+        916757311.173
+      ],
+      "statistics": {
+        "min": 856073224.219,
+        "max": 975550502.304,
+        "mean": 911390304.0898001,
+        "median": 916757311.173,
+        "stdev": 48836088.072694905
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_forwarded.wall_seconds": {
+      "source_name": "throughput_4m_forwarded.wall_seconds",
+      "scenario": "throughput_4m_forwarded",
+      "group": "throughput_4m_forwarded",
+      "path": "forwarded",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.007548,
+      "samples": [
+        0.007554,
+        0.007548,
+        0.007512,
+        0.007538,
+        0.007584
+      ],
+      "statistics": {
+        "min": 0.007512,
+        "max": 0.007584,
+        "mean": 0.0075472,
+        "median": 0.007548,
+        "stdev": 2.61e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_4m_forwarded.peak_rss_mib": {
+      "source_name": "throughput_4m_forwarded.peak_rss_mib",
+      "scenario": "throughput_4m_forwarded",
+      "group": "throughput_4m_forwarded",
+      "path": "forwarded",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 12.645,
+      "samples": [
+        12.645,
+        12.645,
+        12.645,
+        12.613,
+        12.473
+      ],
+      "statistics": {
+        "min": 12.473,
+        "max": 12.645,
+        "mean": 12.6042,
+        "median": 12.645,
+        "stdev": 0.074640472
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 1
+    },
+    "throughput_16m_direct.throughput_mib_per_second": {
+      "source_name": "throughput_16m_direct.throughput_mib_per_second",
+      "scenario": "throughput_16m_direct",
+      "group": "throughput_16m_direct",
+      "path": "direct",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 1311.601692697,
+      "samples": [
+        1311.601692697,
+        1401.225011454,
+        1354.330438252,
+        1289.254491094,
+        1238.220495235
+      ],
+      "statistics": {
+        "min": 1238.220495235,
+        "max": 1401.225011454,
+        "mean": 1318.926425746,
+        "median": 1311.601692697,
+        "stdev": 62.197314956
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_direct/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_direct.bytes_per_second": {
+      "source_name": "throughput_16m_direct.bytes_per_second",
+      "scenario": "throughput_16m_direct",
+      "group": "throughput_16m_direct",
+      "path": "direct",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 1375314056.521,
+      "samples": [
+        1375314056.521,
+        1469290917.61,
+        1420118393.621,
+        1351881317.253,
+        1298368294.012
+      ],
+      "statistics": {
+        "min": 1298368294.012,
+        "max": 1469290917.61,
+        "mean": 1382994595.8034,
+        "median": 1375314056.521,
+        "stdev": 65218611.72714171
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_direct/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_direct.wall_seconds": {
+      "source_name": "throughput_16m_direct.wall_seconds",
+      "scenario": "throughput_16m_direct",
+      "group": "throughput_16m_direct",
+      "path": "direct",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.015607,
+      "samples": [
+        0.01559,
+        0.015634,
+        0.015607,
+        0.015586,
+        0.015636
+      ],
+      "statistics": {
+        "min": 0.015586,
+        "max": 0.015636,
+        "mean": 0.0156106,
+        "median": 0.015607,
+        "stdev": 2.3639e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_direct/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_direct.peak_rss_mib": {
+      "source_name": "throughput_16m_direct.peak_rss_mib",
+      "scenario": "throughput_16m_direct",
+      "group": "throughput_16m_direct",
+      "path": "direct",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 16.371,
+      "samples": [
+        16.426,
+        16.371,
+        16.211,
+        16.426,
+        16.262
+      ],
+      "statistics": {
+        "min": 16.211,
+        "max": 16.426,
+        "mean": 16.3392,
+        "median": 16.371,
+        "stdev": 0.098074971
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_direct/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_forwarded.throughput_mib_per_second": {
+      "source_name": "throughput_16m_forwarded.throughput_mib_per_second",
+      "scenario": "throughput_16m_forwarded",
+      "group": "throughput_16m_forwarded",
+      "path": "forwarded",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 951.64420688,
+      "samples": [
+        954.268695449,
+        923.899401647,
+        939.428373386,
+        955.178979498,
+        951.64420688
+      ],
+      "statistics": {
+        "min": 923.899401647,
+        "max": 955.178979498,
+        "mean": 944.883931372,
+        "median": 951.64420688,
+        "stdev": 13.321756063
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_forwarded/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_forwarded.bytes_per_second": {
+      "source_name": "throughput_16m_forwarded.bytes_per_second",
+      "scenario": "throughput_16m_forwarded",
+      "group": "throughput_16m_forwarded",
+      "path": "forwarded",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 997871275.873,
+      "samples": [
+        1000623251.599,
+        968778738.981,
+        985062046.052,
+        1001577753.606,
+        997871275.873
+      ],
+      "statistics": {
+        "min": 968778738.981,
+        "max": 1001577753.606,
+        "mean": 990782613.2222,
+        "median": 997871275.873,
+        "stdev": 13968873.685063705
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_forwarded/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_forwarded.wall_seconds": {
+      "source_name": "throughput_16m_forwarded.wall_seconds",
+      "scenario": "throughput_16m_forwarded",
+      "group": "throughput_16m_forwarded",
+      "path": "forwarded",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.031663,
+      "samples": [
+        0.031691,
+        0.031655,
+        0.031631,
+        0.031663,
+        0.031698
+      ],
+      "statistics": {
+        "min": 0.031631,
+        "max": 0.031698,
+        "mean": 0.0316676,
+        "median": 0.031663,
+        "stdev": 2.7346e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_forwarded/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_16m_forwarded.peak_rss_mib": {
+      "source_name": "throughput_16m_forwarded.peak_rss_mib",
+      "scenario": "throughput_16m_forwarded",
+      "group": "throughput_16m_forwarded",
+      "path": "forwarded",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 16.316,
+      "samples": [
+        16.219,
+        16.32,
+        16.316,
+        16.324,
+        16.203
+      ],
+      "statistics": {
+        "min": 16.203,
+        "max": 16.324,
+        "mean": 16.2764,
+        "median": 16.316,
+        "stdev": 0.060035823
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_16m_forwarded/rep1.log",
+      "payload_bytes": 16777216,
+      "connections": 1
+    },
+    "throughput_4m_8conn_direct.throughput_mib_per_second": {
+      "source_name": "throughput_4m_8conn_direct.throughput_mib_per_second",
+      "scenario": "throughput_4m_8conn_direct",
+      "group": "throughput_4m_8conn_direct",
+      "path": "direct",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 2961.297662237,
+      "samples": [
+        2961.297662237,
+        3148.141610461,
+        2912.678271976,
+        3147.370649318,
+        2702.623768821
+      ],
+      "statistics": {
+        "min": 2702.623768821,
+        "max": 3148.141610461,
+        "mean": 2974.422392562,
+        "median": 2961.297662237,
+        "stdev": 185.707130331
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_direct.bytes_per_second": {
+      "source_name": "throughput_4m_8conn_direct.bytes_per_second",
+      "scenario": "throughput_4m_8conn_direct",
+      "group": "throughput_4m_8conn_direct",
+      "path": "direct",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 3105145657.478,
+      "samples": [
+        3105145657.478,
+        3301065737.331,
+        3054164531.715,
+        3300257325.979,
+        2833906421.015
+      ],
+      "statistics": {
+        "min": 2833906421.015,
+        "max": 3301065737.331,
+        "mean": 3118907934.7036,
+        "median": 3105145657.478,
+        "stdev": 194728039.89395875
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_direct.wall_seconds": {
+      "source_name": "throughput_4m_8conn_direct.wall_seconds",
+      "scenario": "throughput_4m_8conn_direct",
+      "group": "throughput_4m_8conn_direct",
+      "path": "direct",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.015671,
+      "samples": [
+        0.015671,
+        0.015736,
+        0.015853,
+        0.015627,
+        0.015633
+      ],
+      "statistics": {
+        "min": 0.015627,
+        "max": 0.015853,
+        "mean": 0.015704,
+        "median": 0.015671,
+        "stdev": 9.392e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_direct.peak_rss_mib": {
+      "source_name": "throughput_4m_8conn_direct.peak_rss_mib",
+      "scenario": "throughput_4m_8conn_direct",
+      "group": "throughput_4m_8conn_direct",
+      "path": "direct",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 25.293,
+      "samples": [
+        25.355,
+        25.266,
+        25.434,
+        25.289,
+        25.293
+      ],
+      "statistics": {
+        "min": 25.266,
+        "max": 25.434,
+        "mean": 25.3274,
+        "median": 25.293,
+        "stdev": 0.068105066
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_direct/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_forwarded.throughput_mib_per_second": {
+      "source_name": "throughput_4m_8conn_forwarded.throughput_mib_per_second",
+      "scenario": "throughput_4m_8conn_forwarded",
+      "group": "throughput_4m_8conn_forwarded",
+      "path": "forwarded",
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "value": 1047.686051959,
+      "samples": [
+        1047.686051959,
+        1087.168232765,
+        1039.935156946,
+        1086.686793655,
+        1035.641979579
+      ],
+      "statistics": {
+        "min": 1035.641979579,
+        "max": 1087.168232765,
+        "mean": 1059.423642981,
+        "median": 1047.686051959,
+        "stdev": 25.476367932
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_forwarded.bytes_per_second": {
+      "source_name": "throughput_4m_8conn_forwarded.bytes_per_second",
+      "scenario": "throughput_4m_8conn_forwarded",
+      "group": "throughput_4m_8conn_forwarded",
+      "path": "forwarded",
+      "unit": "B/s",
+      "direction": "higher_is_better",
+      "value": 1098578449.619,
+      "samples": [
+        1098578449.619,
+        1139978516.84,
+        1090451047.13,
+        1139473691.344,
+        1085949324.379
+      ],
+      "statistics": {
+        "min": 1085949324.379,
+        "max": 1139978516.84,
+        "mean": 1110886205.8624,
+        "median": 1098578449.619,
+        "stdev": 26713907.980958857
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_forwarded.wall_seconds": {
+      "source_name": "throughput_4m_8conn_forwarded.wall_seconds",
+      "scenario": "throughput_4m_8conn_forwarded",
+      "group": "throughput_4m_8conn_forwarded",
+      "path": "forwarded",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.031715,
+      "samples": [
+        0.031704,
+        0.031751,
+        0.031715,
+        0.031739,
+        0.03171
+      ],
+      "statistics": {
+        "min": 0.031704,
+        "max": 0.031751,
+        "mean": 0.0317238,
+        "median": 0.031715,
+        "stdev": 2.0192e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "throughput_4m_8conn_forwarded.peak_rss_mib": {
+      "source_name": "throughput_4m_8conn_forwarded.peak_rss_mib",
+      "scenario": "throughput_4m_8conn_forwarded",
+      "group": "throughput_4m_8conn_forwarded",
+      "path": "forwarded",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 25.312,
+      "samples": [
+        25.355,
+        25.285,
+        25.363,
+        25.215,
+        25.312
+      ],
+      "statistics": {
+        "min": 25.215,
+        "max": 25.363,
+        "mean": 25.306,
+        "median": 25.312,
+        "stdev": 0.060016664
+      },
+      "repetitions": 5,
+      "raw_log": "runs/throughput_4m_8conn_forwarded/rep1.log",
+      "payload_bytes": 4194304,
+      "connections": 8
+    },
+    "latency_64b_direct.rtt_mean_us": {
+      "source_name": "latency_64b_direct.rtt_mean_us",
+      "scenario": "latency_64b_direct",
+      "group": "latency_64b_direct",
+      "path": "direct",
+      "unit": "us",
+      "direction": "lower_is_better",
+      "value": 16.008,
+      "samples": [
+        15.98,
+        15.893,
+        16.107,
+        16.008,
+        16.016
+      ],
+      "statistics": {
+        "min": 15.893,
+        "max": 16.107,
+        "mean": 16.0008,
+        "median": 16.008,
+        "stdev": 0.076835539
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_direct/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_direct.rtt_p99_us": {
+      "source_name": "latency_64b_direct.rtt_p99_us",
+      "scenario": "latency_64b_direct",
+      "group": "latency_64b_direct",
+      "path": "direct",
+      "unit": "us",
+      "direction": "lower_is_better",
+      "value": 20.19,
+      "samples": [
+        20.189,
+        20.34,
+        20.19,
+        20.16,
+        20.22
+      ],
+      "statistics": {
+        "min": 20.16,
+        "max": 20.34,
+        "mean": 20.2198,
+        "median": 20.19,
+        "stdev": 0.070464175
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_direct/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_direct.wall_seconds": {
+      "source_name": "latency_64b_direct.wall_seconds",
+      "scenario": "latency_64b_direct",
+      "group": "latency_64b_direct",
+      "path": "direct",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.063807,
+      "samples": [
+        0.063791,
+        0.063786,
+        0.063829,
+        0.063807,
+        0.063819
+      ],
+      "statistics": {
+        "min": 0.063786,
+        "max": 0.063829,
+        "mean": 0.0638064,
+        "median": 0.063807,
+        "stdev": 1.8188e-05
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_direct/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_direct.peak_rss_mib": {
+      "source_name": "latency_64b_direct.peak_rss_mib",
+      "scenario": "latency_64b_direct",
+      "group": "latency_64b_direct",
+      "path": "direct",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 12.562,
+      "samples": [
+        12.457,
+        12.578,
+        12.559,
+        12.566,
+        12.562
+      ],
+      "statistics": {
+        "min": 12.457,
+        "max": 12.578,
+        "mean": 12.5444,
+        "median": 12.562,
+        "stdev": 0.04938927
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_direct/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_forwarded.rtt_mean_us": {
+      "source_name": "latency_64b_forwarded.rtt_mean_us",
+      "scenario": "latency_64b_forwarded",
+      "group": "latency_64b_forwarded",
+      "path": "forwarded",
+      "unit": "us",
+      "direction": "lower_is_better",
+      "value": 44.532,
+      "samples": [
+        36.081,
+        55.098,
+        49.845,
+        44.532,
+        42.612
+      ],
+      "statistics": {
+        "min": 36.081,
+        "max": 55.098,
+        "mean": 45.6336,
+        "median": 44.532,
+        "stdev": 7.226799312
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_forwarded/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_forwarded.rtt_p99_us": {
+      "source_name": "latency_64b_forwarded.rtt_p99_us",
+      "scenario": "latency_64b_forwarded",
+      "group": "latency_64b_forwarded",
+      "path": "forwarded",
+      "unit": "us",
+      "direction": "lower_is_better",
+      "value": 52.059,
+      "samples": [
+        41.99,
+        63.679,
+        56.799,
+        52.059,
+        49.469
+      ],
+      "statistics": {
+        "min": 41.99,
+        "max": 63.679,
+        "mean": 52.7992,
+        "median": 52.059,
+        "stdev": 8.106253463
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_forwarded/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_forwarded.wall_seconds": {
+      "source_name": "latency_64b_forwarded.wall_seconds",
+      "scenario": "latency_64b_forwarded",
+      "group": "latency_64b_forwarded",
+      "path": "forwarded",
+      "unit": "s",
+      "direction": "lower_is_better",
+      "value": 0.113916,
+      "samples": [
+        0.113916,
+        0.164,
+        0.113957,
+        0.113885,
+        0.113889
+      ],
+      "statistics": {
+        "min": 0.113885,
+        "max": 0.164,
+        "mean": 0.1239294,
+        "median": 0.113916,
+        "stdev": 0.022400165
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_forwarded/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    },
+    "latency_64b_forwarded.peak_rss_mib": {
+      "source_name": "latency_64b_forwarded.peak_rss_mib",
+      "scenario": "latency_64b_forwarded",
+      "group": "latency_64b_forwarded",
+      "path": "forwarded",
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "value": 12.633,
+      "samples": [
+        12.461,
+        12.633,
+        12.633,
+        12.516,
+        12.633
+      ],
+      "statistics": {
+        "min": 12.461,
+        "max": 12.633,
+        "mean": 12.5752,
+        "median": 12.633,
+        "stdev": 0.081499693
+      },
+      "repetitions": 5,
+      "raw_log": "runs/latency_64b_forwarded/rep1.log",
+      "request_bytes": 64,
+      "round_trips": 2000
+    }
+  }
+}
