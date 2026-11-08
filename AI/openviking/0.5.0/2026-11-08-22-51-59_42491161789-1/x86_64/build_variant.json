@@ -1,0 +1,27 @@
+{
+  "software": "openviking",
+  "version": "0.5.0",
+  "variant": "base",
+  "architecture": "x86_64",
+  "run_id": "42491161789-1",
+  "out_of_the_box": true,
+  "numa_binding": false,
+  "cpuset_pinning": false,
+  "source": {
+    "repository": "https://gitcode.com/JankinLee/OpenViking.git",
+    "tag": "V0.5.0",
+    "commit": "309645cafee3897459fcd819d26e60fad89e9c81",
+    "kit_archive": "openviking-0.5.0-48T96G-x86_64-container-benchmark-kit.tar",
+    "kit_sha256": "ff8499c84b71d5a49ae2bf18f4b319cc3ad18980b600807a9da4f2d7b89be703"
+  },
+  "runtime": {
+    "container_image": "openeuler-24.03-lts-sp4:latest",
+    "python": "Python 3.11.6",
+    "kit_layout": [".","./assets","./assets/tiktoken","./benchmark","./benchmark/locomo","./data","./harness","./result"]
+  },
+  "providers": {
+    "llm": "deterministic local OpenAI-compatible mock",
+    "embedding": "deterministic local OpenAI-compatible mock",
+    "external_network": false
+  }
+}
