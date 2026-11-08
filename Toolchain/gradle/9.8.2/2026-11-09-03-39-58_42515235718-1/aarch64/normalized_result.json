@@ -1,0 +1,904 @@
+{
+  "software": "gradle",
+  "category": "Toolchain",
+  "version": "9.8.2",
+  "architecture": "aarch64",
+  "run_id": "42515235718-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-08T19:30:50Z",
+    "category": "Toolchain",
+    "software": "gradle",
+    "requested_version": "9.8.2",
+    "actual_version": "9.8.2",
+    "architecture": "aarch64",
+    "run_id": "42515235718-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "variant": "base",
+      "repetitions": 5,
+      "offline": true,
+      "daemon": "disabled (--no-daemon, single-use daemon per invocation)",
+      "max_workers": 1,
+      "build_cache": "disabled",
+      "gradle_version": "9.8.2",
+      "gradle_zip_sha256": "21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607",
+      "jdk_release": "openEuler 24.03 LTS SP4 java-21-openjdk",
+      "jdk_version": "21.0.12",
+      "gradle_source_sha256": "54b41c997ff95f61e74ed257e02012ebbc855b3c4c2637837e744a82595f6d8a",
+      "gradle_source_revision": "v9.8.2",
+      "scales_classes": [
+        100,
+        1000,
+        10000
+      ],
+      "tasks": [
+        "clean_build",
+        "incremental_build",
+        "noop_build"
+      ],
+      "upstream_scenarios": [
+        "upstream_multiproject_build"
+      ],
+      "upstream_samples": [
+        "platforms/documentation/docs/src/snippets/integration-tests/java/incrementalAnnotationProcessing/groovy",
+        "platforms/documentation/docs/src/snippets/reference/platforms/jvm/incrementalAnnotationProcessing/groovy"
+      ]
+    }
+  },
+  "parameter_signature": "30cac8f5f749053ddd73c8cf4cbb8fc745ae1d16b7428c0f7dca7b4a6462e7a0",
+  "test_tools": {
+    "gradle": {
+      "version": "9.8.2"
+    },
+    "openjdk": {
+      "version": "java-21-openjdk-21.0.12.8-4.oe2403sp4 (openEuler 24.03 LTS SP4)"
+    },
+    "container_image": {
+      "version": "openEuler 24.03 LTS SP4"
+    },
+    "gradle_source_release": {
+      "version": "v9.8.2"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-08T19:29:18Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 365509 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 378350 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 343963 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 350613 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-08T19:29:18Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 21956276224 1508310200320  7744413696 100550733824 1594380787712\nSwap:     4294963200    23330816  4271632384",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-08T19:39:25Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 20845608960 1508544974848  7755251712 101494444032 1595491454976\nSwap:     4294963200    23330816  4271632384",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "software": "gradle",
+      "version": "9.8.2"
+    },
+    "benchmark_result": {
+      "software": "gradle",
+      "version": "9.8.2",
+      "architecture": "aarch64",
+      "variant": "base",
+      "generated_at": "2026-11-08T19:38:54Z",
+      "measurement": {
+        "repetitions": 5,
+        "offline": true,
+        "clock": "wall time around the Gradle process tree; peak RSS from getrusage(RUSAGE_CHILDREN)"
+      },
+      "parameters": {
+        "variant": "base",
+        "repetitions": 5,
+        "offline": true,
+        "daemon": "disabled (--no-daemon, single-use daemon per invocation)",
+        "max_workers": 1,
+        "build_cache": "disabled",
+        "gradle_version": "9.8.2",
+        "gradle_zip_sha256": "21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607",
+        "jdk_release": "openEuler 24.03 LTS SP4 java-21-openjdk",
+        "jdk_version": "21.0.12",
+        "gradle_source_sha256": "54b41c997ff95f61e74ed257e02012ebbc855b3c4c2637837e744a82595f6d8a",
+        "gradle_source_revision": "v9.8.2",
+        "scales_classes": [
+          100,
+          1000,
+          10000
+        ],
+        "tasks": [
+          "clean_build",
+          "incremental_build",
+          "noop_build"
+        ],
+        "upstream_scenarios": [
+          "upstream_multiproject_build"
+        ],
+        "upstream_samples": [
+          "platforms/documentation/docs/src/snippets/integration-tests/java/incrementalAnnotationProcessing/groovy",
+          "platforms/documentation/docs/src/snippets/reference/platforms/jvm/incrementalAnnotationProcessing/groovy"
+        ]
+      },
+      "results": {
+        "clean_build_100": {
+          "source_name": "clean_build_100",
+          "scenario": "clean_build_100",
+          "task": "clean_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 5.24704,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.24704,
+          "mean": 5.3247908,
+          "min": 5.242437,
+          "max": 5.543392,
+          "stdev": 0.130005466,
+          "samples": [
+            5.244157,
+            5.24704,
+            5.543392,
+            5.242437,
+            5.346928
+          ]
+        },
+        "clean_build_100_cps": {
+          "source_name": "clean_build_100_cps",
+          "scenario": "clean_build_100",
+          "task": "clean_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 19.058364334939316,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 19.058364335,
+          "mean": 18.788825669,
+          "min": 18.039496395,
+          "max": 19.075098089,
+          "stdev": 0.447768984,
+          "samples": [
+            19.06884176045835,
+            19.058364334939316,
+            18.03949639498704,
+            19.07509808892315,
+            18.702327766523133
+          ]
+        },
+        "clean_build_100_rss": {
+          "source_name": "clean_build_100_rss",
+          "scenario": "clean_build_100",
+          "task": "clean_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 432.891,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 432.891,
+          "mean": 433.0532,
+          "min": 424.07,
+          "max": 441.203,
+          "stdev": 6.649905879,
+          "samples": [
+            441.203,
+            424.07,
+            429.727,
+            432.891,
+            437.375
+          ]
+        },
+        "incremental_build_100": {
+          "source_name": "incremental_build_100",
+          "scenario": "incremental_build_100",
+          "task": "incremental_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 4.992378,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 4.992378,
+          "mean": 5.0513486,
+          "min": 4.942076,
+          "max": 5.192956,
+          "stdev": 0.108710651,
+          "samples": [
+            4.942076,
+            4.992378,
+            5.192956,
+            5.140319,
+            4.989014
+          ]
+        },
+        "incremental_build_100_cps": {
+          "source_name": "incremental_build_100_cps",
+          "scenario": "incremental_build_100",
+          "task": "incremental_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 20.030534546863237,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 20.030534547,
+          "mean": 19.803977469,
+          "min": 19.256854863,
+          "max": 20.234411612,
+          "stdev": 0.423092052,
+          "samples": [
+            20.23441161163851,
+            20.030534546863237,
+            19.25685486262545,
+            19.454045556316643,
+            20.04404076637187
+          ]
+        },
+        "incremental_build_100_rss": {
+          "source_name": "incremental_build_100_rss",
+          "scenario": "incremental_build_100",
+          "task": "incremental_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 429.48,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 429.48,
+          "mean": 428.8202,
+          "min": 417.785,
+          "max": 440.215,
+          "stdev": 10.342236156,
+          "samples": [
+            417.785,
+            429.48,
+            437.672,
+            418.949,
+            440.215
+          ]
+        },
+        "noop_build_100": {
+          "source_name": "noop_build_100",
+          "scenario": "noop_build_100",
+          "task": "noop_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 4.540667,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 4.540667,
+          "mean": 4.5015384,
+          "min": 4.389061,
+          "max": 4.595867,
+          "stdev": 0.104512039,
+          "samples": [
+            4.390076,
+            4.595867,
+            4.389061,
+            4.592021,
+            4.540667
+          ]
+        },
+        "noop_build_100_rss": {
+          "source_name": "noop_build_100_rss",
+          "scenario": "noop_build_100",
+          "task": "noop_build",
+          "scale_items": 100,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 387.234,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 387.234,
+          "mean": 390.9194,
+          "min": 374.027,
+          "max": 411.711,
+          "stdev": 14.219594238,
+          "samples": [
+            374.027,
+            411.711,
+            397.039,
+            384.586,
+            387.234
+          ]
+        },
+        "clean_build_1000": {
+          "source_name": "clean_build_1000",
+          "scenario": "clean_build_1000",
+          "task": "clean_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 6.454594,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 6.454594,
+          "mean": 6.5416482,
+          "min": 6.300864,
+          "max": 6.999976,
+          "stdev": 0.267261046,
+          "samples": [
+            6.999976,
+            6.300864,
+            6.454594,
+            6.504513,
+            6.448294
+          ]
+        },
+        "clean_build_1000_cps": {
+          "source_name": "clean_build_1000_cps",
+          "scenario": "clean_build_1000",
+          "task": "clean_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 154.92841222856154,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 154.928412229,
+          "mean": 153.062725394,
+          "min": 142.857632655,
+          "max": 158.708393008,
+          "stdev": 6.000513976,
+          "samples": [
+            142.8576326547405,
+            158.7083930076891,
+            154.92841222856154,
+            153.73941139021477,
+            155.0797776900371
+          ]
+        },
+        "clean_build_1000_rss": {
+          "source_name": "clean_build_1000_rss",
+          "scenario": "clean_build_1000",
+          "task": "clean_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 466.047,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 466.047,
+          "mean": 468.5642,
+          "min": 442.809,
+          "max": 495.5,
+          "stdev": 21.139804722,
+          "samples": [
+            442.809,
+            466.047,
+            483.223,
+            495.5,
+            455.242
+          ]
+        },
+        "incremental_build_1000": {
+          "source_name": "incremental_build_1000",
+          "scenario": "incremental_build_1000",
+          "task": "incremental_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 5.440404,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.440404,
+          "mean": 5.5125314,
+          "min": 5.240106,
+          "max": 5.798949,
+          "stdev": 0.24562194,
+          "samples": [
+            5.240106,
+            5.798949,
+            5.440404,
+            5.739308,
+            5.34389
+          ]
+        },
+        "incremental_build_1000_cps": {
+          "source_name": "incremental_build_1000_cps",
+          "scenario": "incremental_build_1000",
+          "task": "incremental_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 183.80987882517547,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 183.809878825,
+          "mean": 181.69147764,
+          "min": 172.445041334,
+          "max": 190.835834237,
+          "stdev": 8.042782202,
+          "samples": [
+            190.835834236941,
+            172.44504133421418,
+            183.80987882517547,
+            174.23703345420736,
+            187.12960034731253
+          ]
+        },
+        "incremental_build_1000_rss": {
+          "source_name": "incremental_build_1000_rss",
+          "scenario": "incremental_build_1000",
+          "task": "incremental_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 431.441,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 431.441,
+          "mean": 433.0218,
+          "min": 416.258,
+          "max": 452.68,
+          "stdev": 13.07087976,
+          "samples": [
+            452.68,
+            429.859,
+            431.441,
+            416.258,
+            434.871
+          ]
+        },
+        "noop_build_1000": {
+          "source_name": "noop_build_1000",
+          "scenario": "noop_build_1000",
+          "task": "noop_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 4.642528,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 4.642528,
+          "mean": 4.6208212,
+          "min": 4.487167,
+          "max": 4.695674,
+          "stdev": 0.086173923,
+          "samples": [
+            4.487167,
+            4.695674,
+            4.588979,
+            4.689758,
+            4.642528
+          ]
+        },
+        "noop_build_1000_rss": {
+          "source_name": "noop_build_1000_rss",
+          "scenario": "noop_build_1000",
+          "task": "noop_build",
+          "scale_items": 1000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 404.805,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 404.805,
+          "mean": 398.697,
+          "min": 386.492,
+          "max": 405.527,
+          "stdev": 9.043342275,
+          "samples": [
+            404.805,
+            405.527,
+            386.492,
+            391.477,
+            405.184
+          ]
+        },
+        "clean_build_10000": {
+          "source_name": "clean_build_10000",
+          "scenario": "clean_build_10000",
+          "task": "clean_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 11.787088,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 11.787088,
+          "mean": 11.7096374,
+          "min": 11.422347,
+          "max": 11.925675,
+          "stdev": 0.192577319,
+          "samples": [
+            11.787527,
+            11.62555,
+            11.925675,
+            11.422347,
+            11.787088
+          ]
+        },
+        "clean_build_10000_cps": {
+          "source_name": "clean_build_10000_cps",
+          "scenario": "clean_build_10000",
+          "task": "clean_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 848.3859626737325,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 848.385962674,
+          "mean": 854.183692731,
+          "min": 838.52695969,
+          "max": 875.476817505,
+          "stdev": 14.15991908,
+          "samples": [
+            848.3543664417481,
+            860.1743573422332,
+            838.5269596899127,
+            875.4768175051939,
+            848.3859626737325
+          ]
+        },
+        "clean_build_10000_rss": {
+          "source_name": "clean_build_10000_rss",
+          "scenario": "clean_build_10000",
+          "task": "clean_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 682.898,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 682.898,
+          "mean": 681.0492,
+          "min": 663.016,
+          "max": 694.703,
+          "stdev": 11.482103104,
+          "samples": [
+            682.898,
+            694.703,
+            680.18,
+            663.016,
+            684.449
+          ]
+        },
+        "incremental_build_10000": {
+          "source_name": "incremental_build_10000",
+          "scenario": "incremental_build_10000",
+          "task": "incremental_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 7.65206,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 7.65206,
+          "mean": 7.6657208,
+          "min": 7.452325,
+          "max": 7.910971,
+          "stdev": 0.193592277,
+          "samples": [
+            7.910971,
+            7.804736,
+            7.508512,
+            7.65206,
+            7.452325
+          ]
+        },
+        "incremental_build_10000_cps": {
+          "source_name": "incremental_build_10000_cps",
+          "scenario": "incremental_build_10000",
+          "task": "incremental_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 1306.8376358784433,
+          "unit": "classes/s",
+          "direction": "higher_is_better",
+          "median": 1306.837635878,
+          "mean": 1305.172640113,
+          "min": 1264.067331305,
+          "max": 1341.863109835,
+          "stdev": 32.863219139,
+          "samples": [
+            1264.0673313048424,
+            1281.273319174409,
+            1331.8218043734898,
+            1306.8376358784433,
+            1341.86310983485
+          ]
+        },
+        "incremental_build_10000_rss": {
+          "source_name": "incremental_build_10000_rss",
+          "scenario": "incremental_build_10000",
+          "task": "incremental_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 522.848,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 522.848,
+          "mean": 531.4846,
+          "min": 505.723,
+          "max": 569.801,
+          "stdev": 27.730791682,
+          "samples": [
+            522.848,
+            508.766,
+            569.801,
+            505.723,
+            550.285
+          ]
+        },
+        "noop_build_10000": {
+          "source_name": "noop_build_10000",
+          "scenario": "noop_build_10000",
+          "task": "noop_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 5.294417,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 5.294417,
+          "mean": 5.3433106,
+          "min": 5.090195,
+          "max": 5.547555,
+          "stdev": 0.182444855,
+          "samples": [
+            5.291715,
+            5.294417,
+            5.547555,
+            5.492671,
+            5.090195
+          ]
+        },
+        "noop_build_10000_rss": {
+          "source_name": "noop_build_10000_rss",
+          "scenario": "noop_build_10000",
+          "task": "noop_build",
+          "scale_items": 10000,
+          "workload": "deterministic single-module Gradle java project generated by scripts/generate_project.py",
+          "value": 472.461,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 472.461,
+          "mean": 457.514,
+          "min": 420.742,
+          "max": 489.164,
+          "stdev": 29.936053556,
+          "samples": [
+            474.5,
+            472.461,
+            430.703,
+            420.742,
+            489.164
+          ]
+        },
+        "upstream_multiproject_build": {
+          "source_name": "upstream_multiproject_build",
+          "scenario": "upstream_multiproject_build",
+          "task": "upstream_multiproject",
+          "scale_items": null,
+          "upstream_samples": [
+            "platforms/documentation/docs/src/snippets/integration-tests/java/incrementalAnnotationProcessing/groovy",
+            "platforms/documentation/docs/src/snippets/reference/platforms/jvm/incrementalAnnotationProcessing/groovy"
+          ],
+          "workload": "upstream gradle/gradle v9.8.2 source-release documentation sample projects (multi-module and composite-build layouts)",
+          "value": 10.72974,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 10.72974,
+          "mean": 10.7049302,
+          "min": 10.566499,
+          "max": 10.822447,
+          "stdev": 0.104484283,
+          "samples": [
+            10.72974,
+            10.822447,
+            10.566499,
+            10.773945,
+            10.63202
+          ]
+        },
+        "upstream_multiproject_build_rss": {
+          "source_name": "upstream_multiproject_build_rss",
+          "scenario": "upstream_multiproject_build",
+          "task": "upstream_multiproject",
+          "scale_items": null,
+          "upstream_samples": [
+            "platforms/documentation/docs/src/snippets/integration-tests/java/incrementalAnnotationProcessing/groovy",
+            "platforms/documentation/docs/src/snippets/reference/platforms/jvm/incrementalAnnotationProcessing/groovy"
+          ],
+          "workload": "upstream gradle/gradle v9.8.2 source-release documentation sample projects (multi-module and composite-build layouts)",
+          "value": 428.969,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 428.969,
+          "mean": 429.2172,
+          "min": 412.711,
+          "max": 441.492,
+          "stdev": 11.727237684,
+          "samples": [
+            412.711,
+            441.492,
+            428.969,
+            439.102,
+            423.812
+          ]
+        }
+      }
+    }
+  },
+  "metrics": {
+    "clean_build_100": {
+      "value": 5.24704,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "clean_build_100",
+      "subgroup": "clean_build"
+    },
+    "clean_build_100_cps": {
+      "value": 19.058364334939316,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "clean_build_100",
+      "subgroup": "clean_build"
+    },
+    "clean_build_100_rss": {
+      "value": 432.891,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "clean_build_100",
+      "subgroup": "clean_build"
+    },
+    "incremental_build_100": {
+      "value": 4.992378,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "incremental_build_100",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_100_cps": {
+      "value": 20.030534546863237,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "incremental_build_100",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_100_rss": {
+      "value": 429.48,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "incremental_build_100",
+      "subgroup": "incremental_build"
+    },
+    "noop_build_100": {
+      "value": 4.540667,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "noop_build_100",
+      "subgroup": "noop_build"
+    },
+    "noop_build_100_rss": {
+      "value": 387.234,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "noop_build_100",
+      "subgroup": "noop_build"
+    },
+    "clean_build_1000": {
+      "value": 6.454594,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "clean_build_1000",
+      "subgroup": "clean_build"
+    },
+    "clean_build_1000_cps": {
+      "value": 154.92841222856154,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "clean_build_1000",
+      "subgroup": "clean_build"
+    },
+    "clean_build_1000_rss": {
+      "value": 466.047,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "clean_build_1000",
+      "subgroup": "clean_build"
+    },
+    "incremental_build_1000": {
+      "value": 5.440404,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "incremental_build_1000",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_1000_cps": {
+      "value": 183.80987882517547,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "incremental_build_1000",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_1000_rss": {
+      "value": 431.441,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "incremental_build_1000",
+      "subgroup": "incremental_build"
+    },
+    "noop_build_1000": {
+      "value": 4.642528,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "noop_build_1000",
+      "subgroup": "noop_build"
+    },
+    "noop_build_1000_rss": {
+      "value": 404.805,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "noop_build_1000",
+      "subgroup": "noop_build"
+    },
+    "clean_build_10000": {
+      "value": 11.787088,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "clean_build_10000",
+      "subgroup": "clean_build"
+    },
+    "clean_build_10000_cps": {
+      "value": 848.3859626737325,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "clean_build_10000",
+      "subgroup": "clean_build"
+    },
+    "clean_build_10000_rss": {
+      "value": 682.898,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "clean_build_10000",
+      "subgroup": "clean_build"
+    },
+    "incremental_build_10000": {
+      "value": 7.65206,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "incremental_build_10000",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_10000_cps": {
+      "value": 1306.8376358784433,
+      "unit": "classes/s",
+      "direction": "higher_is_better",
+      "group": "incremental_build_10000",
+      "subgroup": "incremental_build"
+    },
+    "incremental_build_10000_rss": {
+      "value": 522.848,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "incremental_build_10000",
+      "subgroup": "incremental_build"
+    },
+    "noop_build_10000": {
+      "value": 5.294417,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "noop_build_10000",
+      "subgroup": "noop_build"
+    },
+    "noop_build_10000_rss": {
+      "value": 472.461,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "noop_build_10000",
+      "subgroup": "noop_build"
+    },
+    "upstream_multiproject_build": {
+      "value": 10.72974,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_multiproject_build",
+      "subgroup": "upstream_multiproject"
+    },
+    "upstream_multiproject_build_rss": {
+      "value": 428.969,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_multiproject_build",
+      "subgroup": "upstream_multiproject"
+    }
+  }
+}
