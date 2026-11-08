@@ -1,0 +1,1375 @@
+{
+  "software": "perl",
+  "category": "Toolchain",
+  "version": "5.44.0",
+  "architecture": "x86_64",
+  "run_id": "42525665517-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-08T21:34:20Z",
+    "category": "Toolchain",
+    "software": "perl",
+    "requested_version": "5.44.0",
+    "actual_version": "5.44.0",
+    "architecture": "x86_64",
+    "run_id": "42525665517-1"
+  },
+  "parameters": {
+    "benchmark_result": {
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+      "matrix": [
+        "arith_int_small",
+        "arith_int_large",
+        "arith_float_small",
+        "arith_float_large",
+        "string_concat_small",
+        "string_concat_large",
+        "regex_subst_small",
+        "regex_subst_large",
+        "hash_ops_small",
+        "hash_ops_large",
+        "array_sort_small",
+        "array_sort_large",
+        "sub_calls_small",
+        "sub_calls_large",
+        "upstream_benchmark"
+      ],
+      "dimensions": [
+        "calls",
+        "compute",
+        "hashing",
+        "sorting",
+        "strings",
+        "upstream"
+      ],
+      "scenario_details": [
+        {
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "2000000",
+          "check": "int",
+          "expected": "794992328",
+          "tolerance": null,
+          "workload": "integer add/multiply/modulo loop, 2M iterations"
+        },
+        {
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "8000000",
+          "check": "int",
+          "expected": "179965187",
+          "tolerance": null,
+          "workload": "integer add/multiply/modulo loop, 8M iterations"
+        },
+        {
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "2000000",
+          "check": "float",
+          "expected": "287600047361.493164062500",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/add loop, 2M iterations"
+        },
+        {
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "8000000",
+          "check": "float",
+          "expected": "4586514088935.879882812500",
+          "tolerance": "1e-09",
+          "workload": "sqrt/divide/add loop, 8M iterations"
+        },
+        {
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "200000",
+          "check": "int",
+          "expected": "3088895",
+          "tolerance": null,
+          "workload": "formatted string concatenation, 200k appends"
+        },
+        {
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "800000",
+          "check": "int",
+          "expected": "12688895",
+          "tolerance": null,
+          "workload": "formatted string concatenation, 800k appends"
+        },
+        {
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "20000",
+          "check": "int",
+          "expected": "40000",
+          "tolerance": null,
+          "workload": "regex substitution over 20k generated lines"
+        },
+        {
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "80000",
+          "check": "int",
+          "expected": "160000",
+          "tolerance": null,
+          "workload": "regex substitution over 80k generated lines"
+        },
+        {
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "200000",
+          "check": "int",
+          "expected": "233324",
+          "tolerance": null,
+          "workload": "string hash insert/lookup/delete, 200k keys"
+        },
+        {
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "800000",
+          "check": "int",
+          "expected": "933174",
+          "tolerance": null,
+          "workload": "string hash insert/lookup/delete, 800k keys"
+        },
+        {
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "100000",
+          "check": "int",
+          "expected": "1499120",
+          "tolerance": null,
+          "workload": "LCG integer array numeric sort, 100k values"
+        },
+        {
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "400000",
+          "check": "int",
+          "expected": "1497949",
+          "tolerance": null,
+          "workload": "LCG integer array numeric sort, 400k values"
+        },
+        {
+          "scenario": "sub_calls_small",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "2000000",
+          "check": "int",
+          "expected": "95998893",
+          "tolerance": null,
+          "workload": "two argument subroutine calls, 2M calls"
+        },
+        {
+          "scenario": "sub_calls_large",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "8000000",
+          "check": "int",
+          "expected": "383999197",
+          "tolerance": null,
+          "workload": "two argument subroutine calls, 8M calls"
+        },
+        {
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "perl_script",
+          "target": "bench.pl",
+          "scale": "2",
+          "check": "int",
+          "expected": "2",
+          "tolerance": null,
+          "workload": "Perl core Benchmark module timethese report"
+        }
+      ]
+    }
+  },
+  "parameter_signature": "719830530554e2ff2412456d9de5afb66fe5ca97adcd2578c9cea878457c548b",
+  "test_tools": {
+    "perl": {
+      "version": "5.44.0"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-08T21:32:26Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 8 nodes (0-7)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215\nnode 0 size: 192622 MB\nnode 0 free: 61980 MB\nnode 1 cpus: 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239\nnode 1 size: 193523 MB\nnode 1 free: 140396 MB\nnode 2 cpus: 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263\nnode 2 size: 193523 MB\nnode 2 free: 167926 MB\nnode 3 cpus: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 3 size: 193523 MB\nnode 3 free: 166219 MB\nnode 4 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311\nnode 4 size: 193523 MB\nnode 4 free: 134461 MB\nnode 5 cpus: 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335\nnode 5 size: 193481 MB\nnode 5 free: 159722 MB\nnode 6 cpus: 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359\nnode 6 size: 193523 MB\nnode 6 free: 169146 MB\nnode 7 cpus: 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 7 size: 193455 MB\nnode 7 free: 163498 MB\nnode distances:\nnode   0   1   2   3   4   5   6   7 \n  0:  10  12  12  12  32  32  32  32 \n  1:  12  10  12  12  32  32  32  32 \n  2:  12  12  10  12  32  32  32  32 \n  3:  12  12  12  10  32  32  32  32 \n  4:  32  32  32  32  10  12  12  12 \n  5:  32  32  32  32  12  10  12  12 \n  6:  32  32  32  32  12  12  10  12 \n  7:  32  32  32  32  12  12  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-08T21:32:26Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 198435082240 1219863048192 14777667584 226793705472 1423899062272\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-08T21:35:32Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 199098970112 1218794315776 14779244544 227199258624 1423235174400\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "config": {
+        "configure": "Configure -des -Dprefix=<install> -Dman1dir=none -Dman3dir=none -Dcc=gcc",
+        "jobs": 4,
+        "source_sha256": "3b855066b92491cb40e86affb1ca57d1a388aa43e51b91c7806a32c2f65f96c3"
+      }
+    },
+    "raw_output": {
+      "path": "raw-output.log",
+      "size": 10887
+    },
+    "benchmark_result": {
+      "software": "perl",
+      "version": "5.44.0",
+      "architecture": "x86_64",
+      "variant": "base",
+      "generated_at": "2026-11-08T21:35:02Z",
+      "scenarios": [
+        "arith_int_small",
+        "arith_int_large",
+        "arith_float_small",
+        "arith_float_large",
+        "string_concat_small",
+        "string_concat_large",
+        "regex_subst_small",
+        "regex_subst_large",
+        "hash_ops_small",
+        "hash_ops_large",
+        "array_sort_small",
+        "array_sort_large",
+        "sub_calls_small",
+        "sub_calls_large",
+        "upstream_benchmark"
+      ],
+      "results": {
+        "arith_int_small": {
+          "source_name": "arith_int_small",
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.114693,
+          "samples": [
+            0.114738,
+            0.11469,
+            0.114735,
+            0.114693,
+            0.11467
+          ],
+          "median": 0.114693,
+          "min": 0.11467,
+          "max": 0.114738,
+          "mean": 0.114705,
+          "stdev": 3e-05,
+          "warmup_wall_seconds": 0.114663,
+          "checksum": 794992328
+        },
+        "arith_int_small_rss": {
+          "source_name": "arith_int_small_rss",
+          "scenario": "arith_int_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.527,
+          "samples": [
+            6.473,
+            6.531,
+            6.469,
+            6.527,
+            6.531
+          ],
+          "median": 6.527,
+          "min": 6.469,
+          "max": 6.531,
+          "mean": 6.5062,
+          "stdev": 0.032206,
+          "warmup_rss_mib": 6.492
+        },
+        "arith_int_large": {
+          "source_name": "arith_int_large",
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.415361,
+          "samples": [
+            0.415416,
+            0.415264,
+            0.415361,
+            0.415367,
+            0.415281
+          ],
+          "median": 0.415361,
+          "min": 0.415264,
+          "max": 0.415416,
+          "mean": 0.415338,
+          "stdev": 6.4e-05,
+          "warmup_wall_seconds": 0.465631,
+          "checksum": 179965187
+        },
+        "arith_int_large_rss": {
+          "source_name": "arith_int_large_rss",
+          "scenario": "arith_int_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.41,
+          "samples": [
+            6.402,
+            6.508,
+            6.41,
+            6.484,
+            6.402
+          ],
+          "median": 6.41,
+          "min": 6.402,
+          "max": 6.508,
+          "mean": 6.4412,
+          "stdev": 0.050845,
+          "warmup_rss_mib": 6.523
+        },
+        "arith_float_small": {
+          "source_name": "arith_float_small",
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.164809,
+          "samples": [
+            0.164747,
+            0.164809,
+            0.164783,
+            0.164908,
+            0.16484
+          ],
+          "median": 0.164809,
+          "min": 0.164747,
+          "max": 0.164908,
+          "mean": 0.164817,
+          "stdev": 6.1e-05,
+          "warmup_wall_seconds": 0.164943,
+          "checksum": 287600047361.49316
+        },
+        "arith_float_small_rss": {
+          "source_name": "arith_float_small_rss",
+          "scenario": "arith_float_small",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.449,
+          "samples": [
+            6.523,
+            6.449,
+            6.484,
+            6.402,
+            6.391
+          ],
+          "median": 6.449,
+          "min": 6.391,
+          "max": 6.523,
+          "mean": 6.4498,
+          "stdev": 0.055387,
+          "warmup_rss_mib": 6.5
+        },
+        "arith_float_large": {
+          "source_name": "arith_float_large",
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.465453,
+          "samples": [
+            0.465528,
+            0.465398,
+            0.465314,
+            0.465453,
+            0.46546
+          ],
+          "median": 0.465453,
+          "min": 0.465314,
+          "max": 0.465528,
+          "mean": 0.465431,
+          "stdev": 8e-05,
+          "warmup_wall_seconds": 0.465382,
+          "checksum": 4586514088935.88
+        },
+        "arith_float_large_rss": {
+          "source_name": "arith_float_large_rss",
+          "scenario": "arith_float_large",
+          "dimension": "compute",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.5,
+          "samples": [
+            6.465,
+            6.535,
+            6.469,
+            6.504,
+            6.5
+          ],
+          "median": 6.5,
+          "min": 6.465,
+          "max": 6.535,
+          "mean": 6.4946,
+          "stdev": 0.028641,
+          "warmup_rss_mib": 6.402
+        },
+        "string_concat_small": {
+          "source_name": "string_concat_small",
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.032532,
+          "samples": [
+            0.032532,
+            0.032585,
+            0.032508,
+            0.032413,
+            0.032556
+          ],
+          "median": 0.032532,
+          "min": 0.032413,
+          "max": 0.032585,
+          "mean": 0.032519,
+          "stdev": 6.6e-05,
+          "warmup_wall_seconds": 0.032501,
+          "checksum": 3088895
+        },
+        "string_concat_small_rss": {
+          "source_name": "string_concat_small_rss",
+          "scenario": "string_concat_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 9.461,
+          "samples": [
+            9.461,
+            9.449,
+            9.461,
+            9.59,
+            9.59
+          ],
+          "median": 9.461,
+          "min": 9.449,
+          "max": 9.59,
+          "mean": 9.5102,
+          "stdev": 0.073012,
+          "warmup_rss_mib": 9.457
+        },
+        "string_concat_large": {
+          "source_name": "string_concat_large",
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.064622,
+          "samples": [
+            0.064565,
+            0.064737,
+            0.064622,
+            0.064574,
+            0.064655
+          ],
+          "median": 0.064622,
+          "min": 0.064565,
+          "max": 0.064737,
+          "mean": 0.064631,
+          "stdev": 7e-05,
+          "warmup_wall_seconds": 0.064519,
+          "checksum": 12688895
+        },
+        "string_concat_large_rss": {
+          "source_name": "string_concat_large_rss",
+          "scenario": "string_concat_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 18.621,
+          "samples": [
+            18.738,
+            18.613,
+            18.66,
+            18.609,
+            18.621
+          ],
+          "median": 18.621,
+          "min": 18.609,
+          "max": 18.738,
+          "mean": 18.6482,
+          "stdev": 0.054127,
+          "warmup_rss_mib": 18.664
+        },
+        "regex_subst_small": {
+          "source_name": "regex_subst_small",
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "20000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.01642,
+          "samples": [
+            0.016442,
+            0.016336,
+            0.016397,
+            0.01642,
+            0.016421
+          ],
+          "median": 0.01642,
+          "min": 0.016336,
+          "max": 0.016442,
+          "mean": 0.016403,
+          "stdev": 4.1e-05,
+          "warmup_wall_seconds": 0.016376,
+          "checksum": 40000
+        },
+        "regex_subst_small_rss": {
+          "source_name": "regex_subst_small_rss",
+          "scenario": "regex_subst_small",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "20000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 7.246,
+          "samples": [
+            7.293,
+            7.25,
+            7.164,
+            7.246,
+            7.227
+          ],
+          "median": 7.246,
+          "min": 7.164,
+          "max": 7.293,
+          "mean": 7.236,
+          "stdev": 0.046931,
+          "warmup_rss_mib": 7.164
+        },
+        "regex_subst_large": {
+          "source_name": "regex_subst_large",
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "80000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.032498,
+          "samples": [
+            0.032498,
+            0.032617,
+            0.032479,
+            0.032516,
+            0.032483
+          ],
+          "median": 0.032498,
+          "min": 0.032479,
+          "max": 0.032617,
+          "mean": 0.032519,
+          "stdev": 5.7e-05,
+          "warmup_wall_seconds": 0.032565,
+          "checksum": 160000
+        },
+        "regex_subst_large_rss": {
+          "source_name": "regex_subst_large_rss",
+          "scenario": "regex_subst_large",
+          "dimension": "strings",
+          "runner": "perl_script",
+          "scale": "80000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 9.5,
+          "samples": [
+            9.469,
+            9.547,
+            9.5,
+            9.449,
+            9.535
+          ],
+          "median": 9.5,
+          "min": 9.449,
+          "max": 9.547,
+          "mean": 9.5,
+          "stdev": 0.041821,
+          "warmup_rss_mib": 9.477
+        },
+        "hash_ops_small": {
+          "source_name": "hash_ops_small",
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "scale": "200000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.164838,
+          "samples": [
+            0.164695,
+            0.16472,
+            0.16485,
+            0.164884,
+            0.164838
+          ],
+          "median": 0.164838,
+          "min": 0.164695,
+          "max": 0.164884,
+          "mean": 0.164797,
+          "stdev": 8.4e-05,
+          "warmup_wall_seconds": 0.16473,
+          "checksum": 233324
+        },
+        "hash_ops_small_rss": {
+          "source_name": "hash_ops_small_rss",
+          "scenario": "hash_ops_small",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "scale": "200000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 46.656,
+          "samples": [
+            46.555,
+            46.609,
+            46.656,
+            46.688,
+            46.664
+          ],
+          "median": 46.656,
+          "min": 46.555,
+          "max": 46.688,
+          "mean": 46.6344,
+          "stdev": 0.052833,
+          "warmup_rss_mib": 46.562
+        },
+        "hash_ops_large": {
+          "source_name": "hash_ops_large",
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "scale": "800000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.866262,
+          "samples": [
+            0.866429,
+            0.866079,
+            0.86654,
+            0.866262,
+            0.865881
+          ],
+          "median": 0.866262,
+          "min": 0.865881,
+          "max": 0.86654,
+          "mean": 0.866238,
+          "stdev": 0.000265,
+          "warmup_wall_seconds": 0.866135,
+          "checksum": 933174
+        },
+        "hash_ops_large_rss": {
+          "source_name": "hash_ops_large_rss",
+          "scenario": "hash_ops_large",
+          "dimension": "hashing",
+          "runner": "perl_script",
+          "scale": "800000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 167.238,
+          "samples": [
+            167.191,
+            167.238,
+            167.25,
+            167.176,
+            167.242
+          ],
+          "median": 167.238,
+          "min": 167.176,
+          "max": 167.25,
+          "mean": 167.2194,
+          "stdev": 0.033478,
+          "warmup_rss_mib": 167.312
+        },
+        "array_sort_small": {
+          "source_name": "array_sort_small",
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "scale": "100000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.064615,
+          "samples": [
+            0.064638,
+            0.064523,
+            0.064615,
+            0.064643,
+            0.064561
+          ],
+          "median": 0.064615,
+          "min": 0.064523,
+          "max": 0.064643,
+          "mean": 0.064596,
+          "stdev": 5.2e-05,
+          "warmup_wall_seconds": 0.064557,
+          "checksum": 1499120
+        },
+        "array_sort_small_rss": {
+          "source_name": "array_sort_small_rss",
+          "scenario": "array_sort_small",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "scale": "100000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 14.289,
+          "samples": [
+            14.191,
+            14.289,
+            14.301,
+            14.32,
+            14.191
+          ],
+          "median": 14.289,
+          "min": 14.191,
+          "max": 14.32,
+          "mean": 14.2584,
+          "stdev": 0.062512,
+          "warmup_rss_mib": 14.184
+        },
+        "array_sort_large": {
+          "source_name": "array_sort_large",
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "scale": "400000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.164791,
+          "samples": [
+            0.164833,
+            0.164756,
+            0.164776,
+            0.164791,
+            0.164792
+          ],
+          "median": 0.164791,
+          "min": 0.164756,
+          "max": 0.164833,
+          "mean": 0.16479,
+          "stdev": 2.8e-05,
+          "warmup_wall_seconds": 0.164789,
+          "checksum": 1497949
+        },
+        "array_sort_large_rss": {
+          "source_name": "array_sort_large_rss",
+          "scenario": "array_sort_large",
+          "dimension": "sorting",
+          "runner": "perl_script",
+          "scale": "400000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 37.66,
+          "samples": [
+            37.645,
+            37.668,
+            37.598,
+            37.688,
+            37.66
+          ],
+          "median": 37.66,
+          "min": 37.598,
+          "max": 37.688,
+          "mean": 37.6518,
+          "stdev": 0.033841,
+          "warmup_rss_mib": 37.723
+        },
+        "sub_calls_small": {
+          "source_name": "sub_calls_small",
+          "scenario": "sub_calls_small",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.264962,
+          "samples": [
+            0.265004,
+            0.265031,
+            0.264958,
+            0.264955,
+            0.264962
+          ],
+          "median": 0.264962,
+          "min": 0.264955,
+          "max": 0.265031,
+          "mean": 0.264982,
+          "stdev": 3.4e-05,
+          "warmup_wall_seconds": 0.265059,
+          "checksum": 95998893
+        },
+        "sub_calls_small_rss": {
+          "source_name": "sub_calls_small_rss",
+          "scenario": "sub_calls_small",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "scale": "2000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.492,
+          "samples": [
+            6.465,
+            6.527,
+            6.527,
+            6.488,
+            6.492
+          ],
+          "median": 6.492,
+          "min": 6.465,
+          "max": 6.527,
+          "mean": 6.4998,
+          "stdev": 0.026883,
+          "warmup_rss_mib": 6.453
+        },
+        "sub_calls_large": {
+          "source_name": "sub_calls_large",
+          "scenario": "sub_calls_large",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 1.016621,
+          "samples": [
+            1.066646,
+            1.016497,
+            1.016542,
+            1.016735,
+            1.016621
+          ],
+          "median": 1.016621,
+          "min": 1.016497,
+          "max": 1.066646,
+          "mean": 1.026608,
+          "stdev": 0.022382,
+          "warmup_wall_seconds": 1.016577,
+          "checksum": 383999197
+        },
+        "sub_calls_large_rss": {
+          "source_name": "sub_calls_large_rss",
+          "scenario": "sub_calls_large",
+          "dimension": "calls",
+          "runner": "perl_script",
+          "scale": "8000000",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 6.469,
+          "samples": [
+            6.484,
+            6.453,
+            6.48,
+            6.469,
+            6.398
+          ],
+          "median": 6.469,
+          "min": 6.398,
+          "max": 6.484,
+          "mean": 6.4568,
+          "stdev": 0.034996,
+          "warmup_rss_mib": 6.484
+        },
+        "upstream_benchmark": {
+          "source_name": "upstream_benchmark",
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "perl_script",
+          "scale": "2",
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 1.267218,
+          "samples": [
+            1.2671,
+            1.467563,
+            1.517516,
+            1.267218,
+            1.267044
+          ],
+          "median": 1.267218,
+          "min": 1.267044,
+          "max": 1.517516,
+          "mean": 1.357288,
+          "stdev": 0.124724,
+          "warmup_wall_seconds": 1.467745,
+          "checksum": 2
+        },
+        "upstream_benchmark_rss": {
+          "source_name": "upstream_benchmark_rss",
+          "scenario": "upstream_benchmark",
+          "dimension": "upstream",
+          "runner": "perl_script",
+          "scale": "2",
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 15.836,
+          "samples": [
+            15.863,
+            15.863,
+            15.836,
+            15.723,
+            15.797
+          ],
+          "median": 15.836,
+          "min": 15.723,
+          "max": 15.863,
+          "mean": 15.8164,
+          "stdev": 0.058795,
+          "warmup_rss_mib": 15.734
+        }
+      },
+      "parameters": {
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "statistics": "median of independent repetitions; samples/min/max/mean/stdev retained",
+        "matrix": [
+          "arith_int_small",
+          "arith_int_large",
+          "arith_float_small",
+          "arith_float_large",
+          "string_concat_small",
+          "string_concat_large",
+          "regex_subst_small",
+          "regex_subst_large",
+          "hash_ops_small",
+          "hash_ops_large",
+          "array_sort_small",
+          "array_sort_large",
+          "sub_calls_small",
+          "sub_calls_large",
+          "upstream_benchmark"
+        ],
+        "dimensions": [
+          "calls",
+          "compute",
+          "hashing",
+          "sorting",
+          "strings",
+          "upstream"
+        ],
+        "scenario_details": [
+          {
+            "scenario": "arith_int_small",
+            "dimension": "compute",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "2000000",
+            "check": "int",
+            "expected": "794992328",
+            "tolerance": null,
+            "workload": "integer add/multiply/modulo loop, 2M iterations"
+          },
+          {
+            "scenario": "arith_int_large",
+            "dimension": "compute",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "8000000",
+            "check": "int",
+            "expected": "179965187",
+            "tolerance": null,
+            "workload": "integer add/multiply/modulo loop, 8M iterations"
+          },
+          {
+            "scenario": "arith_float_small",
+            "dimension": "compute",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "2000000",
+            "check": "float",
+            "expected": "287600047361.493164062500",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/add loop, 2M iterations"
+          },
+          {
+            "scenario": "arith_float_large",
+            "dimension": "compute",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "8000000",
+            "check": "float",
+            "expected": "4586514088935.879882812500",
+            "tolerance": "1e-09",
+            "workload": "sqrt/divide/add loop, 8M iterations"
+          },
+          {
+            "scenario": "string_concat_small",
+            "dimension": "strings",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "200000",
+            "check": "int",
+            "expected": "3088895",
+            "tolerance": null,
+            "workload": "formatted string concatenation, 200k appends"
+          },
+          {
+            "scenario": "string_concat_large",
+            "dimension": "strings",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "800000",
+            "check": "int",
+            "expected": "12688895",
+            "tolerance": null,
+            "workload": "formatted string concatenation, 800k appends"
+          },
+          {
+            "scenario": "regex_subst_small",
+            "dimension": "strings",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "20000",
+            "check": "int",
+            "expected": "40000",
+            "tolerance": null,
+            "workload": "regex substitution over 20k generated lines"
+          },
+          {
+            "scenario": "regex_subst_large",
+            "dimension": "strings",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "80000",
+            "check": "int",
+            "expected": "160000",
+            "tolerance": null,
+            "workload": "regex substitution over 80k generated lines"
+          },
+          {
+            "scenario": "hash_ops_small",
+            "dimension": "hashing",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "200000",
+            "check": "int",
+            "expected": "233324",
+            "tolerance": null,
+            "workload": "string hash insert/lookup/delete, 200k keys"
+          },
+          {
+            "scenario": "hash_ops_large",
+            "dimension": "hashing",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "800000",
+            "check": "int",
+            "expected": "933174",
+            "tolerance": null,
+            "workload": "string hash insert/lookup/delete, 800k keys"
+          },
+          {
+            "scenario": "array_sort_small",
+            "dimension": "sorting",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "100000",
+            "check": "int",
+            "expected": "1499120",
+            "tolerance": null,
+            "workload": "LCG integer array numeric sort, 100k values"
+          },
+          {
+            "scenario": "array_sort_large",
+            "dimension": "sorting",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "400000",
+            "check": "int",
+            "expected": "1497949",
+            "tolerance": null,
+            "workload": "LCG integer array numeric sort, 400k values"
+          },
+          {
+            "scenario": "sub_calls_small",
+            "dimension": "calls",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "2000000",
+            "check": "int",
+            "expected": "95998893",
+            "tolerance": null,
+            "workload": "two argument subroutine calls, 2M calls"
+          },
+          {
+            "scenario": "sub_calls_large",
+            "dimension": "calls",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "8000000",
+            "check": "int",
+            "expected": "383999197",
+            "tolerance": null,
+            "workload": "two argument subroutine calls, 8M calls"
+          },
+          {
+            "scenario": "upstream_benchmark",
+            "dimension": "upstream",
+            "runner": "perl_script",
+            "target": "bench.pl",
+            "scale": "2",
+            "check": "int",
+            "expected": "2",
+            "tolerance": null,
+            "workload": "Perl core Benchmark module timethese report"
+          }
+        ]
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 180
+    }
+  },
+  "metrics": {
+    "arith_int_small": {
+      "value": 0.114693,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_int_small"
+    },
+    "arith_int_small_rss": {
+      "value": 6.527,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_int_small"
+    },
+    "arith_int_large": {
+      "value": 0.415361,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_int_large"
+    },
+    "arith_int_large_rss": {
+      "value": 6.41,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_int_large"
+    },
+    "arith_float_small": {
+      "value": 0.164809,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_float_small"
+    },
+    "arith_float_small_rss": {
+      "value": 6.449,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_float_small"
+    },
+    "arith_float_large": {
+      "value": 0.465453,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "arith_float_large"
+    },
+    "arith_float_large_rss": {
+      "value": 6.5,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "arith_float_large"
+    },
+    "string_concat_small": {
+      "value": 0.032532,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_concat_small"
+    },
+    "string_concat_small_rss": {
+      "value": 9.461,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_concat_small"
+    },
+    "string_concat_large": {
+      "value": 0.064622,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_concat_large"
+    },
+    "string_concat_large_rss": {
+      "value": 18.621,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_concat_large"
+    },
+    "regex_subst_small": {
+      "value": 0.01642,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "regex_subst_small"
+    },
+    "regex_subst_small_rss": {
+      "value": 7.246,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "regex_subst_small"
+    },
+    "regex_subst_large": {
+      "value": 0.032498,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "regex_subst_large"
+    },
+    "regex_subst_large_rss": {
+      "value": 9.5,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "regex_subst_large"
+    },
+    "hash_ops_small": {
+      "value": 0.164838,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "hash_ops_small"
+    },
+    "hash_ops_small_rss": {
+      "value": 46.656,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "hash_ops_small"
+    },
+    "hash_ops_large": {
+      "value": 0.866262,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "hash_ops_large"
+    },
+    "hash_ops_large_rss": {
+      "value": 167.238,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "hash_ops_large"
+    },
+    "array_sort_small": {
+      "value": 0.064615,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "array_sort_small"
+    },
+    "array_sort_small_rss": {
+      "value": 14.289,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "array_sort_small"
+    },
+    "array_sort_large": {
+      "value": 0.164791,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "array_sort_large"
+    },
+    "array_sort_large_rss": {
+      "value": 37.66,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "array_sort_large"
+    },
+    "sub_calls_small": {
+      "value": 0.264962,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sub_calls_small"
+    },
+    "sub_calls_small_rss": {
+      "value": 6.492,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "sub_calls_small"
+    },
+    "sub_calls_large": {
+      "value": 1.016621,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "sub_calls_large"
+    },
+    "sub_calls_large_rss": {
+      "value": 6.469,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "sub_calls_large"
+    },
+    "upstream_benchmark": {
+      "value": 1.267218,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_benchmark"
+    },
+    "upstream_benchmark_rss": {
+      "value": 15.836,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_benchmark"
+    }
+  }
+}
