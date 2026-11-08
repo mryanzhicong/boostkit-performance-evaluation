@@ -1,0 +1,1029 @@
+{
+  "benchmark": "brpc_upstream_rdma_performance_tcp",
+  "software": "brpc",
+  "version": "1.17.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-08T09:24:03Z",
+  "parameters": {
+    "variant": "base",
+    "official_entry": "example/rdma_performance/client.cpp",
+    "official_server": "example/rdma_performance/server.cpp",
+    "transport": "TCP (--use_rdma=false)",
+    "protocol": "baidu_std",
+    "connection_type": "single",
+    "server": "127.0.0.1:8003",
+    "server_bthread_concurrency": 32,
+    "max_inflight_attachment_bytes": 33554432,
+    "client_workloads": {
+      "0": {
+        "threads": 32,
+        "queue_depth": 32
+      },
+      "1024": {
+        "threads": 32,
+        "queue_depth": 32
+      },
+      "4096": {
+        "threads": 32,
+        "queue_depth": 32
+      },
+      "8192": {
+        "threads": 32,
+        "queue_depth": 32
+      },
+      "102400": {
+        "threads": 32,
+        "queue_depth": 10
+      },
+      "204800": {
+        "threads": 32,
+        "queue_depth": 5
+      },
+      "1048576": {
+        "threads": 32,
+        "queue_depth": 1
+      },
+      "8388608": {
+        "threads": 4,
+        "queue_depth": 1
+      }
+    },
+    "client_bthread_concurrency": 160,
+    "attachment_sizes": [
+      0,
+      1024,
+      4096,
+      8192,
+      102400,
+      204800,
+      1048576,
+      8388608
+    ],
+    "repetitions": 5,
+    "echo_attachment": true,
+    "test_seconds_per_run": 20
+  },
+  "results": {
+    "attachment_0B_avg_latency": {
+      "source_name": "attachment_0B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "avg_latency",
+      "samples": [
+        3213.0,
+        3308.0,
+        3321.0,
+        3334.0,
+        3322.0
+      ],
+      "repetitions": 5,
+      "value": 3299.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_0B_p90_latency": {
+      "source_name": "attachment_0B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p90_latency",
+      "samples": [
+        3857.0,
+        3980.0,
+        3991.0,
+        3957.0,
+        3948.0
+      ],
+      "repetitions": 5,
+      "value": 3946.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_0B_p99_latency": {
+      "source_name": "attachment_0B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p99_latency",
+      "samples": [
+        4610.0,
+        4662.0,
+        4669.0,
+        4601.0,
+        4604.0
+      ],
+      "repetitions": 5,
+      "value": 4629.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_0B_p999_latency": {
+      "source_name": "attachment_0B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p999_latency",
+      "samples": [
+        6176.0,
+        6117.0,
+        5655.0,
+        5190.0,
+        5988.0
+      ],
+      "repetitions": 5,
+      "value": 5825.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_0B_throughput": {
+      "source_name": "attachment_0B_throughput",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "throughput",
+      "samples": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "repetitions": 5,
+      "value": 0.0,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_0B_qps": {
+      "source_name": "attachment_0B_qps",
+      "source_field": "client_stdout",
+      "group": "0B attachment",
+      "attachment_size": 0,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "qps",
+      "samples": [
+        399000.0,
+        309000.0,
+        310000.0,
+        309000.0,
+        310000.0
+      ],
+      "repetitions": 5,
+      "value": 327400.0,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_1024B_avg_latency": {
+      "source_name": "attachment_1024B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "avg_latency",
+      "samples": [
+        5089.0,
+        5113.0,
+        5092.0,
+        5199.0,
+        5254.0
+      ],
+      "repetitions": 5,
+      "value": 5149.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1024B_p90_latency": {
+      "source_name": "attachment_1024B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p90_latency",
+      "samples": [
+        6335.0,
+        6510.0,
+        6443.0,
+        6484.0,
+        6550.0
+      ],
+      "repetitions": 5,
+      "value": 6464.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1024B_p99_latency": {
+      "source_name": "attachment_1024B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p99_latency",
+      "samples": [
+        7316.0,
+        7406.0,
+        7286.0,
+        7216.0,
+        7467.0
+      ],
+      "repetitions": 5,
+      "value": 7338.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1024B_p999_latency": {
+      "source_name": "attachment_1024B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p999_latency",
+      "samples": [
+        8240.0,
+        9434.0,
+        7516.0,
+        7971.0,
+        9031.0
+      ],
+      "repetitions": 5,
+      "value": 8438.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1024B_throughput": {
+      "source_name": "attachment_1024B_throughput",
+      "source_field": "client_stdout",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "throughput",
+      "samples": [
+        197.414,
+        194.153,
+        194.407,
+        192.787,
+        191.734
+      ],
+      "repetitions": 5,
+      "value": 194.09900000000002,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_1024B_qps": {
+      "source_name": "attachment_1024B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "1024B attachment",
+      "attachment_size": 1024,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "qps",
+      "samples": [
+        202151.936,
+        198812.672,
+        199072.768,
+        197413.888,
+        196335.616
+      ],
+      "repetitions": 5,
+      "value": 198757.37600000002,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_4096B_avg_latency": {
+      "source_name": "attachment_4096B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "avg_latency",
+      "samples": [
+        7740.0,
+        7820.0,
+        7606.0,
+        7755.0,
+        7885.0
+      ],
+      "repetitions": 5,
+      "value": 7761.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_4096B_p90_latency": {
+      "source_name": "attachment_4096B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p90_latency",
+      "samples": [
+        9208.0,
+        9294.0,
+        9081.0,
+        9274.0,
+        9266.0
+      ],
+      "repetitions": 5,
+      "value": 9224.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_4096B_p99_latency": {
+      "source_name": "attachment_4096B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p99_latency",
+      "samples": [
+        10342.0,
+        10241.0,
+        9887.0,
+        10196.0,
+        10205.0
+      ],
+      "repetitions": 5,
+      "value": 10174.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_4096B_p999_latency": {
+      "source_name": "attachment_4096B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p999_latency",
+      "samples": [
+        11431.0,
+        11023.0,
+        11119.0,
+        10889.0,
+        11825.0
+      ],
+      "repetitions": 5,
+      "value": 11257.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_4096B_throughput": {
+      "source_name": "attachment_4096B_throughput",
+      "source_field": "client_stdout",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "throughput",
+      "samples": [
+        508.974,
+        510.48,
+        517.715,
+        513.092,
+        506.885
+      ],
+      "repetitions": 5,
+      "value": 511.4291999999999,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_4096B_qps": {
+      "source_name": "attachment_4096B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "4096B attachment",
+      "attachment_size": 4096,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "qps",
+      "samples": [
+        130297.344,
+        130682.88,
+        132535.04,
+        131351.552,
+        129762.56
+      ],
+      "repetitions": 5,
+      "value": 130925.87519999998,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_8192B_avg_latency": {
+      "source_name": "attachment_8192B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "avg_latency",
+      "samples": [
+        10536.0,
+        10658.0,
+        10611.0,
+        10499.0,
+        10510.0
+      ],
+      "repetitions": 5,
+      "value": 10562.8,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8192B_p90_latency": {
+      "source_name": "attachment_8192B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p90_latency",
+      "samples": [
+        12427.0,
+        12614.0,
+        12563.0,
+        12246.0,
+        12411.0
+      ],
+      "repetitions": 5,
+      "value": 12452.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8192B_p99_latency": {
+      "source_name": "attachment_8192B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p99_latency",
+      "samples": [
+        13662.0,
+        14102.0,
+        13810.0,
+        13347.0,
+        13522.0
+      ],
+      "repetitions": 5,
+      "value": 13688.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8192B_p999_latency": {
+      "source_name": "attachment_8192B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "p999_latency",
+      "samples": [
+        14098.0,
+        16531.0,
+        14383.0,
+        37643.0,
+        28932.0
+      ],
+      "repetitions": 5,
+      "value": 22317.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8192B_throughput": {
+      "source_name": "attachment_8192B_throughput",
+      "source_field": "client_stdout",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "throughput",
+      "samples": [
+        753.235,
+        746.29,
+        748.739,
+        755.937,
+        754.657
+      ],
+      "repetitions": 5,
+      "value": 751.7716,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_8192B_qps": {
+      "source_name": "attachment_8192B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "8192B attachment",
+      "attachment_size": 8192,
+      "client_threads": 32,
+      "queue_depth": 32,
+      "measurement": "qps",
+      "samples": [
+        96414.08,
+        95525.12,
+        95838.592,
+        96759.936,
+        96596.096
+      ],
+      "repetitions": 5,
+      "value": 96226.7648,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_102400B_avg_latency": {
+      "source_name": "attachment_102400B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "avg_latency",
+      "samples": [
+        29664.0,
+        24567.0,
+        25392.0,
+        24582.0,
+        25506.0
+      ],
+      "repetitions": 5,
+      "value": 25942.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_102400B_p90_latency": {
+      "source_name": "attachment_102400B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "p90_latency",
+      "samples": [
+        34285.0,
+        28936.0,
+        29543.0,
+        28908.0,
+        29594.0
+      ],
+      "repetitions": 5,
+      "value": 30253.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_102400B_p99_latency": {
+      "source_name": "attachment_102400B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "p99_latency",
+      "samples": [
+        37253.0,
+        31848.0,
+        32224.0,
+        31793.0,
+        32290.0
+      ],
+      "repetitions": 5,
+      "value": 33081.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_102400B_p999_latency": {
+      "source_name": "attachment_102400B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "p999_latency",
+      "samples": [
+        39365.0,
+        46068.0,
+        34817.0,
+        54051.0,
+        34282.0
+      ],
+      "repetitions": 5,
+      "value": 41716.6,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_102400B_throughput": {
+      "source_name": "attachment_102400B_throughput",
+      "source_field": "client_stdout",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "throughput",
+      "samples": [
+        1091.69,
+        1169.43,
+        1244.55,
+        1264.36,
+        1238.93
+      ],
+      "repetitions": 5,
+      "value": 1201.792,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_102400B_qps": {
+      "source_name": "attachment_102400B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "102400B attachment",
+      "attachment_size": 102400,
+      "client_threads": 32,
+      "queue_depth": 10,
+      "measurement": "qps",
+      "samples": [
+        11178.9056,
+        11974.9632,
+        12744.192,
+        12947.0464,
+        12686.6432
+      ],
+      "repetitions": 5,
+      "value": 12306.35008,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_204800B_avg_latency": {
+      "source_name": "attachment_204800B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "avg_latency",
+      "samples": [
+        24907.0,
+        27173.0,
+        24656.0,
+        24244.0,
+        25379.0
+      ],
+      "repetitions": 5,
+      "value": 25271.8,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_204800B_p90_latency": {
+      "source_name": "attachment_204800B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "p90_latency",
+      "samples": [
+        28338.0,
+        32254.0,
+        28627.0,
+        28049.0,
+        29222.0
+      ],
+      "repetitions": 5,
+      "value": 29298.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_204800B_p99_latency": {
+      "source_name": "attachment_204800B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "p99_latency",
+      "samples": [
+        31542.0,
+        35373.0,
+        32473.0,
+        31115.0,
+        32383.0
+      ],
+      "repetitions": 5,
+      "value": 32577.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_204800B_p999_latency": {
+      "source_name": "attachment_204800B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "p999_latency",
+      "samples": [
+        33325.0,
+        36920.0,
+        35438.0,
+        33353.0,
+        34371.0
+      ],
+      "repetitions": 5,
+      "value": 34681.4,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_204800B_throughput": {
+      "source_name": "attachment_204800B_throughput",
+      "source_field": "client_stdout",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "throughput",
+      "samples": [
+        1217.31,
+        1088.22,
+        1255.01,
+        1282.13,
+        1234.62
+      ],
+      "repetitions": 5,
+      "value": 1215.458,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_204800B_qps": {
+      "source_name": "attachment_204800B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "204800B attachment",
+      "attachment_size": 204800,
+      "client_threads": 32,
+      "queue_depth": 5,
+      "measurement": "qps",
+      "samples": [
+        6232.6272,
+        5571.6864000000005,
+        6425.6512,
+        6564.5056,
+        6321.2544
+      ],
+      "repetitions": 5,
+      "value": 6223.1449600000005,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_1048576B_avg_latency": {
+      "source_name": "attachment_1048576B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "avg_latency",
+      "samples": [
+        33758.0,
+        30306.0,
+        30180.0,
+        30876.0,
+        33761.0
+      ],
+      "repetitions": 5,
+      "value": 31776.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1048576B_p90_latency": {
+      "source_name": "attachment_1048576B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "p90_latency",
+      "samples": [
+        37307.0,
+        40676.0,
+        38891.0,
+        40678.0,
+        37543.0
+      ],
+      "repetitions": 5,
+      "value": 39019.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1048576B_p99_latency": {
+      "source_name": "attachment_1048576B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "p99_latency",
+      "samples": [
+        39578.0,
+        46244.0,
+        45142.0,
+        46036.0,
+        40865.0
+      ],
+      "repetitions": 5,
+      "value": 43573.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1048576B_p999_latency": {
+      "source_name": "attachment_1048576B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "p999_latency",
+      "samples": [
+        41813.0,
+        47871.0,
+        48998.0,
+        49979.0,
+        43075.0
+      ],
+      "repetitions": 5,
+      "value": 46347.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_1048576B_throughput": {
+      "source_name": "attachment_1048576B_throughput",
+      "source_field": "client_stdout",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "throughput",
+      "samples": [
+        956.294,
+        1027.05,
+        1060.72,
+        1021.1,
+        996.572
+      ],
+      "repetitions": 5,
+      "value": 1012.3471999999999,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_1048576B_qps": {
+      "source_name": "attachment_1048576B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "1048576B attachment",
+      "attachment_size": 1048576,
+      "client_threads": 32,
+      "queue_depth": 1,
+      "measurement": "qps",
+      "samples": [
+        956.294,
+        1027.05,
+        1060.72,
+        1021.1,
+        996.572
+      ],
+      "repetitions": 5,
+      "value": 1012.3471999999999,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_8388608B_avg_latency": {
+      "source_name": "attachment_8388608B_avg_latency",
+      "source_field": "client_stdout",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "avg_latency",
+      "samples": [
+        25116.0,
+        26371.0,
+        25710.0,
+        26764.0,
+        26964.0
+      ],
+      "repetitions": 5,
+      "value": 26185.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8388608B_p90_latency": {
+      "source_name": "attachment_8388608B_p90_latency",
+      "source_field": "client_stdout",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "p90_latency",
+      "samples": [
+        31285.0,
+        32732.0,
+        32204.0,
+        33421.0,
+        34469.0
+      ],
+      "repetitions": 5,
+      "value": 32822.2,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8388608B_p99_latency": {
+      "source_name": "attachment_8388608B_p99_latency",
+      "source_field": "client_stdout",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "p99_latency",
+      "samples": [
+        38461.0,
+        39683.0,
+        39756.0,
+        41786.0,
+        40678.0
+      ],
+      "repetitions": 5,
+      "value": 40072.8,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8388608B_p999_latency": {
+      "source_name": "attachment_8388608B_p999_latency",
+      "source_field": "client_stdout",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "p999_latency",
+      "samples": [
+        50135.0,
+        44244.0,
+        44486.0,
+        48080.0,
+        45500.0
+      ],
+      "repetitions": 5,
+      "value": 46489.0,
+      "unit": "us",
+      "direction": "lower_is_better"
+    },
+    "attachment_8388608B_throughput": {
+      "source_name": "attachment_8388608B_throughput",
+      "source_field": "client_stdout",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "throughput",
+      "samples": [
+        1217.45,
+        1176.86,
+        1173.43,
+        1159.22,
+        1165.13
+      ],
+      "repetitions": 5,
+      "value": 1178.4180000000001,
+      "unit": "MB/s",
+      "direction": "higher_is_better"
+    },
+    "attachment_8388608B_qps": {
+      "source_name": "attachment_8388608B_qps",
+      "source_field": "client_stdout.Throughput",
+      "group": "8388608B attachment",
+      "attachment_size": 8388608,
+      "client_threads": 4,
+      "queue_depth": 1,
+      "measurement": "qps",
+      "samples": [
+        152.18125,
+        147.1075,
+        146.67875,
+        144.9025,
+        145.64125
+      ],
+      "repetitions": 5,
+      "value": 147.30225000000002,
+      "unit": "requests/s",
+      "direction": "higher_is_better"
+    }
+  }
+}
