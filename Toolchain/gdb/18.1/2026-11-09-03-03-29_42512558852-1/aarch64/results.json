@@ -1,0 +1,695 @@
+{
+  "benchmark": "gdb_workload_matrix",
+  "software": "gdb",
+  "version": "18.1",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-08T19:02:15Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "statistic": "median of independent repetitions",
+    "offline": true,
+    "gdb_version": "18.1",
+    "gdb_source_sha256": "cd9fc3fe2b47743840e42c1592d3d87f8302eb18639c0b8b4ba0898002e2348f",
+    "gdb_source_bytes": 22158720,
+    "configure_options": [
+      "--prefix=<isolated prefix>",
+      "--with-python=python3",
+      "--disable-binutils",
+      "--disable-gas",
+      "--disable-ld",
+      "--disable-gprof",
+      "--disable-gold",
+      "--disable-sim",
+      "--disable-tui",
+      "--without-guile",
+      "--without-intel-pt",
+      "--with-system-gmp",
+      "--with-system-mpfr",
+      "--disable-nls"
+    ],
+    "makeinfo_skipped": true,
+    "fixture_cflags": "-g -O0 -fno-omit-frame-pointer -fno-inline -fno-optimize-sibling-calls",
+    "fixtures": {
+      "breakpoints.cmd": {
+        "sha256": "32fb57db8cb9314c809849172eb6685a1e98328957e967a43e63002d1280fc6b",
+        "bytes": 3040
+      },
+      "deep_2000.c": {
+        "sha256": "07a98a60348ec91bc50f23f0d12da8dc5ed0498e75c8f2251ad5bb65ac967a59",
+        "bytes": 375
+      },
+      "python_eval.py": {
+        "sha256": "e53d43d71c9f02e9dcc2e477ace18bb43328d39686db0e46fb46f04c7f0810eb",
+        "bytes": 250
+      },
+      "steps.cmd": {
+        "sha256": "c09889f34db9b00ddfda3306d4bfb234f6e411bace50b29ff6241a549d959f0d",
+        "bytes": 2577
+      },
+      "steps_500.c": {
+        "sha256": "72c3dd0b408a2ea71ef3be54f864a20c2ae212517042631a02d951f2ddc5453d",
+        "bytes": 7376
+      },
+      "symbols_1000.c": {
+        "sha256": "43cdb209d8d59b4afae82774ac0e11911a9fdf9816762b3f659b5271ed04d316",
+        "bytes": 48014
+      },
+      "symbols_10000.c": {
+        "sha256": "962c77ebe219161ce787080848192cb3685b7a569f4bcfd8f0e19b25a151873c",
+        "bytes": 489015
+      },
+      "symbols_50000.c": {
+        "sha256": "ef3d2a7a6ab04aa575e32fc28a16e46427d3609a0cc7d43af02b4c46564149c8",
+        "bytes": 2489015
+      }
+    },
+    "expectations": {
+      "symbols_small": 1000,
+      "symbols_medium": 10000,
+      "symbols_large": 50000,
+      "breakpoints": 200,
+      "steps": 500,
+      "lookups": 5000,
+      "deep_frames": 2000
+    },
+    "testsuite": {
+      "tests": [
+        "gdb.python/py-symbol.exp",
+        "gdb.python/py-value.exp",
+        "gdb.base/break.exp"
+      ],
+      "min_expected_passes": 12
+    },
+    "scenarios": {
+      "backtrace_deep_2000": {
+        "kind": "fixture",
+        "fixture": "deep_2000",
+        "command": "gdb -batch -ex 'break crash_here' -ex run -ex bt deep_2000 | wc -l"
+      },
+      "breakpoint_set_200": {
+        "kind": "fixture",
+        "fixture": "symbols_50000",
+        "command": "gdb -batch -x breakpoints.cmd symbols_50000"
+      },
+      "core_backtrace_2000": {
+        "kind": "fixture",
+        "fixture": "deep_2000",
+        "command": "gdb -batch -ex bt deep_2000 deep_2000.core | wc -l"
+      },
+      "info_functions_10000": {
+        "kind": "fixture",
+        "fixture": "symbols_10000",
+        "command": "gdb -batch -ex 'info functions' symbols_10000 | wc -l"
+      },
+      "python_eval_5000": {
+        "kind": "fixture",
+        "fixture": "symbols_50000",
+        "command": "gdb -batch -x python_eval.py symbols_50000"
+      },
+      "startup_version": {
+        "kind": "fixture",
+        "fixture": "gdb",
+        "command": "gdb --version"
+      },
+      "step_500": {
+        "kind": "fixture",
+        "fixture": "steps_500",
+        "command": "gdb -batch -x steps.cmd steps_500"
+      },
+      "symbol_load_1000": {
+        "kind": "fixture",
+        "fixture": "symbols_1000",
+        "command": "gdb -batch -ex 'info functions fn_00042' -ex quit symbols_1000"
+      },
+      "symbol_load_50000": {
+        "kind": "fixture",
+        "fixture": "symbols_50000",
+        "command": "gdb -batch -ex 'info functions fn_49975' -ex quit symbols_50000"
+      },
+      "upstream_testsuite_python": {
+        "kind": "testsuite",
+        "fixture": "testsuite",
+        "command": "make check-gdb RUNTESTFLAGS=\"gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.python/py-breakpoint.exp\""
+      }
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "artifact_evidence": {
+    "gdb_binary": {
+      "version": "18.1",
+      "sha256": "4f33be56170be1c7990a5a24c2596bf85e676e11c113e41970f9963e9d110934"
+    },
+    "fixtures": {
+      "breakpoints.cmd": {
+        "sha256": "32fb57db8cb9314c809849172eb6685a1e98328957e967a43e63002d1280fc6b",
+        "bytes": 3040
+      },
+      "deep_2000.c": {
+        "sha256": "07a98a60348ec91bc50f23f0d12da8dc5ed0498e75c8f2251ad5bb65ac967a59",
+        "bytes": 375
+      },
+      "python_eval.py": {
+        "sha256": "e53d43d71c9f02e9dcc2e477ace18bb43328d39686db0e46fb46f04c7f0810eb",
+        "bytes": 250
+      },
+      "steps.cmd": {
+        "sha256": "c09889f34db9b00ddfda3306d4bfb234f6e411bace50b29ff6241a549d959f0d",
+        "bytes": 2577
+      },
+      "steps_500.c": {
+        "sha256": "72c3dd0b408a2ea71ef3be54f864a20c2ae212517042631a02d951f2ddc5453d",
+        "bytes": 7376
+      },
+      "symbols_1000.c": {
+        "sha256": "43cdb209d8d59b4afae82774ac0e11911a9fdf9816762b3f659b5271ed04d316",
+        "bytes": 48014
+      },
+      "symbols_10000.c": {
+        "sha256": "962c77ebe219161ce787080848192cb3685b7a569f4bcfd8f0e19b25a151873c",
+        "bytes": 489015
+      },
+      "symbols_50000.c": {
+        "sha256": "ef3d2a7a6ab04aa575e32fc28a16e46427d3609a0cc7d43af02b4c46564149c8",
+        "bytes": 2489015
+      }
+    },
+    "binary_sizes": {
+      "deep_2000": 72328,
+      "steps_500": 72704,
+      "symbols_1000": 170560,
+      "symbols_10000": 1585848,
+      "symbols_50000": 7970680
+    }
+  },
+  "results": {
+    "backtrace_deep_2000": {
+      "source_name": "backtrace_deep_2000",
+      "scenario": "backtrace_deep_2000",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex 'break crash_here' -ex run -ex bt deep_2000 | wc -l",
+      "value": 0.190534,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.190534,
+        "min": 0.187034,
+        "max": 0.196919,
+        "mean": 0.1910504,
+        "stdev": 0.003403186659588338
+      },
+      "samples": [
+        0.19214,
+        0.196919,
+        0.188625,
+        0.190534,
+        0.187034
+      ],
+      "backtrace_lines": 2010
+    },
+    "backtrace_deep_2000_rss": {
+      "source_name": "backtrace_deep_2000_rss",
+      "scenario": "backtrace_deep_2000",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex 'break crash_here' -ex run -ex bt deep_2000 | wc -l",
+      "value": 45.93,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 45.93,
+        "min": 45.93,
+        "max": 46.969,
+        "mean": 46.1378,
+        "stdev": 0.4156000000000006
+      },
+      "samples": [
+        45.93,
+        45.93,
+        45.93,
+        46.969,
+        45.93
+      ]
+    },
+    "breakpoint_set_200": {
+      "source_name": "breakpoint_set_200",
+      "scenario": "breakpoint_set_200",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x breakpoints.cmd symbols_50000",
+      "value": 1.365592,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 1.365592,
+        "min": 1.291014,
+        "max": 1.437093,
+        "mean": 1.3555954,
+        "stdev": 0.05649814979837833
+      },
+      "samples": [
+        1.293737,
+        1.291014,
+        1.365592,
+        1.390541,
+        1.437093
+      ],
+      "breakpoints": 200
+    },
+    "breakpoint_set_200_rss": {
+      "source_name": "breakpoint_set_200_rss",
+      "scenario": "breakpoint_set_200",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x breakpoints.cmd symbols_50000",
+      "value": 102.355,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 102.355,
+        "min": 102.051,
+        "max": 106.051,
+        "mean": 103.5162,
+        "stdev": 1.6985053900414915
+      },
+      "samples": [
+        102.062,
+        102.355,
+        105.062,
+        106.051,
+        102.051
+      ]
+    },
+    "core_backtrace_2000": {
+      "source_name": "core_backtrace_2000",
+      "scenario": "core_backtrace_2000",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex bt deep_2000 deep_2000.core | wc -l",
+      "value": 0.17614,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.17614,
+        "min": 0.173833,
+        "max": 0.177271,
+        "mean": 0.17587699999999998,
+        "stdev": 0.0011401612166707011
+      },
+      "samples": [
+        0.17614,
+        0.173833,
+        0.176413,
+        0.177271,
+        0.175728
+      ],
+      "backtrace_lines": 2010,
+      "core_bytes": 1984992
+    },
+    "core_backtrace_2000_rss": {
+      "source_name": "core_backtrace_2000_rss",
+      "scenario": "core_backtrace_2000",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex bt deep_2000 deep_2000.core | wc -l",
+      "value": 45.922,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 45.922,
+        "min": 45.91,
+        "max": 45.926,
+        "mean": 45.91959999999999,
+        "stdev": 0.006499230723710064
+      },
+      "samples": [
+        45.91,
+        45.926,
+        45.914,
+        45.926,
+        45.922
+      ]
+    },
+    "info_functions_10000": {
+      "source_name": "info_functions_10000",
+      "scenario": "info_functions_10000",
+      "fixture": "symbols_10000",
+      "command": "gdb -batch -ex 'info functions' symbols_10000 | wc -l",
+      "value": 0.164978,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.164978,
+        "min": 0.164243,
+        "max": 0.165144,
+        "mean": 0.1648614,
+        "stdev": 0.0003168435576116433
+      },
+      "samples": [
+        0.164243,
+        0.164939,
+        0.165144,
+        0.165003,
+        0.164978
+      ],
+      "symbol_lines": 10019,
+      "symbols_medium": 10000
+    },
+    "info_functions_10000_rss": {
+      "source_name": "info_functions_10000_rss",
+      "scenario": "info_functions_10000",
+      "fixture": "symbols_10000",
+      "command": "gdb -batch -ex 'info functions' symbols_10000 | wc -l",
+      "value": 36.922,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 36.922,
+        "min": 36.91,
+        "max": 36.93,
+        "mean": 36.922000000000004,
+        "stdev": 0.007589466384405148
+      },
+      "samples": [
+        36.93,
+        36.918,
+        36.922,
+        36.93,
+        36.91
+      ]
+    },
+    "python_eval_5000": {
+      "source_name": "python_eval_5000",
+      "scenario": "python_eval_5000",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x python_eval.py symbols_50000",
+      "value": 0.280918,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.280918,
+        "min": 0.279357,
+        "max": 0.283327,
+        "mean": 0.2812584,
+        "stdev": 0.001771599683901531
+      },
+      "samples": [
+        0.279357,
+        0.279387,
+        0.280918,
+        0.283327,
+        0.283303
+      ],
+      "lookups": 5000
+    },
+    "python_eval_5000_rss": {
+      "source_name": "python_eval_5000_rss",
+      "scenario": "python_eval_5000",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x python_eval.py symbols_50000",
+      "value": 102.918,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 102.918,
+        "min": 102.172,
+        "max": 105.227,
+        "mean": 103.11959999999999,
+        "stdev": 1.0951968955397955
+      },
+      "samples": [
+        105.227,
+        102.172,
+        102.922,
+        102.918,
+        102.359
+      ]
+    },
+    "startup_version": {
+      "source_name": "startup_version",
+      "scenario": "startup_version",
+      "fixture": "gdb",
+      "command": "gdb --version",
+      "value": 0.047622,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.047622,
+        "min": 0.047541,
+        "max": 0.048824,
+        "mean": 0.047845399999999996,
+        "stdev": 0.0004908305613956817
+      },
+      "samples": [
+        0.047657,
+        0.047583,
+        0.047541,
+        0.048824,
+        0.047622
+      ]
+    },
+    "startup_version_rss": {
+      "source_name": "startup_version_rss",
+      "scenario": "startup_version",
+      "fixture": "gdb",
+      "command": "gdb --version",
+      "value": 21.926,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 21.926,
+        "min": 21.914,
+        "max": 21.926,
+        "mean": 21.9236,
+        "stdev": 0.00479999999999876
+      },
+      "samples": [
+        21.914,
+        21.926,
+        21.926,
+        21.926,
+        21.926
+      ]
+    },
+    "step_500": {
+      "source_name": "step_500",
+      "scenario": "step_500",
+      "fixture": "steps_500",
+      "command": "gdb -batch -x steps.cmd steps_500",
+      "value": 0.295814,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.295814,
+        "min": 0.267599,
+        "max": 0.327635,
+        "mean": 0.2990752,
+        "stdev": 0.020780603941175542
+      },
+      "samples": [
+        0.267599,
+        0.314873,
+        0.295814,
+        0.289455,
+        0.327635
+      ],
+      "steps": 500
+    },
+    "step_500_rss": {
+      "source_name": "step_500_rss",
+      "scenario": "step_500",
+      "fixture": "steps_500",
+      "command": "gdb -batch -x steps.cmd steps_500",
+      "value": 21.922,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 21.922,
+        "min": 21.918,
+        "max": 21.926,
+        "mean": 21.9212,
+        "stdev": 0.0029933259094190134
+      },
+      "samples": [
+        21.926,
+        21.922,
+        21.918,
+        21.918,
+        21.922
+      ]
+    },
+    "symbol_load_1000": {
+      "source_name": "symbol_load_1000",
+      "scenario": "symbol_load_1000",
+      "fixture": "symbols_1000",
+      "command": "gdb -batch -ex 'info functions fn_00042' -ex quit symbols_1000",
+      "value": 0.061588,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.061588,
+        "min": 0.061093,
+        "max": 0.062597,
+        "mean": 0.061829800000000004,
+        "stdev": 0.0005611386281481604
+      },
+      "samples": [
+        0.06151,
+        0.062597,
+        0.062361,
+        0.061093,
+        0.061588
+      ]
+    },
+    "symbol_load_1000_rss": {
+      "source_name": "symbol_load_1000_rss",
+      "scenario": "symbol_load_1000",
+      "fixture": "symbols_1000",
+      "command": "gdb -batch -ex 'info functions fn_00042' -ex quit symbols_1000",
+      "value": 21.918,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 21.918,
+        "min": 21.906,
+        "max": 21.93,
+        "mean": 21.918,
+        "stdev": 0.008000000000000186
+      },
+      "samples": [
+        21.918,
+        21.914,
+        21.906,
+        21.922,
+        21.93
+      ]
+    },
+    "symbol_load_50000": {
+      "source_name": "symbol_load_50000",
+      "scenario": "symbol_load_50000",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -ex 'info functions fn_49975' -ex quit symbols_50000",
+      "value": 0.310623,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.310623,
+        "min": 0.308974,
+        "max": 0.315218,
+        "mean": 0.3114042,
+        "stdev": 0.0021214867805385853
+      },
+      "samples": [
+        0.311897,
+        0.315218,
+        0.310623,
+        0.310309,
+        0.308974
+      ]
+    },
+    "symbol_load_50000_rss": {
+      "source_name": "symbol_load_50000_rss",
+      "scenario": "symbol_load_50000",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -ex 'info functions fn_49975' -ex quit symbols_50000",
+      "value": 102.387,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 102.387,
+        "min": 101.922,
+        "max": 102.926,
+        "mean": 102.50240000000001,
+        "stdev": 0.38142081747067796
+      },
+      "samples": [
+        102.387,
+        102.355,
+        101.922,
+        102.922,
+        102.926
+      ]
+    },
+    "upstream_testsuite_python": {
+      "source_name": "upstream_testsuite_python",
+      "scenario": "upstream_testsuite_python",
+      "fixture": "testsuite",
+      "command": "make check-gdb RUNTESTFLAGS=\"gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.python/py-breakpoint.exp\"",
+      "value": 5.311004,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 5.311004,
+        "min": 5.051359,
+        "max": 5.414242,
+        "mean": 5.2754373999999995,
+        "stdev": 0.12095253368921217
+      },
+      "samples": [
+        5.324471,
+        5.414242,
+        5.311004,
+        5.051359,
+        5.276111
+      ],
+      "expected_passes": 573,
+      "unexpected_failures": 0,
+      "tests_requested": [
+        "gdb.python/py-symbol.exp",
+        "gdb.python/py-value.exp",
+        "gdb.base/break.exp"
+      ],
+      "summary_first_line": "# of expected passes\t\t573"
+    },
+    "upstream_testsuite_python_rss": {
+      "source_name": "upstream_testsuite_python_rss",
+      "scenario": "upstream_testsuite_python",
+      "fixture": "testsuite",
+      "command": "make check-gdb RUNTESTFLAGS=\"gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.python/py-breakpoint.exp\"",
+      "value": 34.043,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 34.043,
+        "min": 34.039,
+        "max": 34.078,
+        "mean": 34.0546,
+        "stdev": 0.01757953355467652
+      },
+      "samples": [
+        34.039,
+        34.039,
+        34.078,
+        34.074,
+        34.043
+      ]
+    }
+  }
+}

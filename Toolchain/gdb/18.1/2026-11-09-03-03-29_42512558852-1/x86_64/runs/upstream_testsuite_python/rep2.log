@@ -1,0 +1,48 @@
+# command: make check-gdb MAKEINFO=true RUNTESTFLAGS=gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.base/break.exp
+# working_directory: /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build
+# started_at: 2026-11-08T19:00:16Z
+make[1]: Entering directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb'
+make[2]: Entering directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/testsuite'
+make check-single
+make[3]: Entering directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/testsuite'
+rm -f *core* gdb.sum gdb.log
+rootme=`pwd`; export rootme; srcdir=/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite ; export srcdir ; EXPECT=`if [ "${READ1}" != "" ] ; then echo ${rootme}/expect-read1; elif [ "${READMORE}" != "" ] ; then echo ${rootme}/expect-readmore; elif [ -f ${rootme}/../../expect/expect ] ; then echo ${rootme}/../../expect/expect ; else echo expect ; fi` ; export EXPECT ; EXEEXT= ; export EXEEXT ;    LD_LIBRARY_PATH=$rootme/../../expect:$rootme/../../libstdc++:$rootme/../../tk/unix:$rootme/../../tcl/unix:$rootme/../../bfd:$rootme/../../opcodes:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH; if [ -f ${rootme}/../../expect/expect ] ; then TCL_LIBRARY=${srcdir}/../../tcl/library ; export TCL_LIBRARY ; fi ; runtest --status gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.base/break.exp  ; \
+result=$?; \
+if test -e gdb.sum; then \
+  /bin/sh /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite/lib/dg-add-core-file-count.sh; \
+  sed -n '/=== gdb Summary ===/,$ p' gdb.sum; \
+fi; \
+exit $result
+WARNING: Couldn't find the global config file.
+NOTE: Dejagnu's default_target_compile is missing support for Go, using local override
+NOTE: Dejagnu's default_target_compile is missing support for Rust, using local override
+NOTE: Dejagnu's default_target_compile is missing support for HIP, using local override
+Test run by runner on Sun Nov  8 19:00:16 2026
+Native configuration is x86_64-pc-linux-gnu
+
+		=== gdb tests ===
+
+Schedule of variations:
+    unix
+
+Running target unix
+Using /usr/share/dejagnu/baseboards/unix.exp as board description file for target.
+Using /usr/share/dejagnu/config/unix.exp as generic interface file for target.
+Using /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite/config/unix.exp as tool-and-target-specific interface file.
+Running /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite/gdb.base/break.exp ...
+Running /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite/gdb.python/py-value.exp ...
+Running /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-src/gdb/testsuite/gdb.python/py-symbol.exp ...
+
+		=== gdb Summary ===
+
+# of expected passes		573
+/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/gdb version  18.1 -nw -nx -q -iex "set height 0" -iex "set width 0" -data-directory /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/data-directory -iex "set interactive-mode on" 
+
+		=== gdb Summary ===
+
+# of expected passes		573
+/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/gdb version  18.1 -nw -nx -q -iex "set height 0" -iex "set width 0" -data-directory /home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/data-directory -iex "set interactive-mode on" 
+
+make[3]: Leaving directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/testsuite'
+make[2]: Leaving directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb/testsuite'
+make[1]: Leaving directory '/home/runner/boostkit-perf/gdb/18.1/x86_64/42512558852-1/gdb-build/gdb'
