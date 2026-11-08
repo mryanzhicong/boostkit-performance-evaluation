@@ -1,0 +1,491 @@
+{
+  "software": "flatbuffers",
+  "version": "25.12.19",
+  "generated_at": "2026-11-08T18:55:37Z",
+  "parameters": {
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": false,
+    "upstream_batches": 10,
+    "upstream_iterations": 10000,
+    "scenarios": {
+      "accessor_1k": {
+        "task": "builder_accessor",
+        "mode": "access",
+        "elements": 1000,
+        "iterations": 100000,
+        "expected_checksum": 49950000000,
+        "repetitions": 5
+      },
+      "builder_1k": {
+        "task": "builder_accessor",
+        "mode": "build",
+        "elements": 1000,
+        "iterations": 100000,
+        "expected_checksum": 0,
+        "repetitions": 5
+      },
+      "builder_accessor_100k": {
+        "task": "builder_accessor",
+        "mode": "merged",
+        "elements": 100000,
+        "iterations": 1000,
+        "expected_checksum": 4999950000000,
+        "repetitions": 5
+      },
+      "builder_accessor_10k": {
+        "task": "builder_accessor",
+        "mode": "merged",
+        "elements": 10000,
+        "iterations": 10000,
+        "expected_checksum": 499950000000,
+        "repetitions": 5
+      },
+      "builder_accessor_1k": {
+        "task": "builder_accessor",
+        "mode": "merged",
+        "elements": 1000,
+        "iterations": 100000,
+        "expected_checksum": 49950000000,
+        "repetitions": 5
+      },
+      "builder_accessor_1m": {
+        "task": "builder_accessor",
+        "mode": "merged",
+        "elements": 1000000,
+        "iterations": 100,
+        "expected_checksum": 49999950000000,
+        "repetitions": 5
+      },
+      "upstream_bench_encode_use": {
+        "task": "upstream_benchmark",
+        "batches": 10,
+        "iterations": 10000,
+        "expected_checksum": -7035620705617902304,
+        "repetitions": 5
+      }
+    }
+  },
+  "results": {
+    "accessor_1k": {
+      "scenario": "accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "accessor_1k",
+      "value": 0.064506,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.064625,
+        0.064271,
+        0.064642,
+        0.064273,
+        0.064506
+      ]
+    },
+    "accessor_1k_rss": {
+      "scenario": "accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "accessor_1k_rss",
+      "value": 11.754,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.754,
+        11.742,
+        11.754,
+        11.75,
+        11.754
+      ]
+    },
+    "accessor_1k_mbs": {
+      "scenario": "accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "accessor_1k_mbs",
+      "value": 5949.191469349751,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        5938.2366719052225,
+        5970.9440482002,
+        5936.674993376983,
+        5970.758248749476,
+        5949.191469349751
+      ]
+    },
+    "accessor_1k_elem_s": {
+      "scenario": "accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "accessor_1k_elem_s",
+      "value": 1550243388.2119493,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        1547388781.4313345,
+        1555911686.452677,
+        1546981838.4332166,
+        1555863270.7357678,
+        1550243388.2119493
+      ]
+    },
+    "builder_1k": {
+      "scenario": "builder_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_1k",
+      "value": 0.016306,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.016773,
+        0.015926,
+        0.016306,
+        0.0163,
+        0.016423
+      ]
+    },
+    "builder_1k_rss": {
+      "scenario": "builder_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_1k_rss",
+      "value": 11.75,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.75,
+        11.75,
+        11.754,
+        11.734,
+        11.754
+      ]
+    },
+    "builder_1k_mbs": {
+      "scenario": "builder_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_1k_mbs",
+      "value": 23534.805894877652,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        22879.541222314136,
+        24096.35469809588,
+        23534.805894877652,
+        23543.469013611964,
+        23367.140286298178
+      ]
+    },
+    "builder_1k_elem_s": {
+      "scenario": "builder_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_1k_elem_s",
+      "value": 6132711885.195633,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        5961962678.113635,
+        6279040562.602035,
+        6132711885.195633,
+        6134969325.153375,
+        6089021494.245874
+      ]
+    },
+    "builder_accessor_100k": {
+      "scenario": "builder_accessor_100k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_100k",
+      "value": 0.064635,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.064822,
+        0.064635,
+        0.064647,
+        0.064201,
+        0.064381
+      ]
+    },
+    "builder_accessor_100k_rss": {
+      "scenario": "builder_accessor_100k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_100k_rss",
+      "value": 11.762,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.766,
+        11.762,
+        11.754,
+        11.762,
+        11.754
+      ]
+    },
+    "builder_accessor_100k_mbs": {
+      "scenario": "builder_accessor_100k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_100k_mbs",
+      "value": 5902.260613384293,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        5885.233635896667,
+        5902.260613384293,
+        5901.165015330855,
+        5942.160009129045,
+        5925.546585888597
+      ]
+    },
+    "builder_accessor_100k_elem_s": {
+      "scenario": "builder_accessor_100k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_100k_elem_s",
+      "value": 1547149377.2723756,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        1542686125.080991,
+        1547149377.2723756,
+        1546862190.0474887,
+        1557608136.9449074,
+        1553253289.0138397
+      ]
+    },
+    "builder_accessor_10k": {
+      "scenario": "builder_accessor_10k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_10k",
+      "value": 0.064716,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.064863,
+        0.064478,
+        0.064716,
+        0.064876,
+        0.064322
+      ]
+    },
+    "builder_accessor_10k_rss": {
+      "scenario": "builder_accessor_10k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_10k_rss",
+      "value": 11.762,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.762,
+        11.762,
+        11.75,
+        11.766,
+        11.762
+      ]
+    },
+    "builder_accessor_10k_mbs": {
+      "scenario": "builder_accessor_10k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_10k_mbs",
+      "value": 5898.056251907373,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        5884.689397629426,
+        5919.8270479611265,
+        5898.056251907373,
+        5883.510210223156,
+        5934.184391008325
+      ]
+    },
+    "builder_accessor_10k_elem_s": {
+      "scenario": "builder_accessor_10k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_10k_elem_s",
+      "value": 1545212930.3418012,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        1541710990.8576536,
+        1550916591.7056983,
+        1545212930.3418012,
+        1541402059.3131511,
+        1554678026.1807778
+      ]
+    },
+    "builder_accessor_1k": {
+      "scenario": "builder_accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1k",
+      "value": 0.064578,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.064578,
+        0.064061,
+        0.064488,
+        0.064908,
+        0.06471
+      ]
+    },
+    "builder_accessor_1k_rss": {
+      "scenario": "builder_accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1k_rss",
+      "value": 11.754,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.746,
+        11.75,
+        11.754,
+        11.789,
+        11.758
+      ]
+    },
+    "builder_accessor_1k_mbs": {
+      "scenario": "builder_accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1k_mbs",
+      "value": 5942.558532656246,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        5942.558532656246,
+        5990.517552362201,
+        5950.85201776881,
+        5912.345857550303,
+        5930.4364846526805
+      ]
+    },
+    "builder_accessor_1k_elem_s": {
+      "scenario": "builder_accessor_1k",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1k_elem_s",
+      "value": 1548514974.1398,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        1548514974.1398,
+        1561012160.2847285,
+        1550676094.7773228,
+        1540642139.6438036,
+        1545356204.6051614
+      ]
+    },
+    "builder_accessor_1m": {
+      "scenario": "builder_accessor_1m",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1m",
+      "value": 0.114767,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.114186,
+        0.11477,
+        0.114767,
+        0.114898,
+        0.114123
+      ]
+    },
+    "builder_accessor_1m_rss": {
+      "scenario": "builder_accessor_1m",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1m_rss",
+      "value": 14.465,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        15.328,
+        14.219,
+        14.465,
+        13.777,
+        14.902
+      ]
+    },
+    "builder_accessor_1m_mbs": {
+      "scenario": "builder_accessor_1m",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1m_mbs",
+      "value": 3323.882434679476,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        3340.794978201,
+        3323.7955509354306,
+        3323.882434679476,
+        3320.092737740077,
+        3342.639217167962
+      ]
+    },
+    "builder_accessor_1m_elem_s": {
+      "scenario": "builder_accessor_1m",
+      "task": "builder_accessor",
+      "source_name": "builder_accessor_1m_elem_s",
+      "value": 871330608.9729626,
+      "unit": "elem/s",
+      "direction": "higher_is_better",
+      "samples": [
+        875764104.1808978,
+        871307833.0574192,
+        871330608.9729626,
+        870337168.6191231,
+        876247557.4599335
+      ]
+    },
+    "upstream_bench_encode_use": {
+      "scenario": "upstream_bench_encode_use",
+      "task": "upstream_benchmark",
+      "source_name": "upstream_bench_encode_use",
+      "value": 0.064529,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "samples": [
+        0.064481,
+        0.064529,
+        0.064409,
+        0.064695,
+        0.065013
+      ]
+    },
+    "upstream_bench_encode_use_rss": {
+      "scenario": "upstream_bench_encode_use",
+      "task": "upstream_benchmark",
+      "source_name": "upstream_bench_encode_use_rss",
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "samples": [
+        11.758,
+        11.758,
+        11.754,
+        11.754,
+        11.793
+      ]
+    },
+    "upstream_bench_encode_use_mbs": {
+      "scenario": "upstream_bench_encode_use",
+      "task": "upstream_benchmark",
+      "source_name": "upstream_bench_encode_use_mbs",
+      "value": 508.39772016264004,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "samples": [
+        508.77617413462883,
+        508.39772016264004,
+        509.3449127354097,
+        507.0932295289435,
+        504.612869493409
+      ]
+    },
+    "upstream_bench_encode_use_iter_s": {
+      "scenario": "upstream_bench_encode_use",
+      "task": "upstream_benchmark",
+      "source_name": "upstream_bench_encode_use_iter_s",
+      "value": 1549690.8366780826,
+      "unit": "iter/s",
+      "direction": "higher_is_better",
+      "samples": [
+        1550844.4347947459,
+        1549690.8366780826,
+        1552578.0558617585,
+        1545714.5065306437,
+        1538153.9076800025
+      ]
+    }
+  }
+}
