@@ -1,0 +1,1581 @@
+{
+  "software": "mpfr",
+  "category": "Toolchain",
+  "version": "4.2.2",
+  "architecture": "aarch64",
+  "run_id": "42521957848-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-08T20:50:34Z",
+    "category": "Toolchain",
+    "software": "mpfr",
+    "requested_version": "4.2.2",
+    "actual_version": "4.2.2",
+    "architecture": "aarch64",
+    "run_id": "42521957848-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "measurement_reps": 5,
+      "warmup_reps": 1,
+      "offline_measurement": true,
+      "strict_parser": true,
+      "invocation": "one routine and precision per process",
+      "operation_selection": "mpfr_mul, mpfr_div, mpfr_sqrt, mpfr_exp",
+      "clock": "CLOCK_PROCESS_CPUTIME_ID",
+      "operands": "8 random values in [0,1) per process, fixed seed"
+    }
+  },
+  "parameter_signature": "a6aed40999715f48d3e9b1f6eb45b437ac84592d310650746cd38061d838dbba",
+  "test_tools": {
+    "mpfr-bench": {
+      "version": "fixed-workload harness following upstream tools/bench methodology"
+    },
+    "gmp": {
+      "version": "6.3.0 (pinned private dependency)"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-08T20:48:43Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381384 MB\nnode 0 free: 365911 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387058 MB\nnode 1 free: 378673 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387001 MB\nnode 2 free: 343901 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 351022 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-08T20:48:43Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 20687073280 1509435826176  7752712192 100709453824 1595649990656\nSwap:     4294963200    23330816  4271632384",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-08T20:51:25Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616337063936 20760543232 1509275852800  7754919936 100800618496 1595576520704\nSwap:     4294963200    23330816  4271632384",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "official_benchmark": {
+      "path": "raw-output.log",
+      "size": 16174
+    },
+    "benchmark_result": {
+      "software": "mpfr",
+      "category": "Toolchain",
+      "benchmark": "fixed-workload MPFR harness (upstream tools/bench methodology)",
+      "parameters": {
+        "measurement_reps": 5,
+        "warmup_reps": 1,
+        "offline_measurement": true,
+        "strict_parser": true,
+        "invocation": "one routine and precision per process",
+        "operation_selection": "mpfr_mul, mpfr_div, mpfr_sqrt, mpfr_exp",
+        "clock": "CLOCK_PROCESS_CPUTIME_ID",
+        "operands": "8 random values in [0,1) per process, fixed seed"
+      },
+      "scenarios": [
+        "mpfr_mul_256",
+        "mpfr_mul_1024",
+        "mpfr_mul_4096",
+        "mpfr_div_1024",
+        "mpfr_sqrt_256",
+        "mpfr_sqrt_1024",
+        "mpfr_exp_256",
+        "mpfr_exp_1024"
+      ],
+      "results": {
+        "mpfr_mul_256.ops_per_second": {
+          "source_name": "mpfr_mul_256.ops_per_second",
+          "scenario": "mpfr_mul_256",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 256,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 22924985.526714,
+          "samples": [
+            22924985.526714,
+            23198273.562931,
+            23696806.812705,
+            22790101.749288,
+            22836521.630237
+          ],
+          "statistics": {
+            "min": 22790101.749288,
+            "max": 23696806.812705,
+            "mean": 23089337.856375,
+            "median": 22924985.526714,
+            "stdev": 374618.306185027
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_256/rep1.log",
+          "iterations": [
+            2097152,
+            2097152,
+            2097152,
+            2097152,
+            2097152
+          ],
+          "cpu_seconds_samples": [
+            0.09147888,
+            0.09040121,
+            0.08849935,
+            0.0920203,
+            0.09183325
+          ]
+        },
+        "mpfr_mul_256.ns_per_op": {
+          "source_name": "mpfr_mul_256.ns_per_op",
+          "scenario": "mpfr_mul_256",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 256,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 43.620529175,
+          "samples": [
+            43.620529175,
+            43.106656075,
+            42.199778557,
+            43.878698349,
+            43.789505959
+          ],
+          "statistics": {
+            "min": 42.199778557,
+            "max": 43.878698349,
+            "mean": 43.319033623,
+            "median": 43.620529175,
+            "stdev": 0.693416274
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_256/rep1.log",
+          "iterations": [
+            2097152,
+            2097152,
+            2097152,
+            2097152,
+            2097152
+          ],
+          "cpu_seconds_samples": [
+            0.09147888,
+            0.09040121,
+            0.08849935,
+            0.0920203,
+            0.09183325
+          ]
+        },
+        "mpfr_mul_256.wall_seconds": {
+          "source_name": "mpfr_mul_256.wall_seconds",
+          "scenario": "mpfr_mul_256",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 256,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.315689,
+          "samples": [
+            0.315687,
+            0.315669,
+            0.315689,
+            0.315897,
+            0.315902
+          ],
+          "statistics": {
+            "min": 0.315669,
+            "max": 0.315902,
+            "mean": 0.3157688,
+            "median": 0.315689,
+            "stdev": 0.000119579
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_256/rep1.log",
+          "iterations": [
+            2097152,
+            2097152,
+            2097152,
+            2097152,
+            2097152
+          ],
+          "cpu_seconds_samples": [
+            0.09147888,
+            0.09040121,
+            0.08849935,
+            0.0920203,
+            0.09183325
+          ]
+        },
+        "mpfr_mul_256.peak_rss_mib": {
+          "source_name": "mpfr_mul_256.peak_rss_mib",
+          "scenario": "mpfr_mul_256",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 256,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.762,
+          "samples": [
+            11.762,
+            11.762,
+            11.762,
+            11.746,
+            11.758
+          ],
+          "statistics": {
+            "min": 11.746,
+            "max": 11.762,
+            "mean": 11.758,
+            "median": 11.762,
+            "stdev": 0.006928203
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_256/rep1.log",
+          "iterations": [
+            2097152,
+            2097152,
+            2097152,
+            2097152,
+            2097152
+          ],
+          "cpu_seconds_samples": [
+            0.09147888,
+            0.09040121,
+            0.08849935,
+            0.0920203,
+            0.09183325
+          ]
+        },
+        "mpfr_mul_1024.ops_per_second": {
+          "source_name": "mpfr_mul_1024.ops_per_second",
+          "scenario": "mpfr_mul_1024",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 1024,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 4066473.589422,
+          "samples": [
+            4066473.589422,
+            4061934.963237,
+            4086431.365556,
+            4074932.598466,
+            3925936.409307
+          ],
+          "statistics": {
+            "min": 3925936.409307,
+            "max": 4086431.365556,
+            "mean": 4043141.7851976,
+            "median": 4066473.589422,
+            "stdev": 66180.246944832
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_1024/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.0644647,
+            0.06453673,
+            0.06414986,
+            0.06433088,
+            0.06677235
+          ]
+        },
+        "mpfr_mul_1024.ns_per_op": {
+          "source_name": "mpfr_mul_1024.ns_per_op",
+          "scenario": "mpfr_mul_1024",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 1024,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 245.913314819,
+          "samples": [
+            245.913314819,
+            246.188087463,
+            244.712295532,
+            245.402832031,
+            254.716300964
+          ],
+          "statistics": {
+            "min": 244.712295532,
+            "max": 254.716300964,
+            "mean": 247.386566162,
+            "median": 245.913314819,
+            "stdev": 4.135781591
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_1024/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.0644647,
+            0.06453673,
+            0.06414986,
+            0.06433088,
+            0.06677235
+          ]
+        },
+        "mpfr_mul_1024.wall_seconds": {
+          "source_name": "mpfr_mul_1024.wall_seconds",
+          "scenario": "mpfr_mul_1024",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 1024,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.215214,
+          "samples": [
+            0.215308,
+            0.215463,
+            0.215125,
+            0.214995,
+            0.215214
+          ],
+          "statistics": {
+            "min": 0.214995,
+            "max": 0.215463,
+            "mean": 0.215221,
+            "median": 0.215214,
+            "stdev": 0.000177816
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_1024/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.0644647,
+            0.06453673,
+            0.06414986,
+            0.06433088,
+            0.06677235
+          ]
+        },
+        "mpfr_mul_1024.peak_rss_mib": {
+          "source_name": "mpfr_mul_1024.peak_rss_mib",
+          "scenario": "mpfr_mul_1024",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 1024,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.758,
+            11.758,
+            11.758,
+            11.758,
+            11.738
+          ],
+          "statistics": {
+            "min": 11.738,
+            "max": 11.758,
+            "mean": 11.754,
+            "median": 11.758,
+            "stdev": 0.008944272
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_1024/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.0644647,
+            0.06453673,
+            0.06414986,
+            0.06433088,
+            0.06677235
+          ]
+        },
+        "mpfr_mul_4096.ops_per_second": {
+          "source_name": "mpfr_mul_4096.ops_per_second",
+          "scenario": "mpfr_mul_4096",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 4096,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 526429.599841,
+          "samples": [
+            520343.050384,
+            528798.865845,
+            528944.574137,
+            526429.599841,
+            500983.222383
+          ],
+          "statistics": {
+            "min": 500983.222383,
+            "max": 528944.574137,
+            "mean": 521099.862518,
+            "median": 526429.599841,
+            "stdev": 11773.616983258
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_4096/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.06297384,
+            0.06196685,
+            0.06194978,
+            0.06224574,
+            0.06540738
+          ]
+        },
+        "mpfr_mul_4096.ns_per_op": {
+          "source_name": "mpfr_mul_4096.ns_per_op",
+          "scenario": "mpfr_mul_4096",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 4096,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 1899.589233398,
+          "samples": [
+            1921.809082032,
+            1891.078186036,
+            1890.557250978,
+            1899.589233398,
+            1996.0748291
+          ],
+          "statistics": {
+            "min": 1890.557250978,
+            "max": 1996.0748291,
+            "mean": 1919.821716309,
+            "median": 1899.589233398,
+            "stdev": 44.470326233
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_4096/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.06297384,
+            0.06196685,
+            0.06194978,
+            0.06224574,
+            0.06540738
+          ]
+        },
+        "mpfr_mul_4096.wall_seconds": {
+          "source_name": "mpfr_mul_4096.wall_seconds",
+          "scenario": "mpfr_mul_4096",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 4096,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.215085,
+          "samples": [
+            0.215085,
+            0.215064,
+            0.215024,
+            0.215562,
+            0.215239
+          ],
+          "statistics": {
+            "min": 0.215024,
+            "max": 0.215562,
+            "mean": 0.2151948,
+            "median": 0.215085,
+            "stdev": 0.000220866
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_4096/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.06297384,
+            0.06196685,
+            0.06194978,
+            0.06224574,
+            0.06540738
+          ]
+        },
+        "mpfr_mul_4096.peak_rss_mib": {
+          "source_name": "mpfr_mul_4096.peak_rss_mib",
+          "scenario": "mpfr_mul_4096",
+          "group": "mpfr",
+          "routine": "mpfr_mul",
+          "precision_bits": 4096,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.742,
+            11.758,
+            11.758,
+            11.758,
+            11.758
+          ],
+          "statistics": {
+            "min": 11.742,
+            "max": 11.758,
+            "mean": 11.7548,
+            "median": 11.758,
+            "stdev": 0.007155418
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_mul_4096/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.06297384,
+            0.06196685,
+            0.06194978,
+            0.06224574,
+            0.06540738
+          ]
+        },
+        "mpfr_div_1024.ops_per_second": {
+          "source_name": "mpfr_div_1024.ops_per_second",
+          "scenario": "mpfr_div_1024",
+          "group": "mpfr",
+          "routine": "mpfr_div",
+          "precision_bits": 1024,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 1941746.134529,
+          "samples": [
+            1939717.110776,
+            1943654.599149,
+            1940528.958181,
+            1941746.134529,
+            1942543.55947
+          ],
+          "statistics": {
+            "min": 1939717.110776,
+            "max": 1943654.599149,
+            "mean": 1941638.072421,
+            "median": 1941746.134529,
+            "stdev": 1566.6997398
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_div_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06757274,
+            0.06743585,
+            0.06754447,
+            0.06750213,
+            0.06747442
+          ]
+        },
+        "mpfr_div_1024.ns_per_op": {
+          "source_name": "mpfr_div_1024.ns_per_op",
+          "scenario": "mpfr_div_1024",
+          "group": "mpfr",
+          "routine": "mpfr_div",
+          "precision_bits": 1024,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 515.00038147,
+          "samples": [
+            515.539093018,
+            514.4947052,
+            515.323410034,
+            515.00038147,
+            514.788970947
+          ],
+          "statistics": {
+            "min": 514.4947052,
+            "max": 515.539093018,
+            "mean": 515.029312134,
+            "median": 515.00038147,
+            "stdev": 0.415564546
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_div_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06757274,
+            0.06743585,
+            0.06754447,
+            0.06750213,
+            0.06747442
+          ]
+        },
+        "mpfr_div_1024.wall_seconds": {
+          "source_name": "mpfr_div_1024.wall_seconds",
+          "scenario": "mpfr_div_1024",
+          "group": "mpfr",
+          "routine": "mpfr_div",
+          "precision_bits": 1024,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.215093,
+          "samples": [
+            0.214931,
+            0.215093,
+            0.215105,
+            0.214994,
+            0.215278
+          ],
+          "statistics": {
+            "min": 0.214931,
+            "max": 0.215278,
+            "mean": 0.2150802,
+            "median": 0.215093,
+            "stdev": 0.000131904
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_div_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06757274,
+            0.06743585,
+            0.06754447,
+            0.06750213,
+            0.06747442
+          ]
+        },
+        "mpfr_div_1024.peak_rss_mib": {
+          "source_name": "mpfr_div_1024.peak_rss_mib",
+          "scenario": "mpfr_div_1024",
+          "group": "mpfr",
+          "routine": "mpfr_div",
+          "precision_bits": 1024,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.758,
+            11.754,
+            11.758,
+            11.758,
+            11.758
+          ],
+          "statistics": {
+            "min": 11.754,
+            "max": 11.758,
+            "mean": 11.7572,
+            "median": 11.758,
+            "stdev": 0.001788854
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_div_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06757274,
+            0.06743585,
+            0.06754447,
+            0.06750213,
+            0.06747442
+          ]
+        },
+        "mpfr_sqrt_256.ops_per_second": {
+          "source_name": "mpfr_sqrt_256.ops_per_second",
+          "scenario": "mpfr_sqrt_256",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 256,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 5094236.297911,
+          "samples": [
+            5094236.297911,
+            5084291.787425,
+            5060353.064947,
+            5126970.476853,
+            5107848.906313
+          ],
+          "statistics": {
+            "min": 5060353.064947,
+            "max": 5126970.476853,
+            "mean": 5094740.106689801,
+            "median": 5094236.297911,
+            "stdev": 25012.632943095
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_256/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.05145894,
+            0.05155959,
+            0.0518035,
+            0.05113039,
+            0.0513218
+          ]
+        },
+        "mpfr_sqrt_256.ns_per_op": {
+          "source_name": "mpfr_sqrt_256.ns_per_op",
+          "scenario": "mpfr_sqrt_256",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 256,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 196.30027771,
+          "samples": [
+            196.30027771,
+            196.68422699,
+            197.6146698,
+            195.046958923,
+            195.777130127
+          ],
+          "statistics": {
+            "min": 195.046958923,
+            "max": 197.6146698,
+            "mean": 196.28465271,
+            "median": 196.30027771,
+            "stdev": 0.964146551
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_256/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.05145894,
+            0.05155959,
+            0.0518035,
+            0.05113039,
+            0.0513218
+          ]
+        },
+        "mpfr_sqrt_256.wall_seconds": {
+          "source_name": "mpfr_sqrt_256.wall_seconds",
+          "scenario": "mpfr_sqrt_256",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 256,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.16482,
+          "samples": [
+            0.16482,
+            0.16461,
+            0.164849,
+            0.164627,
+            0.164926
+          ],
+          "statistics": {
+            "min": 0.16461,
+            "max": 0.164926,
+            "mean": 0.1647664,
+            "median": 0.16482,
+            "stdev": 0.000140589
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_256/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.05145894,
+            0.05155959,
+            0.0518035,
+            0.05113039,
+            0.0513218
+          ]
+        },
+        "mpfr_sqrt_256.peak_rss_mib": {
+          "source_name": "mpfr_sqrt_256.peak_rss_mib",
+          "scenario": "mpfr_sqrt_256",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 256,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.758,
+            11.758,
+            11.758,
+            11.742,
+            11.762
+          ],
+          "statistics": {
+            "min": 11.742,
+            "max": 11.762,
+            "mean": 11.7556,
+            "median": 11.758,
+            "stdev": 0.007797435
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_256/rep1.log",
+          "iterations": [
+            262144,
+            262144,
+            262144,
+            262144,
+            262144
+          ],
+          "cpu_seconds_samples": [
+            0.05145894,
+            0.05155959,
+            0.0518035,
+            0.05113039,
+            0.0513218
+          ]
+        },
+        "mpfr_sqrt_1024.ops_per_second": {
+          "source_name": "mpfr_sqrt_1024.ops_per_second",
+          "scenario": "mpfr_sqrt_1024",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 1024,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 1934422.784251,
+          "samples": [
+            1906180.748028,
+            1947529.971772,
+            1872955.34898,
+            1934422.784251,
+            1959053.462944
+          ],
+          "statistics": {
+            "min": 1872955.34898,
+            "max": 1959053.462944,
+            "mean": 1924028.463195,
+            "median": 1934422.784251,
+            "stdev": 34691.920368179
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06876158,
+            0.06730166,
+            0.06998138,
+            0.06775768,
+            0.06690578
+          ]
+        },
+        "mpfr_sqrt_1024.ns_per_op": {
+          "source_name": "mpfr_sqrt_1024.ns_per_op",
+          "scenario": "mpfr_sqrt_1024",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 1024,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 516.950073242,
+          "samples": [
+            524.609222412,
+            513.470916748,
+            533.915557861,
+            516.950073242,
+            510.450592041
+          ],
+          "statistics": {
+            "min": 510.450592041,
+            "max": 533.915557861,
+            "mean": 519.879272461,
+            "median": 516.950073242,
+            "stdev": 9.459611248
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06876158,
+            0.06730166,
+            0.06998138,
+            0.06775768,
+            0.06690578
+          ]
+        },
+        "mpfr_sqrt_1024.wall_seconds": {
+          "source_name": "mpfr_sqrt_1024.wall_seconds",
+          "scenario": "mpfr_sqrt_1024",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 1024,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.215136,
+          "samples": [
+            0.215524,
+            0.215056,
+            0.215345,
+            0.215129,
+            0.215136
+          ],
+          "statistics": {
+            "min": 0.215056,
+            "max": 0.215524,
+            "mean": 0.215238,
+            "median": 0.215136,
+            "stdev": 0.000192778
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06876158,
+            0.06730166,
+            0.06998138,
+            0.06775768,
+            0.06690578
+          ]
+        },
+        "mpfr_sqrt_1024.peak_rss_mib": {
+          "source_name": "mpfr_sqrt_1024.peak_rss_mib",
+          "scenario": "mpfr_sqrt_1024",
+          "group": "mpfr",
+          "routine": "mpfr_sqrt",
+          "precision_bits": 1024,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.758,
+            11.758,
+            11.758,
+            11.758,
+            11.758
+          ],
+          "statistics": {
+            "min": 11.758,
+            "max": 11.758,
+            "mean": 11.758,
+            "median": 11.758,
+            "stdev": 0.0
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_sqrt_1024/rep1.log",
+          "iterations": [
+            131072,
+            131072,
+            131072,
+            131072,
+            131072
+          ],
+          "cpu_seconds_samples": [
+            0.06876158,
+            0.06730166,
+            0.06998138,
+            0.06775768,
+            0.06690578
+          ]
+        },
+        "mpfr_exp_256.ops_per_second": {
+          "source_name": "mpfr_exp_256.ops_per_second",
+          "scenario": "mpfr_exp_256",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 256,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 408423.077848,
+          "samples": [
+            406248.349554,
+            409576.14219,
+            408248.696814,
+            408423.077848,
+            408610.855272
+          ],
+          "statistics": {
+            "min": 406248.349554,
+            "max": 409576.14219,
+            "mean": 408221.4243356,
+            "median": 408423.077848,
+            "stdev": 1216.691100915
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_256/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.08066002,
+            0.08000466,
+            0.0802648,
+            0.08023053,
+            0.08019366
+          ]
+        },
+        "mpfr_exp_256.ns_per_op": {
+          "source_name": "mpfr_exp_256.ns_per_op",
+          "scenario": "mpfr_exp_256",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 256,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 2448.441467287,
+          "samples": [
+            2461.548461915,
+            2441.548461912,
+            2449.487304685,
+            2448.441467287,
+            2447.31628418
+          ],
+          "statistics": {
+            "min": 2441.548461912,
+            "max": 2461.548461915,
+            "mean": 2449.668395996,
+            "median": 2448.441467287,
+            "stdev": 7.316759424
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_256/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.08066002,
+            0.08000466,
+            0.0802648,
+            0.08023053,
+            0.08019366
+          ]
+        },
+        "mpfr_exp_256.wall_seconds": {
+          "source_name": "mpfr_exp_256.wall_seconds",
+          "scenario": "mpfr_exp_256",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 256,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.265862,
+          "samples": [
+            0.265395,
+            0.265862,
+            0.26668,
+            0.268,
+            0.265599
+          ],
+          "statistics": {
+            "min": 0.265395,
+            "max": 0.268,
+            "mean": 0.2663072,
+            "median": 0.265862,
+            "stdev": 0.001064943
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_256/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.08066002,
+            0.08000466,
+            0.0802648,
+            0.08023053,
+            0.08019366
+          ]
+        },
+        "mpfr_exp_256.peak_rss_mib": {
+          "source_name": "mpfr_exp_256.peak_rss_mib",
+          "scenario": "mpfr_exp_256",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 256,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.762,
+          "samples": [
+            11.762,
+            11.75,
+            11.789,
+            11.758,
+            11.762
+          ],
+          "statistics": {
+            "min": 11.75,
+            "max": 11.789,
+            "mean": 11.7642,
+            "median": 11.762,
+            "stdev": 0.014703741
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_256/rep1.log",
+          "iterations": [
+            32768,
+            32768,
+            32768,
+            32768,
+            32768
+          ],
+          "cpu_seconds_samples": [
+            0.08066002,
+            0.08000466,
+            0.0802648,
+            0.08023053,
+            0.08019366
+          ]
+        },
+        "mpfr_exp_1024.ops_per_second": {
+          "source_name": "mpfr_exp_1024.ops_per_second",
+          "scenario": "mpfr_exp_1024",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 1024,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "value": 82986.963388,
+          "samples": [
+            80391.75278,
+            82717.754843,
+            83617.79238,
+            83978.678519,
+            82986.963388
+          ],
+          "statistics": {
+            "min": 80391.75278,
+            "max": 83978.678519,
+            "mean": 82738.588382,
+            "median": 82986.963388,
+            "stdev": 1403.618960113
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_1024/rep1.log",
+          "iterations": [
+            4096,
+            8192,
+            8192,
+            8192,
+            8192
+          ],
+          "cpu_seconds_samples": [
+            0.0509505,
+            0.09903557,
+            0.09796958,
+            0.09754857,
+            0.0987143
+          ]
+        },
+        "mpfr_exp_1024.ns_per_op": {
+          "source_name": "mpfr_exp_1024.ns_per_op",
+          "scenario": "mpfr_exp_1024",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 1024,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "value": 12050.08544926,
+          "samples": [
+            12439.08691401,
+            12089.30297852,
+            11959.1772461,
+            11907.784423802,
+            12050.08544926
+          ],
+          "statistics": {
+            "min": 11907.784423802,
+            "max": 12439.08691401,
+            "mean": 12089.087402338,
+            "median": 12050.08544926,
+            "stdev": 208.427610759
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_1024/rep1.log",
+          "iterations": [
+            4096,
+            8192,
+            8192,
+            8192,
+            8192
+          ],
+          "cpu_seconds_samples": [
+            0.0509505,
+            0.09903557,
+            0.09796958,
+            0.09754857,
+            0.0987143
+          ]
+        },
+        "mpfr_exp_1024.wall_seconds": {
+          "source_name": "mpfr_exp_1024.wall_seconds",
+          "scenario": "mpfr_exp_1024",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 1024,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "value": 0.315632,
+          "samples": [
+            0.165113,
+            0.316031,
+            0.315244,
+            0.315867,
+            0.315632
+          ],
+          "statistics": {
+            "min": 0.165113,
+            "max": 0.316031,
+            "mean": 0.2855774,
+            "median": 0.315632,
+            "stdev": 0.067342296
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_1024/rep1.log",
+          "iterations": [
+            4096,
+            8192,
+            8192,
+            8192,
+            8192
+          ],
+          "cpu_seconds_samples": [
+            0.0509505,
+            0.09903557,
+            0.09796958,
+            0.09754857,
+            0.0987143
+          ]
+        },
+        "mpfr_exp_1024.peak_rss_mib": {
+          "source_name": "mpfr_exp_1024.peak_rss_mib",
+          "scenario": "mpfr_exp_1024",
+          "group": "mpfr",
+          "routine": "mpfr_exp",
+          "precision_bits": 1024,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "value": 11.758,
+          "samples": [
+            11.758,
+            11.758,
+            11.762,
+            11.758,
+            11.746
+          ],
+          "statistics": {
+            "min": 11.746,
+            "max": 11.762,
+            "mean": 11.7564,
+            "median": 11.758,
+            "stdev": 0.0060663
+          },
+          "repetitions": 5,
+          "raw_log": "runs/mpfr_exp_1024/rep1.log",
+          "iterations": [
+            4096,
+            8192,
+            8192,
+            8192,
+            8192
+          ],
+          "cpu_seconds_samples": [
+            0.0509505,
+            0.09903557,
+            0.09796958,
+            0.09754857,
+            0.0987143
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 96
+    }
+  },
+  "metrics": {
+    "mpfr_mul_256.ops_per_second": {
+      "value": 22924985.526714,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_mul_256"
+    },
+    "mpfr_mul_256.ns_per_op": {
+      "value": 43.620529175,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_256"
+    },
+    "mpfr_mul_256.wall_seconds": {
+      "value": 0.315689,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_256"
+    },
+    "mpfr_mul_256.peak_rss_mib": {
+      "value": 11.762,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_256"
+    },
+    "mpfr_mul_1024.ops_per_second": {
+      "value": 4066473.589422,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_mul_1024"
+    },
+    "mpfr_mul_1024.ns_per_op": {
+      "value": 245.913314819,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_1024"
+    },
+    "mpfr_mul_1024.wall_seconds": {
+      "value": 0.215214,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_1024"
+    },
+    "mpfr_mul_1024.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_1024"
+    },
+    "mpfr_mul_4096.ops_per_second": {
+      "value": 526429.599841,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_mul_4096"
+    },
+    "mpfr_mul_4096.ns_per_op": {
+      "value": 1899.589233398,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_4096"
+    },
+    "mpfr_mul_4096.wall_seconds": {
+      "value": 0.215085,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_4096"
+    },
+    "mpfr_mul_4096.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_mul_4096"
+    },
+    "mpfr_div_1024.ops_per_second": {
+      "value": 1941746.134529,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_div_1024"
+    },
+    "mpfr_div_1024.ns_per_op": {
+      "value": 515.00038147,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_div_1024"
+    },
+    "mpfr_div_1024.wall_seconds": {
+      "value": 0.215093,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_div_1024"
+    },
+    "mpfr_div_1024.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_div_1024"
+    },
+    "mpfr_sqrt_256.ops_per_second": {
+      "value": 5094236.297911,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_sqrt_256"
+    },
+    "mpfr_sqrt_256.ns_per_op": {
+      "value": 196.30027771,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_256"
+    },
+    "mpfr_sqrt_256.wall_seconds": {
+      "value": 0.16482,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_256"
+    },
+    "mpfr_sqrt_256.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_256"
+    },
+    "mpfr_sqrt_1024.ops_per_second": {
+      "value": 1934422.784251,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_sqrt_1024"
+    },
+    "mpfr_sqrt_1024.ns_per_op": {
+      "value": 516.950073242,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_1024"
+    },
+    "mpfr_sqrt_1024.wall_seconds": {
+      "value": 0.215136,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_1024"
+    },
+    "mpfr_sqrt_1024.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_sqrt_1024"
+    },
+    "mpfr_exp_256.ops_per_second": {
+      "value": 408423.077848,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_exp_256"
+    },
+    "mpfr_exp_256.ns_per_op": {
+      "value": 2448.441467287,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_256"
+    },
+    "mpfr_exp_256.wall_seconds": {
+      "value": 0.265862,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_256"
+    },
+    "mpfr_exp_256.peak_rss_mib": {
+      "value": 11.762,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_256"
+    },
+    "mpfr_exp_1024.ops_per_second": {
+      "value": 82986.963388,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mpfr_exp_1024"
+    },
+    "mpfr_exp_1024.ns_per_op": {
+      "value": 12050.08544926,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_1024"
+    },
+    "mpfr_exp_1024.wall_seconds": {
+      "value": 0.315632,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_1024"
+    },
+    "mpfr_exp_1024.peak_rss_mib": {
+      "value": 11.758,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "mpfr_exp_1024"
+    }
+  }
+}
