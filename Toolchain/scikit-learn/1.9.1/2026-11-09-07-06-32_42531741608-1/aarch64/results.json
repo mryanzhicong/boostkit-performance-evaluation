@@ -1,0 +1,1180 @@
+{
+  "architecture": "aarch64",
+  "asv_snapshot": {
+    "manifest_sha256": "7553ec85f3afe564e807bb83b43e16520c061a19f5a71402b71ea0cdc606b8d5",
+    "repository": "https://github.com/scikit-learn/scikit-learn",
+    "tag": "1.9.1",
+    "tag_commit": "866c0f51e7560ef0303cbcc5f159df5382ea9e3f"
+  },
+  "parameters": {
+    "asv": {
+      "n_jobs": 1,
+      "profile": "regular",
+      "repository": "https://github.com/scikit-learn/scikit-learn",
+      "suite": "asv_benchmarks/benchmarks",
+      "tag": "1.9.1",
+      "tag_commit": "866c0f51e7560ef0303cbcc5f159df5382ea9e3f",
+      "vendored_manifest_sha256": "7553ec85f3afe564e807bb83b43e16520c061a19f5a71402b71ea0cdc606b8d5"
+    },
+    "measurement": {
+      "environment": {
+        "LC_ALL": "C",
+        "PYTHONHASHSEED": "0",
+        "TZ": "UTC"
+      },
+      "offline": true,
+      "processes_per_sample": 1,
+      "repetitions": 5,
+      "statistic": "median",
+      "threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "warmups": 1
+    },
+    "python": {
+      "configure_options": [
+        "--with-ensurepip=install"
+      ],
+      "implementation": "CPython",
+      "source_sha256": "710c3e75dac8b2f258d9cd0f76e5c4c2e9175fac9e249c98901552f7cf33b7dd",
+      "version": "3.12.16"
+    },
+    "runtime": {
+      "joblib": "1.4.0",
+      "narwhals": "2.0.1",
+      "numpy": "2.0.0",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.14.0",
+      "threadpoolctl": "3.5.0"
+    },
+    "scenarios": [
+      {
+        "benchmark_class": "SVCBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.svm",
+        "name": "svc_fit_linear",
+        "params": [
+          "linear"
+        ]
+      },
+      {
+        "benchmark_class": "SVCBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.svm",
+        "name": "svc_fit_rbf",
+        "params": [
+          "rbf"
+        ]
+      },
+      {
+        "benchmark_class": "SVCBenchmark",
+        "method": "time_predict",
+        "metric": "predict",
+        "module": "benchmarks.svm",
+        "name": "svc_predict_rbf",
+        "params": [
+          "rbf"
+        ]
+      },
+      {
+        "benchmark_class": "HistGradientBoostingClassifierBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.ensemble",
+        "name": "hist_gbdt_fit",
+        "params": []
+      },
+      {
+        "benchmark_class": "KMeansBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.cluster",
+        "name": "kmeans_fit_blobs_dense",
+        "params": [
+          "dense",
+          "lloyd",
+          "k-means++"
+        ]
+      },
+      {
+        "benchmark_class": "MiniBatchKMeansBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.cluster",
+        "name": "minibatch_kmeans_fit_blobs_dense",
+        "params": [
+          "dense",
+          "k-means++"
+        ]
+      },
+      {
+        "benchmark_class": "SGDRegressorBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.linear_model",
+        "name": "sgd_regressor_fit_synth",
+        "params": [
+          "dense"
+        ]
+      },
+      {
+        "benchmark_class": "RidgeBenchmark",
+        "method": "time_fit",
+        "metric": "fit",
+        "module": "benchmarks.linear_model",
+        "name": "ridge_fit_synth_auto",
+        "params": [
+          "dense",
+          "auto"
+        ]
+      },
+      {
+        "benchmark_class": "CrossValidationBenchmark",
+        "method": "time_crossval",
+        "metric": "cross_validation",
+        "module": "benchmarks.model_selection",
+        "name": "crossval_rf_50k",
+        "params": [
+          1
+        ]
+      }
+    ],
+    "source_distribution_sha256": "629cada3e33e2b9bf376cdc7614a47a4140b8aedc1d836579e359736fbd82977",
+    "variant": "base"
+  },
+  "results": {
+    "crossval_rf_50k.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "crossval_rf_50k",
+      "source_name": "crossval_rf_50k.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 167.473,
+        "mean": 167.4658,
+        "median": 167.465,
+        "min": 167.461,
+        "samples": [
+          167.473,
+          167.465,
+          167.461,
+          167.469,
+          167.461
+        ],
+        "statistic": "median",
+        "stdev": 0.005215361924159774
+      },
+      "unit": "MiB",
+      "value": 167.465
+    },
+    "crossval_rf_50k.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "crossval_rf_50k",
+      "source_name": "crossval_rf_50k.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 45.59660136606544,
+        "mean": 45.541953424201346,
+        "median": 45.55665557901375,
+        "min": 45.46265872893855,
+        "samples": [
+          45.55665557901375,
+          45.46265872893855,
+          45.577803855063394,
+          45.5160475919256,
+          45.59660136606544
+        ],
+        "statistic": "median",
+        "stdev": 0.05349431077652769
+      },
+      "unit": "s",
+      "value": 45.55665557901375
+    },
+    "hist_gbdt_fit.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "hist_gbdt_fit",
+      "source_name": "hist_gbdt_fit.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 142.664,
+        "mean": 142.6608,
+        "median": 142.66,
+        "min": 142.656,
+        "samples": [
+          142.664,
+          142.66,
+          142.664,
+          142.656,
+          142.66
+        ],
+        "statistic": "median",
+        "stdev": 0.0033466401061285024
+      },
+      "unit": "MiB",
+      "value": 142.66
+    },
+    "hist_gbdt_fit.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "hist_gbdt_fit",
+      "source_name": "hist_gbdt_fit.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 5.146739859948866,
+        "mean": 5.140640749176964,
+        "median": 5.140748510952108,
+        "min": 5.135042701032944,
+        "samples": [
+          5.144002118962817,
+          5.146739859948866,
+          5.135042701032944,
+          5.140748510952108,
+          5.136670554988086
+        ],
+        "statistic": "median",
+        "stdev": 0.004889022309356009
+      },
+      "unit": "s",
+      "value": 5.140748510952108
+    },
+    "kmeans_fit_blobs_dense.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "kmeans_fit_blobs_dense",
+      "source_name": "kmeans_fit_blobs_dense.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 158.895,
+        "mean": 158.3954,
+        "median": 158.273,
+        "min": 158.266,
+        "samples": [
+          158.273,
+          158.273,
+          158.266,
+          158.895,
+          158.27
+        ],
+        "statistic": "median",
+        "stdev": 0.2792996598637438
+      },
+      "unit": "MiB",
+      "value": 158.273
+    },
+    "kmeans_fit_blobs_dense.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "kmeans_fit_blobs_dense",
+      "source_name": "kmeans_fit_blobs_dense.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 2.592314072069712,
+        "mean": 2.589658785192296,
+        "median": 2.5916813740041107,
+        "min": 2.5828711648937315,
+        "samples": [
+          2.5922665019752458,
+          2.592314072069712,
+          2.5916813740041107,
+          2.5891608130186796,
+          2.5828711648937315
+        ],
+        "statistic": "median",
+        "stdev": 0.0040081593757707165
+      },
+      "unit": "s",
+      "value": 2.5916813740041107
+    },
+    "minibatch_kmeans_fit_blobs_dense.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "minibatch_kmeans_fit_blobs_dense",
+      "source_name": "minibatch_kmeans_fit_blobs_dense.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 146.289,
+        "mean": 146.28339999999997,
+        "median": 146.285,
+        "min": 146.273,
+        "samples": [
+          146.289,
+          146.289,
+          146.273,
+          146.285,
+          146.281
+        ],
+        "statistic": "median",
+        "stdev": 0.006693280212268045
+      },
+      "unit": "MiB",
+      "value": 146.285
+    },
+    "minibatch_kmeans_fit_blobs_dense.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "minibatch_kmeans_fit_blobs_dense",
+      "source_name": "minibatch_kmeans_fit_blobs_dense.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 4.175259117037058,
+        "mean": 4.161253856611438,
+        "median": 4.160730218980461,
+        "min": 4.148967760032974,
+        "samples": [
+          4.148967760032974,
+          4.160730218980461,
+          4.175259117037058,
+          4.152263388037682,
+          4.1690487989690155
+        ],
+        "statistic": "median",
+        "stdev": 0.011056212468867975
+      },
+      "unit": "s",
+      "value": 4.160730218980461
+    },
+    "ridge_fit_synth_auto.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "ridge_fit_synth_auto",
+      "source_name": "ridge_fit_synth_auto.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 488.367,
+        "mean": 488.36,
+        "median": 488.363,
+        "min": 488.344,
+        "samples": [
+          488.359,
+          488.363,
+          488.344,
+          488.367,
+          488.367
+        ],
+        "statistic": "median",
+        "stdev": 0.009539392014179252
+      },
+      "unit": "MiB",
+      "value": 488.363
+    },
+    "ridge_fit_synth_auto.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "ridge_fit_synth_auto",
+      "source_name": "ridge_fit_synth_auto.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 0.21619183698203415,
+        "mean": 0.21517056198790668,
+        "median": 0.21487116091884673,
+        "min": 0.2143204630119726,
+        "samples": [
+          0.21487116091884673,
+          0.2143204630119726,
+          0.21619183698203415,
+          0.21436716301832348,
+          0.2161021860083565
+        ],
+        "statistic": "median",
+        "stdev": 0.0009176989024831232
+      },
+      "unit": "s",
+      "value": 0.21487116091884673
+    },
+    "sgd_regressor_fit_synth.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "sgd_regressor_fit_synth",
+      "source_name": "sgd_regressor_fit_synth.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 195.148,
+        "mean": 194.6454,
+        "median": 194.52,
+        "min": 194.516,
+        "samples": [
+          194.52,
+          194.523,
+          194.516,
+          195.148,
+          194.52
+        ],
+        "statistic": "median",
+        "stdev": 0.28097295243492487
+      },
+      "unit": "MiB",
+      "value": 194.52
+    },
+    "sgd_regressor_fit_synth.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "sgd_regressor_fit_synth",
+      "source_name": "sgd_regressor_fit_synth.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 4.581652062013745,
+        "mean": 4.564340266026557,
+        "median": 4.564252224052325,
+        "min": 4.549799056025222,
+        "samples": [
+          4.5753329150611535,
+          4.549799056025222,
+          4.564252224052325,
+          4.550665072980337,
+          4.581652062013745
+        ],
+        "statistic": "median",
+        "stdev": 0.014309105996212563
+      },
+      "unit": "s",
+      "value": 4.564252224052325
+    },
+    "svc_fit_linear.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "svc_fit_linear",
+      "source_name": "svc_fit_linear.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 307.223,
+        "mean": 307.2158,
+        "median": 307.219,
+        "min": 307.203,
+        "samples": [
+          307.219,
+          307.219,
+          307.203,
+          307.215,
+          307.223
+        ],
+        "statistic": "median",
+        "stdev": 0.007694153624681635
+      },
+      "unit": "MiB",
+      "value": 307.219
+    },
+    "svc_fit_linear.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "svc_fit_linear",
+      "source_name": "svc_fit_linear.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 0.8368808350060135,
+        "mean": 0.832918327045627,
+        "median": 0.8325818100711331,
+        "min": 0.8295568811008707,
+        "samples": [
+          0.8339928750647232,
+          0.8295568811008707,
+          0.8315792339853942,
+          0.8368808350060135,
+          0.8325818100711331
+        ],
+        "statistic": "median",
+        "stdev": 0.0027414346389744047
+      },
+      "unit": "s",
+      "value": 0.8325818100711331
+    },
+    "svc_fit_rbf.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "svc_fit_rbf",
+      "source_name": "svc_fit_rbf.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 307.859,
+        "mean": 307.3614,
+        "median": 307.238,
+        "min": 307.234,
+        "samples": [
+          307.238,
+          307.234,
+          307.242,
+          307.859,
+          307.234
+        ],
+        "statistic": "median",
+        "stdev": 0.2781866280035698
+      },
+      "unit": "MiB",
+      "value": 307.238
+    },
+    "svc_fit_rbf.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "svc_fit_rbf",
+      "source_name": "svc_fit_rbf.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 0.8475002859486267,
+        "mean": 0.8456623091828078,
+        "median": 0.8455884939758107,
+        "min": 0.8439558800309896,
+        "samples": [
+          0.8463301110314205,
+          0.8455884939758107,
+          0.8449367749271914,
+          0.8475002859486267,
+          0.8439558800309896
+        ],
+        "statistic": "median",
+        "stdev": 0.0013479490895182491
+      },
+      "unit": "s",
+      "value": 0.8455884939758107
+    },
+    "svc_predict_rbf.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "group": "svc_predict_rbf",
+      "source_name": "svc_predict_rbf.peak_rss_mib",
+      "statistics": {
+        "count": 5,
+        "max": 291.008,
+        "mean": 291.00079999999997,
+        "median": 291.004,
+        "min": 290.984,
+        "samples": [
+          291.0,
+          290.984,
+          291.004,
+          291.008,
+          291.008
+        ],
+        "statistic": "median",
+        "stdev": 0.009959919678394026
+      },
+      "unit": "MiB",
+      "value": 291.004
+    },
+    "svc_predict_rbf.wall_seconds": {
+      "direction": "lower_is_better",
+      "group": "svc_predict_rbf",
+      "source_name": "svc_predict_rbf.wall_seconds",
+      "statistics": {
+        "count": 5,
+        "max": 0.7874518319731578,
+        "mean": 0.7498828480020165,
+        "median": 0.7431710199452937,
+        "min": 0.7253748640650883,
+        "samples": [
+          0.7401303009828553,
+          0.7431710199452937,
+          0.7532862230436876,
+          0.7253748640650883,
+          0.7874518319731578
+        ],
+        "statistic": "median",
+        "stdev": 0.023258404954848235
+      },
+      "unit": "s",
+      "value": 0.7431710199452937
+    }
+  },
+  "runtime": {
+    "machine": "aarch64",
+    "pip": "25.0.1",
+    "python": "3.12.16",
+    "python_implementation": "CPython",
+    "runtime": {
+      "joblib": "1.4.0",
+      "narwhals": "2.0.1",
+      "numpy": "2.0.0",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.14.0",
+      "threadpoolctl": "3.5.0"
+    }
+  },
+  "scenarios": {
+    "crossval_rf_50k": {
+      "correctness": {
+        "score": 0.9001555555555555,
+        "score_kind": "accuracy",
+        "threshold": {
+          "min_score": 0.8,
+          "n_features": 100,
+          "n_samples": 45000,
+          "score_kind": "accuracy"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "CrossValidationBenchmark",
+        "data_shape": [
+          45000,
+          100
+        ],
+        "max_rss_mib": 167.473,
+        "method": "time_crossval",
+        "params": [
+          1
+        ],
+        "scenario": "crossval_rf_50k",
+        "score": 0.9001555555555555,
+        "score_kind": "accuracy",
+        "wall_seconds": 45.55665557901375,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 167.473,
+          "mean": 167.4658,
+          "median": 167.465,
+          "min": 167.461,
+          "samples": [
+            167.473,
+            167.465,
+            167.461,
+            167.469,
+            167.461
+          ],
+          "statistic": "median",
+          "stdev": 0.005215361924159774
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 45.59660136606544,
+          "mean": 45.541953424201346,
+          "median": 45.55665557901375,
+          "min": 45.46265872893855,
+          "samples": [
+            45.55665557901375,
+            45.46265872893855,
+            45.577803855063394,
+            45.5160475919256,
+            45.59660136606544
+          ],
+          "statistic": "median",
+          "stdev": 0.05349431077652769
+        }
+      }
+    },
+    "hist_gbdt_fit": {
+      "correctness": {
+        "score": 0.9817627458064837,
+        "score_kind": "balanced_accuracy",
+        "threshold": {
+          "min_score": 0.9,
+          "n_features": 100,
+          "n_samples": 9000,
+          "score_kind": "balanced_accuracy"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "HistGradientBoostingClassifierBenchmark",
+        "data_shape": [
+          9000,
+          100
+        ],
+        "max_rss_mib": 142.664,
+        "method": "time_fit",
+        "params": [],
+        "scenario": "hist_gbdt_fit",
+        "score": 0.9817627458064837,
+        "score_kind": "balanced_accuracy",
+        "wall_seconds": 5.144002118962817,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 142.664,
+          "mean": 142.6608,
+          "median": 142.66,
+          "min": 142.656,
+          "samples": [
+            142.664,
+            142.66,
+            142.664,
+            142.656,
+            142.66
+          ],
+          "statistic": "median",
+          "stdev": 0.0033466401061285024
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 5.146739859948866,
+          "mean": 5.140640749176964,
+          "median": 5.140748510952108,
+          "min": 5.135042701032944,
+          "samples": [
+            5.144002118962817,
+            5.146739859948866,
+            5.135042701032944,
+            5.140748510952108,
+            5.136670554988086
+          ],
+          "statistic": "median",
+          "stdev": 0.004889022309356009
+        }
+      }
+    },
+    "kmeans_fit_blobs_dense": {
+      "correctness": {
+        "score": -3.2702574729919434,
+        "score_kind": "neg_inertia",
+        "threshold": {
+          "max_score": 0.0,
+          "n_features": 3,
+          "n_samples": 450000,
+          "score_kind": "neg_inertia"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "KMeansBenchmark",
+        "data_shape": [
+          450000,
+          3
+        ],
+        "max_rss_mib": 158.273,
+        "method": "time_fit",
+        "params": [
+          "dense",
+          "lloyd",
+          "k-means++"
+        ],
+        "scenario": "kmeans_fit_blobs_dense",
+        "score": -3.2702574729919434,
+        "score_kind": "neg_inertia",
+        "wall_seconds": 2.5922665019752458,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 158.895,
+          "mean": 158.3954,
+          "median": 158.273,
+          "min": 158.266,
+          "samples": [
+            158.273,
+            158.273,
+            158.266,
+            158.895,
+            158.27
+          ],
+          "statistic": "median",
+          "stdev": 0.2792996598637438
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 2.592314072069712,
+          "mean": 2.589658785192296,
+          "median": 2.5916813740041107,
+          "min": 2.5828711648937315,
+          "samples": [
+            2.5922665019752458,
+            2.592314072069712,
+            2.5916813740041107,
+            2.5891608130186796,
+            2.5828711648937315
+          ],
+          "statistic": "median",
+          "stdev": 0.0040081593757707165
+        }
+      }
+    },
+    "minibatch_kmeans_fit_blobs_dense": {
+      "correctness": {
+        "score": -3.116217613220215,
+        "score_kind": "neg_inertia",
+        "threshold": {
+          "max_score": 0.0,
+          "n_features": 3,
+          "n_samples": 450000,
+          "score_kind": "neg_inertia"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "MiniBatchKMeansBenchmark",
+        "data_shape": [
+          450000,
+          3
+        ],
+        "max_rss_mib": 146.289,
+        "method": "time_fit",
+        "params": [
+          "dense",
+          "k-means++"
+        ],
+        "scenario": "minibatch_kmeans_fit_blobs_dense",
+        "score": -3.116217613220215,
+        "score_kind": "neg_inertia",
+        "wall_seconds": 4.148967760032974,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 146.289,
+          "mean": 146.28339999999997,
+          "median": 146.285,
+          "min": 146.273,
+          "samples": [
+            146.289,
+            146.289,
+            146.273,
+            146.285,
+            146.281
+          ],
+          "statistic": "median",
+          "stdev": 0.006693280212268045
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 4.175259117037058,
+          "mean": 4.161253856611438,
+          "median": 4.160730218980461,
+          "min": 4.148967760032974,
+          "samples": [
+            4.148967760032974,
+            4.160730218980461,
+            4.175259117037058,
+            4.152263388037682,
+            4.1690487989690155
+          ],
+          "statistic": "median",
+          "stdev": 0.011056212468867975
+        }
+      }
+    },
+    "ridge_fit_synth_auto": {
+      "correctness": {
+        "score": 0.9444001571050172,
+        "score_kind": "r2",
+        "threshold": {
+          "min_score": 0.8,
+          "n_features": 100,
+          "n_samples": 450000,
+          "score_kind": "r2"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "RidgeBenchmark",
+        "data_shape": [
+          450000,
+          100
+        ],
+        "max_rss_mib": 488.359,
+        "method": "time_fit",
+        "params": [
+          "dense",
+          "auto"
+        ],
+        "scenario": "ridge_fit_synth_auto",
+        "score": 0.9444001571050172,
+        "score_kind": "r2",
+        "wall_seconds": 0.21487116091884673,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 488.367,
+          "mean": 488.36,
+          "median": 488.363,
+          "min": 488.344,
+          "samples": [
+            488.359,
+            488.363,
+            488.344,
+            488.367,
+            488.367
+          ],
+          "statistic": "median",
+          "stdev": 0.009539392014179252
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 0.21619183698203415,
+          "mean": 0.21517056198790668,
+          "median": 0.21487116091884673,
+          "min": 0.2143204630119726,
+          "samples": [
+            0.21487116091884673,
+            0.2143204630119726,
+            0.21619183698203415,
+            0.21436716301832348,
+            0.2161021860083565
+          ],
+          "statistic": "median",
+          "stdev": 0.0009176989024831232
+        }
+      }
+    },
+    "sgd_regressor_fit_synth": {
+      "correctness": {
+        "score": 0.9641785430258396,
+        "score_kind": "r2",
+        "threshold": {
+          "min_score": 0.5,
+          "n_features": 200,
+          "n_samples": 90000,
+          "score_kind": "r2"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "SGDRegressorBenchmark",
+        "data_shape": [
+          90000,
+          200
+        ],
+        "max_rss_mib": 194.52,
+        "method": "time_fit",
+        "params": [
+          "dense"
+        ],
+        "scenario": "sgd_regressor_fit_synth",
+        "score": 0.9641785430258396,
+        "score_kind": "r2",
+        "wall_seconds": 4.5753329150611535,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 195.148,
+          "mean": 194.6454,
+          "median": 194.52,
+          "min": 194.516,
+          "samples": [
+            194.52,
+            194.523,
+            194.516,
+            195.148,
+            194.52
+          ],
+          "statistic": "median",
+          "stdev": 0.28097295243492487
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 4.581652062013745,
+          "mean": 4.564340266026557,
+          "median": 4.564252224052325,
+          "min": 4.549799056025222,
+          "samples": [
+            4.5753329150611535,
+            4.549799056025222,
+            4.564252224052325,
+            4.550665072980337,
+            4.581652062013745
+          ],
+          "statistic": "median",
+          "stdev": 0.014309105996212563
+        }
+      }
+    },
+    "svc_fit_linear": {
+      "correctness": {
+        "score": 0.7373393801965231,
+        "score_kind": "balanced_accuracy",
+        "threshold": {
+          "min_score": 0.5,
+          "n_features": 10000,
+          "n_samples": 900,
+          "score_kind": "balanced_accuracy"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "SVCBenchmark",
+        "data_shape": [
+          900,
+          10000
+        ],
+        "max_rss_mib": 307.219,
+        "method": "time_fit",
+        "params": [
+          "linear"
+        ],
+        "scenario": "svc_fit_linear",
+        "score": 0.7373393801965231,
+        "score_kind": "balanced_accuracy",
+        "wall_seconds": 0.8339928750647232,
+        "warnings": [
+          "ConvergenceWarning"
+        ]
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 307.223,
+          "mean": 307.2158,
+          "median": 307.219,
+          "min": 307.203,
+          "samples": [
+            307.219,
+            307.219,
+            307.203,
+            307.215,
+            307.223
+          ],
+          "statistic": "median",
+          "stdev": 0.007694153624681635
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 0.8368808350060135,
+          "mean": 0.832918327045627,
+          "median": 0.8325818100711331,
+          "min": 0.8295568811008707,
+          "samples": [
+            0.8339928750647232,
+            0.8295568811008707,
+            0.8315792339853942,
+            0.8368808350060135,
+            0.8325818100711331
+          ],
+          "statistic": "median",
+          "stdev": 0.0027414346389744047
+        }
+      }
+    },
+    "svc_fit_rbf": {
+      "correctness": {
+        "score": 0.7382063936685785,
+        "score_kind": "balanced_accuracy",
+        "threshold": {
+          "min_score": 0.5,
+          "n_features": 10000,
+          "n_samples": 900,
+          "score_kind": "balanced_accuracy"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "SVCBenchmark",
+        "data_shape": [
+          900,
+          10000
+        ],
+        "max_rss_mib": 307.238,
+        "method": "time_fit",
+        "params": [
+          "rbf"
+        ],
+        "scenario": "svc_fit_rbf",
+        "score": 0.7382063936685785,
+        "score_kind": "balanced_accuracy",
+        "wall_seconds": 0.8463301110314205,
+        "warnings": [
+          "ConvergenceWarning"
+        ]
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 307.859,
+          "mean": 307.3614,
+          "median": 307.238,
+          "min": 307.234,
+          "samples": [
+            307.238,
+            307.234,
+            307.242,
+            307.859,
+            307.234
+          ],
+          "statistic": "median",
+          "stdev": 0.2781866280035698
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 0.8475002859486267,
+          "mean": 0.8456623091828078,
+          "median": 0.8455884939758107,
+          "min": 0.8439558800309896,
+          "samples": [
+            0.8463301110314205,
+            0.8455884939758107,
+            0.8449367749271914,
+            0.8475002859486267,
+            0.8439558800309896
+          ],
+          "statistic": "median",
+          "stdev": 0.0013479490895182491
+        }
+      }
+    },
+    "svc_predict_rbf": {
+      "correctness": {
+        "score": 0.7382063936685785,
+        "score_kind": "balanced_accuracy",
+        "threshold": {
+          "min_score": 0.5,
+          "n_features": 10000,
+          "n_samples": 900,
+          "score_kind": "balanced_accuracy"
+        }
+      },
+      "evidence": {
+        "benchmark_class": "SVCBenchmark",
+        "data_shape": [
+          900,
+          10000
+        ],
+        "max_rss_mib": 291.0,
+        "method": "time_predict",
+        "params": [
+          "rbf"
+        ],
+        "scenario": "svc_predict_rbf",
+        "score": 0.7382063936685785,
+        "score_kind": "balanced_accuracy",
+        "wall_seconds": 0.7401303009828553,
+        "warnings": []
+      },
+      "statistics": {
+        "peak_rss_mib": {
+          "count": 5,
+          "max": 291.008,
+          "mean": 291.00079999999997,
+          "median": 291.004,
+          "min": 290.984,
+          "samples": [
+            291.0,
+            290.984,
+            291.004,
+            291.008,
+            291.008
+          ],
+          "statistic": "median",
+          "stdev": 0.009959919678394026
+        },
+        "wall_seconds": {
+          "count": 5,
+          "max": 0.7874518319731578,
+          "mean": 0.7498828480020165,
+          "median": 0.7431710199452937,
+          "min": 0.7253748640650883,
+          "samples": [
+            0.7401303009828553,
+            0.7431710199452937,
+            0.7532862230436876,
+            0.7253748640650883,
+            0.7874518319731578
+          ],
+          "statistic": "median",
+          "stdev": 0.023258404954848235
+        }
+      }
+    }
+  },
+  "software": "scikit-learn",
+  "summary": {
+    "metric_count": 18,
+    "samples_per_scenario": 5,
+    "scenario_count": 9,
+    "statistic": "median",
+    "warmups_per_scenario": 1
+  },
+  "variant": "base",
+  "version": "1.9.1",
+  "warnings_observed": {
+    "crossval_rf_50k": [],
+    "hist_gbdt_fit": [],
+    "kmeans_fit_blobs_dense": [],
+    "minibatch_kmeans_fit_blobs_dense": [],
+    "ridge_fit_synth_auto": [],
+    "sgd_regressor_fit_synth": [],
+    "svc_fit_linear": [
+      "ConvergenceWarning"
+    ],
+    "svc_fit_rbf": [
+      "ConvergenceWarning"
+    ],
+    "svc_predict_rbf": []
+  }
+}
