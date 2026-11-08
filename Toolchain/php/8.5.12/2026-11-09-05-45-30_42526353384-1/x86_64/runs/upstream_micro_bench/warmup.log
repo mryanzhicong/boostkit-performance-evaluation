@@ -1,0 +1,39 @@
+# command: /home/runner/boostkit-perf/php/8.5.12/x86_64/42526353384-1/php-install/bin/php -n /home/runner/boostkit-perf/php/8.5.12/x86_64/42526353384-1/php-src/php-8.5.12/Zend/micro_bench.php
+# started_at: 2026-11-08T21:43:12Z
+empty_loop         0.013
+func()             0.038    0.025
+undef_func()       0.035    0.022
+int_func()         0.018    0.005
+$x = self::$x      0.034    0.021
+self::$x = 0       0.024    0.011
+isset(self::$x)    0.039    0.026
+empty(self::$x)    0.038    0.025
+$x = Foo::$x       0.034    0.021
+Foo::$x = 0        0.024    0.012
+isset(Foo::$x)     0.039    0.026
+empty(Foo::$x)     0.039    0.026
+self::f()          0.050    0.037
+Foo::f()           0.046    0.033
+$x = $this->x      0.026    0.013
+$this->x = 0       0.024    0.012
+$this->x += 2      0.039    0.026
+++$this->x         0.035    0.022
+--$this->x         0.035    0.022
+$this->x++         0.037    0.024
+$this->x--         0.035    0.022
+isset($this->x)    0.041    0.028
+empty($this->x)    0.048    0.035
+$this->f()         0.038    0.026
+$x = Foo::TEST     0.045    0.032
+new Foo()          0.119    0.106
+$x = TEST          0.027    0.014
+$x = $_GET         0.044    0.031
+$x = $GLOBALS['v'] 0.043    0.031
+$x = $hash['v']    0.058    0.045
+$x = $str[0]       0.046    0.033
+$x = $a ?: null    0.034    0.021
+$x = $f ?: tmp     0.045    0.032
+$x = $f ? $f : $a  0.034    0.021
+$x = $f ? $f : tmp 0.037    0.024
+------------------------
+Total              1.365
