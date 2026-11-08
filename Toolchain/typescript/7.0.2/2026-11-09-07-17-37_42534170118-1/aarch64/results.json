@@ -1,0 +1,502 @@
+{
+  "benchmark": "typescript_workload_matrix",
+  "software": "typescript",
+  "version": "7.0.2",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-08T23:15:58Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "network": "measured runs have no network access (closed proxy)",
+    "statistic": "median of independent repetitions",
+    "typescript_version": "7.0.2",
+    "node_version": "v22.23.4",
+    "typescript_engines_node": ">=16.20.0",
+    "registry": "https://mirrors.huaweicloud.com/repository/npm",
+    "typescript_tarball_sha256": "da2513f4b95176d6dde8b51aab7afe8a927656c9d277369793f77f7e59371c08",
+    "typescript_tarball_sha512_integrity": "8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==",
+    "projects": {
+      "emit": {
+        "modules": 1000,
+        "digest": "d8c74e77590be83ddc5b65f83fe521c39212a065707fbe7bb4dd774b2485c94a"
+      },
+      "incremental": {
+        "modules": 1000,
+        "digest": "d0c595c993e71600d039370b0752c9f53e5c4d1657a08c72afa3b7290ba85a4b"
+      },
+      "large": {
+        "modules": 5000,
+        "digest": "9325deca857bc05f18e3affb30f6b05cdc94f876ab417db4947de5cf650d59c7"
+      },
+      "medium": {
+        "modules": 1000,
+        "digest": "b8462910150232795a8a4b0d3de802e8f33f02af96a7c8e7be90dfba9dd477ff"
+      },
+      "references": {
+        "modules": 0,
+        "digest": "b1835217ff8eade998c8f55bdd6f1ce76404182fed7d9b9e2460c2ef1409a83f",
+        "packages": {
+          "app": 300,
+          "lib": 200
+        }
+      },
+      "small": {
+        "modules": 100,
+        "digest": "087a34e8c3235dfec0282965f67ea95dbce84cd2abd9a4128f2e4f0ba454d862"
+      }
+    },
+    "upstream_project": {
+      "name": "zod",
+      "version": "3.25.76",
+      "source": "https://mirrors.huaweicloud.com/repository/npm/zod/-/zod-3.25.76.tgz",
+      "tarball_sha256": "782872c88bcf5718946c80a59b1628bd30c5c67748e5f303600d8e0aac6f8e25",
+      "manifest_sha256": "3a8711c709acb47eae838ca23fad0eaf79dc46a31551a3d8f9896d66213a5567",
+      "modules": 13
+    },
+    "scenarios": {
+      "check_small": {
+        "project": "small",
+        "source_files": 100,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "check_medium": {
+        "project": "medium",
+        "source_files": 1000,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "check_large": {
+        "project": "large",
+        "source_files": 5000,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "check_upstream": {
+        "project": "upstream",
+        "source_files": 13,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "emit_medium": {
+        "project": "emit",
+        "source_files": 1000,
+        "command": "tsc -p tsconfig.json --extendedDiagnostics"
+      },
+      "incremental_warm_medium": {
+        "project": "incremental",
+        "source_files": 1000,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "incremental_change_medium": {
+        "project": "incremental",
+        "source_files": 1000,
+        "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics"
+      },
+      "references_build": {
+        "project": "references",
+        "source_files": 500,
+        "command": "tsc --build --verbose"
+      }
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "artifact_evidence": {
+    "check_small": {},
+    "check_medium": {},
+    "check_large": {},
+    "check_upstream": {},
+    "emit_medium": {
+      "dist/**/*.js": 1000,
+      "dist/**/*.d.ts": 1000
+    },
+    "incremental_warm_medium": {
+      ".tsbuildinfo": 1
+    },
+    "incremental_change_medium": {
+      ".tsbuildinfo": 1
+    },
+    "references_build": {
+      "packages/**/*.tsbuildinfo": 2,
+      "packages/lib/dist/**/*.js": 200
+    }
+  },
+  "results": {
+    "check_small": {
+      "source_name": "check_small",
+      "scenario": "check_small",
+      "project": "small",
+      "source_files": 100,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.215057,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.215057,
+      "mean": 0.195116,
+      "min": 0.164954,
+      "max": 0.215221,
+      "stdev": 0.027453,
+      "samples": [
+        0.16513,
+        0.215216,
+        0.215057,
+        0.215221,
+        0.164954
+      ]
+    },
+    "check_small_rss": {
+      "source_name": "check_small_rss",
+      "scenario": "check_small",
+      "project": "small",
+      "source_files": 100,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 43.996,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 43.996,
+      "mean": 43.9936,
+      "min": 43.988,
+      "max": 43.996,
+      "stdev": 0.003578,
+      "samples": [
+        43.988,
+        43.996,
+        43.996,
+        43.996,
+        43.992
+      ]
+    },
+    "check_medium": {
+      "source_name": "check_medium",
+      "scenario": "check_medium",
+      "project": "medium",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.416238,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.416238,
+      "mean": 0.436236,
+      "min": 0.415644,
+      "max": 0.467031,
+      "stdev": 0.027772,
+      "samples": [
+        0.415644,
+        0.466282,
+        0.467031,
+        0.416238,
+        0.415983
+      ]
+    },
+    "check_medium_rss": {
+      "source_name": "check_medium_rss",
+      "scenario": "check_medium",
+      "project": "medium",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 80.66,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 80.66,
+      "mean": 78.4376,
+      "min": 61.445,
+      "max": 97.059,
+      "stdev": 13.84316,
+      "samples": [
+        97.059,
+        80.66,
+        84.215,
+        68.809,
+        61.445
+      ]
+    },
+    "check_large": {
+      "source_name": "check_large",
+      "scenario": "check_large",
+      "project": "large",
+      "source_files": 5000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 1.372743,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.372743,
+      "mean": 1.351805,
+      "min": 1.319434,
+      "max": 1.372938,
+      "stdev": 0.028786,
+      "samples": [
+        1.372743,
+        1.372938,
+        1.319434,
+        1.321123,
+        1.372789
+      ]
+    },
+    "check_large_rss": {
+      "source_name": "check_large_rss",
+      "scenario": "check_large",
+      "project": "large",
+      "source_files": 5000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 451.105,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 451.105,
+      "mean": 446.4788,
+      "min": 424.305,
+      "max": 460.848,
+      "stdev": 15.516902,
+      "samples": [
+        437.148,
+        460.848,
+        458.988,
+        451.105,
+        424.305
+      ]
+    },
+    "check_upstream": {
+      "source_name": "check_upstream",
+      "scenario": "check_upstream",
+      "project": "upstream",
+      "source_files": 13,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.367275,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.367275,
+      "mean": 0.386896,
+      "min": 0.365847,
+      "max": 0.417814,
+      "stdev": 0.027997,
+      "samples": [
+        0.366238,
+        0.365847,
+        0.417814,
+        0.367275,
+        0.417305
+      ]
+    },
+    "check_upstream_rss": {
+      "source_name": "check_upstream_rss",
+      "scenario": "check_upstream",
+      "project": "upstream",
+      "source_files": 13,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 56.734,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 56.734,
+      "mean": 54.8576,
+      "min": 44.863,
+      "max": 69.41,
+      "stdev": 10.19289,
+      "samples": [
+        56.734,
+        69.41,
+        45.328,
+        57.953,
+        44.863
+      ]
+    },
+    "emit_medium": {
+      "source_name": "emit_medium",
+      "scenario": "emit_medium",
+      "project": "emit",
+      "source_files": 1000,
+      "command": "tsc -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.718097,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.718097,
+      "mean": 0.727721,
+      "min": 0.716534,
+      "max": 0.76765,
+      "stdev": 0.022332,
+      "samples": [
+        0.76765,
+        0.718097,
+        0.717968,
+        0.718354,
+        0.716534
+      ]
+    },
+    "emit_medium_rss": {
+      "source_name": "emit_medium_rss",
+      "scenario": "emit_medium",
+      "project": "emit",
+      "source_files": 1000,
+      "command": "tsc -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 211.871,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 211.871,
+      "mean": 211.1756,
+      "min": 198.484,
+      "max": 225.898,
+      "stdev": 12.157179,
+      "samples": [
+        225.898,
+        211.871,
+        199.586,
+        220.039,
+        198.484
+      ]
+    },
+    "incremental_warm_medium": {
+      "source_name": "incremental_warm_medium",
+      "scenario": "incremental_warm_medium",
+      "project": "incremental",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.365875,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.365875,
+      "mean": 0.346632,
+      "min": 0.315641,
+      "max": 0.367861,
+      "stdev": 0.027456,
+      "samples": [
+        0.367861,
+        0.366274,
+        0.315641,
+        0.31751,
+        0.365875
+      ]
+    },
+    "incremental_warm_medium_rss": {
+      "source_name": "incremental_warm_medium_rss",
+      "scenario": "incremental_warm_medium",
+      "project": "incremental",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 52.152,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 52.152,
+      "mean": 55.1132,
+      "min": 45.203,
+      "max": 66.574,
+      "stdev": 9.856127,
+      "samples": [
+        66.574,
+        45.203,
+        47.18,
+        52.152,
+        64.457
+      ]
+    },
+    "incremental_change_medium": {
+      "source_name": "incremental_change_medium",
+      "scenario": "incremental_change_medium",
+      "project": "incremental",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.617194,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.617194,
+      "mean": 0.607175,
+      "min": 0.566503,
+      "max": 0.617808,
+      "stdev": 0.022738,
+      "samples": [
+        0.566503,
+        0.617096,
+        0.617808,
+        0.617275,
+        0.617194
+      ]
+    },
+    "incremental_change_medium_rss": {
+      "source_name": "incremental_change_medium_rss",
+      "scenario": "incremental_change_medium",
+      "project": "incremental",
+      "source_files": 1000,
+      "command": "tsc --noEmit -p tsconfig.json --extendedDiagnostics",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 96.633,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 96.633,
+      "mean": 94.9312,
+      "min": 81.66,
+      "max": 104.715,
+      "stdev": 9.281016,
+      "samples": [
+        81.66,
+        101.664,
+        104.715,
+        96.633,
+        89.984
+      ]
+    },
+    "references_build": {
+      "source_name": "references_build",
+      "scenario": "references_build",
+      "project": "references",
+      "source_files": 500,
+      "command": "tsc --build --verbose",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 0.265598,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.265598,
+      "mean": 0.265624,
+      "min": 0.264859,
+      "max": 0.266398,
+      "stdev": 0.000555,
+      "samples": [
+        0.265786,
+        0.26548,
+        0.266398,
+        0.264859,
+        0.265598
+      ]
+    },
+    "references_build_rss": {
+      "source_name": "references_build_rss",
+      "scenario": "references_build",
+      "project": "references",
+      "source_files": 500,
+      "command": "tsc --build --verbose",
+      "native_backend": "@typescript/typescript-linux-arm64",
+      "value": 44.0,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 44.0,
+      "mean": 51.6578,
+      "min": 43.996,
+      "max": 73.113,
+      "stdev": 12.636289,
+      "samples": [
+        43.996,
+        43.996,
+        44.0,
+        73.113,
+        53.184
+      ]
+    }
+  }
+}
