@@ -1,0 +1,27 @@
+# command: /home/runner/boostkit-perf/pcre/8.45/x86_64/42525143752-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/x86_64/42525143752-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-08T21:27:10Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0004 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+

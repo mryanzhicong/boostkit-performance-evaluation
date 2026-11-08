@@ -1,0 +1,15 @@
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/42525143752-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/42525143752-1/fixtures 725100
+# started_at: 2026-11-08T21:29:14Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok

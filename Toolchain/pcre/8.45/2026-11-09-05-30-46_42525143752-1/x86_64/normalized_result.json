@@ -1,0 +1,1425 @@
+{
+  "software": "pcre",
+  "category": "Toolchain",
+  "version": "8.45",
+  "architecture": "x86_64",
+  "run_id": "42525143752-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-08T21:26:47Z",
+    "category": "Toolchain",
+    "software": "pcre",
+    "requested_version": "8.45",
+    "actual_version": "8.45",
+    "architecture": "x86_64",
+    "run_id": "42525143752-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "variant": "base",
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "pcre_version": "8.45",
+      "pcre_configure_options": "--enable-utf --enable-unicode-properties --enable-jit --disable-shared --enable-static --disable-pcretest-libreadline --disable-pcretest-libedit --enable-pcre8 --disable-pcre16 --disable-pcre32",
+      "cflags": "-O2 -DNDEBUG",
+      "build_parallel_jobs": 8,
+      "source_archive": "pcre-8.45.tar.gz",
+      "source_sha256": "4e6ce03e0336e8b4a3d6c2b70b1c5e18590a5673a98186da90d4f33c23defc09",
+      "pcretest_patterns": {
+        "pcretest_timing_literal": 6,
+        "pcretest_timing_backtrack": 3,
+        "pcretest_timing_utf8": 4,
+        "pcretest_dfa": 3
+      },
+      "pcretest_data_lines": {
+        "pcretest_timing_literal": 13,
+        "pcretest_timing_backtrack": 3,
+        "pcretest_timing_utf8": 4,
+        "pcretest_dfa": 5
+      },
+      "pcretest_iterations": {
+        "pcretest_timing_literal": 300000,
+        "pcretest_timing_backtrack": 600,
+        "pcretest_timing_utf8": 1200000,
+        "pcretest_dfa": 300000
+      },
+      "benchmark_iterations": {
+        "pcre_exec_literal": 10000000,
+        "pcre_exec_backtrack": 600,
+        "pcre_exec_utf8": 12000000,
+        "pcre_exec_jit": 60000000,
+        "pcre_exec_dfa": 5000000,
+        "pcre_compile": 3000000
+      },
+      "benchmark_modes": [
+        "pcre_compile",
+        "pcre_exec_backtrack",
+        "pcre_exec_dfa",
+        "pcre_exec_jit",
+        "pcre_exec_literal",
+        "pcre_exec_utf8"
+      ],
+      "run_tests": "1 2 4 5 6 7 8 9 10 11 12 14 15 16",
+      "scan_patterns": 8,
+      "scan_corpus_bytes": 57499392,
+      "scan_expected_matched_lines": 725100,
+      "fixture_sha256": {
+        "pcretest_literal.txt": "47d7ac545b3a5b052a8ff30391b29f757e02ae8bc6cfb86dd94fc0454f9c5260",
+        "pcretest_backtrack.txt": "dda0f0d0e80395cd0a535d79fb6fd0d22b1f3d843b55ae8d8e914d56642bed46",
+        "pcretest_utf8.txt": "49b9895ec5b47ecc36e1980af67e30bc08540381b5c060cba8e2f8af7246eb66",
+        "pcretest_dfa.txt": "e284e13bc16c8bde4e7a5d494287a79e9d9da8360dcbcc29e63b96b7aa8a4e19",
+        "scan_patterns.txt": "3f067bb24e13505eecc085aef18dfbf0ff4ef519e30f8d286f726746d5b735be",
+        "scan_corpus.txt": "1a4ad1797740481f4643fe08302911e872ca95994f7376f738b9b32052db458c"
+      }
+    }
+  },
+  "parameter_signature": "b22866974a6895208e7d22bdcb1bf9c8202c2ea2870ccd5e16900ddea6f37f48",
+  "test_tools": {
+    "pcretest": {
+      "version": "8.45 (built from the pinned source archive)"
+    },
+    "pcregrep": {
+      "version": "8.45 (built from the pinned source archive)"
+    },
+    "RunTest": {
+      "version": "8.45 upstream test suite shipped in the source archive"
+    },
+    "pcre_bench": {
+      "version": "1.0.0 (case-owned MIT load, compiled against the built libpcre)"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-08T21:26:07Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 8 nodes (0-7)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215\nnode 0 size: 192622 MB\nnode 0 free: 61967 MB\nnode 1 cpus: 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239\nnode 1 size: 193523 MB\nnode 1 free: 140428 MB\nnode 2 cpus: 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263\nnode 2 size: 193523 MB\nnode 2 free: 167939 MB\nnode 3 cpus: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 3 size: 193523 MB\nnode 3 free: 166199 MB\nnode 4 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311\nnode 4 size: 193523 MB\nnode 4 free: 134414 MB\nnode 5 cpus: 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335\nnode 5 size: 193481 MB\nnode 5 free: 159697 MB\nnode 6 cpus: 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359\nnode 6 size: 193523 MB\nnode 6 free: 169196 MB\nnode 7 cpus: 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 7 size: 193455 MB\nnode 7 free: 163502 MB\nnode distances:\nnode   0   1   2   3   4   5   6   7 \n  0:  10  12  12  12  32  32  32  32 \n  1:  12  10  12  12  32  32  32  32 \n  2:  12  12  10  12  32  32  32  32 \n  3:  12  12  12  10  32  32  32  32 \n  4:  32  32  32  32  10  12  12  12 \n  5:  32  32  32  32  12  10  12  12 \n  6:  32  32  32  32  12  12  10  12 \n  7:  32  32  32  32  12  12  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-08T21:26:07Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 198449344512 1219857346560 14778159104 226785632256 1423884800000\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-08T21:28:56Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334144512 198460141568 1219736276992 14779453440 226896257024 1423874002944\nSwap:     4294963200  2721443840  1573519360",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "pcre_raw_output": {
+      "path": "raw-output.log",
+      "size": 66979
+    },
+    "benchmark_result": {
+      "benchmark": "pcre_match_compile_matrix",
+      "software": "pcre",
+      "version": "8.45",
+      "architecture": "x86_64",
+      "variant": "base",
+      "timestamp": "2026-11-08T21:28:25Z",
+      "parameters": {
+        "variant": "base",
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "pcre_version": "8.45",
+        "pcre_configure_options": "--enable-utf --enable-unicode-properties --enable-jit --disable-shared --enable-static --disable-pcretest-libreadline --disable-pcretest-libedit --enable-pcre8 --disable-pcre16 --disable-pcre32",
+        "cflags": "-O2 -DNDEBUG",
+        "build_parallel_jobs": 8,
+        "source_archive": "pcre-8.45.tar.gz",
+        "source_sha256": "4e6ce03e0336e8b4a3d6c2b70b1c5e18590a5673a98186da90d4f33c23defc09",
+        "pcretest_patterns": {
+          "pcretest_timing_literal": 6,
+          "pcretest_timing_backtrack": 3,
+          "pcretest_timing_utf8": 4,
+          "pcretest_dfa": 3
+        },
+        "pcretest_data_lines": {
+          "pcretest_timing_literal": 13,
+          "pcretest_timing_backtrack": 3,
+          "pcretest_timing_utf8": 4,
+          "pcretest_dfa": 5
+        },
+        "pcretest_iterations": {
+          "pcretest_timing_literal": 300000,
+          "pcretest_timing_backtrack": 600,
+          "pcretest_timing_utf8": 1200000,
+          "pcretest_dfa": 300000
+        },
+        "benchmark_iterations": {
+          "pcre_exec_literal": 10000000,
+          "pcre_exec_backtrack": 600,
+          "pcre_exec_utf8": 12000000,
+          "pcre_exec_jit": 60000000,
+          "pcre_exec_dfa": 5000000,
+          "pcre_compile": 3000000
+        },
+        "benchmark_modes": [
+          "pcre_compile",
+          "pcre_exec_backtrack",
+          "pcre_exec_dfa",
+          "pcre_exec_jit",
+          "pcre_exec_literal",
+          "pcre_exec_utf8"
+        ],
+        "run_tests": "1 2 4 5 6 7 8 9 10 11 12 14 15 16",
+        "scan_patterns": 8,
+        "scan_corpus_bytes": 57499392,
+        "scan_expected_matched_lines": 725100,
+        "fixture_sha256": {
+          "pcretest_literal.txt": "47d7ac545b3a5b052a8ff30391b29f757e02ae8bc6cfb86dd94fc0454f9c5260",
+          "pcretest_backtrack.txt": "dda0f0d0e80395cd0a535d79fb6fd0d22b1f3d843b55ae8d8e914d56642bed46",
+          "pcretest_utf8.txt": "49b9895ec5b47ecc36e1980af67e30bc08540381b5c060cba8e2f8af7246eb66",
+          "pcretest_dfa.txt": "e284e13bc16c8bde4e7a5d494287a79e9d9da8360dcbcc29e63b96b7aa8a4e19",
+          "scan_patterns.txt": "3f067bb24e13505eecc085aef18dfbf0ff4ef519e30f8d286f726746d5b735be",
+          "scan_corpus.txt": "1a4ad1797740481f4643fe08302911e872ca95994f7376f738b9b32052db458c"
+        }
+      },
+      "runtime_context": {
+        "c_compiler": "cc (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+        "measurement_network_mode": "none",
+        "pcretest_build_features": "PCRE version 8.45 2021-06-15;Compiled with;  8-bit support;  UTF-8 support;  Unicode properties support;  Just-in-time compiler support: x86 64bit (little endian + unaligned);  Newline sequence is LF;  \\R matches all Unicode newlines;  Internal link size = 2;  POSIX malloc threshold = 10;  Parentheses nest limit = 250;  Default match limit = 10000000;  Default recursion depth limit = 10000000;  Match recursion uses stack;",
+        "actual_version_string": "8.45"
+      },
+      "metric_contract": {
+        "wall_time": {
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "peak_rss": {
+          "unit": "MiB",
+          "direction": "lower_is_better"
+        },
+        "per_call_cost": {
+          "unit": "ns/op",
+          "direction": "lower_is_better"
+        },
+        "throughput": {
+          "unit": "ops/s",
+          "direction": "higher_is_better"
+        },
+        "statistic": "median of independent repetitions"
+      },
+      "results": {
+        "pcretest_timing_literal_compiles_per_second": {
+          "source_name": "pcretest_timing_literal_compiles_per_second",
+          "scenario": "pcretest_timing_literal",
+          "group": "pcretest_upstream",
+          "value": 1324748.960072,
+          "unit": "compiles/s",
+          "direction": "higher_is_better",
+          "median": 1324748.960072,
+          "mean": 1323658.603673,
+          "min": 1314868.681143,
+          "max": 1329672.302261,
+          "stdev": 6408.270567,
+          "samples": [
+            1319591.014758,
+            1329412.060131,
+            1324748.960072,
+            1314868.681143,
+            1329672.302261
+          ]
+        },
+        "pcretest_timing_literal_matches_per_second": {
+          "source_name": "pcretest_timing_literal_matches_per_second",
+          "scenario": "pcretest_timing_literal",
+          "group": "pcretest_upstream",
+          "value": 2870289.413489,
+          "unit": "matches/s",
+          "direction": "higher_is_better",
+          "median": 2870289.413489,
+          "mean": 2867926.974625,
+          "min": 2848882.142476,
+          "max": 2880956.654899,
+          "stdev": 13884.586229,
+          "samples": [
+            2859113.865309,
+            2880392.79695,
+            2870289.413489,
+            2848882.142476,
+            2880956.654899
+          ]
+        },
+        "pcretest_timing_backtrack_compiles_per_second": {
+          "source_name": "pcretest_timing_backtrack_compiles_per_second",
+          "scenario": "pcretest_timing_backtrack",
+          "group": "pcretest_upstream",
+          "value": 1152.219751,
+          "unit": "compiles/s",
+          "direction": "higher_is_better",
+          "median": 1152.219751,
+          "mean": 1153.700433,
+          "min": 1148.356861,
+          "max": 1159.851359,
+          "stdev": 4.402791,
+          "samples": [
+            1148.356861,
+            1151.947655,
+            1156.126539,
+            1152.219751,
+            1159.851359
+          ]
+        },
+        "pcretest_timing_backtrack_matches_per_second": {
+          "source_name": "pcretest_timing_backtrack_matches_per_second",
+          "scenario": "pcretest_timing_backtrack",
+          "group": "pcretest_upstream",
+          "value": 1152.219751,
+          "unit": "matches/s",
+          "direction": "higher_is_better",
+          "median": 1152.219751,
+          "mean": 1153.700433,
+          "min": 1148.356861,
+          "max": 1159.851359,
+          "stdev": 4.402791,
+          "samples": [
+            1148.356861,
+            1151.947655,
+            1156.126539,
+            1152.219751,
+            1159.851359
+          ]
+        },
+        "pcretest_timing_utf8_compiles_per_second": {
+          "source_name": "pcretest_timing_utf8_compiles_per_second",
+          "scenario": "pcretest_timing_utf8",
+          "group": "pcretest_upstream",
+          "value": 3532515.703136,
+          "unit": "compiles/s",
+          "direction": "higher_is_better",
+          "median": 3532515.703136,
+          "mean": 3511971.806271,
+          "min": 3442195.145214,
+          "max": 3532936.908371,
+          "stdev": 39428.398344,
+          "samples": [
+            3532757.493862,
+            3442195.145214,
+            3532936.908371,
+            3532515.703136,
+            3519453.780773
+          ]
+        },
+        "pcretest_timing_utf8_matches_per_second": {
+          "source_name": "pcretest_timing_utf8_matches_per_second",
+          "scenario": "pcretest_timing_utf8",
+          "group": "pcretest_upstream",
+          "value": 3532515.703136,
+          "unit": "matches/s",
+          "direction": "higher_is_better",
+          "median": 3532515.703136,
+          "mean": 3511971.806271,
+          "min": 3442195.145214,
+          "max": 3532936.908371,
+          "stdev": 39428.398344,
+          "samples": [
+            3532757.493862,
+            3442195.145214,
+            3532936.908371,
+            3532515.703136,
+            3519453.780773
+          ]
+        },
+        "pcretest_dfa_matches_per_second": {
+          "source_name": "pcretest_dfa_matches_per_second",
+          "scenario": "pcretest_dfa",
+          "group": "pcretest_upstream",
+          "value": 1567214.704235,
+          "unit": "matches/s",
+          "direction": "higher_is_better",
+          "median": 1567214.704235,
+          "mean": 1570221.864732,
+          "min": 1566651.626811,
+          "max": 1575277.80024,
+          "stdev": 4610.816387,
+          "samples": [
+            1566708.898175,
+            1567214.704235,
+            1575277.80024,
+            1566651.626811,
+            1575256.294199
+          ]
+        },
+        "upstream_runtest_tests_ok": {
+          "source_name": "upstream_runtest_tests_ok",
+          "scenario": "upstream_runtest",
+          "group": "runtest_upstream",
+          "value": 36.0,
+          "unit": "tests",
+          "direction": "higher_is_better",
+          "median": 36.0,
+          "mean": 36.0,
+          "min": 36.0,
+          "max": 36.0,
+          "stdev": 0.0,
+          "samples": [
+            36.0,
+            36.0,
+            36.0,
+            36.0,
+            36.0
+          ]
+        },
+        "pcre_exec_literal_match_ns_per_op": {
+          "source_name": "pcre_exec_literal_match_ns_per_op",
+          "scenario": "pcre_exec_literal",
+          "group": "pcre_exec_matrix",
+          "value": 132.723502,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 132.723502,
+          "mean": 132.756613,
+          "min": 131.824127,
+          "max": 133.278335,
+          "stdev": 0.589266,
+          "samples": [
+            132.706885,
+            133.250217,
+            133.278335,
+            131.824127,
+            132.723502
+          ]
+        },
+        "pcre_exec_literal_ops_per_second": {
+          "source_name": "pcre_exec_literal_ops_per_second",
+          "scenario": "pcre_exec_literal",
+          "group": "pcre_exec_matrix",
+          "value": 7534460.643303,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 7534460.643303,
+          "mean": 7532700.512837,
+          "min": 7503094.921612,
+          "max": 7585864.740569,
+          "stdev": 33535.742675,
+          "samples": [
+            7535404.071214,
+            7504678.187489,
+            7503094.921612,
+            7585864.740569,
+            7534460.643303
+          ]
+        },
+        "pcre_exec_backtrack_match_ns_per_op": {
+          "source_name": "pcre_exec_backtrack_match_ns_per_op",
+          "scenario": "pcre_exec_backtrack",
+          "group": "pcre_exec_matrix",
+          "value": 2441250.681667,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 2441250.681667,
+          "mean": 2440999.380333,
+          "min": 2400328.305,
+          "max": 2495837.108333,
+          "stdev": 35944.449423,
+          "samples": [
+            2441250.681667,
+            2447980.173333,
+            2495837.108333,
+            2400328.305,
+            2419600.633333
+          ]
+        },
+        "pcre_exec_backtrack_ops_per_second": {
+          "source_name": "pcre_exec_backtrack_ops_per_second",
+          "scenario": "pcre_exec_backtrack",
+          "group": "pcre_exec_matrix",
+          "value": 409.626102,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 409.626102,
+          "mean": 409.738868,
+          "min": 400.667174,
+          "max": 416.609677,
+          "stdev": 5.993145,
+          "samples": [
+            409.626102,
+            408.500041,
+            400.667174,
+            416.609677,
+            413.291345
+          ]
+        },
+        "pcre_exec_utf8_match_ns_per_op": {
+          "source_name": "pcre_exec_utf8_match_ns_per_op",
+          "scenario": "pcre_exec_utf8",
+          "group": "pcre_exec_matrix",
+          "value": 105.789406,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 105.789406,
+          "mean": 105.163743,
+          "min": 101.416221,
+          "max": 106.662848,
+          "stdev": 2.139376,
+          "samples": [
+            105.582467,
+            105.789406,
+            101.416221,
+            106.662848,
+            106.367774
+          ]
+        },
+        "pcre_exec_utf8_ops_per_second": {
+          "source_name": "pcre_exec_utf8_ops_per_second",
+          "scenario": "pcre_exec_utf8",
+          "group": "pcre_exec_matrix",
+          "value": 9452742.403513,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 9452742.403513,
+          "mean": 9512209.339206,
+          "min": 9375335.593067,
+          "max": 9860355.549384,
+          "stdev": 198395.939818,
+          "samples": [
+            9471269.512856,
+            9452742.403513,
+            9860355.549384,
+            9375335.593067,
+            9401343.637212
+          ]
+        },
+        "pcre_exec_dfa_dfa_ns_per_op": {
+          "source_name": "pcre_exec_dfa_dfa_ns_per_op",
+          "scenario": "pcre_exec_dfa",
+          "group": "pcre_exec_matrix",
+          "value": 223.41675,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 223.41675,
+          "mean": 223.607637,
+          "min": 222.771744,
+          "max": 225.195031,
+          "stdev": 0.928441,
+          "samples": [
+            223.41675,
+            225.195031,
+            222.771744,
+            223.461291,
+            223.193369
+          ]
+        },
+        "pcre_exec_dfa_ops_per_second": {
+          "source_name": "pcre_exec_dfa_ops_per_second",
+          "scenario": "pcre_exec_dfa",
+          "group": "pcre_exec_matrix",
+          "value": 4475940.151266,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 4475940.151266,
+          "mean": 4472180.585704,
+          "min": 4440595.320632,
+          "max": 4488899.637549,
+          "stdev": 18489.167617,
+          "samples": [
+            4475940.151266,
+            4440595.320632,
+            4488899.637549,
+            4475047.976922,
+            4480419.84215
+          ]
+        },
+        "pcre_exec_jit_match_ns_per_op": {
+          "source_name": "pcre_exec_jit_match_ns_per_op",
+          "scenario": "pcre_exec_jit",
+          "group": "pcre_exec_matrix",
+          "value": 23.431197,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 23.431197,
+          "mean": 23.454488,
+          "min": 23.417258,
+          "max": 23.527436,
+          "stdev": 0.047073,
+          "samples": [
+            23.431197,
+            23.420561,
+            23.417258,
+            23.475989,
+            23.527436
+          ]
+        },
+        "pcre_exec_jit_ops_per_second": {
+          "source_name": "pcre_exec_jit_ops_per_second",
+          "scenario": "pcre_exec_jit",
+          "group": "pcre_exec_matrix",
+          "value": 42678144.136008,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 42678144.136008,
+          "mean": 42635900.016082,
+          "min": 42503568.723599,
+          "max": 42703547.287305,
+          "stdev": 85448.077218,
+          "samples": [
+            42678144.136008,
+            42697525.47772,
+            42703547.287305,
+            42596714.455779,
+            42503568.723599
+          ]
+        },
+        "pcre_compile_compile_ns_per_op": {
+          "source_name": "pcre_compile_compile_ns_per_op",
+          "scenario": "pcre_compile",
+          "group": "pcre_exec_matrix",
+          "value": 503.131037,
+          "unit": "ns/op",
+          "direction": "lower_is_better",
+          "median": 503.131037,
+          "mean": 504.753425,
+          "min": 501.475474,
+          "max": 509.226929,
+          "stdev": 3.65039,
+          "samples": [
+            501.818752,
+            509.226929,
+            503.131037,
+            501.475474,
+            508.114932
+          ]
+        },
+        "pcre_compile_compiles_per_second": {
+          "source_name": "pcre_compile_compiles_per_second",
+          "scenario": "pcre_compile",
+          "group": "pcre_exec_matrix",
+          "value": 1987553.791081,
+          "unit": "ops/s",
+          "direction": "higher_is_better",
+          "median": 1987553.791081,
+          "mean": 1981248.065948,
+          "min": 1963761.034041,
+          "max": 1994115.470271,
+          "stdev": 14295.229862,
+          "samples": [
+            1992751.360284,
+            1963761.034041,
+            1987553.791081,
+            1994115.470271,
+            1968058.674064
+          ]
+        },
+        "pcregrep_scan_matched_lines": {
+          "source_name": "pcregrep_scan_matched_lines",
+          "scenario": "pcregrep_scan",
+          "group": "pcregrep_tool",
+          "value": 725100.0,
+          "unit": "lines",
+          "direction": "higher_is_better",
+          "median": 725100.0,
+          "mean": 725100.0,
+          "min": 725100.0,
+          "max": 725100.0,
+          "stdev": 0.0,
+          "samples": [
+            725100.0,
+            725100.0,
+            725100.0,
+            725100.0,
+            725100.0
+          ]
+        },
+        "pcregrep_scan_scan_mib_per_second": {
+          "source_name": "pcregrep_scan_scan_mib_per_second",
+          "scenario": "pcregrep_scan",
+          "group": "pcregrep_tool",
+          "value": 768.201919,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "median": 768.201919,
+          "mean": 765.555396,
+          "min": 761.083607,
+          "max": 768.38626,
+          "stdev": 3.757452,
+          "samples": [
+            768.201919,
+            761.815823,
+            761.083607,
+            768.38626,
+            768.289369
+          ]
+        },
+        "pcretest_timing_literal_wall_s": {
+          "source_name": "pcretest_timing_literal_wall_s",
+          "scenario": "pcretest_timing_literal",
+          "group": "pcretest_upstream",
+          "value": 1.358748,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.358748,
+          "mean": 1.359893,
+          "min": 1.353717,
+          "max": 1.368958,
+          "stdev": 0.006594,
+          "samples": [
+            1.364059,
+            1.353982,
+            1.358748,
+            1.368958,
+            1.353717
+          ]
+        },
+        "pcretest_timing_literal_rss_mib": {
+          "source_name": "pcretest_timing_literal_rss_mib",
+          "scenario": "pcretest_timing_literal",
+          "group": "pcretest_upstream",
+          "value": 2.0,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 2.0,
+          "mean": 2.0,
+          "min": 1.984,
+          "max": 2.012,
+          "stdev": 0.010954,
+          "samples": [
+            2.012,
+            1.984,
+            1.996,
+            2.0,
+            2.008
+          ]
+        },
+        "pcretest_timing_backtrack_wall_s": {
+          "source_name": "pcretest_timing_backtrack_wall_s",
+          "scenario": "pcretest_timing_backtrack",
+          "group": "pcretest_upstream",
+          "value": 1.562202,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.562202,
+          "mean": 1.560215,
+          "min": 1.551923,
+          "max": 1.567457,
+          "stdev": 0.005949,
+          "samples": [
+            1.567457,
+            1.562571,
+            1.556923,
+            1.562202,
+            1.551923
+          ]
+        },
+        "pcretest_timing_backtrack_rss_mib": {
+          "source_name": "pcretest_timing_backtrack_rss_mib",
+          "scenario": "pcretest_timing_backtrack",
+          "group": "pcretest_upstream",
+          "value": 1.945,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.945,
+          "mean": 1.8912,
+          "min": 1.734,
+          "max": 1.961,
+          "stdev": 0.0954,
+          "samples": [
+            1.961,
+            1.945,
+            1.867,
+            1.734,
+            1.949
+          ]
+        },
+        "pcretest_timing_utf8_wall_s": {
+          "source_name": "pcretest_timing_utf8_wall_s",
+          "scenario": "pcretest_timing_utf8",
+          "group": "pcretest_upstream",
+          "value": 1.358805,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.358805,
+          "mean": 1.366893,
+          "min": 1.358643,
+          "max": 1.394459,
+          "stdev": 0.015569,
+          "samples": [
+            1.358712,
+            1.394459,
+            1.358643,
+            1.358805,
+            1.363848
+          ]
+        },
+        "pcretest_timing_utf8_rss_mib": {
+          "source_name": "pcretest_timing_utf8_rss_mib",
+          "scenario": "pcretest_timing_utf8",
+          "group": "pcretest_upstream",
+          "value": 1.852,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.852,
+          "mean": 1.897,
+          "min": 1.785,
+          "max": 2.008,
+          "stdev": 0.100931,
+          "samples": [
+            1.84,
+            2.0,
+            1.785,
+            2.008,
+            1.852
+          ]
+        },
+        "pcretest_dfa_wall_s": {
+          "source_name": "pcretest_dfa_wall_s",
+          "scenario": "pcretest_dfa",
+          "group": "pcretest_upstream",
+          "value": 0.957112,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.957112,
+          "mean": 0.955286,
+          "min": 0.952213,
+          "max": 0.957456,
+          "stdev": 0.002802,
+          "samples": [
+            0.957421,
+            0.957112,
+            0.952213,
+            0.957456,
+            0.952226
+          ]
+        },
+        "pcretest_dfa_rss_mib": {
+          "source_name": "pcretest_dfa_rss_mib",
+          "scenario": "pcretest_dfa",
+          "group": "pcretest_upstream",
+          "value": 1.996,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.996,
+          "mean": 1.9796,
+          "min": 1.949,
+          "max": 2.004,
+          "stdev": 0.02635,
+          "samples": [
+            1.996,
+            2.004,
+            1.949,
+            1.953,
+            1.996
+          ]
+        },
+        "upstream_runtest_wall_s": {
+          "source_name": "upstream_runtest_wall_s",
+          "scenario": "upstream_runtest",
+          "group": "runtest_upstream",
+          "value": 0.337544,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.337544,
+          "mean": 0.338455,
+          "min": 0.337006,
+          "max": 0.342578,
+          "stdev": 0.002318,
+          "samples": [
+            0.337544,
+            0.337543,
+            0.337604,
+            0.342578,
+            0.337006
+          ]
+        },
+        "upstream_runtest_rss_mib": {
+          "source_name": "upstream_runtest_rss_mib",
+          "scenario": "upstream_runtest",
+          "group": "runtest_upstream",
+          "value": 3.359,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 3.359,
+          "mean": 3.4016,
+          "min": 3.285,
+          "max": 3.543,
+          "stdev": 0.105365,
+          "samples": [
+            3.543,
+            3.359,
+            3.477,
+            3.285,
+            3.344
+          ]
+        },
+        "pcre_exec_literal_wall_s": {
+          "source_name": "pcre_exec_literal_wall_s",
+          "scenario": "pcre_exec_literal",
+          "group": "pcre_exec_matrix",
+          "value": 1.333296,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.333296,
+          "mean": 1.333338,
+          "min": 1.323159,
+          "max": 1.338581,
+          "stdev": 0.006254,
+          "samples": [
+            1.333296,
+            1.338581,
+            1.338372,
+            1.323159,
+            1.333284
+          ]
+        },
+        "pcre_exec_literal_rss_mib": {
+          "source_name": "pcre_exec_literal_rss_mib",
+          "scenario": "pcre_exec_literal",
+          "group": "pcre_exec_matrix",
+          "value": 1.859,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.859,
+          "mean": 1.8764,
+          "min": 1.84,
+          "max": 1.914,
+          "stdev": 0.035047,
+          "samples": [
+            1.914,
+            1.914,
+            1.855,
+            1.84,
+            1.859
+          ]
+        },
+        "pcre_exec_backtrack_wall_s": {
+          "source_name": "pcre_exec_backtrack_wall_s",
+          "scenario": "pcre_exec_backtrack",
+          "group": "pcre_exec_matrix",
+          "value": 1.470554,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.470554,
+          "mean": 1.471611,
+          "min": 1.4451,
+          "max": 1.506213,
+          "stdev": 0.02261,
+          "samples": [
+            1.470554,
+            1.475801,
+            1.506213,
+            1.4451,
+            1.460385
+          ]
+        },
+        "pcre_exec_backtrack_rss_mib": {
+          "source_name": "pcre_exec_backtrack_rss_mib",
+          "scenario": "pcre_exec_backtrack",
+          "group": "pcre_exec_matrix",
+          "value": 1.812,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.812,
+          "mean": 1.7896,
+          "min": 1.742,
+          "max": 1.836,
+          "stdev": 0.044394,
+          "samples": [
+            1.742,
+            1.836,
+            1.742,
+            1.816,
+            1.812
+          ]
+        },
+        "pcre_exec_utf8_wall_s": {
+          "source_name": "pcre_exec_utf8_wall_s",
+          "scenario": "pcre_exec_utf8",
+          "group": "pcre_exec_matrix",
+          "value": 1.272359,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.272359,
+          "mean": 1.266215,
+          "min": 1.221461,
+          "max": 1.282647,
+          "stdev": 0.025538,
+          "samples": [
+            1.272359,
+            1.272198,
+            1.221461,
+            1.282647,
+            1.282409
+          ]
+        },
+        "pcre_exec_utf8_rss_mib": {
+          "source_name": "pcre_exec_utf8_rss_mib",
+          "scenario": "pcre_exec_utf8",
+          "group": "pcre_exec_matrix",
+          "value": 1.863,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.863,
+          "mean": 1.845,
+          "min": 1.773,
+          "max": 1.945,
+          "stdev": 0.073089,
+          "samples": [
+            1.871,
+            1.773,
+            1.863,
+            1.773,
+            1.945
+          ]
+        },
+        "pcre_exec_dfa_wall_s": {
+          "source_name": "pcre_exec_dfa_wall_s",
+          "scenario": "pcre_exec_dfa",
+          "group": "pcre_exec_matrix",
+          "value": 1.119973,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.119973,
+          "mean": 1.121986,
+          "min": 1.119691,
+          "max": 1.130314,
+          "stdev": 0.004657,
+          "samples": [
+            1.120045,
+            1.130314,
+            1.119973,
+            1.119691,
+            1.119908
+          ]
+        },
+        "pcre_exec_dfa_rss_mib": {
+          "source_name": "pcre_exec_dfa_rss_mib",
+          "scenario": "pcre_exec_dfa",
+          "group": "pcre_exec_matrix",
+          "value": 1.801,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.801,
+          "mean": 1.7838,
+          "min": 1.684,
+          "max": 1.848,
+          "stdev": 0.060899,
+          "samples": [
+            1.805,
+            1.801,
+            1.848,
+            1.781,
+            1.684
+          ]
+        },
+        "pcre_exec_jit_wall_s": {
+          "source_name": "pcre_exec_jit_wall_s",
+          "scenario": "pcre_exec_jit",
+          "group": "pcre_exec_matrix",
+          "value": 1.409663,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.409663,
+          "mean": 1.411573,
+          "min": 1.409474,
+          "max": 1.41461,
+          "stdev": 0.002726,
+          "samples": [
+            1.409663,
+            1.409474,
+            1.409614,
+            1.414506,
+            1.41461
+          ]
+        },
+        "pcre_exec_jit_rss_mib": {
+          "source_name": "pcre_exec_jit_rss_mib",
+          "scenario": "pcre_exec_jit",
+          "group": "pcre_exec_matrix",
+          "value": 1.941,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.941,
+          "mean": 1.9358,
+          "min": 1.855,
+          "max": 2.008,
+          "stdev": 0.054861,
+          "samples": [
+            1.949,
+            1.855,
+            2.008,
+            1.926,
+            1.941
+          ]
+        },
+        "pcre_compile_wall_s": {
+          "source_name": "pcre_compile_wall_s",
+          "scenario": "pcre_compile",
+          "group": "pcre_exec_matrix",
+          "value": 1.51124,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.51124,
+          "mean": 1.51748,
+          "min": 1.50627,
+          "max": 1.531723,
+          "stdev": 0.011175,
+          "samples": [
+            1.511118,
+            1.531723,
+            1.51124,
+            1.50627,
+            1.52705
+          ]
+        },
+        "pcre_compile_rss_mib": {
+          "source_name": "pcre_compile_rss_mib",
+          "scenario": "pcre_compile",
+          "group": "pcre_exec_matrix",
+          "value": 1.621,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 1.621,
+          "mean": 1.6506,
+          "min": 1.566,
+          "max": 1.781,
+          "stdev": 0.094447,
+          "samples": [
+            1.621,
+            1.566,
+            1.781,
+            1.715,
+            1.57
+          ]
+        },
+        "pcregrep_scan_wall_s": {
+          "source_name": "pcregrep_scan_wall_s",
+          "scenario": "pcregrep_scan",
+          "group": "pcregrep_tool",
+          "value": 0.571055,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.571055,
+          "mean": 0.57304,
+          "min": 0.570918,
+          "max": 0.576396,
+          "stdev": 0.002818,
+          "samples": [
+            0.571055,
+            0.575842,
+            0.576396,
+            0.570918,
+            0.57099
+          ]
+        },
+        "pcregrep_scan_rss_mib": {
+          "source_name": "pcregrep_scan_rss_mib",
+          "scenario": "pcregrep_scan",
+          "group": "pcregrep_tool",
+          "value": 3.258,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 3.258,
+          "mean": 3.2354,
+          "min": 3.047,
+          "max": 3.344,
+          "stdev": 0.115634,
+          "samples": [
+            3.309,
+            3.258,
+            3.344,
+            3.219,
+            3.047
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 144
+    }
+  },
+  "metrics": {
+    "pcretest_timing_literal_compiles_per_second": {
+      "value": 1324748.960072,
+      "unit": "compiles/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_literal_matches_per_second": {
+      "value": 2870289.413489,
+      "unit": "matches/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_backtrack_compiles_per_second": {
+      "value": 1152.219751,
+      "unit": "compiles/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_backtrack_matches_per_second": {
+      "value": 1152.219751,
+      "unit": "matches/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_utf8_compiles_per_second": {
+      "value": 3532515.703136,
+      "unit": "compiles/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_utf8_matches_per_second": {
+      "value": 3532515.703136,
+      "unit": "matches/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_dfa_matches_per_second": {
+      "value": 1567214.704235,
+      "unit": "matches/s",
+      "direction": "higher_is_better",
+      "group": "pcretest_upstream"
+    },
+    "upstream_runtest_tests_ok": {
+      "value": 36.0,
+      "unit": "tests",
+      "direction": "higher_is_better",
+      "group": "runtest_upstream"
+    },
+    "pcre_exec_literal_match_ns_per_op": {
+      "value": 132.723502,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_literal_ops_per_second": {
+      "value": 7534460.643303,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_backtrack_match_ns_per_op": {
+      "value": 2441250.681667,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_backtrack_ops_per_second": {
+      "value": 409.626102,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_utf8_match_ns_per_op": {
+      "value": 105.789406,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_utf8_ops_per_second": {
+      "value": 9452742.403513,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_dfa_dfa_ns_per_op": {
+      "value": 223.41675,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_dfa_ops_per_second": {
+      "value": 4475940.151266,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_jit_match_ns_per_op": {
+      "value": 23.431197,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_jit_ops_per_second": {
+      "value": 42678144.136008,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_compile_compile_ns_per_op": {
+      "value": 503.131037,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_compile_compiles_per_second": {
+      "value": 1987553.791081,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcregrep_scan_matched_lines": {
+      "value": 725100.0,
+      "unit": "lines",
+      "direction": "higher_is_better",
+      "group": "pcregrep_tool"
+    },
+    "pcregrep_scan_scan_mib_per_second": {
+      "value": 768.201919,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "pcregrep_tool"
+    },
+    "pcretest_timing_literal_wall_s": {
+      "value": 1.358748,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_literal_rss_mib": {
+      "value": 2.0,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_backtrack_wall_s": {
+      "value": 1.562202,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_backtrack_rss_mib": {
+      "value": 1.945,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_utf8_wall_s": {
+      "value": 1.358805,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_timing_utf8_rss_mib": {
+      "value": 1.852,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_dfa_wall_s": {
+      "value": 0.957112,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "pcretest_dfa_rss_mib": {
+      "value": 1.996,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcretest_upstream"
+    },
+    "upstream_runtest_wall_s": {
+      "value": 0.337544,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "runtest_upstream"
+    },
+    "upstream_runtest_rss_mib": {
+      "value": 3.359,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "runtest_upstream"
+    },
+    "pcre_exec_literal_wall_s": {
+      "value": 1.333296,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_literal_rss_mib": {
+      "value": 1.859,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_backtrack_wall_s": {
+      "value": 1.470554,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_backtrack_rss_mib": {
+      "value": 1.812,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_utf8_wall_s": {
+      "value": 1.272359,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_utf8_rss_mib": {
+      "value": 1.863,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_dfa_wall_s": {
+      "value": 1.119973,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_dfa_rss_mib": {
+      "value": 1.801,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_jit_wall_s": {
+      "value": 1.409663,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_exec_jit_rss_mib": {
+      "value": 1.941,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_compile_wall_s": {
+      "value": 1.51124,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcre_compile_rss_mib": {
+      "value": 1.621,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcre_exec_matrix"
+    },
+    "pcregrep_scan_wall_s": {
+      "value": 0.571055,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "pcregrep_tool"
+    },
+    "pcregrep_scan_rss_mib": {
+      "value": 3.258,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "pcregrep_tool"
+    }
+  }
+}
