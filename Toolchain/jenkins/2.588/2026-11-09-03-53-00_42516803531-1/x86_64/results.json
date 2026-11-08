@@ -1,0 +1,692 @@
+{
+  "benchmark": "jenkins_controller_workload_matrix",
+  "software": "jenkins",
+  "version": "2.588",
+  "architecture": "x86_64",
+  "variant": "base",
+  "timestamp": "2026-11-08T19:50:42Z",
+  "parameters": {
+    "variant": "base",
+    "build_variant": {
+      "variant": "base"
+    },
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "controller_port": 19777,
+    "controller_heap": "-Xms512m -Xmx512m",
+    "controller_flags": [
+      "-Djenkins.install.runSetupWizard=false",
+      "-Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true",
+      "-Dhudson.model.UpdateCenter.updateCenterUrl=http://127.0.0.1:1/update-center.json",
+      "-Djenkins.model.DownloadService.noSignatureCheck=true",
+      "-Dhudson.model.UsageStatistics.disabled=true"
+    ],
+    "measurement_window": {
+      "startup_cold": "process spawn to the first HTTP 200 from /api/json",
+      "startup_warm": "process spawn to the first HTTP 200 from /api/json",
+      "job_batch": "first build trigger to the last completed build result",
+      "api_list": "twenty sequential /api/json job-list reads",
+      "api_scan": "one /job/<name>/api/json read per pre-created job"
+    },
+    "matrix": [
+      "startup_cold",
+      "startup_warm",
+      "job_single",
+      "job_throughput_10",
+      "job_throughput_50",
+      "api_list_200",
+      "api_scan_200"
+    ],
+    "dimensions": [
+      "api",
+      "job",
+      "startup"
+    ]
+  },
+  "inputs": {
+    "war": "https://get.jenkins.io/war/2.588/jenkins.war",
+    "war_sha256": "e84790335e973f1c051f32cb1e64808049a31a17dbeaa98014937842710bf37a",
+    "war_size": 52583800,
+    "war_urls": [
+      "https://get.jenkins.io/war/2.588/jenkins.war",
+      "https://mirrors.huaweicloud.com/jenkins/war/2.588/jenkins.war",
+      "https://mirrors.tuna.tsinghua.edu.cn/jenkins/war/2.588/jenkins.war",
+      "https://mirrors.aliyun.com/jenkins/war/2.588/jenkins.war"
+    ],
+    "jdk": "Eclipse Temurin 21.0.13+9 (OpenJDK21U)",
+    "jdk_sha256_x64": "d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041447ea740c7d66d1c",
+    "jdk_sha256_aarch64": "e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578",
+    "workload_generator": "in-repo deterministic freestyle shell job template"
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "scenarios": [
+    {
+      "scenario": "startup_cold",
+      "dimension": "startup",
+      "action": "startup_cold",
+      "scale": 0,
+      "workload": "fresh controller boot with an empty JENKINS_HOME",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        }
+      ]
+    },
+    {
+      "scenario": "startup_warm",
+      "dimension": "startup",
+      "action": "startup_warm",
+      "scale": 0,
+      "workload": "second controller boot from a pre-initialized JENKINS_HOME",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588"
+        }
+      ]
+    },
+    {
+      "scenario": "job_single",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 1,
+      "workload": "single freestyle shell job: trigger to completion",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 1,
+          "builds_total": 1,
+          "builds_success": 1,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 1,
+          "builds_total": 1,
+          "builds_success": 1,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 1,
+          "builds_total": 1,
+          "builds_success": 1,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 1,
+          "builds_total": 1,
+          "builds_success": 1,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 1,
+          "builds_total": 1,
+          "builds_success": 1,
+          "builds_result": "SUCCESS"
+        }
+      ]
+    },
+    {
+      "scenario": "job_throughput_10",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 10,
+      "workload": "ten freestyle shell jobs: trigger to completion",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 10,
+          "builds_total": 10,
+          "builds_success": 10,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 10,
+          "builds_total": 10,
+          "builds_success": 10,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 10,
+          "builds_total": 10,
+          "builds_success": 10,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 10,
+          "builds_total": 10,
+          "builds_success": 10,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 10,
+          "builds_total": 10,
+          "builds_success": 10,
+          "builds_result": "SUCCESS"
+        }
+      ]
+    },
+    {
+      "scenario": "job_throughput_50",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 50,
+      "workload": "fifty freestyle shell jobs: trigger to completion",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 50,
+          "builds_total": 50,
+          "builds_success": 50,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 50,
+          "builds_total": 50,
+          "builds_success": 50,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 50,
+          "builds_total": 50,
+          "builds_success": 50,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 50,
+          "builds_total": 50,
+          "builds_success": 50,
+          "builds_result": "SUCCESS"
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "jobs_created": 50,
+          "builds_total": 50,
+          "builds_success": 50,
+          "builds_result": "SUCCESS"
+        }
+      ]
+    },
+    {
+      "scenario": "api_list_200",
+      "dimension": "api",
+      "action": "api_list",
+      "scale": 200,
+      "workload": "twenty full job-list reads with 200 jobs",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 20,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 20,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 20,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 20,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 20,
+          "api_failures": 0,
+          "api_jobs": 200
+        }
+      ]
+    },
+    {
+      "scenario": "api_scan_200",
+      "dimension": "api",
+      "action": "api_scan",
+      "scale": 200,
+      "workload": "sequential detail document reads for 200 jobs",
+      "checks": [
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 200,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 200,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 200,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 200,
+          "api_failures": 0,
+          "api_jobs": 200
+        },
+        {
+          "ready": true,
+          "jenkins_version": "2.588",
+          "api_requests": 200,
+          "api_failures": 0,
+          "api_jobs": 200
+        }
+      ]
+    }
+  ],
+  "results": {
+    "startup_cold": {
+      "source_name": "startup_cold",
+      "scenario": "startup_cold",
+      "dimension": "startup",
+      "action": "startup_cold",
+      "scale": 0,
+      "workload": "fresh controller boot with an empty JENKINS_HOME",
+      "value": 2.133499,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.133499,
+      "mean": 2.136832,
+      "min": 2.128624,
+      "max": 2.146931,
+      "stdev": 0.009098,
+      "samples": [
+        2.128905,
+        2.146202,
+        2.133499,
+        2.146931,
+        2.128624
+      ]
+    },
+    "startup_cold_rss": {
+      "source_name": "startup_cold_rss",
+      "scenario": "startup_cold",
+      "dimension": "startup",
+      "action": "startup_cold",
+      "scale": 0,
+      "workload": "fresh controller boot with an empty JENKINS_HOME",
+      "value": 291.398,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 291.398,
+      "mean": 288.528,
+      "min": 280.629,
+      "max": 294.984,
+      "stdev": 5.921564,
+      "samples": [
+        284.145,
+        280.629,
+        291.484,
+        291.398,
+        294.984
+      ]
+    },
+    "startup_warm": {
+      "source_name": "startup_warm",
+      "scenario": "startup_warm",
+      "dimension": "startup",
+      "action": "startup_warm",
+      "scale": 0,
+      "workload": "second controller boot from a pre-initialized JENKINS_HOME",
+      "value": 2.006208,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.006208,
+      "mean": 2.010507,
+      "min": 2.003142,
+      "max": 2.032635,
+      "stdev": 0.01248,
+      "samples": [
+        2.003555,
+        2.006996,
+        2.006208,
+        2.032635,
+        2.003142
+      ]
+    },
+    "startup_warm_rss": {
+      "source_name": "startup_warm_rss",
+      "scenario": "startup_warm",
+      "dimension": "startup",
+      "action": "startup_warm",
+      "scale": 0,
+      "workload": "second controller boot from a pre-initialized JENKINS_HOME",
+      "value": 319.566,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 319.566,
+      "mean": 313.5258,
+      "min": 285.543,
+      "max": 333.668,
+      "stdev": 18.504197,
+      "samples": [
+        305.977,
+        285.543,
+        322.875,
+        319.566,
+        333.668
+      ]
+    },
+    "job_single": {
+      "source_name": "job_single",
+      "scenario": "job_single",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 1,
+      "workload": "single freestyle shell job: trigger to completion",
+      "value": 0.109452,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.109452,
+      "mean": 0.111723,
+      "min": 0.106454,
+      "max": 0.116861,
+      "stdev": 0.004703,
+      "samples": [
+        0.1093,
+        0.106454,
+        0.109452,
+        0.116549,
+        0.116861
+      ]
+    },
+    "job_single_rss": {
+      "source_name": "job_single_rss",
+      "scenario": "job_single",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 1,
+      "workload": "single freestyle shell job: trigger to completion",
+      "value": 346.277,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 346.277,
+      "mean": 349.8188,
+      "min": 340.551,
+      "max": 364.773,
+      "stdev": 9.734995,
+      "samples": [
+        340.551,
+        343.516,
+        346.277,
+        364.773,
+        353.977
+      ]
+    },
+    "job_throughput_10": {
+      "source_name": "job_throughput_10",
+      "scenario": "job_throughput_10",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 10,
+      "workload": "ten freestyle shell jobs: trigger to completion",
+      "value": 0.573603,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.573603,
+      "mean": 0.558296,
+      "min": 0.529874,
+      "max": 0.5795,
+      "stdev": 0.02541,
+      "samples": [
+        0.531248,
+        0.577255,
+        0.5795,
+        0.529874,
+        0.573603
+      ]
+    },
+    "job_throughput_10_rss": {
+      "source_name": "job_throughput_10_rss",
+      "scenario": "job_throughput_10",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 10,
+      "workload": "ten freestyle shell jobs: trigger to completion",
+      "value": 343.207,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 343.207,
+      "mean": 345.2018,
+      "min": 332.961,
+      "max": 354.641,
+      "stdev": 8.735574,
+      "samples": [
+        342.559,
+        354.641,
+        343.207,
+        332.961,
+        352.641
+      ]
+    },
+    "job_throughput_50": {
+      "source_name": "job_throughput_50",
+      "scenario": "job_throughput_50",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 50,
+      "workload": "fifty freestyle shell jobs: trigger to completion",
+      "value": 0.62455,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.62455,
+      "mean": 0.669346,
+      "min": 0.579259,
+      "max": 0.780531,
+      "stdev": 0.096579,
+      "samples": [
+        0.579259,
+        0.595916,
+        0.62455,
+        0.780531,
+        0.766473
+      ]
+    },
+    "job_throughput_50_rss": {
+      "source_name": "job_throughput_50_rss",
+      "scenario": "job_throughput_50",
+      "dimension": "job",
+      "action": "job_batch",
+      "scale": 50,
+      "workload": "fifty freestyle shell jobs: trigger to completion",
+      "value": 390.688,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 390.688,
+      "mean": 402.1796,
+      "min": 368.121,
+      "max": 446.617,
+      "stdev": 34.922447,
+      "samples": [
+        368.121,
+        374.355,
+        390.688,
+        446.617,
+        431.117
+      ]
+    },
+    "api_list_200": {
+      "source_name": "api_list_200",
+      "scenario": "api_list_200",
+      "dimension": "api",
+      "action": "api_list",
+      "scale": 200,
+      "workload": "twenty full job-list reads with 200 jobs",
+      "value": 0.071119,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.071119,
+      "mean": 0.073091,
+      "min": 0.066627,
+      "max": 0.083277,
+      "stdev": 0.007151,
+      "samples": [
+        0.071119,
+        0.083277,
+        0.066627,
+        0.077392,
+        0.067038
+      ]
+    },
+    "api_list_200_rss": {
+      "source_name": "api_list_200_rss",
+      "scenario": "api_list_200",
+      "dimension": "api",
+      "action": "api_list",
+      "scale": 200,
+      "workload": "twenty full job-list reads with 200 jobs",
+      "value": 414.199,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 414.199,
+      "mean": 408.595,
+      "min": 371.203,
+      "max": 430.691,
+      "stdev": 22.250417,
+      "samples": [
+        430.691,
+        416.23,
+        371.203,
+        414.199,
+        410.652
+      ]
+    },
+    "api_scan_200": {
+      "source_name": "api_scan_200",
+      "scenario": "api_scan_200",
+      "dimension": "api",
+      "action": "api_scan",
+      "scale": 200,
+      "workload": "sequential detail document reads for 200 jobs",
+      "value": 0.845442,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.845442,
+      "mean": 0.862737,
+      "min": 0.80788,
+      "max": 0.927303,
+      "stdev": 0.04612,
+      "samples": [
+        0.844144,
+        0.845442,
+        0.927303,
+        0.80788,
+        0.888918
+      ]
+    },
+    "api_scan_200_rss": {
+      "source_name": "api_scan_200_rss",
+      "scenario": "api_scan_200",
+      "dimension": "api",
+      "action": "api_scan",
+      "scale": 200,
+      "workload": "sequential detail document reads for 200 jobs",
+      "value": 463.961,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 463.961,
+      "mean": 448.7922,
+      "min": 404.723,
+      "max": 466.539,
+      "stdev": 26.660258,
+      "samples": [
+        442.25,
+        466.539,
+        463.961,
+        404.723,
+        466.488
+      ]
+    }
+  }
+}
