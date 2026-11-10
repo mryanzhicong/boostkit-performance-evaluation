@@ -1,0 +1,48 @@
+[openviking] [2026-11-10 18:48:04] benchmark-kit layout: kit=/home/runner/boostkit-perf/openviking/0.5.0/x86_64/42794255360-1/install/kit-context/openviking-0.5.0-x86_64-kit-slim/payload/x86_test/kit wheel=openviking-0.5.0-cp310-abi3-manylinux_2_31_x86_64.whl overlay=openviking-0.5.0-x86_64-kit-slim/payload/x86_test/_port/final_v0.5.0/openviking
+[openviking] [2026-11-10 18:48:04] warm-up pass: discarded evidence in /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup
+[openviking] [2026-11-10 18:48:04] generating ov.conf with the kit's prepare_run.py for /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup
+模型连接检查通过
+[openviking] [2026-11-10 18:48:06] starting the OpenViking server through the kit's agfs_timing harness on port 19666 (run_root=/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup)
+[openviking] [2026-11-10 18:48:12] OpenViking server is healthy (pid=1004)
+[protocol] [18:48:12] [1/5] warm-up write: importing the first LoCoMo session
+Results saved to:
+  - Success records: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup/metrics/import_success.csv
+  - Error logs: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup/metrics/import_errors.log
+[protocol] [18:48:16] [2/5] search: replaying the 152 LoCoMo search questions
+[protocol] [18:48:19] search telemetry rows: 152
+[protocol] [18:48:19] warm-up pass complete (QA and reports are only executed in the measured pass)
+[protocol] [18:48:19] protocol mode=warmup completed for /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/warmup
+[openviking] [2026-11-10 18:48:19] warm-up pass finished
+[openviking] [2026-11-10 18:48:19] measured pass: full seven-step benchmark-kit protocol in /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run
+[openviking] [2026-11-10 18:48:19] generating ov.conf with the kit's prepare_run.py for /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run
+模型连接检查通过
+[openviking] [2026-11-10 18:48:21] starting the OpenViking server through the kit's agfs_timing harness on port 19666 (run_root=/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run)
+[openviking] [2026-11-10 18:48:26] OpenViking server is healthy (pid=1605)
+[protocol] [18:48:26] [1/5] write: importing LoCoMo sample 0 (61 commits with per-stage telemetry)
+Results saved to:
+  - Success records: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run/metrics/import_success.csv
+  - Error logs: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run/metrics/import_errors.log
+[protocol] [18:50:19] [2/5] search: replaying the 152 LoCoMo search questions
+[protocol] [18:50:22] search telemetry rows: 152
+[protocol] [18:50:22] [3/5] QA: answering the 152 LoCoMo questions through the service
+[protocol] [18:50:33] [4/5] coverage: recording instrumentation coverage
+write stages=46 search rows=152 search stages=7
+[protocol] [18:50:33] [5/5] reports: generating the kit report suite
+[protocol] [18:50:38] protocol mode=full completed for /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/run
+search_local_sum: 17.788 ms (152 samples, group=search)
+search_query_prepare: 1.469 ms (152 samples, group=search)
+search_response_handling: 6.792 ms (152 samples, group=search)
+search_result_processing: 0.012 ms (152 samples, group=search)
+search_vector_recall: 9.159 ms (152 samples, group=search)
+write_commit_prepare: 0.924 ms (61 samples, group=write)
+write_extraction_local: 29.145 ms (61 samples, group=write)
+write_local_net: 150.981 ms (61 samples, group=write)
+write_local_sum: 167.339 ms (61 samples, group=write)
+write_long_term_finalize: 1.254 ms (61 samples, group=write)
+write_long_term_prepare: 3.130 ms (61 samples, group=write)
+write_parallel_tail: 0.032 ms (61 samples, group=write)
+write_persist_and_vector_upsert: 19.084 ms (61 samples, group=write)
+write_relation_and_commit: 101.031 ms (61 samples, group=write)
+write_streaming_merge_local: 10.011 ms (61 samples, group=write)
+wrote /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/benchmark_openviking.json and /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/runs
+[openviking] [2026-11-10 18:50:38] measured pass published: /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/openviking/0.5.0/x86_64/42794255360-1/benchmark_openviking.json (protocol_status=0)
