@@ -45,6 +45,8 @@ def parse_result(output: str, query: str, expected_events: int) -> dict:
         throughput_per_core = None
     if events != expected_events or not all(math.isfinite(x) and x > 0 for x in (seconds, throughput)):
         raise ValueError(f"{query}: incomplete or non-positive Nexmark measurement")
+    if cores is None or cores <= 0:
+        raise ValueError(f"{query}: Nexmark reported no TaskManager CPU metrics (Cores={cells[2]})")
     return {
         "query": query, "events": events, "cores": cores, "cores_raw": cells[2],
         "time_seconds": seconds, "throughput_events_per_second": throughput,

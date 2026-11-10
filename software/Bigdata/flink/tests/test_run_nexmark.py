@@ -59,6 +59,11 @@ def test_jdk_and_checkpoint_match_ten_million_event_runbook() -> None:
     assert "java-11-openjdk-devel" not in build
 
 
+def test_cpu_sender_reads_the_same_nexmark_config_as_queries() -> None:
+    start = (SCRIPT.parents[1] / "scripts/stages/start.sh").read_text(encoding="utf-8")
+    assert 'NEXMARK_CONF_DIR="${NEXMARK_HOME}/conf" "${JAVA_HOME}/bin/java"' in start
+
+
 def test_optimized_standalone_does_not_fall_back_to_base(tmp_path: Path) -> None:
     results = tmp_path / "results"
     env = dict(os.environ, PERF_WORK_DIR=str(tmp_path / "private"))
@@ -99,6 +104,7 @@ def test_standalone_report_uses_all_formal_metrics(tmp_path: Path) -> None:
     "|q3 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |\n" * 2,
     "|q4 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |",
     "|q3 |9,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |",
+    "|q3 |10,000,000 |0 |202.042 |0.000 |49.49 K/s |9.22 E/s |",
 ])
 def test_rejects_missing_or_ambiguous_measurements(row: str) -> None:
     with pytest.raises(ValueError):
@@ -144,6 +150,15 @@ def test_wait_idle_does_not_fail_after_previous_180_second_limit(monkeypatch: py
     RUNNER.wait_idle(8081)
     assert checks == 101
     assert elapsed == 200
+
+
+def test_first_warmup_requires_cpu_metrics(tmp_path: Path) -> None:
+    log = tmp_path / "metric-client.log"
+    log.write_text("Can't connect to metric server. Skip to report metric for this round.\n")
+    with pytest.raises(RuntimeError, match="produced no TaskManager metrics"):
+        RUNNER.require_cpu_metrics(log)
+    log.write_text('Report CPU metric: [{"pid":123,"cpuCores":0.5}]\n')
+    RUNNER.require_cpu_metrics(log)
 
 
 def test_job_timeout_keeps_flink_within_self_hosted_five_day_limit() -> None:
