@@ -1,0 +1,296 @@
+[faiss-sra] using local dataset /home/runner/software/faiss/data/sift-128-euclidean.hdf5
+[faiss-sra] /home/runner/boostkit-perf/faiss/1.14.3/aarch64/42786170073-1/sra-test/hnsw_test hnsw sift-128-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/sift.faiss
+  num_threads = 32
+  nloop = 5
+  metric = L2
+  efc = 500
+  save_or_load = save
+  efs = 120
+  k_f = 16
+base vector size: 1000000
+query vector size: 10000
+Index build+prepare time: 20.9193 s
+Loop 1/5:
+  wall_time = 6.09014 s (broadcast->join)
+  thread_time: min=4.9209 s, avg=5.8696 s, max=6.09003 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 52543.9
+  QPS_avg_thread  = 1703.69
+Loop 2/5:
+  wall_time = 5.99663 s (broadcast->join)
+  thread_time: min=5.20228 s, avg=5.84265 s, max=5.99629 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 53363.3
+  QPS_avg_thread  = 1711.55
+Loop 3/5:
+  wall_time = 5.88421 s (broadcast->join)
+  thread_time: min=5.07669 s, avg=5.71654 s, max=5.88376 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 54382.8
+  QPS_avg_thread  = 1749.31
+Loop 4/5:
+  wall_time = 5.9839 s (broadcast->join)
+  thread_time: min=5.3594 s, avg=5.79882 s, max=5.98346 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 53476.8
+  QPS_avg_thread  = 1724.49
+Loop 5/5:
+  wall_time = 5.9795 s (broadcast->join)
+  thread_time: min=5.29334 s, avg=5.81461 s, max=5.97907 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 53516.2
+  QPS_avg_thread  = 1719.81
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 20.9193 s
+  recall = 0.9914
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 5.98688 s
+  avg_thread_time(min/avg/max) = 5.17052 / 5.80844 / 5.98652 s
+  mid50_sorted_wall_mean = 5.9817 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 53496.5
+  QPS_from_avg_thread_time * threads = 55092.2
+[faiss-sra] using local dataset /home/runner/software/faiss/data/glove-100-angular.hdf5
+[faiss-sra] /home/runner/boostkit-perf/faiss/1.14.3/aarch64/42786170073-1/sra-test/hnsw_test hnsw glove-100-angular --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/glove.faiss
+  num_threads = 32
+  nloop = 5
+  metric = IP
+  efc = 600
+  save_or_load = save
+  efs = 520
+  k_f = 54
+base vector size: 1183514
+query vector size: 10000
+Index build+prepare time: 109.218 s
+Loop 1/5:
+  wall_time = 67.3564 s (broadcast->join)
+  thread_time: min=62.7203 s, avg=65.1067 s, max=67.3561 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 4750.85
+  QPS_avg_thread  = 153.594
+Loop 2/5:
+  wall_time = 68.5468 s (broadcast->join)
+  thread_time: min=63.1881 s, avg=66.1339 s, max=68.5465 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 4668.34
+  QPS_avg_thread  = 151.208
+Loop 3/5:
+  wall_time = 69.0248 s (broadcast->join)
+  thread_time: min=63.4679 s, avg=66.2604 s, max=69.0225 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 4636.01
+  QPS_avg_thread  = 150.92
+Loop 4/5:
+  wall_time = 66.4621 s (broadcast->join)
+  thread_time: min=63.8196 s, avg=65.0272 s, max=66.46 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 4814.77
+  QPS_avg_thread  = 153.782
+Loop 5/5:
+  wall_time = 66.7013 s (broadcast->join)
+  thread_time: min=63.0494 s, avg=65.1831 s, max=66.7009 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 4797.51
+  QPS_avg_thread  = 153.414
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 109.218 s
+  recall = 0.99081
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 67.6183 s
+  avg_thread_time(min/avg/max) = 63.2491 / 65.5422 / 67.6172 s
+  mid50_sorted_wall_mean = 67.0288 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 4774.07
+  QPS_from_avg_thread_time * threads = 4882.35
+[faiss-sra] using local dataset /home/runner/software/faiss/data/deep-image-96-angular.hdf5
+[faiss-sra] /home/runner/boostkit-perf/faiss/1.14.3/aarch64/42786170073-1/sra-test/hnsw_test hnsw deep-image-96-angular --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/deep.faiss
+  num_threads = 32
+  nloop = 5
+  metric = IP
+  efc = 450
+  save_or_load = save
+  efs = 164
+  k_f = 32
+base vector size: 9990000
+query vector size: 10000
+Index build+prepare time: 478.636 s
+Loop 1/5:
+  wall_time = 11.9913 s (broadcast->join)
+  thread_time: min=11.0119 s, avg=11.6214 s, max=11.9881 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 26686
+  QPS_avg_thread  = 860.481
+Loop 2/5:
+  wall_time = 12.0681 s (broadcast->join)
+  thread_time: min=11.2341 s, avg=11.8873 s, max=12.0678 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 26516.1
+  QPS_avg_thread  = 841.237
+Loop 3/5:
+  wall_time = 11.9274 s (broadcast->join)
+  thread_time: min=11.4441 s, avg=11.7548 s, max=11.9269 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 26829.1
+  QPS_avg_thread  = 850.72
+Loop 4/5:
+  wall_time = 11.9252 s (broadcast->join)
+  thread_time: min=11.1629 s, avg=11.7158 s, max=11.9248 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 26834
+  QPS_avg_thread  = 853.548
+Loop 5/5:
+  wall_time = 11.5701 s (broadcast->join)
+  thread_time: min=11.0381 s, avg=11.2901 s, max=11.5699 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 27657.5
+  QPS_avg_thread  = 885.734
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 478.636 s
+  recall = 0.99145
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 11.8964 s
+  avg_thread_time(min/avg/max) = 11.1782 / 11.6539 / 11.8955 s
+  mid50_sorted_wall_mean = 11.9263 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 26831.5
+  QPS_from_avg_thread_time * threads = 27458.7
+[faiss-sra] using local dataset /home/runner/software/faiss/data/fashion-mnist-784-euclidean.hdf5
+[faiss-sra] /home/runner/boostkit-perf/faiss/1.14.3/aarch64/42786170073-1/sra-test/hnsw_test hnsw fashion-mnist-784-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/fashion.faiss
+  num_threads = 32
+  nloop = 5
+  metric = L2
+  efc = 300
+  save_or_load = save
+  efs = 30
+  k_f = 18
+base vector size: 60000
+query vector size: 10000
+Index build+prepare time: 1.06887 s
+Loop 1/5:
+  wall_time = 2.40011 s (broadcast->join)
+  thread_time: min=1.32183 s, avg=1.91376 s, max=2.3998 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 133327
+  QPS_avg_thread  = 5225.33
+Loop 2/5:
+  wall_time = 2.0052 s (broadcast->join)
+  thread_time: min=1.60323 s, avg=1.77924 s, max=2.00496 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 159585
+  QPS_avg_thread  = 5620.39
+Loop 3/5:
+  wall_time = 2.08899 s (broadcast->join)
+  thread_time: min=1.34345 s, avg=1.87854 s, max=2.08867 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 153184
+  QPS_avg_thread  = 5323.3
+Loop 4/5:
+  wall_time = 2.21578 s (broadcast->join)
+  thread_time: min=1.38005 s, avg=1.8281 s, max=2.21531 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 144419
+  QPS_avg_thread  = 5470.17
+Loop 5/5:
+  wall_time = 2.02769 s (broadcast->join)
+  thread_time: min=1.45951 s, avg=1.80698 s, max=2.02743 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 157815
+  QPS_avg_thread  = 5534.08
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 1.06887 s
+  recall = 0.99187
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 2.14755 s
+  avg_thread_time(min/avg/max) = 1.42161 / 1.84132 / 2.14724 s
+  mid50_sorted_wall_mean = 2.05834 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 155465
+  QPS_from_avg_thread_time * threads = 173788
+[faiss-sra] using local dataset /home/runner/software/faiss/data/gist-960-euclidean.hdf5
+[faiss-sra] /home/runner/boostkit-perf/faiss/1.14.3/aarch64/42786170073-1/sra-test/hnsw_test hnsw gist-960-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnsw/gist.faiss
+  num_threads = 32
+  nloop = 5
+  metric = L2
+  efc = 500
+  save_or_load = save
+  efs = 360
+  k_f = 58
+base vector size: 1000000
+query vector size: 1000
+Index build+prepare time: 368.977 s
+Loop 1/5:
+  wall_time = 13.2988 s (broadcast->join)
+  thread_time: min=11.8918 s, avg=12.5186 s, max=13.2984 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2406.22
+  QPS_avg_thread  = 79.8814
+Loop 2/5:
+  wall_time = 15.5095 s (broadcast->join)
+  thread_time: min=10.9675 s, avg=14.5341 s, max=15.5092 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2063.25
+  QPS_avg_thread  = 68.8036
+Loop 3/5:
+  wall_time = 15.3779 s (broadcast->join)
+  thread_time: min=11.2436 s, avg=14.4419 s, max=15.3774 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2080.91
+  QPS_avg_thread  = 69.2428
+Loop 4/5:
+  wall_time = 14.3936 s (broadcast->join)
+  thread_time: min=11.2981 s, avg=13.8706 s, max=14.3935 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2223.2
+  QPS_avg_thread  = 72.0948
+Loop 5/5:
+  wall_time = 13.2209 s (broadcast->join)
+  thread_time: min=11.7421 s, avg=12.4451 s, max=13.2203 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2420.41
+  QPS_avg_thread  = 80.3531
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 368.977 s
+  recall = 0.9903
+  pin_threads = OFF
+  loops = 5
+  avg_loop_wall_time = 14.3602 s
+  avg_thread_time(min/avg/max) = 11.4286 / 13.5621 / 14.3597 s
+  mid50_sorted_wall_mean = 13.8462 s
+  total_queries_per_loop = 32000
+  final_QPS(mid50 wall mean) = 2311.1
+  QPS_from_avg_thread_time * threads = 2359.52
+[faiss-sra] normalized 20 official measurements
