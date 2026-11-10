@@ -1,0 +1,2977 @@
+{
+  "software": "spdk",
+  "category": "Acceleration",
+  "version": "26.09",
+  "architecture": "aarch64",
+  "run_id": "42867162660-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-10T17:44:00Z",
+    "category": "Acceleration",
+    "software": "spdk",
+    "requested_version": "26.09",
+    "actual_version": "26.09",
+    "architecture": "aarch64",
+    "run_id": "42867162660-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base",
+      "benchmark": "bdevperf",
+      "bdev": "Malloc",
+      "io_path": "SPDK userspace bdev stack"
+    },
+    "benchmark_result": {
+      "measurement_reps": 5,
+      "warmup_reps": 1,
+      "duration_seconds": 5,
+      "aggregate": "median across independent measurement repetitions",
+      "bdev_type": "Malloc",
+      "bdev_block_size": 512,
+      "bdev_size_mib": 16,
+      "io_direction": "all I/O stays inside the SPDK userspace block stack",
+      "offline": true,
+      "strict": true,
+      "scenarios": [
+        {
+          "key": "randread_bs4k_qd1_single",
+          "workload": "randread",
+          "io_size_bytes": 4096,
+          "queue_depth": 1,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randread_bs4k_qd32_single",
+          "workload": "randread",
+          "io_size_bytes": 4096,
+          "queue_depth": 32,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randread_bs4k_qd128_single",
+          "workload": "randread",
+          "io_size_bytes": 4096,
+          "queue_depth": 128,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randwrite_bs4k_qd32_single",
+          "workload": "randwrite",
+          "io_size_bytes": 4096,
+          "queue_depth": 32,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randrw_bs4k_qd32_single",
+          "workload": "randrw",
+          "io_size_bytes": 4096,
+          "queue_depth": 32,
+          "bdev_count": 1,
+          "read_percentage": 70,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randread_bs64k_qd32_single",
+          "workload": "randread",
+          "io_size_bytes": 65536,
+          "queue_depth": 32,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randread_bs128k_qd32_single",
+          "workload": "randread",
+          "io_size_bytes": 131072,
+          "queue_depth": 32,
+          "bdev_count": 1,
+          "read_percentage": null,
+          "cpu_mask": "0x1"
+        },
+        {
+          "key": "randread_bs4k_qd32_multi4",
+          "workload": "randread",
+          "io_size_bytes": 4096,
+          "queue_depth": 32,
+          "bdev_count": 4,
+          "read_percentage": null,
+          "cpu_mask": "0xF"
+        }
+      ]
+    }
+  },
+  "parameter_signature": "92993b437354b5c1ab223704d591bca3c9111ada5ee3a5a7a284ebd1a30b2273",
+  "test_tools": {
+    "bdevperf": {
+      "version": "26.09"
+    },
+    "DPDK": {
+      "version": "26.03.0"
+    },
+    "ISA-L": {
+      "version": "7c3479e0a9dac17f448603ec1ad64c7c625f530c"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-10T17:40:36Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381404 MB\nnode 0 free: 370796 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387001 MB\nnode 1 free: 373511 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387058 MB\nnode 2 free: 380607 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 380648 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-10T17:40:36Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616357715968 16022876160 1578698768384  1896910848 30249586688 1600334839808\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-10T17:48:45Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616357715968 16154431488 1578205532160  1899474944 30628540416 1600203284480\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base",
+        "benchmark": "bdevperf",
+        "bdev": "Malloc",
+        "io_path": "SPDK userspace bdev stack"
+      }
+    },
+    "benchmark_raw": {
+      "path": "benchmark_raw.txt",
+      "size": 126383
+    },
+    "benchmark_result": {
+      "software": "spdk",
+      "category": "Acceleration",
+      "version": "26.09",
+      "architecture": "aarch64",
+      "variant": "base",
+      "benchmark": "SPDK bdevperf over Malloc bdev (SPDK userspace block stack path)",
+      "timestamp": "2026-11-10T17:48:14Z",
+      "parameters": {
+        "measurement_reps": 5,
+        "warmup_reps": 1,
+        "duration_seconds": 5,
+        "aggregate": "median across independent measurement repetitions",
+        "bdev_type": "Malloc",
+        "bdev_block_size": 512,
+        "bdev_size_mib": 16,
+        "io_direction": "all I/O stays inside the SPDK userspace block stack",
+        "offline": true,
+        "strict": true,
+        "scenarios": [
+          {
+            "key": "randread_bs4k_qd1_single",
+            "workload": "randread",
+            "io_size_bytes": 4096,
+            "queue_depth": 1,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randread_bs4k_qd32_single",
+            "workload": "randread",
+            "io_size_bytes": 4096,
+            "queue_depth": 32,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randread_bs4k_qd128_single",
+            "workload": "randread",
+            "io_size_bytes": 4096,
+            "queue_depth": 128,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randwrite_bs4k_qd32_single",
+            "workload": "randwrite",
+            "io_size_bytes": 4096,
+            "queue_depth": 32,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randrw_bs4k_qd32_single",
+            "workload": "randrw",
+            "io_size_bytes": 4096,
+            "queue_depth": 32,
+            "bdev_count": 1,
+            "read_percentage": 70,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randread_bs64k_qd32_single",
+            "workload": "randread",
+            "io_size_bytes": 65536,
+            "queue_depth": 32,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randread_bs128k_qd32_single",
+            "workload": "randread",
+            "io_size_bytes": 131072,
+            "queue_depth": 32,
+            "bdev_count": 1,
+            "read_percentage": null,
+            "cpu_mask": "0x1"
+          },
+          {
+            "key": "randread_bs4k_qd32_multi4",
+            "workload": "randread",
+            "io_size_bytes": 4096,
+            "queue_depth": 32,
+            "bdev_count": 4,
+            "read_percentage": null,
+            "cpu_mask": "0xF"
+          }
+        ]
+      },
+      "runtime_context": {
+        "eal_args": [
+          "--no-huge",
+          "-s",
+          "1024"
+        ],
+        "bdevperf_args": [
+          "-H"
+        ],
+        "hugepages": {
+          "total_pages": 0,
+          "free_pages": 0,
+          "hugepage_size_kib": 2048
+        },
+        "runtime_profile": "nohuge_s_1024",
+        "cpu_count": 384,
+        "build": {
+          "spdk_full_version": "26.09.0",
+          "dpdk_full_version": "26.03.0",
+          "isa_l_commit": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+          "source_tree_sha256": "8174a666e91dd7c3e98060346083e9eac6d3593f375520cd88c73e0d35fadaa9",
+          "dpdk_source_tree_sha256": "e19de03312f467bd7603eb0a2fa91ae32bc71a3c270e59dfbb1334f6a3acb98d",
+          "isa_l_source_tree_sha256": "0ae8ad7907d5426f59871b697e121451855f38db36a30d75151287d7187a5bd5"
+        },
+        "observations": [
+          {
+            "key": "randread_bs4k_qd1_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs4k_qd1_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "1",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:07Z",
+                "finished_at": "2026-11-10T17:44:13Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.973,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd1_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "1",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:13Z",
+                "finished_at": "2026-11-10T17:44:18Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.934,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd1_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "1",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:18Z",
+                "finished_at": "2026-11-10T17:44:23Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.969,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd1_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "1",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:23Z",
+                "finished_at": "2026-11-10T17:44:28Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.875,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd1_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd1_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "1",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:28Z",
+                "finished_at": "2026-11-10T17:44:34Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.969,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd1_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randread_bs4k_qd32_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs4k_qd32_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:39Z",
+                "finished_at": "2026-11-10T17:44:44Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.926,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:44Z",
+                "finished_at": "2026-11-10T17:44:49Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.945,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:49Z",
+                "finished_at": "2026-11-10T17:44:55Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.973,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:44:55Z",
+                "finished_at": "2026-11-10T17:45:00Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 467.969,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:00Z",
+                "finished_at": "2026-11-10T17:45:05Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.664,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randread_bs4k_qd128_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs4k_qd128_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "128",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:10Z",
+                "finished_at": "2026-11-10T17:45:16Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.98,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd128_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "128",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:16Z",
+                "finished_at": "2026-11-10T17:45:21Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.945,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd128_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "128",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:21Z",
+                "finished_at": "2026-11-10T17:45:26Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.73,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd128_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "128",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:26Z",
+                "finished_at": "2026-11-10T17:45:31Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.98,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd128_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd128_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "128",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:31Z",
+                "finished_at": "2026-11-10T17:45:37Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.945,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd128_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randwrite_bs4k_qd32_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randwrite_bs4k_qd32_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randwrite",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:42Z",
+                "finished_at": "2026-11-10T17:45:47Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.965,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randwrite_bs4k_qd32_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randwrite",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:47Z",
+                "finished_at": "2026-11-10T17:45:52Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.977,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randwrite_bs4k_qd32_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randwrite",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:52Z",
+                "finished_at": "2026-11-10T17:45:58Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.918,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randwrite_bs4k_qd32_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randwrite",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:45:58Z",
+                "finished_at": "2026-11-10T17:46:03Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.934,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randwrite_bs4k_qd32_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randwrite_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randwrite",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:03Z",
+                "finished_at": "2026-11-10T17:46:08Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.953,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randwrite_bs4k_qd32_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randrw_bs4k_qd32_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randrw_bs4k_qd32_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randrw",
+                  "-M",
+                  "70",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:13Z",
+                "finished_at": "2026-11-10T17:46:19Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.934,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randrw_bs4k_qd32_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randrw",
+                  "-M",
+                  "70",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:19Z",
+                "finished_at": "2026-11-10T17:46:24Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.953,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randrw_bs4k_qd32_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randrw",
+                  "-M",
+                  "70",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:24Z",
+                "finished_at": "2026-11-10T17:46:29Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.902,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randrw_bs4k_qd32_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randrw",
+                  "-M",
+                  "70",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:29Z",
+                "finished_at": "2026-11-10T17:46:34Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.926,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randrw_bs4k_qd32_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randrw_bs4k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randrw",
+                  "-M",
+                  "70",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:34Z",
+                "finished_at": "2026-11-10T17:46:40Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.969,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randrw_bs4k_qd32_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randread_bs64k_qd32_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs64k_qd32_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "65536",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:45Z",
+                "finished_at": "2026-11-10T17:46:50Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.93,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs64k_qd32_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "65536",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:50Z",
+                "finished_at": "2026-11-10T17:46:55Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.965,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs64k_qd32_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "65536",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:46:55Z",
+                "finished_at": "2026-11-10T17:47:00Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 467.941,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs64k_qd32_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "65536",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:00Z",
+                "finished_at": "2026-11-10T17:47:06Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.695,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs64k_qd32_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs64k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "65536",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:06Z",
+                "finished_at": "2026-11-10T17:47:11Z",
+                "duration_s": 5.25,
+                "exit_code": 0,
+                "peak_rss_mib": 468.672,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs64k_qd32_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randread_bs128k_qd32_single",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs128k_qd32_single",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "131072",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:16Z",
+                "finished_at": "2026-11-10T17:47:21Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.68,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs128k_qd32_single",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "131072",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:21Z",
+                "finished_at": "2026-11-10T17:47:27Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.723,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs128k_qd32_single",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "131072",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:27Z",
+                "finished_at": "2026-11-10T17:47:32Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.691,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs128k_qd32_single",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "131072",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:32Z",
+                "finished_at": "2026-11-10T17:47:37Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.5,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs128k_qd32_single",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0x1",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs128k_qd32_single.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "131072",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:37Z",
+                "finished_at": "2026-11-10T17:47:42Z",
+                "duration_s": 5.24,
+                "exit_code": 0,
+                "peak_rss_mib": 468.711,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs128k_qd32_single/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          },
+          {
+            "key": "randread_bs4k_qd32_multi4",
+            "raw_logs": {
+              "warmup": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/warmup.log",
+              "reps": [
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep1.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep2.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep3.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep4.log",
+                "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep5.log"
+              ]
+            },
+            "timings": [
+              {
+                "scenario": "randread_bs4k_qd32_multi4",
+                "repetition": 1,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0xF",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:48Z",
+                "finished_at": "2026-11-10T17:47:53Z",
+                "duration_s": 5.3,
+                "exit_code": 0,
+                "peak_rss_mib": 525.762,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep1.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_multi4",
+                "repetition": 2,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0xF",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:53Z",
+                "finished_at": "2026-11-10T17:47:58Z",
+                "duration_s": 5.3,
+                "exit_code": 0,
+                "peak_rss_mib": 529.781,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep2.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_multi4",
+                "repetition": 3,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0xF",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:47:58Z",
+                "finished_at": "2026-11-10T17:48:04Z",
+                "duration_s": 5.3,
+                "exit_code": 0,
+                "peak_rss_mib": 525.746,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep3.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_multi4",
+                "repetition": 4,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0xF",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:48:04Z",
+                "finished_at": "2026-11-10T17:48:09Z",
+                "duration_s": 5.3,
+                "exit_code": 0,
+                "peak_rss_mib": 526.688,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep4.log",
+                "timing_error": ""
+              },
+              {
+                "scenario": "randread_bs4k_qd32_multi4",
+                "repetition": 5,
+                "warmup": false,
+                "command": [
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/src/spdk/build/examples/bdevperf",
+                  "-m",
+                  "0xF",
+                  "-c",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.bdev.json",
+                  "-j",
+                  "/home/runner/boostkit-perf/spdk/26.09/aarch64/42867162660-1/matrix/randread_bs4k_qd32_multi4.jobs.ini",
+                  "-t",
+                  "5",
+                  "-l",
+                  "-q",
+                  "32",
+                  "-o",
+                  "4096",
+                  "-w",
+                  "randread",
+                  "-H",
+                  "--no-huge",
+                  "-s",
+                  "1024"
+                ],
+                "started_at": "2026-11-10T17:48:09Z",
+                "finished_at": "2026-11-10T17:48:14Z",
+                "duration_s": 5.3,
+                "exit_code": 0,
+                "peak_rss_mib": 525.742,
+                "log": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/Acceleration/spdk/26.09/aarch64/42867162660-1/runs/randread_bs4k_qd32_multi4/rep5.log",
+                "timing_error": ""
+              }
+            ]
+          }
+        ]
+      },
+      "results": {
+        "randread_bs4k_qd1_single / IOPS": {
+          "source_name": "randread_bs4k_qd1_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs4k_qd1_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 3558390.31,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            3560422.41,
+            3558390.31,
+            3546041.49,
+            3576264.08,
+            3540606.5
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 3558390.31,
+            "min": 3540606.5,
+            "max": 3576264.08,
+            "mean": 3556344.9579999996,
+            "stdev": 13887.413491286632
+          }
+        },
+        "randread_bs4k_qd1_single / MiB/s": {
+          "source_name": "randread_bs4k_qd1_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs4k_qd1_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 13899.96,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            13907.9,
+            13899.96,
+            13851.72,
+            13969.78,
+            13830.49
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 13899.96,
+            "min": 13830.49,
+            "max": 13969.78,
+            "mean": 13891.970000000001,
+            "stdev": 54.249087549930636
+          }
+        },
+        "randread_bs4k_qd1_single / avg_latency_us": {
+          "source_name": "randread_bs4k_qd1_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs4k_qd1_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 0.24,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            0.24,
+            0.24,
+            0.24,
+            0.24,
+            0.24
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 0.24,
+            "min": 0.24,
+            "max": 0.24,
+            "mean": 0.24,
+            "stdev": 0.0
+          }
+        },
+        "randread_bs4k_qd1_single / p99_latency_us": {
+          "source_name": "randread_bs4k_qd1_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs4k_qd1_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 0.36,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            0.36,
+            0.37,
+            0.36,
+            0.36,
+            0.38
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 0.36,
+            "min": 0.36,
+            "max": 0.38,
+            "mean": 0.366,
+            "stdev": 0.008944271909999166
+          }
+        },
+        "randread_bs4k_qd1_single / peak_rss_mib": {
+          "source_name": "randread_bs4k_qd1_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs4k_qd1_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.969,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.973,
+            467.934,
+            467.969,
+            468.875,
+            467.969
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.969,
+            "min": 467.934,
+            "max": 468.875,
+            "mean": 468.14400000000006,
+            "stdev": 0.4089474293842635
+          }
+        },
+        "randread_bs4k_qd32_single / IOPS": {
+          "source_name": "randread_bs4k_qd32_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 4134014.74,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            4102028.8,
+            4157296.28,
+            4134014.74,
+            4157353.05,
+            4119384.39
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 4134014.74,
+            "min": 4102028.8,
+            "max": 4157353.05,
+            "mean": 4134015.4519999996,
+            "stdev": 24103.186068957097
+          }
+        },
+        "randread_bs4k_qd32_single / MiB/s": {
+          "source_name": "randread_bs4k_qd32_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 16148.5,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            16023.55,
+            16239.44,
+            16148.5,
+            16239.66,
+            16091.35
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 16148.5,
+            "min": 16023.55,
+            "max": 16239.66,
+            "mean": 16148.5,
+            "stdev": 94.15260777057665
+          }
+        },
+        "randread_bs4k_qd32_single / avg_latency_us": {
+          "source_name": "randread_bs4k_qd32_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 7.7,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            7.77,
+            7.66,
+            7.7,
+            7.66,
+            7.73
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 7.7,
+            "min": 7.66,
+            "max": 7.77,
+            "mean": 7.704000000000001,
+            "stdev": 0.04722287581247022
+          }
+        },
+        "randread_bs4k_qd32_single / p99_latency_us": {
+          "source_name": "randread_bs4k_qd32_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 8.32,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            8.36,
+            8.24,
+            8.32,
+            8.24,
+            8.36
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 8.32,
+            "min": 8.24,
+            "max": 8.36,
+            "mean": 8.303999999999998,
+            "stdev": 0.06066300355241205
+          }
+        },
+        "randread_bs4k_qd32_single / peak_rss_mib": {
+          "source_name": "randread_bs4k_qd32_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.969,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.926,
+            467.945,
+            467.973,
+            467.969,
+            468.664
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.969,
+            "min": 467.926,
+            "max": 468.664,
+            "mean": 468.0954,
+            "stdev": 0.318426286603348
+          }
+        },
+        "randread_bs4k_qd128_single / IOPS": {
+          "source_name": "randread_bs4k_qd128_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs4k_qd128_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 3824951.74,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            3813171.3,
+            3824951.74,
+            3932060.04,
+            3960692.37,
+            3821385.74
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 3824951.74,
+            "min": 3813171.3,
+            "max": 3960692.37,
+            "mean": 3870452.2380000004,
+            "stdev": 70174.29211085867
+          }
+        },
+        "randread_bs4k_qd128_single / MiB/s": {
+          "source_name": "randread_bs4k_qd128_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs4k_qd128_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 14941.22,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            14895.2,
+            14941.22,
+            15359.61,
+            15471.45,
+            14927.29
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 14941.22,
+            "min": 14895.2,
+            "max": 15471.45,
+            "mean": 15118.954000000002,
+            "stdev": 274.1163332054478
+          }
+        },
+        "randread_bs4k_qd128_single / avg_latency_us": {
+          "source_name": "randread_bs4k_qd128_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs4k_qd128_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 33.42,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            33.53,
+            33.42,
+            32.51,
+            32.28,
+            33.46
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 33.42,
+            "min": 32.28,
+            "max": 33.53,
+            "mean": 33.04,
+            "stdev": 0.5956928738872078
+          }
+        },
+        "randread_bs4k_qd128_single / p99_latency_us": {
+          "source_name": "randread_bs4k_qd128_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs4k_qd128_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 36.96,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            37.12,
+            37.12,
+            36.0,
+            35.84,
+            36.96
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 36.96,
+            "min": 35.84,
+            "max": 37.12,
+            "mean": 36.608,
+            "stdev": 0.6339716081970844
+          }
+        },
+        "randread_bs4k_qd128_single / peak_rss_mib": {
+          "source_name": "randread_bs4k_qd128_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs4k_qd128_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.945,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.98,
+            467.945,
+            467.73,
+            467.98,
+            467.945
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.945,
+            "min": 467.73,
+            "max": 467.98,
+            "mean": 467.916,
+            "stdev": 0.10543955614473761
+          }
+        },
+        "randwrite_bs4k_qd32_single / IOPS": {
+          "source_name": "randwrite_bs4k_qd32_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randwrite_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 5616191.43,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            5666495.47,
+            5627193.74,
+            5613995.0,
+            5616191.43,
+            5258982.85
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 5616191.43,
+            "min": 5258982.85,
+            "max": 5666495.47,
+            "mean": 5556571.698,
+            "stdev": 167691.5166140345
+          }
+        },
+        "randwrite_bs4k_qd32_single / MiB/s": {
+          "source_name": "randwrite_bs4k_qd32_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randwrite_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 21938.25,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            22134.75,
+            21981.23,
+            21929.67,
+            21938.25,
+            20542.9
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 21938.25,
+            "min": 20542.9,
+            "max": 22134.75,
+            "mean": 21705.36,
+            "stdev": 655.0469465618468
+          }
+        },
+        "randwrite_bs4k_qd32_single / avg_latency_us": {
+          "source_name": "randwrite_bs4k_qd32_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randwrite_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 5.66,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            5.61,
+            5.65,
+            5.66,
+            5.66,
+            6.05
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 5.66,
+            "min": 5.61,
+            "max": 6.05,
+            "mean": 5.726000000000001,
+            "stdev": 0.1822909761891683
+          }
+        },
+        "randwrite_bs4k_qd32_single / p99_latency_us": {
+          "source_name": "randwrite_bs4k_qd32_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randwrite_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 6.44,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            6.28,
+            6.44,
+            6.44,
+            6.4,
+            7.16
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 6.44,
+            "min": 6.28,
+            "max": 7.16,
+            "mean": 6.544,
+            "stdev": 0.3505424368033062
+          }
+        },
+        "randwrite_bs4k_qd32_single / peak_rss_mib": {
+          "source_name": "randwrite_bs4k_qd32_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randwrite_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.953,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.965,
+            467.977,
+            467.918,
+            467.934,
+            467.953
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.953,
+            "min": 467.918,
+            "max": 467.977,
+            "mean": 467.94939999999997,
+            "stdev": 0.023670656940590402
+          }
+        },
+        "randrw_bs4k_qd32_single / IOPS": {
+          "source_name": "randrw_bs4k_qd32_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randrw_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 3664006.74,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            3664006.74,
+            3678543.59,
+            3650949.33,
+            3655340.44,
+            3675082.25
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 3664006.74,
+            "min": 3650949.33,
+            "max": 3678543.59,
+            "mean": 3664784.47,
+            "stdev": 12005.866498468515
+          }
+        },
+        "randrw_bs4k_qd32_single / MiB/s": {
+          "source_name": "randrw_bs4k_qd32_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randrw_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 14312.53,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            14312.53,
+            14369.31,
+            14261.52,
+            14278.67,
+            14355.79
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 14312.53,
+            "min": 14261.52,
+            "max": 14369.31,
+            "mean": 14315.564000000002,
+            "stdev": 46.898533879002976
+          }
+        },
+        "randrw_bs4k_qd32_single / avg_latency_us": {
+          "source_name": "randrw_bs4k_qd32_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randrw_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 8.69,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            8.69,
+            8.66,
+            8.72,
+            8.71,
+            8.66
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 8.69,
+            "min": 8.66,
+            "max": 8.72,
+            "mean": 8.687999999999999,
+            "stdev": 0.027748873851023488
+          }
+        },
+        "randrw_bs4k_qd32_single / p99_latency_us": {
+          "source_name": "randrw_bs4k_qd32_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randrw_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 10.2,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            10.24,
+            10.16,
+            10.2,
+            10.24,
+            10.2
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 10.2,
+            "min": 10.16,
+            "max": 10.24,
+            "mean": 10.208,
+            "stdev": 0.03346640106136316
+          }
+        },
+        "randrw_bs4k_qd32_single / peak_rss_mib": {
+          "source_name": "randrw_bs4k_qd32_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randrw_bs4k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.953,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.934,
+            467.953,
+            468.902,
+            467.926,
+            467.969
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.953,
+            "min": 467.926,
+            "max": 468.902,
+            "mean": 468.13680000000005,
+            "stdev": 0.42808725746043463
+          }
+        },
+        "randread_bs64k_qd32_single / IOPS": {
+          "source_name": "randread_bs64k_qd32_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs64k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 387846.05,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            387846.05,
+            386879.41,
+            389746.98,
+            384926.17,
+            390315.0
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 387846.05,
+            "min": 384926.17,
+            "max": 390315.0,
+            "mean": 387942.72199999995,
+            "stdev": 2186.4705402474606
+          }
+        },
+        "randread_bs64k_qd32_single / MiB/s": {
+          "source_name": "randread_bs64k_qd32_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs64k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 24240.38,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            24240.38,
+            24179.96,
+            24359.19,
+            24057.89,
+            24394.69
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 24240.38,
+            "min": 24057.89,
+            "max": 24394.69,
+            "mean": 24246.422,
+            "stdev": 136.65471074939168
+          }
+        },
+        "randread_bs64k_qd32_single / avg_latency_us": {
+          "source_name": "randread_bs64k_qd32_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs64k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 82.46,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            82.46,
+            82.66,
+            82.05,
+            83.07,
+            81.93
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 82.46,
+            "min": 81.93,
+            "max": 83.07,
+            "mean": 82.434,
+            "stdev": 0.46306587004442057
+          }
+        },
+        "randread_bs64k_qd32_single / p99_latency_us": {
+          "source_name": "randread_bs64k_qd32_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs64k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 92.8,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            92.8,
+            92.8,
+            92.16,
+            92.8,
+            92.16
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 92.8,
+            "min": 92.16,
+            "max": 92.8,
+            "mean": 92.544,
+            "stdev": 0.3505424368033066
+          }
+        },
+        "randread_bs64k_qd32_single / peak_rss_mib": {
+          "source_name": "randread_bs64k_qd32_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs64k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 467.965,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            467.93,
+            467.965,
+            467.941,
+            468.695,
+            468.672
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 467.965,
+            "min": 467.93,
+            "max": 468.695,
+            "mean": 468.2406,
+            "stdev": 0.40459028658633195
+          }
+        },
+        "randread_bs128k_qd32_single / IOPS": {
+          "source_name": "randread_bs128k_qd32_single / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs128k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 202462.26,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            202283.76,
+            202462.26,
+            203307.27,
+            202128.71,
+            203442.76
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 202462.26,
+            "min": 202128.71,
+            "max": 203442.76,
+            "mean": 202724.952,
+            "stdev": 606.9399822634849
+          }
+        },
+        "randread_bs128k_qd32_single / MiB/s": {
+          "source_name": "randread_bs128k_qd32_single / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs128k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 25307.78,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            25285.47,
+            25307.78,
+            25413.41,
+            25266.09,
+            25430.35
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 25307.78,
+            "min": 25266.09,
+            "max": 25430.35,
+            "mean": 25340.620000000003,
+            "stdev": 75.86923948478666
+          }
+        },
+        "randread_bs128k_qd32_single / avg_latency_us": {
+          "source_name": "randread_bs128k_qd32_single / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs128k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 157.95,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            158.1,
+            157.95,
+            157.31,
+            158.22,
+            157.2
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 157.95,
+            "min": 157.2,
+            "max": 158.22,
+            "mean": 157.756,
+            "stdev": 0.46886032035138175
+          }
+        },
+        "randread_bs128k_qd32_single / p99_latency_us": {
+          "source_name": "randread_bs128k_qd32_single / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs128k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 170.24,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            170.24,
+            170.24,
+            168.96,
+            170.24,
+            168.96
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 170.24,
+            "min": 168.96,
+            "max": 170.24,
+            "mean": 169.728,
+            "stdev": 0.7010848736066132
+          }
+        },
+        "randread_bs128k_qd32_single / peak_rss_mib": {
+          "source_name": "randread_bs128k_qd32_single / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs128k_qd32_single",
+          "aggregate": "median of the measurement repetitions",
+          "value": 468.691,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            468.68,
+            468.723,
+            468.691,
+            468.5,
+            468.711
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 468.691,
+            "min": 468.5,
+            "max": 468.723,
+            "mean": 468.66099999999994,
+            "stdev": 0.09155053249435748
+          }
+        },
+        "randread_bs4k_qd32_multi4 / IOPS": {
+          "source_name": "randread_bs4k_qd32_multi4 / IOPS",
+          "source_field": "total row IOPS column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_multi4",
+          "aggregate": "median of the measurement repetitions",
+          "value": 6694700.79,
+          "unit": "IOPS",
+          "direction": "higher_is_better",
+          "samples": [
+            6655973.35,
+            6694700.79,
+            6680260.78,
+            6735155.88,
+            6703203.26
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 6694700.79,
+            "min": 6655973.35,
+            "max": 6735155.88,
+            "mean": 6693858.812,
+            "stdev": 29213.39661011831
+          }
+        },
+        "randread_bs4k_qd32_multi4 / MiB/s": {
+          "source_name": "randread_bs4k_qd32_multi4 / MiB/s",
+          "source_field": "total row MiB/s column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_multi4",
+          "aggregate": "median of the measurement repetitions",
+          "value": 26151.17,
+          "unit": "MiB/s",
+          "direction": "higher_is_better",
+          "samples": [
+            25999.9,
+            26151.17,
+            26094.77,
+            26309.2,
+            26184.39
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 26151.17,
+            "min": 25999.9,
+            "max": 26309.2,
+            "mean": 26147.886,
+            "stdev": 114.11255290282452
+          }
+        },
+        "randread_bs4k_qd32_multi4 / avg_latency_us": {
+          "source_name": "randread_bs4k_qd32_multi4 / avg_latency_us",
+          "source_field": "total row Average latency column of the bdevperf summary table",
+          "group": "randread_bs4k_qd32_multi4",
+          "aggregate": "median of the measurement repetitions",
+          "value": 19.03,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            19.14,
+            19.03,
+            19.07,
+            18.91,
+            19.01
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 19.03,
+            "min": 18.91,
+            "max": 19.14,
+            "mean": 19.032,
+            "stdev": 0.084380092438916
+          }
+        },
+        "randread_bs4k_qd32_multi4 / p99_latency_us": {
+          "source_name": "randread_bs4k_qd32_multi4 / p99_latency_us",
+          "source_field": "99.00000% cutoff of the bdevperf latency summary, maximum across jobs",
+          "group": "randread_bs4k_qd32_multi4",
+          "aggregate": "median of the measurement repetitions",
+          "value": 20.64,
+          "unit": "us",
+          "direction": "lower_is_better",
+          "samples": [
+            20.64,
+            20.8,
+            20.64,
+            20.4,
+            20.64
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 20.64,
+            "min": 20.4,
+            "max": 20.8,
+            "mean": 20.624000000000002,
+            "stdev": 0.14310835055998736
+          }
+        },
+        "randread_bs4k_qd32_multi4 / peak_rss_mib": {
+          "source_name": "randread_bs4k_qd32_multi4 / peak_rss_mib",
+          "source_field": "peak VmHWM of the bdevperf process sampled from /proc/<pid>/status",
+          "group": "randread_bs4k_qd32_multi4",
+          "aggregate": "median of the measurement repetitions",
+          "value": 525.762,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "samples": [
+            525.762,
+            529.781,
+            525.746,
+            526.688,
+            525.742
+          ],
+          "statistics": {
+            "repetitions": 5,
+            "median": 525.762,
+            "min": 525.742,
+            "max": 529.781,
+            "mean": 526.7438,
+            "stdev": 1.7457689423288465
+          }
+        }
+      }
+    }
+  },
+  "metrics": {
+    "randread_bs4k_qd1_single / IOPS": {
+      "value": 3558390.31,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd1_single"
+    },
+    "randread_bs4k_qd1_single / MiB/s": {
+      "value": 13899.96,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd1_single"
+    },
+    "randread_bs4k_qd1_single / avg_latency_us": {
+      "value": 0.24,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd1_single"
+    },
+    "randread_bs4k_qd1_single / p99_latency_us": {
+      "value": 0.36,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd1_single"
+    },
+    "randread_bs4k_qd1_single / peak_rss_mib": {
+      "value": 467.969,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd1_single"
+    },
+    "randread_bs4k_qd32_single / IOPS": {
+      "value": 4134014.74,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd32_single"
+    },
+    "randread_bs4k_qd32_single / MiB/s": {
+      "value": 16148.5,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd32_single"
+    },
+    "randread_bs4k_qd32_single / avg_latency_us": {
+      "value": 7.7,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_single"
+    },
+    "randread_bs4k_qd32_single / p99_latency_us": {
+      "value": 8.32,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_single"
+    },
+    "randread_bs4k_qd32_single / peak_rss_mib": {
+      "value": 467.969,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_single"
+    },
+    "randread_bs4k_qd128_single / IOPS": {
+      "value": 3824951.74,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd128_single"
+    },
+    "randread_bs4k_qd128_single / MiB/s": {
+      "value": 14941.22,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd128_single"
+    },
+    "randread_bs4k_qd128_single / avg_latency_us": {
+      "value": 33.42,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd128_single"
+    },
+    "randread_bs4k_qd128_single / p99_latency_us": {
+      "value": 36.96,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd128_single"
+    },
+    "randread_bs4k_qd128_single / peak_rss_mib": {
+      "value": 467.945,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd128_single"
+    },
+    "randwrite_bs4k_qd32_single / IOPS": {
+      "value": 5616191.43,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randwrite_bs4k_qd32_single"
+    },
+    "randwrite_bs4k_qd32_single / MiB/s": {
+      "value": 21938.25,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randwrite_bs4k_qd32_single"
+    },
+    "randwrite_bs4k_qd32_single / avg_latency_us": {
+      "value": 5.66,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randwrite_bs4k_qd32_single"
+    },
+    "randwrite_bs4k_qd32_single / p99_latency_us": {
+      "value": 6.44,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randwrite_bs4k_qd32_single"
+    },
+    "randwrite_bs4k_qd32_single / peak_rss_mib": {
+      "value": 467.953,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randwrite_bs4k_qd32_single"
+    },
+    "randrw_bs4k_qd32_single / IOPS": {
+      "value": 3664006.74,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randrw_bs4k_qd32_single"
+    },
+    "randrw_bs4k_qd32_single / MiB/s": {
+      "value": 14312.53,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randrw_bs4k_qd32_single"
+    },
+    "randrw_bs4k_qd32_single / avg_latency_us": {
+      "value": 8.69,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randrw_bs4k_qd32_single"
+    },
+    "randrw_bs4k_qd32_single / p99_latency_us": {
+      "value": 10.2,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randrw_bs4k_qd32_single"
+    },
+    "randrw_bs4k_qd32_single / peak_rss_mib": {
+      "value": 467.953,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randrw_bs4k_qd32_single"
+    },
+    "randread_bs64k_qd32_single / IOPS": {
+      "value": 387846.05,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs64k_qd32_single"
+    },
+    "randread_bs64k_qd32_single / MiB/s": {
+      "value": 24240.38,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs64k_qd32_single"
+    },
+    "randread_bs64k_qd32_single / avg_latency_us": {
+      "value": 82.46,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs64k_qd32_single"
+    },
+    "randread_bs64k_qd32_single / p99_latency_us": {
+      "value": 92.8,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs64k_qd32_single"
+    },
+    "randread_bs64k_qd32_single / peak_rss_mib": {
+      "value": 467.965,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs64k_qd32_single"
+    },
+    "randread_bs128k_qd32_single / IOPS": {
+      "value": 202462.26,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs128k_qd32_single"
+    },
+    "randread_bs128k_qd32_single / MiB/s": {
+      "value": 25307.78,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs128k_qd32_single"
+    },
+    "randread_bs128k_qd32_single / avg_latency_us": {
+      "value": 157.95,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs128k_qd32_single"
+    },
+    "randread_bs128k_qd32_single / p99_latency_us": {
+      "value": 170.24,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs128k_qd32_single"
+    },
+    "randread_bs128k_qd32_single / peak_rss_mib": {
+      "value": 468.691,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs128k_qd32_single"
+    },
+    "randread_bs4k_qd32_multi4 / IOPS": {
+      "value": 6694700.79,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd32_multi4"
+    },
+    "randread_bs4k_qd32_multi4 / MiB/s": {
+      "value": 26151.17,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "randread_bs4k_qd32_multi4"
+    },
+    "randread_bs4k_qd32_multi4 / avg_latency_us": {
+      "value": 19.03,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_multi4"
+    },
+    "randread_bs4k_qd32_multi4 / p99_latency_us": {
+      "value": 20.64,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_multi4"
+    },
+    "randread_bs4k_qd32_multi4 / peak_rss_mib": {
+      "value": 525.762,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "randread_bs4k_qd32_multi4"
+    }
+  }
+}
