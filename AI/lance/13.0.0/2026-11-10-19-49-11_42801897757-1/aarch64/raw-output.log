@@ -1,0 +1,71 @@
+[lance] [2026-11-10 19:43:45] using local SIFT-1M archive: /home/runner/software/lance/sift.tar.gz
+[lance] [2026-11-10 19:43:49] converting the official SIFT-1M base and 1000 query vectors to Lance datasets
+[lance] [2026-11-10 19:43:50] building the official IVF-PQ index: 256 partitions, 16 subvectors
+{'commit': '0923349', 'name': 'index_creation', 'platform': 'Linux-6.6.0-132.0.0.111.oe2403sp3.aarch64-aarch64-with-glibc2.38', 'arch': 'aarch64', 'params': {'type': 'ivf_pq', 'metric': 'l2'}, 'duration': 16.53859233856201}
+[lance] [2026-11-10 19:44:07] running upstream metrics.py for all 42 nprobes/refine-factor scenarios
+Computing ground truth
+
+  0%|          | 0/1000000 [00:00<?, ?it/s]/home/runner/boostkit-perf/lance/13.0.0/aarch64/42801897757-1/lance-13.0.0/python/python/lance/torch/data.py:111: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:208.)
+  return torch.from_numpy(nparr)
+
+  1%|          | 10240/1000000 [00:06<09:42, 1698.18it/s]
+  7%|▋         | 71680/1000000 [00:06<00:58, 15811.57it/s]
+ 12%|█▏        | 122880/1000000 [00:06<00:27, 31625.67it/s]
+ 17%|█▋        | 174080/1000000 [00:06<00:15, 52536.42it/s]
+ 24%|██▎       | 235520/1000000 [00:06<00:09, 84690.85it/s]
+ 31%|███       | 307200/1000000 [00:06<00:05, 131987.46it/s]
+ 38%|███▊      | 378880/1000000 [00:06<00:03, 188018.56it/s]
+ 45%|████▌     | 450560/1000000 [00:06<00:02, 248980.47it/s]
+ 52%|█████▏    | 522240/1000000 [00:06<00:01, 315073.72it/s]
+ 60%|██████    | 604160/1000000 [00:07<00:01, 394505.35it/s]
+ 69%|██████▊   | 686080/1000000 [00:07<00:00, 464344.83it/s]
+ 76%|███████▌  | 757760/1000000 [00:07<00:00, 515470.66it/s]
+ 84%|████████▍ | 839680/1000000 [00:07<00:00, 573958.06it/s]
+ 92%|█████████▏| 921600/1000000 [00:07<00:00, 616217.35it/s]
+ 99%|█████████▉| 993280/1000000 [00:07<00:00, 637072.01it/s]
+100%|██████████| 1000000/1000000 [00:08<00:00, 120797.43it/s]
+Get ground truth in: 8.280s
+Starting benchmarks
+nprobes: 1, refine=None, recall@1=0.292, mean(s)=0.0011963090896606446
+nprobes: 1, refine=1, recall@1=0.292, mean(s)=0.0015195670127868652
+nprobes: 1, refine=10, recall@1=0.498, mean(s)=0.001930102825164795
+nprobes: 1, refine=20, recall@1=0.513, mean(s)=0.0020208334922790527
+nprobes: 1, refine=30, recall@1=0.516, mean(s)=0.002160318374633789
+nprobes: 1, refine=40, recall@1=0.518, mean(s)=0.0022696537971496583
+nprobes: 1, refine=50, recall@1=0.518, mean(s)=0.002382093906402588
+nprobes: 10, refine=None, recall@1=0.457, mean(s)=0.0017249531745910645
+nprobes: 10, refine=1, recall@1=0.457, mean(s)=0.0019693052768707275
+nprobes: 10, refine=10, recall@1=0.875, mean(s)=0.0023624985218048096
+nprobes: 10, refine=20, recall@1=0.939, mean(s)=0.0025457191467285157
+nprobes: 10, refine=30, recall@1=0.956, mean(s)=0.002643014430999756
+nprobes: 10, refine=40, recall@1=0.965, mean(s)=0.0028292293548583983
+nprobes: 10, refine=50, recall@1=0.969, mean(s)=0.003100783109664917
+nprobes: 25, refine=None, recall@1=0.457, mean(s)=0.0026276662349700927
+nprobes: 25, refine=1, recall@1=0.457, mean(s)=0.002818389654159546
+nprobes: 25, refine=10, recall@1=0.886, mean(s)=0.003396106719970703
+nprobes: 25, refine=20, recall@1=0.954, mean(s)=0.003625671625137329
+nprobes: 25, refine=30, recall@1=0.972, mean(s)=0.003464984655380249
+nprobes: 25, refine=40, recall@1=0.980, mean(s)=0.0038824007511138914
+nprobes: 25, refine=50, recall@1=0.984, mean(s)=0.003854968547821045
+nprobes: 50, refine=None, recall@1=0.458, mean(s)=0.0039202656745910645
+nprobes: 50, refine=1, recall@1=0.458, mean(s)=0.004628368139266968
+nprobes: 50, refine=10, recall@1=0.887, mean(s)=0.0045033273696899415
+nprobes: 50, refine=20, recall@1=0.955, mean(s)=0.004774497032165527
+nprobes: 50, refine=30, recall@1=0.972, mean(s)=0.004949287891387939
+nprobes: 50, refine=40, recall@1=0.981, mean(s)=0.005218713998794556
+nprobes: 50, refine=50, recall@1=0.985, mean(s)=0.00519233250617981
+nprobes: 75, refine=None, recall@1=0.458, mean(s)=0.005082948446273804
+nprobes: 75, refine=1, recall@1=0.458, mean(s)=0.005577839851379394
+nprobes: 75, refine=10, recall@1=0.887, mean(s)=0.005930812120437622
+nprobes: 75, refine=20, recall@1=0.955, mean(s)=0.00590269684791565
+nprobes: 75, refine=30, recall@1=0.972, mean(s)=0.005865614891052246
+nprobes: 75, refine=40, recall@1=0.981, mean(s)=0.006023402690887451
+nprobes: 75, refine=50, recall@1=0.985, mean(s)=0.006227850198745727
+nprobes: 100, refine=None, recall@1=0.458, mean(s)=0.006325868129730225
+nprobes: 100, refine=1, recall@1=0.458, mean(s)=0.006814402341842651
+nprobes: 100, refine=10, recall@1=0.887, mean(s)=0.006942281246185303
+nprobes: 100, refine=20, recall@1=0.955, mean(s)=0.00711117172241211
+nprobes: 100, refine=30, recall@1=0.972, mean(s)=0.007189110517501831
+nprobes: 100, refine=40, recall@1=0.981, mean(s)=0.007342884778976441
+nprobes: 100, refine=50, recall@1=0.985, mean(s)=0.007522245645523071
+[lance] [2026-11-10 19:47:18] normalized all 42 official SIFT scenarios (recall@1 and mean query time)
