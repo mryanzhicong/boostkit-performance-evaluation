@@ -529,7 +529,16 @@ def _metric_names(
     return ordered
 
 
-def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
+def render_summary(
+    summary: dict, comparisons: list[dict] | None = None, *, detail: bool = True
+) -> str:
+    """Render the run summary.
+
+    ``detail=False`` keeps the overview, the environment tables and a pointer to
+    the full report, and drops the per-metric tables.  GitHub caps a step summary
+    at 1 MiB, so the run page must not receive the full 1000+ metric tables of
+    large cases (they are published as artifacts and on the results branch).
+    """
     lines = [
         "# 性能测试汇总",
         "",
@@ -579,6 +588,22 @@ def render_summary(summary: dict, comparisons: list[dict] | None = None) -> str:
                     lines.extend(_test_tools_section(test_tools, heading_level=4))
                     break
     metric_items = [item for item in summary.get("items", []) if item.get("metrics")]
+    if not detail:
+        metric_count = sum(len(item.get("metrics", {})) for item in metric_items)
+        comparison_count = sum(len(comparison.get("metrics", {})) for comparison in comparisons or [])
+        if metric_count or comparison_count:
+            lines.extend([
+                "## 指标明细",
+                "",
+                f"- 单架构指标：{metric_count} 条",
+                f"- 跨架构对比指标：{comparison_count} 条",
+                "",
+                "> 逐条指标表已从运行摘要中省略（GitHub Step Summary 上限 1 MiB）。"
+                "完整内容见本次运行的 report artifact，以及 `performance-results` 分支上的"
+                " `combined-report.md` / `combined-report.json`。",
+                "",
+            ])
+        return "\n".join(lines)
     if metric_items:
         comparison_orders = {
             _result_key(comparison): list(comparison.get("metrics", {}))

@@ -168,7 +168,9 @@ jobs:
         run: |
           printf 'Source runs: x86_64 `%s`, aarch64 `%s`.\n\n' \
             "${X86_RUN_ID}" "${ARM_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
-          cat .perf-output/existing-comparison/report/combined-report.md >> "${GITHUB_STEP_SUMMARY}"
+          python3 framework/write_step_summary.py \
+            --report .perf-output/existing-comparison/report/combined-report.md \
+            --compact .perf-output/existing-comparison/report/combined-report-summary.md
       - name: Allocate UTC+8 consolidated result directory
         shell: bash
         run: |
