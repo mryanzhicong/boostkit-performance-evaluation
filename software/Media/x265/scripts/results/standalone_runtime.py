@@ -174,7 +174,7 @@ def extract_metrics(
             raise RuntimeError(f"指标 {result_key} 必须为正且有限")
         group = result.get("group")
         if not isinstance(group, str) or not group:
-            raise RuntimeError(f"指标 {result_key} 缺少码率分组")
+            raise RuntimeError(f"指标 {result_key} 缺少测试模式分组")
         subgroup = result.get("subgroup")
         if not isinstance(subgroup, str) or not subgroup:
             raise RuntimeError(f"指标 {result_key} 缺少视频分组")

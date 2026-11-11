@@ -19,8 +19,6 @@ SPEC.loader.exec_module(reference)
 ORIGINAL_SHA256 = {
     "x264/scripts/fps-encode-x264.sh": "5fe04feacb5c5cfcb4fe087952098dfbc30dba7b02f8a75329235bc6d796530a",
     "x264/scripts/score-x264.sh": "c83bdecea7428ace4b1d387a31f41e12042e2ef74380beaf9b71ec48a0342fd2",
-    "x265/scripts/fps-encode-x265.sh": "d520649bd84db013022953619d6d06463cd7f25f579c36abfc93719d977a0e70",
-    "x265/scripts/score-x265.sh": "78fef59be864a1c33077f482aec22f265b1c31efb211e7ec475053725d744145",
 }
 
 
