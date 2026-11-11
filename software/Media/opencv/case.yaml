@@ -1,0 +1,55 @@
+name: opencv
+category: Media
+enabled: true
+versions:
+  - "4.10.0"
+test_tools:
+  opencv:
+    version: "与被测软件版本一致"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_opencv
+    start:
+      script: scripts/stages/start.sh
+      function: start_opencv_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_opencv_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_opencv_runtime
+  timeout_minutes: 1200
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  official_logs:
+    path: benchmark_norm.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_opencv.json
+    stage: test
+    format: json
+    required: true
+  reference_summary:
+    path: result_bench-opencv.csv
+    stage: test
+    format: text
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    group_path: group
+    subgroup_path: subgroup
+    unit: ms
+    direction: lower_is_better
