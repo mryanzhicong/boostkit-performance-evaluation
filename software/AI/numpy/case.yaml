@@ -1,0 +1,66 @@
+name: numpy
+category: AI
+enabled: true
+versions:
+  - "2.4.3"
+test_tools:
+  # `numpy_baseline` is the software under test: the unmodified 2.4.3 import
+  # (GitCode commit 289c872f).  `asv_bench` is the aggregate ASV suite that
+  # lives on the boostkit main branch; it is vendored byte-for-byte under
+  # asv_bench/ and pinned by asv_bench/manifest.sha256.
+  numpy_baseline:
+    version: "2.4.3"
+    revision: "289c872fc2cc3a82a63a66b4c1a32e8ef6e80fb6"
+  asv_bench:
+    version: "2.4.3"
+    revision: "95422b21eb5b43a2453e45b8531a3dd09c9b61ab"
+  cpython:
+    version: "3.14.10"
+  asv:
+    version: "0.6.4"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_numpy
+    start:
+      script: scripts/stages/start.sh
+      function: start_numpy_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_numpy_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_numpy_runtime
+  timeout_minutes: 300
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+  asv_report:
+    path: asv
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group

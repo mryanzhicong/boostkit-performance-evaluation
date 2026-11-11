@@ -1,0 +1,20 @@
+# Pinned measurement environment for the numpy case.
+#
+# Installed into the container-side CPython 3.14.10 virtual environment.  The
+# versions are the ones the local x86_64 verification and the Blue runs used;
+# `asv` is pinned below the upstream 0.6.5 line because the NumPy benchmark
+# suite is exercised with the 0.6.4 result-file format.
+asv==0.6.4
+asv_runner==0.3.2
+build==1.6.1
+Cython==3.3.1
+meson==1.12.1
+meson-python==0.22.1
+ninja==1.13.2
+packaging==26.3
+# meson-python rewrites the wheel's RPATHs with patchelf; `--no-isolation`
+# builds check for it explicitly and fail without it.
+patchelf==0.19.3.0
+setuptools==84.2.1
+virtualenv==21.15.5
+wheel==0.48.0
