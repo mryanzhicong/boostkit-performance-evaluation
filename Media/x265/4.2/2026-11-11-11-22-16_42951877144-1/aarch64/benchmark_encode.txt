@@ -1,0 +1,100 @@
+Single route; CPU/NUMA affinity: unbound; pools=16; frame-threads=15
+scenario                                 frames          fps status
+BQTerrace-medium-l16-ft15-ctu16-bf7-pool16-aq4 r1 unbound: OK 28.150 fps 
+BQTerrace_medium_crf24_offline              600       28.150     OK
+BQTerrace-medium-l16-ft15-ctu16-bf7-pool16-aq4 r1 unbound: OK 35.063 fps 
+BQTerrace_medium_crf28_offline              600       35.063     OK
+Result: /home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/scripts/result_bench-x265.csv
+Read fps (frames per second); higher is better.
+
+BQTerrace_medium_crf24_offline: 21.314703 seconds, 28.149583 fps
+[rawvideo @ 0x30274d80] Estimating duration from bitrate, this may be inaccurate
+Input #0, rawvideo, from '/home/runner/software/x265/video/BQTerrace_1920x1080_60-dianbo.yuv':
+  Duration: 00:00:10.00, start: 0.000000, bitrate: 1492992 kb/s
+  Stream #0:0: Video: rawvideo (I420 / 0x30323449), yuv420p, 1920x1080, 1492992 kb/s, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> hevc (libx265))
+x265 [info]: HEVC encoder version 4.2+1-e444744
+x265 [info]: build info [Linux][GCC 12.3.1][64 bit] 8bit
+x265 [info]: using cpu capabilities: NEON SVE SVE2 Neon_DotProd Neon_I8MM SVE2_BitPerm
+x265 [warning]: Max TU size should be less than or equal to max CU size, setting max TU size = 16
+x265 [warning]: QGSize should be less than or equal to maxCUSize, setting QGSize = 16
+x265 [info]: Main profile, Level-4.1 (Main tier)
+x265 [info]: Thread pool created using 16 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 15 / wpp(68 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 16 / 8
+x265 [info]: Residual QT: max TU size, max depth : 16 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 25 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 7 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 4 / 1.0 / 16 / 1
+x265 [info]: Rate Control / qCompress            : CRF-24.0 / 0.60
+x265 [info]: VBV/HRD buffer / max-rate / init    : 12000 / 6000 / 0.750
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=6 deblock sao
+Output #0, mp4, to '/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/scripts/.work/cases/BQTerrace_medium_crf24_offline/BQTerrace-medium-l16-ft15-ctu16-bf7-pool16-aq4-r1-n0/output.mp4':
+  Metadata:
+    encoder         : Lavf61.1.100
+  Stream #0:0: Video: hevc (hev1 / 0x31766568), yuv420p(progressive), 1920x1080, q=2-31, 60 fps, 15360 tbn
+      Metadata:
+        encoder         : Lavc61.3.100 libx265
+      Side data:
+        cpb: bitrate max/min/avg: 6000000/0/0 buffer size: 12000000 vbv_delay: N/A
+[mp4 @ 0x3027f060] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 0x3027ef90] video:4761KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:2KiB muxing overhead: 0.190721%
+frame=  600 fps= 28 q=35.4 Lsize=    4770KiB time=00:00:09.96 bitrate=3920.7kbits/s speed=0.471x    
+x265 [info]: frame I:      3, Avg QP:28.89  kb/s: 71412.64
+x265 [info]: frame P:     88, Avg QP:30.01  kb/s: 16627.28
+x265 [info]: frame B:    509, Avg QP:35.34  kb/s: 1299.61 
+x265 [info]: Weighted P-Frames: Y:14.8% UV:11.4%
+
+encoded 600 frames in 21.15s (28.37 fps), 3898.23 kb/s, Avg QP:34.53
+
+BQTerrace_medium_crf28_offline: 17.111884 seconds, 35.063352 fps
+[rawvideo @ 0x3f5fdd80] Estimating duration from bitrate, this may be inaccurate
+Input #0, rawvideo, from '/home/runner/software/x265/video/BQTerrace_1920x1080_60-dianbo.yuv':
+  Duration: 00:00:10.00, start: 0.000000, bitrate: 1492992 kb/s
+  Stream #0:0: Video: rawvideo (I420 / 0x30323449), yuv420p, 1920x1080, 1492992 kb/s, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> hevc (libx265))
+x265 [info]: HEVC encoder version 4.2+1-e444744
+x265 [info]: build info [Linux][GCC 12.3.1][64 bit] 8bit
+x265 [info]: using cpu capabilities: NEON SVE SVE2 Neon_DotProd Neon_I8MM SVE2_BitPerm
+x265 [warning]: Max TU size should be less than or equal to max CU size, setting max TU size = 16
+x265 [warning]: QGSize should be less than or equal to maxCUSize, setting QGSize = 16
+x265 [info]: Main profile, Level-4.1 (Main tier)
+x265 [info]: Thread pool created using 16 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 15 / wpp(68 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 16 / 8
+x265 [info]: Residual QT: max TU size, max depth : 16 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 25 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 7 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 4 / 1.0 / 16 / 1
+x265 [info]: Rate Control / qCompress            : CRF-28.0 / 0.60
+x265 [info]: VBV/HRD buffer / max-rate / init    : 12000 / 6000 / 0.750
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=6 deblock sao
+Output #0, mp4, to '/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/scripts/.work/cases/BQTerrace_medium_crf28_offline/BQTerrace-medium-l16-ft15-ctu16-bf7-pool16-aq4-r1-n0/output.mp4':
+  Metadata:
+    encoder         : Lavf61.1.100
+  Stream #0:0: Video: hevc (hev1 / 0x31766568), yuv420p(progressive), 1920x1080, q=2-31, 60 fps, 15360 tbn
+      Metadata:
+        encoder         : Lavc61.3.100 libx265
+      Side data:
+        cpb: bitrate max/min/avg: 6000000/0/0 buffer size: 12000000 vbv_delay: N/A
+[mp4 @ 0x3f608060] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 0x3f607f90] video:2276KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:2KiB muxing overhead: 0.397578%
+frame=  600 fps= 35 q=39.3 Lsize=    2285KiB time=00:00:09.96 bitrate=1878.2kbits/s speed=0.587x    
+x265 [info]: frame I:      3, Avg QP:32.97  kb/s: 41468.64
+x265 [info]: frame P:     88, Avg QP:34.66  kb/s: 6439.90 
+x265 [info]: frame B:    509, Avg QP:39.09  kb/s: 837.77  
+x265 [info]: Weighted P-Frames: Y:14.8% UV:11.4%
+
+encoded 600 frames in 16.97s (35.35 fps), 1862.57 kb/s, Avg QP:38.41

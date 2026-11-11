@@ -1,0 +1,101 @@
+{
+  "sources": {
+    "x265_tree_sha256": "2bcb020b791a3f1a8bb96a3fc0021d4e151408318b28a73bcfaf89f32e222bb3",
+    "ffmpeg_tree_sha256": "02717a24e139f432e0c58a2e36c824f51fa15e85ae97e929af652799e5a5bd1d"
+  },
+  "config": {
+    "x265": "4.2",
+    "ffmpeg": "7.0.1",
+    "bit_depth": 8,
+    "shared_x265": false,
+    "libnuma": false,
+    "assembly": true,
+    "build_type": "Release",
+    "ffmpeg_autodetect": false,
+    "extra_cflags": "",
+    "extra_cxxflags": ""
+  },
+  "cc": "cc (GCC) 12.3.1 (openEuler 12.3.1-111.oe2403sp3)\nCopyright (C) 2022 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "cxx": "c++ (GCC) 12.3.1 (openEuler 12.3.1-111.oe2403sp3)\nCopyright (C) 2022 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "cmake": "cmake version 3.27.9\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n",
+  "commands": [
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/x265_4.2/source",
+        "-B",
+        "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/x265-build",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_INSTALL_PREFIX=/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/install",
+        "-DENABLE_SHARED=OFF",
+        "-DENABLE_CLI=ON",
+        "-DENABLE_PIC=ON",
+        "-DENABLE_ASSEMBLY=ON",
+        "-DENABLE_LIBNUMA=OFF",
+        "-DHIGH_BIT_DEPTH=OFF"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467"
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/x265-build",
+        "--parallel",
+        "16"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467"
+    },
+    {
+      "argv": [
+        "cmake",
+        "--install",
+        "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/x265-build"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467"
+    },
+    {
+      "argv": [
+        "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/ffmpeg-7.0.1/configure",
+        "--prefix=/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/install",
+        "--enable-gpl",
+        "--enable-libx265",
+        "--disable-autodetect",
+        "--disable-doc",
+        "--disable-ffplay",
+        "--pkg-config-flags=--static",
+        "--extra-libs=-lstdc++ -lm -lpthread -ldl"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/ffmpeg-build"
+    },
+    {
+      "argv": [
+        "make",
+        "-j",
+        "16"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/ffmpeg-build"
+    },
+    {
+      "argv": [
+        "make",
+        "install"
+      ],
+      "cwd": "/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/ffmpeg-build"
+    }
+  ],
+  "build_environment": {
+    "CFLAGS": "",
+    "CXXFLAGS": ""
+  },
+  "versions": {
+    "x265": "x265 [info]: HEVC encoder version 4.2+1-e444744\nx265 [info]: build info [Linux][GCC 12.3.1][64 bit] 8bit\nx265 [info]: using cpu capabilities: NEON SVE SVE2 Neon_DotProd Neon_I8MM SVE2_BitPerm\n",
+    "ffmpeg": "ffmpeg version 7.0.1 Copyright (c) 2000-2024 the FFmpeg developers\nbuilt with gcc 12 (GCC)\nconfiguration: --prefix=/home/runner/boostkit-perf/x265/4.2/aarch64/42951877144-1/reference/software/build-20261111-111914-544467/install --enable-gpl --enable-libx265 --disable-autodetect --disable-doc --disable-ffplay --pkg-config-flags=--static --extra-libs='-lstdc++ -lm -lpthread -ldl'\nlibavutil      59.  8.100 / 59.  8.100\nlibavcodec     61.  3.100 / 61.  3.100\nlibavformat    61.  1.100 / 61.  1.100\nlibavdevice    61.  1.100 / 61.  1.100\nlibavfilter    10.  1.100 / 10.  1.100\nlibswscale      8.  1.100 /  8.  1.100\nlibswresample   5.  1.100 /  5.  1.100\nlibpostproc    58.  1.100 / 58.  1.100\n"
+  },
+  "binaries": {
+    "ffmpeg": "d7ee4e9bff86c5bab81a05e426e971d811bb9e48796b7ac22aefa290f8c9711c",
+    "ffprobe": "f1a89095ceb20e2b3a8645a36b9713ba7d3f06d9b4d6e8d7c53ea63f76662395",
+    "x265": "1506966971bd08100eb374812c194a713a547bb23d57136e76cdfd5651256551"
+  }
+}

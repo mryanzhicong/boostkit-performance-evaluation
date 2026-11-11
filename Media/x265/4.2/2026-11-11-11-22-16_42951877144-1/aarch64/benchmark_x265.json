@@ -1,0 +1,74 @@
+{
+  "software": "x265",
+  "version": "4.2",
+  "architecture": "aarch64",
+  "parameters": {
+    "reference_revision": "21154155f56328b708e2c78f4ce6bac08101fe68",
+    "source_video": "BQTerrace_1920x1080_60-dianbo.yuv",
+    "source_video_sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+    "width": 1920,
+    "height": 1080,
+    "pixel_format": "yuv420p",
+    "source_fps": 60,
+    "frames": 600,
+    "encoder": "stock x265 4.2 via FFmpeg 7.0.1",
+    "preset": "medium",
+    "crfs": [
+      24,
+      28
+    ],
+    "maxrate_kbps": 6000,
+    "bufsize_kbits": 12000,
+    "pools": 16,
+    "frame_threads": 15,
+    "ctu": 16,
+    "bframes": 7,
+    "aq_mode": 4,
+    "cpu_affinity": "unbound",
+    "numa_affinity": "unbound",
+    "repetitions": 1,
+    "timing": "600 frames / full encode command seconds"
+  },
+  "measurements": [
+    {
+      "scenario": "BQTerrace_medium_crf24_offline",
+      "frames": 600,
+      "crf": 24,
+      "seconds": 21.31470263299707,
+      "fps": 28.149583427504464,
+      "output_bytes": 4884490,
+      "output_sha256": "1e24aadd51bbbf01ea3050a345522cdafac75ae89150baa12439f1a7e4429af5",
+      "pool_thread_counts": [
+        16
+      ]
+    },
+    {
+      "scenario": "BQTerrace_medium_crf28_offline",
+      "frames": 600,
+      "crf": 28,
+      "seconds": 17.111883859004593,
+      "fps": 35.0633515832489,
+      "output_bytes": 2339878,
+      "output_sha256": "e75fef411ef840047f7de64cdbcac9fe110af04ce7e53995e9dd68f406957fc5",
+      "pool_thread_counts": [
+        16
+      ]
+    }
+  ],
+  "results": {
+    "single/BQTerrace/medium_crf24_offline/fps": {
+      "source_name": "single/BQTerrace/medium_crf24_offline/fps",
+      "source_field": "fps",
+      "group": "单路",
+      "subgroup": "BQTerrace",
+      "value": 28.15
+    },
+    "single/BQTerrace/medium_crf28_offline/fps": {
+      "source_name": "single/BQTerrace/medium_crf28_offline/fps",
+      "source_field": "fps",
+      "group": "单路",
+      "subgroup": "BQTerrace",
+      "value": 35.063
+    }
+  }
+}

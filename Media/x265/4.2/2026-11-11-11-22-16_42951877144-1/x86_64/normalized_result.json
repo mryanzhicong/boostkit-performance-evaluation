@@ -1,0 +1,187 @@
+{
+  "software": "x265",
+  "category": "Media",
+  "version": "4.2",
+  "architecture": "x86_64",
+  "run_id": "42951877144-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-11T03:20:45Z",
+    "category": "Media",
+    "software": "x265",
+    "requested_version": "4.2",
+    "actual_version": "4.2",
+    "architecture": "x86_64",
+    "run_id": "42951877144-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base"
+    },
+    "benchmark_result": {
+      "reference_revision": "21154155f56328b708e2c78f4ce6bac08101fe68",
+      "source_video": "BQTerrace_1920x1080_60-dianbo.yuv",
+      "source_video_sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+      "width": 1920,
+      "height": 1080,
+      "pixel_format": "yuv420p",
+      "source_fps": 60,
+      "frames": 600,
+      "encoder": "stock x265 4.2 via FFmpeg 7.0.1",
+      "preset": "medium",
+      "crfs": [
+        24,
+        28
+      ],
+      "maxrate_kbps": 6000,
+      "bufsize_kbits": 12000,
+      "pools": 16,
+      "frame_threads": 15,
+      "ctu": 16,
+      "bframes": 7,
+      "aq_mode": 4,
+      "cpu_affinity": "unbound",
+      "numa_affinity": "unbound",
+      "repetitions": 1,
+      "timing": "600 frames / full encode command seconds"
+    }
+  },
+  "parameter_signature": "336651fdf2c7c898eba4de4623bd3fe0e51d5d77b0b6aa5ccc11728e2ab73085",
+  "test_tools": {
+    "x265": {
+      "version": "与被测软件版本一致"
+    },
+    "ffmpeg": {
+      "version": "7.0.1"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-11T03:19:13Z",
+    "architecture": "x86_64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 8 nodes (0-7)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215\nnode 0 size: 192622 MB\nnode 0 free: 153774 MB\nnode 1 cpus: 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239\nnode 1 size: 193523 MB\nnode 1 free: 155163 MB\nnode 2 cpus: 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263\nnode 2 size: 193523 MB\nnode 2 free: 173330 MB\nnode 3 cpus: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 3 size: 193523 MB\nnode 3 free: 172278 MB\nnode 4 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311\nnode 4 size: 193481 MB\nnode 4 free: 172489 MB\nnode 5 cpus: 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335\nnode 5 size: 193523 MB\nnode 5 free: 174796 MB\nnode 6 cpus: 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359\nnode 6 size: 193523 MB\nnode 6 free: 176189 MB\nnode 7 cpus: 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 7 size: 193455 MB\nnode 7 free: 175153 MB\nnode distances:\nnode   0   1   2   3   4   5   6   7 \n  0:  10  12  12  12  32  32  32  32 \n  1:  12  10  12  12  32  32  32  32 \n  2:  12  12  10  12  32  32  32  32 \n  3:  12  12  12  10  32  32  32  32 \n  4:  32  32  32  32  10  12  12  12 \n  5:  32  32  32  32  12  10  12  12 \n  6:  32  32  32  32  12  12  10  12 \n  7:  32  32  32  32  12  12  12  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-11T03:19:13Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334136320 163281391616 1418910490624   474578944 48595972096 1459052744704\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-11T03:21:40Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1622334136320 164835794944 1416019218432   484937728 49942683648 1457498341376\nSwap:     4294963200           0  4294963200",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base"
+      }
+    },
+    "official_benchmark": {
+      "path": "benchmark_encode.txt",
+      "size": 6647
+    },
+    "benchmark_result": {
+      "software": "x265",
+      "version": "4.2",
+      "architecture": "x86_64",
+      "parameters": {
+        "reference_revision": "21154155f56328b708e2c78f4ce6bac08101fe68",
+        "source_video": "BQTerrace_1920x1080_60-dianbo.yuv",
+        "source_video_sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+        "width": 1920,
+        "height": 1080,
+        "pixel_format": "yuv420p",
+        "source_fps": 60,
+        "frames": 600,
+        "encoder": "stock x265 4.2 via FFmpeg 7.0.1",
+        "preset": "medium",
+        "crfs": [
+          24,
+          28
+        ],
+        "maxrate_kbps": 6000,
+        "bufsize_kbits": 12000,
+        "pools": 16,
+        "frame_threads": 15,
+        "ctu": 16,
+        "bframes": 7,
+        "aq_mode": 4,
+        "cpu_affinity": "unbound",
+        "numa_affinity": "unbound",
+        "repetitions": 1,
+        "timing": "600 frames / full encode command seconds"
+      },
+      "measurements": [
+        {
+          "scenario": "BQTerrace_medium_crf24_offline",
+          "frames": 600,
+          "crf": 24,
+          "seconds": 22.625568426003156,
+          "fps": 26.518670766760973,
+          "output_bytes": 4880552,
+          "output_sha256": "23c49bd31f990d2cb495c8ce7105aeb7db75f0c801a8c07fdd57a489907148eb",
+          "pool_thread_counts": [
+            16
+          ]
+        },
+        {
+          "scenario": "BQTerrace_medium_crf28_offline",
+          "frames": 600,
+          "crf": 28,
+          "seconds": 22.22691129699524,
+          "fps": 26.99430397605948,
+          "output_bytes": 2339882,
+          "output_sha256": "17d2302ff7580b22a45da46b4ac2ab5a7b02bc1b988dd0d03f39381085a509b0",
+          "pool_thread_counts": [
+            16
+          ]
+        }
+      ],
+      "results": {
+        "single/BQTerrace/medium_crf24_offline/fps": {
+          "source_name": "single/BQTerrace/medium_crf24_offline/fps",
+          "source_field": "fps",
+          "group": "单路",
+          "subgroup": "BQTerrace",
+          "value": 26.519
+        },
+        "single/BQTerrace/medium_crf28_offline/fps": {
+          "source_name": "single/BQTerrace/medium_crf28_offline/fps",
+          "source_field": "fps",
+          "group": "单路",
+          "subgroup": "BQTerrace",
+          "value": 26.994
+        }
+      }
+    },
+    "reference_summary": {
+      "path": "result_bench-x265.csv",
+      "size": 120
+    }
+  },
+  "metrics": {
+    "single/BQTerrace/medium_crf24_offline/fps": {
+      "value": 26.519,
+      "unit": "fps",
+      "direction": "higher_is_better",
+      "group": "单路",
+      "subgroup": "BQTerrace"
+    },
+    "single/BQTerrace/medium_crf28_offline/fps": {
+      "value": 26.994,
+      "unit": "fps",
+      "direction": "higher_is_better",
+      "group": "单路",
+      "subgroup": "BQTerrace"
+    }
+  }
+}
