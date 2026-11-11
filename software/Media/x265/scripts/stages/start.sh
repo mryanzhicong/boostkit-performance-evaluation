@@ -11,17 +11,25 @@ start_x265_runtime() {
         log_message "ERROR: x265 binary is not runnable"
         return 40
     }
-    [[ -d "${VIDEO_DIR}" ]] || {
-        log_message "ERROR: reference videos are unavailable: ${VIDEO_DIR}"
+    [[ -x "${FFMPEG_BIN}" && -x "${FFPROBE_BIN}" ]] || {
+        log_message "ERROR: private FFmpeg 7.0.1 binaries are unavailable"
         return 40
     }
-    python3 "${SCRIPT_DIR}/../collect_reference.py" \
-        --check-only --encoder x265 --allow-video-subset \
-        --video-dir "${VIDEO_DIR}" || return 40
-    [[ ! -e "${PERF_WORK_DIR}/video" ]] || {
-        log_message "ERROR: reference video link already exists: ${PERF_WORK_DIR}/video"
+    local ffmpeg_version
+    ffmpeg_version="$("${FFMPEG_BIN}" -version 2>&1)" || return 40
+    [[ "${ffmpeg_version}" == *"ffmpeg version 7.0.1"* ]] || {
+        log_message "ERROR: private FFmpeg version is not 7.0.1"
         return 40
     }
-    ln -s "${VIDEO_DIR}" "${PERF_WORK_DIR}/video" || return 40
-    log_message "x265 official benchmark runtime is ready"
+    [[ -f "${VIDEO_FILE}" ]] || {
+        log_message "ERROR: required BQTerrace video is unavailable: ${VIDEO_FILE}"
+        return 40
+    }
+    local bytes
+    bytes="$(stat -c %s -- "${VIDEO_FILE}")" || return 40
+    (( bytes >= 1920 * 1080 * 3 / 2 * 600 )) || {
+        log_message "ERROR: BQTerrace video contains fewer than 600 complete frames"
+        return 40
+    }
+    log_message "x265 4.2 / FFmpeg 7.0.1 runtime and 600-frame video are ready"
 }
