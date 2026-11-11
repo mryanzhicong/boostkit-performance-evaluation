@@ -1,4 +1,4 @@
-"""Checks for the official Nexmark table and two-stage workload contract."""
+"""Checks for every official Nexmark result column and the two-stage workload."""
 
 from __future__ import annotations
 
@@ -30,8 +30,12 @@ RUNNER_SPEC.loader.exec_module(RUNNER)
 def test_official_result_row() -> None:
     row = "|q3 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |"
     result = MODULE.parse_result("Nexmark Results\n" + row, "q3", 10_000_000)
+    assert result["events"] == 10_000_000
+    assert result["cores"] == 15.17
     assert result["time_seconds"] == 10.232
+    assert result["core_seconds"] == 155.247
     assert result["throughput_events_per_second"] == 977_320
+    assert result["throughput_per_core_events_per_second"] == 64_420
     assert len(MODULE.QUERIES) == 23
     assert "q6" not in MODULE.QUERIES
 
@@ -44,9 +48,42 @@ def test_parse_all_official_query_logs(tmp_path: Path) -> None:
         )
     payload = MODULE.parse_benchmark(tmp_path)
     assert len(payload["measurements"]) == 23
-    assert len(payload["results"]) == 46
+    assert len(payload["results"]) == 138
+    assert set(payload["results"]) == {
+        f"{query}/{name}" for query in MODULE.QUERIES
+        for name, _, _ in MODULE.METRIC_SPECS
+    }
+    assert payload["results"]["q3/cores"]["direction"] == "neutral"
+    assert payload["results"]["q3/core_seconds"]["unit"] == "core*s"
+    assert payload["results"]["q3/throughput_per_core"]["direction"] == "higher_is_better"
     assert payload["parameters"]["benchmark_events"] == 10_000_000
     assert payload["parameters"]["checkpoint_interval"] == 180_000
+
+
+def test_all_result_columns_reach_cross_architecture_report(tmp_path: Path) -> None:
+    for query in MODULE.QUERIES:
+        (tmp_path / f"bench-{query}.log").write_text(
+            f"|{query} |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |\n",
+            encoding="utf-8",
+        )
+    payload = MODULE.parse_benchmark(tmp_path)
+    sys.path.insert(0, str(SCRIPT.parents[4] / "framework"))
+    from generate_comparison import compare_pair
+    from reporting import render_comparison
+
+    base = {
+        "category": "Bigdata", "software": "flink", "version": "1.16.3",
+        "parameters": payload["parameters"], "metrics": payload["results"],
+    }
+    comparison = compare_pair(
+        dict(base, architecture="x86_64"), dict(base, architecture="aarch64")
+    )
+    assert len(comparison["metrics"]) == 138
+    assert comparison["metrics"]["q3/events"]["relative_performance"] is None
+    report = render_comparison(comparison)
+    for field in ("events", "cores", "time", "core_seconds", "throughput",
+                  "throughput_per_core"):
+        assert f"q3/{field}" in report
 
 
 def test_jdk_and_checkpoint_match_ten_million_event_runbook() -> None:
@@ -57,6 +94,11 @@ def test_jdk_and_checkpoint_match_ten_million_event_runbook() -> None:
     assert "prepare_bisheng_jdk || return $?" in build
     assert "execution.checkpointing.interval: 180000" in build
     assert "java-11-openjdk-devel" not in build
+
+
+def test_cpu_sender_reads_the_same_nexmark_config_as_queries() -> None:
+    start = (SCRIPT.parents[1] / "scripts/stages/start.sh").read_text(encoding="utf-8")
+    assert 'NEXMARK_CONF_DIR="${NEXMARK_HOME}/conf" "${JAVA_HOME}/bin/java"' in start
 
 
 def test_optimized_standalone_does_not_fall_back_to_base(tmp_path: Path) -> None:
@@ -91,14 +133,21 @@ def test_standalone_report_uses_all_formal_metrics(tmp_path: Path) -> None:
     assert report.returncode == 0, report.stderr
     result = json.loads((tmp_path / "results.json").read_text())
     assert result["status"] == "passed"
-    assert len(result["metrics"]) == 46
-    assert "### q23" in (tmp_path / "report.md").read_text()
+    assert len(result["metrics"]) == 138
+    report_text = (tmp_path / "report.md").read_text()
+    assert "### q23" in report_text
+    assert "| Events Num |" in report_text
+    assert "| Cores * Time(s) |" in report_text
+    assert "| Throughput/Cores |" in report_text
 
 
 @pytest.mark.parametrize("row", [
     "|q3 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |\n" * 2,
     "|q4 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |",
     "|q3 |9,000,000 |15.17 |10.232 |155.247 |977.32 K/s |64.42 K/s |",
+    "|q3 |10,000,000 |0 |202.042 |0.000 |49.49 K/s |9.22 E/s |",
+    "|q3 |10,000,000 |15.17 |10.232 |bad |977.32 K/s |64.42 K/s |",
+    "|q3 |10,000,000 |15.17 |10.232 |155.247 |977.32 K/s |bad |",
 ])
 def test_rejects_missing_or_ambiguous_measurements(row: str) -> None:
     with pytest.raises(ValueError):
@@ -144,6 +193,15 @@ def test_wait_idle_does_not_fail_after_previous_180_second_limit(monkeypatch: py
     RUNNER.wait_idle(8081)
     assert checks == 101
     assert elapsed == 200
+
+
+def test_first_warmup_requires_cpu_metrics(tmp_path: Path) -> None:
+    log = tmp_path / "metric-client.log"
+    log.write_text("Can't connect to metric server. Skip to report metric for this round.\n")
+    with pytest.raises(RuntimeError, match="produced no TaskManager metrics"):
+        RUNNER.require_cpu_metrics(log)
+    log.write_text('Report CPU metric: [{"pid":123,"cpuCores":0.5}]\n')
+    RUNNER.require_cpu_metrics(log)
 
 
 def test_job_timeout_keeps_flink_within_self_hosted_five_day_limit() -> None:

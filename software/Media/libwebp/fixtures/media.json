@@ -1,0 +1,36 @@
+{
+  "benchmark": "libwebp_1.2.1_lossless_encode",
+  "generator": "scripts/harness/generate_inputs.py：容器内确定性生成 RGBA dashboard PNG（1920x1080），再按最近邻下采样得到 1280x720；与上游 Test/libwebp/scripts/generate_inputs.py @ 21154155 生成字节完全一致，不依赖任何外部媒体。",
+  "notes": [
+    "输入由脚本生成，仓库与运行机都不需要视频或图片素材文件，也不挂载媒体目录。",
+    "不固定 PNG/WebP/PAM 的 sha256：evidence.json 记录每个场景的 input_sha256 / output_sha256 供审计，不做相等断言。",
+    "预热阶段用 dwebp -quiet -pam 解码并按 width*height*4 校验像素字节数；编码失败或尺寸不符时用例显式非零退出，不补零、不跳过。",
+    "计时区间为一次完整 cwebp 进程：进程启动、PNG 读取、无损压缩与 WebP 写文件；素材生成与解码校验不计时。"
+  ],
+  "scenarios": [
+    {
+      "name": "dashboard_lossless_z0",
+      "group": "无损编码",
+      "subgroup": "dashboard",
+      "width": 1920,
+      "height": 1080,
+      "encoder_options": ["-lossless", "-z", "0", "-exact", "-mt"],
+      "native_threads": 1,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "description": "1920x1080 dashboard PNG 无损编码：cwebp -quiet -lossless -z 0 -exact -mt；1 次预热 + 20 次采样取均值，不含绑核。"
+    },
+    {
+      "name": "dashboard_720p_lossless_z0",
+      "group": "无损编码",
+      "subgroup": "dashboard",
+      "width": 1280,
+      "height": 720,
+      "encoder_options": ["-lossless", "-z", "0", "-exact", "-mt"],
+      "native_threads": 1,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "description": "1280x720 dashboard PNG（由 1080p 最近邻下采样）无损编码：cwebp -quiet -lossless -z 0 -exact -mt；1 次预热 + 20 次采样取均值，不含绑核。"
+    }
+  ]
+}

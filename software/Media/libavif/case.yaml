@@ -1,0 +1,57 @@
+name: libavif
+category: Media
+enabled: true
+versions:
+  - "0.9.3"
+test_tools:
+  libavif:
+    version: "与被测软件版本一致"
+  aom:
+    version: "3.2.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_libavif
+    start:
+      script: scripts/stages/start.sh
+      function: start_libavif_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_libavif_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_libavif_runtime
+  timeout_minutes: 900
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  official_logs:
+    path: benchmark_encode.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_libavif.json
+    stage: test
+    format: json
+    required: true
+  reference_summary:
+    path: result_bench-libavif.csv
+    stage: test
+    format: text
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    group_path: group
+    subgroup_path: subgroup
+    unit: ms
+    direction: lower_is_better

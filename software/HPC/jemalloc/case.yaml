@@ -1,0 +1,58 @@
+name: jemalloc
+category: HPC
+enabled: true
+versions:
+  - "5.4.0"
+test_tools:
+  malloc_benchmark:
+    version: unknown
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_jemalloc
+    start:
+      script: scripts/stages/start.sh
+      function: start_jemalloc_runtime
+    test:
+      script: scripts/stages/run.sh
+      function: run_jemalloc_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_jemalloc_runtime
+  timeout_minutes: 720
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  mode_0_log:
+    path: benchmark_mode_0.log
+    stage: test
+    format: text
+    required: true
+  mode_1_log:
+    path: benchmark_mode_1.log
+    stage: test
+    format: text
+    required: true
+  mode_2_log:
+    path: benchmark_mode_2.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_jemalloc.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group

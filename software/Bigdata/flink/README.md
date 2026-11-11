@@ -97,18 +97,24 @@ bash bin/run_query.sh q1
 
 ## 指标与结果目录
 
-报告只收录 Nexmark 官方结果表中每条查询的 `Throughput`（events/s，越高越好）
-和 `Time(s)`（秒，越低越好），共 **23 × 2 = 46 项**；按 `q0` 至 `q23`
-分组。官方表的 `Cores`、`Throughput/Cores` 和完整原始行保存在 JSON 与原始日志中，
-但不作为跨架构主指标，因为附件指出 CPU 采样可能有噪声。必须产生 23 条有效的
-正式查询结果，不能用缺失项或失败项的估计值填表。
+报告按 `q0` 至 `q23`（不含 q6）分组，**完整列出** Nexmark 官方结果表的
+`Events Num`、`Cores`、`Time(s)`、`Cores * Time(s)`、`Throughput`、
+`Throughput/Cores`，共 **23 × 6 = 138 个数值字段**。其中 `Events Num`
+必须为 10,000,000，仅展示；`Cores` 仅展示；`Time(s)`（s）与
+`Cores * Time(s)`（core*s）越小越好；`Throughput`（events/s）与
+`Throughput/Cores`（events/s/core）越大越好。
+
+所有字段均直接解析官方结果行，`Cores * Time(s)` 不用四舍五入后的其他列重算。
+附件指出 CPU 采样可能有噪声，因此 `Cores` 及其派生值虽然完整展示，
+仍需结合原始日志审慎解读。必须产生 23 条有效的正式查询结果，
+不能用缺失项或失败项的估计值填表。
 
 | 文件 | 内容 |
 |---|---|
 | `${RESULTS_DIR}/warmup-qN.log` | 原始 warmup 输出 |
 | `${RESULTS_DIR}/bench-qN.log` | 每条正式查询的原始输出 |
 | `${RESULTS_DIR}/benchmark_flink_raw.log` | 顺序合并的两阶段原始日志 |
-| `${RESULTS_DIR}/benchmark_flink.json` | 46 项指标、原始行及跨架构对齐用的固定负载参数 |
+| `${RESULTS_DIR}/benchmark_flink.json` | 138 个结果字段、原始行及跨架构对齐用的固定负载参数 |
 | `${RESULTS_DIR}/flink-logs/`、`${RESULTS_DIR}/nexmark-logs/` | 停止阶段复制的进程日志 |
 
 `stop` 阶段只停止本任务私有 PID 目录管理的 Flink 进程和本任务的

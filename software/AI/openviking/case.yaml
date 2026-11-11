@@ -1,0 +1,56 @@
+name: openviking
+category: AI
+enabled: true
+versions:
+  - "0.5.0"
+test_tools:
+  benchmark-kit:
+    version: "OpenViking v0.5.0 container benchmark kit (gitcode.com/JankinLee/OpenViking branch V0.5.0, commit b2b3df1fb5d845552a87f1efde8d5ddf5018c66b, 48T96G kit)"
+  provider-mock:
+    version: "deterministic local OpenAI-compatible mock for the kit's LLM and embedding endpoints (no external model service, no network)"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_openviking
+    start:
+      script: scripts/stages/start.sh
+      function: start_openviking_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_openviking_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_openviking_runtime
+  timeout_minutes: 300
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: benchmark_openviking.json
+    stage: test
+    format: json
+    required: true
+  run_telemetry:
+    path: run
+    stage: test
+    format: directory
+    required: true
+  analysis_reports:
+    path: reports
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
