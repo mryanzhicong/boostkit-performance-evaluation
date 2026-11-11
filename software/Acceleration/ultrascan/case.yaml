@@ -1,0 +1,66 @@
+name: ultrascan
+category: Acceleration
+enabled: true
+versions:
+  - "5.8.0"
+test_tools:
+  hsbench:
+    version: "5.8.0"
+    revision: "tools/hsbench built from the pinned Ultrascan 5.8.0 source inside the private container (CMake Release, single-thread block mode)"
+  hsdump:
+    version: "5.8.0"
+    revision: "tools/hsdump built from the same source with CMake Debug (DUMP_SUPPORT) to emit the universal bytecode database (dump/db.raw)"
+  intel_hsbench_samples:
+    version: "Intel Hyperscan hsbench samples (cdrdv2 content 739375)"
+    revision: "pcre/snort_literals and corpora/gutenberg.db, pinned by SHA-256, extracted inside the container"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_ultrascan
+    start:
+      script: scripts/stages/start.sh
+      function: start_ultrascan_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_ultrascan_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_ultrascan_runtime
+  timeout_minutes: 120
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  hsbench_output:
+    path: benchmark_hsbench.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
