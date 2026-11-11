@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# x265 performance case entry point (upstream source build + reference scripts).
+# x265 performance case entry point (upstream Test/x265 scripts in private work).
 #
 # The four framework stages map to: download and build upstream x265 into this
-# task's private directory (build), verify the binary and the reference video
-# set (start), run the untouched reference encode/score scripts (test), and a
-# no-op stop (x265 has no background service).
+# task's private directory (build), verify the binaries and BQTerrace video
+# (start), run the original CRF 24/28 scripts (test), and a no-op stop.
 
 set -euo pipefail
 
@@ -138,7 +137,7 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build and run x265's official H.265/HEVC encode benchmark as a standalone
+Build and run the stock x265 4.2 BQTerrace benchmark as a standalone
 performance evaluation. The optimized build is reserved and fails until its
 implementation is supplied. Results default to results/<version>/<run-id>/
 inside this directory.

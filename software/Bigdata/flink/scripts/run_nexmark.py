@@ -72,6 +72,15 @@ def set_workload(conf: Path, events: int, tps: int) -> None:
     conf.write_text(text, encoding="utf-8")
 
 
+def require_cpu_metrics(log_path: Path) -> None:
+    output = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
+    if not re.search(r"Report CPU metric: \[\s*\{", output):
+        raise RuntimeError(
+            "Nexmark CPU sender produced no TaskManager metrics during the first warmup; "
+            f"check {log_path} and the nexmark.metric.reporter.port configuration"
+        )
+
+
 def terminate(process: subprocess.Popen) -> None:
     if process.poll() is not None:
         return
@@ -153,6 +162,8 @@ def execute(args: argparse.Namespace) -> None:
                         raise RuntimeError(f"warmup/{query} has no FINISHED Flink job or Nexmark result row")
                     if rc != 0 and not observed_finish:
                         raise RuntimeError(f"warmup/{query}: Nexmark runner failed with exit {rc}")
+                    if query == QUERIES[0]:
+                        require_cpu_metrics(home / "log/metric-client.log")
                     continue
                 parse_result(output, query, BENCH_EVENTS)
                 if rc != 0 and not observed_finish:

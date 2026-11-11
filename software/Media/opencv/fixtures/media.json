@@ -1,0 +1,70 @@
+{
+  "benchmark": "opencv_4.10.0_norm_l1_gray8",
+  "resolution": "1920x1080",
+  "color_format": "gray8",
+  "media_directory": "/home/runner/software/media/video",
+  "media_override_env": "OPENCV_MEDIA_DIR",
+  "notes": [
+    "Full YUV inputs are archived by the case documentation and never committed.",
+    "Frame 0 of each clip is converted to RGB24 with the reference BT.601 path and pinned.",
+    "The measured input is the original luma plane (gray8) of frame 0.",
+    "scenario names follow the open-box material: <video>_norm_l1_gray8"
+  ],
+  "videos": {
+    "BQTerrace": {
+      "filename": "BQTerrace_1920x1080_60.yuv",
+      "bytes": 1866240000,
+      "frames": 600,
+      "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+      "frame0_sha256": "40454da92d6bcd66757a280d0ed89f8d53bb4cadd27d6fb0e158f07f8bcd537f",
+      "rgb_sha256": "65cbb4131d78152b2a8b9a326b1b7f8822f2eb137e4641866d9430f1485f9def"
+    },
+    "Film2012": {
+      "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+      "bytes": 4665600000,
+      "frames": 1500,
+      "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc",
+      "frame0_sha256": "ac6f75f3f5e725f4e1589f94dfb5428c963a665bc1b1bbde4b499adc380bdb22",
+      "rgb_sha256": "93a3575fed46b08bf70492bbf6aba4f0ea8d1d0272deafe64467fa773fc6ee6d"
+    },
+    "messi": {
+      "filename": "messi_1920x1080_25_1000.yuv",
+      "bytes": 3110400000,
+      "frames": 1000,
+      "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b",
+      "frame0_sha256": "d369dc12c89225aff141e4b4c3f96bd1461ce630e5102035e19032196514b3e4",
+      "rgb_sha256": "31c0b0e13543cefe0f6d47f2c363ac639a8065bb2762226fe421c87568123a0a"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "BQTerrace_norm_l1_gray8",
+      "group": "图像处理",
+      "subgroup": "BQTerrace",
+      "video": "BQTerrace",
+      "operation": "norm_l1_gray8",
+      "api": "cv2.norm(gray, cv2.NORM_L1)"
+    },
+    {
+      "name": "Film2012_norm_l1_gray8",
+      "group": "图像处理",
+      "subgroup": "Film2012",
+      "video": "Film2012",
+      "operation": "norm_l1_gray8",
+      "api": "cv2.norm(gray, cv2.NORM_L1)"
+    },
+    {
+      "name": "messi_norm_l1_gray8",
+      "group": "图像处理",
+      "subgroup": "messi",
+      "video": "messi",
+      "operation": "norm_l1_gray8",
+      "api": "cv2.norm(gray, cv2.NORM_L1)"
+    }
+  ],
+  "calls_per_sample": 500,
+  "native_threads": 1,
+  "unit": "ms",
+  "direction": "lower_is_better",
+  "description": "cv2.norm(gray, cv2.NORM_L1) 对 1920x1080 灰度帧做 L1 范数：每次采样 500 次调用，5 次预热 + 20 次采样取中位数，单线程（cv2.setNumThreads(1)），不绑核不绑内存。"
+}
