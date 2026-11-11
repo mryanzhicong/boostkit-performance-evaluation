@@ -39,7 +39,7 @@ PY
     wait_for_cluster 16 || return $?
 
     log_message 'starting Nexmark CPU metric sender'
-    "${JAVA_HOME}/bin/java" \
+    NEXMARK_CONF_DIR="${NEXMARK_HOME}/conf" "${JAVA_HOME}/bin/java" \
         "-Dlog.file=${NEXMARK_HOME}/log/metric-client.log" \
         "-Dlog4j.configuration=file:${NEXMARK_HOME}/conf/log4j.properties" \
         "-Dlog4j.configurationFile=file:${NEXMARK_HOME}/conf/log4j.properties" \

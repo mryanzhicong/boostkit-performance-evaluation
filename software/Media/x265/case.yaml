@@ -6,6 +6,8 @@ versions:
 test_tools:
   x265:
     version: "与被测软件版本一致"
+  ffmpeg:
+    version: "7.0.1"
 execution:
   type: shell-functions
   stages:
@@ -38,13 +40,8 @@ outputs:
     stage: test
     format: json
     required: true
-  reference_summary_single:
-    path: video_fps_summary_x265-8core-1.csv
-    stage: test
-    format: text
-    required: true
-  reference_summary_whole_machine:
-    path: video_fps_summary_x265-8core-whole-machine.csv
+  reference_summary:
+    path: result_bench-x265.csv
     stage: test
     format: text
     required: true

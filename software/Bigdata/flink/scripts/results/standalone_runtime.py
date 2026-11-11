@@ -13,8 +13,14 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from parse_benchmark import METRIC_SPECS, QUERIES
 
-QUERIES = tuple(f"q{i}" for i in range(24) if i != 6)
+
+REPORT_LABELS = {
+    "events": "Events Num", "cores": "Cores", "time": "Time(s)",
+    "core_seconds": "Cores * Time(s)", "throughput": "Throughput",
+    "throughput_per_core": "Throughput/Cores",
+}
 
 
 def timestamp() -> str:
@@ -80,12 +86,13 @@ def build_info(version: str, actual_file: Path, architecture: str, run_id: str) 
 def validate_metrics(benchmark: dict) -> dict:
     results = benchmark.get("results")
     rows = benchmark.get("measurements")
-    expected = {f"{query}/{kind}" for query in QUERIES for kind in ("throughput", "time")}
+    expected = {f"{query}/{kind}" for query in QUERIES for kind, _, _ in METRIC_SPECS}
     if not isinstance(results, dict) or set(results) != expected:
-        raise RuntimeError("benchmark_flink.json must contain all 46 Nexmark query metrics")
+        raise RuntimeError(f"benchmark_flink.json must contain all {len(expected)} Nexmark result fields")
     if not isinstance(rows, list) or len(rows) != len(QUERIES) or \
             {row.get("query") for row in rows if isinstance(row, dict)} != set(QUERIES):
         raise RuntimeError("benchmark_flink.json must contain 23 distinct official query rows")
+    specs = {name: (unit, direction) for name, unit, direction in METRIC_SPECS}
     for name, metric in results.items():
         if not isinstance(metric, dict):
             raise RuntimeError(f"invalid Nexmark metric: {name}")
@@ -93,8 +100,9 @@ def validate_metrics(benchmark: dict) -> dict:
         if isinstance(value, bool) or not isinstance(value, (int, float)) or \
                 not math.isfinite(value) or value <= 0:
             raise RuntimeError(f"missing or non-positive Nexmark metric: {name}")
-        if metric.get("unit") != ("events/s" if name.endswith("/throughput") else "s"):
-            raise RuntimeError(f"unexpected unit for {name}")
+        unit, direction = specs[name.rsplit("/", 1)[1]]
+        if metric.get("unit") != unit or metric.get("direction") != direction:
+            raise RuntimeError(f"unexpected unit or direction for {name}")
     return results
 
 
@@ -117,14 +125,20 @@ def render_report(result: dict) -> str:
                        ("cpu_model", "CPU 型号"), ("cpu_count", "CPU 核数"),
                        ("kernel", "内核")):
         lines.append(f"| {label} | {markdown_cell(result['system_info'].get(key, 'N/A'))} |")
-    lines += ["", "## 正式 Nexmark 指标", ""]
+    lines += ["", "## 正式 Nexmark 结果", "",
+              "Cores 及其派生值受 TaskManager CPU 采样噪声影响；请结合原始日志解读。", ""]
     for query in QUERIES:
         lines += [f"### {query}", "", "| 指标 | 数值 | 单位 | 优化方向 |", "|---|---:|---|---|"]
-        for name, label, direction in (("throughput", "Throughput", "越大越好"),
-                                       ("time", "Time(s)", "越小越好")):
+        for name, _, direction in METRIC_SPECS:
             metric = result["metrics"].get(f"{query}/{name}")
             if metric:
-                lines.append(f"| {label} | {metric['value']} | {metric['unit']} | {direction} |")
+                direction_label = {
+                    "neutral": "仅展示", "higher_is_better": "越大越好",
+                    "lower_is_better": "越小越好",
+                }[direction]
+                lines.append(
+                    f"| {REPORT_LABELS[name]} | {metric['value']} | {metric['unit']} | {direction_label} |"
+                )
         lines.append("")
     if result.get("error"):
         lines += ["## 错误", "", result["error"].replace("|", "\\|"), ""]
