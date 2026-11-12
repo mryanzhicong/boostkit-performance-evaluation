@@ -59,6 +59,8 @@ TORCHVISION_WHEEL_CACHE=""
 TORCHVISION_TORCH_HOME=""
 TORCHVISION_TORCH_WHEEL=""
 TORCHVISION_TORCH_WHEEL_URL=""
+TORCHVISION_TORCHVISION_WHEEL=""
+TORCHVISION_TORCHVISION_WHEEL_URL=""
 TORCHVISION_EVIDENCE_DIR=""
 TORCHVISION_CSV_PATH=""
 TORCHVISION_CONTAINER_IMAGE_FILE=""
@@ -78,6 +80,26 @@ validate_variant() {
         base|optimized) ;;
         *) log "ERROR: invalid build variant: ${PERF_VARIANT}"; return 10 ;;
     esac
+}
+
+resolve_torchvision_video_dir() {
+    local dir file ok
+    for dir in \
+        "${TORCHVISION_VIDEO_DIR}" \
+        "${TORCHVISION_ASSET_DIR}/video" \
+        /home/runner/software/x264/video \
+        /home/test/Test/video; do
+        [[ -d "${dir}" ]] || continue
+        ok=1
+        for file in "${TORCHVISION_VIDEO_BQ}" "${TORCHVISION_VIDEO_FILM}" "${TORCHVISION_VIDEO_MESSI}"; do
+            [[ -f "${dir}/${file}" ]] || { ok=0; break; }
+        done
+        if (( ok == 1 )); then
+            printf '%s\n' "${dir}"
+            return 0
+        fi
+    done
+    printf '%s\n' "${TORCHVISION_VIDEO_DIR}"
 }
 
 configure_runtime_paths() {
@@ -115,8 +137,10 @@ configure_runtime_paths() {
             log "ERROR: PERF_WORK_DIR is too broad for a private run: ${PERF_WORK_DIR}"
             return 10 ;;
     esac
+    [[ "${TORCHVISION_ASSET_DIR}" == /* ]] || TORCHVISION_ASSET_DIR="$(pwd -P)/${TORCHVISION_ASSET_DIR}"
     [[ "${TORCHVISION_VIDEO_DIR}" == /* ]] || TORCHVISION_VIDEO_DIR="$(pwd -P)/${TORCHVISION_VIDEO_DIR}"
     [[ "${TORCHVISION_WEIGHT_DIR}" == /* ]] || TORCHVISION_WEIGHT_DIR="$(pwd -P)/${TORCHVISION_WEIGHT_DIR}"
+    TORCHVISION_VIDEO_DIR="$(resolve_torchvision_video_dir)"
     [[ "${TORCHVISION_IMAGE_ARCHIVE_DIR}" == /* ]] || TORCHVISION_IMAGE_ARCHIVE_DIR="$(pwd -P)/${TORCHVISION_IMAGE_ARCHIVE_DIR}"
     TMPDIR="${PERF_WORK_DIR}/tmp"
     TORCHVISION_DEPS_DIR="${PERF_WORK_DIR}/pydeps"
@@ -124,6 +148,13 @@ configure_runtime_paths() {
     TORCHVISION_TORCH_HOME="${PERF_WORK_DIR}/torch-cache"
     TORCHVISION_TORCH_WHEEL="torch-${TORCH_VERSION}+cpu-cp311-cp311-manylinux_2_28_${EXPECTED_ARCH}.whl"
     TORCHVISION_TORCH_WHEEL_URL="https://download.pytorch.org/whl/cpu/${TORCHVISION_TORCH_WHEEL/+/%2B}"
+    if [[ "${EXPECTED_ARCH}" == "x86_64" ]]; then
+        TORCHVISION_TORCHVISION_WHEEL="torchvision-${TORCHVISION_VERSION}+cpu-cp311-cp311-manylinux_2_28_x86_64.whl"
+        TORCHVISION_TORCHVISION_WHEEL_URL="https://download.pytorch.org/whl/cpu/${TORCHVISION_TORCHVISION_WHEEL/+/%2B}"
+    else
+        TORCHVISION_TORCHVISION_WHEEL=""
+        TORCHVISION_TORCHVISION_WHEEL_URL=""
+    fi
     TORCHVISION_EVIDENCE_DIR="${RESULTS_DIR}/benchmark_evidence"
     TORCHVISION_CSV_PATH="${RESULTS_DIR}/result_bench-torchvision.csv"
     TORCHVISION_CONTAINER_IMAGE_FILE="${PERF_WORK_DIR}/container-image.txt"
@@ -133,7 +164,8 @@ configure_runtime_paths() {
     export PERF_ACTUAL_VERSION_FILE TMPDIR TORCH_VERSION TORCHVISION_VERSION
     export TORCHVISION_VIDEO_DIR TORCHVISION_WEIGHT_DIR TORCHVISION_DEPS_DIR
     export TORCHVISION_TORCH_HOME TORCHVISION_EVIDENCE_DIR TORCHVISION_CSV_PATH
-    export TORCHVISION_CONTAINER_NAME
+    export TORCHVISION_TORCHVISION_WHEEL TORCHVISION_TORCHVISION_WHEEL_URL
+    export TORCHVISION_CONTAINER_NAME TORCHVISION_ASSET_DIR
 }
 
 initialize_runtime() {

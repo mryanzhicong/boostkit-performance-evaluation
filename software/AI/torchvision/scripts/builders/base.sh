@@ -29,6 +29,23 @@ PY
     sha256sum "${wheel}" | tee "${PERF_WORK_DIR}/torch-wheel.sha256"
 }
 
+fetch_torchvision_wheel() {
+    [[ -n "${TORCHVISION_TORCHVISION_WHEEL}" ]] || return 0
+    local wheel="${TORCHVISION_WHEEL_CACHE}/${TORCHVISION_TORCHVISION_WHEEL}"
+    local local_wheel="${TORCHVISION_WHEEL_DIR}/${TORCHVISION_TORCHVISION_WHEEL}"
+    if [[ -f "${local_wheel}" ]]; then
+        log "using local torchvision CPU wheel ${local_wheel}"
+        cp -- "${local_wheel}" "${wheel}" || return 30
+    else
+        log "downloading torchvision CPU wheel ${TORCHVISION_TORCHVISION_WHEEL_URL}"
+        with_network_proxy curl -fL --retry 3 --connect-timeout 30 \
+            -o "${wheel}.part" "${TORCHVISION_TORCHVISION_WHEEL_URL}" || return 30
+        mv -- "${wheel}.part" "${wheel}" || return 30
+    fi
+    [[ -s "${wheel}" ]] || { log 'ERROR: torchvision wheel is empty'; return 30; }
+    sha256sum "${wheel}" | tee "${PERF_WORK_DIR}/torchvision-wheel.sha256"
+}
+
 install_torchvision_dependencies() {
     local -a dnf_options=()
     [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
@@ -45,24 +62,30 @@ install_torchvision_dependencies() {
 }
 
 install_torchvision_python_packages() {
-    log "installing torch ${TORCH_VERSION}+cpu, torchvision ${TORCHVISION_VERSION}, numpy ${NUMPY_VERSION}, pillow ${PILLOW_VERSION}"
+    local -a requirements=("torch==2.9.1+cpu" "numpy==2.4.6" "pillow==13.0.0")
+    if [[ "${EXPECTED_ARCH}" == "x86_64" ]]; then
+        requirements+=("torchvision==0.24.1+cpu")
+    else
+        requirements+=("torchvision==0.24.1")
+    fi
+    log "installing pinned CPU Python packages: ${requirements[*]}"
     if ! container_exec sh -c '
         set -e
+        deps="$1"; wheels="$2"; shift 2
         python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-            --no-warn-script-location --only-binary=:all: --target "$1" \
-            --find-links "$2" \
+            --no-warn-script-location --only-binary=:all: --target "$deps" \
+            --find-links "$wheels" \
             --index-url https://mirrors.huaweicloud.com/repository/pypi/simple \
-            --timeout 120 \
-            "torch==2.9.1+cpu" "torchvision==0.24.1" "numpy==2.4.6" "pillow==13.0.0"
-    ' sh "${TORCHVISION_DEPS_DIR}" "${TORCHVISION_WHEEL_CACHE}"; then
+            --timeout 120 "$@"
+    ' sh "${TORCHVISION_DEPS_DIR}" "${TORCHVISION_WHEEL_CACHE}" "${requirements[@]}"; then
         log 'Huawei PyPI mirror failed; retrying with pypi.org'
         container_exec sh -c '
             set -e
+            deps="$1"; wheels="$2"; shift 2
             python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
-                --no-warn-script-location --only-binary=:all: --target "$1" \
-                --find-links "$2" --index-url https://pypi.org/simple --timeout 120 \
-                "torch==2.9.1+cpu" "torchvision==0.24.1" "numpy==2.4.6" "pillow==13.0.0"
-        ' sh "${TORCHVISION_DEPS_DIR}" "${TORCHVISION_WHEEL_CACHE}" || {
+                --no-warn-script-location --only-binary=:all: --target "$deps" \
+                --find-links "$wheels" --index-url https://pypi.org/simple --timeout 120 "$@"
+        ' sh "${TORCHVISION_DEPS_DIR}" "${TORCHVISION_WHEEL_CACHE}" "${requirements[@]}" || {
             log 'ERROR: Python dependency installation failed'
             return 30
         }
@@ -109,6 +132,7 @@ build_torchvision_base() {
     require_torchvision_container || return $?
     install_torchvision_dependencies || return $?
     fetch_torch_wheel || return $?
+    fetch_torchvision_wheel || return $?
     install_torchvision_python_packages || return $?
     verify_torchvision_runtime || return $?
     stage_local_weights || return $?

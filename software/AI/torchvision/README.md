@@ -22,7 +22,7 @@ torchvision 0.24.1，使用参考仓库 `Test/torchvision` 规定的三段 1080p
 | 项目 | 来源与版本 | 预置位置 | 容器内位置 |
 |---|---|---|---|
 | PyTorch | CPU wheel `torch-2.9.1+cpu-cp311-cp311-manylinux_2_28_<arch>.whl`，[官方 CPU 索引](https://download.pytorch.org/whl/cpu/) | `/home/runner/software/torchvision/` | `${PERF_WORK_DIR}/wheels/`，安装到 `${PERF_WORK_DIR}/pydeps` |
-| torchvision | PyPI `torchvision==0.24.1` | pip 解析 | `${PERF_WORK_DIR}/pydeps` |
+| torchvision | x86_64：[CPU wheel](https://download.pytorch.org/whl/cpu/torchvision-0.24.1%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl)；aarch64：PyPI `torchvision==0.24.1` | x86_64 优先 `/home/runner/software/torchvision/`；缺失时下载 | `${PERF_WORK_DIR}/wheels/`（x86_64）或 pip 解析，安装到 `${PERF_WORK_DIR}/pydeps` |
 | numpy / pillow | `numpy==2.4.6`、`pillow==13.0.0` | pip 解析 | `${PERF_WORK_DIR}/pydeps` |
 | MobileNetV2 INT8 权重 | [mobilenet_v2_qnnpack_37f702c5.pth](https://download.pytorch.org/models/quantized/mobilenet_v2_qnnpack_37f702c5.pth)，SHA-256 `a9225f174880dcd1a662adaa01ea71b06b6a78822d3a4a5a4bd2d4ee5709a8da` | `/home/runner/software/torchvision/weights/`（可选） | `${PERF_WORK_DIR}/torch-cache/hub/checkpoints/` |
 | MobileNetV3-Large INT8 权重 | [mobilenet_v3_large_qnnpack-5bcacf28.pth](https://download.pytorch.org/models/quantized/mobilenet_v3_large_qnnpack-5bcacf28.pth)，SHA-256 `5bcacf2876b29c80e6ef777b76ae2a9cbde265af9b51e287c9b7f04a38cb53b1` | 同上 | 同上 |
@@ -31,8 +31,15 @@ torchvision 0.24.1，使用参考仓库 `Test/torchvision` 规定的三段 1080p
 PyTorch wheel 优先从 `/home/runner/software/torchvision/` 读取同名文件；缺失时
 从官方 CPU 索引下载到 `${PERF_WORK_DIR}/wheels/`。wheel 按架构固定文件名，下载后
 记录 SHA-256 并校验 zip 完整性；没有在上游找到可固定的 wheel SHA-256，因此在
-构建日志/`torch-wheel.sha256` 中记录实际值。torchvision、numpy、pillow 从
-Huawei PyPI 镜像安装，缺失时回退 pypi.org。
+构建日志/`torch-wheel.sha256` 中记录实际值。numpy、pillow 从 Huawei PyPI 镜像
+安装，缺失时回退 pypi.org。
+
+x86_64 额外使用与 `torch-2.9.1+cpu` 同源的
+`torchvision-0.24.1+cpu-cp311-cp311-manylinux_2_28_x86_64.whl`，避免 PyPI
+torchvision 与 CPU torch 的算子注册不匹配（`torchvision::nms does not exist`）；
+该 wheel 同样优先本地预置，缺失时从官方 CPU 索引下载。aarch64 的 CPU 索引未提供
+torchvision wheel（HTTP 403），所以 aarch64 使用 PyPI 的 `torchvision==0.24.1`，
+实测与 `torch-2.9.1+cpu` 兼容。
 
 模型权重优先读取 `/home/runner/software/torchvision/weights/` 下的同名文件并
 校验上表 SHA-256；缺失时由 torchvision 从官方 URL 下载到本次任务的
@@ -85,7 +92,9 @@ python3 -m pip install --target "${PERF_WORK_DIR}/pydeps" \
 | `messi_1920x1080_25_1000.yuv` | 3,110,400,000 | `1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b` |
 
 脚本不生成或下载视频。源文件 SHA-256 写入结果 `parameters`，跨架构比较要求
-内容一致。
+内容一致。默认目录缺少完整三件套时，脚本会依次回退到
+`/home/runner/software/x264/video`、`/home/test/Test/video`（仅当三个文件名齐全）
+读取相同素材，并把实际解析到的目录挂载进容器。
 
 1. `build`：创建唯一容器，安装 Python 3.11/pip 和固定 CPU 依赖，校验版本。
 2. `start`：校验运行时、三段视频和可选本地权重；不启动后台服务。
@@ -145,6 +154,10 @@ bash software/AI/torchvision/torchvision_test.sh \
   `${PERF_WORK_DIR}` 私有 wheel/pydeps/TORCH_HOME，不复用半成品。
 - 参考脚本的 `bootstrap_env.sh` 负责通用 pip/sysroot；本用例只安装本软件需要的
   Python 3.11/pip 和固定 wheel，容器内仓库地址按镜像策略替换。
+- x86_64 使用 PyTorch CPU 索引中的 torchvision `0.24.1+cpu` wheel，避免 PyPI
+  wheel 与 CPU torch 的算子注册不匹配；aarch64 使用 PyPI 的 `0.24.1`。
+- 视频默认目录不完整时回退到 x264 的 `/home/runner/software/x264/video` 或
+  `/home/test/Test/video`，只读使用同一份素材。
 - 参考脚本直接打印 CSV；本用例保留同一 CSV，并额外保存 evidence、输出/top5
   和 SHA-256，由独立解析器严格校验后生成 Framework 指标。
 - 驱动脚本按框架四阶段重写，但模型、权重 URL、预处理、线程、轮次、计时函数
