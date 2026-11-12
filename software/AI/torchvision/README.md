@@ -42,8 +42,10 @@ torchvision wheel（HTTP 403），所以 aarch64 使用 PyPI 的 `torchvision==0
 实测与 `torch-2.9.1+cpu` 兼容。
 
 模型权重优先读取 `/home/runner/software/torchvision/weights/` 下的同名文件并
-校验上表 SHA-256；缺失时由 torchvision 从官方 URL 下载到本次任务的
-`TORCH_HOME`。权重不写入仓库。
+校验上表 SHA-256；缺失时在 build 阶段用宿主 `curl`（沿用 `PERF_PROXY`）从官方
+URL 下载到本次任务的 `TORCH_HOME/hub/checkpoints` 并再次校验 SHA-256。这样
+正式测试阶段不依赖 Python `torchvision` 的 HTTPS 下载路径，避免 Runner 上
+OpenSSL/CA 差异导致 `_ssl.c` 下载失败。权重不写入仓库。
 
 ## 容器与安装
 

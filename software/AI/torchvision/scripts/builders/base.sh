@@ -98,23 +98,36 @@ verify_torchvision_runtime() {
 
 stage_local_weights() {
     local checkpoints="${TORCHVISION_TORCH_HOME}/hub/checkpoints"
-    local file sha
+    local file sha url target item
     mkdir -p "${checkpoints}"
-    for pair in \
-        "${TORCHVISION_weight_v2_file}:${TORCHVISION_weight_v2_sha256}" \
-        "${TORCHVISION_weight_v3_file}:${TORCHVISION_weight_v3_sha256}"; do
-        file="${pair%%:*}"
-        sha="${pair##*:}"
-        if [[ -f "${TORCHVISION_WEIGHT_DIR}/${file}" ]]; then
-            log "staging local model weights ${file}"
-            cp -- "${TORCHVISION_WEIGHT_DIR}/${file}" "${checkpoints}/${file}" || return 30
-            printf '%s  %s\n' "${sha}" "${checkpoints}/${file}" | sha256sum -c - || {
-                log "ERROR: local model weight checksum mismatch: ${file}"
+    for item in \
+        "${TORCHVISION_weight_v2_file}|${TORCHVISION_weight_v2_sha256}|${TORCHVISION_weight_v2_url}" \
+        "${TORCHVISION_weight_v3_file}|${TORCHVISION_weight_v3_sha256}|${TORCHVISION_weight_v3_url}"; do
+        IFS='|' read -r file sha url <<< "${item}"
+        target="${checkpoints}/${file}"
+        if [[ -f "${target}" ]]; then
+            printf '%s  %s\n' "${sha}" "${target}" | sha256sum -c - || {
+                log "ERROR: staged model weight checksum mismatch: ${file}"
                 return 30
             }
-        else
-            log "local model weight is absent; torchvision will download ${file}"
+            continue
         fi
+        if [[ -f "${TORCHVISION_WEIGHT_DIR}/${file}" ]]; then
+            log "staging local model weights ${file}"
+            cp -- "${TORCHVISION_WEIGHT_DIR}/${file}" "${target}" || return 30
+        else
+            log "downloading official model weights ${file}"
+            with_network_proxy curl -fL --retry 3 --connect-timeout 30 \
+                -o "${target}.part" "${url}" || {
+                log "ERROR: model weight download failed: ${url}"
+                return 30
+            }
+            mv -- "${target}.part" "${target}" || return 30
+        fi
+        printf '%s  %s\n' "${sha}" "${target}" | sha256sum -c - || {
+            log "ERROR: model weight checksum mismatch: ${file}"
+            return 30
+        }
     done
 }
 
