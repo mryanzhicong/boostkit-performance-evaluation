@@ -1,0 +1,80 @@
+{
+  "benchmark": "dav1d_decode",
+  "software": "dav1d",
+  "version": "1.5.4",
+  "architecture": "x86_64",
+  "timestamp": "2026-11-12T02:42:40Z",
+  "parameters": {
+    "videos": [
+      {
+        "filename": "BQTerrace_1920x1080_60-dianbo.yuv",
+        "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7",
+        "fps": 60
+      },
+      {
+        "filename": "messi_1920x1080_25_1000.yuv",
+        "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b",
+        "fps": 25
+      }
+    ],
+    "codec": "AV1",
+    "bit_depth": 8,
+    "width": 1920,
+    "height": 1080,
+    "frames": 30,
+    "cq_level": 32,
+    "decode_threads": 16,
+    "iterations": 20,
+    "warmup_iterations": 1,
+    "timing": "whole_process_wall_clock/30",
+    "affinity": "unbound",
+    "decoder": "dav1d-1.5.4",
+    "input_encoder": "aom-3.2.0",
+    "encoder_settings": {
+      "codec": "av1",
+      "good": true,
+      "cpu_used": 8,
+      "passes": 1,
+      "threads": 1,
+      "row_mt": 0,
+      "tile_columns": 1,
+      "end_usage": "q",
+      "cq_level": 32,
+      "limit": 30,
+      "input_bit_depth": 8,
+      "bit_depth": 8
+    }
+  },
+  "runtime_context": {
+    "cpu_count": 384,
+    "machine": "x86_64",
+    "cpu_model": "AMD EPYC 9654 96-Core Processor",
+    "python": "3.11.6",
+    "stream_sha256": {
+      "BQTerrace": "300c72b125d034a458f849327d77772d17fbe804325d14471da1fbb61c33b3c4",
+      "messi": "37b287a500fee571405410f5a9cbe88f1c81ae89c5f7b31fd2df3a19d51b9324"
+    },
+    "decoder_sha256": "e8abdb1ee3df417249e92688739e9f76c8c15bf5f0171c218ac771c0f7b304f1",
+    "decoder_version_output": "1.5.4",
+    "warmup_seconds": {
+      "BQTerrace_1080p_decode_c16": 0.1639929770026356,
+      "messi_1080p_decode_c16": 0.17210977600188926
+    }
+  },
+  "results": {
+    "BQTerrace_1080p_decode_c16": {
+      "source_name": "BQTerrace_1080p_decode_c16",
+      "value": 2.405063,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "BQTerrace"
+    },
+    "messi_1080p_decode_c16": {
+      "source_name": "messi_1080p_decode_c16",
+      "value": 2.920221,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "messi"
+    }
+  }
+}
