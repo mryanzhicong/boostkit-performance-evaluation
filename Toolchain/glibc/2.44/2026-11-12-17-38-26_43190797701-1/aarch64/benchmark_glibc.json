@@ -1,0 +1,72 @@
+{
+  "benchmark": "glibc_2.44_string_benchtests",
+  "software": "glibc",
+  "version": "2.44",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-12T09:37:48Z",
+  "parameters": {
+    "variant": "base",
+    "build_targets": [
+      "bench-timing-type",
+      "bench-memcpy",
+      "bench-memcmp"
+    ],
+    "run_commands": [
+      "bench-memcpy",
+      "bench-memcmp"
+    ],
+    "timing_backend": "clock_gettime(CLOCK_MONOTONIC)",
+    "benchtest_patch": "scripts/glibc-2.44-benchtests.patch",
+    "selected_lengths": [
+      2048,
+      4096
+    ]
+  },
+  "results": {
+    "memcpy.length=2048.align1=0.align2=0.dst_gt_src=0": {
+      "source_name": "memcpy.length=2048.align1=0.align2=0.dst_gt_src=0",
+      "source_field": "functions.memcpy.results[242].timings[1]",
+      "source_file": "bench-memcpy.out",
+      "implementation": "memcpy",
+      "group": "memcpy",
+      "raw_value": 15.5859,
+      "raw_unit": "ns",
+      "value": 15.5859,
+      "unit": "ns"
+    },
+    "memcpy.length=4096.align1=0.align2=0.dst_gt_src=0": {
+      "source_name": "memcpy.length=4096.align1=0.align2=0.dst_gt_src=0",
+      "source_field": "functions.memcpy.results[264].timings[1]",
+      "source_file": "bench-memcpy.out",
+      "implementation": "memcpy",
+      "group": "memcpy",
+      "raw_value": 31.1523,
+      "raw_unit": "ns",
+      "value": 31.1523,
+      "unit": "ns"
+    },
+    "memcmp.length=2048.align1=0.align2=0.result=0": {
+      "source_name": "memcmp.length=2048.align1=0.align2=0.result=0",
+      "source_field": "functions.memcmp.results[436].timings[0]",
+      "source_file": "bench-memcmp.out",
+      "implementation": "memcmp",
+      "group": "memcmp",
+      "raw_value": 23.6066,
+      "raw_unit": "ns",
+      "value": 23.6066,
+      "unit": "ns"
+    },
+    "memcmp.length=4096.align1=0.align2=0.result=0": {
+      "source_name": "memcmp.length=4096.align1=0.align2=0.result=0",
+      "source_field": "functions.memcmp.results[449].timings[0]",
+      "source_file": "bench-memcmp.out",
+      "implementation": "memcmp",
+      "group": "memcmp",
+      "raw_value": 46.2125,
+      "raw_unit": "ns",
+      "value": 46.2125,
+      "unit": "ns"
+    }
+  }
+}
