@@ -1,0 +1,13 @@
+diff --git a/benchmarking/tpch/answers.py b/benchmarking/tpch/answers.py
+index da803a3..f1bff32 100644
+--- a/benchmarking/tpch/answers.py
++++ b/benchmarking/tpch/answers.py
+@@ -399,7 +399,7 @@ def q13(get_df: GetDFFunc) -> DataFrame:
+ 
+     daft_df = (
+         customers.join(
+-            orders.where(~col("O_COMMENT").match(".*special.*requests.*")),
++            orders.where(~col("O_COMMENT").regexp(".*special.*requests.*")),
+             left_on="C_CUSTKEY",
+             right_on="O_CUSTKEY",
+             how="left",
