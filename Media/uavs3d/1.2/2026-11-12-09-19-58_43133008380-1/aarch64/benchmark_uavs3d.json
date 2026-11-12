@@ -1,0 +1,67 @@
+{
+  "benchmark": "uavs3d_decode",
+  "software": "uavs3d",
+  "version": "1.2",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-12T01:18:28Z",
+  "parameters": {
+    "video": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+    "video_sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc",
+    "stream": "Film2012_1080p_q32.avs3",
+    "codec": "AVS3-P2",
+    "bit_depth": 8,
+    "width": 1920,
+    "height": 1080,
+    "frames": 120,
+    "fps": 25,
+    "qp": 32,
+    "decode_threads": [
+      16,
+      24
+    ],
+    "iterations": 20,
+    "warmup_iterations": 1,
+    "timing": "whole_process_wall_clock/120",
+    "affinity": "unbound",
+    "decoder": "uavs3d-1.2",
+    "input_encoder": "uavs3e-1.3",
+    "encoder_settings": {
+      "wpp_threads": 4,
+      "frm_threads": 2,
+      "speed_level": 4,
+      "gop": 7,
+      "preset": 0,
+      "fps_num": 25,
+      "fps_den": 1
+    }
+  },
+  "runtime_context": {
+    "cpu_count": 384,
+    "machine": "aarch64",
+    "cpu_model": "",
+    "python": "3.11.6",
+    "stream_sha256": "b7d9935064d0891dbf12b16a8448b7b19dc2c617b070c84826345adc329555df",
+    "decoder_sha256": "3cf51d48635083553347389d7499f4d82165f0bca785623c1958bf110da0b443",
+    "decoder_version_output": "uavs2d: 1.2.0_release,",
+    "warmup_seconds": {
+      "Film2012_1080p_q32_decode_c16": 2.2845894230122212,
+      "Film2012_1080p_q32_decode_c24": 2.2814584440202452
+    }
+  },
+  "results": {
+    "Film2012_1080p_q32_decode_c16": {
+      "source_name": "Film2012_1080p_q32_decode_c16",
+      "value": 1.269871,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "16 threads"
+    },
+    "Film2012_1080p_q32_decode_c24": {
+      "source_name": "Film2012_1080p_q32_decode_c24",
+      "value": 1.370882,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "24 threads"
+    }
+  }
+}
