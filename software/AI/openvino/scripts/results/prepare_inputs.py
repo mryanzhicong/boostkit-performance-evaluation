@@ -114,7 +114,8 @@ def verify_manifest(manifest: dict, args: argparse.Namespace) -> None:
             raise ValueError(f"input video is missing or too short: {source}")
         if not input_path.is_file():
             raise ValueError(f"prepared input is missing: {input_path}")
-        if case.get("input_sha256") != sha256_file(input_path):
+        array = np.load(input_path)
+        if case.get("input_sha256") != hashlib.sha256(array.tobytes()).hexdigest():
             raise ValueError(f"prepared input checksum differs for {video['name']}")
         if case.get("model_sha256") != model["sha256"]:
             raise ValueError(f"case model checksum differs for {video['name']}")
