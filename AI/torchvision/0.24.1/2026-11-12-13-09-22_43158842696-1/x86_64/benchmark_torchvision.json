@@ -1,0 +1,112 @@
+{
+  "benchmark": "torchvision_official_int8",
+  "software": "torchvision",
+  "version": "0.24.1",
+  "architecture": "x86_64",
+  "timestamp": "2026-11-12T05:08:15Z",
+  "parameters": {
+    "videos": [
+      {
+        "name": "BQTerrace",
+        "filename": "BQTerrace_1920x1080_60-dianbo.yuv",
+        "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7"
+      },
+      {
+        "name": "Film2012",
+        "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+        "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc"
+      },
+      {
+        "name": "messi",
+        "filename": "messi_1920x1080_25_1000.yuv",
+        "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b"
+      }
+    ],
+    "models": [
+      {
+        "name": "mobilenet_v2",
+        "weights_url": "https://download.pytorch.org/models/quantized/mobilenet_v2_qnnpack_37f702c5.pth"
+      },
+      {
+        "name": "mobilenet_v3_large",
+        "weights_url": "https://download.pytorch.org/models/quantized/mobilenet_v3_large_qnnpack-5bcacf28.pth"
+      }
+    ],
+    "precision": "official quantized INT8",
+    "quantized_engine": "qnnpack",
+    "batch_size": 1,
+    "input_size": 224,
+    "compute_threads": 1,
+    "interop_threads": 1,
+    "warmup_iterations": 3,
+    "iterations": 20,
+    "timing": "model_forward_only",
+    "affinity": "unbound",
+    "torch": "2.9.1",
+    "torchvision": "0.24.1",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0"
+  },
+  "runtime_context": {
+    "torch": "2.9.1+cpu",
+    "torchvision": "0.24.1+cpu",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0",
+    "quantized_engine": "qnnpack",
+    "threads": 1,
+    "interop_threads": 1,
+    "torch_home": "/home/runner/boostkit-perf/torchvision/0.24.1/x86_64/43158842696-1/torch-cache",
+    "cpu_count": 384,
+    "cpu_model": "AMD EPYC 9654 96-Core Processor"
+  },
+  "results": {
+    "BQTerrace_mobilenet_v2_official_int8_b1_c1": {
+      "source_name": "BQTerrace_mobilenet_v2_official_int8_b1_c1",
+      "value": 21.519241,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v2",
+      "subgroup": "BQTerrace"
+    },
+    "BQTerrace_mobilenet_v3_large_official_int8_b1_c1": {
+      "source_name": "BQTerrace_mobilenet_v3_large_official_int8_b1_c1",
+      "value": 17.803723,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v3_large",
+      "subgroup": "BQTerrace"
+    },
+    "Film2012_mobilenet_v2_official_int8_b1_c1": {
+      "source_name": "Film2012_mobilenet_v2_official_int8_b1_c1",
+      "value": 21.524921,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v2",
+      "subgroup": "Film2012"
+    },
+    "Film2012_mobilenet_v3_large_official_int8_b1_c1": {
+      "source_name": "Film2012_mobilenet_v3_large_official_int8_b1_c1",
+      "value": 17.726145,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v3_large",
+      "subgroup": "Film2012"
+    },
+    "messi_mobilenet_v2_official_int8_b1_c1": {
+      "source_name": "messi_mobilenet_v2_official_int8_b1_c1",
+      "value": 21.537619,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v2",
+      "subgroup": "messi"
+    },
+    "messi_mobilenet_v3_large_official_int8_b1_c1": {
+      "source_name": "messi_mobilenet_v3_large_official_int8_b1_c1",
+      "value": 17.661401,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "mobilenet_v3_large",
+      "subgroup": "messi"
+    }
+  }
+}
