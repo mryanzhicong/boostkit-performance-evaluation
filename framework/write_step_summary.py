@@ -9,12 +9,12 @@ GitHub aborts step summary uploads larger than 1 MiB::
 When that happens the whole summary of the run silently disappears, so a large
 case (numpy publishes 1256 metrics) must not be pasted in full.  This helper:
 
-* appends the compact report produced by ``framework/generate_comparison.py``
-  (``combined-report-summary.md``) when it exists, otherwise
-* appends the full report truncated at a line boundary,
+* appends the full report when it fits in the remaining summary space,
+* otherwise appends the compact report produced by
+  ``framework/generate_comparison.py`` (``combined-report-summary.md``), or
+  truncates the full report at a line boundary,
 * always keeps the summary file below the limit, counting what earlier steps
-  already wrote, and
-* states where the complete report can be found.
+  already wrote, and points to the complete report only when content is omitted.
 """
 
 from __future__ import annotations
@@ -54,12 +54,17 @@ def build_payload(
 ) -> tuple[str, str]:
     full_text = report.read_text(encoding="utf-8")
     full_size = len(full_text.encode("utf-8"))
+    available = limit - margin
+    if full_size + (0 if full_text.endswith("\n") else 1) <= available:
+        return full_text, ""
+
     note = POINTER.format(size=f"{full_size / 1024:.0f}")
     if compact is not None and compact.is_file():
         compact_text = compact.read_text(encoding="utf-8")
-        if len(compact_text.encode("utf-8")) + len(note.encode("utf-8")) <= limit - margin:
+        compact_size = len(compact_text.encode("utf-8"))
+        if compact_size + (0 if compact_text.endswith("\n") else 1) + len(note.encode("utf-8")) <= available:
             return compact_text, note
-    budget = limit - margin - len(note.encode("utf-8"))
+    budget = available - len(note.encode("utf-8"))
     return truncate_at_line(full_text, max(budget, 0)), note
 
 
@@ -100,7 +105,8 @@ def main(argv: list[str] | None = None) -> int:
         args.report, args.compact, remaining, args.margin_bytes
     )
     body = payload if payload.endswith("\n") else payload + "\n"
-    body += note
+    if note:
+        body += note
     encoded = body.encode("utf-8")
     if len(encoded) > remaining:
         body = truncate_at_line(body, remaining - 1) + "\n"
