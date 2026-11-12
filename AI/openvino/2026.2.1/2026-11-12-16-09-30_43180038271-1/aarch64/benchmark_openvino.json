@@ -1,0 +1,87 @@
+{
+  "benchmark": "openvino_resnet18_fp32",
+  "software": "openvino",
+  "version": "2026.2.1",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-12T08:07:00Z",
+  "parameters": {
+    "videos": [
+      {
+        "name": "BQTerrace",
+        "filename": "BQTerrace_1920x1080_60-dianbo.yuv",
+        "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7"
+      },
+      {
+        "name": "Film2012",
+        "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+        "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc"
+      },
+      {
+        "name": "messi",
+        "filename": "messi_1920x1080_25_1000.yuv",
+        "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b"
+      }
+    ],
+    "model": {
+      "name": "resnet18",
+      "weights_url": "https://download.pytorch.org/models/resnet18-f37072fd.pth",
+      "weights_sha256": "f37072fd47e89c5e827621c5baffa7500819f7896bbacec160b1a16c560e07ec"
+    },
+    "precision": "FP32",
+    "batch_size": 1,
+    "input_size": 224,
+    "threads": 1,
+    "streams": 1,
+    "performance_hint": "LATENCY",
+    "inference_precision": "f32",
+    "cpu_pinning": false,
+    "warmup_iterations": 3,
+    "iterations": 20,
+    "timing": "synchronous_inference",
+    "affinity": "unbound",
+    "torch": "2.9.1",
+    "torchvision": "0.24.1",
+    "openvino": "2026.2.1",
+    "onnx": "1.19.1",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0"
+  },
+  "runtime_context": {
+    "openvino": "2026.2.1",
+    "openvino_module": "2026.2.1-21919-ede283a88e3-releases/2026/2",
+    "threads": 1,
+    "streams": 1,
+    "performance_hint": "LATENCY",
+    "inference_precision": "f32",
+    "cpu_pinning": false,
+    "cpu_count": 384,
+    "cpu_model": "",
+    "model_sha256": "862dcd99a448a35093c9468ee3ae33a6974b2b0a637104a339ba066cfcef1af1"
+  },
+  "results": {
+    "BQTerrace_resnet18_fp32_b1_c1": {
+      "source_name": "BQTerrace_resnet18_fp32_b1_c1",
+      "value": 28.714937,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "resnet18",
+      "subgroup": "BQTerrace"
+    },
+    "Film2012_resnet18_fp32_b1_c1": {
+      "source_name": "Film2012_resnet18_fp32_b1_c1",
+      "value": 29.297115,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "resnet18",
+      "subgroup": "Film2012"
+    },
+    "messi_resnet18_fp32_b1_c1": {
+      "source_name": "messi_resnet18_fp32_b1_c1",
+      "value": 28.992834,
+      "unit": "ms/image",
+      "direction": "lower_is_better",
+      "group": "resnet18",
+      "subgroup": "messi"
+    }
+  }
+}
