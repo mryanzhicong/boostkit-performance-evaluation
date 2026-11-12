@@ -279,3 +279,31 @@ def test_prepare_inputs_verify_only_checks_hashes(tmp_path: Path) -> None:
     failed = verify()
     assert failed.returncode == 2
     assert "checksum differs" in failed.stderr
+
+
+def test_prepare_inputs_runs_encoder_in_writable_output_directory(tmp_path: Path) -> None:
+    source = tmp_path / "small.yuv"
+    source.write_bytes(b"\x00" * (4 * 4 * 3 // 2 * 2))
+    encoder = tmp_path / "fake-uavs3enc"
+    encoder.write_text(
+        "#!/usr/bin/env python3\n"
+        "from pathlib import Path\n"
+        "import sys\n"
+        "Path('psnr.txt').write_text('encoder sidecar')\n"
+        "Path(sys.argv[sys.argv.index('-o') + 1]).write_bytes(b'AVS3')\n",
+        encoding="utf-8",
+    )
+    encoder.chmod(0o755)
+    output = tmp_path / "private-media" / "small.avs3"
+    manifest_path = tmp_path / "private-media" / "manifest.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS / "results/prepare_inputs.py"),
+         "--encoder", str(encoder), "--source", str(source),
+         "--output", str(output), "--manifest", str(manifest_path),
+         "--width", "4", "--height", "4", "--frames", "2"],
+        cwd=tmp_path, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert output.read_bytes() == b"AVS3"
+    assert (output.parent / "psnr.txt").read_text() == "encoder sidecar"
+    assert not (tmp_path / "psnr.txt").exists()

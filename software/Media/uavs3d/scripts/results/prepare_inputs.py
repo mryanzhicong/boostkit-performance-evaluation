@@ -161,6 +161,8 @@ def main() -> int:
         try:
             result = subprocess.run(
                 command,
+                # Upstream uavs3enc writes psnr.txt relative to its working directory.
+                cwd=output.parent,
                 stdout=log_handle if log_handle is not None else subprocess.DEVNULL,
                 stderr=subprocess.STDOUT,
                 check=False,
