@@ -1,0 +1,45 @@
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/gist.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = L2
+  efc = 500
+  save_or_load = save
+  efs = 300
+  k_f = 65
+base vector size: 1000000
+query vector size: 1000
+Index build+prepare time: 394.701 s
+Loop 1/3:
+  wall_time = 12.9975 s (broadcast->join)
+  thread_time: min=11.4574 s, avg=12.1858 s, max=12.9973 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2462
+  QPS_avg_thread  = 82.0627
+Loop 2/3:
+  wall_time = 12.7793 s (broadcast->join)
+  thread_time: min=11.349 s, avg=12.1202 s, max=12.7791 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2504.05
+  QPS_avg_thread  = 82.507
+Loop 3/3:
+  wall_time = 12.6553 s (broadcast->join)
+  thread_time: min=11.6154 s, avg=11.8753 s, max=12.6551 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2528.59
+  QPS_avg_thread  = 84.2083
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 394.701 s
+  recall = 0.9904
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 12.8107 s
+  avg_thread_time(min/avg/max) = 11.4739 / 12.0604 / 12.8105 s
+  mid50_sorted_wall_mean = 12.7173 s
+  total_queries_per_loop = 32000
+  final_QPS(mid50 wall mean) = 2516.26
+  QPS_from_avg_thread_time * threads = 2653.3

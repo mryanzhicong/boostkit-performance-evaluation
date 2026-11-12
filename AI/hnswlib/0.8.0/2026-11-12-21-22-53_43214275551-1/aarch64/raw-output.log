@@ -1,0 +1,238 @@
+[hnswlib] [2026-11-12 20:54:55] running original sra_test hnswlib_test on five datasets
+[hnswlib-sra] using local dataset /home/runner/software/hnswlib/data/sift-128-euclidean.hdf5
+[hnswlib-sra] /home/runner/boostkit-perf/hnswlib/0.8.0/aarch64/43214275551-1/sra-test/hnswlib_test hnswlib sift-128-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/sift.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = L2
+  efc = 200
+  save_or_load = save
+  efs = 100
+  k_f = 24
+base vector size: 1000000
+query vector size: 10000
+Index build+prepare time: 16.64 s
+Loop 1/3:
+  wall_time = 4.72826 s (broadcast->join)
+  thread_time: min=3.96209 s, avg=4.41065 s, max=4.72783 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 67678.1
+  QPS_avg_thread  = 2267.24
+Loop 2/3:
+  wall_time = 4.253 s (broadcast->join)
+  thread_time: min=4.08934 s, avg=4.18214 s, max=4.25287 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 75240.9
+  QPS_avg_thread  = 2391.12
+Loop 3/3:
+  wall_time = 4.32745 s (broadcast->join)
+  thread_time: min=4.08274 s, avg=4.19465 s, max=4.32713 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 73946.6
+  QPS_avg_thread  = 2383.99
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 16.64 s
+  recall = 0.99019
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 4.43624 s
+  avg_thread_time(min/avg/max) = 4.04472 / 4.26248 / 4.43595 s
+  mid50_sorted_wall_mean = 4.29022 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 74588.2
+  QPS_from_avg_thread_time * threads = 75073.7
+[hnswlib-sra] using local dataset /home/runner/software/hnswlib/data/glove-100-angular.hdf5
+[hnswlib-sra] /home/runner/boostkit-perf/hnswlib/0.8.0/aarch64/43214275551-1/sra-test/hnswlib_test hnswlib glove-100-angular --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/glove.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = IP
+  efc = 800
+  save_or_load = save
+  efs = 520
+  k_f = 54
+base vector size: 1183514
+query vector size: 10000
+Index build+prepare time: 160.636 s
+Loop 1/3:
+  wall_time = 84.6062 s (broadcast->join)
+  thread_time: min=73.4616 s, avg=79.6228 s, max=84.6059 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 3782.23
+  QPS_avg_thread  = 125.592
+Loop 2/3:
+  wall_time = 85.9628 s (broadcast->join)
+  thread_time: min=73.1351 s, avg=79.9082 s, max=85.9627 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 3722.54
+  QPS_avg_thread  = 125.144
+Loop 3/3:
+  wall_time = 87.5897 s (broadcast->join)
+  thread_time: min=70.3317 s, avg=78.3699 s, max=87.5817 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 3653.4
+  QPS_avg_thread  = 127.6
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 160.636 s
+  recall = 0.99035
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 86.0529 s
+  avg_thread_time(min/avg/max) = 72.3095 / 79.3003 / 86.0501 s
+  mid50_sorted_wall_mean = 85.2845 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 3752.15
+  QPS_from_avg_thread_time * threads = 4035.29
+[hnswlib-sra] using local dataset /home/runner/software/hnswlib/data/deep-image-96-angular.hdf5
+[hnswlib-sra] /home/runner/boostkit-perf/hnswlib/0.8.0/aarch64/43214275551-1/sra-test/hnswlib_test hnswlib deep-image-96-angular --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/deep.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = IP
+  efc = 450
+  save_or_load = save
+  efs = 170
+  k_f = 35
+base vector size: 9990000
+query vector size: 10000
+Index build+prepare time: 621.3 s
+Loop 1/3:
+  wall_time = 18.4701 s (broadcast->join)
+  thread_time: min=16.5961 s, avg=17.9795 s, max=18.4699 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 17325.3
+  QPS_avg_thread  = 556.189
+Loop 2/3:
+  wall_time = 18.3433 s (broadcast->join)
+  thread_time: min=17.0981 s, avg=17.9226 s, max=18.3428 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 17445
+  QPS_avg_thread  = 557.954
+Loop 3/3:
+  wall_time = 18.608 s (broadcast->join)
+  thread_time: min=16.8467 s, avg=17.9322 s, max=18.6078 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 17196.9
+  QPS_avg_thread  = 557.657
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 621.3 s
+  recall = 0.99182
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 18.4738 s
+  avg_thread_time(min/avg/max) = 16.847 / 17.9448 / 18.4735 s
+  mid50_sorted_wall_mean = 18.4067 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 17385
+  QPS_from_avg_thread_time * threads = 17832.5
+[hnswlib-sra] using local dataset /home/runner/software/hnswlib/data/fashion-mnist-784-euclidean.hdf5
+[hnswlib-sra] /home/runner/boostkit-perf/hnswlib/0.8.0/aarch64/43214275551-1/sra-test/hnswlib_test hnswlib fashion-mnist-784-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/fashion.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = L2
+  efc = 200
+  save_or_load = save
+  efs = 30
+  k_f = 16
+base vector size: 60000
+query vector size: 10000
+Index build+prepare time: 0.670168 s
+Loop 1/3:
+  wall_time = 2.1733 s (broadcast->join)
+  thread_time: min=1.91211 s, avg=2.01384 s, max=2.17309 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 147242
+  QPS_avg_thread  = 4965.63
+Loop 2/3:
+  wall_time = 2.19778 s (broadcast->join)
+  thread_time: min=1.85785 s, avg=1.98746 s, max=2.19756 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 145602
+  QPS_avg_thread  = 5031.55
+Loop 3/3:
+  wall_time = 2.25973 s (broadcast->join)
+  thread_time: min=1.93414 s, avg=2.03451 s, max=2.2595 s
+  total_queries = nq(10000) * threads(32) = 320000
+  QPS_total(wall) = 141610
+  QPS_avg_thread  = 4915.19
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 0.670168 s
+  recall = 0.9907
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 2.21027 s
+  avg_thread_time(min/avg/max) = 1.90136 / 2.01194 / 2.21005 s
+  mid50_sorted_wall_mean = 2.18554 s
+  total_queries_per_loop = 320000
+  final_QPS(mid50 wall mean) = 146417
+  QPS_from_avg_thread_time * threads = 159051
+[hnswlib-sra] using local dataset /home/runner/software/hnswlib/data/gist-960-euclidean.hdf5
+[hnswlib-sra] /home/runner/boostkit-perf/hnswlib/0.8.0/aarch64/43214275551-1/sra-test/hnswlib_test hnswlib gist-960-euclidean --no-pin
+Loaded configuration:
+  batch_size = 100
+  batch_mode = false
+  top_k = 10
+  index_path = indexes/hnswlib/gist.hnswlib
+  num_threads = 32
+  nloop = 3
+  metric = L2
+  efc = 500
+  save_or_load = save
+  efs = 300
+  k_f = 65
+base vector size: 1000000
+query vector size: 1000
+Index build+prepare time: 394.701 s
+Loop 1/3:
+  wall_time = 12.9975 s (broadcast->join)
+  thread_time: min=11.4574 s, avg=12.1858 s, max=12.9973 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2462
+  QPS_avg_thread  = 82.0627
+Loop 2/3:
+  wall_time = 12.7793 s (broadcast->join)
+  thread_time: min=11.349 s, avg=12.1202 s, max=12.7791 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2504.05
+  QPS_avg_thread  = 82.507
+Loop 3/3:
+  wall_time = 12.6553 s (broadcast->join)
+  thread_time: min=11.6154 s, avg=11.8753 s, max=12.6551 s
+  total_queries = nq(1000) * threads(32) = 32000
+  QPS_total(wall) = 2528.59
+  QPS_avg_thread  = 84.2083
+==================================================
+Final Summary (same nq per thread):
+  build+prepare_time = 394.701 s
+  recall = 0.9904
+  pin_threads = OFF
+  loops = 3
+  avg_loop_wall_time = 12.8107 s
+  avg_thread_time(min/avg/max) = 11.4739 / 12.0604 / 12.8105 s
+  mid50_sorted_wall_mean = 12.7173 s
+  total_queries_per_loop = 32000
+  final_QPS(mid50 wall mean) = 2516.26
+  QPS_from_avg_thread_time * threads = 2653.3
+[hnswlib-sra] normalized 20 official measurements
+[hnswlib] [2026-11-12 21:21:10] hnswlib benchmark results written to benchmark_sra.json
