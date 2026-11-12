@@ -59,21 +59,113 @@ openEuler 24.03 LTS SP4 版本。
 `boostkit-torchvision-<架构>-<运行 ID>`，标签为
 `boostkit.torchvision.run-id=<运行 ID>`。容器使用宿主网络，不绑核、不限制
 CPU/内存/NUMA；工作目录、结果目录、只读用例脚本目录、视频目录和可选的本地
-权重目录挂载到容器内相同绝对路径。
-
-容器内安装 Python 3.11 和 pip，然后：
+权重目录挂载到容器内相同绝对路径：
 
 ```bash
-python3 -m pip install --target "${PERF_WORK_DIR}/pydeps" \
-  --find-links "${PERF_WORK_DIR}/wheels" \
-  --index-url https://mirrors.huaweicloud.com/repository/pypi/simple \
-  --only-binary=:all: \
-  "torch==2.9.1+cpu" "torchvision==0.24.1" "numpy==2.4.6" "pillow==13.0.0"
+docker run --detach --name "${TORCHVISION_CONTAINER_NAME}" \
+  --label "boostkit.torchvision.run-id=${PERF_RUN_ID}" \
+  --network=host --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount "type=bind,source=${SCRIPT_DIR},target=${SCRIPT_DIR},readonly" \
+  --mount "type=bind,source=${TORCHVISION_VIDEO_DIR},target=${TORCHVISION_VIDEO_DIR},readonly" \
+  --mount "type=bind,source=${TORCHVISION_WEIGHT_DIR},target=${TORCHVISION_WEIGHT_DIR},readonly" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${TORCHVISION_CONTAINER_IMAGE}" sleep infinity
 ```
 
-构建后执行 `scripts/results/verify_runtime.py`，断言
-`torch 2.9.1`、`torchvision 0.24.1`、`numpy 2.4.6`、`pillow 13.0.0`，并把
-实际 `torchvision` 版本 `0.24.1` 写入 `PERF_ACTUAL_VERSION_FILE`。
+视频目录和本地权重目录只在实际存在时挂载（脚本里是条件参数）；`/etc/passwd`、
+`/etc/group` 只读挂载用于 UID/GID 解析。设置 `PERF_PROXY` 时额外把
+`/home/runner/software/anchors/` 挂到容器 CA 目录并执行
+`update-ca-trust extract`，只在本次容器内把 openEuler 仓库地址换成
+`repo.huaweicloud.com/openeuler`。没有代理时不挂载证书目录，也不执行证书更新。
+
+镜像准备使用官方离线归档（优先公共目录，缺失才下载），并核对 SHA-256、架构和
+容器内发行版：
+
+```bash
+archive="${TORCHVISION_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+printf '%s  %s\n' \
+  "$(awk 'NR==1 {print $1}' "${archive}.sha256sum")" "${archive}" | sha256sum -c -
+
+docker load --input "${archive}"
+docker image inspect --format '{{.Architecture}}' "${TORCHVISION_CONTAINER_IMAGE}"
+docker run --rm --network=none "${TORCHVISION_CONTAINER_IMAGE}" cat /etc/os-release
+```
+
+容器内先安装 Python 3.11、pip 和运行时库：
+
+```bash
+docker exec --user 0 "${TORCHVISION_CONTAINER_NAME}" dnf install -y \
+  python3 python3-pip tar gzip xz curl ca-certificates libgomp libstdc++
+```
+
+PyTorch CPU wheel 优先从 `/home/runner/software/torchvision/` 读取，缺失才下载；
+x86_64 还下载与 CPU torch 同源的 torchvision CPU wheel：
+
+```bash
+curl -fL --retry 3 -o \
+  "${TORCHVISION_WHEEL_CACHE}/${TORCHVISION_TORCH_WHEEL}" \
+  "${TORCHVISION_TORCH_WHEEL_URL}"
+
+# 仅 x86_64
+curl -fL --retry 3 -o \
+  "${TORCHVISION_WHEEL_CACHE}/${TORCHVISION_TORCHVISION_WHEEL}" \
+  "${TORCHVISION_TORCHVISION_WHEEL_URL}"
+```
+
+两个 wheel 都校验 zip 完整性并记录 SHA-256。随后在容器内安装到私有目录：
+
+```bash
+docker exec \
+  -e "TMPDIR=${TMPDIR}" -e "HOME=${PERF_WORK_DIR}/home" \
+  -e "PYTHONPATH=${TORCHVISION_DEPS_DIR}" \
+  -e "TORCH_HOME=${TORCHVISION_TORCH_HOME}" \
+  "${TORCHVISION_CONTAINER_NAME}" \
+  python3 -m pip install --disable-pip-version-check --no-input --no-cache-dir \
+    --no-warn-script-location --only-binary=:all: \
+    --target "${TORCHVISION_DEPS_DIR}" \
+    --find-links "${TORCHVISION_WHEEL_CACHE}" \
+    --index-url https://mirrors.huaweicloud.com/repository/pypi/simple \
+    "torch==2.9.1+cpu" "torchvision==0.24.1+cpu" \
+    "numpy==2.4.6" "pillow==13.0.0"
+```
+
+aarch64 的 PyTorch CPU 索引没有 torchvision wheel（HTTP 403），因此 aarch64 把
+`torchvision==0.24.1+cpu` 换成 PyPI 的 `torchvision==0.24.1`；Huawei 镜像失败时
+回退 pypi.org。x86_64 必须使用 CPU wheel，否则 PyPI wheel 与 CPU torch 会出现
+`operator torchvision::nms does not exist`。
+
+模型权重在 build 阶段用宿主 `curl` 预下载到本次任务的
+`${TORCHVISION_TORCH_HOME}/hub/checkpoints/`，并按上表 SHA-256 校验：
+
+```bash
+curl -fL --retry 3 -o \
+  "${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v2_qnnpack_37f702c5.pth" \
+  https://download.pytorch.org/models/quantized/mobilenet_v2_qnnpack_37f702c5.pth
+curl -fL --retry 3 -o \
+  "${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v3_large_qnnpack-5bcacf28.pth" \
+  https://download.pytorch.org/models/quantized/mobilenet_v3_large_qnnpack-5bcacf28.pth
+printf '%s  %s\n' \
+  a9225f174880dcd1a662adaa01ea71b06b6a78822d3a4a5a4bd2d4ee5709a8da \
+  "${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v2_qnnpack_37f702c5.pth" | sha256sum -c -
+printf '%s  %s\n' \
+  5bcacf2876b29c80e6ef777b76ae2a9cbde265af9b51e287c9b7f04a38cb53b1 \
+  "${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v3_large_qnnpack-5bcacf28.pth" | sha256sum -c -
+```
+
+构建结束前在容器内运行版本检查，断言固定版本并把实际 `torchvision` 版本写入
+`PERF_ACTUAL_VERSION_FILE`：
+
+```bash
+docker exec \
+  -e "PYTHONPATH=${TORCHVISION_DEPS_DIR}" \
+  -e "TORCH_HOME=${TORCHVISION_TORCH_HOME}" \
+  "${TORCHVISION_CONTAINER_NAME}" \
+  python3 "${SCRIPT_DIR}/scripts/results/verify_runtime.py"
+```
+
 
 ## 数据与运行顺序
 
@@ -109,6 +201,101 @@ python3 -m pip install --target "${PERF_WORK_DIR}/pydeps" \
 输入。模型使用 `torchvision.models.quantization.mobilenet_v2/mobilenet_v3_large
 (weights=..., quantize=True)`，`torch.backends.quantized.engine='qnnpack'`，
 `torch.set_num_threads(1)`、`torch.set_num_interop_threads(1)`。
+
+## 启动与就绪检查
+
+`build` 创建的容器在 `start`、`test` 阶段复用，不重新 `docker run`、不重新
+`docker load`、不重新安装依赖。`start` 在容器内执行固定版本检查，并逐个确认
+视频和权重：
+
+```bash
+docker exec \
+  -e "TMPDIR=${TMPDIR}" -e "HOME=${PERF_WORK_DIR}/home" \
+  -e "PYTHONPATH=${TORCHVISION_DEPS_DIR}" \
+  -e "TORCH_HOME=${TORCHVISION_TORCH_HOME}" \
+  "${TORCHVISION_CONTAINER_NAME}" \
+  python3 "${SCRIPT_DIR}/scripts/results/verify_runtime.py"
+
+for video in \
+  BQTerrace_1920x1080_60-dianbo.yuv \
+  Film2012_1920x1080_25_8bit_8Mbps.yuv \
+  messi_1920x1080_25_1000.yuv; do
+  docker exec "${TORCHVISION_CONTAINER_NAME}" test -f "${TORCHVISION_VIDEO_DIR}/${video}"
+  stat -c '%s %n' "${TORCHVISION_VIDEO_DIR}/${video}"
+done
+
+sha256sum -c <<EOF
+a9225f174880dcd1a662adaa01ea71b06b6a78822d3a4a5a4bd2d4ee5709a8da  ${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v2_qnnpack_37f702c5.pth
+5bcacf2876b29c80e6ef777b76ae2a9cbde265af9b51e287c9b7f04a38cb53b1  ${TORCHVISION_TORCH_HOME}/hub/checkpoints/mobilenet_v3_large_qnnpack-5bcacf28.pth
+EOF
+```
+
+`verify_runtime.py` 必须报告 `torch 2.9.1+cpu`、`torchvision 0.24.1`（x86 为
+`0.24.1+cpu`）、`numpy 2.4.6`、`pillow 13.0.0`；视频必须至少包含 1 个完整帧；
+权重 SHA-256 必须匹配。没有 `sleep` 式就绪判断，以上检查全部通过才算 ready。
+
+## 正式测试命令
+
+`test` 在同一个容器内执行：
+
+```bash
+docker exec \
+  -e "TMPDIR=${TMPDIR}" -e "HOME=${PERF_WORK_DIR}/home" \
+  -e "PYTHONPATH=${TORCHVISION_DEPS_DIR}" \
+  -e "TORCH_HOME=${TORCHVISION_TORCH_HOME}" \
+  "${TORCHVISION_CONTAINER_NAME}" \
+  python3 "${SCRIPT_DIR}/scripts/results/run_benchmark.py" \
+    --video-dir "${TORCHVISION_VIDEO_DIR}" \
+    --weight-dir "${TORCHVISION_WEIGHT_DIR}" \
+    --evidence-dir "${TORCHVISION_EVIDENCE_DIR}" \
+    --csv "${TORCHVISION_CSV_PATH}" \
+    --work-dir "${PERF_WORK_DIR}/media" \
+    --iterations 20 --warmup-iterations 3 --threads 1 --batch-size 1 \
+  2>&1 | tee "${RESULTS_DIR}/benchmark_raw.log"
+```
+
+测试脚本内部固定：
+
+1. 设置 `OMP_NUM_THREADS=1`、`OMP_THREAD_LIMIT=1`、`MKL_NUM_THREADS=1`、
+   `OPENBLAS_NUM_THREADS=1`；`torch.set_num_threads(1)`、
+   `torch.set_num_interop_threads(1)`；`torch.backends.quantized.engine='qnnpack'`。
+2. 每个模型调用
+   `mobilenet_v2/mobilenet_v3_large(weights=官方INT8权重, quantize=True).eval()`；
+   构造模型和加载权重不计时。
+3. 每个视频读取首帧，按 BT.709 整数公式转 RGB，执行
+   `weights.transforms()(image).unsqueeze(0).contiguous()` 得到 224×224 输入。
+4. `with torch.inference_mode():` 先做 3 次预热，检查输出形状 `(1,1000)` 和
+   有限值；再执行 20 次 `model(x)`，每次用 `time.perf_counter_ns()` 计时；
+   均值写入 CSV 的 `ms_per_image`。
+5. 记录每个场景的 20 个样本、输入张量 SHA、权重 URL/SHA、QNNPACK engine、
+   量化 Conv2d/Linear 数量、输出和 top5；失败场景写 `FAIL` 行并以非零退出，
+   不生成成功指标。
+
+测试结束后由解析器严格校验并生成 Framework 结果：
+
+```bash
+SOFTWARE_VERSION=0.24.1 EXPECTED_ARCH="${EXPECTED_ARCH}" \
+  python3 "${SCRIPT_DIR}/scripts/results/parse_benchmark.py" \
+  "${TORCHVISION_CSV_PATH}" \
+  "${TORCHVISION_EVIDENCE_DIR}/evidence.json" \
+  "${RESULTS_DIR}/benchmark_torchvision.json"
+```
+
+## 停止与清理
+
+`stop` 先保存容器日志，再按本次任务 label 只停止/删除本任务容器；成功、失败、
+取消都会执行，重复调用安全：
+
+```bash
+docker logs "${TORCHVISION_CONTAINER_NAME}" \
+  > "${RESULTS_DIR}/container_runtime.log" 2>&1 || true
+docker stop --time 30 "${TORCHVISION_CONTAINER_NAME}"
+docker rm "${TORCHVISION_CONTAINER_NAME}"
+```
+
+不执行 `docker prune`，不删除其他任务容器、共享镜像、共享 wheel/权重缓存或
+真实结果。正式工作流的全局清理在用例 `stop/finalize` 之后运行，结果目录已先
+持久化。
 
 ## 指标与产物
 
