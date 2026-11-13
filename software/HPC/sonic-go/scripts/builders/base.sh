@@ -103,14 +103,9 @@ copy_or_download_bootstrap_archive() {
     fi
 }
 
-# 编译 Go 源码需要 PATH 上有 bootstrap Go（make.bash 自举）。优先使用 Runner
-# 已有的 PATH Go；缺失时退回安装任务私有的官方二进制（离线目录优先，校验
-# SHA-256 后解压），避免依赖系统包。
+# 始终使用本次任务私有的官方 bootstrap Go，避免两台 Runner 的系统 Go
+# 版本不同导致构建结果不同。离线目录优先，下载包均校验 SHA-256。
 resolve_bootstrap_go() {
-    if command -v go >/dev/null 2>&1; then
-        log_message "using bootstrap Go from PATH: $(go version 2>/dev/null || echo unknown)"
-        return 0
-    fi
     local install_dir="${PERF_WORK_DIR}/bootstrap-go"
     local archive
     if [[ -e "${install_dir}" ]]; then
@@ -129,6 +124,8 @@ resolve_bootstrap_go() {
         log_message "ERROR: bootstrap Go binary is unavailable: ${install_dir}/bin/go"
         return 30
     fi
+    unset GOROOT
+    export GOROOT_BOOTSTRAP="${install_dir}"
     export PATH="${install_dir}/bin:${PATH}"
     log_message "installed private bootstrap Go ${GO_BOOTSTRAP_VERSION} for ${GO_ARCH}"
 }
