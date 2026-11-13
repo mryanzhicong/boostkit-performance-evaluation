@@ -126,6 +126,9 @@ EOF
 start_envoy_container() {
     local dnf_options=()
     local -a mounts=(--mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}")
+    if [[ "${RESULTS_DIR}" != "${PERF_WORK_DIR}" && "${RESULTS_DIR}" != "${PERF_WORK_DIR}/"* ]]; then
+        mounts+=(--mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}")
+    fi
     mounts+=(--mount "type=bind,source=/etc/passwd,target=/etc/passwd,readonly")
     mounts+=(--mount "type=bind,source=/etc/group,target=/etc/group,readonly")
     if [[ -n "${PERF_PROXY:-}" ]]; then
@@ -143,6 +146,7 @@ start_envoy_container() {
     docker run --detach --name "${ENVOY_CONTAINER_NAME}" \
         --label "boostkit.envoy.run-id=${PERF_RUN_ID}" \
         --network=host --user "$(id -u):$(id -g)" \
+        --ulimit "nofile=1048576:1048576" \
         "${mounts[@]}" "${ENVOY_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
 
     if [[ -n "${PERF_PROXY:-}" ]]; then

@@ -36,9 +36,13 @@ Envoy、k6 或容器内运行期组件。
 - **容器名与标签**：`boostkit-envoy-<arch>-<run-id>`，标签
   `boostkit.envoy.run-id=<run-id>`。停止阶段只停止并删除标签与本任务
   run ID 一致的容器，标签不符即报错（退出码 60），不会误删其他任务。
-- **挂载**：`PERF_WORK_DIR`（容器内同绝对路径，读写）、`/etc/passwd`
-  与 `/etc/group`（只读）、设置 `PERF_PROXY` 时额外挂载代理 CA 目录到
+- **挂载**：`PERF_WORK_DIR`（容器内同绝对路径，读写）；当结果目录不在
+  `PERF_WORK_DIR` 下时，额外挂载 `RESULTS_DIR`；`/etc/passwd` 与
+  `/etc/group`（只读）；设置 `PERF_PROXY` 时额外挂载代理 CA 目录到
   `/etc/pki/ca-trust/source/anchors`（只读）。
+- **文件描述符**：容器显式设置 `--ulimit nofile=1048576:1048576`。Envoy
+  启动需要较高 fd 上限，容器默认 1024 会导致 libevent `Too many open files`
+  并断言退出，因此该参数是启动成功的必要条件。
 - **宿主职责边界**：宿主机只负责下载/校验 Envoy 与 k6、生成自签名证书、
   做 HTTPS 就绪探测、运行结果解析与规范化；不向宿主机安装 Envoy 服务，
   也不在宿主机启动 Envoy 或 k6 进程。
