@@ -33,7 +33,9 @@ bash software/HPC/sonic-go/sonic_go_test.sh --version 1.15.2 --variant base
 
 ## 源码、依赖与构建
 
-脚本检查并通过系统 `dnf` 安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk、util-linux（`taskset`）和 Python 3。正式工作流保留已配置的企业代理；Go 模块默认访问华为云镜像，网络错误时回退到 `goproxy.cn`。脚本先按 Sonic 工作区各 `go.sum` 中的完整校验记录逐项下载模块，降低同时建立的代理连接数，再执行 `go mod download` 检查完整依赖图。开发工作流设置 `SONIC_GO_PROXY=direct`，从模块源码仓库直连获取。
+脚本检查并通过系统 `dnf` 安装缺失的 Git、curl、GCC、tar、gzip、coreutils、gawk、util-linux（`taskset`）和 Python 3。正式工作流保留已配置的企业代理；Blue 工作流使用华为云 Go 模块镜像；开发工作流设置 `SONIC_GO_PROXY=direct`。没有离线模块包时，脚本按 Sonic 工作区各 `go.sum` 逐项下载模块，再执行 `go mod download` 检查完整依赖图。
+
+两台 Runner 可共用同一份 Sonic 1.15.2 模块包，将 `sonic-go-1.15.2-modules.tar.gz` 放到 `/home/runner/software/sonic-go/`。包的 SHA-256 为 `4516f94b7288159156f57b8d12ea8e1af3d0c3c5242670f3e571f4b8618de7a0`。脚本优先校验并解压该包到本次私有模块缓存；包内包含模块源码、Go 官方校验库签名记录和签名树状态。四个上游 `go.work.sum` 缺少的间接模块哈希已在制作离线包时通过官方校验库验证，运行时只追加到本次任务的私有源码副本，不修改上游代码。使用该包时，模块下载与校验仅访问本地缓存；若包不完整，构建会失败，不回退到公网。可通过 `SONIC_GO_MODULE_ARCHIVE` 指定其他包路径，但内容仍须符合上述校验值。此包不代替下述 Go 与 Sonic 源码克隆。
 
 编译 Go 源码统一使用私有自举 Go，不依赖 Runner 的系统 `go`。脚本优先读取 `/home/runner/software/golang/go1.27.0.linux-<arch>.tar.gz`；没有离线包时从 `https://go.dev/dl` 下载，并校验 SHA-256。自举 Go 只安装在本次任务的 `${PERF_WORK_DIR}/bootstrap-go`。
 

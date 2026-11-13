@@ -5,6 +5,7 @@ run_sonic_go_benchmarks() {
     local raw_result
 
     initialize_runtime || return $?
+    activate_sonic_offline_module_cache || return $?
     verify_go_toolchain || return $?
     if [[ ! -d "${SOURCE_DIR}" ]]; then
         log_message "ERROR: Sonic source directory is unavailable: ${SOURCE_DIR}"
