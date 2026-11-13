@@ -5,6 +5,8 @@
 私有 openEuler 24.03 LTS SP4 容器，使用 Kafka 发行包自带的两个性能测试程序，
 分别报告生产和消费吞吐量（MB/s，越高越好）。容器不限制 CPU/内存、不绑核，
 数据保存在本次任务的 `/home/runner/boostkit-perf/kafka/` 子目录，不使用系统 Kafka。
+生产与消费数据目录应落在 **NVMe** 上（例如 `/data/data1/...`），否则冷读消费会
+被机械盘/RAID 逻辑卷限制；本文同时给出“多 Topic + 多进程 + 冷读”的可复现实验方法。
 
 Framework 只调用 `case.yaml` 指定的构建、启动、测试、停止四个函数；
 `kafka_test.sh` 独立入口调用同一组函数。`base` 使用官方发行包；
@@ -16,8 +18,18 @@ Framework 只调用 `case.yaml` 指定的构建、启动、测试、停止四个
 |---|---|---|
 | Kafka 与两个压测程序 | [Apache 归档](https://archive.apache.org/dist/kafka/2.5.0/)的 `kafka_2.12-2.5.0.tgz` | `${PERF_WORK_DIR}/kafka_2.12-2.5.0` |
 | ZooKeeper | [Apache 归档](https://archive.apache.org/dist/zookeeper/zookeeper-3.6.2/)的 `apache-zookeeper-3.6.2-bin.tar.gz` | `${PERF_WORK_DIR}/apache-zookeeper-3.6.2-bin` |
-| Java | openEuler `java-11-openjdk-headless` | 仅安装在本次私有容器 |
+| Java | openEuler `java-11-openjdk-headless` | 默认安装在本次私有容器；无外网时可复用宿主机 Java（见下文） |
 | 容器镜像 | [openEuler 24.03 LTS SP4 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | Docker daemon；按架构加载 |
+
+## 本次测试环境
+
+| 架构 | Runner IP | Kafka / ZooKeeper 离线包 | 数据盘 |
+|---|---|---|---|
+| x86_64 | 90.91.181.112 | `/usr/local/kafka_2.12-2.5.0.tgz`、`/usr/local/apache-zookeeper-3.6.2-bin.tar.gz` | `/data/data1`（NVMe，符号链接自 `/home/runner/boostkit-perf`） |
+| aarch64 | 90.91.179.186 | 同上 | `nvme0n1`（NVMe，`/` 所在盘） |
+
+两平台均已配置 root 免密登录；容器镜像均为 `openeuler-24.03-lts-sp4:latest`，
+Docker 分别使用 host 网络与私有工作目录。
 
 ## 工作目录与前置条件
 
@@ -38,6 +50,25 @@ Runner 必须能使用 Docker daemon，且运行数据的文件系统至少有 *
 `build`、`start`、`test`、`stop` 各自在新 Shell 中执行，靠上述私有目录和运行 ID
 恢复状态。`${PERF_WORK_DIR}` 挂载到容器内的**同一路径**，因此容器内程序写入
 `data/kafka/`，实际占用的是宿主机 `/home/runner` 所在的持久磁盘。
+
+### 使用 NVMe 作为数据盘
+
+`/home/runner` 可能是 RAID 逻辑卷（冷读随机性能可能仅约 500 MB/s）。建议把
+Kafka 数据放到 NVMe，用一个符号链接保持脚本默认路径不变：
+
+```bash
+# 在 Runner 上执行；假设 /data/data1 是 NVMe 挂载点
+docker rm -f boostkit-kafka-x86_64-kafka-run1 2>/dev/null || true
+mkdir -p /data/data1/boostkit-perf
+rm -rf /home/runner/boostkit-perf
+ln -s /data/data1/boostkit-perf /home/runner/boostkit-perf
+
+# 校验：数据目录应显示 nvme 设备
+df -h /home/runner/boostkit-perf/kafka/local-kafka-run1/data
+```
+
+迁移后需重新执行 `build`、`start`（旧容器与工作目录先删除），否则容器仍可能
+挂载旧的数据目录。
 
 ## 获取、校验与安装
 
@@ -85,6 +116,9 @@ docker run --rm --network=none "${KAFKA_CONTAINER_IMAGE}" cat /etc/os-release
 ```
 
 `${KAFKA_CONTAINER_IMAGE}` 是 `docker load` 返回的镜像引用，脚本不会猜测固定镜像名。
+若 Runner 上执行 `docker images` 已能看到 `openeuler-24.03-lts-sp4:latest`，可跳过
+镜像下载与 `docker load`，直接把镜像引用写入
+`${PERF_WORK_DIR}/container-image.txt` 即可（构建脚本会先检查该文件）。
 核对容器系统为 openEuler 24.03 LTS SP4 后，创建私有容器。以下命令展示
 启用和不启用 `PERF_PROXY` 时的完整挂载逻辑：
 
@@ -100,12 +134,19 @@ docker run --detach --name "${KAFKA_CONTAINER_NAME}" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
   --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  --mount type=bind,source=/usr/lib/jvm,target=/usr/lib/jvm,readonly \
+  --mount type=bind,source=/etc/java,target=/etc/java,readonly \
   "${cert_mount[@]}" "${KAFKA_CONTAINER_IMAGE}" sleep infinity
 ```
+
+`/usr/lib/jvm` 与 `/etc/java` 两个挂载用于“复用宿主机 Java 11”的离线场景；
+若容器内通过 `dnf` 安装 Java，可省略这两个挂载。
 
 随后用 `docker exec` 在容器内执行以下准备操作；不配置 `PERF_PROXY` 时跳过
 证书更新，并将 `dnf --setopt="proxy=..."` 改为普通 `dnf`。下载归档时也仅在
 `PERF_PROXY` 非空的情况下临时把它传给 `curl` 的 `http_proxy`、`https_proxy`。
+
+**方式一：联网安装 Java（脚本默认）**
 
 ```bash
 docker exec --user 0 "${KAFKA_CONTAINER_NAME}" update-ca-trust extract
@@ -118,6 +159,21 @@ docker exec --user 0 "${KAFKA_CONTAINER_NAME}" \
 docker exec "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/kafka_2.12-2.5.0/bin/kafka-topics.sh" --version
 ```
+
+**方式二：无外网时复用宿主机 Java 11**
+
+宿主机已安装 `java-11-openjdk-headless` 时，直接设置 `KAFKA_JAVA_MODE=host`
+即可。`base.sh` 会自动挂载 `/usr/lib/jvm` 与 `/etc/java`，并在容器内建立
+`/usr/bin/java` 链接，跳过 `dnf`：
+
+```bash
+export KAFKA_JAVA_MODE=host
+# 重新执行 build 阶段；容器内 Java 版本可用以下命令确认
+docker exec "${KAFKA_CONTAINER_NAME}" /usr/bin/java -version
+```
+
+Java 的 `conf` 目录通常是指向 `/etc/java/...` 的符号链接，因此 `/etc/java`
+必须一起挂载，否则会出现 `Error loading java.security file`。
 
 版本命令必须报告 `2.5.0`；脚本还确认 ZooKeeper 3.6.2 的 JAR 文件存在，
 然后写入 `${PERF_ACTUAL_VERSION_FILE}`。容器内的 `dnf` 和仓库地址修改
@@ -170,18 +226,28 @@ transaction.state.log.min.isr=1
 group.initial.rebalance.delay.ms=0
 auto.create.topics.enable=false
 delete.topic.enable=true
+num.io.threads=32
+num.network.threads=32
 ```
 
-`conf/producer.properties`：
+`conf/producer.properties`（本次调优后的最终值，已移除 `compression.type=lz4`）：
 
 ```properties
-compression.type=lz4
-acks=1
+acks=all
 linger.ms=500
 batch.size=65536
 max.request.size=1073741824
 buffer.memory=134217728
+retries=0
+key.serializer=org.apache.kafka.common.serialization.ByteArraySerializer
+value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer
+socket.send.buffer.bytes=524288
+socket.receive.buffer.bytes=524288
 ```
+
+与旧配置相比：`acks` 从 `1` 改为 `all`、`retries=0`、显式指定 ByteArray
+序列化器、增加收发 socket 缓冲；删除 LZ4 压缩后，生产端写入的是原始 1 KiB
+记录，吞吐会低于压缩配置，但更接近真实写入压力。
 
 配置中的 `<PERF_WORK_DIR>`、`<KAFKA_PORT>`、`<ZOOKEEPER_PORT>` 是本次运行
 生成的实际值，不是需要手动保留的占位文本。脚本先启动 ZooKeeper，最多等待
@@ -191,7 +257,9 @@ buffer.memory=134217728
 docker exec -e "ZOO_LOG_DIR=${PERF_WORK_DIR}/logs" "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/apache-zookeeper-3.6.2-bin/bin/zkServer.sh" \
   start "${PERF_WORK_DIR}/conf/zookeeper.properties"
-docker exec -e "LOG_DIR=${PERF_WORK_DIR}/logs" "${KAFKA_CONTAINER_NAME}" \
+docker exec -e "LOG_DIR=${PERF_WORK_DIR}/logs" \
+  -e "KAFKA_HEAP_OPTS=${KAFKA_BROKER_HEAP_OPTS:--Xmx128G -Xms128G}" \
+  "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/kafka_2.12-2.5.0/bin/kafka-server-start.sh" \
   -daemon "${PERF_WORK_DIR}/conf/server.properties"
 docker exec "${KAFKA_CONTAINER_NAME}" \
@@ -204,16 +272,48 @@ docker exec "${KAFKA_CONTAINER_NAME}" \
 
 ## 测试与指标
 
-附件给出的性能工具及主要负载参数保持不变：单机、72 分区、单副本、1 KiB
-消息、生产端不限速、消费端 `--fetch-size 1024`。为了让自动化测试能够结束，
-生产与消费都固定为 **10,000,000 条消息**，数据净载荷约 9.54 GiB；
-运行前要求私有数据盘至少有 25 GB 空余。两架构使用完全相同的数量和参数。
-正式测试耗时取决于实际吞吐，约为 `9765.63 / 生产 MB/s + 9765.63 / 消费 MB/s`
-秒，再加启动及 Topic 创建时间；每个 Framework 阶段的超时上限为 180 分钟。
+附件给出的性能工具与主要负载参数保持不变，本次调优后的默认值如下：
+
+| 参数 | 默认值 | 说明 |
+|---|---|---|
+| 消息条数 | 10,000,000 | 数据净载荷约 9.54 GiB |
+| 单条记录大小 | 1024 B | 未压缩原始大小 |
+| 分区数 | 72 | 单副本 |
+| 消费 fetch | 1 MiB (`1048576`) | 原值 1024 B，已提升 |
+| 消费线程 | 8 | `--threads`，可调 |
+| 生产者进程 | 1 | `KAFKA_PRODUCER_PROCS`，>1 时按进程并行、吞吐求和 |
+| Broker 堆 | `-Xmx128G -Xms128G` | 原默认 1G |
+| 压测工具堆 | `-Xmx4096M` | 原默认 256M |
+
+相关环境变量均可覆盖：
+
+```bash
+export KAFKA_RECORDS=10000000          # 总消息数
+export KAFKA_RECORD_SIZE=1024          # 单条字节数
+export KAFKA_CONSUMER_FETCH_SIZE=1048576
+export KAFKA_CONSUMER_THREADS=8
+export KAFKA_PRODUCER_PROCS=1
+export KAFKA_BROKER_HEAP_OPTS="-Xmx128G -Xms128G"
+export KAFKA_TOOLS_HEAP_OPTS="-Xmx4096M"
+export KAFKA_JAVA_MODE=host            # package（默认，容器内 dnf 安装）或 host（复用宿主 Java）
+export KAFKA_NUM_IO_THREADS=32         # Broker num.io.threads
+export KAFKA_NUM_NETWORK_THREADS=32    # Broker num.network.threads
+```
+
+**冷读测试要求**：生产完成后、消费开始前必须清理页缓存，否则消费会命中
+page cache，测出的不是磁盘能力。需 root 执行：
+
+```bash
+sync
+echo 3 > /proc/sys/vm/drop_caches
+```
+
+运行前要求私有数据盘至少有 **25 GB** 空余（1 亿条时约 95 GiB）。两架构使用
+完全相同的数量和参数。每个 Framework 阶段的超时上限为 180 分钟。
 
 测试阶段先确认 Topic 可访问，再生产、消费同一 Topic 中的消息。下列为脚本
 在宿主机调用容器内官方工具的命令形式；实际脚本还通过 `docker exec -e` 设置
-容器内的私有 `HOME`、`TMPDIR`：
+容器内的私有 `HOME`、`TMPDIR` 和工具堆：
 
 ```bash
 docker exec "${KAFKA_CONTAINER_NAME}" \
@@ -227,15 +327,18 @@ docker exec "${KAFKA_CONTAINER_NAME}" \
 docker exec "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/kafka_2.12-2.5.0/bin/kafka-consumer-perf-test.sh" \
   --broker-list "127.0.0.1:${KAFKA_PORT}" \
-  --topic test_topic_kafka --fetch-size 1024 --messages 10000000 \
+  --topic test_topic_kafka --fetch-size 1048576 --threads 8 --messages 10000000 \
   2>&1 | tee "${RESULTS_DIR}/consumer.log"
 ```
 
 `scripts/results/parse_benchmark.py` 从生产工具最终摘要的 `MB/sec` 和消费工具
 CSV 的 `MB.sec` 字段各提取一项。生产工具可能先输出多条中途进度；解析器
-只接受记录数为 10,000,000 的唯一最终摘要，忽略未达到目标的进度行。
-它还要求消费记录数为 10,000,000、两项吞吐量均为正数；任一条件不满足则
-测试失败，不会填入估计值。
+取每条进程日志的**最后一条**摘要，忽略中途进度。当
+`KAFKA_PRODUCER_PROCS > 1` 时，脚本把各进程日志合并为一条总摘要
+（记录数为各进程之和，MB/s 为各进程之和，延迟按记录数加权），再交给解析器。
+消费者 `--threads` 在单个进程内汇总，输出本身即为总吞吐。
+解析器还要求消费记录数为 `KAFKA_RECORDS`、两项吞吐量均为正数；任一条件
+不满足则测试失败，不会填入估计值。
 单架构与跨架构报告分别按“生产者”“消费者”分组；最终各有一项
 `producer/throughput`、`consumer/throughput`，单位均为 MB/s，越大越好。
 例如两个官方工具分别输出 120.5 和 118.2 MB/s 时，
@@ -275,6 +378,130 @@ tail -n 50 .perf-output/Bigdata/kafka/2.5.0/<架构>/<run-id>/producer.log
 tail -n 50 .perf-output/Bigdata/kafka/2.5.0/<架构>/<run-id>/consumer.log
 ```
 
+## 多 Topic 并行消费复现实验（推荐 8 × 9）
+
+单 Topic 下把消费者从 10 增加到 40，吞吐基本不变；将消费者拆成多个独立
+消费组（每个 Topic 一组、独立 JVM 进程）可以绕过单组协调/单 JVM 瓶颈。
+本次在 x86 与 ARM 上使用相同的 **8 Topic × 9 分区** 配置，总分区 72、
+总数据 1000 万条。
+
+| 项目 | 值 |
+|---|---|
+| Topic 数 | 8 |
+| 每 Topic 分区 | 9（总 72） |
+| 生产 | 8 个进程，每个 1,250,000 条 |
+| 消费 | 8 个进程 × 每进程 5 线程（总 40） |
+| fetch-size | 1048576 |
+| Broker 堆 / 工具堆 | `-Xmx128G -Xms128G` / `-Xmx4096M` |
+| 缓存 | 生产后 `sync + drop_caches`，消费为冷读 |
+| 吞吐口径 | 每个生产者/消费者的 MB/s 或 MB.sec 相加 |
+
+复现脚本（在 Runner 上以 root 执行）：
+
+```bash
+#!/bin/bash
+set -u
+ARCH=$(uname -m)
+C="boostkit-kafka-${ARCH}-kafka-run1"
+W="/home/runner/boostkit-perf/kafka/local-kafka-run1"
+P=39209
+K="$W/kafka_2.12-2.5.0/bin"
+RUN="docker exec -e HOME=$W -e TMPDIR=$W/tmp -e KAFKA_HEAP_OPTS=-Xmx4096M $C"
+T=8; PART=9; REC=1250000; TH=5
+
+for t in $(seq 1 $T); do
+  $RUN "$K/kafka-topics.sh" --delete --bootstrap-server 127.0.0.1:$P --topic "kafka_multi_$t" >/dev/null 2>&1
+done
+sleep 8
+for t in $(seq 1 $T); do
+  $RUN "$K/kafka-topics.sh" --create --bootstrap-server 127.0.0.1:$P \
+    --replication-factor 1 --partitions $PART --topic "kafka_multi_$t" >/dev/null 2>&1
+done
+
+sync; echo 3 > /proc/sys/vm/drop_caches
+for t in $(seq 1 $T); do
+  $RUN "$K/kafka-producer-perf-test.sh" --topic "kafka_multi_$t" --num-records $REC \
+    --record-size 1024 --throughput -1 \
+    --producer-props "bootstrap.servers=127.0.0.1:$P" \
+    --producer.config "$W/conf/producer.properties" > /tmp/prod_$t.log 2>&1 &
+done
+wait
+
+sync; echo 3 > /proc/sys/vm/drop_caches
+for t in $(seq 1 $T); do
+  $RUN "$K/kafka-consumer-perf-test.sh" --broker-list "127.0.0.1:$P" --topic "kafka_multi_$t" \
+    --fetch-size 1048576 --threads $TH --messages $REC > /tmp/cons_$t.log 2>&1 &
+done
+wait
+
+PSUM=0; CSUM=0
+for t in $(seq 1 $T); do
+  p=$(sed -n 's/.*(\([0-9.]*\) MB\/sec).*/\1/p' /tmp/prod_$t.log | tail -1)
+  c=$(sed '/egrep: warning/d' /tmp/cons_$t.log | tail -1 | awk -F', ' '{print $4}')
+  echo "topic$t producer=$p consumer=$c MB/s"
+  PSUM=$(python3 -c "print($PSUM+${p:-0})")
+  CSUM=$(python3 -c "print($CSUM+${c:-0})")
+done
+echo "PRODUCER_SUM=$PSUM MB/s CONSUMER_SUM=$CSUM MB/s"
+```
+
+说明：
+
+- 每个消费者进程使用独立的默认消费组，避免 40 个消费者挤在同一组导致
+  rebalance 和分区分配不均。实测同一 Topic + 4 进程同组仅约 542 MB/s，
+  远低于独立组方案。
+- 各进程 `MB/s` 是各自运行窗口的平均值，求和口径通常高于“总数据量 / 墙钟”；
+  对比时必须固定口径，报告建议同时给出墙钟整体吞吐。
+- 生产者没有 `--threads` 参数，并行生产必须启动多个进程。
+
+### 6/8/10 Topic 对比（各进程吞吐总和）
+
+| Topic 数 | 每 Topic 分区 | 每 Topic 消费线程 | x86 生产 | ARM 生产 | x86 消费 | ARM 消费 |
+|---|---|---|---|---|---|---|
+| 6 | 12 | 7 | 3814.48 | 3603.22 | 3931.85 | 4241.13 |
+| 8 | 9 | 5 | 4840.77 | 4265.57 | 4431.96 | 4501.54 |
+| 10 | 7 | 4 | 5597.09 | 5208.60 | 4059.38 | 4739.36 |
+
+单位 MB/s。8 Topic 时两平台消费相差约 1.5%，推荐作为跨架构对比配置。
+
+### 8 Topic 三轮平均值
+
+| 平台 | 生产平均 | 消费平均 |
+|---|---|---|
+| x86（90.91.181.112） | 4757.45 MB/s | 4070.30 MB/s |
+| ARM（90.91.179.186） | 4459.03 MB/s | 4448.57 MB/s |
+
+消费三轮波动约 7%~10%，建议增加轮次以降低噪声。
+
+## Broker 线程与缓存观测
+
+`start.sh` 生成 `conf/server.properties` 时已写入以下两项，可用
+`KAFKA_NUM_IO_THREADS`、`KAFKA_NUM_NETWORK_THREADS` 覆盖（默认 32；
+修改后需重启 Broker 生效）：
+
+```properties
+num.io.threads=32
+num.network.threads=32
+```
+
+消费期间建议同时采集：
+
+```bash
+iostat -x 5          # r/s、rkB/s、r_await、%util
+mpstat 5             # CPU idle、softirq
+docker stats --no-stream --format \
+  '{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.BlockIO}}'
+```
+
+判读要点：
+
+- `%util` 接近 100% 且 `r_await` 高：存储瓶颈；
+- CPU idle 高、磁盘 util 低但吞吐不涨：每请求/单线程处理或延迟瓶颈，
+  此时继续增加消费者通常无效；
+- 冷读与热读必须分别标注。x86 数据盘为 RAID 逻辑卷时曾出现热读
+  1817 MB/s、冷读仅 460 MB/s；迁移到 NVMe 后冷读提升到约 1589 MB/s
+  （1000 万条）和 1908 MB/s（1 亿条）。
+
 ## 独立运行
 
 在 Runner 上从仓库根目录执行：
@@ -288,3 +515,18 @@ bash software/Bigdata/kafka/kafka_test.sh \
 独立入口产生 `results.json` 和 `report.md`，成功或失败都会尝试停止私有容器。
 排障时加 `--keep-workdir`，保留本次安装包、数据和服务日志；不指定该选项时，
 独立入口只清理自己创建的 `local-<run-id>` 工作目录。
+
+## 本次代码变更摘要
+
+| 文件 | 变更 |
+|---|---|
+| `scripts/common.sh` | `KAFKA_RECORDS`/`KAFKA_RECORD_SIZE`/`KAFKA_PARTITIONS` 支持环境变量覆盖；`kafka_exec` 注入 `KAFKA_HEAP_OPTS=${KAFKA_TOOLS_HEAP_OPTS:--Xmx4096M}` |
+| `scripts/builders/base.sh` | 新增 `KAFKA_JAVA_MODE=host`：条件挂载 `/usr/lib/jvm`、`/etc/java`，并用 `ln -sf` 复用宿主 Java 11；默认仍为容器内 `dnf` 安装 |
+| `scripts/stages/start.sh` | `producer.properties` 改为 `acks=all`、`retries=0`、ByteArray 序列化器、socket 缓冲，删除 `compression.type=lz4`；启动 Broker 注入 `KAFKA_HEAP_OPTS=${KAFKA_BROKER_HEAP_OPTS:--Xmx128G -Xms128G}`；`server.properties` 增加可配置的 `num.io.threads`/`num.network.threads`（默认 32） |
+| `scripts/stages/test.sh` | 消费默认 `--fetch-size 1048576`、`--threads` 可配；新增 `KAFKA_PRODUCER_PROCS` 多进程并行生产，按进程合并摘要并求和 |
+| `scripts/results/parse_benchmark.py` | `parameters` 记录本次实际使用的 `record_size_bytes`/`partitions`/`replication_factor`/`producer_processes` 与 `consumer.fetch_size_bytes`/`threads`，并新增同名 CLI 参数；解析仍保持严格（缺摘要、摘要重复、记录数不符或吞吐非正数都失败） |
+
+复现时请使用上述五个文件的最新版本。仍属于**环境步骤**而非代码的部分：
+NVMe 数据盘迁移（`/home/runner/boostkit-perf` 软链接到 `/data/data1`）、
+离线包放置、缓存清理（`drop_caches`）与多 Topic 手工实验脚本，按本文对应
+章节执行即可。

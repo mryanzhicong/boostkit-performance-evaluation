@@ -10,16 +10,24 @@ import math
 import re
 from pathlib import Path
 
-PRODUCER = re.compile(
+PRODUCER_SUMMARY = re.compile(
     r"^\s*(?P<records>\d+) records sent,\s*[\d.]+ records/sec\s*"
     r"\((?P<mbps>[\d.]+) MB/sec\)",
     re.MULTILINE,
 )
+CONSUMER_COLUMNS = ("MB.sec", "data.consumed.in.nMsg")
+
+
+def positive(value: float, metric: str) -> float:
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{metric} throughput must be positive and finite")
+    return value
 
 
 def producer_result(text: str, expected_records: int) -> float:
     summaries = [
-        row for row in PRODUCER.finditer(text)
+        row
+        for row in PRODUCER_SUMMARY.finditer(text)
         if int(row["records"]) == expected_records
     ]
     if len(summaries) != 1:
@@ -27,51 +35,59 @@ def producer_result(text: str, expected_records: int) -> float:
             f"expected one Kafka producer final summary for {expected_records} "
             f"records, found {len(summaries)}"
         )
-    return positive(float(summaries[0]["mbps"]))
+    return positive(float(summaries[0]["mbps"]), "Kafka producer")
 
 
 def consumer_result(text: str, expected_records: int) -> float:
-    rows = list(csv.reader(text.splitlines()))
+    rows = [[cell.strip() for cell in row] for row in csv.reader(text.splitlines())]
     summaries: list[tuple[int, float]] = []
-    for index, row in enumerate(rows[:-1]):
-        columns = [column.strip() for column in row]
-        if "MB.sec" not in columns or "data.consumed.in.nMsg" not in columns:
+    for index, columns in enumerate(rows[:-1]):
+        if not set(CONSUMER_COLUMNS).issubset(columns):
             continue
-        value = [column.strip() for column in rows[index + 1]]
-        if len(value) != len(columns):
+        values = rows[index + 1]
+        if len(values) != len(columns):
             raise ValueError("Kafka consumer summary has a mismatched CSV row")
-        count = int(value[columns.index("data.consumed.in.nMsg")])
-        throughput = positive(float(value[columns.index("MB.sec")]))
-        summaries.append((count, throughput))
+        record = dict(zip(columns, values))
+        summaries.append(
+            (int(record["data.consumed.in.nMsg"]), float(record["MB.sec"]))
+        )
     if len(summaries) != 1:
         raise ValueError(f"expected one Kafka consumer summary, found {len(summaries)}")
-    if summaries[0][0] != expected_records:
+    count, throughput = summaries[0]
+    if count != expected_records:
         raise ValueError("Kafka consumer did not receive the expected record count")
-    return summaries[0][1]
+    return positive(throughput, "Kafka consumer")
 
 
-def positive(value: float) -> float:
-    if not math.isfinite(value) or value <= 0:
-        raise ValueError("Kafka throughput must be positive and finite")
-    return value
-
-
-def build_result(producer: str, consumer: str, expected_records: int) -> dict:
+def build_result(
+    producer: str,
+    consumer: str,
+    expected_records: int,
+    fetch_size: int = 1048576,
+    threads: int = 8,
+    record_size: int = 1024,
+    partitions: int = 72,
+    replication_factor: int = 1,
+    producer_processes: int = 1,
+) -> dict:
     return {
         "parameters": {
             "record_count": expected_records,
-            "record_size_bytes": 1024,
-            "partitions": 72,
-            "replication_factor": 1,
+            "record_size_bytes": record_size,
+            "partitions": partitions,
+            "replication_factor": replication_factor,
+            "producer_processes": producer_processes,
             "producer": {
-                "compression.type": "lz4",
-                "acks": "1",
+                "acks": "all",
                 "linger.ms": 500,
                 "batch.size": 65536,
                 "buffer.memory": 134217728,
+                "retries": 0,
+                "socket.send.buffer.bytes": 524288,
+                "socket.receive.buffer.bytes": 524288,
                 "throughput_limit": -1,
             },
-            "consumer": {"fetch_size_bytes": 1024},
+            "consumer": {"fetch_size_bytes": fetch_size, "threads": threads},
         },
         "results": {
             "producer/throughput": {
@@ -96,13 +112,34 @@ def main() -> int:
     parser.add_argument("--consumer", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--expected-records", required=True, type=int)
+    parser.add_argument("--fetch-size", type=int, default=1048576)
+    parser.add_argument("--threads", type=int, default=8)
+    parser.add_argument("--record-size", type=int, default=1024)
+    parser.add_argument("--partitions", type=int, default=72)
+    parser.add_argument("--replication-factor", type=int, default=1)
+    parser.add_argument("--producer-processes", type=int, default=1)
     args = parser.parse_args()
-    if args.expected_records <= 0:
-        parser.error("expected records must be positive")
+    for name in (
+        "expected_records",
+        "fetch_size",
+        "threads",
+        "record_size",
+        "partitions",
+        "replication_factor",
+        "producer_processes",
+    ):
+        if getattr(args, name) <= 0:
+            parser.error(f"{name.replace('_', ' ')} must be positive")
     result = build_result(
         args.producer.read_text(encoding="utf-8"),
         args.consumer.read_text(encoding="utf-8"),
         args.expected_records,
+        fetch_size=args.fetch_size,
+        threads=args.threads,
+        record_size=args.record_size,
+        partitions=args.partitions,
+        replication_factor=args.replication_factor,
+        producer_processes=args.producer_processes,
     )
     args.output.write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

@@ -26,14 +26,20 @@ transaction.state.log.min.isr=1
 group.initial.rebalance.delay.ms=0
 auto.create.topics.enable=false
 delete.topic.enable=true
+num.io.threads=${KAFKA_NUM_IO_THREADS:-32}
+num.network.threads=${KAFKA_NUM_NETWORK_THREADS:-32}
 EOF
     cat > "${PERF_WORK_DIR}/conf/producer.properties" <<EOF
-compression.type=lz4
-acks=1
+acks=all
 linger.ms=500
 batch.size=65536
 max.request.size=1073741824
 buffer.memory=134217728
+retries=0
+key.serializer=org.apache.kafka.common.serialization.ByteArraySerializer
+value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer
+socket.send.buffer.bytes=524288
+socket.receive.buffer.bytes=524288
 EOF
 }
 
@@ -78,7 +84,9 @@ start_kafka_runtime() {
         "${ZOOKEEPER_HOME}/bin/zkServer.sh" start "${PERF_WORK_DIR}/conf/zookeeper.properties" || return 40
     wait_for_zookeeper || return $?
     log_message "starting Kafka ${SOFTWARE_VERSION} at 127.0.0.1:${KAFKA_PORT}"
-    docker exec -e "LOG_DIR=${PERF_WORK_DIR}/logs" "${KAFKA_CONTAINER_NAME}" \
+    docker exec -e "LOG_DIR=${PERF_WORK_DIR}/logs" \
+        -e "KAFKA_HEAP_OPTS=${KAFKA_BROKER_HEAP_OPTS:--Xmx128G -Xms128G}" \
+        "${KAFKA_CONTAINER_NAME}" \
         "${KAFKA_HOME}/bin/kafka-server-start.sh" -daemon "${PERF_WORK_DIR}/conf/server.properties" || return 40
     wait_for_kafka || return $?
     kafka_exec "${KAFKA_HOME}/bin/kafka-topics.sh" --create \

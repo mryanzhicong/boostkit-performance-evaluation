@@ -14,11 +14,12 @@ KAFKA_IMAGE_ARCHIVE_DIR="${KAFKA_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEu
 KAFKA_CA_ANCHORS_DIR="${KAFKA_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 KAFKA_ARCHIVE_SHA512=447a7057bcd9faca98b6f4807bd6019ef73eee90efdc1e7b10005f669e2537a8a190cb8b9c9f4c20db1d95b13d0f0487e9cc560d0759532058439ce7f722c7cd
 ZOOKEEPER_ARCHIVE_SHA512=caff5111bb6876b7124760bc006e6fa2523efa54b99321a3c9cd8192ea0d5596abc7d70a054b1aac9b20a411407dae7611c7aba870c23bff28eb1643ba499199
-KAFKA_RECORDS=10000000
-KAFKA_RECORD_SIZE=1024
-KAFKA_PARTITIONS=72
+KAFKA_RECORDS=${KAFKA_RECORDS:-10000000}
+KAFKA_RECORD_SIZE=${KAFKA_RECORD_SIZE:-1024}
+KAFKA_PARTITIONS=${KAFKA_PARTITIONS:-72}
 
 log_message() { printf '[kafka] [%s] %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*"; }
+log_error() { printf '[kafka] [%s] ERROR: %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*" >&2; }
 
 configure_runtime_paths() {
     [[ "${SOFTWARE_VERSION}" == 2.5.0 ]] || { log_message "ERROR: unsupported version: ${SOFTWARE_VERSION}"; return 10; }
@@ -62,6 +63,7 @@ require_docker() {
 
 kafka_exec() {
     docker exec -e "HOME=${PERF_WORK_DIR}" -e "TMPDIR=${PERF_WORK_DIR}/tmp" \
+        -e "KAFKA_HEAP_OPTS=${KAFKA_TOOLS_HEAP_OPTS:--Xmx4096M}" \
         "${KAFKA_CONTAINER_NAME}" "$@"
 }
 
