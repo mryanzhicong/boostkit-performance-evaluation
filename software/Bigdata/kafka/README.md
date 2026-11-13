@@ -3,10 +3,12 @@
 本用例按《鲲鹏服务器大数据性能测试一本通》第 7.5.1 节的单机生产者/消费者
 场景测试 Apache Kafka 2.5.0。x86_64 与 aarch64 各在一台 Runner 上启动一个
 私有 openEuler 24.03 LTS SP4 容器，使用 Kafka 发行包自带的两个性能测试程序，
-分别报告生产和消费吞吐量（MB/s，越高越好）。容器不限制 CPU/内存、不绑核，
+分别报告生产和消费吞吐量（MB/s，越高越好）。默认负载为 **8 Topic × 9 分区**
+的并行生产/消费（8 个生产者进程、8 个消费者进程 × 5 线程），单机单进程的
+小规模场景可通过 `KAFKA_TOPICS=1` 复现。容器不限制 CPU/内存、不绑核，
 数据保存在本次任务的 `/home/runner/boostkit-perf/kafka/` 子目录，不使用系统 Kafka。
 生产与消费数据目录应落在 **NVMe** 上（例如 `/data/data1/...`），否则冷读消费会
-被机械盘/RAID 逻辑卷限制；本文同时给出“多 Topic + 多进程 + 冷读”的可复现实验方法。
+被机械盘/RAID 逻辑卷限制；多 Topic + 多进程 + 冷读的可复现实验方法见下文。
 
 Framework 只调用 `case.yaml` 指定的构建、启动、测试、停止四个函数；
 `kafka_test.sh` 独立入口调用同一组函数。`base` 使用官方发行包；
@@ -276,23 +278,26 @@ docker exec "${KAFKA_CONTAINER_NAME}" \
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| 消息条数 | 10,000,000 | 数据净载荷约 9.54 GiB |
+| 消息条数 | 10,000,000 | 数据净载荷约 9.54 GiB；每 Topic 1,250,000 条 |
 | 单条记录大小 | 1024 B | 未压缩原始大小 |
-| 分区数 | 72 | 单副本 |
+| Topic 数 | 8 | `KAFKA_TOPICS`，每个 Topic 一个生产者/消费者进程 |
+| 分区数 | 72（8 × 9） | 单副本，每 Topic 9 分区 |
 | 消费 fetch | 1 MiB (`1048576`) | 原值 1024 B，已提升 |
-| 消费线程 | 8 | `--threads`，可调 |
-| 生产者进程 | 1 | `KAFKA_PRODUCER_PROCS`，>1 时按进程并行、吞吐求和 |
+| 消费线程 | 5/进程（总 40） | `KAFKA_CONSUMER_THREADS` |
+| 生产者进程 | 8 | 每 Topic 一个进程，吞吐求和 |
 | Broker 堆 | `-Xmx128G -Xms128G` | 原默认 1G |
 | 压测工具堆 | `-Xmx4096M` | 原默认 256M |
 
 相关环境变量均可覆盖：
 
 ```bash
-export KAFKA_RECORDS=10000000          # 总消息数
+export KAFKA_RECORDS=10000000          # 总消息数（需被 KAFKA_TOPICS 整除）
 export KAFKA_RECORD_SIZE=1024          # 单条字节数
+export KAFKA_TOPICS=8                  # Topic 数（设为 1 回到单 Topic 场景）
+export KAFKA_PARTITIONS=72             # 总分区（需被 KAFKA_TOPICS 整除）
 export KAFKA_CONSUMER_FETCH_SIZE=1048576
-export KAFKA_CONSUMER_THREADS=8
-export KAFKA_PRODUCER_PROCS=1
+export KAFKA_CONSUMER_THREADS=5        # 每个消费者进程的线程数
+export KAFKA_PRODUCER_PROCS=8          # 多 Topic 时必须等于 KAFKA_TOPICS
 export KAFKA_BROKER_HEAP_OPTS="-Xmx128G -Xms128G"
 export KAFKA_TOOLS_HEAP_OPTS="-Xmx4096M"
 export KAFKA_JAVA_MODE=host            # package（默认，容器内 dnf 安装）或 host（复用宿主 Java）
@@ -308,37 +313,41 @@ sync
 echo 3 > /proc/sys/vm/drop_caches
 ```
 
-运行前要求私有数据盘至少有 **25 GB** 空余（1 亿条时约 95 GiB）。两架构使用
-完全相同的数量和参数。每个 Framework 阶段的超时上限为 180 分钟。
+用例默认不自动清理页缓存（容器内非 root 无法写 `/proc/sys/vm/drop_caches`），
+因此消费吞吐包含 page cache 影响；严格冷读需在 Runner 上以 root 执行上面的
+命令，或另行在测试阶段前增加这一步。运行前要求私有数据盘至少有 **25 GB**
+空余（1 亿条时约 95 GiB）。两架构使用完全相同的数量和参数。每个 Framework
+阶段的超时上限为 180 分钟。
 
-测试阶段先确认 Topic 可访问，再生产、消费同一 Topic 中的消息。下列为脚本
-在宿主机调用容器内官方工具的命令形式；实际脚本还通过 `docker exec -e` 设置
-容器内的私有 `HOME`、`TMPDIR` 和工具堆：
+测试阶段先确认 8 个 Topic 均可访问，然后并行生产、并行消费；下列为脚本在
+宿主机调用容器内官方工具的命令形式（Topic 名称 `test_topic_kafka_1..8`，
+每 Topic 1,250,000 条、9 分区）。实际脚本还通过 `docker exec -e` 设置容器内
+的私有 `HOME`、`TMPDIR` 和工具堆：
 
 ```bash
+# 8 个生产者进程并行，每进程一个 Topic
 docker exec "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/kafka_2.12-2.5.0/bin/kafka-producer-perf-test.sh" \
-  --topic test_topic_kafka \
-  --num-records 10000000 --record-size 1024 --throughput -1 \
+  --topic test_topic_kafka_<1..8> \
+  --num-records 1250000 --record-size 1024 --throughput -1 \
   --producer-props "bootstrap.servers=127.0.0.1:${KAFKA_PORT}" \
   --producer.config "${PERF_WORK_DIR}/conf/producer.properties" \
-  2>&1 | tee "${RESULTS_DIR}/producer.log"
+  > "${PERF_WORK_DIR}/producer_parts/part_<1..8>.log" 2>&1 &
 
+# 8 个消费者进程并行，每进程一个 Topic、5 线程
 docker exec "${KAFKA_CONTAINER_NAME}" \
   "${PERF_WORK_DIR}/kafka_2.12-2.5.0/bin/kafka-consumer-perf-test.sh" \
   --broker-list "127.0.0.1:${KAFKA_PORT}" \
-  --topic test_topic_kafka --fetch-size 1048576 --threads 8 --messages 10000000 \
-  2>&1 | tee "${RESULTS_DIR}/consumer.log"
+  --topic test_topic_kafka_<1..8> --fetch-size 1048576 --threads 5 \
+  --messages 1250000 > "${PERF_WORK_DIR}/consumer_parts/part_<1..8>.log" 2>&1 &
 ```
 
 `scripts/results/parse_benchmark.py` 从生产工具最终摘要的 `MB/sec` 和消费工具
-CSV 的 `MB.sec` 字段各提取一项。生产工具可能先输出多条中途进度；解析器
-取每条进程日志的**最后一条**摘要，忽略中途进度。当
-`KAFKA_PRODUCER_PROCS > 1` 时，脚本把各进程日志合并为一条总摘要
-（记录数为各进程之和，MB/s 为各进程之和，延迟按记录数加权），再交给解析器。
-消费者 `--threads` 在单个进程内汇总，输出本身即为总吞吐。
-解析器还要求消费记录数为 `KAFKA_RECORDS`、两项吞吐量均为正数；任一条件
-不满足则测试失败，不会填入估计值。
+CSV 的 `MB.sec` 字段各提取一项。生产工具可能先输出多条中途进度；脚本对每个
+进程只取**最后一条**摘要，再把 8 个进程合并为一条总摘要（记录数求和、MB/s
+求和、延迟按记录数加权），消费者同样把 8 个进程的 `MB.sec` 与记录数求和，
+然后交给解析器。解析器还要求消费记录数为 `KAFKA_RECORDS`、两项吞吐量均为
+正数；任一条件不满足则测试失败，不会填入估计值。
 单架构与跨架构报告分别按“生产者”“消费者”分组；最终各有一项
 `producer/throughput`、`consumer/throughput`，单位均为 MB/s，越大越好。
 例如两个官方工具分别输出 120.5 和 118.2 MB/s 时，
@@ -378,12 +387,12 @@ tail -n 50 .perf-output/Bigdata/kafka/2.5.0/<架构>/<run-id>/producer.log
 tail -n 50 .perf-output/Bigdata/kafka/2.5.0/<架构>/<run-id>/consumer.log
 ```
 
-## 多 Topic 并行消费复现实验（推荐 8 × 9）
+## 默认 8 × 9 多 Topic 并行配置
 
 单 Topic 下把消费者从 10 增加到 40，吞吐基本不变；将消费者拆成多个独立
 消费组（每个 Topic 一组、独立 JVM 进程）可以绕过单组协调/单 JVM 瓶颈。
-本次在 x86 与 ARM 上使用相同的 **8 Topic × 9 分区** 配置，总分区 72、
-总数据 1000 万条。
+用例默认即使用 **8 Topic × 9 分区** 配置（总分区 72、总数据 1000 万条），
+下表为该配置在 x86 与 ARM 上的复现结果，可用来核对量级。
 
 | 项目 | 值 |
 |---|---|
@@ -520,11 +529,11 @@ bash software/Bigdata/kafka/kafka_test.sh \
 
 | 文件 | 变更 |
 |---|---|
-| `scripts/common.sh` | `KAFKA_RECORDS`/`KAFKA_RECORD_SIZE`/`KAFKA_PARTITIONS` 支持环境变量覆盖；`kafka_exec` 注入 `KAFKA_HEAP_OPTS=${KAFKA_TOOLS_HEAP_OPTS:--Xmx4096M}` |
+| `scripts/common.sh` | `KAFKA_RECORDS`/`KAFKA_RECORD_SIZE`/`KAFKA_PARTITIONS`/`KAFKA_TOPICS`/`KAFKA_CONSUMER_THREADS` 支持环境变量覆盖，并校验 Topic 数整除关系；`kafka_exec` 注入 `KAFKA_HEAP_OPTS=${KAFKA_TOOLS_HEAP_OPTS:--Xmx4096M}` |
 | `scripts/builders/base.sh` | 新增 `KAFKA_JAVA_MODE=host`：条件挂载 `/usr/lib/jvm`、`/etc/java`，并用 `ln -sf` 复用宿主 Java 11；默认仍为容器内 `dnf` 安装 |
-| `scripts/stages/start.sh` | `producer.properties` 改为 `acks=all`、`retries=0`、ByteArray 序列化器、socket 缓冲，删除 `compression.type=lz4`；启动 Broker 注入 `KAFKA_HEAP_OPTS=${KAFKA_BROKER_HEAP_OPTS:--Xmx128G -Xms128G}`；`server.properties` 增加可配置的 `num.io.threads`/`num.network.threads`（默认 32） |
-| `scripts/stages/test.sh` | 消费默认 `--fetch-size 1048576`、`--threads` 可配；新增 `KAFKA_PRODUCER_PROCS` 多进程并行生产，按进程合并摘要并求和 |
-| `scripts/results/parse_benchmark.py` | `parameters` 记录本次实际使用的 `record_size_bytes`/`partitions`/`replication_factor`/`producer_processes` 与 `consumer.fetch_size_bytes`/`threads`，并新增同名 CLI 参数；解析仍保持严格（缺摘要、摘要重复、记录数不符或吞吐非正数都失败） |
+| `scripts/stages/start.sh` | `producer.properties` 改为 `acks=all`、`retries=0`、ByteArray 序列化器、socket 缓冲，删除 `compression.type=lz4`；启动 Broker 注入 `KAFKA_HEAP_OPTS=${KAFKA_BROKER_HEAP_OPTS:--Xmx128G -Xms128G}`；`server.properties` 增加可配置的 `num.io.threads`/`num.network.threads`（默认 32）；按 `KAFKA_TOPICS` 创建 8 × 9 分区 Topic |
+| `scripts/stages/test.sh` | 默认 8 Topic 并行：每 Topic 一个生产者进程（1,250,000 条）与一个消费者进程（5 线程、fetch 1 MiB），逐进程取最终摘要后求和，再交给解析器 |
+| `scripts/results/parse_benchmark.py` | `parameters` 记录本次实际使用的 `topics`/`partitions_per_topic`/`records_per_topic`/`record_size_bytes`/`producer_processes`/`consumer_processes` 与 `consumer.fetch_size_bytes`/`threads`，并新增同名 CLI 参数；解析仍保持严格（缺摘要、摘要重复、记录数不符或吞吐非正数都失败） |
 
 复现时请使用上述五个文件的最新版本。仍属于**环境步骤**而非代码的部分：
 NVMe 数据盘迁移（`/home/runner/boostkit-perf` 软链接到 `/data/data1`）、

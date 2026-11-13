@@ -69,14 +69,22 @@ def build_result(
     partitions: int = 72,
     replication_factor: int = 1,
     producer_processes: int = 1,
+    consumer_processes: int = 1,
+    topics: int = 1,
 ) -> dict:
+    if topics <= 0 or expected_records % topics or partitions % topics:
+        raise ValueError("topics must divide both record count and partitions")
     return {
         "parameters": {
             "record_count": expected_records,
             "record_size_bytes": record_size,
             "partitions": partitions,
             "replication_factor": replication_factor,
+            "topics": topics,
+            "partitions_per_topic": partitions // topics,
+            "records_per_topic": expected_records // topics,
             "producer_processes": producer_processes,
+            "consumer_processes": consumer_processes,
             "producer": {
                 "acks": "all",
                 "linger.ms": 500,
@@ -118,6 +126,8 @@ def main() -> int:
     parser.add_argument("--partitions", type=int, default=72)
     parser.add_argument("--replication-factor", type=int, default=1)
     parser.add_argument("--producer-processes", type=int, default=1)
+    parser.add_argument("--consumer-processes", type=int, default=1)
+    parser.add_argument("--topics", type=int, default=1)
     args = parser.parse_args()
     for name in (
         "expected_records",
@@ -127,6 +137,8 @@ def main() -> int:
         "partitions",
         "replication_factor",
         "producer_processes",
+        "consumer_processes",
+        "topics",
     ):
         if getattr(args, name) <= 0:
             parser.error(f"{name.replace('_', ' ')} must be positive")
@@ -140,6 +152,8 @@ def main() -> int:
         partitions=args.partitions,
         replication_factor=args.replication_factor,
         producer_processes=args.producer_processes,
+        consumer_processes=args.consumer_processes,
+        topics=args.topics,
     )
     args.output.write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

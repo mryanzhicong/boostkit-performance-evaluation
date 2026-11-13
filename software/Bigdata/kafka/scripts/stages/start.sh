@@ -18,7 +18,7 @@ listeners=PLAINTEXT://127.0.0.1:${KAFKA_PORT}
 advertised.listeners=PLAINTEXT://127.0.0.1:${KAFKA_PORT}
 log.dirs=${PERF_WORK_DIR}/data/kafka
 zookeeper.connect=127.0.0.1:${ZOOKEEPER_PORT}
-num.partitions=${KAFKA_PARTITIONS}
+num.partitions=${KAFKA_PARTITIONS_PER_TOPIC}
 default.replication.factor=1
 offsets.topic.replication.factor=1
 transaction.state.log.replication.factor=1
@@ -89,8 +89,18 @@ start_kafka_runtime() {
         "${KAFKA_CONTAINER_NAME}" \
         "${KAFKA_HOME}/bin/kafka-server-start.sh" -daemon "${PERF_WORK_DIR}/conf/server.properties" || return 40
     wait_for_kafka || return $?
-    kafka_exec "${KAFKA_HOME}/bin/kafka-topics.sh" --create \
-        --bootstrap-server "127.0.0.1:${KAFKA_PORT}" --replication-factor 1 \
-        --partitions "${KAFKA_PARTITIONS}" --topic test_topic_kafka || return 40
-    log_message "private Kafka topic is ready with ${KAFKA_PARTITIONS} partitions"
+    local topic i
+    for (( i = 1; i <= KAFKA_TOPICS; i++ )); do
+        topic="$(kafka_topic_name "${i}")"
+        kafka_exec "${KAFKA_HOME}/bin/kafka-topics.sh" --delete \
+            --bootstrap-server "127.0.0.1:${KAFKA_PORT}" --topic "${topic}" >/dev/null 2>&1 || true
+    done
+    sleep 2
+    for (( i = 1; i <= KAFKA_TOPICS; i++ )); do
+        topic="$(kafka_topic_name "${i}")"
+        kafka_exec "${KAFKA_HOME}/bin/kafka-topics.sh" --create \
+            --bootstrap-server "127.0.0.1:${KAFKA_PORT}" --replication-factor 1 \
+            --partitions "${KAFKA_PARTITIONS_PER_TOPIC}" --topic "${topic}" || return 40
+    done
+    log_message "private Kafka topics are ready: ${KAFKA_TOPICS} topics × ${KAFKA_PARTITIONS_PER_TOPIC} partitions"
 }
