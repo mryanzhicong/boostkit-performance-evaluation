@@ -1,0 +1,41 @@
+{
+  "parameters": {
+    "record_count": 10000000,
+    "record_size_bytes": 1024,
+    "partitions": 72,
+    "replication_factor": 1,
+    "topics": 8,
+    "partitions_per_topic": 9,
+    "records_per_topic": 1250000,
+    "producer_processes": 8,
+    "consumer_processes": 8,
+    "producer": {
+      "acks": "all",
+      "linger.ms": 500,
+      "batch.size": 65536,
+      "buffer.memory": 134217728,
+      "retries": 0,
+      "socket.send.buffer.bytes": 524288,
+      "socket.receive.buffer.bytes": 524288,
+      "throughput_limit": -1
+    },
+    "consumer": {
+      "fetch_size_bytes": 1048576,
+      "threads": 5
+    }
+  },
+  "results": {
+    "producer/throughput": {
+      "value": 4374.09,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "生产者"
+    },
+    "consumer/throughput": {
+      "value": 4782.6611,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "消费者"
+    }
+  }
+}
