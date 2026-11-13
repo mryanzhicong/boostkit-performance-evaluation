@@ -278,7 +278,8 @@ require_mysql_container() {
     docker run --detach --name "${MYSQL_CONTAINER_NAME}" \
         --label "boostkit.mysql.run-id=${PERF_RUN_ID}" \
         --cpus=8 --cpuset-cpus="${cpu_set}" --cpuset-mems="${numa_node}" \
-        --memory=32g --network=host --user "$(id -u):$(id -g)" \
+        --memory=32g --ulimit nofile=65535:65535 \
+        --network=host --user "$(id -u):$(id -g)" \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
@@ -354,7 +355,7 @@ SQL
 
 launch_mysql_server() {
     local mode="$1"
-    local attempt actual_limit
+    local attempt actual_limit actual_connections actual_open_files server_limits
     local -a mode_options user_options=()
 
     if [[ "$(id -u)" -eq 0 ]]; then
@@ -403,24 +404,30 @@ launch_mysql_server() {
     for attempt in {1..60}; do
         if "${MYSQLADMIN_BIN}" --socket="${SOCKET_PATH}" -u root ping >/dev/null 2>&1; then
             if [[ "${mode}" == prepare ]]; then
-                actual_limit="$("${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N \
-                    -e 'SELECT @@GLOBAL.max_prepared_stmt_count')" || {
-                    log_message "ERROR: cannot verify MySQL prepared-statement limit"
+                server_limits="$("${MYSQL_BIN}" --socket="${SOCKET_PATH}" -u root -N \
+                    -e 'SELECT @@GLOBAL.max_prepared_stmt_count, @@GLOBAL.max_connections, @@GLOBAL.open_files_limit')" || {
+                    log_message "ERROR: cannot verify MySQL server limits"
                     return 40
                 }
             else
-                actual_limit="$(MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
+                server_limits="$(MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
                     "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N \
-                    -e 'SELECT @@GLOBAL.max_prepared_stmt_count')" || {
-                    log_message "ERROR: cannot verify MySQL prepared-statement limit"
+                    -e 'SELECT @@GLOBAL.max_prepared_stmt_count, @@GLOBAL.max_connections, @@GLOBAL.open_files_limit')" || {
+                    log_message "ERROR: cannot verify MySQL server limits"
                     return 40
                 }
             fi
+            read -r actual_limit actual_connections actual_open_files <<< "${server_limits}"
             if [[ "${actual_limit}" != "${MYSQL_PREPARED_STMT_LIMIT}" ]]; then
                 log_message "ERROR: MySQL max_prepared_stmt_count is ${actual_limit}, expected ${MYSQL_PREPARED_STMT_LIMIT}"
                 return 40
             fi
+            if [[ ! "${actual_connections}" =~ ^[0-9]+$ ]] || (( actual_connections < 2048 )); then
+                log_message "ERROR: MySQL max_connections is ${actual_connections:-unavailable}, expected at least 2048 (open_files_limit=${actual_open_files:-unavailable})"
+                return 40
+            fi
             log_message "mysqld is ready on port ${MYSQL_PORT} (socket ${SOCKET_PATH})"
+            log_message "verified MySQL limits: max_connections=${actual_connections}, open_files_limit=${actual_open_files}"
             return 0
         fi
         sleep 1
@@ -476,6 +483,12 @@ run_sysbench() {
     if ! LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" "${command[@]}" 2>&1 \
         | tee -a "${raw_output}" "${run_output}"; then
         log_message "ERROR: Sysbench ${label} failed"
+        return 50
+    fi
+    # Some Sysbench prepare worker failures are printed as FATAL while the
+    # parent process still exits successfully. Never snapshot partial data.
+    if grep -q 'FATAL:' "${run_output}"; then
+        log_message "ERROR: Sysbench ${label} reported FATAL errors despite exit code 0"
         return 50
     fi
 }
