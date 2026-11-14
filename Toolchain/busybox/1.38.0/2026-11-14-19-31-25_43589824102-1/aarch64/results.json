@@ -1,0 +1,627 @@
+{
+  "benchmark": "busybox_applet_matrix",
+  "software": "busybox",
+  "version": "1.38.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T11:30:19Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "busybox_version": "1.38.0",
+    "build_configuration": "defconfig",
+    "cflags": "-O2 -DNDEBUG",
+    "build_parallel_jobs": 8,
+    "source_archive": "busybox-1.38.0.tar.bz2",
+    "source_sha256": "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+    "required_applets": "sort sha256sum grep tar gzip sed awk cut",
+    "sha256sum_arguments": 8,
+    "corpus_lines": 900000,
+    "corpus_bytes": 53259531,
+    "gzip_input_lines": 400000,
+    "gzip_input_bytes": 23667205,
+    "sort_input_lines": 1000000,
+    "sort_input_bytes": 14000000,
+    "tar_tree_files": 16000,
+    "tar_tree_bytes": 56000000,
+    "tar_archive_entries": 16001,
+    "expected_grep_matches": 87913,
+    "expected_awk_aggregate": 52359531,
+    "fixture_sha256": {
+      "corpus_text.txt": "bc19c8c081631054f1b9eeb00e7aaa216ca3f48464dd300adf19180f44d9ccc6",
+      "gzip_input.txt": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280",
+      "sort_input.txt": "8b1700b34099bc29eb860d4fc031bc4809d5518615da40ca12a4d0ec15e2ab3f",
+      "tar_tree": "db57e877c451b5c02265f5536b38605e47e80e76f6781d3adabbd4c18fd9997d"
+    },
+    "expected_output_sha256": {
+      "sed_substitute": "f95546057b16fc3117f1405029399152b1616790db86ba38ce8f748cd3ccc09f",
+      "cut_fields": "fc5000daaba27a9190e8ddd2379d5c0f5f6a57de75328ce03c32e35e4a0ec1ab",
+      "gzip_roundtrip": "5f13276f7e51af288bb732bf84e1c5bd5f7d5279ba3b66716f5e9f709eb28280"
+    }
+  },
+  "runtime_context": {
+    "c_compiler": "cc (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+    "measurement_network_mode": "unavailable",
+    "actual_version_string": "1.38.0",
+    "applet_count": 408
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "throughput": {
+      "unit": "MiB/s or lines/s",
+      "direction": "higher_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "sha256sum_hash_hash_mib_per_second": {
+      "source_name": "sha256sum_hash_hash_mib_per_second",
+      "scenario": "sha256sum_hash",
+      "group": "hashing",
+      "value": 206.811559,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 206.811559,
+      "mean": 206.024222,
+      "min": 202.651011,
+      "max": 207.409156,
+      "stdev": 1.921689,
+      "samples": [
+        206.811559,
+        206.883477,
+        202.651011,
+        207.409156,
+        206.365905
+      ]
+    },
+    "sha256sum_hash_wall_s": {
+      "source_name": "sha256sum_hash_wall_s",
+      "scenario": "sha256sum_hash",
+      "group": "hashing",
+      "value": 1.964774,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.964774,
+      "mean": 1.972421,
+      "min": 1.959113,
+      "max": 2.005112,
+      "stdev": 0.01861,
+      "samples": [
+        1.964774,
+        1.964091,
+        2.005112,
+        1.959113,
+        1.969017
+      ]
+    },
+    "sha256sum_hash_rss_mib": {
+      "source_name": "sha256sum_hash_rss_mib",
+      "scenario": "sha256sum_hash",
+      "group": "hashing",
+      "value": 1.703,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.703,
+      "mean": 1.7014,
+      "min": 1.691,
+      "max": 1.707,
+      "stdev": 0.006693,
+      "samples": [
+        1.707,
+        1.707,
+        1.691,
+        1.703,
+        1.699
+      ]
+    },
+    "sort_numeric_sorted_lines": {
+      "source_name": "sort_numeric_sorted_lines",
+      "scenario": "sort_numeric",
+      "group": "sorting",
+      "value": 1000000.0,
+      "unit": "lines",
+      "direction": "higher_is_better",
+      "median": 1000000.0,
+      "mean": 1000000.0,
+      "min": 1000000.0,
+      "max": 1000000.0,
+      "stdev": 0.0,
+      "samples": [
+        1000000.0,
+        1000000.0,
+        1000000.0,
+        1000000.0,
+        1000000.0
+      ]
+    },
+    "sort_numeric_sorted_lines_per_second": {
+      "source_name": "sort_numeric_sorted_lines_per_second",
+      "scenario": "sort_numeric",
+      "group": "sorting",
+      "value": 544261.524194,
+      "unit": "lines/s",
+      "direction": "higher_is_better",
+      "median": 544261.524194,
+      "mean": 544578.956314,
+      "min": 544229.238063,
+      "max": 545818.755424,
+      "stdev": 694.116277,
+      "samples": [
+        544229.238063,
+        544253.526355,
+        545818.755424,
+        544331.737534,
+        544261.524194
+      ]
+    },
+    "sort_numeric_wall_s": {
+      "source_name": "sort_numeric_wall_s",
+      "scenario": "sort_numeric",
+      "group": "sorting",
+      "value": 1.837352,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.837352,
+      "mean": 1.836283,
+      "min": 1.83211,
+      "max": 1.837461,
+      "stdev": 0.002337,
+      "samples": [
+        1.837461,
+        1.837379,
+        1.83211,
+        1.837115,
+        1.837352
+      ]
+    },
+    "sort_numeric_rss_mib": {
+      "source_name": "sort_numeric_rss_mib",
+      "scenario": "sort_numeric",
+      "group": "sorting",
+      "value": 47.488,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 47.488,
+      "mean": 47.485,
+      "min": 47.473,
+      "max": 47.488,
+      "stdev": 0.006708,
+      "samples": [
+        47.473,
+        47.488,
+        47.488,
+        47.488,
+        47.488
+      ]
+    },
+    "grep_count_matched_lines": {
+      "source_name": "grep_count_matched_lines",
+      "scenario": "grep_count",
+      "group": "text_scan",
+      "value": 87913.0,
+      "unit": "lines",
+      "direction": "higher_is_better",
+      "median": 87913.0,
+      "mean": 87913.0,
+      "min": 87913.0,
+      "max": 87913.0,
+      "stdev": 0.0,
+      "samples": [
+        87913.0,
+        87913.0,
+        87913.0,
+        87913.0,
+        87913.0
+      ]
+    },
+    "grep_count_scan_mib_per_second": {
+      "source_name": "grep_count_scan_mib_per_second",
+      "scenario": "grep_count",
+      "group": "text_scan",
+      "value": 106.232817,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 106.232817,
+      "mean": 105.992264,
+      "min": 105.023162,
+      "max": 106.241483,
+      "stdev": 0.541786,
+      "samples": [
+        105.023162,
+        106.239483,
+        106.232817,
+        106.241483,
+        106.224374
+      ]
+    },
+    "grep_count_wall_s": {
+      "source_name": "grep_count_wall_s",
+      "scenario": "grep_count",
+      "group": "text_scan",
+      "value": 0.478122,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.478122,
+      "mean": 0.479217,
+      "min": 0.478083,
+      "max": 0.483629,
+      "stdev": 0.002466,
+      "samples": [
+        0.483629,
+        0.478092,
+        0.478122,
+        0.478083,
+        0.47816
+      ]
+    },
+    "grep_count_rss_mib": {
+      "source_name": "grep_count_rss_mib",
+      "scenario": "grep_count",
+      "group": "text_scan",
+      "value": 1.652,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.652,
+      "mean": 1.6504,
+      "min": 1.648,
+      "max": 1.652,
+      "stdev": 0.002191,
+      "samples": [
+        1.648,
+        1.648,
+        1.652,
+        1.652,
+        1.652
+      ]
+    },
+    "sed_substitute_sed_mib_per_second": {
+      "source_name": "sed_substitute_sed_mib_per_second",
+      "scenario": "sed_substitute",
+      "group": "text_transform",
+      "value": 64.506119,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 64.506119,
+      "mean": 64.581262,
+      "min": 64.475903,
+      "max": 64.924988,
+      "stdev": 0.19263,
+      "samples": [
+        64.475903,
+        64.489411,
+        64.509887,
+        64.924988,
+        64.506119
+      ]
+    },
+    "sed_substitute_wall_s": {
+      "source_name": "sed_substitute_wall_s",
+      "scenario": "sed_substitute",
+      "group": "text_transform",
+      "value": 0.787402,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.787402,
+      "mean": 0.786491,
+      "min": 0.782322,
+      "max": 0.787771,
+      "stdev": 0.002337,
+      "samples": [
+        0.787771,
+        0.787606,
+        0.787356,
+        0.782322,
+        0.787402
+      ]
+    },
+    "sed_substitute_rss_mib": {
+      "source_name": "sed_substitute_rss_mib",
+      "scenario": "sed_substitute",
+      "group": "text_transform",
+      "value": 1.703,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.703,
+      "mean": 1.7046,
+      "min": 1.695,
+      "max": 1.711,
+      "stdev": 0.006693,
+      "samples": [
+        1.703,
+        1.703,
+        1.711,
+        1.711,
+        1.695
+      ]
+    },
+    "awk_aggregate_aggregate_mib_per_second": {
+      "source_name": "awk_aggregate_aggregate_mib_per_second",
+      "scenario": "awk_aggregate",
+      "group": "text_transform",
+      "value": 184.488427,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 184.488427,
+      "mean": 183.753621,
+      "min": 180.920151,
+      "max": 184.52462,
+      "stdev": 1.585507,
+      "samples": [
+        184.488427,
+        180.920151,
+        184.491778,
+        184.34313,
+        184.52462
+      ]
+    },
+    "awk_aggregate_aggregate_value": {
+      "source_name": "awk_aggregate_aggregate_value",
+      "scenario": "awk_aggregate",
+      "group": "text_transform",
+      "value": 52359531.0,
+      "unit": "bytes",
+      "direction": "higher_is_better",
+      "median": 52359531.0,
+      "mean": 52359531.0,
+      "min": 52359531.0,
+      "max": 52359531.0,
+      "stdev": 0.0,
+      "samples": [
+        52359531.0,
+        52359531.0,
+        52359531.0,
+        52359531.0,
+        52359531.0
+      ]
+    },
+    "awk_aggregate_wall_s": {
+      "source_name": "awk_aggregate_wall_s",
+      "scenario": "awk_aggregate",
+      "group": "text_transform",
+      "value": 0.275314,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.275314,
+      "mean": 0.276432,
+      "min": 0.27526,
+      "max": 0.280744,
+      "stdev": 0.002413,
+      "samples": [
+        0.275314,
+        0.280744,
+        0.275309,
+        0.275531,
+        0.27526
+      ]
+    },
+    "awk_aggregate_rss_mib": {
+      "source_name": "awk_aggregate_rss_mib",
+      "scenario": "awk_aggregate",
+      "group": "text_transform",
+      "value": 1.703,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.703,
+      "mean": 1.7046,
+      "min": 1.703,
+      "max": 1.707,
+      "stdev": 0.002191,
+      "samples": [
+        1.703,
+        1.707,
+        1.707,
+        1.703,
+        1.703
+      ]
+    },
+    "gzip_compress_gzip_mib_per_second": {
+      "source_name": "gzip_compress_gzip_mib_per_second",
+      "scenario": "gzip_compress",
+      "group": "compression",
+      "value": 19.931303,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 19.931303,
+      "mean": 19.897223,
+      "min": 19.843147,
+      "max": 19.93426,
+      "stdev": 0.049299,
+      "samples": [
+        19.843147,
+        19.931303,
+        19.93426,
+        19.934084,
+        19.843321
+      ]
+    },
+    "gzip_compress_wall_s": {
+      "source_name": "gzip_compress_wall_s",
+      "scenario": "gzip_compress",
+      "group": "compression",
+      "value": 1.13243,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.13243,
+      "mean": 1.134375,
+      "min": 1.132262,
+      "max": 1.137461,
+      "stdev": 0.002813,
+      "samples": [
+        1.137461,
+        1.13243,
+        1.132262,
+        1.132272,
+        1.137451
+      ]
+    },
+    "gzip_compress_rss_mib": {
+      "source_name": "gzip_compress_rss_mib",
+      "scenario": "gzip_compress",
+      "group": "compression",
+      "value": 1.805,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.805,
+      "mean": 1.8034,
+      "min": 1.801,
+      "max": 1.805,
+      "stdev": 0.002191,
+      "samples": [
+        1.801,
+        1.805,
+        1.805,
+        1.805,
+        1.801
+      ]
+    },
+    "tar_gzip_create_archive_entries": {
+      "source_name": "tar_gzip_create_archive_entries",
+      "scenario": "tar_gzip_create",
+      "group": "compression",
+      "value": 16001.0,
+      "unit": "files",
+      "direction": "higher_is_better",
+      "median": 16001.0,
+      "mean": 16001.0,
+      "min": 16001.0,
+      "max": 16001.0,
+      "stdev": 0.0,
+      "samples": [
+        16001.0,
+        16001.0,
+        16001.0,
+        16001.0,
+        16001.0
+      ]
+    },
+    "tar_gzip_create_archive_mib_per_second": {
+      "source_name": "tar_gzip_create_archive_mib_per_second",
+      "scenario": "tar_gzip_create",
+      "group": "compression",
+      "value": 32.976474,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 32.976474,
+      "mean": 32.975484,
+      "min": 32.970631,
+      "max": 32.977736,
+      "stdev": 0.002861,
+      "samples": [
+        32.970631,
+        32.977736,
+        32.975333,
+        32.977247,
+        32.976474
+      ]
+    },
+    "tar_gzip_create_wall_s": {
+      "source_name": "tar_gzip_create_wall_s",
+      "scenario": "tar_gzip_create",
+      "group": "compression",
+      "value": 1.619511,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.619511,
+      "mean": 1.61956,
+      "min": 1.619449,
+      "max": 1.619798,
+      "stdev": 0.000141,
+      "samples": [
+        1.619798,
+        1.619449,
+        1.619567,
+        1.619473,
+        1.619511
+      ]
+    },
+    "tar_gzip_create_rss_mib": {
+      "source_name": "tar_gzip_create_rss_mib",
+      "scenario": "tar_gzip_create",
+      "group": "compression",
+      "value": 1.914,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.914,
+      "mean": 1.9164,
+      "min": 1.91,
+      "max": 1.926,
+      "stdev": 0.006066,
+      "samples": [
+        1.918,
+        1.914,
+        1.926,
+        1.914,
+        1.91
+      ]
+    },
+    "cut_fields_cut_mib_per_second": {
+      "source_name": "cut_fields_cut_mib_per_second",
+      "scenario": "cut_fields",
+      "group": "text_transform",
+      "value": 117.453929,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 117.453929,
+      "mean": 117.451537,
+      "min": 116.084093,
+      "max": 118.83896,
+      "stdev": 0.974106,
+      "samples": [
+        117.425689,
+        118.83896,
+        117.455015,
+        116.084093,
+        117.453929
+      ]
+    },
+    "cut_fields_wall_s": {
+      "source_name": "cut_fields_wall_s",
+      "scenario": "cut_fields",
+      "group": "text_transform",
+      "value": 0.432444,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.432444,
+      "mean": 0.432477,
+      "min": 0.427404,
+      "max": 0.437547,
+      "stdev": 0.003586,
+      "samples": [
+        0.432548,
+        0.427404,
+        0.43244,
+        0.437547,
+        0.432444
+      ]
+    },
+    "cut_fields_rss_mib": {
+      "source_name": "cut_fields_rss_mib",
+      "scenario": "cut_fields",
+      "group": "text_transform",
+      "value": 1.883,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.883,
+      "mean": 1.8798,
+      "min": 1.867,
+      "max": 1.883,
+      "stdev": 0.007155,
+      "samples": [
+        1.883,
+        1.883,
+        1.867,
+        1.883,
+        1.883
+      ]
+    }
+  }
+}
