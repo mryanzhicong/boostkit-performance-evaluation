@@ -1,0 +1,695 @@
+{
+  "benchmark": "nextjs_workload_matrix",
+  "software": "nextjs",
+  "version": "16.4.3",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T10:54:31Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "statistic": "median of independent repetitions",
+    "offline": true,
+    "next_version": "16.4.3",
+    "react_version": "19.3.1",
+    "react_dom_version": "19.3.1",
+    "node_version": "22.23.4",
+    "next_engines_node": ">=20.9.0",
+    "npm_version": "10.9.9",
+    "registry_for_install": "https://mirrors.huaweicloud.com/repository/npm",
+    "dependency_manifest_sha256": "7261e3a14aed6fb8ea15450d27197bf8191c7e331e3bfe8a7a650dd516770030",
+    "dependency_lockfile_sha256": "cbd088bbb61a97c4e293795457c2390fd0cbd190f93dfa0f20cc62bc74c2e7fd",
+    "next_tarball_sha256": "d37409b7530c4873cd14c0619a7b8734777fd0dc2cae627bb592e5a82f74f8f4",
+    "next_tarball_sha512_integrity": "OqxKTGi9u80FydydsMNYNjnuje9Au+kvHlt2GZ//ftdpDHm1dxKqAaENoOOTX5wKzn+9vaKUNIfZeyZUuLhCnA==",
+    "telemetry_disabled": true,
+    "build_workers": 2,
+    "projects": {
+      "dynamic_500": {
+        "digest": "bf5c590d961f9b2bb1a5db8b373c8839fbc1b15d79640db43888f4cbf055127d",
+        "source_files": 6,
+        "expected_html_pages": 5
+      },
+      "routes_500": {
+        "digest": "58d6758b5caf997c047b434d67af97f5ac889516af5d0b69a277d4cad7354c34",
+        "source_files": 504,
+        "expected_html_pages": 505
+      },
+      "static_1000": {
+        "digest": "97c4d5b6f2257dff3a9a66e706024d565ea7ee279c811aac2ce028421b9e3871",
+        "source_files": 5,
+        "expected_html_pages": 1005
+      },
+      "static_3000": {
+        "digest": "a28f4c0669b10928fb6996a1143e4d950e4ea5fb2a436b478f039e5857c818b2",
+        "source_files": 5,
+        "expected_html_pages": 3005
+      }
+    },
+    "upstream_project": {
+      "project": "vercel/next.js examples/with-typescript",
+      "tag": "v16.4.3",
+      "files": 16,
+      "source_files": 14,
+      "manifest_sha256": "3b0450395b05455d32c0f52b68463d23bdd4bf3b3a759518a6275fc37dd43bb9"
+    },
+    "scenarios": {
+      "build_dynamic_500": {
+        "kind": "build",
+        "project": "dynamic_500",
+        "command": "next build",
+        "requests": 0
+      },
+      "build_incremental_1000": {
+        "kind": "build",
+        "project": "static_1000",
+        "command": "next build (warm .next/cache)",
+        "requests": 0
+      },
+      "build_routes_500": {
+        "kind": "build",
+        "project": "routes_500",
+        "command": "next build",
+        "requests": 0
+      },
+      "build_static_1000": {
+        "kind": "build",
+        "project": "static_1000",
+        "command": "next build",
+        "requests": 0
+      },
+      "build_static_3000": {
+        "kind": "build",
+        "project": "static_3000",
+        "command": "next build",
+        "requests": 0
+      },
+      "build_upstream": {
+        "kind": "build",
+        "project": "upstream",
+        "command": "next build",
+        "requests": 0
+      },
+      "serve_get_100_dynamic": {
+        "kind": "http",
+        "project": "dynamic_500",
+        "command": "next start + 100 serial loopback GET /dyn/item-42",
+        "requests": 100
+      },
+      "serve_get_100_static": {
+        "kind": "http",
+        "project": "static_1000",
+        "command": "next start + 100 serial loopback GET /items/item-999",
+        "requests": 100
+      },
+      "serve_startup_1000": {
+        "kind": "http",
+        "project": "static_1000",
+        "command": "next start + first loopback GET / (startup latency)",
+        "requests": 0
+      }
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "startup_latency": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "serial_request_latency": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "artifact_evidence": {
+    "build_dynamic_500": {
+      "project": "dynamic_500",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "KZdn860TY0er1XsrV_5NN",
+      "html_pages": 5,
+      "expected_html_pages": 5,
+      "dynamic_routes": 1,
+      "compile_ms_median": 4000.0
+    },
+    "build_incremental_1000": {
+      "project": "static_1000",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "VNOpT914hsuobJxLsn8U6",
+      "html_pages": 1005,
+      "expected_html_pages": 1005,
+      "compile_ms_median": 668.0,
+      "cache_reuse": {
+        "cold_compile_ms": 3000.0,
+        "warm_compile_ms": 668.0,
+        "ratio": 0.2227
+      }
+    },
+    "build_routes_500": {
+      "project": "routes_500",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "L7yJ3zn2eTPrfm3xpf10J",
+      "html_pages": 505,
+      "expected_html_pages": 505,
+      "compile_ms_median": 12300.0
+    },
+    "build_static_1000": {
+      "project": "static_1000",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "VNOpT914hsuobJxLsn8U6",
+      "html_pages": 1005,
+      "expected_html_pages": 1005,
+      "compile_ms_median": 3000.0
+    },
+    "build_static_3000": {
+      "project": "static_3000",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "Ye9EBOF4vmRWIHDPuRtVX",
+      "html_pages": 3005,
+      "expected_html_pages": 3005,
+      "compile_ms_median": 3000.0
+    },
+    "build_upstream": {
+      "project": "upstream",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "BBZyTj0vLMz2Ib2qV6vZ7",
+      "html_pages": 9,
+      "expected_html_pages": 9,
+      "dynamic_routes": 1,
+      "compile_ms_median": 2600.0
+    },
+    "serve_get_100_dynamic": {
+      "project": "dynamic_500",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "KZdn860TY0er1XsrV_5NN",
+      "html_pages": 5,
+      "expected_html_pages": 5
+    },
+    "serve_get_100_static": {
+      "project": "static_1000",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "VNOpT914hsuobJxLsn8U6",
+      "html_pages": 1005,
+      "expected_html_pages": 1005
+    },
+    "serve_startup_1000": {
+      "project": "static_1000",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "build_id": "VNOpT914hsuobJxLsn8U6",
+      "html_pages": 1005,
+      "expected_html_pages": 1005
+    }
+  },
+  "results": {
+    "build_dynamic_500": {
+      "source_name": "build_dynamic_500",
+      "scenario": "build_dynamic_500",
+      "project": "dynamic_500",
+      "source_files": 6,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 5.197076,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 5.197076,
+        "min": 4.055119,
+        "max": 5.470411,
+        "mean": 4.957877600000001,
+        "stdev": 0.4946020596223189
+      },
+      "samples": [
+        4.055119,
+        5.470411,
+        5.197076,
+        5.229442,
+        4.83734
+      ],
+      "workers": 2
+    },
+    "build_dynamic_500_rss": {
+      "source_name": "build_dynamic_500_rss",
+      "scenario": "build_dynamic_500",
+      "project": "dynamic_500",
+      "source_files": 6,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 2488.348,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 2488.348,
+        "min": 2404.352,
+        "max": 2530.094,
+        "mean": 2477.7198000000003,
+        "stdev": 42.781030330743604
+      },
+      "samples": [
+        2462.184,
+        2530.094,
+        2488.348,
+        2503.621,
+        2404.352
+      ]
+    },
+    "build_incremental_1000": {
+      "source_name": "build_incremental_1000",
+      "scenario": "build_incremental_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next build (warm .next/cache)",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 4.741681,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 4.741681,
+        "min": 4.484589,
+        "max": 5.307382,
+        "mean": 4.829021,
+        "stdev": 0.2722996024404002
+      },
+      "samples": [
+        4.741681,
+        4.891047,
+        4.720406,
+        4.484589,
+        5.307382
+      ],
+      "workers": 2
+    },
+    "build_incremental_1000_rss": {
+      "source_name": "build_incremental_1000_rss",
+      "scenario": "build_incremental_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next build (warm .next/cache)",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 4484.258,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 4484.258,
+        "min": 3343.109,
+        "max": 4652.602,
+        "mean": 4291.3578,
+        "stdev": 479.0236958599856
+      },
+      "samples": [
+        4451.156,
+        3343.109,
+        4652.602,
+        4484.258,
+        4525.664
+      ]
+    },
+    "build_routes_500": {
+      "source_name": "build_routes_500",
+      "scenario": "build_routes_500",
+      "project": "routes_500",
+      "source_files": 504,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 16.136777,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 16.136777,
+        "min": 11.976601,
+        "max": 16.966038,
+        "mean": 15.4778512,
+        "stdev": 1.807628470631551
+      },
+      "samples": [
+        16.966038,
+        11.976601,
+        16.136777,
+        16.661439,
+        15.648401
+      ],
+      "workers": 2
+    },
+    "build_routes_500_rss": {
+      "source_name": "build_routes_500_rss",
+      "scenario": "build_routes_500",
+      "project": "routes_500",
+      "source_files": 504,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 2771.48,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 2771.48,
+        "min": 2684.914,
+        "max": 2865.566,
+        "mean": 2763.1428,
+        "stdev": 64.5689853548899
+      },
+      "samples": [
+        2684.914,
+        2789.52,
+        2704.234,
+        2771.48,
+        2865.566
+      ]
+    },
+    "build_static_1000": {
+      "source_name": "build_static_1000",
+      "scenario": "build_static_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 7.223855,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 7.223855,
+        "min": 7.141447,
+        "max": 8.335857,
+        "mean": 7.454299800000001,
+        "stdev": 0.4459265912759186
+      },
+      "samples": [
+        8.335857,
+        7.351946,
+        7.141447,
+        7.218394,
+        7.223855
+      ],
+      "workers": 2
+    },
+    "build_static_1000_rss": {
+      "source_name": "build_static_1000_rss",
+      "scenario": "build_static_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 2524.008,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 2524.008,
+        "min": 2397.066,
+        "max": 2621.898,
+        "mean": 2524.0256,
+        "stdev": 89.01594679966067
+      },
+      "samples": [
+        2397.066,
+        2621.898,
+        2456.426,
+        2524.008,
+        2620.73
+      ]
+    },
+    "build_static_3000": {
+      "source_name": "build_static_3000",
+      "scenario": "build_static_3000",
+      "project": "static_3000",
+      "source_files": 5,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 12.266615,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 12.266615,
+        "min": 11.571595,
+        "max": 13.999694,
+        "mean": 12.5114576,
+        "stdev": 0.8397185700787138
+      },
+      "samples": [
+        11.958797,
+        12.266615,
+        13.999694,
+        12.760587,
+        11.571595
+      ],
+      "workers": 2
+    },
+    "build_static_3000_rss": {
+      "source_name": "build_static_3000_rss",
+      "scenario": "build_static_3000",
+      "project": "static_3000",
+      "source_files": 5,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 2500.059,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 2500.059,
+        "min": 2390.457,
+        "max": 2541.004,
+        "mean": 2488.0461999999998,
+        "stdev": 52.714340467846185
+      },
+      "samples": [
+        2483.266,
+        2541.004,
+        2390.457,
+        2525.445,
+        2500.059
+      ]
+    },
+    "build_upstream": {
+      "source_name": "build_upstream",
+      "scenario": "build_upstream",
+      "project": "upstream",
+      "source_files": 14,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 4.647524,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 4.647524,
+        "min": 4.07746,
+        "max": 4.935874,
+        "mean": 4.601379799999999,
+        "stdev": 0.3156830732214826
+      },
+      "samples": [
+        4.647524,
+        4.896075,
+        4.07746,
+        4.449966,
+        4.935874
+      ],
+      "workers": 2
+    },
+    "build_upstream_rss": {
+      "source_name": "build_upstream_rss",
+      "scenario": "build_upstream",
+      "project": "upstream",
+      "source_files": 14,
+      "command": "next build",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 2047.332,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 2047.332,
+        "min": 1867.625,
+        "max": 2124.0,
+        "mean": 2026.7376,
+        "stdev": 90.23634695753151
+      },
+      "samples": [
+        1867.625,
+        2047.332,
+        2095.641,
+        2124.0,
+        1999.09
+      ]
+    },
+    "serve_get_100_dynamic": {
+      "source_name": "serve_get_100_dynamic",
+      "scenario": "serve_get_100_dynamic",
+      "project": "dynamic_500",
+      "source_files": 6,
+      "command": "next start + 100 serial loopback GET /dyn/item-42",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 0.003148,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.003148,
+        "min": 0.003097,
+        "max": 0.003356,
+        "mean": 0.0031977999999999998,
+        "stdev": 9.746466026206627e-05
+      },
+      "samples": [
+        0.003356,
+        0.003097,
+        0.003124,
+        0.003264,
+        0.003148
+      ],
+      "serial_requests": 100
+    },
+    "serve_get_100_dynamic_rss": {
+      "source_name": "serve_get_100_dynamic_rss",
+      "scenario": "serve_get_100_dynamic",
+      "project": "dynamic_500",
+      "source_files": 6,
+      "command": "next start + 100 serial loopback GET /dyn/item-42",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 120.184,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 120.184,
+        "min": 117.188,
+        "max": 120.184,
+        "mean": 119.5848,
+        "stdev": 1.1983999999999981
+      },
+      "samples": [
+        120.184,
+        120.184,
+        120.184,
+        120.184,
+        117.188
+      ]
+    },
+    "serve_get_100_static": {
+      "source_name": "serve_get_100_static",
+      "scenario": "serve_get_100_static",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next start + 100 serial loopback GET /items/item-999",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 0.000943,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.000943,
+        "min": 0.000939,
+        "max": 0.000965,
+        "mean": 0.0009484000000000001,
+        "stdev": 9.329523031752498e-06
+      },
+      "samples": [
+        0.000943,
+        0.000965,
+        0.000952,
+        0.000939,
+        0.000943
+      ],
+      "serial_requests": 100
+    },
+    "serve_get_100_static_rss": {
+      "source_name": "serve_get_100_static_rss",
+      "scenario": "serve_get_100_static",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next start + 100 serial loopback GET /items/item-999",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 96.172,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 96.172,
+        "min": 87.184,
+        "max": 96.184,
+        "mean": 93.77919999999999,
+        "stdev": 3.495966498695318
+      },
+      "samples": [
+        93.18,
+        87.184,
+        96.176,
+        96.172,
+        96.184
+      ]
+    },
+    "serve_startup_1000": {
+      "source_name": "serve_startup_1000",
+      "scenario": "serve_startup_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next start + first loopback GET / (startup latency)",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 0.313945,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 0.313945,
+        "min": 0.312565,
+        "max": 0.316466,
+        "mean": 0.31453119999999996,
+        "stdev": 0.0014774570585976523
+      },
+      "samples": [
+        0.316466,
+        0.316017,
+        0.313945,
+        0.312565,
+        0.313663
+      ],
+      "startup_seconds_by_rep": [
+        0.316466,
+        0.316017,
+        0.313945,
+        0.312565,
+        0.313663
+      ]
+    },
+    "serve_startup_1000_rss": {
+      "source_name": "serve_startup_1000_rss",
+      "scenario": "serve_startup_1000",
+      "project": "static_1000",
+      "source_files": 5,
+      "command": "next start + first loopback GET / (startup latency)",
+      "native_backend": "@next/swc-linux-arm64-gnu",
+      "value": 81.184,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "statistics": {
+        "samples": 5,
+        "median": 81.184,
+        "min": 81.172,
+        "max": 84.184,
+        "mean": 82.3768,
+        "stdev": 1.4690544441919111
+      },
+      "samples": [
+        81.176,
+        81.184,
+        81.172,
+        84.168,
+        84.184
+      ]
+    }
+  }
+}
