@@ -1,0 +1,316 @@
+{
+  "benchmark": "scons_bench_and_build",
+  "software": "scons",
+  "version": "4.11.1",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T13:31:22Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "scenarios": [
+      "upstream_bench_is_types",
+      "upstream_bench_lvars_gvars",
+      "upstream_bench_dependency_func",
+      "scons_clean_100",
+      "scons_noop_100",
+      "scons_incremental_one_100"
+    ],
+    "extra_parameters": {
+      "c_file_count": 100,
+      "bench_scripts": [
+        "is_types.py",
+        "lvars-gvars.py",
+        "dependency-func.py"
+      ],
+      "scons_launcher": "python3 scripts/scons.py (run from the pinned source tree)"
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "upstream_bench_is_types__wall_seconds": {
+      "source_name": "upstream_bench_is_types__wall_seconds",
+      "scenario": "upstream_bench_is_types",
+      "description": "upstream bench/ harness: SCons is_types snippet timing",
+      "workload": "bench/is_types.py",
+      "value": 0.213863,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.213863,
+      "mean": 0.213868,
+      "min": 0.213846,
+      "max": 0.213893,
+      "stdev": 2.3e-05,
+      "samples": [
+        0.213893,
+        0.213891,
+        0.213863,
+        0.213846,
+        0.213848
+      ]
+    },
+    "upstream_bench_is_types__peak_rss_mib": {
+      "source_name": "upstream_bench_is_types__peak_rss_mib",
+      "scenario": "upstream_bench_is_types",
+      "description": "upstream bench/ harness: SCons is_types snippet timing",
+      "workload": "bench/is_types.py",
+      "value": 11.781,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.781,
+      "mean": 11.7842,
+      "min": 11.766,
+      "max": 11.812,
+      "stdev": 0.016843,
+      "samples": [
+        11.781,
+        11.812,
+        11.781,
+        11.781,
+        11.766
+      ]
+    },
+    "upstream_bench_lvars_gvars__wall_seconds": {
+      "source_name": "upstream_bench_lvars_gvars__wall_seconds",
+      "scenario": "upstream_bench_lvars_gvars",
+      "description": "upstream bench/ harness: LocalVariables/GlobalVariables snippet timing",
+      "workload": "bench/lvars-gvars.py",
+      "value": 0.16383,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.16383,
+      "mean": 0.16382,
+      "min": 0.163797,
+      "max": 0.163834,
+      "stdev": 1.8e-05,
+      "samples": [
+        0.163797,
+        0.163834,
+        0.163805,
+        0.163834,
+        0.16383
+      ]
+    },
+    "upstream_bench_lvars_gvars__peak_rss_mib": {
+      "source_name": "upstream_bench_lvars_gvars__peak_rss_mib",
+      "scenario": "upstream_bench_lvars_gvars",
+      "description": "upstream bench/ harness: LocalVariables/GlobalVariables snippet timing",
+      "workload": "bench/lvars-gvars.py",
+      "value": 11.77,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.77,
+      "mean": 11.7664,
+      "min": 11.758,
+      "max": 11.773,
+      "stdev": 0.007765,
+      "samples": [
+        11.773,
+        11.758,
+        11.77,
+        11.758,
+        11.773
+      ]
+    },
+    "upstream_bench_dependency_func__wall_seconds": {
+      "source_name": "upstream_bench_dependency_func__wall_seconds",
+      "scenario": "upstream_bench_dependency_func",
+      "description": "upstream bench/ harness: dependency function snippet timing",
+      "workload": "bench/dependency-func.py",
+      "value": 0.063689,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.063689,
+      "mean": 0.063697,
+      "min": 0.063682,
+      "max": 0.063719,
+      "stdev": 1.6e-05,
+      "samples": [
+        0.063708,
+        0.063689,
+        0.063719,
+        0.063687,
+        0.063682
+      ]
+    },
+    "upstream_bench_dependency_func__peak_rss_mib": {
+      "source_name": "upstream_bench_dependency_func__peak_rss_mib",
+      "scenario": "upstream_bench_dependency_func",
+      "description": "upstream bench/ harness: dependency function snippet timing",
+      "workload": "bench/dependency-func.py",
+      "value": 11.781,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.781,
+      "mean": 11.7802,
+      "min": 11.777,
+      "max": 11.785,
+      "stdev": 0.003347,
+      "samples": [
+        11.777,
+        11.781,
+        11.781,
+        11.785,
+        11.777
+      ]
+    },
+    "scons_clean_100__wall_seconds": {
+      "source_name": "scons_clean_100__wall_seconds",
+      "scenario": "scons_clean_100",
+      "description": "SCons clean build of the generated 100-file C project",
+      "workload": "100 generated C sources",
+      "value": 10.3762,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 10.3762,
+      "mean": 10.30598,
+      "min": 10.024737,
+      "max": 10.476448,
+      "stdev": 0.172458,
+      "samples": [
+        10.376541,
+        10.476448,
+        10.024737,
+        10.3762,
+        10.275975
+      ]
+    },
+    "scons_clean_100__peak_rss_mib": {
+      "source_name": "scons_clean_100__peak_rss_mib",
+      "scenario": "scons_clean_100",
+      "description": "SCons clean build of the generated 100-file C project",
+      "workload": "100 generated C sources",
+      "value": 31.863,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 31.863,
+      "mean": 31.863,
+      "min": 31.863,
+      "max": 31.863,
+      "stdev": 0.0,
+      "samples": [
+        31.863,
+        31.863,
+        31.863,
+        31.863,
+        31.863
+      ]
+    },
+    "scons_clean_100__files_per_second": {
+      "source_name": "scons_clean_100__files_per_second",
+      "scenario": "scons_clean_100",
+      "description": "SCons clean build of the generated 100-file C project",
+      "workload": "100 generated C sources",
+      "value": 9.63744,
+      "unit": "files/s",
+      "direction": "higher_is_better",
+      "median": 9.63744,
+      "mean": 9.705309,
+      "min": 9.54522,
+      "max": 9.975324,
+      "stdev": 0.164678,
+      "samples": [
+        9.637123,
+        9.54522,
+        9.975324,
+        9.63744,
+        9.731437
+      ]
+    },
+    "scons_noop_100__wall_seconds": {
+      "source_name": "scons_noop_100__wall_seconds",
+      "scenario": "scons_noop_100",
+      "description": "SCons no-op build of an up-to-date 100-file C project (idle incremental)",
+      "workload": "100 unchanged C sources",
+      "value": 0.414105,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.414105,
+      "mean": 0.414109,
+      "min": 0.4141,
+      "max": 0.414121,
+      "stdev": 9e-06,
+      "samples": [
+        0.414105,
+        0.414105,
+        0.4141,
+        0.414116,
+        0.414121
+      ]
+    },
+    "scons_noop_100__peak_rss_mib": {
+      "source_name": "scons_noop_100__peak_rss_mib",
+      "scenario": "scons_noop_100",
+      "description": "SCons no-op build of an up-to-date 100-file C project (idle incremental)",
+      "workload": "100 unchanged C sources",
+      "value": 26.785,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 26.785,
+      "mean": 26.781,
+      "min": 26.773,
+      "max": 26.789,
+      "stdev": 0.007483,
+      "samples": [
+        26.773,
+        26.773,
+        26.785,
+        26.789,
+        26.785
+      ]
+    },
+    "scons_incremental_one_100__wall_seconds": {
+      "source_name": "scons_incremental_one_100__wall_seconds",
+      "scenario": "scons_incremental_one_100",
+      "description": "SCons incremental build after modifying a single C source",
+      "workload": "100 C sources, 1 modified",
+      "value": 0.414128,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.414128,
+      "mean": 0.414125,
+      "min": 0.414096,
+      "max": 0.414155,
+      "stdev": 2.1e-05,
+      "samples": [
+        0.414117,
+        0.41413,
+        0.414128,
+        0.414096,
+        0.414155
+      ]
+    },
+    "scons_incremental_one_100__peak_rss_mib": {
+      "source_name": "scons_incremental_one_100__peak_rss_mib",
+      "scenario": "scons_incremental_one_100",
+      "description": "SCons incremental build after modifying a single C source",
+      "workload": "100 C sources, 1 modified",
+      "value": 26.785,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 26.785,
+      "mean": 26.7866,
+      "min": 26.781,
+      "max": 26.793,
+      "stdev": 0.004561,
+      "samples": [
+        26.785,
+        26.793,
+        26.785,
+        26.781,
+        26.789
+      ]
+    }
+  }
+}
