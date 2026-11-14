@@ -1,0 +1,836 @@
+{
+  "software": "php",
+  "category": "Toolchain",
+  "version": "8.5.12",
+  "architecture": "aarch64",
+  "run_id": "43586379029-1",
+  "status": "passed",
+  "cleanup_status": "passed",
+  "build_info": {
+    "recorded_at": "2026-11-14T10:43:01Z",
+    "category": "Toolchain",
+    "software": "php",
+    "requested_version": "8.5.12",
+    "actual_version": "8.5.12",
+    "architecture": "aarch64",
+    "run_id": "43586379029-1"
+  },
+  "parameters": {
+    "build_variant": {
+      "variant": "base",
+      "php_configure": "--disable-all --enable-cli --disable-opcache-jit"
+    },
+    "benchmark_result": {
+      "variant": "base",
+      "build_variant": {
+        "variant": "base"
+      },
+      "repetitions": 5,
+      "warmups": 1,
+      "offline": true,
+      "interpreter": "PHP 8.5.12 (CLI, Zend Engine, no FPM)",
+      "build": {
+        "configure": "--disable-all --enable-cli --disable-opcache-jit",
+        "compiler": "gcc -O2 (PHP default release flags)",
+        "opcache": "Zend OPcache embedded in the CLI binary, JIT disabled at configure time, opcache.enable_cli=0 for all scenarios",
+        "runtime_flags": "-n (no php.ini), -d memory_limit=512M"
+      },
+      "matrix": [
+        "cli_startup",
+        "compute_nbody_100000",
+        "compute_spectral_norm_400",
+        "compute_fannkuch_9",
+        "string_churn_400000",
+        "array_hash_400000",
+        "include_modules_1000",
+        "upstream_zend_bench",
+        "upstream_micro_bench"
+      ],
+      "dimensions": [
+        "compile",
+        "compute",
+        "hashing",
+        "startup",
+        "strings",
+        "upstream"
+      ],
+      "include_modules": 1000,
+      "upstream_benchmarks": "Zend/bench.php and Zend/micro_bench.php from the official php-8.5.12.tar.gz source tree",
+      "excluded_dimensions": [
+        "OPcache CLI toggle: PHP 8.5 embeds OPcache in the CLI, and enabling opcache.file_cache_only in a local probe changed include time from about 0.61 s to 0.18 s only after several cache-warming runs, with the first warmed runs at 0.97-1.51 s; the variance exceeds the 5-sample budget of this matrix, so it is documented instead of measured",
+        "composer install of a fixed project: composer and the dependency cache are not part of the offline pre-placed assets for this delivery"
+      ]
+    }
+  },
+  "parameter_signature": "a6c6e23f0187a94880a5ec1720f97858d81a80f17163455e0228b1cf7465adb0",
+  "test_tools": {
+    "php": {
+      "version": "8.5.12"
+    },
+    "php_source": {
+      "version": "php-8.5.12.tar.gz from https://www.php.net/distributions (official SHA-256 from the php.net releases JSON)"
+    },
+    "php_benchmarks": {
+      "version": "Zend/bench.php and Zend/micro_bench.php from the same official tarball plus repository-committed workloads, see benchmarks/ and README section 3"
+    }
+  },
+  "system_info": {
+    "collected_at": "2026-11-14T10:41:21Z",
+    "architecture": "aarch64",
+    "platform": "openEuler 24.03 (LTS-SP3)",
+    "kernel": "6.6.0-132.0.0.111.oe2403sp3.aarch64",
+    "cpu_model": "Kunpeng 950 7592C To Be Filled By O.E.M. CPU @ 2.3GHz",
+    "cpu_count": 384,
+    "python_version": "3.11.6",
+    "gcc_version": "12.3.1",
+    "glibc_version": "glibc 2.38",
+    "numa": "available: 4 nodes (0-3)\nnode 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95\nnode 0 size: 381404 MB\nnode 0 free: 376058 MB\nnode 1 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191\nnode 1 size: 387001 MB\nnode 1 free: 381436 MB\nnode 2 cpus: 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287\nnode 2 size: 387058 MB\nnode 2 free: 375993 MB\nnode 3 cpus: 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383\nnode 3 size: 386014 MB\nnode 3 free: 382147 MB\nnode distances:\nnode   0   1   2   3 \n  0:  10  15  20  20 \n  1:  15  10  20  20 \n  2:  20  20  10  15 \n  3:  20  20  15  10"
+  },
+  "runtime_before": {
+    "collected_at": "2026-11-14T10:41:21Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616357715968 24736505856 1589260509184  5294542848 14343860224 1591621210112\nSwap:     4294963200    27000832  4267962368",
+    "cpu_governor": "performance"
+  },
+  "runtime_after": {
+    "collected_at": "2026-11-14T10:43:59Z",
+    "memory": "total        used        free      shared  buff/cache   available\nMem:     1616357715968 25208823808 1588125650944  5296672768 15031775232 1591148892160\nSwap:     4294963200    27000832  4267962368",
+    "cpu_governor": "performance"
+  },
+  "sources": {
+    "build_variant": {
+      "variant": "base",
+      "parameters": {
+        "variant": "base",
+        "php_configure": "--disable-all --enable-cli --disable-opcache-jit"
+      }
+    },
+    "php_raw_output": {
+      "path": "raw-output.log",
+      "size": 6651
+    },
+    "benchmark_result": {
+      "benchmark": "php_workload_matrix",
+      "software": "php",
+      "version": "8.5.12",
+      "architecture": "aarch64",
+      "variant": "base",
+      "timestamp": "2026-11-14T10:43:28Z",
+      "parameters": {
+        "variant": "base",
+        "build_variant": {
+          "variant": "base"
+        },
+        "repetitions": 5,
+        "warmups": 1,
+        "offline": true,
+        "interpreter": "PHP 8.5.12 (CLI, Zend Engine, no FPM)",
+        "build": {
+          "configure": "--disable-all --enable-cli --disable-opcache-jit",
+          "compiler": "gcc -O2 (PHP default release flags)",
+          "opcache": "Zend OPcache embedded in the CLI binary, JIT disabled at configure time, opcache.enable_cli=0 for all scenarios",
+          "runtime_flags": "-n (no php.ini), -d memory_limit=512M"
+        },
+        "matrix": [
+          "cli_startup",
+          "compute_nbody_100000",
+          "compute_spectral_norm_400",
+          "compute_fannkuch_9",
+          "string_churn_400000",
+          "array_hash_400000",
+          "include_modules_1000",
+          "upstream_zend_bench",
+          "upstream_micro_bench"
+        ],
+        "dimensions": [
+          "compile",
+          "compute",
+          "hashing",
+          "startup",
+          "strings",
+          "upstream"
+        ],
+        "include_modules": 1000,
+        "upstream_benchmarks": "Zend/bench.php and Zend/micro_bench.php from the official php-8.5.12.tar.gz source tree",
+        "excluded_dimensions": [
+          "OPcache CLI toggle: PHP 8.5 embeds OPcache in the CLI, and enabling opcache.file_cache_only in a local probe changed include time from about 0.61 s to 0.18 s only after several cache-warming runs, with the first warmed runs at 0.97-1.51 s; the variance exceeds the 5-sample budget of this matrix, so it is documented instead of measured",
+          "composer install of a fixed project: composer and the dependency cache are not part of the offline pre-placed assets for this delivery"
+        ]
+      },
+      "inputs": {
+        "source": "https://www.php.net/distributions/php-8.5.12.tar.gz",
+        "source_sha256": "81a0f450349e84b08eb43faa85f8a4c835684f3cc1c50471775d1317a046c525",
+        "source_size": 24469403,
+        "upstream_benchmark_provenance": "Zend/bench.php, Zend/micro_bench.php (same official tarball, tag php-8.5.12)"
+      },
+      "metric_contract": {
+        "wall_time": {
+          "unit": "s",
+          "direction": "lower_is_better"
+        },
+        "peak_rss": {
+          "unit": "MiB",
+          "direction": "lower_is_better"
+        },
+        "statistic": "median of independent repetitions"
+      },
+      "scenarios": [
+        {
+          "scenario": "cli_startup",
+          "dimension": "startup",
+          "runner": "php_script",
+          "scale": 0,
+          "workload": "single-process CLI bootstrap plus one small file compilation",
+          "checks": [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1"
+          ]
+        },
+        {
+          "scenario": "compute_nbody_100000",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 100000,
+          "workload": "n-body energy after 100000 integration steps",
+          "checks": [
+            "-0.169228805296",
+            "-0.169228805296",
+            "-0.169228805296",
+            "-0.169228805296",
+            "-0.169228805296"
+          ]
+        },
+        {
+          "scenario": "compute_spectral_norm_400",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 400,
+          "workload": "10 A^T A power iterations at N=400",
+          "checks": [
+            "1.274224081392",
+            "1.274224081392",
+            "1.274224081392",
+            "1.274224081392",
+            "1.274224081392"
+          ]
+        },
+        {
+          "scenario": "compute_fannkuch_9",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 9,
+          "workload": "Heap permutation enumeration for n=9 (max flips x 1e6 + sum flips mod 1e6)",
+          "checks": [
+            "30911505",
+            "30911505",
+            "30911505",
+            "30911505",
+            "30911505"
+          ]
+        },
+        {
+          "scenario": "string_churn_400000",
+          "dimension": "strings",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 formatted strings, implode and crc32",
+          "checks": [
+            "1259483823",
+            "1259483823",
+            "1259483823",
+            "1259483823",
+            "1259483823"
+          ]
+        },
+        {
+          "scenario": "array_hash_400000",
+          "dimension": "hashing",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 string-keyed hash inserts, iteration and mutation",
+          "checks": [
+            "480001400000",
+            "480001400000",
+            "480001400000",
+            "480001400000",
+            "480001400000"
+          ]
+        },
+        {
+          "scenario": "include_modules_1000",
+          "dimension": "compile",
+          "runner": "php_script",
+          "scale": 1000,
+          "workload": "include 1000 generated modules of 100 functions and a 500-element array each",
+          "checks": [
+            "1075312348280",
+            "1075312348280",
+            "1075312348280",
+            "1075312348280",
+            "1075312348280"
+          ]
+        },
+        {
+          "scenario": "upstream_zend_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/bench.php from the official php-8.5.12 tarball",
+          "checks": [
+            "nestedloop",
+            "nestedloop",
+            "nestedloop",
+            "nestedloop",
+            "nestedloop"
+          ]
+        },
+        {
+          "scenario": "upstream_micro_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/micro_bench.php from the official php-8.5.12 tarball",
+          "checks": [
+            "undef_func()",
+            "undef_func()",
+            "undef_func()",
+            "undef_func()",
+            "undef_func()"
+          ]
+        }
+      ],
+      "results": {
+        "cli_startup": {
+          "source_name": "cli_startup",
+          "scenario": "cli_startup",
+          "dimension": "startup",
+          "runner": "php_script",
+          "scale": 0,
+          "workload": "single-process CLI bootstrap plus one small file compilation",
+          "value": 0.008456,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.008456,
+          "mean": 0.006923,
+          "min": 0.004504,
+          "max": 0.008585,
+          "stdev": 0.002181,
+          "samples": [
+            0.008456,
+            0.008506,
+            0.008585,
+            0.004504,
+            0.004565
+          ]
+        },
+        "cli_startup_rss": {
+          "source_name": "cli_startup_rss",
+          "scenario": "cli_startup",
+          "dimension": "startup",
+          "runner": "php_script",
+          "scale": 0,
+          "workload": "single-process CLI bootstrap plus one small file compilation",
+          "value": 9.066,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 9.066,
+          "mean": 9.0676,
+          "min": 9.066,
+          "max": 9.07,
+          "stdev": 0.002191,
+          "samples": [
+            9.066,
+            9.07,
+            9.066,
+            9.07,
+            9.066
+          ]
+        },
+        "compute_nbody_100000": {
+          "source_name": "compute_nbody_100000",
+          "scenario": "compute_nbody_100000",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 100000,
+          "workload": "n-body energy after 100000 integration steps",
+          "value": 0.265037,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.265037,
+          "mean": 0.265003,
+          "min": 0.264807,
+          "max": 0.265074,
+          "stdev": 0.000111,
+          "samples": [
+            0.264807,
+            0.265074,
+            0.265063,
+            0.265035,
+            0.265037
+          ]
+        },
+        "compute_nbody_100000_rss": {
+          "source_name": "compute_nbody_100000_rss",
+          "scenario": "compute_nbody_100000",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 100000,
+          "workload": "n-body energy after 100000 integration steps",
+          "value": 9.191,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 9.191,
+          "mean": 9.1904,
+          "min": 9.184,
+          "max": 9.195,
+          "stdev": 0.003975,
+          "samples": [
+            9.191,
+            9.191,
+            9.184,
+            9.195,
+            9.191
+          ]
+        },
+        "compute_spectral_norm_400": {
+          "source_name": "compute_spectral_norm_400",
+          "scenario": "compute_spectral_norm_400",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 400,
+          "workload": "10 A^T A power iterations at N=400",
+          "value": 0.315106,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.315106,
+          "mean": 0.315105,
+          "min": 0.315081,
+          "max": 0.31513,
+          "stdev": 1.8e-05,
+          "samples": [
+            0.315112,
+            0.31513,
+            0.315098,
+            0.315081,
+            0.315106
+          ]
+        },
+        "compute_spectral_norm_400_rss": {
+          "source_name": "compute_spectral_norm_400_rss",
+          "scenario": "compute_spectral_norm_400",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 400,
+          "workload": "10 A^T A power iterations at N=400",
+          "value": 9.191,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 9.191,
+          "mean": 9.1882,
+          "min": 9.18,
+          "max": 9.195,
+          "stdev": 0.006058,
+          "samples": [
+            9.195,
+            9.191,
+            9.191,
+            9.184,
+            9.18
+          ]
+        },
+        "compute_fannkuch_9": {
+          "source_name": "compute_fannkuch_9",
+          "scenario": "compute_fannkuch_9",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 9,
+          "workload": "Heap permutation enumeration for n=9 (max flips x 1e6 + sum flips mod 1e6)",
+          "value": 0.265067,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.265067,
+          "mean": 0.265016,
+          "min": 0.264802,
+          "max": 0.265108,
+          "stdev": 0.000123,
+          "samples": [
+            0.265108,
+            0.26507,
+            0.265034,
+            0.265067,
+            0.264802
+          ]
+        },
+        "compute_fannkuch_9_rss": {
+          "source_name": "compute_fannkuch_9_rss",
+          "scenario": "compute_fannkuch_9",
+          "dimension": "compute",
+          "runner": "php_script",
+          "scale": 9,
+          "workload": "Heap permutation enumeration for n=9 (max flips x 1e6 + sum flips mod 1e6)",
+          "value": 9.195,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 9.195,
+          "mean": 9.1912,
+          "min": 9.18,
+          "max": 9.195,
+          "stdev": 0.006496,
+          "samples": [
+            9.195,
+            9.195,
+            9.18,
+            9.191,
+            9.195
+          ]
+        },
+        "string_churn_400000": {
+          "source_name": "string_churn_400000",
+          "scenario": "string_churn_400000",
+          "dimension": "strings",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 formatted strings, implode and crc32",
+          "value": 0.064473,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.064473,
+          "mean": 0.064546,
+          "min": 0.064424,
+          "max": 0.064877,
+          "stdev": 0.000189,
+          "samples": [
+            0.064424,
+            0.064435,
+            0.064521,
+            0.064473,
+            0.064877
+          ]
+        },
+        "string_churn_400000_rss": {
+          "source_name": "string_churn_400000_rss",
+          "scenario": "string_churn_400000",
+          "dimension": "strings",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 formatted strings, implode and crc32",
+          "value": 151.93,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 151.93,
+          "mean": 151.9284,
+          "min": 151.922,
+          "max": 151.93,
+          "stdev": 0.003578,
+          "samples": [
+            151.93,
+            151.922,
+            151.93,
+            151.93,
+            151.93
+          ]
+        },
+        "array_hash_400000": {
+          "source_name": "array_hash_400000",
+          "scenario": "array_hash_400000",
+          "dimension": "hashing",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 string-keyed hash inserts, iteration and mutation",
+          "value": 0.064799,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.064799,
+          "mean": 0.064704,
+          "min": 0.06443,
+          "max": 0.064865,
+          "stdev": 0.000197,
+          "samples": [
+            0.064563,
+            0.06443,
+            0.064865,
+            0.064862,
+            0.064799
+          ]
+        },
+        "array_hash_400000_rss": {
+          "source_name": "array_hash_400000_rss",
+          "scenario": "array_hash_400000",
+          "dimension": "hashing",
+          "runner": "php_script",
+          "scale": 400000,
+          "workload": "400000 string-keyed hash inserts, iteration and mutation",
+          "value": 41.191,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 41.191,
+          "mean": 41.1898,
+          "min": 41.188,
+          "max": 41.191,
+          "stdev": 0.001643,
+          "samples": [
+            41.191,
+            41.188,
+            41.188,
+            41.191,
+            41.191
+          ]
+        },
+        "include_modules_1000": {
+          "source_name": "include_modules_1000",
+          "scenario": "include_modules_1000",
+          "dimension": "compile",
+          "runner": "php_script",
+          "scale": 1000,
+          "workload": "include 1000 generated modules of 100 functions and a 500-element array each",
+          "value": 0.365126,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.365126,
+          "mean": 0.365074,
+          "min": 0.364912,
+          "max": 0.365256,
+          "stdev": 0.000149,
+          "samples": [
+            0.365148,
+            0.364929,
+            0.365126,
+            0.365256,
+            0.364912
+          ]
+        },
+        "include_modules_1000_rss": {
+          "source_name": "include_modules_1000_rss",
+          "scenario": "include_modules_1000",
+          "dimension": "compile",
+          "runner": "php_script",
+          "scale": 1000,
+          "workload": "include 1000 generated modules of 100 functions and a 500-element array each",
+          "value": 126.316,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 126.316,
+          "mean": 126.3146,
+          "min": 126.309,
+          "max": 126.316,
+          "stdev": 0.00313,
+          "samples": [
+            126.316,
+            126.316,
+            126.316,
+            126.316,
+            126.309
+          ]
+        },
+        "upstream_zend_bench": {
+          "source_name": "upstream_zend_bench",
+          "scenario": "upstream_zend_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/bench.php from the official php-8.5.12 tarball",
+          "value": 0.314733,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 0.314733,
+          "mean": 0.31484,
+          "min": 0.314705,
+          "max": 0.315211,
+          "stdev": 0.000212,
+          "samples": [
+            0.314729,
+            0.314705,
+            0.314733,
+            0.315211,
+            0.314821
+          ]
+        },
+        "upstream_zend_bench_rss": {
+          "source_name": "upstream_zend_bench_rss",
+          "scenario": "upstream_zend_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/bench.php from the official php-8.5.12 tarball",
+          "value": 13.211,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 13.211,
+          "mean": 13.2126,
+          "min": 13.207,
+          "max": 13.219,
+          "stdev": 0.006066,
+          "samples": [
+            13.211,
+            13.207,
+            13.219,
+            13.219,
+            13.207
+          ]
+        },
+        "upstream_micro_bench": {
+          "source_name": "upstream_micro_bench",
+          "scenario": "upstream_micro_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/micro_bench.php from the official php-8.5.12 tarball",
+          "value": 1.766735,
+          "unit": "s",
+          "direction": "lower_is_better",
+          "median": 1.766735,
+          "mean": 1.776648,
+          "min": 1.766399,
+          "max": 1.816815,
+          "stdev": 0.022454,
+          "samples": [
+            1.766735,
+            1.816815,
+            1.766761,
+            1.766531,
+            1.766399
+          ]
+        },
+        "upstream_micro_bench_rss": {
+          "source_name": "upstream_micro_bench_rss",
+          "scenario": "upstream_micro_bench",
+          "dimension": "upstream",
+          "runner": "php_upstream_bench",
+          "scale": 0,
+          "workload": "php-src Zend/micro_bench.php from the official php-8.5.12 tarball",
+          "value": 9.195,
+          "unit": "MiB",
+          "direction": "lower_is_better",
+          "median": 9.195,
+          "mean": 9.195,
+          "min": 9.191,
+          "max": 9.199,
+          "stdev": 0.002828,
+          "samples": [
+            9.191,
+            9.195,
+            9.199,
+            9.195,
+            9.195
+          ]
+        }
+      }
+    },
+    "run_samples": {
+      "path": "runs",
+      "file_count": 108
+    }
+  },
+  "metrics": {
+    "cli_startup": {
+      "value": 0.008456,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "cli_startup"
+    },
+    "cli_startup_rss": {
+      "value": 9.066,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "cli_startup"
+    },
+    "compute_nbody_100000": {
+      "value": 0.265037,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "compute_nbody_100000"
+    },
+    "compute_nbody_100000_rss": {
+      "value": 9.191,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "compute_nbody_100000"
+    },
+    "compute_spectral_norm_400": {
+      "value": 0.315106,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "compute_spectral_norm_400"
+    },
+    "compute_spectral_norm_400_rss": {
+      "value": 9.191,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "compute_spectral_norm_400"
+    },
+    "compute_fannkuch_9": {
+      "value": 0.265067,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "compute_fannkuch_9"
+    },
+    "compute_fannkuch_9_rss": {
+      "value": 9.195,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "compute_fannkuch_9"
+    },
+    "string_churn_400000": {
+      "value": 0.064473,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "string_churn_400000"
+    },
+    "string_churn_400000_rss": {
+      "value": 151.93,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "string_churn_400000"
+    },
+    "array_hash_400000": {
+      "value": 0.064799,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "array_hash_400000"
+    },
+    "array_hash_400000_rss": {
+      "value": 41.191,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "array_hash_400000"
+    },
+    "include_modules_1000": {
+      "value": 0.365126,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "include_modules_1000"
+    },
+    "include_modules_1000_rss": {
+      "value": 126.316,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "include_modules_1000"
+    },
+    "upstream_zend_bench": {
+      "value": 0.314733,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_zend_bench"
+    },
+    "upstream_zend_bench_rss": {
+      "value": 13.211,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_zend_bench"
+    },
+    "upstream_micro_bench": {
+      "value": 1.766735,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "upstream_micro_bench"
+    },
+    "upstream_micro_bench_rss": {
+      "value": 9.195,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "group": "upstream_micro_bench"
+    }
+  }
+}
