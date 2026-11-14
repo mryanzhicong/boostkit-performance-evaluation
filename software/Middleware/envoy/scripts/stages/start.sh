@@ -123,11 +123,23 @@ admin:
 EOF
 }
 
+install_envoy_container_dependencies() {
+    local -a dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message "installing Envoy/k6 runtime dependencies inside the private container"
+    envoy_container_exec_root dnf "${dnf_options[@]}" install -y python3 bash libstdc++ || return 30
+}
+
 start_envoy_process() {
-    local name="$1" configuration="$2" pid_file="$3"
-    "${ENVOY_BIN}" --config-path "${configuration}" --disable-hot-restart \
-        > "${RUNTIME_DIR}/${name}.log" 2>&1 &
-    printf '%s\n' "$!" > "${pid_file}"
+    local name="$1" configuration="$2"
+    envoy_configure_container || return 40
+    docker exec -d --user "$(id -u):$(id -g)" \
+        --env "HOME=${ENVOY_CONTAINER_HOME}" \
+        --env "TMPDIR=${TMPDIR}" "${ENVOY_CONTAINER_NAME}" \
+        bash -c "exec '${ENVOY_BIN}' --config-path '${configuration}' --disable-hot-restart > '${RUNTIME_DIR}/${name}.log' 2>&1" || {
+        log_message "ERROR: failed to start the ${name} Envoy process inside the container"
+        return 40
+    }
 }
 
 wait_for_https_service() {
@@ -157,10 +169,12 @@ start_envoy_runtime() {
         log_message "ERROR: failed to generate isolated Envoy runtime configurations"
         return 40
     }
-    start_envoy_process backend "${RUNTIME_DIR}/backend.yaml" "${BACKEND_PID_FILE}"
-    start_envoy_process direct "${RUNTIME_DIR}/direct.yaml" "${DIRECT_PID_FILE}"
-    start_envoy_process proxy "${RUNTIME_DIR}/proxy.yaml" "${PROXY_PID_FILE}"
+    start_envoy_container || return $?
+    install_envoy_container_dependencies || return $?
+    start_envoy_process backend "${RUNTIME_DIR}/backend.yaml" || return $?
+    start_envoy_process direct "${RUNTIME_DIR}/direct.yaml" || return $?
+    start_envoy_process proxy "${RUNTIME_DIR}/proxy.yaml" || return $?
     wait_for_https_service 'https://127.0.0.1:19000/' || return $?
     wait_for_https_service 'https://127.0.0.1:19001/' || return $?
-    log_message "Envoy direct-response and reverse-proxy scenarios are ready"
+    log_message "Envoy direct-response and reverse-proxy scenarios are ready inside ${ENVOY_CONTAINER_NAME}"
 }
