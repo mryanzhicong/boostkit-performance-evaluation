@@ -1,0 +1,487 @@
+{
+  "benchmark": "maven_build_matrix",
+  "software": "maven",
+  "version": "3.10.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T08:30:15Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "command_flags": [
+      "-B",
+      "-o",
+      "-ntp",
+      "-Dstyle.color=never"
+    ],
+    "scales_classes": [
+      100,
+      1000,
+      10000
+    ],
+    "tasks": [
+      "clean_package",
+      "incremental_package",
+      "noop_package"
+    ],
+    "extra_scenarios": [
+      "maven_self_build"
+    ],
+    "jdk_release": "21.0.12"
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "clean_package_100": {
+      "source_name": "clean_package_100",
+      "scenario": "clean_package_100",
+      "task": "clean_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 2.066107,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.066107,
+      "mean": 2.046124,
+      "min": 1.966083,
+      "max": 2.116241,
+      "stdev": 0.05707,
+      "samples": [
+        2.066146,
+        1.966083,
+        2.116241,
+        2.066107,
+        2.016041
+      ]
+    },
+    "clean_package_100_rss": {
+      "source_name": "clean_package_100_rss",
+      "scenario": "clean_package_100",
+      "task": "clean_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 280.777,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 280.777,
+      "mean": 282.4212,
+      "min": 271.504,
+      "max": 298.43,
+      "stdev": 9.865425,
+      "samples": [
+        279.086,
+        298.43,
+        282.309,
+        280.777,
+        271.504
+      ]
+    },
+    "incremental_package_100": {
+      "source_name": "incremental_package_100",
+      "scenario": "incremental_package_100",
+      "task": "incremental_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 2.01609,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.01609,
+      "mean": 2.066118,
+      "min": 2.016017,
+      "max": 2.21631,
+      "stdev": 0.086718,
+      "samples": [
+        2.016017,
+        2.01609,
+        2.016024,
+        2.21631,
+        2.06615
+      ]
+    },
+    "incremental_package_100_rss": {
+      "source_name": "incremental_package_100_rss",
+      "scenario": "incremental_package_100",
+      "task": "incremental_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 271.867,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 271.867,
+      "mean": 274.1196,
+      "min": 262.711,
+      "max": 284.715,
+      "stdev": 8.518695,
+      "samples": [
+        284.715,
+        271.289,
+        280.016,
+        271.867,
+        262.711
+      ]
+    },
+    "noop_package_100": {
+      "source_name": "noop_package_100",
+      "scenario": "noop_package_100",
+      "task": "noop_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 1.565438,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.565438,
+      "mean": 1.535459,
+      "min": 1.465432,
+      "max": 1.565506,
+      "stdev": 0.04474,
+      "samples": [
+        1.515449,
+        1.465432,
+        1.565506,
+        1.565472,
+        1.565438
+      ]
+    },
+    "noop_package_100_rss": {
+      "source_name": "noop_package_100_rss",
+      "scenario": "noop_package_100",
+      "task": "noop_package",
+      "scale_classes": 100,
+      "workload": "generated single-module java project",
+      "value": 253.492,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 253.492,
+      "mean": 255.193,
+      "min": 244.203,
+      "max": 266.617,
+      "stdev": 10.771081,
+      "samples": [
+        245.602,
+        253.492,
+        266.617,
+        266.051,
+        244.203
+      ]
+    },
+    "clean_package_1000": {
+      "source_name": "clean_package_1000",
+      "scenario": "clean_package_1000",
+      "task": "clean_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 2.816994,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.816994,
+      "mean": 2.78694,
+      "min": 2.716774,
+      "max": 2.817027,
+      "stdev": 0.044824,
+      "samples": [
+        2.766904,
+        2.716774,
+        2.816994,
+        2.816999,
+        2.817027
+      ]
+    },
+    "clean_package_1000_rss": {
+      "source_name": "clean_package_1000_rss",
+      "scenario": "clean_package_1000",
+      "task": "clean_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 369.559,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 369.559,
+      "mean": 367.4742,
+      "min": 357.371,
+      "max": 372.406,
+      "stdev": 6.240015,
+      "samples": [
+        357.371,
+        372.199,
+        365.836,
+        372.406,
+        369.559
+      ]
+    },
+    "incremental_package_1000": {
+      "source_name": "incremental_package_1000",
+      "scenario": "incremental_package_1000",
+      "task": "incremental_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 2.767126,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.767126,
+      "mean": 2.787104,
+      "min": 2.766931,
+      "max": 2.866917,
+      "stdev": 0.044617,
+      "samples": [
+        2.866917,
+        2.766985,
+        2.767562,
+        2.767126,
+        2.766931
+      ]
+    },
+    "incremental_package_1000_rss": {
+      "source_name": "incremental_package_1000_rss",
+      "scenario": "incremental_package_1000",
+      "task": "incremental_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 374.547,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 374.547,
+      "mean": 375.8584,
+      "min": 360.121,
+      "max": 396.277,
+      "stdev": 14.523736,
+      "samples": [
+        360.121,
+        374.547,
+        396.277,
+        364.906,
+        383.441
+      ]
+    },
+    "noop_package_1000": {
+      "source_name": "noop_package_1000",
+      "scenario": "noop_package_1000",
+      "task": "noop_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 1.615506,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.615506,
+      "mean": 1.605587,
+      "min": 1.565805,
+      "max": 1.615601,
+      "stdev": 0.022239,
+      "samples": [
+        1.615478,
+        1.615546,
+        1.615506,
+        1.565805,
+        1.615601
+      ]
+    },
+    "noop_package_1000_rss": {
+      "source_name": "noop_package_1000_rss",
+      "scenario": "noop_package_1000",
+      "task": "noop_package",
+      "scale_classes": 1000,
+      "workload": "generated single-module java project",
+      "value": 265.898,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 265.898,
+      "mean": 262.101,
+      "min": 253.68,
+      "max": 265.977,
+      "stdev": 5.581629,
+      "samples": [
+        265.898,
+        265.938,
+        265.977,
+        259.012,
+        253.68
+      ]
+    },
+    "clean_package_10000": {
+      "source_name": "clean_package_10000",
+      "scenario": "clean_package_10000",
+      "task": "clean_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 5.620052,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 5.620052,
+      "mean": 5.610722,
+      "min": 5.521499,
+      "max": 5.671781,
+      "stdev": 0.065196,
+      "samples": [
+        5.620052,
+        5.671781,
+        5.670381,
+        5.521499,
+        5.569897
+      ]
+    },
+    "clean_package_10000_rss": {
+      "source_name": "clean_package_10000_rss",
+      "scenario": "clean_package_10000",
+      "task": "clean_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 988.715,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 988.715,
+      "mean": 1024.8374,
+      "min": 834.312,
+      "max": 1219.52,
+      "stdev": 161.336643,
+      "samples": [
+        922.285,
+        1159.355,
+        988.715,
+        1219.52,
+        834.312
+      ]
+    },
+    "incremental_package_10000": {
+      "source_name": "incremental_package_10000",
+      "scenario": "incremental_package_10000",
+      "task": "incremental_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 5.470198,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 5.470198,
+      "mean": 5.490145,
+      "min": 5.420049,
+      "max": 5.620043,
+      "stdev": 0.075794,
+      "samples": [
+        5.620043,
+        5.470198,
+        5.470115,
+        5.47032,
+        5.420049
+      ]
+    },
+    "incremental_package_10000_rss": {
+      "source_name": "incremental_package_10000_rss",
+      "scenario": "incremental_package_10000",
+      "task": "incremental_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 1351.371,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1351.371,
+      "mean": 1327.0726,
+      "min": 1247.027,
+      "max": 1384.434,
+      "stdev": 62.629789,
+      "samples": [
+        1378.23,
+        1247.027,
+        1274.301,
+        1351.371,
+        1384.434
+      ]
+    },
+    "noop_package_10000": {
+      "source_name": "noop_package_10000",
+      "scenario": "noop_package_10000",
+      "task": "noop_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 2.066193,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 2.066193,
+      "mean": 2.04619,
+      "min": 2.015981,
+      "max": 2.066292,
+      "stdev": 0.027473,
+      "samples": [
+        2.015981,
+        2.066276,
+        2.066292,
+        2.01621,
+        2.066193
+      ]
+    },
+    "noop_package_10000_rss": {
+      "source_name": "noop_package_10000_rss",
+      "scenario": "noop_package_10000",
+      "task": "noop_package",
+      "scale_classes": 10000,
+      "workload": "generated single-module java project",
+      "value": 276.953,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 276.953,
+      "mean": 276.4984,
+      "min": 265.805,
+      "max": 286.113,
+      "stdev": 8.604581,
+      "samples": [
+        283.48,
+        286.113,
+        270.141,
+        276.953,
+        265.805
+      ]
+    },
+    "maven_self_build": {
+      "source_name": "maven_self_build",
+      "scenario": "maven_self_build",
+      "task": "clean_package",
+      "scale_classes": null,
+      "workload": "upstream apache/maven source tree",
+      "value": 20.687504,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 20.687504,
+      "mean": 20.657458,
+      "min": 20.186683,
+      "max": 21.238566,
+      "stdev": 0.45155,
+      "samples": [
+        20.937639,
+        21.238566,
+        20.236898,
+        20.687504,
+        20.186683
+      ]
+    },
+    "maven_self_build_rss": {
+      "source_name": "maven_self_build_rss",
+      "scenario": "maven_self_build",
+      "task": "clean_package",
+      "scale_classes": null,
+      "workload": "upstream apache/maven source tree",
+      "value": 1815.336,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1815.336,
+      "mean": 1844.2774,
+      "min": 1780.043,
+      "max": 2001.238,
+      "stdev": 89.904232,
+      "samples": [
+        1831.047,
+        2001.238,
+        1793.723,
+        1780.043,
+        1815.336
+      ]
+    }
+  }
+}
