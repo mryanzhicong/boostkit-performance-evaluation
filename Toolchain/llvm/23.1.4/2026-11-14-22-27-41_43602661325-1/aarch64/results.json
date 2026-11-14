@@ -1,0 +1,614 @@
+{
+  "benchmark": "llvm_ir_pipeline",
+  "software": "llvm",
+  "version": "23.1.4",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T14:26:26Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "scenarios": [
+      "opt_o0_arith",
+      "opt_o2_arith",
+      "opt_o3_arith",
+      "opt_multi_pass_arith",
+      "opt_o2_mem",
+      "opt_o2_branch",
+      "llc_o0_arith",
+      "llc_o2_arith",
+      "pipeline_o2_arith"
+    ],
+    "extra_parameters": {
+      "ir_functions": 200,
+      "modules": [
+        "arith.ll",
+        "mem.ll",
+        "branch.ll"
+      ],
+      "native_target": "AArch64",
+      "jdk": null
+    }
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "opt_o0_arith__wall_seconds": {
+      "source_name": "opt_o0_arith__wall_seconds",
+      "scenario": "opt_o0_arith",
+      "description": "opt -O0 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 0.015505,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.015505,
+      "mean": 0.012288,
+      "min": 0.00745,
+      "max": 0.015517,
+      "stdev": 0.004412,
+      "samples": [
+        0.015505,
+        0.015507,
+        0.00745,
+        0.015517,
+        0.00746
+      ]
+    },
+    "opt_o0_arith__peak_rss_mib": {
+      "source_name": "opt_o0_arith__peak_rss_mib",
+      "scenario": "opt_o0_arith",
+      "description": "opt -O0 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 27.945,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 27.945,
+      "mean": 27.9414,
+      "min": 27.934,
+      "max": 27.945,
+      "stdev": 0.005128,
+      "samples": [
+        27.938,
+        27.945,
+        27.945,
+        27.945,
+        27.934
+      ]
+    },
+    "opt_o0_arith__functions_per_second": {
+      "source_name": "opt_o0_arith__functions_per_second",
+      "scenario": "opt_o0_arith",
+      "description": "opt -O0 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 12899.064818,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 12899.064818,
+      "mean": 18468.168887,
+      "min": 12889.089386,
+      "max": 26845.637584,
+      "stdev": 7631.133839,
+      "samples": [
+        12899.064818,
+        12897.401174,
+        26845.637584,
+        12889.089386,
+        26809.651475
+      ]
+    },
+    "opt_o2_arith__wall_seconds": {
+      "source_name": "opt_o2_arith__wall_seconds",
+      "scenario": "opt_o2_arith",
+      "description": "opt -O2 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 0.163748,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.163748,
+      "mean": 0.16378,
+      "min": 0.163736,
+      "max": 0.163911,
+      "stdev": 7.4e-05,
+      "samples": [
+        0.163748,
+        0.163736,
+        0.163755,
+        0.163911,
+        0.163748
+      ]
+    },
+    "opt_o2_arith__peak_rss_mib": {
+      "source_name": "opt_o2_arith__peak_rss_mib",
+      "scenario": "opt_o2_arith",
+      "description": "opt -O2 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 34.625,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 34.625,
+      "mean": 34.6258,
+      "min": 34.621,
+      "max": 34.633,
+      "stdev": 0.005215,
+      "samples": [
+        34.621,
+        34.633,
+        34.629,
+        34.621,
+        34.625
+      ]
+    },
+    "opt_o2_arith__functions_per_second": {
+      "source_name": "opt_o2_arith__functions_per_second",
+      "scenario": "opt_o2_arith",
+      "description": "opt -O2 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 1221.388964,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1221.388964,
+      "mean": 1221.153504,
+      "min": 1220.174363,
+      "max": 1221.478478,
+      "stdev": 0.549725,
+      "samples": [
+        1221.388964,
+        1221.478478,
+        1221.336753,
+        1220.174363,
+        1221.388964
+      ]
+    },
+    "opt_o3_arith__wall_seconds": {
+      "source_name": "opt_o3_arith__wall_seconds",
+      "scenario": "opt_o3_arith",
+      "description": "opt -O3 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 0.163762,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.163762,
+      "mean": 0.163762,
+      "min": 0.163755,
+      "max": 0.16377,
+      "stdev": 6e-06,
+      "samples": [
+        0.163765,
+        0.163756,
+        0.16377,
+        0.163755,
+        0.163762
+      ]
+    },
+    "opt_o3_arith__peak_rss_mib": {
+      "source_name": "opt_o3_arith__peak_rss_mib",
+      "scenario": "opt_o3_arith",
+      "description": "opt -O3 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 34.688,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 34.688,
+      "mean": 34.6838,
+      "min": 34.676,
+      "max": 34.691,
+      "stdev": 0.007225,
+      "samples": [
+        34.691,
+        34.688,
+        34.676,
+        34.676,
+        34.688
+      ]
+    },
+    "opt_o3_arith__functions_per_second": {
+      "source_name": "opt_o3_arith__functions_per_second",
+      "scenario": "opt_o3_arith",
+      "description": "opt -O3 over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 1221.284547,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1221.284547,
+      "mean": 1221.287532,
+      "min": 1221.224889,
+      "max": 1221.336753,
+      "stdev": 0.046752,
+      "samples": [
+        1221.262174,
+        1221.329295,
+        1221.224889,
+        1221.336753,
+        1221.284547
+      ]
+    },
+    "opt_multi_pass_arith__wall_seconds": {
+      "source_name": "opt_multi_pass_arith__wall_seconds",
+      "scenario": "opt_multi_pass_arith",
+      "description": "opt with default<O2>,loop-vectorize,instcombine,gvn,simplifycfg over arith.ll",
+      "workload": "arith.ll",
+      "value": 0.163773,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.163773,
+      "mean": 0.163789,
+      "min": 0.163764,
+      "max": 0.163819,
+      "stdev": 2.7e-05,
+      "samples": [
+        0.163819,
+        0.163817,
+        0.163771,
+        0.163773,
+        0.163764
+      ]
+    },
+    "opt_multi_pass_arith__peak_rss_mib": {
+      "source_name": "opt_multi_pass_arith__peak_rss_mib",
+      "scenario": "opt_multi_pass_arith",
+      "description": "opt with default<O2>,loop-vectorize,instcombine,gvn,simplifycfg over arith.ll",
+      "workload": "arith.ll",
+      "value": 50.539,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 50.539,
+      "mean": 50.5272,
+      "min": 50.453,
+      "max": 50.57,
+      "stdev": 0.04722,
+      "samples": [
+        50.57,
+        50.562,
+        50.539,
+        50.512,
+        50.453
+      ]
+    },
+    "opt_multi_pass_arith__functions_per_second": {
+      "source_name": "opt_multi_pass_arith__functions_per_second",
+      "scenario": "opt_multi_pass_arith",
+      "description": "opt with default<O2>,loop-vectorize,instcombine,gvn,simplifycfg over arith.ll",
+      "workload": "arith.ll",
+      "value": 1221.202518,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1221.202518,
+      "mean": 1221.08474,
+      "min": 1220.859607,
+      "max": 1221.269632,
+      "stdev": 0.20034,
+      "samples": [
+        1220.859607,
+        1220.874512,
+        1221.217432,
+        1221.202518,
+        1221.269632
+      ]
+    },
+    "opt_o2_mem__wall_seconds": {
+      "source_name": "opt_o2_mem__wall_seconds",
+      "scenario": "opt_o2_mem",
+      "description": "opt -O2 over the 200-function memory IR module",
+      "workload": "mem.ll",
+      "value": 0.113709,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.113709,
+      "mean": 0.113707,
+      "min": 0.113692,
+      "max": 0.113717,
+      "stdev": 9e-06,
+      "samples": [
+        0.113712,
+        0.113709,
+        0.113692,
+        0.113706,
+        0.113717
+      ]
+    },
+    "opt_o2_mem__peak_rss_mib": {
+      "source_name": "opt_o2_mem__peak_rss_mib",
+      "scenario": "opt_o2_mem",
+      "description": "opt -O2 over the 200-function memory IR module",
+      "workload": "mem.ll",
+      "value": 34.652,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 34.652,
+      "mean": 34.8384,
+      "min": 34.637,
+      "max": 35.598,
+      "stdev": 0.424759,
+      "samples": [
+        34.637,
+        34.664,
+        34.641,
+        34.652,
+        35.598
+      ]
+    },
+    "opt_o2_mem__functions_per_second": {
+      "source_name": "opt_o2_mem__functions_per_second",
+      "scenario": "opt_o2_mem",
+      "description": "opt -O2 over the 200-function memory IR module",
+      "workload": "mem.ll",
+      "value": 1758.875727,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1758.875727,
+      "mean": 1758.90358,
+      "min": 1758.75199,
+      "max": 1759.138726,
+      "stdev": 0.145694,
+      "samples": [
+        1758.829323,
+        1758.875727,
+        1759.138726,
+        1758.922133,
+        1758.75199
+      ]
+    },
+    "opt_o2_branch__wall_seconds": {
+      "source_name": "opt_o2_branch__wall_seconds",
+      "scenario": "opt_o2_branch",
+      "description": "opt -O2 over the 200-function branchy IR module",
+      "workload": "branch.ll",
+      "value": 0.163762,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.163762,
+      "mean": 0.163762,
+      "min": 0.163752,
+      "max": 0.163771,
+      "stdev": 7e-06,
+      "samples": [
+        0.163766,
+        0.163752,
+        0.163771,
+        0.163762,
+        0.163759
+      ]
+    },
+    "opt_o2_branch__peak_rss_mib": {
+      "source_name": "opt_o2_branch__peak_rss_mib",
+      "scenario": "opt_o2_branch",
+      "description": "opt -O2 over the 200-function branchy IR module",
+      "workload": "branch.ll",
+      "value": 35.316,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 35.316,
+      "mean": 35.318,
+      "min": 35.305,
+      "max": 35.34,
+      "stdev": 0.01362,
+      "samples": [
+        35.316,
+        35.34,
+        35.305,
+        35.309,
+        35.32
+      ]
+    },
+    "opt_o2_branch__functions_per_second": {
+      "source_name": "opt_o2_branch__functions_per_second",
+      "scenario": "opt_o2_branch",
+      "description": "opt -O2 over the 200-function branchy IR module",
+      "workload": "branch.ll",
+      "value": 1221.284547,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1221.284547,
+      "mean": 1221.284549,
+      "min": 1221.217432,
+      "max": 1221.359128,
+      "stdev": 0.053519,
+      "samples": [
+        1221.254717,
+        1221.359128,
+        1221.217432,
+        1221.284547,
+        1221.306921
+      ]
+    },
+    "llc_o0_arith__wall_seconds": {
+      "source_name": "llc_o0_arith__wall_seconds",
+      "scenario": "llc_o0_arith",
+      "description": "llc -O0 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 0.031589,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.031589,
+      "mean": 0.031599,
+      "min": 0.031583,
+      "max": 0.031642,
+      "stdev": 2.4e-05,
+      "samples": [
+        0.031588,
+        0.031589,
+        0.031583,
+        0.031642,
+        0.031594
+      ]
+    },
+    "llc_o0_arith__peak_rss_mib": {
+      "source_name": "llc_o0_arith__peak_rss_mib",
+      "scenario": "llc_o0_arith",
+      "description": "llc -O0 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 31.875,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 31.875,
+      "mean": 31.875,
+      "min": 31.875,
+      "max": 31.875,
+      "stdev": 0.0,
+      "samples": [
+        31.875,
+        31.875,
+        31.875,
+        31.875,
+        31.875
+      ]
+    },
+    "llc_o0_arith__functions_per_second": {
+      "source_name": "llc_o0_arith__functions_per_second",
+      "scenario": "llc_o0_arith",
+      "description": "llc -O0 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 6331.317864,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 6331.317864,
+      "mean": 6329.277136,
+      "min": 6320.712976,
+      "max": 6332.52066,
+      "stdev": 4.851074,
+      "samples": [
+        6331.518298,
+        6331.317864,
+        6332.52066,
+        6320.712976,
+        6330.315883
+      ]
+    },
+    "llc_o2_arith__wall_seconds": {
+      "source_name": "llc_o2_arith__wall_seconds",
+      "scenario": "llc_o2_arith",
+      "description": "llc -O2 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 0.163779,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.163779,
+      "mean": 0.163789,
+      "min": 0.163771,
+      "max": 0.163819,
+      "stdev": 2.2e-05,
+      "samples": [
+        0.163819,
+        0.163806,
+        0.163779,
+        0.163771,
+        0.163771
+      ]
+    },
+    "llc_o2_arith__peak_rss_mib": {
+      "source_name": "llc_o2_arith__peak_rss_mib",
+      "scenario": "llc_o2_arith",
+      "description": "llc -O2 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 43.973,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 43.973,
+      "mean": 43.976,
+      "min": 43.965,
+      "max": 43.992,
+      "stdev": 0.00995,
+      "samples": [
+        43.977,
+        43.965,
+        43.973,
+        43.992,
+        43.973
+      ]
+    },
+    "llc_o2_arith__functions_per_second": {
+      "source_name": "llc_o2_arith__functions_per_second",
+      "scenario": "llc_o2_arith",
+      "description": "llc -O2 (code generation) over the 200-function integer IR module",
+      "workload": "arith.ll",
+      "value": 1221.15778,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 1221.15778,
+      "mean": 1221.08175,
+      "min": 1220.859607,
+      "max": 1221.217432,
+      "stdev": 0.164039,
+      "samples": [
+        1220.859607,
+        1220.956497,
+        1221.15778,
+        1221.217432,
+        1221.217432
+      ]
+    },
+    "pipeline_o2_arith__wall_seconds": {
+      "source_name": "pipeline_o2_arith__wall_seconds",
+      "scenario": "pipeline_o2_arith",
+      "description": "opt -O2 then llc -O2 in one measured pipeline",
+      "workload": "arith.ll",
+      "value": 0.314003,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.314003,
+      "mean": 0.314032,
+      "min": 0.31399,
+      "max": 0.314147,
+      "stdev": 6.5e-05,
+      "samples": [
+        0.314003,
+        0.314001,
+        0.314147,
+        0.31399,
+        0.314021
+      ]
+    },
+    "pipeline_o2_arith__peak_rss_mib": {
+      "source_name": "pipeline_o2_arith__peak_rss_mib",
+      "scenario": "pipeline_o2_arith",
+      "description": "opt -O2 then llc -O2 in one measured pipeline",
+      "workload": "arith.ll",
+      "value": 43.984,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 43.984,
+      "mean": 43.982,
+      "min": 43.965,
+      "max": 44.0,
+      "stdev": 0.012708,
+      "samples": [
+        43.984,
+        43.977,
+        43.984,
+        44.0,
+        43.965
+      ]
+    },
+    "pipeline_o2_arith__functions_per_second": {
+      "source_name": "pipeline_o2_arith__functions_per_second",
+      "scenario": "pipeline_o2_arith",
+      "description": "opt -O2 then llc -O2 in one measured pipeline",
+      "workload": "arith.ll",
+      "value": 636.93659,
+      "unit": "functions/s",
+      "direction": "higher_is_better",
+      "median": 636.93659,
+      "mean": 636.876981,
+      "min": 636.644628,
+      "max": 636.962961,
+      "stdev": 0.131834,
+      "samples": [
+        636.93659,
+        636.940647,
+        636.644628,
+        636.962961,
+        636.90008
+      ]
+    }
+  }
+}
