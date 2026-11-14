@@ -1,0 +1,619 @@
+{
+  "benchmark": "apr_util_base64_matrix",
+  "software": "apr-util",
+  "version": "1.6.5",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T12:35:03Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "apr_util_version": "1.6.5",
+    "apr_version": "1.7.5",
+    "build_target": "static",
+    "optimization": "-O2 -DNDEBUG",
+    "harness_cflags": "-O2 -std=c99 -Wall -Wextra",
+    "build_parallel_jobs": 8,
+    "configure_options": [
+      "--disable-shared",
+      "--enable-static",
+      "--without-ldap",
+      "--without-mysql",
+      "--without-pgsql",
+      "--without-sqlite3",
+      "--without-sqlite2",
+      "--without-odbc",
+      "--without-oracle",
+      "--without-openssl",
+      "--without-crypto",
+      "--without-gdbm",
+      "--without-ndbm",
+      "--without-berkeley-db"
+    ],
+    "apr_source_archive": "apr-1.7.5.tar.bz2",
+    "apr_source_sha256": "cd0f5d52b9ab1704c72160c5ee3ed5d3d4ca2df4a7f8ab564e3cb352b67232f2",
+    "apr_util_source_archive": "apr-util-1.6.5.tar.bz2",
+    "apr_util_source_sha256": "96de1dd6f6a0476d2d2e7964926d8c1ddc3bb0e210e1b1812d3ba5a454a392e2",
+    "upstream_expected_test_modules": 19,
+    "payload_bytes": {
+      "64B": 64,
+      "1KIB": 1024,
+      "64KIB": 65536,
+      "1MIB": 1048576
+    },
+    "base64_loops": {
+      "ENCODE_64B": 20000000,
+      "ENCODE_1KIB": 1000000,
+      "ENCODE_64KIB": 24000,
+      "ENCODE_1MIB": 1200,
+      "DECODE_64B": 16000000,
+      "DECODE_1KIB": 800000,
+      "DECODE_64KIB": 15000,
+      "DECODE_1MIB": 800
+    }
+  },
+  "runtime_context": {
+    "c_compiler": "cc (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+    "measurement_network_mode": "unavailable",
+    "actual_version_string": "1.6.5"
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "throughput": {
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "base64_encode_64b_mib_per_second": {
+      "source_name": "base64_encode_64b_mib_per_second",
+      "scenario": "base64_encode_64b",
+      "group": "base64_encode",
+      "value": 1779.354649,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 1779.354649,
+      "mean": 1779.355696,
+      "min": 1779.152365,
+      "max": 1779.523253,
+      "stdev": 0.14918,
+      "samples": [
+        1779.523253,
+        1779.276842,
+        1779.152365,
+        1779.354649,
+        1779.471371
+      ]
+    },
+    "base64_encode_64b_wall_s": {
+      "source_name": "base64_encode_64b_wall_s",
+      "scenario": "base64_encode_64b",
+      "group": "base64_encode",
+      "value": 0.686037,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.686037,
+      "mean": 0.686037,
+      "min": 0.685972,
+      "max": 0.686115,
+      "stdev": 5.8e-05,
+      "samples": [
+        0.685972,
+        0.686067,
+        0.686115,
+        0.686037,
+        0.685992
+      ]
+    },
+    "base64_encode_64b_rss_mib": {
+      "source_name": "base64_encode_64b_rss_mib",
+      "scenario": "base64_encode_64b",
+      "group": "base64_encode",
+      "value": 1.289,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.289,
+      "mean": 1.2874,
+      "min": 1.285,
+      "max": 1.289,
+      "stdev": 0.002191,
+      "samples": [
+        1.285,
+        1.289,
+        1.285,
+        1.289,
+        1.289
+      ]
+    },
+    "base64_encode_1kib_mib_per_second": {
+      "source_name": "base64_encode_1kib_mib_per_second",
+      "scenario": "base64_encode_1kib",
+      "group": "base64_encode",
+      "value": 1881.688575,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 1881.688575,
+      "mean": 1861.288525,
+      "min": 1795.019668,
+      "max": 1882.726105,
+      "stdev": 37.831519,
+      "samples": [
+        1864.583393,
+        1881.688575,
+        1882.424886,
+        1882.726105,
+        1795.019668
+      ]
+    },
+    "base64_encode_1kib_wall_s": {
+      "source_name": "base64_encode_1kib_wall_s",
+      "scenario": "base64_encode_1kib",
+      "group": "base64_encode",
+      "value": 0.518982,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.518982,
+      "mean": 0.524848,
+      "min": 0.518696,
+      "max": 0.54404,
+      "stdev": 0.010939,
+      "samples": [
+        0.523743,
+        0.518982,
+        0.518779,
+        0.518696,
+        0.54404
+      ]
+    },
+    "base64_encode_1kib_rss_mib": {
+      "source_name": "base64_encode_1kib_rss_mib",
+      "scenario": "base64_encode_1kib",
+      "group": "base64_encode",
+      "value": 1.285,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.285,
+      "mean": 1.285,
+      "min": 1.277,
+      "max": 1.289,
+      "stdev": 0.004899,
+      "samples": [
+        1.277,
+        1.289,
+        1.285,
+        1.289,
+        1.285
+      ]
+    },
+    "base64_encode_64kib_mib_per_second": {
+      "source_name": "base64_encode_64kib_mib_per_second",
+      "scenario": "base64_encode_64kib",
+      "group": "base64_encode",
+      "value": 1892.622683,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 1892.622683,
+      "mean": 1895.047024,
+      "min": 1892.484188,
+      "max": 1904.696601,
+      "stdev": 5.395513,
+      "samples": [
+        1892.622683,
+        1892.484188,
+        1892.808966,
+        1904.696601,
+        1892.622683
+      ]
+    },
+    "base64_encode_64kib_wall_s": {
+      "source_name": "base64_encode_64kib_wall_s",
+      "scenario": "base64_encode_64kib",
+      "group": "base64_encode",
+      "value": 0.792551,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.792551,
+      "mean": 0.791542,
+      "min": 0.787527,
+      "max": 0.792609,
+      "stdev": 0.002245,
+      "samples": [
+        0.792551,
+        0.792609,
+        0.792473,
+        0.787527,
+        0.792551
+      ]
+    },
+    "base64_encode_64kib_rss_mib": {
+      "source_name": "base64_encode_64kib_rss_mib",
+      "scenario": "base64_encode_64kib",
+      "group": "base64_encode",
+      "value": 1.555,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.555,
+      "mean": 1.555,
+      "min": 1.551,
+      "max": 1.559,
+      "stdev": 0.002828,
+      "samples": [
+        1.559,
+        1.551,
+        1.555,
+        1.555,
+        1.555
+      ]
+    },
+    "base64_encode_1mib_mib_per_second": {
+      "source_name": "base64_encode_1mib_mib_per_second",
+      "scenario": "base64_encode_1mib",
+      "group": "base64_encode",
+      "value": 1888.743561,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 1888.743561,
+      "mean": 1888.688885,
+      "min": 1888.407695,
+      "max": 1888.918972,
+      "stdev": 0.227701,
+      "samples": [
+        1888.496851,
+        1888.877346,
+        1888.407695,
+        1888.918972,
+        1888.743561
+      ]
+    },
+    "base64_encode_1mib_wall_s": {
+      "source_name": "base64_encode_1mib_wall_s",
+      "scenario": "base64_encode_1mib",
+      "group": "base64_encode",
+      "value": 0.635343,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.635343,
+      "mean": 0.635361,
+      "min": 0.635284,
+      "max": 0.635456,
+      "stdev": 7.7e-05,
+      "samples": [
+        0.635426,
+        0.635298,
+        0.635456,
+        0.635284,
+        0.635343
+      ]
+    },
+    "base64_encode_1mib_rss_mib": {
+      "source_name": "base64_encode_1mib_rss_mib",
+      "scenario": "base64_encode_1mib",
+      "group": "base64_encode",
+      "value": 4.57,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 4.57,
+      "mean": 4.5656,
+      "min": 4.555,
+      "max": 4.574,
+      "stdev": 0.008142,
+      "samples": [
+        4.57,
+        4.574,
+        4.57,
+        4.559,
+        4.555
+      ]
+    },
+    "base64_decode_64b_mib_per_second": {
+      "source_name": "base64_decode_64b_mib_per_second",
+      "scenario": "base64_decode_64b",
+      "group": "base64_decode",
+      "value": 886.220315,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 886.220315,
+      "mean": 885.415736,
+      "min": 882.192594,
+      "max": 886.226749,
+      "stdev": 1.801797,
+      "samples": [
+        886.214685,
+        882.192594,
+        886.220315,
+        886.226749,
+        886.224336
+      ]
+    },
+    "base64_decode_64b_wall_s": {
+      "source_name": "base64_decode_64b_wall_s",
+      "scenario": "base64_decode_64b",
+      "group": "base64_decode",
+      "value": 1.101941,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.101941,
+      "mean": 1.102946,
+      "min": 1.101933,
+      "max": 1.106972,
+      "stdev": 0.002251,
+      "samples": [
+        1.101948,
+        1.106972,
+        1.101941,
+        1.101933,
+        1.101936
+      ]
+    },
+    "base64_decode_64b_rss_mib": {
+      "source_name": "base64_decode_64b_rss_mib",
+      "scenario": "base64_decode_64b",
+      "group": "base64_decode",
+      "value": 1.289,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.289,
+      "mean": 1.2866,
+      "min": 1.281,
+      "max": 1.289,
+      "stdev": 0.003578,
+      "samples": [
+        1.289,
+        1.285,
+        1.289,
+        1.281,
+        1.289
+      ]
+    },
+    "base64_decode_1kib_mib_per_second": {
+      "source_name": "base64_decode_1kib_mib_per_second",
+      "scenario": "base64_decode_1kib",
+      "group": "base64_decode",
+      "value": 909.969774,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 909.969774,
+      "mean": 908.923668,
+      "min": 904.602502,
+      "max": 910.047154,
+      "stdev": 2.415899,
+      "samples": [
+        909.969774,
+        904.602502,
+        909.963415,
+        910.047154,
+        910.035493
+      ]
+    },
+    "base64_decode_1kib_wall_s": {
+      "source_name": "base64_decode_1kib_wall_s",
+      "scenario": "base64_decode_1kib",
+      "group": "base64_decode",
+      "value": 0.858545,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.858545,
+      "mean": 0.859538,
+      "min": 0.858472,
+      "max": 0.863639,
+      "stdev": 0.002293,
+      "samples": [
+        0.858545,
+        0.863639,
+        0.858551,
+        0.858472,
+        0.858483
+      ]
+    },
+    "base64_decode_1kib_rss_mib": {
+      "source_name": "base64_decode_1kib_rss_mib",
+      "scenario": "base64_decode_1kib",
+      "group": "base64_decode",
+      "value": 1.285,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.285,
+      "mean": 1.2858,
+      "min": 1.285,
+      "max": 1.289,
+      "stdev": 0.001789,
+      "samples": [
+        1.289,
+        1.285,
+        1.285,
+        1.285,
+        1.285
+      ]
+    },
+    "base64_decode_64kib_mib_per_second": {
+      "source_name": "base64_decode_64kib_mib_per_second",
+      "scenario": "base64_decode_64kib",
+      "group": "base64_decode",
+      "value": 909.363387,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 909.363387,
+      "mean": 909.269262,
+      "min": 908.780712,
+      "max": 909.472777,
+      "stdev": 0.281972,
+      "samples": [
+        909.363387,
+        909.472777,
+        909.291063,
+        909.43837,
+        908.780712
+      ]
+    },
+    "base64_decode_64kib_wall_s": {
+      "source_name": "base64_decode_64kib_wall_s",
+      "scenario": "base64_decode_64kib",
+      "group": "base64_decode",
+      "value": 1.030941,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.030941,
+      "mean": 1.031048,
+      "min": 1.030817,
+      "max": 1.031602,
+      "stdev": 0.00032,
+      "samples": [
+        1.030941,
+        1.030817,
+        1.031023,
+        1.030856,
+        1.031602
+      ]
+    },
+    "base64_decode_64kib_rss_mib": {
+      "source_name": "base64_decode_64kib_rss_mib",
+      "scenario": "base64_decode_64kib",
+      "group": "base64_decode",
+      "value": 1.617,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 1.617,
+      "mean": 1.6186,
+      "min": 1.617,
+      "max": 1.621,
+      "stdev": 0.002191,
+      "samples": [
+        1.617,
+        1.617,
+        1.621,
+        1.621,
+        1.617
+      ]
+    },
+    "base64_decode_1mib_mib_per_second": {
+      "source_name": "base64_decode_1mib_mib_per_second",
+      "scenario": "base64_decode_1mib",
+      "group": "base64_decode",
+      "value": 905.179095,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 905.179095,
+      "mean": 906.956848,
+      "min": 904.769606,
+      "max": 910.253551,
+      "stdev": 2.768596,
+      "samples": [
+        905.179095,
+        904.769606,
+        910.253551,
+        904.880132,
+        909.701857
+      ]
+    },
+    "base64_decode_1mib_wall_s": {
+      "source_name": "base64_decode_1mib_wall_s",
+      "scenario": "base64_decode_1mib",
+      "group": "base64_decode",
+      "value": 0.883803,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.883803,
+      "mean": 0.882077,
+      "min": 0.878876,
+      "max": 0.884203,
+      "stdev": 0.00269,
+      "samples": [
+        0.883803,
+        0.884203,
+        0.878876,
+        0.884095,
+        0.879409
+      ]
+    },
+    "base64_decode_1mib_rss_mib": {
+      "source_name": "base64_decode_1mib_rss_mib",
+      "scenario": "base64_decode_1mib",
+      "group": "base64_decode",
+      "value": 5.902,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 5.902,
+      "mean": 5.9006,
+      "min": 5.891,
+      "max": 5.906,
+      "stdev": 0.006309,
+      "samples": [
+        5.906,
+        5.906,
+        5.898,
+        5.902,
+        5.891
+      ]
+    },
+    "upstream_testall_tests_passed": {
+      "source_name": "upstream_testall_tests_passed",
+      "scenario": "upstream_testall",
+      "group": "upstream_suite",
+      "value": 19.0,
+      "unit": "modules",
+      "direction": "higher_is_better",
+      "median": 19.0,
+      "mean": 19.0,
+      "min": 19.0,
+      "max": 19.0,
+      "stdev": 0.0,
+      "samples": [
+        19.0,
+        19.0,
+        19.0,
+        19.0,
+        19.0
+      ]
+    },
+    "upstream_testall_wall_s": {
+      "source_name": "upstream_testall_wall_s",
+      "scenario": "upstream_testall",
+      "group": "upstream_suite",
+      "value": 12.234017,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 12.234017,
+      "mean": 12.266389,
+      "min": 11.255017,
+      "max": 13.369797,
+      "stdev": 1.01848,
+      "samples": [
+        13.212774,
+        11.255017,
+        13.369797,
+        12.234017,
+        11.260342
+      ]
+    },
+    "upstream_testall_rss_mib": {
+      "source_name": "upstream_testall_rss_mib",
+      "scenario": "upstream_testall",
+      "group": "upstream_suite",
+      "value": 2.801,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 2.801,
+      "mean": 2.7994,
+      "min": 2.797,
+      "max": 2.801,
+      "stdev": 0.002191,
+      "samples": [
+        2.797,
+        2.801,
+        2.801,
+        2.797,
+        2.801
+      ]
+    }
+  }
+}
