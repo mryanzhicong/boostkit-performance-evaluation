@@ -1,0 +1,1813 @@
+# PCRE 8.45 raw measurement output
+# architecture: aarch64
+# repetitions: 5 (plus 1 warm-up per scenario)
+# network mode during measurement: none
+
+===== pcretest_timing_literal/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:43:00Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0005 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_literal/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:43:19Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0005 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_literal/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:43:37Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0005 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_literal/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:43:55Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0005 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_literal/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:44:13Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+No match
+
+/\b(\d{4})-(\d{2})-(\d{2})\b/
+Compile time 0.0005 milliseconds
+release 2026-11-02 build 7
+Execute time 0.0002 milliseconds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_literal/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_literal.txt
+# started_at: 2026-11-14T11:42:42Z
+# offline: False
+/\b(?:quick|lazy)\s+brown\s+(?:fox|dog)\b/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0002 milliseconds
+ 0: quick brown fox
+The Quick Brown Fox jumped
+Execute time 0.0003 milliseconds
+No match
+
+/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+Compile time 0.0006 milliseconds
+user.name+tag@example.co.uk
+Execute time 0.0001 milliseconds
+ 0: user.name+tag@example.co.uk
+not-an-address@
+Execute time 0.0000 milliseconds
+N[pcre-parse] normalized 46 metrics across 12 scenarios
+[pcre] [2026-11-14 19:44:31] all 12 scenarios finished with 5 repetitions
+ds
+ 0: 2026-11-02
+ 1: 2026
+ 2: 11
+ 3: 02
+no date in this line
+Execute time 0.0000 milliseconds
+No match
+
+/(?:error|warning):\s+([^\n]+)/i
+Compile time 0.0006 milliseconds
+ERROR: disk quota exceeded
+Execute time 0.0001 milliseconds
+ 0: ERROR: disk quota exceeded
+ 1: disk quota exceeded
+Warning: cache lookup miss
+Execute time 0.0001 milliseconds
+ 0: Warning: cache lookup miss
+ 1: cache lookup miss
+info: everything is fine
+Execute time 0.0001 milliseconds
+No match
+
+/(?:\w+\s+){3}\d+/
+Compile time 0.0004 milliseconds
+alpha beta gamma 42
+Execute time 0.0001 milliseconds
+ 0: alpha beta gamma 42
+only two words 7
+Execute time 0.0001 milliseconds
+ 0: only two words 7
+
+/\A(?:[a-z]+\/)+[a-z]+\.log\z/
+Compile time 0.0006 milliseconds
+var/log/app.log
+Execute time 0.0001 milliseconds
+ 0: var/log/app.log
+/var/log/app.log
+Execute time 0.0000 milliseconds
+No match
+
+
+===== pcretest_timing_backtrack/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:43:02Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9874 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_backtrack/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:43:20Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9849 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_backtrack/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:43:38Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9979 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_backtrack/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:43:56Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9812 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_backtrack/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:44:14Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9697 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_backtrack/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 600 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_backtrack.txt
+# started_at: 2026-11-14T11:42:44Z
+# offline: False
+/^(a+)+[bc]/
+Compile time 0.0003 milliseconds
+aaaaaaaaaaaaaaaaa
+Execute time 2.9897 milliseconds
+No match
+
+/^([a-z]+)+\.([a-z]+)+$/
+Compile time 0.0005 milliseconds
+abcdefghijklmnop
+Execute time 0.0000 milliseconds
+No match
+
+/^(\w+\s?)*$/
+Compile time 0.0003 milliseconds
+word word word word word word word
+Execute time 0.0003 milliseconds
+ 0: word word word word word word word
+ 1: word
+
+
+===== pcretest_timing_utf8/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:43:04Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_timing_utf8/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:43:22Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_timing_utf8/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:43:40Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_timing_utf8/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:43:58Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_timing_utf8/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:44:16Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_timing_utf8/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -t 1200000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_utf8.txt
+# started_at: 2026-11-14T11:42:46Z
+# offline: False
+/^\p{Lu}\p{Ll}+\s+\p{Han}+/8
+Compile time 0.0005 milliseconds
+\x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+Execute time 0.0001 milliseconds
+ 0: \x{39f}\x{3bb}\x{3ac}\x{3bd}\x{3b4}\x{3c1}\x{3b1} \x{4e2d}\x{6587}
+
+/\p{Greek}+/8
+Compile time 0.0002 milliseconds
+abc \x{3b1}\x{3b2}\x{3b3} def
+Execute time 0.0001 milliseconds
+ 0: \x{3b1}\x{3b2}\x{3b3}
+
+/[\x{4e00}-\x{9fff}]{3,}/8
+Compile time 0.0002 milliseconds
+\x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+Execute time 0.0001 milliseconds
+ 0: \x{4e2d}\x{6587}\x{6d4b}\x{8bd5}
+
+/\X/8
+Compile time 0.0001 milliseconds
+\x{1f600}\x{1f64f}
+Execute time 0.0000 milliseconds
+ 0: \x{1f600}
+
+
+===== pcretest_dfa/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:43:06Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== pcretest_dfa/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:43:24Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== pcretest_dfa/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:43:42Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== pcretest_dfa/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:44:00Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== pcretest_dfa/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:44:18Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== pcretest_dfa/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:42:48Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
+
+===== upstream_runtest/rep1.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:43:07Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== upstream_runtest/rep2.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:43:25Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== upstream_runtest/rep3.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:43:43Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== upstream_runtest/rep4.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:44:01Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== upstream_runtest/rep5.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:44:19Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== upstream_runtest/warmup.log =====
+# command: env PATH=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin:/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/venv/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin ./RunTest 1 2 4 5 6 7 8 9 10 11 12 14 15 16
+# started_at: 2026-11-14T11:42:49Z
+# offline: False
+
+PCRE C library tests using test data from ./testdata
+PCRE version 8.45 2021-06-15
+
+---- Testing 8-bit library ----
+
+Test 1: Main functionality (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 2: API, errors, internals, and non-Perl stuff (not UTF-8)
+  OK
+  OK with study
+  OK with JIT study
+Test 4: UTF-8 support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 5: API, internals, and non-Perl stuff for UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 6: Unicode property support (Compatible with Perl >= 5.10)
+  OK
+  OK with study
+  OK with JIT study
+Test 7: API, internals, and non-Perl stuff for Unicode property support
+  OK
+  OK with study
+  OK with JIT study
+Test 8: DFA matching main functionality
+  OK
+  OK with study
+Test 9: DFA matching with UTF-8
+  OK
+  OK with study
+Test 10: DFA matching with Unicode properties
+  OK
+  OK with study
+Test 11: Internal offsets and code size tests
+  OK
+  OK with study
+Test 12: JIT-specific features (when JIT is available)
+  OK
+Test 14: Specials for the basic 8-bit library
+  OK
+  OK with study
+  OK with JIT study
+Test 15: Specials for the 8-bit library with UTF-8 support
+  OK
+  OK with study
+  OK with JIT study
+Test 16: Specials for the 8-bit library with Unicode propery support
+  OK
+  OK with study
+  OK with JIT study
+
+===== pcre_exec_literal/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:43:07Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=167.582730 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=5967201.986764 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_literal/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:43:26Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=166.885070 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=5992147.784082 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_literal/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:43:44Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=168.532507 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=5933573.400136 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_literal/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:44:02Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=165.929900 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=6026641.378108 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_literal/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:44:20Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=168.446900 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=5936588.912071 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_literal/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench literal 10000000
+# started_at: 2026-11-14T11:42:49Z
+# offline: False
+PERF-CONFIG mode=literal iterations=10000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=10000000 actual=10000000 status=ok
+PERF-CHECK name=verified_matches expected=3 actual=3 status=ok
+PERF-CHECK name=exec_iterations expected=10000000 actual=10000000 status=ok
+PERF-INFO matched_calls=10000000
+PERF-METRIC name=match_ns_per_op value=167.975152 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=5953261.478733 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:43:09Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=3034248.383333 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=329.570910 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:43:27Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=2985411.803333 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=334.962165 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:43:45Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=2994911.368333 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=333.899698 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:44:03Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=2992860.460000 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=334.128508 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:44:22Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=3031160.860000 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=329.906609 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_backtrack/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench backtrack 600
+# started_at: 2026-11-14T11:42:51Z
+# offline: False
+PERF-CONFIG mode=backtrack iterations=600 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=600 actual=600 status=ok
+PERF-CHECK name=verified_matches expected=0 actual=0 status=ok
+PERF-CHECK name=exec_iterations expected=600 actual=600 status=ok
+PERF-METRIC name=match_ns_per_op value=3000302.768333 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=333.299696 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:43:11Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.102954 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8764014.958088 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:43:29Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.379353 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8742836.616925 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:43:47Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.880731 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8704679.986759 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:44:05Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.667822 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8720842.390352 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:44:24Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.136383 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8761448.154445 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_utf8/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench utf8 12000000
+# started_at: 2026-11-14T11:42:53Z
+# offline: False
+PERF-CONFIG mode=utf8 iterations=12000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=exec_completed expected=12000000 actual=12000000 status=ok
+PERF-CHECK name=verified_matches expected=1 actual=1 status=ok
+PERF-CHECK name=exec_iterations expected=12000000 actual=12000000 status=ok
+PERF-INFO matched_calls=12000000
+PERF-METRIC name=match_ns_per_op value=114.244593 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=8753149.468887 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:43:13Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=267.060274 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3744473.051994 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:43:31Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=269.388770 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3712107.224283 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:43:49Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=268.243774 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3727952.318679 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:44:07Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=269.988476 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3703861.787268 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:44:25Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=265.536386 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3765962.234292 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_dfa/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench dfa 5000000
+# started_at: 2026-11-14T11:42:55Z
+# offline: False
+PERF-CONFIG mode=dfa iterations=5000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=dfa_verified_matches expected=2 actual=2 status=ok
+PERF-CHECK name=dfa_matched_calls expected=5000000 actual=5000000 status=ok
+PERF-METRIC name=dfa_ns_per_op value=265.836565 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=3761709.761427 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:43:14Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.028077 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36998562.893804 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:43:32Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.155338 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36825171.776445 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:43:50Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.396219 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36501387.223358 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:44:08Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.619811 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36205895.483684 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:44:26Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.554089 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36292253.482187 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_exec_jit/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:42:56Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.300349 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36629567.847600 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/rep1.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:43:16Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=566.864658 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1764089.514665 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/rep2.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:43:34Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=567.405170 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1762409.038324 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/rep3.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:43:52Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=568.362660 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1759440.002621 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/rep4.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:44:10Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=566.288617 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1765883.985621 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/rep5.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:44:28Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=563.513883 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1774579.171120 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcre_compile/warmup.log =====
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench compile 3000000
+# started_at: 2026-11-14T11:42:58Z
+# offline: False
+PERF-CONFIG mode=compile iterations=3000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=compiled_patterns expected=3000000 actual=3000000 status=ok
+PERF-METRIC name=compile_ns_per_op value=565.223281 unit=ns/op direction=lower_is_better
+PERF-METRIC name=compiles_per_second value=1769212.333630 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok
+
+===== pcregrep_scan/rep1.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:43:18Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok
+
+===== pcregrep_scan/rep2.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:43:36Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok
+
+===== pcregrep_scan/rep3.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:43:54Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok
+
+===== pcregrep_scan/rep4.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:44:12Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok
+
+===== pcregrep_scan/rep5.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:44:30Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok
+
+===== pcregrep_scan/warmup.log =====
+# command: env PCREGREP_BIN=/home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcregrep bash /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Toolchain/pcre/scripts/fixtures/pcregrep_scan.sh /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures 725100
+# started_at: 2026-11-14T11:43:00Z
+# offline: False
+PATTERN 1 matched_lines=49892 pattern=key=(?:alpha|beta) .*marker=hit$
+PATTERN 2 matched_lines=50029 pattern=key=gamma .*tag=red
+PATTERN 3 matched_lines=175259 pattern=tag=blue .*marker=miss$
+PATTERN 4 matched_lines=199638 pattern=value=[0-9a-f]{8} tag=amber
+PATTERN 5 matched_lines=261 pattern=^idx=000[0-9]{3} key=delta
+PATTERN 6 matched_lines=99935 pattern=trace=[0-9a-f]{8} marker=hit$
+PATTERN 7 matched_lines=50068 pattern=key=alpha .*tag=green
+PATTERN 8 matched_lines=100018 pattern=^idx=[0-9]{5}[02468] key=beta
+SCAN corpus_bytes=57499392 patterns=8 matched_lines=725100
+PERF-CHECK name=scan_matched_lines expected=725100 actual=725100 status=ok
+PERF-CHECK name=scan_patterns expected=8 actual=8 status=ok
+PERF-RESULT status=ok

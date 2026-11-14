@@ -1,0 +1,10 @@
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-bench/pcre_bench jit 60000000
+# started_at: 2026-11-14T11:44:26Z
+# offline: False
+PERF-CONFIG mode=jit iterations=60000000 pcre_version=8.45 2021-06-15
+PERF-CHECK name=jit_available expected=1 actual=1 status=ok
+PERF-CHECK name=jit_executable expected=1 actual=1 status=ok
+PERF-CHECK name=jit_matched_calls expected=60000000 actual=60000000 status=ok
+PERF-METRIC name=match_ns_per_op value=27.554089 unit=ns/op direction=lower_is_better
+PERF-METRIC name=ops_per_second value=36292253.482187 unit=ops/s direction=higher_is_better
+PERF-RESULT status=ok

@@ -1,0 +1,31 @@
+# command: /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/pcre-install/bin/pcretest -q -T -dfa -TM 300000 /home/runner/boostkit-perf/pcre/8.45/aarch64/43590990573-1/fixtures/pcretest_dfa.txt
+# started_at: 2026-11-14T11:44:18Z
+# offline: False
+/(?:quick|lazy)\s+brown\s+(?:fox|dog)/
+Compile time 0.0008 milliseconds
+the quick brown fox jumps over the lazy dog
+Execute time 0.0003 milliseconds
+ 0: quick brown fox
+the lazy dog sleeps all day
+Execute time 0.0000 milliseconds
+No match
+
+/[a-z]+@[a-z]+\.[a-z]{2,}/
+Compile time 0.0004 milliseconds
+contact user@example.com for details
+Execute time 0.0006 milliseconds
+ 0: user@example.com
+
+/^\d{4}-\d{2}-\d{2}$/
+Compile time 0.0003 milliseconds
+2026-11-02
+Execute time 0.0001 milliseconds
+ 0: 2026-11-02
+2026-1-2
+Execute time 0.0001 milliseconds
+No match
+
+--------------------------------------
+Total compile time 0.0015 milliseconds
+Total study time   0.0000 milliseconds
+Total execute time 0.0010 milliseconds
