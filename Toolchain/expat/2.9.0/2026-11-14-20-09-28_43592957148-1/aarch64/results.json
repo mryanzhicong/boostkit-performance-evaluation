@@ -1,0 +1,589 @@
+{
+  "benchmark": "expat_xml_parse_matrix",
+  "software": "expat",
+  "version": "2.9.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "timestamp": "2026-11-14T12:08:11Z",
+  "parameters": {
+    "variant": "base",
+    "repetitions": 5,
+    "warmups": 1,
+    "offline": true,
+    "parse_network": "disabled (all corpora are local; only the external-DTD corpus is read from disk)",
+    "build_parallel_jobs": 4,
+    "build_system": "autotools (in-tree ./configure + make)",
+    "compile_flags": "-O2",
+    "configure_flags": "--disable-shared --enable-static --without-docbook --without-examples",
+    "source_name": "expat-2.9.0.tar.xz",
+    "source_sha256": "1e6371862cc31999b368c3b89b49994f0677e1bab5f1b2b85ae3741f5d803051",
+    "source_url": "https://github.com/libexpat/libexpat/releases/download/R_2_9_0/expat-2.9.0.tar.xz",
+    "expat_version_string": "xmlwf using expat_2.9.0",
+    "runtests_checks": 5196,
+    "benchmark_iterations": 20,
+    "benchmark_buffer": 8192,
+    "corpora": {
+      "dtd_ext.xml": 3786557,
+      "entities.xml": 11327949,
+      "external.dtd": 144,
+      "huge.xml": 38936621,
+      "namespaced.xml": 3333483,
+      "wide.xml": 9567551
+    },
+    "scenarios": [
+      "xmlwf_parse_wide",
+      "xmlwf_parse_huge",
+      "xmlwf_parse_namespaced",
+      "xmlwf_parse_entities",
+      "xmlwf_parse_external_dtd",
+      "upstream_runtests",
+      "upstream_benchmark_wide",
+      "upstream_benchmark_namespaced"
+    ]
+  },
+  "metric_contract": {
+    "wall_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "peak_rss": {
+      "unit": "MiB",
+      "direction": "lower_is_better"
+    },
+    "parse_throughput": {
+      "unit": "MiB/s",
+      "direction": "higher_is_better"
+    },
+    "test_rate": {
+      "unit": "tests/s",
+      "direction": "higher_is_better"
+    },
+    "benchmark_average_parse_time": {
+      "unit": "s",
+      "direction": "lower_is_better"
+    },
+    "statistic": "median of independent repetitions"
+  },
+  "results": {
+    "xmlwf_parse_wide": {
+      "source_name": "xmlwf_parse_wide",
+      "scenario": "xmlwf_parse_wide",
+      "task": "parse",
+      "value": 0.06368,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.06368,
+      "mean": 0.073692,
+      "min": 0.06367,
+      "max": 0.113741,
+      "stdev": 0.022388,
+      "samples": [
+        0.06368,
+        0.113741,
+        0.06368,
+        0.06367,
+        0.063689
+      ]
+    },
+    "xmlwf_parse_wide_rss": {
+      "source_name": "xmlwf_parse_wide_rss",
+      "scenario": "xmlwf_parse_wide",
+      "task": "parse",
+      "value": 20.215,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 20.215,
+      "mean": 20.215,
+      "min": 20.207,
+      "max": 20.219,
+      "stdev": 0.004899,
+      "samples": [
+        20.219,
+        20.215,
+        20.219,
+        20.207,
+        20.215
+      ]
+    },
+    "xmlwf_parse_wide_mbs": {
+      "source_name": "xmlwf_parse_wide_mbs",
+      "scenario": "xmlwf_parse_wide",
+      "task": "parse",
+      "value": 143.28404,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 143.28404,
+      "mean": 130.671727,
+      "min": 80.220217,
+      "max": 143.306544,
+      "stdev": 28.203255,
+      "samples": [
+        143.28404,
+        80.220217,
+        143.28404,
+        143.306544,
+        143.263792
+      ]
+    },
+    "xmlwf_parse_huge": {
+      "source_name": "xmlwf_parse_huge",
+      "scenario": "xmlwf_parse_huge",
+      "task": "parse",
+      "value": 0.263882,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.263882,
+      "mean": 0.263877,
+      "min": 0.263863,
+      "max": 0.263884,
+      "stdev": 9e-06,
+      "samples": [
+        0.263871,
+        0.263883,
+        0.263882,
+        0.263863,
+        0.263884
+      ]
+    },
+    "xmlwf_parse_huge_rss": {
+      "source_name": "xmlwf_parse_huge_rss",
+      "scenario": "xmlwf_parse_huge",
+      "task": "parse",
+      "value": 76.227,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 76.227,
+      "mean": 76.2214,
+      "min": 76.211,
+      "max": 76.227,
+      "stdev": 0.007797,
+      "samples": [
+        76.227,
+        76.215,
+        76.211,
+        76.227,
+        76.227
+      ]
+    },
+    "xmlwf_parse_huge_mbs": {
+      "source_name": "xmlwf_parse_huge_mbs",
+      "scenario": "xmlwf_parse_huge",
+      "task": "parse",
+      "value": 140.717652,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 140.717652,
+      "mean": 140.720532,
+      "min": 140.716585,
+      "max": 140.727785,
+      "stdev": 0.004925,
+      "samples": [
+        140.723518,
+        140.717119,
+        140.717652,
+        140.727785,
+        140.716585
+      ]
+    },
+    "xmlwf_parse_namespaced": {
+      "source_name": "xmlwf_parse_namespaced",
+      "scenario": "xmlwf_parse_namespaced",
+      "task": "parse",
+      "value": 0.063677,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.063677,
+      "mean": 0.063674,
+      "min": 0.063637,
+      "max": 0.063705,
+      "stdev": 3e-05,
+      "samples": [
+        0.0637,
+        0.063649,
+        0.063637,
+        0.063705,
+        0.063677
+      ]
+    },
+    "xmlwf_parse_namespaced_rss": {
+      "source_name": "xmlwf_parse_namespaced_rss",
+      "scenario": "xmlwf_parse_namespaced",
+      "task": "parse",
+      "value": 11.766,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.766,
+      "mean": 11.762,
+      "min": 11.754,
+      "max": 11.77,
+      "stdev": 0.007483,
+      "samples": [
+        11.77,
+        11.754,
+        11.766,
+        11.766,
+        11.754
+      ]
+    },
+    "xmlwf_parse_namespaced_mbs": {
+      "source_name": "xmlwf_parse_namespaced_mbs",
+      "scenario": "xmlwf_parse_namespaced",
+      "task": "parse",
+      "value": 49.924731,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 49.924731,
+      "mean": 49.927406,
+      "min": 49.902788,
+      "max": 49.956112,
+      "stdev": 0.023653,
+      "samples": [
+        49.906705,
+        49.946694,
+        49.956112,
+        49.902788,
+        49.924731
+      ]
+    },
+    "xmlwf_parse_entities": {
+      "source_name": "xmlwf_parse_entities",
+      "scenario": "xmlwf_parse_entities",
+      "task": "parse",
+      "value": 0.113741,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.113741,
+      "mean": 0.123734,
+      "min": 0.113702,
+      "max": 0.163774,
+      "stdev": 0.022383,
+      "samples": [
+        0.113702,
+        0.113703,
+        0.11375,
+        0.113741,
+        0.163774
+      ]
+    },
+    "xmlwf_parse_entities_rss": {
+      "source_name": "xmlwf_parse_entities_rss",
+      "scenario": "xmlwf_parse_entities",
+      "task": "parse",
+      "value": 23.898,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 23.898,
+      "mean": 23.896,
+      "min": 23.891,
+      "max": 23.902,
+      "stdev": 0.004848,
+      "samples": [
+        23.898,
+        23.898,
+        23.902,
+        23.891,
+        23.891
+      ]
+    },
+    "xmlwf_parse_entities_mbs": {
+      "source_name": "xmlwf_parse_entities_mbs",
+      "scenario": "xmlwf_parse_entities",
+      "task": "parse",
+      "value": 94.980473,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 94.980473,
+      "mean": 89.188523,
+      "min": 65.963914,
+      "max": 95.013052,
+      "stdev": 12.982964,
+      "samples": [
+        95.013052,
+        95.012216,
+        94.972958,
+        94.980473,
+        65.963914
+      ]
+    },
+    "xmlwf_parse_external_dtd": {
+      "source_name": "xmlwf_parse_external_dtd",
+      "scenario": "xmlwf_parse_external_dtd",
+      "task": "parse",
+      "value": 0.031582,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.031582,
+      "mean": 0.031597,
+      "min": 0.031579,
+      "max": 0.03165,
+      "stdev": 3e-05,
+      "samples": [
+        0.031579,
+        0.03165,
+        0.031592,
+        0.031581,
+        0.031582
+      ]
+    },
+    "xmlwf_parse_external_dtd_rss": {
+      "source_name": "xmlwf_parse_external_dtd_rss",
+      "scenario": "xmlwf_parse_external_dtd",
+      "task": "parse",
+      "value": 11.754,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.754,
+      "mean": 11.7572,
+      "min": 11.754,
+      "max": 11.766,
+      "stdev": 0.005215,
+      "samples": [
+        11.758,
+        11.766,
+        11.754,
+        11.754,
+        11.754
+      ]
+    },
+    "xmlwf_parse_external_dtd_mbs": {
+      "source_name": "xmlwf_parse_external_dtd_mbs",
+      "scenario": "xmlwf_parse_external_dtd",
+      "task": "parse",
+      "value": 114.341782,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 114.341782,
+      "mean": 114.288307,
+      "min": 114.096119,
+      "max": 114.352644,
+      "stdev": 0.108965,
+      "samples": [
+        114.352644,
+        114.096119,
+        114.305589,
+        114.345403,
+        114.341782
+      ]
+    },
+    "upstream_runtests": {
+      "source_name": "upstream_runtests",
+      "scenario": "upstream_runtests",
+      "task": "upstream_suite",
+      "value": 14.279423,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 14.279423,
+      "mean": 14.419551,
+      "min": 14.279342,
+      "max": 14.930132,
+      "stdev": 0.286246,
+      "samples": [
+        14.279392,
+        14.930132,
+        14.279423,
+        14.279342,
+        14.329466
+      ]
+    },
+    "upstream_runtests_rss": {
+      "source_name": "upstream_runtests_rss",
+      "scenario": "upstream_runtests",
+      "task": "upstream_suite",
+      "value": 48.047,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 48.047,
+      "mean": 48.0586,
+      "min": 46.801,
+      "max": 49.781,
+      "stdev": 1.118841,
+      "samples": [
+        47.41,
+        48.047,
+        49.781,
+        46.801,
+        48.254
+      ]
+    },
+    "upstream_runtests_tps": {
+      "source_name": "upstream_runtests_tps",
+      "scenario": "upstream_runtests",
+      "task": "upstream_suite",
+      "value": 363.880249,
+      "unit": "tests/s",
+      "direction": "higher_is_better",
+      "median": 363.880249,
+      "mean": 360.45482,
+      "min": 348.021036,
+      "max": 363.882313,
+      "stdev": 6.972477,
+      "samples": [
+        363.881039,
+        348.021036,
+        363.880249,
+        363.882313,
+        362.609465
+      ]
+    },
+    "upstream_benchmark_wide": {
+      "source_name": "upstream_benchmark_wide",
+      "scenario": "upstream_benchmark_wide",
+      "task": "upstream_benchmark",
+      "value": 1.46521,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 1.46521,
+      "mean": 1.465209,
+      "min": 1.465198,
+      "max": 1.46522,
+      "stdev": 1e-05,
+      "samples": [
+        1.46521,
+        1.4652,
+        1.46522,
+        1.465198,
+        1.465218
+      ]
+    },
+    "upstream_benchmark_wide_rss": {
+      "source_name": "upstream_benchmark_wide_rss",
+      "scenario": "upstream_benchmark_wide",
+      "task": "upstream_benchmark",
+      "value": 11.766,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.766,
+      "mean": 11.7652,
+      "min": 11.762,
+      "max": 11.77,
+      "stdev": 0.003347,
+      "samples": [
+        11.77,
+        11.766,
+        11.762,
+        11.766,
+        11.762
+      ]
+    },
+    "upstream_benchmark_wide_mbs": {
+      "source_name": "upstream_benchmark_wide_mbs",
+      "scenario": "upstream_benchmark_wide",
+      "task": "upstream_benchmark",
+      "value": 124.546347,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 124.546347,
+      "mean": 124.546415,
+      "min": 124.545497,
+      "max": 124.547367,
+      "stdev": 0.000855,
+      "samples": [
+        124.546347,
+        124.547197,
+        124.545497,
+        124.547367,
+        124.545667
+      ]
+    },
+    "upstream_benchmark_wide_avg_s": {
+      "source_name": "upstream_benchmark_wide_avg_s",
+      "scenario": "upstream_benchmark_wide",
+      "task": "upstream_benchmark",
+      "value": 0.070921,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.070921,
+      "mean": 0.070989,
+      "min": 0.070815,
+      "max": 0.071216,
+      "stdev": 0.000161,
+      "samples": [
+        0.07109,
+        0.071216,
+        0.070921,
+        0.070815,
+        0.070904
+      ]
+    },
+    "upstream_benchmark_namespaced": {
+      "source_name": "upstream_benchmark_namespaced",
+      "scenario": "upstream_benchmark_namespaced",
+      "task": "upstream_benchmark",
+      "value": 0.81453,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.81453,
+      "mean": 0.814513,
+      "min": 0.81447,
+      "max": 0.814546,
+      "stdev": 3.6e-05,
+      "samples": [
+        0.81447,
+        0.814479,
+        0.814546,
+        0.81453,
+        0.81454
+      ]
+    },
+    "upstream_benchmark_namespaced_rss": {
+      "source_name": "upstream_benchmark_namespaced_rss",
+      "scenario": "upstream_benchmark_namespaced",
+      "task": "upstream_benchmark",
+      "value": 11.766,
+      "unit": "MiB",
+      "direction": "lower_is_better",
+      "median": 11.766,
+      "mean": 11.7706,
+      "min": 11.762,
+      "max": 11.793,
+      "stdev": 0.012641,
+      "samples": [
+        11.762,
+        11.766,
+        11.766,
+        11.766,
+        11.793
+      ]
+    },
+    "upstream_benchmark_namespaced_mbs": {
+      "source_name": "upstream_benchmark_namespaced_mbs",
+      "scenario": "upstream_benchmark_namespaced",
+      "task": "upstream_benchmark",
+      "value": 78.058687,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "median": 78.058687,
+      "mean": 78.060316,
+      "min": 78.057154,
+      "max": 78.064438,
+      "stdev": 0.003426,
+      "samples": [
+        78.064438,
+        78.063575,
+        78.057154,
+        78.058687,
+        78.057729
+      ]
+    },
+    "upstream_benchmark_namespaced_avg_s": {
+      "source_name": "upstream_benchmark_namespaced_avg_s",
+      "scenario": "upstream_benchmark_namespaced",
+      "task": "upstream_benchmark",
+      "value": 0.038725,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "median": 0.038725,
+      "mean": 0.038637,
+      "min": 0.038348,
+      "max": 0.038833,
+      "stdev": 0.000221,
+      "samples": [
+        0.03882,
+        0.038458,
+        0.038725,
+        0.038348,
+        0.038833
+      ]
+    }
+  }
+}
