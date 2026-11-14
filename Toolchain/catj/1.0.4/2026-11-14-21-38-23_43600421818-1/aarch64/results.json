@@ -1,0 +1,985 @@
+{
+  "architecture": "aarch64",
+  "parameters": {
+    "inputs": [
+      {
+        "bytes": 621271,
+        "name": "objects-5000.json",
+        "objects": 5000,
+        "sha256": "e34897a7c6b6759a0b33600c78bf7b7b8fde4f40c406e1f77c2dcfe7a83defa3"
+      },
+      {
+        "bytes": 3166334,
+        "name": "objects-25000.json",
+        "objects": 25000,
+        "sha256": "01a77b0b0bb8fded9fbf444baea8ffa54cf5b73ec4ec35fbec7786747ecb4576"
+      },
+      {
+        "bytes": 12785306,
+        "name": "objects-100000.json",
+        "objects": 100000,
+        "sha256": "c67dfc01b6bfe5ec75cefaa7ee18495504f027d8dfce5b3f78af0f8bfabbcc13"
+      }
+    ],
+    "measurement": {
+      "captures_stdout": true,
+      "environment": {
+        "FORCE_COLOR": "0",
+        "LC_ALL": "C",
+        "TZ": "UTC"
+      },
+      "offline": true,
+      "processes_per_sample": 1,
+      "repetitions": 5,
+      "statistic": "median",
+      "warmups": 1
+    },
+    "node": {
+      "archive_sha256": "6287aa46b6c375d816e63ae66d024fbbfd70404825aabdfdf898a970871d2f4b",
+      "version": "v22.23.4"
+    },
+    "package": {
+      "dependencies": {
+        "colors": "1.4.0",
+        "minimist": "0.0.10",
+        "optimist": "0.6.1",
+        "wordwrap": "0.0.3"
+      },
+      "dependency_tree_sha256": "c9a154e32f88703a2362713c1e3426da182e37651c2a419ab49bce60f3e12fce",
+      "name": "catj",
+      "tarball_sha256": "bc3c7c18e24aa412f705ce2676534aeac25b42f01ec71f5fd3b5ddad518f3e6c",
+      "version": "1.0.4"
+    },
+    "scenarios": {
+      "flatten_file_100000": {
+        "input": "objects-100000.json",
+        "iterations": 1,
+        "mode": "file",
+        "timeout_seconds": 180
+      },
+      "flatten_file_25000": {
+        "input": "objects-25000.json",
+        "iterations": 1,
+        "mode": "file",
+        "timeout_seconds": 120
+      },
+      "flatten_file_5000": {
+        "input": "objects-5000.json",
+        "iterations": 1,
+        "mode": "file",
+        "timeout_seconds": 120
+      },
+      "flatten_stdin_100000": {
+        "input": "objects-100000.json",
+        "iterations": 1,
+        "mode": "stdin",
+        "timeout_seconds": 180
+      },
+      "flatten_stdin_25000": {
+        "input": "objects-25000.json",
+        "iterations": 1,
+        "mode": "stdin",
+        "timeout_seconds": 120
+      },
+      "flatten_stdin_5000": {
+        "input": "objects-5000.json",
+        "iterations": 1,
+        "mode": "stdin",
+        "timeout_seconds": 120
+      }
+    },
+    "software": "catj",
+    "variant": "base"
+  },
+  "results": {
+    "flatten_file_100000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_100000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_file_100000.peak_rss_mib",
+      "statistics": {
+        "max": 133.766,
+        "mean": 130.7596,
+        "median": 130.516,
+        "min": 127.516,
+        "samples": [
+          131.504,
+          130.496,
+          130.516,
+          127.516,
+          133.766
+        ],
+        "stdev": 2.2495743597400764
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 130.516
+    },
+    "flatten_file_100000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_100000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_file_100000.throughput_mib_s",
+      "statistics": {
+        "max": 7.9517106682379595,
+        "mean": 7.853756859146786,
+        "median": 7.872903742929523,
+        "min": 7.724149483005837,
+        "samples": [
+          7.724149483005837,
+          7.872903742929523,
+          7.9517106682379595,
+          7.772352546453476,
+          7.9476678551071345
+        ],
+        "stdev": 0.1027199604647704
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 7.872903742929523
+    },
+    "flatten_file_100000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_100000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_file_100000.wall_seconds",
+      "statistics": {
+        "max": 1.578558,
+        "mean": 1.5527208,
+        "median": 1.548732,
+        "min": 1.533383,
+        "samples": [
+          1.578558,
+          1.548732,
+          1.533383,
+          1.568768,
+          1.534163
+        ],
+        "stdev": 0.02036741580809896
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 1.548732
+    },
+    "flatten_file_25000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_25000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_file_25000.peak_rss_mib",
+      "statistics": {
+        "max": 76.996,
+        "mean": 75.7928,
+        "median": 76.996,
+        "min": 73.98,
+        "samples": [
+          76.996,
+          73.996,
+          76.996,
+          73.98,
+          76.996
+        ],
+        "stdev": 1.6475591643397793
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 76.996
+    },
+    "flatten_file_25000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_25000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_file_25000.throughput_mib_s",
+      "statistics": {
+        "max": 7.069101214442922,
+        "mean": 6.967686820811974,
+        "median": 6.982789398263506,
+        "min": 6.820140739153408,
+        "samples": [
+          6.982030555606888,
+          7.069101214442922,
+          6.820140739153408,
+          6.984372196593146,
+          6.982789398263506
+        ],
+        "stdev": 0.09050822861325138
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 6.982789398263506
+    },
+    "flatten_file_25000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_25000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_file_25000.wall_seconds",
+      "statistics": {
+        "max": 0.442755,
+        "mean": 0.4334384,
+        "median": 0.432442,
+        "min": 0.427162,
+        "samples": [
+          0.432489,
+          0.427162,
+          0.442755,
+          0.432344,
+          0.432442
+        ],
+        "stdev": 0.005685158687319122
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 0.432442
+    },
+    "flatten_file_5000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_5000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_file_5000.peak_rss_mib",
+      "statistics": {
+        "max": 58.992,
+        "mean": 56.08579999999999,
+        "median": 55.996,
+        "min": 53.621,
+        "samples": [
+          55.996,
+          55.996,
+          53.621,
+          55.824,
+          58.992
+        ],
+        "stdev": 1.9108836175968418
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 55.996
+    },
+    "flatten_file_5000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_5000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_file_5000.throughput_mib_s",
+      "statistics": {
+        "max": 4.632521198361408,
+        "mean": 4.6280083205843665,
+        "median": 4.628648851435704,
+        "min": 4.622690147679077,
+        "samples": [
+          4.631326232328578,
+          4.624855173117066,
+          4.628648851435704,
+          4.632521198361408,
+          4.622690147679077
+        ],
+        "stdev": 0.00418360448493592
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 4.628648851435704
+    },
+    "flatten_file_5000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_file_5000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_file_5000.wall_seconds",
+      "statistics": {
+        "max": 0.12817,
+        "mean": 0.12802280000000002,
+        "median": 0.128005,
+        "min": 0.127898,
+        "samples": [
+          0.127931,
+          0.12811,
+          0.128005,
+          0.127898,
+          0.12817
+        ],
+        "stdev": 0.00011574843411467917
+      },
+      "subgroup": "file",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 0.128005
+    },
+    "flatten_stdin_100000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_100000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_stdin_100000.peak_rss_mib",
+      "statistics": {
+        "max": 141.547,
+        "mean": 138.54860000000002,
+        "median": 138.996,
+        "min": 135.121,
+        "samples": [
+          139.434,
+          135.121,
+          137.645,
+          138.996,
+          141.547
+        ],
+        "stdev": 2.3737858580756557
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 138.996
+    },
+    "flatten_stdin_100000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_100000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_stdin_100000.throughput_mib_s",
+      "statistics": {
+        "max": 7.950886222610614,
+        "mean": 7.904164948110983,
+        "median": 7.924490923598431,
+        "min": 7.822013974520741,
+        "samples": [
+          7.822013974520741,
+          7.924490923598431,
+          7.949807960615959,
+          7.950886222610614,
+          7.87362565920917
+        ],
+        "stdev": 0.05558942792781901
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 7.924490923598431
+    },
+    "flatten_stdin_100000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_100000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_stdin_100000.wall_seconds",
+      "statistics": {
+        "max": 1.558808,
+        "mean": 1.542668,
+        "median": 1.53865,
+        "min": 1.533542,
+        "samples": [
+          1.558808,
+          1.53865,
+          1.53375,
+          1.533542,
+          1.54859
+        ],
+        "stdev": 0.010891838779563338
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 1.53865
+    },
+    "flatten_stdin_25000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_25000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_stdin_25000.peak_rss_mib",
+      "statistics": {
+        "max": 90.984,
+        "mean": 88.83879999999999,
+        "median": 89.449,
+        "min": 86.59,
+        "samples": [
+          86.59,
+          89.898,
+          89.449,
+          90.984,
+          87.273
+        ],
+        "stdev": 1.8442452927959423
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 89.449
+    },
+    "flatten_stdin_25000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_25000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_stdin_25000.throughput_mib_s",
+      "statistics": {
+        "max": 6.983548405887828,
+        "mean": 6.841360630748525,
+        "median": 6.822436688530809,
+        "min": 6.671994743460618,
+        "samples": [
+          6.983548405887828,
+          6.746889621915773,
+          6.9819336939475996,
+          6.671994743460618,
+          6.822436688530809
+        ],
+        "stdev": 0.13959391137509672
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 6.822436688530809
+    },
+    "flatten_stdin_25000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_25000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_stdin_25000.wall_seconds",
+      "statistics": {
+        "max": 0.452586,
+        "mean": 0.44152880000000005,
+        "median": 0.442606,
+        "min": 0.432395,
+        "samples": [
+          0.432395,
+          0.447562,
+          0.432495,
+          0.452586,
+          0.442606
+        ],
+        "stdev": 0.009011900171439984
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 0.442606
+    },
+    "flatten_stdin_5000.peak_rss_mib": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_5000",
+      "group_path": "metric.group",
+      "metric": "peak_rss_mib",
+      "source_name": "flatten_stdin_5000.peak_rss_mib",
+      "statistics": {
+        "max": 55.988,
+        "mean": 54.1904,
+        "median": 52.996,
+        "min": 52.984,
+        "samples": [
+          55.988,
+          52.996,
+          52.996,
+          52.984,
+          55.988
+        ],
+        "stdev": 1.6409840949869061
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB",
+      "unit_path": "metric.unit",
+      "value": 52.996
+    },
+    "flatten_stdin_5000.throughput_mib_s": {
+      "direction": "higher_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_5000",
+      "group_path": "metric.group",
+      "metric": "throughput_mib_s",
+      "source_name": "flatten_stdin_5000.throughput_mib_s",
+      "statistics": {
+        "max": 4.630059517590824,
+        "mean": 4.4529316301736195,
+        "median": 4.449962043096078,
+        "min": 4.282638555429661,
+        "samples": [
+          4.630059517590824,
+          4.282638555429661,
+          4.449293705012783,
+          4.452704329738751,
+          4.449962043096078
+        ],
+        "stdev": 0.12287811483234909
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "MiB/s",
+      "unit_path": "metric.unit",
+      "value": 4.449962043096078
+    },
+    "flatten_stdin_5000.wall_seconds": {
+      "direction": "lower_is_better",
+      "direction_path": "metric.direction",
+      "group": "flatten_stdin_5000",
+      "group_path": "metric.group",
+      "metric": "wall_seconds",
+      "source_name": "flatten_stdin_5000.wall_seconds",
+      "statistics": {
+        "max": 0.138347,
+        "mean": 0.1331372,
+        "median": 0.133145,
+        "min": 0.127966,
+        "samples": [
+          0.127966,
+          0.138347,
+          0.133165,
+          0.133063,
+          0.133145
+        ],
+        "stdev": 0.003670479015060569
+      },
+      "subgroup": "stdin",
+      "subgroup_path": "metric.subgroup",
+      "unit": "s",
+      "unit_path": "metric.unit",
+      "value": 0.133145
+    }
+  },
+  "runtime": {
+    "catj": {
+      "files": {
+        "LICENSE": "06e474d31dac4705d4c9bffcbf0278d816467ec04f8572e2dc84cf204d7989fd",
+        "catj.js": "735fad756dbb41159a0d0180f0b40510cd249f88324c055440a01d4234b42b7b",
+        "package.json": "87e0e456907e344c38913b6b5ef9fae41e1936a85bdf90da59e1c0f80d51187c"
+      },
+      "version": "1.0.4"
+    },
+    "dependencies": {
+      "colors": {
+        "files": {
+          "LICENSE": "77ffe84006509949525fd57df06f4a6a80ad862c5314b66ab5bb6ac4cee6280b",
+          "package.json": "12d1b76eb6efbe581026d035eba2a3c916fc5d4664a9476d23bafc6813db9176"
+        },
+        "version": "1.4.0"
+      },
+      "minimist": {
+        "files": {
+          "LICENSE": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b",
+          "package.json": "13d55a1cdbbb635577ced4a90720ee5076f74611c827dd909d9bbc7cb92dd574"
+        },
+        "version": "0.0.10"
+      },
+      "optimist": {
+        "files": {
+          "LICENSE": "05991c2e8f070b69ec5b656c2c12fd07cd0153dd157d39b050b82af59b319a01",
+          "package.json": "3ea969af1e7553a4b01ea2860ae33aa9e2d6501330ac2ddfb48f5354e31955b5"
+        },
+        "version": "0.6.1"
+      },
+      "wordwrap": {
+        "files": {
+          "LICENSE": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b",
+          "package.json": "fc9409d0faed896f14385be4b820c4f686f2b3aeca64b3e597b22a97a0d6d6a3"
+        },
+        "version": "0.0.3"
+      }
+    },
+    "inputs": [
+      {
+        "bytes": 621271,
+        "name": "objects-5000.json",
+        "objects": 5000,
+        "sha256": "e34897a7c6b6759a0b33600c78bf7b7b8fde4f40c406e1f77c2dcfe7a83defa3"
+      },
+      {
+        "bytes": 3166334,
+        "name": "objects-25000.json",
+        "objects": 25000,
+        "sha256": "01a77b0b0bb8fded9fbf444baea8ffa54cf5b73ec4ec35fbec7786747ecb4576"
+      },
+      {
+        "bytes": 12785306,
+        "name": "objects-100000.json",
+        "objects": 100000,
+        "sha256": "c67dfc01b6bfe5ec75cefaa7ee18495504f027d8dfce5b3f78af0f8bfabbcc13"
+      }
+    ],
+    "machine": "aarch64",
+    "node": {
+      "version": "v22.23.4"
+    },
+    "scenarios": [
+      "flatten_file_5000",
+      "flatten_stdin_5000",
+      "flatten_file_25000",
+      "flatten_stdin_25000",
+      "flatten_file_100000",
+      "flatten_stdin_100000"
+    ],
+    "suite": "catj-cli-flatten"
+  },
+  "scenarios": {
+    "flatten_file_100000": {
+      "input": "objects-100000.json",
+      "input_bytes": 12785306,
+      "input_objects": 100000,
+      "iterations": 1,
+      "mode": "file",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 133.766,
+          "mean": 130.7596,
+          "median": 130.516,
+          "min": 127.516,
+          "samples": [
+            131.504,
+            130.496,
+            130.516,
+            127.516,
+            133.766
+          ],
+          "stdev": 2.2495743597400764
+        },
+        "throughput_mib_s": {
+          "max": 7.9517106682379595,
+          "mean": 7.853756859146786,
+          "median": 7.872903742929523,
+          "min": 7.724149483005837,
+          "samples": [
+            7.724149483005837,
+            7.872903742929523,
+            7.9517106682379595,
+            7.772352546453476,
+            7.9476678551071345
+          ],
+          "stdev": 0.1027199604647704
+        },
+        "wall_seconds": {
+          "max": 1.578558,
+          "mean": 1.5527208,
+          "median": 1.548732,
+          "min": 1.533383,
+          "samples": [
+            1.578558,
+            1.548732,
+            1.533383,
+            1.568768,
+            1.534163
+          ],
+          "stdev": 0.02036741580809896
+        }
+      },
+      "stdout_lines": 900000,
+      "stdout_sha256": "d96bbd89dce36ff2d50e463f8af04a9d0d97fd14a153f66a6576ac51be1b99f0"
+    },
+    "flatten_file_25000": {
+      "input": "objects-25000.json",
+      "input_bytes": 3166334,
+      "input_objects": 25000,
+      "iterations": 1,
+      "mode": "file",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 76.996,
+          "mean": 75.7928,
+          "median": 76.996,
+          "min": 73.98,
+          "samples": [
+            76.996,
+            73.996,
+            76.996,
+            73.98,
+            76.996
+          ],
+          "stdev": 1.6475591643397793
+        },
+        "throughput_mib_s": {
+          "max": 7.069101214442922,
+          "mean": 6.967686820811974,
+          "median": 6.982789398263506,
+          "min": 6.820140739153408,
+          "samples": [
+            6.982030555606888,
+            7.069101214442922,
+            6.820140739153408,
+            6.984372196593146,
+            6.982789398263506
+          ],
+          "stdev": 0.09050822861325138
+        },
+        "wall_seconds": {
+          "max": 0.442755,
+          "mean": 0.4334384,
+          "median": 0.432442,
+          "min": 0.427162,
+          "samples": [
+            0.432489,
+            0.427162,
+            0.442755,
+            0.432344,
+            0.432442
+          ],
+          "stdev": 0.005685158687319122
+        }
+      },
+      "stdout_lines": 225000,
+      "stdout_sha256": "f5d0e76415a3909fb050bc82e06a1a8c39c02baa6b36d98155a242c39629ffa3"
+    },
+    "flatten_file_5000": {
+      "input": "objects-5000.json",
+      "input_bytes": 621271,
+      "input_objects": 5000,
+      "iterations": 1,
+      "mode": "file",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 58.992,
+          "mean": 56.08579999999999,
+          "median": 55.996,
+          "min": 53.621,
+          "samples": [
+            55.996,
+            55.996,
+            53.621,
+            55.824,
+            58.992
+          ],
+          "stdev": 1.9108836175968418
+        },
+        "throughput_mib_s": {
+          "max": 4.632521198361408,
+          "mean": 4.6280083205843665,
+          "median": 4.628648851435704,
+          "min": 4.622690147679077,
+          "samples": [
+            4.631326232328578,
+            4.624855173117066,
+            4.628648851435704,
+            4.632521198361408,
+            4.622690147679077
+          ],
+          "stdev": 0.00418360448493592
+        },
+        "wall_seconds": {
+          "max": 0.12817,
+          "mean": 0.12802280000000002,
+          "median": 0.128005,
+          "min": 0.127898,
+          "samples": [
+            0.127931,
+            0.12811,
+            0.128005,
+            0.127898,
+            0.12817
+          ],
+          "stdev": 0.00011574843411467917
+        }
+      },
+      "stdout_lines": 45000,
+      "stdout_sha256": "99246fc77db1f80f82b1d1b5e446c40e9e6eefaa2e4d8d7ded2a3cdca7b34e6a"
+    },
+    "flatten_stdin_100000": {
+      "input": "objects-100000.json",
+      "input_bytes": 12785306,
+      "input_objects": 100000,
+      "iterations": 1,
+      "mode": "stdin",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 141.547,
+          "mean": 138.54860000000002,
+          "median": 138.996,
+          "min": 135.121,
+          "samples": [
+            139.434,
+            135.121,
+            137.645,
+            138.996,
+            141.547
+          ],
+          "stdev": 2.3737858580756557
+        },
+        "throughput_mib_s": {
+          "max": 7.950886222610614,
+          "mean": 7.904164948110983,
+          "median": 7.924490923598431,
+          "min": 7.822013974520741,
+          "samples": [
+            7.822013974520741,
+            7.924490923598431,
+            7.949807960615959,
+            7.950886222610614,
+            7.87362565920917
+          ],
+          "stdev": 0.05558942792781901
+        },
+        "wall_seconds": {
+          "max": 1.558808,
+          "mean": 1.542668,
+          "median": 1.53865,
+          "min": 1.533542,
+          "samples": [
+            1.558808,
+            1.53865,
+            1.53375,
+            1.533542,
+            1.54859
+          ],
+          "stdev": 0.010891838779563338
+        }
+      },
+      "stdout_lines": 900000,
+      "stdout_sha256": "d96bbd89dce36ff2d50e463f8af04a9d0d97fd14a153f66a6576ac51be1b99f0"
+    },
+    "flatten_stdin_25000": {
+      "input": "objects-25000.json",
+      "input_bytes": 3166334,
+      "input_objects": 25000,
+      "iterations": 1,
+      "mode": "stdin",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 90.984,
+          "mean": 88.83879999999999,
+          "median": 89.449,
+          "min": 86.59,
+          "samples": [
+            86.59,
+            89.898,
+            89.449,
+            90.984,
+            87.273
+          ],
+          "stdev": 1.8442452927959423
+        },
+        "throughput_mib_s": {
+          "max": 6.983548405887828,
+          "mean": 6.841360630748525,
+          "median": 6.822436688530809,
+          "min": 6.671994743460618,
+          "samples": [
+            6.983548405887828,
+            6.746889621915773,
+            6.9819336939475996,
+            6.671994743460618,
+            6.822436688530809
+          ],
+          "stdev": 0.13959391137509672
+        },
+        "wall_seconds": {
+          "max": 0.452586,
+          "mean": 0.44152880000000005,
+          "median": 0.442606,
+          "min": 0.432395,
+          "samples": [
+            0.432395,
+            0.447562,
+            0.432495,
+            0.452586,
+            0.442606
+          ],
+          "stdev": 0.009011900171439984
+        }
+      },
+      "stdout_lines": 225000,
+      "stdout_sha256": "f5d0e76415a3909fb050bc82e06a1a8c39c02baa6b36d98155a242c39629ffa3"
+    },
+    "flatten_stdin_5000": {
+      "input": "objects-5000.json",
+      "input_bytes": 621271,
+      "input_objects": 5000,
+      "iterations": 1,
+      "mode": "stdin",
+      "statistics": {
+        "peak_rss_mib": {
+          "max": 55.988,
+          "mean": 54.1904,
+          "median": 52.996,
+          "min": 52.984,
+          "samples": [
+            55.988,
+            52.996,
+            52.996,
+            52.984,
+            55.988
+          ],
+          "stdev": 1.6409840949869061
+        },
+        "throughput_mib_s": {
+          "max": 4.630059517590824,
+          "mean": 4.4529316301736195,
+          "median": 4.449962043096078,
+          "min": 4.282638555429661,
+          "samples": [
+            4.630059517590824,
+            4.282638555429661,
+            4.449293705012783,
+            4.452704329738751,
+            4.449962043096078
+          ],
+          "stdev": 0.12287811483234909
+        },
+        "wall_seconds": {
+          "max": 0.138347,
+          "mean": 0.1331372,
+          "median": 0.133145,
+          "min": 0.127966,
+          "samples": [
+            0.127966,
+            0.138347,
+            0.133165,
+            0.133063,
+            0.133145
+          ],
+          "stdev": 0.003670479015060569
+        }
+      },
+      "stdout_lines": 45000,
+      "stdout_sha256": "99246fc77db1f80f82b1d1b5e446c40e9e6eefaa2e4d8d7ded2a3cdca7b34e6a"
+    }
+  },
+  "software": "catj",
+  "summary": {
+    "metric_count": 18,
+    "samples_per_scenario": 5,
+    "scenario_count": 6,
+    "statistic": "median",
+    "warmups_per_scenario": 1
+  },
+  "variant": "base",
+  "version": "1.0.4"
+}
