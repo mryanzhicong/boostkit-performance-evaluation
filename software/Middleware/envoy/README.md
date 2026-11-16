@@ -5,7 +5,9 @@
 容器内运行 k6 压测客户端，测试 HTTPS 直接响应和反向代理两个场景。
 
 容器规格固定为 **4 CPU、8 GiB（4U8G）**：`--cpus=4`，CPU 集合与 NUMA
-内存节点按当前 runner 的 affinity 和 sysfs 拓扑读取，不写死 CPU 区间；
+内存节点按当前 runner 的 affinity 和 sysfs 拓扑读取，不写死 CPU 区间；每个
+NUMA 节点最低的 4 个 CPU 保留给系统进程，容器取紧随其后的 4 个 CPU（Blue
+aarch64 上为 4、5、6、7），避免系统负载落在 0-3 上影响测量。
 `--memory=8g`，Docker 支持 swap accounting 时追加 `--memory-swap=8g`。
 容器使用 `--network=host`，服务端口由运行 ID 派生，避免与其他任务冲突。
 

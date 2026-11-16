@@ -18,6 +18,10 @@ ENVOY_CA_ANCHORS_DIR="${ENVOY_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 ENVOY_CONTAINER_CPUS="${ENVOY_CONTAINER_CPUS:-4}"
 ENVOY_CONTAINER_MEMORY="${ENVOY_CONTAINER_MEMORY:-8g}"
 ENVOY_CONTAINER_NUMA_NODE="${ENVOY_CONTAINER_NUMA_NODE:-}"
+# Leave the lowest CPUs of each NUMA node to host/system work.  On the Blue
+# aarch64 runner this moves the 4U8G container from 0-3 to 4-7 without
+# hard-coding an absolute CPU range.
+ENVOY_CONTAINER_CPU_RESERVED="${ENVOY_CONTAINER_CPU_RESERVED:-4}"
 
 INSTALL_DIR=""
 ENVOY_BIN=""
@@ -56,6 +60,10 @@ validate_envoy_container_resources() {
         log_message "ERROR: ENVOY_CONTAINER_NUMA_NODE must be a non-negative integer: ${ENVOY_CONTAINER_NUMA_NODE}"
         return 10
     fi
+    if [[ ! "${ENVOY_CONTAINER_CPU_RESERVED}" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR: ENVOY_CONTAINER_CPU_RESERVED must be a non-negative integer: ${ENVOY_CONTAINER_CPU_RESERVED}"
+        return 10
+    fi
 }
 
 # Pick four CPUs from one NUMA node, never from a hard-coded CPU range.  The
@@ -63,15 +71,18 @@ validate_envoy_container_resources() {
 # topology (for example a local WSL smoke host), fall back to four affinity CPUs
 # and let Docker use the host memory policy.
 select_envoy_cpu_set() {
-    python3 - "${ENVOY_CONTAINER_CPUS}" "${ENVOY_CONTAINER_NUMA_NODE}" <<'PY'
+    python3 - "${ENVOY_CONTAINER_CPUS}" "${ENVOY_CONTAINER_NUMA_NODE}" "${ENVOY_CONTAINER_CPU_RESERVED}" <<'PY'
 import os
 import sys
 from pathlib import Path
 
 want = int(sys.argv[1])
 preferred = sys.argv[2].strip()
+reserved = int(sys.argv[3])
 if want < 1:
     raise SystemExit("CPU count must be positive")
+if reserved < 0:
+    raise SystemExit("reserved CPU count must be non-negative")
 
 affinity = sorted(os.sched_getaffinity(0))
 node_cpus = {}
@@ -89,14 +100,20 @@ if node_cpus:
             raise SystemExit(f"requested NUMA node {preferred} has no allowed CPUs")
         candidates = [preferred]
     for node in candidates:
-        if len(node_cpus[node]) >= want:
-            print(",".join(map(str, node_cpus[node][:want])), node)
+        cpus = node_cpus[node]
+        # Prefer CPUs above the reserved low-numbered range.  If a node is too
+        # small for that, fall back to its first CPUs so local smoke hosts with
+        # exactly four CPUs still work.
+        offset = reserved if len(cpus) >= want + reserved else 0
+        if len(cpus) - offset >= want:
+            print(",".join(map(str, cpus[offset:offset + want])), node)
             raise SystemExit(0)
     raise SystemExit(f"no NUMA node has at least {want} available CPUs")
 
-if len(affinity) < want:
+offset = reserved if len(affinity) >= want + reserved else 0
+if len(affinity) - offset < want:
     raise SystemExit(f"only {len(affinity)} CPUs available, need {want}")
-print(",".join(map(str, affinity[:want])), "")
+print(",".join(map(str, affinity[offset:offset + want])), "")
 PY
 }
 

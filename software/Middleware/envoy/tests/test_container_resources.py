@@ -13,6 +13,7 @@ def _run(script: str, **overrides: str) -> subprocess.CompletedProcess[str]:
         "ENVOY_CONTAINER_CPUS": "4",
         "ENVOY_CONTAINER_MEMORY": "8g",
         "ENVOY_CONTAINER_NUMA_NODE": "",
+        "ENVOY_CONTAINER_CPU_RESERVED": "4",
     }
     env.update(overrides)
     return subprocess.run(
@@ -31,6 +32,8 @@ def test_selects_four_cpus_from_one_numa_node() -> None:
     assert len(fields) in (1, 2), completed.stdout
     cpus = [int(value) for value in fields[0].split(",")]
     assert len(cpus) == 4
+    # 0-3 are reserved for host/system work, so the container must not use them.
+    assert cpus == [4, 5, 6, 7], cpus
     if len(fields) == 2:
         node = fields[1]
         assert node.isdigit()
@@ -48,6 +51,12 @@ def test_rejects_non_gi_b_memory_value() -> None:
     completed = _run("validate_envoy_container_resources", ENVOY_CONTAINER_MEMORY="8192m")
     assert completed.returncode == 10
     assert "ENVOY_CONTAINER_MEMORY" in completed.stdout
+
+
+def test_rejects_negative_reserved_cpu_count() -> None:
+    completed = _run("validate_envoy_container_resources", ENVOY_CONTAINER_CPU_RESERVED="-1")
+    assert completed.returncode == 10
+    assert "ENVOY_CONTAINER_CPU_RESERVED" in completed.stdout
 
 
 def test_derives_a_distinct_port_block_from_the_run_id() -> None:
