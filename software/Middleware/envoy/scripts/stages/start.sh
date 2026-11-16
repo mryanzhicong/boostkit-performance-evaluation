@@ -3,6 +3,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 write_runtime_configurations() {
     mkdir -p "${RUNTIME_DIR}" || return 40
+    set_envoy_runtime_ports || return 40
+    printf 'ENVOY_BACKEND_PORT=%s\nENVOY_BACKEND_ADMIN_PORT=%s\nENVOY_DIRECT_PORT=%s\nENVOY_DIRECT_ADMIN_PORT=%s\nENVOY_PROXY_PORT=%s\nENVOY_PROXY_ADMIN_PORT=%s\n' \
+        "${ENVOY_BACKEND_PORT}" "${ENVOY_BACKEND_ADMIN_PORT}" \
+        "${ENVOY_DIRECT_PORT}" "${ENVOY_DIRECT_ADMIN_PORT}" \
+        "${ENVOY_PROXY_PORT}" "${ENVOY_PROXY_ADMIN_PORT}" \
+        > "${RUNTIME_DIR}/ports.env" || return 40
     openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
         -keyout "${RUNTIME_DIR}/tls.key" -out "${RUNTIME_DIR}/tls.crt" \
         -subj '/CN=localhost' >/dev/null 2>&1 || return 40
@@ -12,7 +18,7 @@ static_resources:
   listeners:
   - name: backend
     address:
-      socket_address: { address: 127.0.0.1, port_value: 18080 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_PORT} }
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -34,14 +40,14 @@ static_resources:
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 18081 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_ADMIN_PORT} }
 EOF
     cat > "${RUNTIME_DIR}/direct.yaml" <<EOF
 static_resources:
   listeners:
   - name: direct_tls
     address:
-      socket_address: { address: 127.0.0.1, port_value: 19000 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_DIRECT_PORT} }
     filter_chains:
     - transport_socket:
         name: envoy.transport_sockets.tls
@@ -71,14 +77,14 @@ static_resources:
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 19002 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_DIRECT_ADMIN_PORT} }
 EOF
     cat > "${RUNTIME_DIR}/proxy.yaml" <<EOF
 static_resources:
   listeners:
   - name: proxy_tls
     address:
-      socket_address: { address: 127.0.0.1, port_value: 19001 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_PROXY_PORT} }
     filter_chains:
     - transport_socket:
         name: envoy.transport_sockets.tls
@@ -115,11 +121,11 @@ static_resources:
       - lb_endpoints:
         - endpoint:
             address:
-              socket_address: { address: 127.0.0.1, port_value: 18080 }
+              socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_PORT} }
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 19003 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_PROXY_ADMIN_PORT} }
 EOF
 }
 
@@ -238,7 +244,7 @@ start_envoy_runtime() {
     start_envoy_process backend "${RUNTIME_DIR}/backend.yaml" || return $?
     start_envoy_process direct "${RUNTIME_DIR}/direct.yaml" || return $?
     start_envoy_process proxy "${RUNTIME_DIR}/proxy.yaml" || return $?
-    wait_for_https_service 'https://127.0.0.1:19000/' || return $?
-    wait_for_https_service 'https://127.0.0.1:19001/' || return $?
-    log_message "Envoy direct-response and reverse-proxy scenarios are ready inside ${ENVOY_CONTAINER_NAME}"
+    wait_for_https_service "https://127.0.0.1:${ENVOY_DIRECT_PORT}/" || return $?
+    wait_for_https_service "https://127.0.0.1:${ENVOY_PROXY_PORT}/" || return $?
+    log_message "Envoy direct-response and reverse-proxy scenarios are ready inside ${ENVOY_CONTAINER_NAME}: backend ${ENVOY_BACKEND_PORT}, direct ${ENVOY_DIRECT_PORT}, proxy ${ENVOY_PROXY_PORT}"
 }

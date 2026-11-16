@@ -8,6 +8,12 @@ run_envoy_benchmarks() {
         return 50
     }
     check_envoy_container || return 50
+    [[ -r "${RUNTIME_DIR}/ports.env" ]] || {
+        log_message "ERROR: Envoy runtime port file is missing: ${RUNTIME_DIR}/ports.env"
+        return 50
+    }
+    # shellcheck disable=SC1091
+    . "${RUNTIME_DIR}/ports.env"
     docker exec -i --user "$(id -u):$(id -g)" \
         --env "SOFTWARE_VERSION=${SOFTWARE_VERSION}" \
         --env "EXPECTED_ARCH=${EXPECTED_ARCH}" \
@@ -15,8 +21,8 @@ run_envoy_benchmarks() {
         --env "TMPDIR=${TMPDIR}" \
         "${ENVOY_CONTAINER_NAME}" python3 - \
         --k6 "${K6_BIN}" \
-        --direct-url 'https://127.0.0.1:19000/' \
-        --reverse-url 'https://127.0.0.1:19001/' \
+        --direct-url "https://127.0.0.1:${ENVOY_DIRECT_PORT}/" \
+        --reverse-url "https://127.0.0.1:${ENVOY_PROXY_PORT}/" \
         --output "${RESULTS_DIR}/benchmark_envoy.json" \
         --raw-output "${RESULTS_DIR}/benchmark_envoy_raw.log" \
         < "${SCRIPT_DIR}/scripts/results/run_k6_benchmark.py" || {

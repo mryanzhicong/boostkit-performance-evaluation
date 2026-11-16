@@ -50,6 +50,36 @@ def test_rejects_non_gi_b_memory_value() -> None:
     assert "ENVOY_CONTAINER_MEMORY" in completed.stdout
 
 
+def test_derives_a_distinct_port_block_from_the_run_id() -> None:
+    completed = _run(
+        "set_envoy_runtime_ports; "
+        'printf "%s %s %s %s %s %s\\n" "$ENVOY_BACKEND_PORT" '
+        '"$ENVOY_BACKEND_ADMIN_PORT" "$ENVOY_DIRECT_PORT" '
+        '"$ENVOY_DIRECT_ADMIN_PORT" "$ENVOY_PROXY_PORT" '
+        '"$ENVOY_PROXY_ADMIN_PORT"',
+        PERF_RUN_ID="43789417289-1",
+    )
+    assert completed.returncode == 0, completed.stderr
+    ports = [int(value) for value in completed.stdout.split()]
+    assert len(ports) == 6
+    assert len(set(ports)) == 6
+    assert all(20000 <= port <= 49999 for port in ports)
+
+
+def test_runtime_uses_the_derived_ports() -> None:
+    start = (ENVOY_DIR / "scripts/stages/start.sh").read_text(encoding="utf-8")
+    test = (ENVOY_DIR / "scripts/stages/test.sh").read_text(encoding="utf-8")
+    assert "set_envoy_runtime_ports" in start
+    assert "ports.env" in start
+    assert "${ENVOY_DIRECT_PORT}" in start
+    assert "${ENVOY_PROXY_PORT}" in start
+    assert "ports.env" in test
+    assert "${ENVOY_DIRECT_PORT}" in test
+    assert "${ENVOY_PROXY_PORT}" in test
+    assert "19000" not in start
+    assert "19001" not in test
+
+
 def test_start_script_passes_quota_and_verifies_it() -> None:
     text = (ENVOY_DIR / "scripts/stages/start.sh").read_text(encoding="utf-8")
     assert '"--cpus=${ENVOY_CONTAINER_CPUS}"' in text

@@ -100,6 +100,29 @@ print(",".join(map(str, affinity[:want])), "")
 PY
 }
 
+# Derive a per-run port block instead of using fixed 18080/19000/19001 ports.
+# The block is ten ports wide and stays in the unprivileged 20000-49999 range;
+# cksum spreads sequential run IDs without depending on a hard-coded suffix.
+select_envoy_port_base() {
+    local hash
+    hash="$(printf '%s' "${PERF_RUN_ID}" | cksum | awk '{print $1}')"
+    printf '%s\n' "$(( 20000 + (hash % 3000) * 10 ))"
+}
+
+set_envoy_runtime_ports() {
+    local base
+    base="$(select_envoy_port_base)" || return 40
+    ENVOY_BACKEND_PORT=$(( base ))
+    ENVOY_BACKEND_ADMIN_PORT=$(( base + 1 ))
+    ENVOY_DIRECT_PORT=$(( base + 2 ))
+    ENVOY_DIRECT_ADMIN_PORT=$(( base + 3 ))
+    ENVOY_PROXY_PORT=$(( base + 4 ))
+    ENVOY_PROXY_ADMIN_PORT=$(( base + 5 ))
+    export ENVOY_BACKEND_PORT ENVOY_BACKEND_ADMIN_PORT
+    export ENVOY_DIRECT_PORT ENVOY_DIRECT_ADMIN_PORT
+    export ENVOY_PROXY_PORT ENVOY_PROXY_ADMIN_PORT
+}
+
 verify_envoy_container_resources() {
     local expected_cpu_set="$1"
     local expected_numa_node="$2"
