@@ -4,10 +4,12 @@
 **本次任务私有的 openEuler 24.03 LTS SP4 容器**中启动 Envoy 服务，并在同一
 容器内运行 k6 压测客户端，测试 HTTPS 直接响应和反向代理两个场景。
 
-容器规格固定为 **4 CPU、8 GiB（4U8G）**：`--cpus=4`，CPU 集合与 NUMA
-内存节点按当前 runner 的 affinity 和 sysfs 拓扑读取，不写死 CPU 区间；每个
-NUMA 节点最低的 4 个 CPU 保留给系统进程，容器取紧随其后的 4 个 CPU（Blue
-aarch64 上为 4、5、6、7），避免系统负载落在 0-3 上影响测量。
+容器规格固定为 **4 CPU、8 GiB（4U8G）**：`--cpus=4`，按 runner 的 affinity
+和 sysfs 拓扑选一个 NUMA 节点，同时绑定 CPU 集合与内存节点，不写死绝对 CPU 区间。
+默认取 **NUMA 节点 3**（Blue aarch64 runner 上为 288-383），保留该节点最低的
+8 个 CPU 给系统进程，容器取紧随其后的 4 个 CPU（即 296-299），内存落
+`--cpuset-mems=3`；这样容器不再与系统、中断和 Docker daemon 争用节点 0。
+若目标 runner 没有该节点，脚本记录告警后回退到原选择策略（最低可用节点）。
 `--memory=8g`，Docker 支持 swap accounting 时追加 `--memory-swap=8g`。
 容器使用 `--network=host`，服务端口由运行 ID 派生，避免与其他任务冲突。
 

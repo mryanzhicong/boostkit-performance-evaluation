@@ -17,11 +17,13 @@ ENVOY_IMAGE_ARCHIVE_DIR="${ENVOY_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEu
 ENVOY_CA_ANCHORS_DIR="${ENVOY_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 ENVOY_CONTAINER_CPUS="${ENVOY_CONTAINER_CPUS:-4}"
 ENVOY_CONTAINER_MEMORY="${ENVOY_CONTAINER_MEMORY:-8g}"
-ENVOY_CONTAINER_NUMA_NODE="${ENVOY_CONTAINER_NUMA_NODE:-}"
-# Leave the lowest CPUs of each NUMA node to host/system work.  On the Blue
-# aarch64 runner this moves the 4U8G container from 0-3 to 4-7 without
-# hard-coding an absolute CPU range.
-ENVOY_CONTAINER_CPU_RESERVED="${ENVOY_CONTAINER_CPU_RESERVED:-4}"
+ENVOY_CONTAINER_NUMA_NODE="${ENVOY_CONTAINER_NUMA_NODE:-3}"
+# Pin the 4U8G container to one NUMA node and leave the lowest CPUs of that node
+# to host/system work.  On the Blue aarch64 runner the default used to be node 0
+# (CPUs 4-7), which also hosts the OS, IRQ handling and the Docker daemon; the
+# default now targets node 3 (CPUs 288-383) and skips its first 8 CPUs.  The
+# selection falls back to the previous behaviour on hosts without that node.
+ENVOY_CONTAINER_CPU_RESERVED="${ENVOY_CONTAINER_CPU_RESERVED:-8}"
 
 INSTALL_DIR=""
 ENVOY_BIN=""
@@ -96,9 +98,26 @@ for cpu in affinity:
 if node_cpus:
     candidates = sorted(node_cpus, key=int)
     if preferred:
-        if preferred not in node_cpus:
-            raise SystemExit(f"requested NUMA node {preferred} has no allowed CPUs")
-        candidates = [preferred]
+        if preferred in node_cpus:
+            candidates = [preferred]
+        else:
+            # Keep hosts without the preferred node usable (local smoke hosts,
+            # runners with fewer NUMA nodes) instead of failing the run.
+            print(
+                "WARN: requested NUMA node "
+                + preferred
+                + " has no allowed CPUs, falling back to nodes "
+                + ",".join(candidates),
+                file=sys.stderr,
+            )
+    print(
+        "topology: allowed CPUs "
+        + ",".join(
+            f"node{node}={cpus[0]}-{cpus[-1]}({len(cpus)})"
+            for node, cpus in sorted(node_cpus.items(), key=lambda item: int(item[0]))
+        ),
+        file=sys.stderr,
+    )
     for node in candidates:
         cpus = node_cpus[node]
         # Prefer CPUs above the reserved low-numbered range.  If a node is too
