@@ -46,9 +46,36 @@ Envoy、k6 或容器内运行期组件。
 - **宿主职责边界**：宿主机只负责下载/校验 Envoy 与 k6、生成自签名证书、
   做 HTTPS 就绪探测、运行结果解析与规范化；不向宿主机安装 Envoy 服务，
   也不在宿主机启动 Envoy 或 k6 进程。
+- **资源规格：4U8G**：容器固定限制为 4 个 CPU、8 GiB 内存：
+  `--cpus=4`、`--cpuset-cpus=<同一 NUMA 节点上的 4 个允许 CPU>`、
+  `--cpuset-mems=<该 NUMA 节点>`、`--memory=8g`；Docker 支持
+  swap accounting 时追加 `--memory-swap=8g`。
+  CPU 集合由当前进程的 affinity 与 sysfs NUMA 拓扑计算，不使用写死的
+  CPU 区间；没有 NUMA 拓扑的本地 WSL 只保留 4 CPU 配额，Blue 的
+  aarch64 运行会同时绑定 CPU 与 NUMA 内存节点。启动后通过
+  `docker inspect` 核对 `NanoCpus`、`CpusetCpus`、`CpusetMems`、
+  `Memory`；支持 swap accounting 时再核对 `MemorySwap`，任一不符即失败。以下是实际命令形态，
+  `cpu_set`、`numa_node` 由脚本按拓扑计算：
+
+```bash
+docker run --detach --name "${ENVOY_CONTAINER_NAME}" \
+  --label "boostkit.envoy.run-id=${PERF_RUN_ID}" \
+  --cpus=4 --cpuset-cpus="${cpu_set}" --cpuset-mems="${numa_node}" \
+  --memory=8g \
+  --network=host --user "$(id -u):$(id -g)" \
+  --ulimit nofile=1048576:1048576 \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
+  --mount "type=bind,source=/etc/passwd,target=/etc/passwd,readonly" \
+  --mount "type=bind,source=/etc/group,target=/etc/group,readonly" \
+  "${ENVOY_CONTAINER_IMAGE}" sleep infinity
+```
+
 - **与整机直跑的差异**：服务端与压测客户端都在容器内，容器使用
   `--network=host` 共享宿主网络栈，因此 `127.0.0.1` 端口与直跑一致；
-  不限制 CPU、内存或 NUMA（不设置 `--cpus`/`--memory`/`--cpuset-*`）。
+  容器固定为 4U8G，因此结果代表 4 个 CPU、8 GiB 内存下的表现。
+- **本次正式证据范围**：只派发 aarch64 Blue；x86_64 代码路径保留，但
+  本次不跑 x86_64。
 - **独立运行前置**：需要可访问的 Docker daemon；daemon 不可用或容器
   运行异常时，构建/启动/测试阶段分别以 30/40/50 退出码失败。
 

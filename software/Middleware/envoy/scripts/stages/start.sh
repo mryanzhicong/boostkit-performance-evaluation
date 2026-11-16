@@ -124,7 +124,8 @@ EOF
 }
 
 start_envoy_container() {
-    local dnf_options=()
+    local dnf_options=() cpu_set numa_node swap_limit expect_swap=false
+    local -a resource_args=()
     local -a mounts=(--mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}")
     if [[ "${RESULTS_DIR}" != "${PERF_WORK_DIR}" && "${RESULTS_DIR}" != "${PERF_WORK_DIR}/"* ]]; then
         mounts+=(--mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}")
@@ -142,12 +143,37 @@ start_envoy_container() {
         log_message "ERROR: refusing to reuse an existing Envoy container: ${ENVOY_CONTAINER_NAME}"
         return 40
     fi
-    log_message "starting task-private Envoy container ${ENVOY_CONTAINER_NAME} from ${ENVOY_CONTAINER_IMAGE}"
+    validate_envoy_container_resources || return $?
+    read -r cpu_set numa_node <<< "$(select_envoy_cpu_set)" || {
+        log_message "ERROR: failed to select a 4-CPU set from the allowed topology"
+        return 40
+    }
+    if [[ -z "${cpu_set}" ]]; then
+        log_message "ERROR: no usable CPU set for the ${ENVOY_CONTAINER_CPUS}-CPU Envoy container"
+        return 40
+    fi
+    resource_args+=(
+        "--cpus=${ENVOY_CONTAINER_CPUS}"
+        "--cpuset-cpus=${cpu_set}"
+        "--memory=${ENVOY_CONTAINER_MEMORY}"
+    )
+    swap_limit="$(docker info --format '{{.SwapLimit}}' 2>/dev/null || true)"
+    if [[ "${swap_limit}" == true ]]; then
+        resource_args+=("--memory-swap=${ENVOY_CONTAINER_MEMORY}")
+        expect_swap=true
+    fi
+    [[ -z "${numa_node}" ]] || resource_args+=("--cpuset-mems=${numa_node}")
+    log_message "starting ${ENVOY_CONTAINER_CPUS}U${ENVOY_CONTAINER_MEMORY%[gG]}G Envoy container ${ENVOY_CONTAINER_NAME} from ${ENVOY_CONTAINER_IMAGE}: CPUs ${cpu_set}, NUMA ${numa_node:-unbound}"
     docker run --detach --name "${ENVOY_CONTAINER_NAME}" \
         --label "boostkit.envoy.run-id=${PERF_RUN_ID}" \
+        "${resource_args[@]}" \
         --network=host --user "$(id -u):$(id -g)" \
         --ulimit "nofile=1048576:1048576" \
         "${mounts[@]}" "${ENVOY_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if ! verify_envoy_container_resources "${cpu_set}" "${numa_node}" "${expect_swap}"; then
+        docker rm --force "${ENVOY_CONTAINER_NAME}" >/dev/null 2>&1 || true
+        return 40
+    fi
 
     if [[ -n "${PERF_PROXY:-}" ]]; then
         log_message "updating CA trust in the private Envoy container"

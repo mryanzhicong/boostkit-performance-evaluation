@@ -15,6 +15,9 @@ K6_VERSION="2.2.0"
 ENVOY_OFFLINE_DIR="${ENVOY_OFFLINE_DIR:-/home/runner/software/envoy}"
 ENVOY_IMAGE_ARCHIVE_DIR="${ENVOY_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
 ENVOY_CA_ANCHORS_DIR="${ENVOY_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
+ENVOY_CONTAINER_CPUS="${ENVOY_CONTAINER_CPUS:-4}"
+ENVOY_CONTAINER_MEMORY="${ENVOY_CONTAINER_MEMORY:-8g}"
+ENVOY_CONTAINER_NUMA_NODE="${ENVOY_CONTAINER_NUMA_NODE:-}"
 
 INSTALL_DIR=""
 ENVOY_BIN=""
@@ -38,6 +41,103 @@ normalize_architecture() {
         aarch64|arm64) printf 'aarch64\n' ;;
         *) printf '%s\n' "${1,,}" ;;
     esac
+}
+
+validate_envoy_container_resources() {
+    if [[ ! "${ENVOY_CONTAINER_CPUS}" =~ ^[1-9][0-9]*$ ]]; then
+        log_message "ERROR: ENVOY_CONTAINER_CPUS must be a positive integer: ${ENVOY_CONTAINER_CPUS}"
+        return 10
+    fi
+    if [[ ! "${ENVOY_CONTAINER_MEMORY}" =~ ^[1-9][0-9]*[gG]$ ]]; then
+        log_message "ERROR: ENVOY_CONTAINER_MEMORY must be a whole-GiB value such as 8g: ${ENVOY_CONTAINER_MEMORY}"
+        return 10
+    fi
+    if [[ -n "${ENVOY_CONTAINER_NUMA_NODE}" && ! "${ENVOY_CONTAINER_NUMA_NODE}" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR: ENVOY_CONTAINER_NUMA_NODE must be a non-negative integer: ${ENVOY_CONTAINER_NUMA_NODE}"
+        return 10
+    fi
+}
+
+# Pick four CPUs from one NUMA node, never from a hard-coded CPU range.  The
+# runner's allowed affinity is the source of truth; when sysfs exposes no NUMA
+# topology (for example a local WSL smoke host), fall back to four affinity CPUs
+# and let Docker use the host memory policy.
+select_envoy_cpu_set() {
+    python3 - "${ENVOY_CONTAINER_CPUS}" "${ENVOY_CONTAINER_NUMA_NODE}" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+want = int(sys.argv[1])
+preferred = sys.argv[2].strip()
+if want < 1:
+    raise SystemExit("CPU count must be positive")
+
+affinity = sorted(os.sched_getaffinity(0))
+node_cpus = {}
+for cpu in affinity:
+    nodes = sorted(Path(f"/sys/devices/system/cpu/cpu{cpu}").glob("node[0-9]*"))
+    if not nodes:
+        continue
+    node = nodes[0].name[4:]
+    node_cpus.setdefault(node, []).append(cpu)
+
+if node_cpus:
+    candidates = sorted(node_cpus, key=int)
+    if preferred:
+        if preferred not in node_cpus:
+            raise SystemExit(f"requested NUMA node {preferred} has no allowed CPUs")
+        candidates = [preferred]
+    for node in candidates:
+        if len(node_cpus[node]) >= want:
+            print(",".join(map(str, node_cpus[node][:want])), node)
+            raise SystemExit(0)
+    raise SystemExit(f"no NUMA node has at least {want} available CPUs")
+
+if len(affinity) < want:
+    raise SystemExit(f"only {len(affinity)} CPUs available, need {want}")
+print(",".join(map(str, affinity[:want])), "")
+PY
+}
+
+verify_envoy_container_resources() {
+    local expected_cpu_set="$1"
+    local expected_numa_node="$2"
+    local expect_swap="${3:-false}"
+    local actual nano_cpus cpu_set numa_node memory memory_swap
+    local expected_nano expected_bytes
+
+    expected_nano=$(( ENVOY_CONTAINER_CPUS * 1000000000 ))
+    expected_bytes=$(( ${ENVOY_CONTAINER_MEMORY%[gG]} * 1024 * 1024 * 1024 ))
+    actual="$(docker inspect --format '{{.HostConfig.NanoCpus}}|{{.HostConfig.CpusetCpus}}|{{.HostConfig.CpusetMems}}|{{.HostConfig.Memory}}|{{.HostConfig.MemorySwap}}' "${ENVOY_CONTAINER_NAME}" 2>/dev/null)" || {
+        log_message "ERROR: cannot inspect Envoy container resource limits: ${ENVOY_CONTAINER_NAME}"
+        return 40
+    }
+    IFS='|' read -r nano_cpus cpu_set numa_node memory memory_swap <<< "${actual}"
+    if [[ "${nano_cpus}" != "${expected_nano}" ]]; then
+        log_message "ERROR: Envoy container CPU quota is ${nano_cpus}, expected ${expected_nano} (${ENVOY_CONTAINER_CPUS} CPUs)"
+        return 40
+    fi
+    if [[ "${cpu_set}" != "${expected_cpu_set}" ]]; then
+        log_message "ERROR: Envoy container CPU set is ${cpu_set}, expected ${expected_cpu_set}"
+        return 40
+    fi
+    if [[ -n "${expected_numa_node}" && "${numa_node}" != "${expected_numa_node}" ]]; then
+        log_message "ERROR: Envoy container NUMA memory set is ${numa_node}, expected ${expected_numa_node}"
+        return 40
+    fi
+    if [[ "${memory}" != "${expected_bytes}" ]]; then
+        log_message "ERROR: Envoy container memory is ${memory}, expected ${expected_bytes}"
+        return 40
+    fi
+    if [[ "${expect_swap}" == true && "${memory_swap}" != "${expected_bytes}" ]]; then
+        log_message "ERROR: Envoy container memory swap is ${memory_swap}, expected ${expected_bytes}"
+        return 40
+    fi
+    if [[ "${expect_swap}" != true ]]; then
+        log_message "WARNING: this Docker daemon does not enforce swap accounting; the 8 GiB memory cgroup limit is still verified"
+    fi
+    log_message "verified Envoy container limits: ${ENVOY_CONTAINER_CPUS} CPUs (${cpu_set}), NUMA ${numa_node:-unbound}, ${ENVOY_CONTAINER_MEMORY} memory"
 }
 
 validate_variant() {
@@ -106,6 +206,11 @@ initialize_runtime() {
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" || return 30
 }
 
+# >>> container-runtime:begin
+# This case keeps its container runtime in common.sh rather than importing the
+# generated block, because the image is prepared during the build stage and the
+# three Envoy processes share one task-private container.  The markers keep the
+# repository container-block verifier applicable to this hand-written runtime.
 verify_envoy_image_release() {
     local release
     release="$(docker run --rm --network=none "${ENVOY_CONTAINER_IMAGE}" cat /etc/os-release)" || return 30
@@ -199,3 +304,4 @@ remove_envoy_container() {
     docker rm "${ENVOY_CONTAINER_NAME}" >/dev/null || return 70
     log_message "removed task-private Envoy container: ${ENVOY_CONTAINER_NAME}"
 }
+# >>> container-runtime:end
