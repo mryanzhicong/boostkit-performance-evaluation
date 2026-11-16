@@ -1,0 +1,17 @@
+scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+crossprod_small|blas|r_script|bench.R|400|float|16033800.787921709940|1e-09|crossprod of a 400x400 double matrix (BLAS dgemm)
+crossprod_large|blas|r_script|bench.R|1200|float|431497997.192656815052|1e-09|crossprod of a 1200x1200 double matrix (BLAS dgemm)
+matvec_small|blas|r_script|bench.R|500|float|63900.229739928029|1e-09|matrix-vector product 500x500 (BLAS dgemv)
+matvec_large|blas|r_script|bench.R|1500|float|559495.296892058803|1e-09|matrix-vector product 1500x1500 (BLAS dgemv)
+solve_small|blas|r_script|bench.R|300|float|0.035995605184|1e-09|solve 300x300 positive definite system (LAPACK)
+solve_large|blas|r_script|bench.R|900|float|0.075889014603|1e-09|solve 900x900 positive definite system (LAPACK)
+vector_arith_small|vector|r_script|bench.R|5000000|float|1793168203899.968261718750|1e-09|sqrt/divide/sum over a 5M element numeric vector
+vector_arith_large|vector|r_script|bench.R|20000000|float|28631058481635.855468750000|1e-09|sqrt/divide/sum over a 20M element numeric vector
+sort_small|vector|r_script|bench.R|1000000|float|499916.506571774138|1e-09|sort 1M uniform random doubles
+sort_large|vector|r_script|bench.R|4000000|float|1999827.257361510070|1e-09|sort 4M uniform random doubles
+lapply_small|calls|r_script|bench.R|200000|int|82857528571||lapply over 200k elements
+lapply_large|calls|r_script|bench.R|800000|int|382858228583||lapply over 800k elements
+paste_small|strings|r_script|bench.R|200000|int|2488895||paste0 over 200k elements
+paste_large|strings|r_script|bench.R|800000|int|10288895||paste0 over 800k elements
+rowsum_small|matrix|r_script|bench.R|20000|float|999524.848536490696|1e-09|rowSums over a 20000x100 matrix
+rowsum_large|matrix|r_script|bench.R|40000|float|1999827.257361510070|1e-09|rowSums over a 40000x100 matrix
