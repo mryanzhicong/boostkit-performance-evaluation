@@ -370,6 +370,8 @@ def test_container_runs_without_pinning_and_mounts_results() -> None:
     assert "--cpus=" not in content
     assert 'type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in content
     assert 'type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}' in content
+    assert 'type=bind,source=/home/runner/.gitconfig,target=/home/runner/.gitconfig,readonly' in content
+    assert "GIT_CONFIG_GLOBAL=/home/runner/.gitconfig" in content
     assert "boostkit.rust.run-id=${PERF_RUN_ID}" in content
     assert "openEuler-24.03-LTS-SP4" in content
     assert "docker load" in content

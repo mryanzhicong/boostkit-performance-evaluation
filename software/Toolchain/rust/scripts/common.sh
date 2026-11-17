@@ -234,7 +234,7 @@ prepare_rust_container_image() {
 # granted because the upstream collector reads hardware performance counters
 # (instructions:u/cycles:u) inside the container.
 require_rust_container() {
-    local -a cert_mount=()
+    local -a cert_mount=() git_mount=()
     require_docker || return $?
     if docker container inspect "${RUST_CONTAINER_NAME}" >/dev/null 2>&1; then
         log_message "ERROR: refusing to reuse an existing container: ${RUST_CONTAINER_NAME}"
@@ -250,6 +250,9 @@ require_rust_container() {
         fi
         cert_mount+=(--mount "type=bind,source=${RUST_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        git_mount+=(--mount type=bind,source=/home/runner/.gitconfig,target=/home/runner/.gitconfig,readonly)
+    fi
     log_message "starting Rust container ${RUST_CONTAINER_NAME} (host network, no CPU/NUMA pinning)"
     # rustc-perf runs compilations under `setarch -R` to disable ASLR; the
     # personality() syscall is denied by the default Docker seccomp profile.
@@ -261,7 +264,7 @@ require_rust_container() {
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
-        "${cert_mount[@]}" \
+        "${cert_mount[@]}" "${git_mount[@]}" \
         "${RUST_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
     if [[ -n "${PERF_PROXY:-}" ]]; then
         log_message 'updating CA trust in the private Rust container'
@@ -292,14 +295,15 @@ check_rust_container() {
 # Run a command inside the container with the host proxy forwarded when one is
 # configured (git clone, cargo fetch and downloads need it).
 container_exec() {
+    local -a proxy=() git_config=()
     if [[ -n "${PERF_PROXY:-}" ]]; then
-        docker exec -e http_proxy="${PERF_PROXY}" -e https_proxy="${PERF_PROXY}" \
-            -e TMPDIR="${TMPDIR}" -e CARGO_HOME="${CARGO_HOME}" \
-            "${RUST_CONTAINER_NAME}" "$@"
-    else
-        docker exec -e TMPDIR="${TMPDIR}" -e CARGO_HOME="${CARGO_HOME}" \
-            "${RUST_CONTAINER_NAME}" "$@"
+        proxy=(-e "http_proxy=${PERF_PROXY}" -e "https_proxy=${PERF_PROXY}")
     fi
+    if [[ -f /home/runner/.gitconfig ]]; then
+        git_config=(-e GIT_CONFIG_GLOBAL=/home/runner/.gitconfig)
+    fi
+    docker exec "${proxy[@]}" -e "TMPDIR=${TMPDIR}" -e "CARGO_HOME=${CARGO_HOME}" \
+        "${git_config[@]}" "${RUST_CONTAINER_NAME}" "$@"
 }
 
 container_exec_root() {

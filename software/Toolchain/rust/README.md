@@ -60,6 +60,9 @@ docker run --detach --name "${RUST_CONTAINER_NAME}" \
 
 - 不使用 `--cpus`、`--cpuset-cpus`、`--cpuset-mems`：不绑核、不绑 NUMA。
 - `--network=host`：容器直接使用宿主机网络。
+- 若 Runner 存在 `/home/runner/.gitconfig`，只读挂载到容器内同一路径，并在 `docker exec`
+  时设置 `GIT_CONFIG_GLOBAL=/home/runner/.gitconfig`；`rustc-perf` 的 `git fetch` 可以使用
+  Runner 配置的 `insteadOf`、代理或镜像规则。文件不存在时不挂载，也不设置该变量。
 - `--cap-add=PERFMON`：允许容器内的 `perf_event_open` 读取本进程用户态硬件计数器。
 - `--security-opt seccomp=unconfined`：rustc-perf 通过 `setarch -R` 关闭 ASLR，而默认
   Docker seccomp 配置拒绝 `personality()` 系统调用（实测返回 `Operation not permitted`）。
