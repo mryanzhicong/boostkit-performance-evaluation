@@ -62,7 +62,7 @@ prepare_rocksdb_benchmark_data() {
     log_message "installing RocksDB/YCSB runtime dependencies inside the private container"
     docker exec --user 0 "${ROCKSDB_CONTAINER_NAME}" \
         dnf "${dnf_options[@]}" install -y \
-        java-11-openjdk-headless python3 libatomic snappy zlib bzip2 lz4 zstd || return 30
+        java-11-openjdk-headless python3 libatomic snappy zlib bzip2 lz4 zstd liburing numactl-libs || return 30
     if ! docker exec "${ROCKSDB_CONTAINER_NAME}" java -version 2>&1 | grep -Eq 'version "11([."]|$)' || \
        ! docker exec "${ROCKSDB_CONTAINER_NAME}" python3 --version >/dev/null 2>&1; then
         log_message "ERROR: container requires Java 11 and Python 3"
