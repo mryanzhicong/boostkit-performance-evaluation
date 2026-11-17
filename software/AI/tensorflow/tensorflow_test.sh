@@ -11,7 +11,7 @@ usage() {
     cat <<EOF2
 Usage: $(basename "$0") [--version 2.20.0] [--variant base|optimized] [--results-dir DIR]
                         [--asset-dir DIR] [--keep-workdir]
-Load the private aarch64 TensorFlow ModelZoo benchmark image, build
+Load the private TensorFlow ModelZoo benchmark image, build
 predictor_server, and run one din_mmoe baseline serving benchmark.
 EOF2
 }

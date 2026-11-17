@@ -86,10 +86,6 @@ configure_runtime_paths() {
         return 10
     }
     EXPECTED_ARCH="$(normalize_arch "${EXPECTED_ARCH}")"
-    if [[ "${EXPECTED_ARCH}" != "aarch64" ]]; then
-        log 'ERROR: the benchmark-infer image is aarch64-only; run this case with architecture=aarch64'
-        return 20
-    fi
     if [[ -z "${PERF_WORK_DIR}" ]]; then
         PERF_WORK_DIR="/home/runner/boostkit-perf/tensorflow/local-${PERF_RUN_ID}"
         STANDALONE_OWNS_WORK_DIR=1
@@ -183,12 +179,6 @@ load_tensorflow_image() {
             return 30
         }
     fi
-    local image_arch
-    image_arch="$(docker image inspect --format '{{.Architecture}}' "${TF_IMAGE}")"
-    [[ "${image_arch}" == "arm64" ]] || {
-        log "ERROR: benchmark image architecture is ${image_arch}, expected arm64"
-        return 30
-    }
     sha256sum "${TF_IMAGE_TAR}" | tee "${TF_IMAGE_SHA256_FILE}" >/dev/null
     TF_IMAGE_SHA256="$(awk '{print $1}' "${TF_IMAGE_SHA256_FILE}")"
 }

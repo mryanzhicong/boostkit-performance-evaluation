@@ -4,10 +4,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 start_tensorflow_runtime() {
     initialize_runtime || return $?
     check_tensorflow_container || return $?
-    [[ "$(container_exec uname -m)" == "aarch64" ]] || {
-        log 'ERROR: benchmark container is not aarch64'
-        return 40
-    }
     container_exec test -x "${TF_SOURCE_DIR}/bazel-bin/predictor_server" || {
         log 'ERROR: predictor_server is missing; run the build stage first'
         return 40

@@ -72,7 +72,7 @@ def test_parser_rejects_bad_header_and_values(tmp_path: Path) -> None:
     assert result.returncode != 0
 
 
-def test_case_wiring_and_aarch64_only_guard() -> None:
+def test_case_wiring_and_container_flags() -> None:
     case = yaml.safe_load((CASE_DIR / "case.yaml").read_text())
     assert case["name"] == "tensorflow"
     assert case["category"] == "AI"
@@ -82,19 +82,9 @@ def test_case_wiring_and_aarch64_only_guard() -> None:
     assert case["outputs"]["benchmark_result_csv"]["path"] == "tensorflow-benchmark/results.csv"
     assert case["metrics"]["collection"]["subgroup_path"] == "subgroup"
     content = (SCRIPTS / "common.sh").read_text()
-    assert "aarch64-only" in content
     assert "--privileged" in content
     assert "--cpuset-cpus=0-15" in content
     assert "--memory=128g" in content
-    result = subprocess.run(
-        ["bash", "-c", 'source "$1"; EXPECTED_ARCH=x86_64; configure_runtime_paths', "bash",
-         str(SCRIPTS / "common.sh")],
-        env={**os.environ, "PERF_RUN_ID": "x", "PERF_WORK_DIR": "/tmp/tf-guard-work",
-             "RESULTS_DIR": "/tmp/tf-guard-results"},
-        capture_output=True, text=True, check=False,
-    )
-    assert result.returncode == 20
-    assert "aarch64-only" in result.stdout
 
 
 def test_optimized_builder_fails_explicitly() -> None:
@@ -103,7 +93,7 @@ def test_optimized_builder_fails_explicitly() -> None:
     assert "return 40" in content
 
 
-def test_container_name_is_aarch64_and_run_id() -> None:
+def test_container_name_uses_arch_and_run_id() -> None:
     result = subprocess.run(
         ["bash", "-c", 'source "$1"; PERF_RUN_ID=42-1; EXPECTED_ARCH=aarch64; configure_runtime_paths; printf "%s\\n" "$TF_CONTAINER_NAME"',
          "bash", str(SCRIPTS / "common.sh")],

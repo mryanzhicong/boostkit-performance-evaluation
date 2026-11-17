@@ -1,13 +1,10 @@
 # TensorFlow ModelZoo 2.0 Serving 性能测试
 
-本用例在 **aarch64** 上加载私有 `benchmark-infer:v1.0.0` 镜像，构建
-`predictor_server`，对 `din_mmoe` SavedModel 执行一轮 Serving 压测。测试数据来自
-`tf_benchmark.tar.gz` 中的模型和 `benchmark_dataset`。实现按
+本用例加载私有 `benchmark-infer:v1.0.0` 镜像，构建 `predictor_server`，对
+`din_mmoe` SavedModel 执行一轮 Serving 压测。测试数据来自 `tf_benchmark.tar.gz`
+中的模型和 `benchmark_dataset`。实现按
 `TensorFlow-benchmark-Modelzoo 2.0测试指导.pdf` 的流程，但框架内只运行
 **一个私有容器、一个 server**；PDF 的 12 容器批量版需要另外的编排层。
-
-镜像只有 arm64；`x86_64` Runner 不能运行本用例，workflow 必须使用
-`architecture=aarch64`。`architecture=all` 的 x86 job 会明确失败。
 
 软件入口为 `tensorflow_test.sh`。Framework 根据 `case.yaml` 依次调用构建、启动、
 测试和停止函数；`scripts/builders/base.sh` 负责镜像、源码、资产和 Bazel 构建，
@@ -18,7 +15,7 @@
 
 | 项目 | 来源与版本 | 本次任务中的位置 |
 |---|---|---|
-| benchmark 镜像 | 私有 `benchmark-infer:v1.0.0`，arm64 | `/home/runner/software/tensorflow/benchmark-infer.tar`，`docker load` 后使用 |
+| benchmark 镜像 | 私有 `benchmark-infer:v1.0.0` | `/home/runner/software/tensorflow/benchmark-infer.tar`，`docker load` 后使用 |
 | TensorFlow 源码 | [boostkit/tensorflow](https://gitcode.com/boostkit/tensorflow)，分支 `dev_2.20.0` | `${PERF_WORK_DIR}/tensorflow`；也可预置 `/home/runner/software/tensorflow/tensorflow/` |
 | SavedModel | `din_mmoe`（默认）、`bst_mmoe`、`wd_dcn` | `/home/runner/software/tensorflow/tf_benchmark/` 或从 `tf_benchmark.tar.gz` 解压 |
 | 数据集 | `benchmark_dataset/din_mmoe.tsv` 等 | 同上 |
@@ -170,4 +167,3 @@ bash software/AI/tensorflow/tensorflow_test.sh \
   用户确认保留这些参数，因此与框架其他“不绑核、不限制 CPU/内存”的用例不同。
 - PDF 同时支持 `baseline`、`dnn`、`opt`；本用例默认 `baseline`，可通过
   `TF_RUN_MODES` 扩展。
-- 镜像只有 arm64，无法在 x86_64 上运行，也无法形成同口径双架构对比。
