@@ -1,0 +1,543 @@
+{
+  "software": "ultrascan",
+  "version": "5.8.0",
+  "variant": "base",
+  "architecture": "aarch64",
+  "run_id": "44030468363-1",
+  "generated_at": "2026-11-17T07:41:11Z",
+  "toolchain": {
+    "compiler": "c++ (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)"
+  },
+  "dataset": {
+    "root": "/home/runner/software/Ultrascan",
+    "source_zip": "ultrascan-data.zip",
+    "source_zip_sha256": "8d6eaf567ced89104fdca57703a6730145f65c25ed48895ba998435f9d3d1d95",
+    "files": {
+      "alexa200.db": {
+        "kind": "corpus",
+        "bytes": 192055296,
+        "sha256": "514468f2aefec5c4369722ebbc112c0c25ee7eacd16aabdb9becf75342c73561",
+        "crc32": "604ccfd3",
+        "corpus_blocks": 130957,
+        "corpus_bytes": 177087567,
+        "streams": 5400
+      },
+      "gutenberg.db": {
+        "kind": "corpus",
+        "bytes": 7161856,
+        "sha256": "b1d621f8280cbbf0783e03af2ff21296628ca7c7c85f5ec67c6c92e8620318a6",
+        "crc32": "a21b4252",
+        "corpus_blocks": 3280,
+        "corpus_bytes": 6701044,
+        "streams": 653
+      },
+      "qiming.db": {
+        "kind": "corpus",
+        "bytes": 121352192,
+        "sha256": "90e83f37b497490b6f86f656a64d1f05caae79d88233ecfd55bf7f2ccc005b99",
+        "crc32": "299fd25e",
+        "corpus_blocks": 358002,
+        "corpus_bytes": 98413056,
+        "streams": 358002
+      },
+      "snort_literals": {
+        "kind": "rules",
+        "bytes": 127118,
+        "sha256": "ac54e9982237fdf81912b00e4bb182fb859b7b406d109f0593e5709eadac44ee",
+        "crc32": "330f8f3d",
+        "expressions": 3116,
+        "lines": 3116
+      },
+      "snort_pcres": {
+        "kind": "rules",
+        "bytes": 42284,
+        "sha256": "b3bccdad742608de1f368fd1ff0fc308650d7f63daf4a93e00c970874c8091fa",
+        "crc32": "70fe79bd",
+        "expressions": 847,
+        "lines": 847
+      },
+      "teakettle_2500": {
+        "kind": "rules",
+        "bytes": 109676,
+        "sha256": "281de3c5d8672f61f7548ccb54357933826a2bdb640cdad3d1b2d0ac31f7934b",
+        "crc32": "12dd475c",
+        "expressions": 2500,
+        "lines": 2500
+      },
+      "wanan_1byte.db": {
+        "kind": "corpus",
+        "bytes": 372473856,
+        "sha256": "11c7014182ff5b5fd5c9887115cad47032a8dd515f24bf8dcab0f13bee5016e0",
+        "crc32": "5bdf3969",
+        "corpus_blocks": 737840,
+        "corpus_bytes": 282931988,
+        "streams": 233163
+      },
+      "wanan_2-4.db": {
+        "kind": "corpus",
+        "bytes": 455647232,
+        "sha256": "dbc836696d175ff9f7f1902087d3ec618c87d11ed72ad6525b4b5e1ab2b8cf1e",
+        "crc32": "81d4690b",
+        "corpus_blocks": 1105580,
+        "corpus_bytes": 344439847,
+        "streams": 233204
+      },
+      "wanan_clone.db": {
+        "kind": "corpus",
+        "bytes": 2542039040,
+        "sha256": "36823924c424948e9543ec4a2226516db5a547fdfc6c6abc77c53db5ea5c4d45",
+        "crc32": "c48aa5e4",
+        "corpus_blocks": 2288635,
+        "corpus_bytes": 1873201198,
+        "streams": 480174
+      },
+      "启明核心规则集": {
+        "kind": "rules",
+        "bytes": 201280,
+        "sha256": "bac492d4f9054b88439ad8a27c03f825d64083917c6ee43ae12b6580bab37ad6",
+        "crc32": "b769162e",
+        "expressions": 1190,
+        "lines": 1190
+      },
+      "短规则规则集": {
+        "kind": "rules",
+        "bytes": 19496,
+        "sha256": "5fbe941f658fae9881f9b8cb73c4703163766cdb9fda44c35ddfe5fd99e86998",
+        "crc32": "8663ab58",
+        "expressions": 372,
+        "lines": 372
+      },
+      "短规则规则集1byte": {
+        "kind": "rules",
+        "bytes": 20793,
+        "sha256": "2afec5caa8b4b105c24b8201d77b20f66aac1e895a08777918644e819e4383a8",
+        "crc32": "7d3e05e6",
+        "expressions": 372,
+        "lines": 372
+      },
+      "美亚规则集": {
+        "kind": "rules",
+        "bytes": 250,
+        "sha256": "b41235d1f305c1a10c788660733b324479ad1fb24ba8880d394544999f2b91a5",
+        "crc32": "541dd57a",
+        "expressions": 16,
+        "lines": 16
+      }
+    }
+  },
+  "benchmark": {
+    "workload": "Ultrascan hsbench block-mode rule/corpus matrix; each metric is the Mean throughput (overall) of one scenario",
+    "warmups": 1,
+    "measure_reps": 5,
+    "scenarios": [
+      {
+        "key": "hsbench_rules_block",
+        "mode": "rules",
+        "rule": "snort_literals",
+        "corpus": "gutenberg.db",
+        "iterations": 1,
+        "greybox": ""
+      },
+      {
+        "key": "hsbench_ubc_block",
+        "mode": "ubc",
+        "rule": "snort_literals",
+        "corpus": "gutenberg.db",
+        "iterations": 1,
+        "greybox": ""
+      },
+      {
+        "key": "hsbench_teakettle_2500_gutenberg_block",
+        "mode": "rules",
+        "rule": "teakettle_2500",
+        "corpus": "gutenberg.db",
+        "iterations": 1000,
+        "greybox": "allowLily:1"
+      },
+      {
+        "key": "hsbench_snort_pcres_alexa200_block",
+        "mode": "rules",
+        "rule": "snort_pcres",
+        "corpus": "alexa200.db",
+        "iterations": 100,
+        "greybox": "allowLily:1"
+      },
+      {
+        "key": "hsbench_snort_literals_alexa200_block",
+        "mode": "rules",
+        "rule": "snort_literals",
+        "corpus": "alexa200.db",
+        "iterations": 200,
+        "greybox": "allowLily:1"
+      },
+      {
+        "key": "hsbench_qiming_core_qiming_block",
+        "mode": "rules",
+        "rule": "启明核心规则集",
+        "corpus": "qiming.db",
+        "iterations": 200,
+        "greybox": "allowLily:1;allowNeoFdr:1"
+      },
+      {
+        "key": "hsbench_short_rules_wanan_clone_block",
+        "mode": "rules",
+        "rule": "短规则规则集",
+        "corpus": "wanan_clone.db",
+        "iterations": 100,
+        "greybox": "allowLily:1"
+      },
+      {
+        "key": "hsbench_short_rules_1byte_wanan_1byte_block",
+        "mode": "rules",
+        "rule": "短规则规则集1byte",
+        "corpus": "wanan_1byte.db",
+        "iterations": 100,
+        "greybox": "allowLily:1"
+      },
+      {
+        "key": "hsbench_meiya_wanan_2_4_block",
+        "mode": "rules",
+        "rule": "美亚规则集",
+        "corpus": "wanan_2-4.db",
+        "iterations": 100,
+        "greybox": "allowLily:1"
+      }
+    ]
+  },
+  "results": {
+    "hsbench_rules_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_rules_block_mean_throughput_mbit_s",
+      "source_benchmark": "官方文档兼容场景：现场编译 snort_literals，扫描 gutenberg.db",
+      "source_field": "Mean throughput (overall)",
+      "value": 5444.09,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        5444.09,
+        5415.97,
+        5457.68,
+        5420.27,
+        5507.32
+      ],
+      "sample_summary": {
+        "median": 5444.09,
+        "mean": 5449.066,
+        "min": 5415.97,
+        "max": 5507.32
+      },
+      "wall_seconds_sample_values": [
+        0.222912,
+        0.221017,
+        0.219884,
+        0.220674,
+        0.219086
+      ],
+      "max_rss_kib_sample_values": [
+        36828,
+        37904,
+        36844,
+        36836,
+        36840
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_ubc_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_ubc_block_mean_throughput_mbit_s",
+      "source_benchmark": "官方文档兼容场景：加载 hsdump 生成的通用字节码，扫描 gutenberg.db",
+      "source_field": "Mean throughput (overall)",
+      "value": 5600.67,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        5529.46,
+        5622.18,
+        5600.67,
+        5598.37,
+        5614.18
+      ],
+      "sample_summary": {
+        "median": 5600.67,
+        "mean": 5592.972,
+        "min": 5529.46,
+        "max": 5622.18
+      },
+      "wall_seconds_sample_values": [
+        0.022963,
+        0.02329,
+        0.022887,
+        0.022945,
+        0.022921
+      ],
+      "max_rss_kib_sample_values": [
+        19968,
+        19968,
+        19972,
+        19972,
+        19968
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_teakettle_2500_gutenberg_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_teakettle_2500_gutenberg_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 1 行：teakettle_2500 + gutenberg.db，-N -n 1000 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 3240.62,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        3253.29,
+        3238.78,
+        3252.31,
+        3240.62,
+        3239.87
+      ],
+      "sample_summary": {
+        "median": 3240.62,
+        "mean": 3244.974,
+        "min": 3238.78,
+        "max": 3253.29
+      },
+      "wall_seconds_sample_values": [
+        19.0679,
+        19.14407,
+        19.0548,
+        19.110605,
+        19.125239
+      ],
+      "max_rss_kib_sample_values": [
+        68908,
+        68888,
+        71080,
+        67384,
+        70780
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_snort_pcres_alexa200_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_snort_pcres_alexa200_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 2 行：snort_pcres + alexa200.db，-N -n 100 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 1499.09,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        1498.67,
+        1497.16,
+        1499.49,
+        1499.09,
+        1502.1
+      ],
+      "sample_summary": {
+        "median": 1499.09,
+        "mean": 1499.302,
+        "min": 1497.16,
+        "max": 1502.1
+      },
+      "wall_seconds_sample_values": [
+        98.028487,
+        98.160916,
+        97.979152,
+        98.014542,
+        97.836436
+      ],
+      "max_rss_kib_sample_values": [
+        374960,
+        374948,
+        374952,
+        374968,
+        374960
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_snort_literals_alexa200_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_snort_literals_alexa200_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 3 行：snort_literals + alexa200.db，-N -n 200 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 4843.28,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        4828.06,
+        4843.28,
+        4843.44,
+        4827.49,
+        4844.05
+      ],
+      "sample_summary": {
+        "median": 4843.28,
+        "mean": 4837.264,
+        "min": 4827.49,
+        "max": 4844.05
+      },
+      "wall_seconds_sample_values": [
+        59.155973,
+        58.973821,
+        58.966746,
+        59.172654,
+        58.966959
+      ],
+      "max_rss_kib_sample_values": [
+        373524,
+        373524,
+        373520,
+        373524,
+        373520
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_qiming_core_qiming_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_qiming_core_qiming_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 4 行：启明核心规则集 + qiming.db，-N -n 200 -G allowLily:1;allowNeoFdr:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 1864.44,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        1848.25,
+        1864.44,
+        1861.86,
+        1868.19,
+        1870.69
+      ],
+      "sample_summary": {
+        "median": 1864.44,
+        "mean": 1862.686,
+        "min": 1848.25,
+        "max": 1870.69
+      },
+      "wall_seconds_sample_values": [
+        95.398401,
+        95.083628,
+        95.191763,
+        94.506616,
+        94.817614
+      ],
+      "max_rss_kib_sample_values": [
+        262252,
+        262640,
+        261796,
+        262320,
+        262756
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_short_rules_wanan_clone_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_short_rules_wanan_clone_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 5 行：短规则规则集 + wanan_clone.db，-N -n 100 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 4628.19,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        4631.47,
+        4618.01,
+        4615.6,
+        4636.61,
+        4628.19
+      ],
+      "sample_summary": {
+        "median": 4628.19,
+        "mean": 4625.976,
+        "min": 4615.6,
+        "max": 4636.61
+      },
+      "wall_seconds_sample_values": [
+        326.357452,
+        327.290781,
+        327.453545,
+        325.992886,
+        326.567133
+      ],
+      "max_rss_kib_sample_values": [
+        3966104,
+        3964616,
+        3964312,
+        3965080,
+        3965276
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_short_rules_1byte_wanan_1byte_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_short_rules_1byte_wanan_1byte_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 6 行：短规则规则集1byte + wanan_1byte.db，-N -n 100 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 2199.53,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        2199.53,
+        2204.9,
+        2193.29,
+        2204.03,
+        2188.73
+      ],
+      "sample_summary": {
+        "median": 2199.53,
+        "mean": 2198.096,
+        "min": 2188.73,
+        "max": 2204.9
+      },
+      "wall_seconds_sample_values": [
+        103.748359,
+        103.502709,
+        104.039274,
+        103.531862,
+        104.254077
+      ],
+      "max_rss_kib_sample_values": [
+        653028,
+        653096,
+        651752,
+        653416,
+        653288
+      ],
+      "group": "hsbench"
+    },
+    "hsbench_meiya_wanan_2_4_block_mean_throughput_mbit_s": {
+      "source_name": "hsbench_meiya_wanan_2_4_block_mean_throughput_mbit_s",
+      "source_benchmark": "xlsx 第 7 行：美亚规则集 + wanan_2-4.db，-N -n 100 -G allowLily:1",
+      "source_field": "Mean throughput (overall)",
+      "value": 10472.51,
+      "unit": "Mbit/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        10474.02,
+        10471.59,
+        10473.5,
+        10466.04,
+        10472.51
+      ],
+      "sample_summary": {
+        "median": 10472.51,
+        "mean": 10471.532,
+        "min": 10466.04,
+        "max": 10474.02
+      },
+      "wall_seconds_sample_values": [
+        27.251667,
+        27.251429,
+        27.25838,
+        27.273703,
+        27.24398
+      ],
+      "max_rss_kib_sample_values": [
+        818748,
+        817664,
+        818796,
+        818432,
+        818816
+      ],
+      "group": "hsbench"
+    }
+  },
+  "runs_dir": "runs"
+}
