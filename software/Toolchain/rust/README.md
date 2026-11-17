@@ -111,6 +111,15 @@ docker exec "${RUST_CONTAINER_NAME}" sh -c \
    CARGO_HOME='${PERF_WORK_DIR}/cargo' cargo build -p collector --release --locked"
 ```
 
+`collector` 本身不依赖 `rust-lang/team`，但 Cargo 在解析整个 workspace 的
+`Cargo.lock` 时会处理 `site` 的 `rust_team_data` git 依赖。因此构建命令设置了
+`CARGO_NET_GIT_FETCH_WITH_CLI=true`、`CARGO_NET_RETRY=5` 和
+`CARGO_HTTP_TIMEOUT=120`，让 Cargo 使用系统 `git`，从而读取上面挂载的
+`/home/runner/.gitconfig` 中的 `insteadOf`/代理/镜像规则，而不是走 libgit2 的
+直连 GitHub 路径。若 Runner 的 `.gitconfig` 没有配置 GitHub 镜像，`rust-lang/team`
+仍可能因国内网络不稳定失败；此时需要预置该仓库的 Cargo git cache，或改用不含
+`site` 成员的构建 workspace。
+
 collector（含基准包装器 `rustc-fake`）由刚部署的被测工具链在容器内构建，产物留在
 `${PERF_WORK_DIR}/rustc-perf/target/release/`。模块缓存使用任务私有
 `CARGO_HOME`（Framework 已指向任务目录），不使用系统 Rust 或全局 cargo 缓存。

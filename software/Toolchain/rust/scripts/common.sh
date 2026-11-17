@@ -303,6 +303,8 @@ container_exec() {
         git_config=(-e GIT_CONFIG_GLOBAL=/home/runner/.gitconfig)
     fi
     docker exec "${proxy[@]}" -e "TMPDIR=${TMPDIR}" -e "CARGO_HOME=${CARGO_HOME}" \
+        -e "CARGO_NET_GIT_FETCH_WITH_CLI=true" -e "CARGO_NET_RETRY=5" \
+        -e "CARGO_HTTP_TIMEOUT=120" \
         "${git_config[@]}" "${RUST_CONTAINER_NAME}" "$@"
 }
 
