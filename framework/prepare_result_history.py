@@ -150,6 +150,8 @@ def prepare(
         comparison = load_json(comparison_json, {}) if comparison_json.is_file() else None
         if comparison_json.is_file():
             shutil.copy2(comparison_json, run_root / "comparison.json")
+        for item_path in sorted(report_dir.glob(f"{stem}-items.jsonl")):
+            shutil.copy2(item_path, run_root / item_path.name)
         scoped_comparisons = [comparison] if comparison else []
         scoped_summary = build_summary(
             [result for result, _source_dir in entries], scoped_comparisons

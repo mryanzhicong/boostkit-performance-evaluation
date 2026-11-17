@@ -69,6 +69,14 @@ def _cell(value: object) -> str:
     return rendered.replace("|", "\\|").replace("\r\n", "<br>").replace("\n", "<br>")
 
 
+def _format_number(value: object) -> str:
+    if value is None or value == "":
+        return "N/A"
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return str(value)
+    return f"{float(value):.6f}"
+
+
 def _html_cell(value: object) -> str:
     if value is None or value == "":
         return "N/A"
@@ -488,6 +496,90 @@ def render_single(data: dict) -> str:
     return "\n".join(lines)
 
 
+def _item_comparison_lines(
+    item_comparison: dict, *, heading_level: int = 2, detail: bool = True
+) -> list[str]:
+    lines = ["#" * heading_level + " 逐项对比汇总", ""]
+    paired = item_comparison.get("paired", 0)
+    compared = item_comparison.get("compared", 0)
+    missing_x86 = item_comparison.get("missing_x86", 0)
+    missing_aarch64 = item_comparison.get("missing_aarch64", 0)
+    invalid = item_comparison.get("invalid", 0)
+    unit = item_comparison.get("unit") or "N/A"
+    lines.append(
+        f"- 对比键：{paired}；有效：{compared}；缺失 x86_64：{missing_x86}；"
+        f"缺失 aarch64：{missing_aarch64}；无效：{invalid}；"
+        f"元数据不一致：{item_comparison.get('metadata_mismatch', 0)}；"
+        f"neutral：{item_comparison.get('neutral', 0)}"
+    )
+    lines.append(
+        "- 聚合：几何平均 "
+        f"{_format_number(item_comparison.get('geometric_mean'))}；算术平均 "
+        f"{_format_number(item_comparison.get('arithmetic_mean'))}；中位数 "
+        f"{_format_number(item_comparison.get('median'))}；单位：{unit}"
+    )
+    lines.append(
+        f"- aarch64 更优：{item_comparison.get('arm_faster', 0)}/{compared}；"
+        f"x86_64 更优：{item_comparison.get('x86_faster', 0)}/{compared}"
+    )
+    lines.append("")
+    rows: list[list[object]] = []
+    groups = item_comparison.get("groups", {})
+    if isinstance(groups, dict):
+        for group, stats in groups.items():
+            rows.append([
+                group,
+                stats.get("n", 0),
+                _format_number(stats.get("arithmetic_mean")),
+                _format_number(stats.get("geometric_mean")),
+                _format_number(stats.get("median")),
+                f"{stats.get('arm_faster', 0)}/{stats.get('n', 0)}",
+            ])
+    overall = [
+        "全部",
+        compared,
+        _format_number(item_comparison.get("arithmetic_mean")),
+        _format_number(item_comparison.get("geometric_mean")),
+        _format_number(item_comparison.get("median")),
+        f"{item_comparison.get('arm_faster', 0)}/{compared}",
+    ]
+    lines.extend(
+        _fixed_width_table(
+            ("分组", "对比项", "算术平均", "几何平均", "中位数", "aarch64 更优"),
+            rows + [overall],
+            (220, 120, 220, 220, 220, 380),
+        )
+    )
+    if detail:
+        samples = item_comparison.get("samples")
+        if isinstance(samples, list) and samples:
+            lines.extend(["", "### 逐项样例", ""])
+            sample_rows: list[list[object]] = []
+            for sample in samples:
+                sample_rows.append([
+                    sample.get("key", ""),
+                    _format_number(sample.get("x86_64")),
+                    _format_number(sample.get("aarch64")),
+                    _format_number(sample.get("relative_performance")),
+                    "aarch64" if (sample.get("relative_performance") or 0) > 1 else "x86_64",
+                ])
+            lines.extend(
+                _fixed_width_table(
+                    ("场景", "x86_64", "aarch64", "相对性能", "更快"),
+                    sample_rows,
+                    (600, 180, 180, 220, 200),
+                )
+            )
+    if item_comparison.get("artifact"):
+        lines.extend(["", f"> 完整逐项对比明细：`{item_comparison['artifact']}`。"])
+    lines.extend([
+        "",
+        "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已按方向换算。",
+        "",
+    ])
+    return lines
+
+
 def render_comparison(comparison: dict) -> str:
     lines = [f"# {comparison['software']} {comparison['version']} 跨架构对比", ""]
     metrics = comparison.get("metrics", {})
@@ -503,6 +595,9 @@ def render_comparison(comparison: dict) -> str:
             "> 相对性能大于 1 表示 aarch64 更优，小于 1 表示 x86_64 更优。",
             "",
         ])
+    item_comparison = comparison.get("item_comparison")
+    if isinstance(item_comparison, dict):
+        lines.extend(_item_comparison_lines(item_comparison, heading_level=2))
     environments = comparison.get("environments", {})
     if isinstance(environments, dict) and environments:
         lines.extend(["## 测试环境", ""])
@@ -660,6 +755,11 @@ def render_summary(
                 ))
             if other_names:
                 lines.extend(_ungrouped_comparison_metric_table(metrics, other_names))
+            item_comparison = comparison.get("item_comparison")
+            if isinstance(item_comparison, dict):
+                lines.extend(_item_comparison_lines(
+                    item_comparison, heading_level=4, detail=detail,
+                ))
         if has_comparison_metrics:
             lines.extend([
                 "> 相对性能大于 1 表示 aarch64 更优；越小越好的指标已经反向换算。",

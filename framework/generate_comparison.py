@@ -10,6 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from item_comparison import compare_items, load_items, write_items
 from json_helper import atomic_write_json, load_json
 from reporting import render_junit, render_summary
 
@@ -157,7 +158,8 @@ def build_summary(results: list[dict], comparisons: list[dict]) -> dict:
 def generate(input_root: Path, output_dir: Path) -> dict:
     normalized_paths = sorted(input_root.rglob("normalized_result.json"))
     normalized_dirs = {path.parent.resolve() for path in normalized_paths}
-    results = [load_json(path, {}) for path in normalized_paths]
+    normalized_records = [(path, load_json(path, {})) for path in normalized_paths]
+    results = [result for _path, result in normalized_records]
     for status_path in sorted(input_root.rglob("status.json")):
         if status_path.parent.resolve() in normalized_dirs:
             continue
@@ -176,9 +178,11 @@ def generate(input_root: Path, output_dir: Path) -> dict:
             })
     results = [result for result in results if result]
     grouped: dict[tuple, dict[str, dict]] = defaultdict(dict)
-    for result in results:
+    result_paths: dict[tuple[tuple, str], Path] = {}
+    for path, result in normalized_records:
         key = (result.get("category"), result.get("software"), result.get("version"))
         grouped[key][result.get("architecture")] = result
+        result_paths[(key, result.get("architecture"))] = path.parent
 
     output_dir.mkdir(parents=True, exist_ok=True)
     comparisons: list[dict] = []
@@ -193,8 +197,20 @@ def generate(input_root: Path, output_dir: Path) -> dict:
         ):
             continue
         comparison = compare_pair(x86, arm)
-        comparisons.append(comparison)
         stem = f"{comparison['category']}-{comparison['software']}-{comparison['version']}"
+        x86_dir = result_paths.get((key, "x86_64"))
+        arm_dir = result_paths.get((key, "aarch64"))
+        if x86_dir is not None and arm_dir is not None:
+            x86_items = load_items(x86_dir / "items.jsonl")
+            arm_items = load_items(arm_dir / "items.jsonl")
+            if x86_items is not None and arm_items is not None:
+                item_summary, item_records = compare_items(x86_items, arm_items)
+                if item_summary["compared"]:
+                    artifact = f"{stem}-items.jsonl"
+                    write_items(output_dir / artifact, item_records)
+                    item_summary["artifact"] = artifact
+                    comparison["item_comparison"] = item_summary
+        comparisons.append(comparison)
         atomic_write_json(output_dir / f"{stem}.json", comparison)
 
     summary = build_summary(results, comparisons)

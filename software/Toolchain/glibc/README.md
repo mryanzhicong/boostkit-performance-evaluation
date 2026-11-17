@@ -34,6 +34,8 @@ GNU 官方地址下载到 `${PERF_WORK_DIR}`。两种来源都必须通过相同
 [`scripts/glibc-2.44-benchtests.patch`](scripts/glibc-2.44-benchtests.patch)，再在独立
 构建目录中执行以下命令。补丁只让官方 `USE_CLOCK_GETTIME` 计时方式在结果中标记为
 `clock_gettime_ns`，并保留公开 `memcpy`、`memcmp` 函数的结果入口；不修改被测函数实现。
+解析器在 `memcpy`、`memcmp` 的 `ifuncs` 中分别存在 `__memcpy_kunpeng950`、
+`__memcmp_kunpeng950` 时优先取对应实现，否则回退到公开 `memcpy`、`memcmp`。
 
 ```bash
 mkdir -p "${PERF_WORK_DIR}/glibc-build"
@@ -86,16 +88,40 @@ make -C "${PERF_WORK_DIR}/glibc-src/benchtests" \
 只取两个长度、两个公开函数，共四项指标。`align1=0`、`align2=0` 表示两地址
 均按 0 偏移对齐；`memcpy` 取 `dst > src=0`，`memcmp` 取相等输入 `result=0`。
 
-| 函数 | 长度 | 官方结果中的场景 | 报告指标数 | 单位与方向 |
-|---|---:|---|---:|---|
-| `memcpy` | 2048、4096 字节 | `align1=0, align2=0, dst > src=0` | 2 | ns/调用，越小越好 |
-| `memcmp` | 2048、4096 字节 | `align1=0, align2=0, result=0` | 2 | ns/调用，越小越好 |
+| 函数 | 长度 | 官方结果中的场景 | 选取实现 | 报告指标数 | 单位与方向 |
+|---|---:|---|---|---:|---|
+| `memcpy` | 2048、4096 字节 | `align1=0, align2=0, dst > src=0` | `__memcpy_kunpeng950`（存在时），否则 `memcpy` | 2 | ns/调用，越小越好 |
+| `memcmp` | 2048、4096 字节 | `align1=0, align2=0, result=0` | `__memcmp_kunpeng950`（存在时），否则 `memcmp` | 2 | ns/调用，越小越好 |
 
-解析器从官方 JSON 的 `functions.<函数>.results[].timings[]` 中选取公开函数对应的
-时间值。`benchmark_glibc.json` 保存四项结构化指标及每项的原始文件、字段路径；
-`benchmark_bench.txt` 记录实际执行命令，`benchtests/` 保留两份完整官方输出，
-`build_variant.json` 记录构建类型。Framework 读取 `benchmark_glibc.json`，按
-`memcpy`、`memcmp` 分组生成单架构及跨架构报告。
+解析器从官方 JSON 的 `functions.<函数>.results[].timings[]` 中按上表选取实现的
+时间值；`__memcpy_kunpeng950`、`__memcmp_kunpeng950` 各自只对对应函数生效，且必须
+唯一。每项保留 `implementation`、`source_file`、`source_field`，可直接回查官方输出。
+`benchmark_glibc.json` 的 `parameters.implementation_selection` 固定记录该策略：两架构
+配对时策略字符串相同，但实际选中的实现可能不同（aarch64 可能选中
+`__memcpy_kunpeng950`/`__memcmp_kunpeng950`，x86_64 通常回退到公开入口）。因此跨架构
+指标按**同一选择策略**比较，而不是按同一个 ifunc 名称比较；需要核对实际实现时看
+每项的 `implementation` 字段。
+
+`benchmark_glibc.json` 保存四项结构化指标；`items.jsonl` 保存**全部官方场景**的
+逐项原始数据（每个 scene 一行，含最终选中的 `implementation`、`ns` 值、`key`
+和 `source_field`），不截断、不聚合。`benchmark_bench.txt` 记录实际执行命令，
+`benchtests/` 保留两份完整官方输出，`build_variant.json` 记录构建类型。
+
+### 单架构与跨架构
+
+- 单架构：只生成 `items.jsonl` 和 4 项原始指标，不生成任何相对值；不会因为缺
+  另一架构而失败。
+- 跨架构：Framework 按 `key` 对两架构的 `items.jsonl` 做 inner join，生成
+  `<分类>-<软件>-<版本>-items.jsonl` 逐项对比明细，并在 `comparison.json` 写入
+  `item_comparison` 汇总。
+- 汇总同时给出算术平均、几何平均、中位数、aarch64/x86_64 更优计数、缺失/无效
+  条数；建议使用几何平均，因为逐项值是比值。相对性能定义为 `x86_64 / aarch64`
+  （`lower_is_better`），大于 1 表示 aarch64 更优。
+- 完整逐项明细只写入 JSONL artifact，不进入 `case.yaml` 的 `metrics` 列表，也不
+  在报告里展开几千行；报告只展示分组汇总和最多 10 条样例。
+
+Framework 读取 `benchmark_glibc.json` 生成单架构指标，读取双架构 `items.jsonl`
+生成跨架构汇总和逐项 artifact，按 `memcpy`、`memcmp` 分组。
 
 脱离 Workflow 执行完整流程：
 

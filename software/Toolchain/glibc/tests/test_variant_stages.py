@@ -128,6 +128,7 @@ def test_normalized_parameters_align_across_architectures(tmp_path: Path) -> Non
         normalized = json.loads(output.read_text(encoding="utf-8"))
         assert normalized["variant"] == "base"
         assert len(normalized["results"]) == 4
+        assert (output.parent / "items.jsonl").is_file()
         parameters.append(normalized["parameters"])
     assert parameters[0] == parameters[1]
     assert not any("boostkit-perf" in json.dumps(parameter) for parameter in parameters)

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Extract comparable public memcpy/memcmp timings from glibc 2.44 benchtests."""
+"""Extract comparable memcpy/memcmp timings from glibc 2.44 benchtests.
+
+``memcpy`` and ``memcmp`` prefer their Kunpeng 950 implementation when the
+benchtests output contains it, and otherwise fall back to the public entry.
+"""
 
 from __future__ import annotations
 
@@ -7,12 +11,17 @@ import json
 import math
 import os
 import sys
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 TIMING_TYPE = "clock_gettime_ns"
 LENGTHS = (2048, 4096)
+PREFERRED_IMPLEMENTATIONS = {
+    "memcpy": "__memcpy_kunpeng950",
+    "memcmp": "__memcmp_kunpeng950",
+}
 
 
 def read_benchmark(directory: Path, function: str) -> tuple[dict[str, Any], str]:
@@ -36,11 +45,26 @@ def read_benchmark(directory: Path, function: str) -> tuple[dict[str, Any], str]
     return benchmark, source_file
 
 
+def selected_implementation(
+    benchmark: dict[str, Any], function: str, source_file: str
+) -> tuple[str, int]:
+    implementations = benchmark["ifuncs"]
+    preferred = PREFERRED_IMPLEMENTATIONS[function]
+    implementation = function
+    if preferred in implementations:
+        if implementations.count(preferred) != 1:
+            raise ValueError(f"{source_file} has duplicate {preferred} entries")
+        implementation = preferred
+    return implementation, implementations.index(implementation)
+
+
 def extract_metrics(directory: Path) -> dict[str, Any]:
     results: dict[str, Any] = {}
     for function in ("memcpy", "memcmp"):
         benchmark, source_file = read_benchmark(directory, function)
-        implementation_index = benchmark["ifuncs"].index(function)
+        implementation, implementation_index = selected_implementation(
+            benchmark, function, source_file
+        )
         for length in LENGTHS:
             scenario = {"length": length, "align1": 0, "align2": 0}
             if function == "memcpy":
@@ -71,7 +95,7 @@ def extract_metrics(directory: Path) -> dict[str, Any]:
                 or not math.isfinite(value)
                 or value <= 0
             ):
-                raise ValueError(f"{source_file} contains an invalid public timing: {value!r}")
+                raise ValueError(f"{source_file} contains an invalid timing: {value!r}")
             name = f"{function}.length={length}.align1=0.align2=0"
             name += ".dst_gt_src=0" if function == "memcpy" else ".result=0"
             results[name] = {
@@ -81,7 +105,7 @@ def extract_metrics(directory: Path) -> dict[str, Any]:
                     f"timings[{implementation_index}]"
                 ),
                 "source_file": source_file,
-                "implementation": function,
+                "implementation": implementation,
                 "group": function,
                 "raw_value": value,
                 "raw_unit": "ns",
@@ -89,6 +113,60 @@ def extract_metrics(directory: Path) -> dict[str, Any]:
                 "unit": "ns",
             }
     return results
+
+
+def extract_items(directory: Path) -> list[dict[str, Any]]:
+    """Emit one raw item per official scenario and selected implementation."""
+    items: list[dict[str, Any]] = []
+    occurrences: dict[tuple[str, str], int] = defaultdict(int)
+    for function in ("memcpy", "memcmp"):
+        benchmark, source_file = read_benchmark(directory, function)
+        implementation, implementation_index = selected_implementation(
+            benchmark, function, source_file
+        )
+        for row_index, row in enumerate(benchmark["results"]):
+            if not isinstance(row, dict):
+                raise ValueError(f"{source_file} has malformed result row")
+            scenario = {key: value for key, value in row.items() if key != "timings"}
+            timings = row.get("timings")
+            if not isinstance(timings, list) or implementation_index >= len(timings):
+                raise ValueError(f"{source_file} has malformed timing values")
+            value = timings[implementation_index]
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value <= 0
+            ):
+                raise ValueError(f"{source_file} contains an invalid timing: {value!r}")
+            canonical = json.dumps(scenario, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            occurrence = occurrences[(function, canonical)]
+            occurrences[(function, canonical)] += 1
+            items.append({
+                "key": f"{function}|{canonical}|occurrence={occurrence}",
+                "function": function,
+                "group": function,
+                "scenario": scenario,
+                "unit": "ns",
+                "direction": "lower_is_better",
+                "value": value,
+                "raw_value": value,
+                "raw_unit": "ns",
+                "implementation": implementation,
+                "source_file": source_file,
+                "source_field": (
+                    f"functions.{function}.results[{row_index}]."
+                    f"timings[{implementation_index}]"
+                ),
+            })
+    return items
+
+
+def write_items(items: list[dict[str, Any]], path: Path) -> None:
+    path.write_text(
+        "".join(json.dumps(item, ensure_ascii=False, separators=(",", ":")) + "\n" for item in items),
+        encoding="utf-8",
+    )
 
 
 def main() -> int:
@@ -118,12 +196,19 @@ def main() -> int:
             "timing_backend": "clock_gettime(CLOCK_MONOTONIC)",
             "benchtest_patch": "scripts/glibc-2.44-benchtests.patch",
             "selected_lengths": list(LENGTHS),
+            "implementation_selection": {
+                function: [PREFERRED_IMPLEMENTATIONS[function], function]
+                for function in ("memcpy", "memcmp")
+            },
         },
         "results": results,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    items = extract_items(directory)
+    write_items(items, output_path.parent / "items.jsonl")
     print(f"[glibc-parse] normalized {len(results)} public glibc timings")
+    print(f"[glibc-parse] wrote {len(items)} raw scenario items")
     return 0
 
 
