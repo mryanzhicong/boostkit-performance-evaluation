@@ -42,7 +42,10 @@ def parse_metadata(path: Path) -> dict[str, str]:
 def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8", errors="replace") as handle:
         reader = csv.DictReader(handle)
-        if reader.fieldnames != HEADER:
+        fieldnames = set(reader.fieldnames or [])
+        required = set(HEADER)
+        optional = {"dropped", "avg_latency_us"}
+        if not required.issubset(fieldnames) or fieldnames - required - optional:
             raise ValueError(f"unexpected results.csv header: {reader.fieldnames}")
         rows = []
         for row in reader:
@@ -86,18 +89,46 @@ def main() -> int:
         "source_branch": "dev_2.20.0",
     }
     results: dict[str, Any] = {}
+    actual_qps_sum = 0.0
+    total_sum = 0.0
+    success_total = 0.0
+    failure_total = 0.0
+    dropped_total = 0.0
+    p99_sum = 0.0
+    cpu_pct_sum = 0.0
     for row_index, row in enumerate(rows):
         mode = row["mode"]
         target_qps = int(number(row["target_qps"], f"row {row_index} target_qps"))
         actual_qps = number(row["actual_qps"], f"row {row_index} actual_qps")
+        total = number(row["total"], f"row {row_index} total")
+        success = number(row["success"], f"row {row_index} success")
+        failure = number(row["failure"], f"row {row_index} failure")
+        dropped_raw = row.get("dropped", "")
+        dropped_derived = not bool(dropped_raw)
+        if dropped_derived:
+            dropped = max(total - success - failure, 0.0)
+        else:
+            dropped = number(dropped_raw, f"row {row_index} dropped")
         p99 = number(row["p99_latency_us"], f"row {row_index} p99")
         cpu_pct = number(row["server_cpu_pct_avg"], f"row {row_index} cpu")
         cpu_cores = number(row["server_cpu_cores_avg"], f"row {row_index} cores")
-        if actual_qps <= 0 or p99 <= 0 or cpu_pct < 0 or cpu_cores < 0:
+        if (actual_qps <= 0 or p99 <= 0 or total < 0 or success < 0 or
+                failure < 0 or dropped < 0 or cpu_pct < 0 or cpu_cores < 0):
             raise ValueError(f"row {row_index} contains invalid benchmark values")
+        actual_qps_sum += actual_qps
+        total_sum += total
+        success_total += success
+        failure_total += failure
+        dropped_total += dropped
+        p99_sum += p99
+        cpu_pct_sum += cpu_pct
         prefix = f"{model}/{mode}/qps={target_qps}"
         values = {
             "actual_qps": (actual_qps, "queries/s", "higher_is_better", "actual_qps"),
+            "total_requests": (total, "requests", "neutral", "total"),
+            "success": (success, "requests", "higher_is_better", "success"),
+            "failure": (failure, "requests", "lower_is_better", "failure"),
+            "dropped": (dropped, "requests", "lower_is_better", "dropped"),
             "p99_latency_us": (p99, "us", "lower_is_better", "p99_latency_us"),
             "server_cpu_pct_avg": (cpu_pct, "%", "lower_is_better", "server_cpu_pct_avg"),
             "server_cpu_cores_avg": (cpu_cores, "cores", "lower_is_better", "server_cpu_cores_avg"),
@@ -114,6 +145,20 @@ def main() -> int:
                 "unit": unit,
                 "direction": direction,
             }
+            if suffix == "dropped":
+                results[name]["derived"] = (
+                    "max(total - success - failure, 0)" if dropped_derived else None
+                )
+    summary = {
+        "rows": len(rows),
+        "actual_qps_sum": actual_qps_sum,
+        "total_requests_sum": total_sum,
+        "success_total": success_total,
+        "failure_total": failure_total,
+        "dropped_total": dropped_total,
+        "avg_p99_latency_us": p99_sum / len(rows),
+        "avg_server_cpu_pct": cpu_pct_sum / len(rows),
+    }
     payload = {
         "benchmark": "tensorflow_modelzoo_serving",
         "software": "tensorflow",
@@ -121,6 +166,7 @@ def main() -> int:
         "architecture": os.environ["EXPECTED_ARCH"],
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": parameters,
+        "summary": summary,
         "runtime_context": {
             "tensorflow_version": "2.20.0",
             "image": image,

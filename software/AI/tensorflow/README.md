@@ -115,19 +115,35 @@ ${PERF_WORK_DIR}/tensorflow/bazel-bin/predictor_server
 
 ## 指标与产物
 
-每个 `mode × target_qps` 行产生 4 项指标：
+每个 `mode × target_qps` 行产生 8 项指标：
 
 | 指标 | 单位 | 方向 |
 |---|---|---|
 | `actual_qps` | queries/s | 越大越好 |
+| `total_requests` | requests | 中性 |
+| `success` | requests | 越大越好 |
+| `failure` | requests | 越小越好 |
+| `dropped` | requests | 越小越好 |
 | `p99_latency_us` | us | 越小越好 |
 | `server_cpu_pct_avg` | % | 越小越好 |
 | `server_cpu_cores_avg` | cores | 越小越好 |
+
+当前 `tools/run_serving_benchmark.sh` 的 CSV 不含 `dropped` 列；此时解析器按
+`max(total - success - failure, 0)` 推导，并在该指标上写
+`"derived": "max(total - success - failure, 0)"`。如果 CSV 带 `dropped` 列，
+则直接使用原始值。`benchmark_tensorflow.json` 另有 `summary`：
+`actual_qps_sum`、`total_requests_sum`、`success_total`、`failure_total`、
+`dropped_total`、`avg_p99_latency_us`、`avg_server_cpu_pct`，对应 PDF 的
+批量汇总口径；单容器时就是该行值。
 
 指标名形如：
 
 ```text
 din_mmoe/baseline/qps=565/actual_qps
+din_mmoe/baseline/qps=565/total_requests
+din_mmoe/baseline/qps=565/success
+din_mmoe/baseline/qps=565/failure
+din_mmoe/baseline/qps=565/dropped
 din_mmoe/baseline/qps=565/p99_latency_us
 din_mmoe/baseline/qps=565/server_cpu_pct_avg
 din_mmoe/baseline/qps=565/server_cpu_cores_avg
