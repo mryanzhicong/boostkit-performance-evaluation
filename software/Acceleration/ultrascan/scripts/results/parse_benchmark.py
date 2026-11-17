@@ -1,36 +1,26 @@
 #!/usr/bin/env python3
-"""Measure and normalize the Ultrascan hsbench "Mean throughput" benchmark.
+"""Measure and normalize the Ultrascan hsbench block-mode matrix.
 
-The measured content is the upstream hsbench procedure documented for Ultrascan
-5.8.0, executed twice inside the private openEuler container on the Intel
-``hsbench-samples`` package:
+The case keeps the two documented reference scenarios and adds the seven
+rule/corpus combinations from the 2026-11-16 data set::
 
-``hsbench_rules_block``
-    Compile the pattern set for every run and scan the corpus in block mode::
-
-        hsbench -e <samples>/pcre/snort_literals \
-                -c <samples>/corpora/gutenberg.db -N -n 1
-
-``hsbench_ubc_block``
-    Load the universal bytecode database produced by ``hsdump -N -U`` and scan
-    the same corpus in block mode::
-
-        hsbench -U <dump>/dump/db.raw \
-                -c <samples>/corpora/gutenberg.db -N -n 1
+    hsbench -e <dataset>/<rule> -c <dataset>/<corpus> -N -n <iterations> \
+            [-G <greybox overrides>]
 
 ``drive``
-    Container-side timing driver: run one warm-up plus every declared
-    repetition of both scenarios inside the container and record the raw hsbench
-    output plus wall time and peak RSS for every run.
+    Container-side timing driver.  It runs one warm-up plus every declared
+    repetition of each scenario, records the raw hsbench stdout, wall time and
+    peak RSS, and refuses to continue after the first failed sample.
 
 ``report``
-    Host-side strict parser: validate the recorded runs, keep the only metric the
-    benchmark contract asks for (the ``Mean throughput (overall)`` value of each
-    scenario, Mbit/s) and write the normalized ``results.json``.
+    Host-side strict parser.  It validates the recorded runs against the
+    dataset manifest (rule expression count, corpus bytes/blocks), checks that
+    repetitions agree on every invariant, and writes one metric per scenario:
+    the ``Mean throughput (overall)`` value in Mbit/s.
 
-The parser is strict: a missing sample, extra sample, non-zero exit, timeout, a
-changed corpus size or a match count that differs between the two scenarios
-fails the test stage (exit code 50) instead of being padded or ignored.
+The parser never pads missing samples and never falls back to a synthetic
+corpus.  A missing sample, extra sample, non-zero exit, timeout, changed corpus
+or an inconsistent match count fails the test stage (exit code 50).
 """
 
 from __future__ import annotations
@@ -50,7 +40,8 @@ from pathlib import Path
 from typing import Any
 
 HSBENCH_INFO_RE = re.compile(
-    r"^Hyperscan info:\s+Version:\s+(\S+)\s+Mode:\s+(BLOCK|STREAM|VECTORED)\s*$",
+    r"^Hyperscan info:\s+Version:\s+(\S+)"
+    r"(?:\s+Features:.*?)?\s+Mode:\s+(BLOCK|STREAM|VECTORED)\s*$",
     re.MULTILINE,
 )
 EXPRESSION_RE = re.compile(r"^Expression count:\s+([0-9]+)\s*$", re.MULTILINE)
@@ -72,32 +63,13 @@ MAX_TPUT_RE = re.compile(
 FAT_LOAD_RE = re.compile(r"^Loading FAT database from:\s+(\S.*)$", re.MULTILINE)
 RSS_RE = re.compile(r"Maximum resident set size \(kbytes\):\s*([0-9]+)")
 
-# Pinned measurement inputs (see scripts/common.sh).
-EXPECTED_LITERAL_EXPRESSIONS = 3116
-EXPECTED_CORPUS_BYTES = 6701044
-EXPECTED_CORPUS_BLOCKS = 3280
-RULES_RELATIVE = "pcre/snort_literals"
-CORPUS_RELATIVE = "corpora/gutenberg.db"
-# One hsbench sample scans a ~7 MB corpus in a few milliseconds after a ~0.3 s
-# rule compile, so 300 s is already a 1000x margin; a longer bound would only let
-# a hung measurement burn the stage budget before it is reported as a failure.
-MEASUREMENT_TIMEOUT = 300
-
-SCENARIOS = (
-    {
-        "key": "hsbench_rules_block",
-        "source": "without universal bytecode (-e pcre/snort_literals)",
-        "mode": "rules",
-    },
-    {
-        "key": "hsbench_ubc_block",
-        "source": "with universal bytecode (-U dump/db.raw)",
-        "mode": "ubc",
-    },
-)
+CASE_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_SCENARIOS = CASE_ROOT / "benchmark" / "scenarios.json"
+MEASUREMENT_TIMEOUT = int(os.environ.get("PERF_ULTRASCAN_MEASUREMENT_TIMEOUT", "3600"))
 GROUP = "hsbench"
 METRIC_SUFFIX = "mean_throughput_mbit_s"
 METRIC_UNIT = "Mbit/s"
+ARCHITECTURES = {"x86_64", "aarch64"}
 
 
 def fail(message: str) -> None:
@@ -134,25 +106,134 @@ def hsbench_environment() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Scenario and dataset metadata
+# ---------------------------------------------------------------------------
+def load_scenarios(path: Path) -> list[dict[str, Any]]:
+    payload = load_json(path)
+    groups = []
+    for group in ("legacy", "matrix"):
+        entries = payload.get(group)
+        if not isinstance(entries, list):
+            raise RuntimeError(f"{path}: '{group}' must be a list")
+        groups.extend(entries)
+    scenarios: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw in groups:
+        if not isinstance(raw, dict):
+            raise RuntimeError(f"{path}: every scenario must be an object")
+        key = raw.get("key")
+        if not isinstance(key, str) or not re.fullmatch(r"[a-z0-9_]+", key):
+            raise RuntimeError(f"{path}: invalid scenario key: {key!r}")
+        if key in seen:
+            raise RuntimeError(f"{path}: duplicate scenario key: {key}")
+        seen.add(key)
+        mode = raw.get("mode")
+        if mode not in {"rules", "ubc"}:
+            raise RuntimeError(f"{path}: {key} has invalid mode {mode!r}")
+        rule = raw.get("rule")
+        corpus = raw.get("corpus")
+        if not isinstance(rule, str) or not isinstance(corpus, str):
+            raise RuntimeError(f"{path}: {key} needs rule and corpus")
+        iterations = raw.get("iterations")
+        if not isinstance(iterations, int) or iterations < 1:
+            raise RuntimeError(f"{path}: {key} has invalid iterations {iterations!r}")
+        greybox = raw.get("greybox", "")
+        if not isinstance(greybox, str):
+            raise RuntimeError(f"{path}: {key} has invalid greybox")
+        if mode == "ubc" and greybox:
+            raise RuntimeError(f"{path}: {key} cannot combine -U and -G")
+        scenario = {
+            "key": key,
+            "mode": mode,
+            "rule": rule,
+            "corpus": corpus,
+            "iterations": iterations,
+            "greybox": greybox,
+            "source": raw.get("source", ""),
+        }
+        scenarios.append(scenario)
+    if not scenarios:
+        raise RuntimeError(f"{path}: no scenarios declared")
+    return scenarios
+
+
+def load_dataset_manifest(path: Path) -> dict[str, Any]:
+    payload = load_json(path)
+    if payload.get("schema") != 1:
+        raise RuntimeError(f"{path}: unsupported dataset manifest schema")
+    files = payload.get("files")
+    if not isinstance(files, dict) or not files:
+        raise RuntimeError(f"{path}: dataset manifest has no files")
+    return payload
+
+
+def corpus_metadata(manifest: dict[str, Any], corpus: str) -> dict[str, int]:
+    entry = manifest["files"].get(corpus)
+    if not isinstance(entry, dict) or entry.get("kind") != "corpus":
+        raise RuntimeError(f"dataset manifest has no corpus entry for {corpus!r}")
+    try:
+        return {
+            "corpus_bytes": int(entry["corpus_bytes"]),
+            "corpus_blocks": int(entry["corpus_blocks"]),
+        }
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeError(f"dataset manifest has invalid corpus stats for {corpus!r}") from error
+
+
+def rule_metadata(manifest: dict[str, Any], rule: str) -> dict[str, int]:
+    entry = manifest["files"].get(rule)
+    if not isinstance(entry, dict) or entry.get("kind") != "rules":
+        raise RuntimeError(f"dataset manifest has no rules entry for {rule!r}")
+    try:
+        return {"expressions": int(entry["expressions"])}
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeError(f"dataset manifest has invalid rule stats for {rule!r}") from error
+
+
+def select_scenarios(scenarios: list[dict[str, Any]], only: list[str]) -> list[dict[str, Any]]:
+    if not only:
+        return scenarios
+    by_key = {scenario["key"]: scenario for scenario in scenarios}
+    selected = []
+    for key in only:
+        if key not in by_key:
+            raise RuntimeError(f"unknown scenario selected: {key}")
+        selected.append(by_key[key])
+    return selected
+
+
+def metric_name(scenario: dict[str, Any]) -> str:
+    return f"{scenario['key']}_{METRIC_SUFFIX}"
+
+
+# ---------------------------------------------------------------------------
 # Container-side timing driver
 # ---------------------------------------------------------------------------
 def build_command(
-    hsbench: Path, samples_root: Path, dump_db: Path, scenario: dict[str, str]
+    hsbench: Path,
+    dataset_root: Path,
+    dump_db: Path,
+    scenario: dict[str, Any],
 ) -> list[str]:
     if scenario["mode"] == "rules":
-        command = [str(hsbench), "-e", str(samples_root / RULES_RELATIVE)]
+        command = [str(hsbench), "-e", str(dataset_root / scenario["rule"])]
     else:
         command = [str(hsbench), "-U", str(dump_db)]
-    command.extend([
-        "-c", str(samples_root / CORPUS_RELATIVE),
-        "-N", "-n", str(MEASUREMENT_ITERATIONS),
-    ])
+    command.extend(
+        [
+            "-c",
+            str(dataset_root / scenario["corpus"]),
+            "-N",
+            "-n",
+            str(scenario["iterations"]),
+        ]
+    )
+    if scenario["mode"] == "rules" and scenario["greybox"]:
+        command.extend(["-G", scenario["greybox"]])
     return command
 
 
-def run_one(
-    command: list[str], log_path: Path, timing_path: Path
-) -> dict[str, Any]:
+def run_one(command: list[str], log_path: Path, timing_path: Path) -> dict[str, Any]:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     timing_path.parent.mkdir(parents=True, exist_ok=True)
     timed = ["/usr/bin/time", "-v", "-o", str(timing_path), *command]
@@ -196,33 +277,44 @@ def run_one(
 
 def drive(args: argparse.Namespace) -> int:
     hsbench = args.hsbench.resolve()
-    samples_root = args.samples_root.resolve()
+    dataset_root = args.dataset_root.resolve()
     dump_db = args.dump_db.resolve()
     runs_dir = args.runs_dir.resolve()
     if args.reps < 1:
         raise RuntimeError("--reps must be at least 1")
     if args.warmups < 1:
         raise RuntimeError("--warmups must be at least 1")
-    for path in (hsbench, samples_root / RULES_RELATIVE,
-                 samples_root / CORPUS_RELATIVE, dump_db):
-        if not path.exists():
-            raise RuntimeError(f"missing measurement input: {path}")
+    scenarios = select_scenarios(
+        load_scenarios(args.scenarios), args.scenario
+    )
+    manifest = load_dataset_manifest(args.dataset_manifest)
+    for scenario in scenarios:
+        rule_path = dataset_root / scenario["rule"]
+        corpus_path = dataset_root / scenario["corpus"]
+        if not rule_path.is_file():
+            raise RuntimeError(f"missing rule file: {rule_path}")
+        if not corpus_path.is_file():
+            raise RuntimeError(f"missing corpus: {corpus_path}")
+        if scenario["mode"] == "ubc" and not dump_db.is_file():
+            raise RuntimeError(f"missing universal bytecode database: {dump_db}")
+        corpus_metadata(manifest, scenario["corpus"])
+        rule_metadata(manifest, scenario["rule"])
 
     labels = [f"warmup{index}" for index in range(1, args.warmups + 1)]
     labels += [f"rep{index}" for index in range(1, args.reps + 1)]
-    # The driver owns the runs directory for this measurement.  A reused results
-    # directory must not keep samples from an earlier run: the strict host parser
-    # only reads the expected labels, so leftover files would be silently ignored
-    # and two different measurements could be reported as one.
+    # A reused results directory must not keep samples from an earlier run: the
+    # strict host parser only reads the expected labels, so stale files would be
+    # silently ignored and two different measurements could be reported as one.
     if runs_dir.exists():
         shutil.rmtree(runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         scenario_dir = runs_dir / scenario["key"]
-        command = build_command(hsbench, samples_root, dump_db, scenario)
+        command = build_command(hsbench, dataset_root, dump_db, scenario)
         for label in labels:
             log_path = scenario_dir / f"{label}.log"
             evidence = run_one(command, log_path, scenario_dir / f".{label}.time")
+            evidence["scenario"] = scenario
             write_json(scenario_dir / f"{label}.json", evidence)
             if evidence["timed_out"] or evidence["exit_code"] != 0:
                 raise RuntimeError(
@@ -231,8 +323,8 @@ def drive(args: argparse.Namespace) -> int:
                 )
             print(f"[ultrascan] {scenario['key']} {label}: recorded", flush=True)
     print(
-        f"[ultrascan] recorded {len(SCENARIOS)} scenarios x "
-        f"({args.warmups} warmup + {args.reps} repetitions) with -n {MEASUREMENT_ITERATIONS}",
+        f"[ultrascan] recorded {len(scenarios)} scenarios x "
+        f"({args.warmups} warmup + {args.reps} repetitions)",
         flush=True,
     )
     return 0
@@ -249,7 +341,11 @@ def one_match(pattern: re.Pattern[str], text: str, label: str) -> re.Match[str]:
 
 
 def parse_run(
-    log_path: Path, evidence_path: Path, scenario: dict[str, str], version: str
+    log_path: Path,
+    evidence_path: Path,
+    scenario: dict[str, Any],
+    manifest: dict[str, Any],
+    version: str,
 ) -> dict[str, Any]:
     try:
         output = log_path.read_text(encoding="utf-8", errors="replace")
@@ -277,12 +373,18 @@ def parse_run(
             f"{log_path.name}: hsbench ran in {info.group(2)} mode, expected BLOCK"
         )
 
+    expected_corpus = corpus_metadata(manifest, scenario["corpus"])
+    expected_rule = rule_metadata(manifest, scenario["rule"])
     corpus = one_match(CORPUS_RE, output, "Corpus size")
     corpus_bytes, corpus_blocks = int(corpus.group(1)), int(corpus.group(2))
-    if corpus_bytes != EXPECTED_CORPUS_BYTES or corpus_blocks != EXPECTED_CORPUS_BLOCKS:
+    if (
+        corpus_bytes != expected_corpus["corpus_bytes"]
+        or corpus_blocks != expected_corpus["corpus_blocks"]
+    ):
         raise RuntimeError(
             f"{log_path.name}: corpus is {corpus_bytes} bytes / {corpus_blocks} "
-            f"blocks, expected {EXPECTED_CORPUS_BYTES} / {EXPECTED_CORPUS_BLOCKS}"
+            f"blocks, expected {expected_corpus['corpus_bytes']} / "
+            f"{expected_corpus['corpus_blocks']}"
         )
     matches = one_match(MATCHES_RE, output, "Matches per iteration")
     bytecode = one_match(BYTECODE_RE, output, "Bytecode size")
@@ -300,14 +402,14 @@ def parse_run(
     compile_time = float(one_match(COMPILE_RE, output, "Compile time").group(1))
 
     if scenario["mode"] == "rules":
-        if expression_count != EXPECTED_LITERAL_EXPRESSIONS:
+        if expression_count != expected_rule["expressions"]:
             raise RuntimeError(
                 f"{log_path.name}: compiled {expression_count} expressions, "
-                f"expected {EXPECTED_LITERAL_EXPRESSIONS}"
+                f"expected {expected_rule['expressions']}"
             )
-        if compile_time <= 0:
+        if compile_time < 0:
             raise RuntimeError(
-                f"{log_path.name}: rule compilation took no measured time"
+                f"{log_path.name}: rule compilation time is negative"
             )
         if FAT_LOAD_RE.search(output):
             raise RuntimeError(
@@ -347,15 +449,23 @@ def parse_run(
 
 
 def parse_scenario(
-    runs_dir: Path, scenario: dict[str, str], warmups: int, reps: int, version: str
+    runs_dir: Path,
+    scenario: dict[str, Any],
+    manifest: dict[str, Any],
+    warmups: int,
+    reps: int,
+    version: str,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     scenario_dir = runs_dir / scenario["key"]
     if not scenario_dir.is_dir():
         raise RuntimeError(f"missing scenario directory: {scenario_dir}")
     warmup_labels = [f"warmup{index}" for index in range(1, warmups + 1)]
     rep_labels = [f"rep{index}" for index in range(1, reps + 1)]
-    expected = {f"{label}.{suffix}" for label in warmup_labels + rep_labels
-                for suffix in ("log", "json")}
+    expected = {
+        f"{label}.{suffix}"
+        for label in warmup_labels + rep_labels
+        for suffix in ("log", "json")
+    }
     observed = {path.name for path in scenario_dir.iterdir() if path.is_file()}
     if observed != expected:
         missing = sorted(expected - observed)
@@ -365,23 +475,45 @@ def parse_scenario(
             f"missing={missing} extra={extra}"
         )
     measured = [
-        parse_run(scenario_dir / f"{label}.log", scenario_dir / f"{label}.json",
-                  scenario, version)
+        parse_run(
+            scenario_dir / f"{label}.log",
+            scenario_dir / f"{label}.json",
+            scenario,
+            manifest,
+            version,
+        )
         for label in rep_labels
     ]
     for label in warmup_labels:
-        parse_run(scenario_dir / f"{label}.log", scenario_dir / f"{label}.json",
-                  scenario, version)
-    for field in ("expression_count", "bytecode_bytes", "corpus_bytes",
-                  "corpus_blocks", "matches_per_iteration"):
+        parse_run(
+            scenario_dir / f"{label}.log",
+            scenario_dir / f"{label}.json",
+            scenario,
+            manifest,
+            version,
+        )
+    for field in (
+        "expression_count",
+        "bytecode_bytes",
+        "corpus_bytes",
+        "corpus_blocks",
+        "matches_per_iteration",
+    ):
         values = {item[field] for item in measured}
         if len(values) != 1:
             raise RuntimeError(
                 f"{scenario['key']} repetitions disagree on {field}: {sorted(values)}"
             )
-    consistency = {field: measured[0][field] for field in
-                   ("expression_count", "bytecode_bytes", "corpus_bytes",
-                    "corpus_blocks", "matches_per_iteration")}
+    consistency = {
+        field: measured[0][field]
+        for field in (
+            "expression_count",
+            "bytecode_bytes",
+            "corpus_bytes",
+            "corpus_blocks",
+            "matches_per_iteration",
+        )
+    }
     return measured, consistency
 
 
@@ -399,16 +531,22 @@ def report(args: argparse.Namespace) -> int:
     if args.reps < 1 or args.warmups < 1:
         raise RuntimeError("--warmups and --reps must both be at least 1")
     version = args.version
+    if args.architecture not in ARCHITECTURES:
+        raise RuntimeError(f"unsupported architecture: {args.architecture}")
+    scenarios = select_scenarios(
+        load_scenarios(args.scenarios), args.scenario
+    )
+    manifest = load_dataset_manifest(args.dataset_manifest)
     results: dict[str, Any] = {}
     consistency_by_scenario: dict[str, Any] = {}
     raw_sections: list[str] = []
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         measured, consistency = parse_scenario(
-            runs_dir, scenario, args.warmups, args.reps, version
+            runs_dir, scenario, manifest, args.warmups, args.reps, version
         )
         consistency_by_scenario[scenario["key"]] = consistency
         values = [item["mean_throughput_mbit_s"] for item in measured]
-        name = f"{scenario['key']}_{METRIC_SUFFIX}"
+        name = metric_name(scenario)
         results[name] = {
             "source_name": name,
             "source_benchmark": scenario["source"],
@@ -419,8 +557,12 @@ def report(args: argparse.Namespace) -> int:
             "samples": len(values),
             "sample_values": values,
             "sample_summary": summarize(values),
-            "wall_seconds_sample_values": [item["wall_seconds"] for item in measured],
-            "max_rss_kib_sample_values": [item["max_rss_kib"] for item in measured],
+            "wall_seconds_sample_values": [
+                item["wall_seconds"] for item in measured
+            ],
+            "max_rss_kib_sample_values": [
+                item["max_rss_kib"] for item in measured
+            ],
             "group": GROUP,
         }
         for label in [f"warmup{index}" for index in range(1, args.warmups + 1)]:
@@ -436,15 +578,34 @@ def report(args: argparse.Namespace) -> int:
                 )
             )
 
-    rules = consistency_by_scenario["hsbench_rules_block"]
-    ubc = consistency_by_scenario["hsbench_ubc_block"]
-    for field in ("bytecode_bytes", "corpus_bytes", "corpus_blocks",
-                  "matches_per_iteration"):
-        if rules[field] != ubc[field]:
-            raise RuntimeError(
-                f"the two scenarios disagree on {field}: "
-                f"{rules[field]} != {ubc[field]}"
-            )
+    # The legacy pair must remain the same workload: same corpus statistics,
+    # bytecode size and match count.  The matrix rows have no such pair.
+    reference_pairs: dict[tuple[str, str], str] = {}
+    for scenario in scenarios:
+        reference_pairs.setdefault(
+            (scenario["rule"], scenario["corpus"]), scenario["key"]
+        )
+    for (rule, corpus), first_key in reference_pairs.items():
+        keys = [
+            scenario["key"]
+            for scenario in scenarios
+            if scenario["rule"] == rule and scenario["corpus"] == corpus
+        ]
+        if len(keys) < 2:
+            continue
+        first = consistency_by_scenario[first_key]
+        for key in keys[1:]:
+            for field in (
+                "bytecode_bytes",
+                "corpus_bytes",
+                "corpus_blocks",
+                "matches_per_iteration",
+            ):
+                if first[field] != consistency_by_scenario[key][field]:
+                    raise RuntimeError(
+                        f"{first_key} and {key} disagree on {field}: "
+                        f"{first[field]} != {consistency_by_scenario[key][field]}"
+                    )
 
     payload = {
         "software": "ultrascan",
@@ -454,17 +615,30 @@ def report(args: argparse.Namespace) -> int:
         "run_id": args.run_id,
         "generated_at": utc_timestamp(),
         "toolchain": {"compiler": args.compiler},
+        "dataset": {
+            "root": manifest.get("root"),
+            "source_zip": manifest.get("source_zip"),
+            "source_zip_sha256": manifest.get("source_zip_sha256"),
+            "files": manifest.get("files"),
+        },
         "benchmark": {
-            "workload": "upstream hsbench block-mode scan of pcre/snort_literals "
-                        "over corpora/gutenberg.db (Mean throughput)",
-            "iterations": MEASUREMENT_ITERATIONS,
+            "workload": (
+                "Ultrascan hsbench block-mode rule/corpus matrix; each metric is "
+                "the Mean throughput (overall) of one scenario"
+            ),
             "warmups": args.warmups,
             "measure_reps": args.reps,
-            "samples_package": {
-                "rules": RULES_RELATIVE,
-                "corpus": CORPUS_RELATIVE,
-            },
-            "scenarios": [scenario["key"] for scenario in SCENARIOS],
+            "scenarios": [
+                {
+                    "key": scenario["key"],
+                    "mode": scenario["mode"],
+                    "rule": scenario["rule"],
+                    "corpus": scenario["corpus"],
+                    "iterations": scenario["iterations"],
+                    "greybox": scenario["greybox"],
+                }
+                for scenario in scenarios
+            ],
         },
         "results": results,
         "runs_dir": "runs",
@@ -491,16 +665,23 @@ def main() -> int:
 
     drive_parser = subparsers.add_parser("drive")
     drive_parser.add_argument("--hsbench", required=True, type=Path)
-    drive_parser.add_argument("--samples-root", required=True, type=Path)
+    drive_parser.add_argument("--dataset-root", required=True, type=Path)
     drive_parser.add_argument("--dump-db", required=True, type=Path)
+    drive_parser.add_argument("--dataset-manifest", required=True, type=Path)
     drive_parser.add_argument("--runs-dir", required=True, type=Path)
     drive_parser.add_argument("--warmups", required=True, type=int)
     drive_parser.add_argument("--reps", required=True, type=int)
+    drive_parser.add_argument("--scenarios", type=Path, default=DEFAULT_SCENARIOS)
+    drive_parser.add_argument("--scenario", action="append", default=[])
+    drive_parser.add_argument("--output", type=Path, default=None)
 
     report_parser = subparsers.add_parser("report")
     report_parser.add_argument("--runs-dir", required=True, type=Path)
     report_parser.add_argument("--raw-output", required=True, type=Path)
     report_parser.add_argument("--output", required=True, type=Path)
+    report_parser.add_argument("--dataset-manifest", required=True, type=Path)
+    report_parser.add_argument("--scenarios", type=Path, default=DEFAULT_SCENARIOS)
+    report_parser.add_argument("--scenario", action="append", default=[])
     report_parser.add_argument("--version", required=True)
     report_parser.add_argument("--architecture", required=True)
     report_parser.add_argument("--variant", default="base")
@@ -517,9 +698,6 @@ def main() -> int:
     except (RuntimeError, OSError, subprocess.SubprocessError) as error:
         print(f"[ultrascan-parse] ERROR: {error}", file=sys.stderr)
         return 1
-
-
-MEASUREMENT_ITERATIONS = 1
 
 
 if __name__ == "__main__":

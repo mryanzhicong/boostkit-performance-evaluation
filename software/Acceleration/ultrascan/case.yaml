@@ -10,9 +10,9 @@ test_tools:
   hsdump:
     version: "5.8.0"
     revision: "tools/hsdump built from the same source with CMake Debug (DUMP_SUPPORT) to emit the universal bytecode database (dump/db.raw)"
-  intel_hsbench_samples:
-    version: "Intel Hyperscan hsbench samples (cdrdv2 content 739375)"
-    revision: "pcre/snort_literals and corpora/gutenberg.db, pinned by SHA-256, extracted inside the container"
+  ultrascan_dataset:
+    version: "2026-11-16 lixumc@163.com ultrascan-data.zip (2.05 GB)"
+    revision: "7 rule sets + 6 SQLite corpora, pre-placed under /home/runner/software/Ultrascan and pinned by benchmark/dataset-lock.json"
 execution:
   type: shell-functions
   stages:
@@ -28,7 +28,7 @@ execution:
     stop:
       script: scripts/stages/stop.sh
       function: stop_ultrascan_runtime
-  timeout_minutes: 120
+  timeout_minutes: 360
 outputs:
   build_variant:
     path: build_variant.json

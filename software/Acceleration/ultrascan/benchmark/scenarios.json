@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "description": "Ultrascan 5.8.0 hsbench 开箱性能测试矩阵：2 个官方兼容场景 + 李旭 2026-11-16 邮件 xlsx 的 7 行矩阵。规则集和语料均来自 /home/runner/software/Ultrascan/ 下的 ultrascan-data 数据包。",
+  "legacy": [
+    {
+      "key": "hsbench_rules_block",
+      "mode": "rules",
+      "rule": "snort_literals",
+      "corpus": "gutenberg.db",
+      "iterations": 1,
+      "greybox": "",
+      "source": "官方文档兼容场景：现场编译 snort_literals，扫描 gutenberg.db"
+    },
+    {
+      "key": "hsbench_ubc_block",
+      "mode": "ubc",
+      "rule": "snort_literals",
+      "corpus": "gutenberg.db",
+      "iterations": 1,
+      "greybox": "",
+      "source": "官方文档兼容场景：加载 hsdump 生成的通用字节码，扫描 gutenberg.db"
+    }
+  ],
+  "matrix": [
+    {
+      "key": "hsbench_teakettle_2500_gutenberg_block",
+      "mode": "rules",
+      "rule": "teakettle_2500",
+      "corpus": "gutenberg.db",
+      "iterations": 1000,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 1 行：teakettle_2500 + gutenberg.db，-N -n 1000 -G allowLily:1"
+    },
+    {
+      "key": "hsbench_snort_pcres_alexa200_block",
+      "mode": "rules",
+      "rule": "snort_pcres",
+      "corpus": "alexa200.db",
+      "iterations": 100,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 2 行：snort_pcres + alexa200.db，-N -n 100 -G allowLily:1"
+    },
+    {
+      "key": "hsbench_snort_literals_alexa200_block",
+      "mode": "rules",
+      "rule": "snort_literals",
+      "corpus": "alexa200.db",
+      "iterations": 200,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 3 行：snort_literals + alexa200.db，-N -n 200 -G allowLily:1"
+    },
+    {
+      "key": "hsbench_qiming_core_qiming_block",
+      "mode": "rules",
+      "rule": "启明核心规则集",
+      "corpus": "qiming.db",
+      "iterations": 200,
+      "greybox": "allowLily:1;allowNeoFdr:1",
+      "source": "xlsx 第 4 行：启明核心规则集 + qiming.db，-N -n 200 -G allowLily:1;allowNeoFdr:1"
+    },
+    {
+      "key": "hsbench_short_rules_wanan_clone_block",
+      "mode": "rules",
+      "rule": "短规则规则集",
+      "corpus": "wanan_clone.db",
+      "iterations": 100,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 5 行：短规则规则集 + wanan_clone.db，-N -n 100 -G allowLily:1"
+    },
+    {
+      "key": "hsbench_short_rules_1byte_wanan_1byte_block",
+      "mode": "rules",
+      "rule": "短规则规则集1byte",
+      "corpus": "wanan_1byte.db",
+      "iterations": 100,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 6 行：短规则规则集1byte + wanan_1byte.db，-N -n 100 -G allowLily:1"
+    },
+    {
+      "key": "hsbench_meiya_wanan_2_4_block",
+      "mode": "rules",
+      "rule": "美亚规则集",
+      "corpus": "wanan_2-4.db",
+      "iterations": 100,
+      "greybox": "allowLily:1",
+      "source": "xlsx 第 7 行：美亚规则集 + wanan_2-4.db，-N -n 100 -G allowLily:1"
+    }
+  ]
+}

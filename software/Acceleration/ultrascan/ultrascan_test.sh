@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 # Ultrascan 5.8.0 Mean throughput 独立运行入口。
 #
-# 口径：Intel Hyperscan hsbench-samples 的固定规则集 pcre/snort_literals +
-# 固定语料 corpora/gutenberg.db，block 模式、单线程、每次测量扫一遍语料
-# （-N -n 1），只统计 hsbench 的 `Mean throughput (overall)`（Mbit/s）：
+# 口径：/home/runner/software/Ultrascan 下预置的 7 个规则集 + 6 个 SQLite 语料，
+# 按 benchmark/scenarios.json 的 9 个场景（2 个官方兼容场景 + 7 行 xlsx 矩阵）
+# 运行 hsbench，block 模式、单线程，只统计 `Mean throughput (overall)`（Mbit/s）：
 #
-#   1) 无通用字节码：hsbench -e <samples>/pcre/snort_literals \
-#                              -c <samples>/corpora/gutenberg.db -N -n 1
-#   2) 有通用字节码：hsdump -N -U 先生成 dump/db.raw，再
-#                     hsbench -U <dump>/dump/db.raw \
-#                             -c <samples>/corpora/gutenberg.db -N -n 1
+#   hsbench -e <dataset>/<rule> -c <dataset>/<corpus> -N -n <iterations> \
+#           [-G <greybox overrides>]
 #
-# 宿主只负责下载并校验 hsbench-samples.zip；解包/成员校验、Release 构建
-# hsbench、Debug 构建 hsdump（DUMP_SUPPORT）、生成 db.raw、1 次预热 + N 次
-# 独立测量全部在任务专属的 openEuler 24.03 LTS SP4 容器内完成，严格解析留在
-# 宿主。每个场景取 N 次独立测量的中位数。
+# 对旧口径保留两个兼容场景：现场编译 snort_literals/gutenberg.db，以及
+# hsdump -N -U 生成的通用字节码加载场景。
+#
+# 宿主只负责校验预置数据集的 size/CRC/SHA-256 与 SQLite schema；Release
+# hsbench、Debug hsdump（DUMP_SUPPORT）、db.raw、1 次预热 + N 次独立测量全部
+# 在任务专属的 openEuler 24.03 LTS SP4 容器内完成，严格解析留在宿主。
 #
 # 退出码：0 成功；10 参数非法；20 架构/环境不符；30 下载/构建失败；
 #         40 运行前检查失败；50 测量/解析失败；60 清理失败；70 结果校验失败。
@@ -163,19 +162,21 @@ Usage: $(basename "$0") [OPTIONS]
 
 Build Ultrascan ${SOFTWARE_VERSION} inside the private openEuler container, build
 hsbench (Release) and hsdump (Debug, DUMP_SUPPORT), generate the universal
-bytecode dump/db.raw with hsdump, then measure the one metric this case reports:
-hsbench's Mean throughput (overall) in Mbit/s, block mode, single thread, one
-scan per measurement (-N -n 1), over the Intel hsbench-samples inputs
-(pcre/snort_literals + corpora/gutenberg.db):
+bytecode dump/db.raw with hsdump, then measure the 9-scenario matrix declared in
+benchmark/scenarios.json.  Each scenario reports hsbench's Mean throughput
+(overall) in Mbit/s, block mode, single thread:
 
-  without universal bytecode:
-    hsbench -e <samples>/pcre/snort_literals -c <samples>/corpora/gutenberg.db -N -n 1
-  with universal bytecode:
+  rules matrix:
+    hsbench -e <dataset>/<rule> -c <dataset>/<corpus> \
+            -N -n <iterations> [-G <greybox overrides>]
+  legacy universal bytecode:
     hsdump -N -U ...   # writes <dump>/dump/db.raw
-    hsbench -U <dump>/dump/db.raw -c <samples>/corpora/gutenberg.db -N -n 1
+    hsbench -U <dump>/dump/db.raw -c <dataset>/gutenberg.db -N -n 1
 
-Each scenario runs PERF_ULTRASCAN_WARMUPS warmups and PERF_REPS measured
-repetitions; the reported value is the median of the measured repetitions.
+The dataset is pre-placed under /home/runner/software/Ultrascan (7 rule sets + 6
+SQLite corpora; see benchmark/dataset-lock.json).  Each scenario runs
+PERF_ULTRASCAN_WARMUPS warmups and PERF_REPS measured repetitions; the reported
+value is the median of the measured repetitions.
 
 Options:
   --version VERSION       Ultrascan version (default: ${SOFTWARE_VERSION})
@@ -188,14 +189,15 @@ Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, PERF_VARIANT, PERF_RUN_ID, RESULTS_DIR,
   PERF_WORK_DIR, PERF_REPS, PERF_ULTRASCAN_WARMUPS,
   PERF_ULTRASCAN_BUILD_JOBS, PERF_ULTRASCAN_OFFLINE_DIR,
-  PERF_ULTRASCAN_GIT_URL, PERF_ULTRASCAN_GIT_URLS, PERF_PROXY
+  PERF_ULTRASCAN_DATA_DIR, PERF_ULTRASCAN_GIT_URL,
+  PERF_ULTRASCAN_GIT_URLS, PERF_PROXY
 
 Exit codes:
   0   success
   10  invalid command line
   20  architecture/environment mismatch
-  30  download, sample verification or build failure
-  40  pre-run check failure (hsbench/hsdump/db.raw/samples/container)
+  30  dataset verification or build failure
+  40  pre-run check failure (hsbench/hsdump/db.raw/dataset/container)
   50  measurement or strict parsing failure
   60  container or work-directory cleanup failure
   70  result validation/report failure
