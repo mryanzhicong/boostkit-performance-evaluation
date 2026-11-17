@@ -11,6 +11,7 @@ container-side ``drive`` step and the strict host-side ``report`` step.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -122,16 +123,20 @@ def test_image_uses_local_verified_sp4_archive(tmp_path: Path) -> None:
 def test_start_mounts_private_paths_and_labels_the_run(tmp_path: Path) -> None:
     work = tmp_path / "work"
     results = tmp_path / "results"
+    offline = tmp_path / "Ultrascan"
     work.mkdir()
     results.mkdir()
+    offline.mkdir()
     write_fake_docker(tmp_path)
     completed = run_shell(
         f'source "{COMMON}"; PERF_WORK_DIR="{work}"; RESULTS_DIR="{results}"; '
+        'ULTRASCAN_OFFLINE_DIR="${OFFLINE_DIR}"; ULTRASCAN_DATA_ROOT="${OFFLINE_DIR}"; '
         'ULTRASCAN_IMAGE_ARCHIVE_DIR="${ARCHIVE_DIR}"; '
         'prepare_ultrascan_container_image() { ULTRASCAN_CONTAINER_IMAGE="openeuler-test:latest"; }; '
         'start_ultrascan_container',
         tmp_path,
         ARCHIVE_DIR=str(tmp_path),
+        OFFLINE_DIR=str(offline),
         IMAGE_ARCH="amd64" if os.uname().machine == "x86_64" else "arm64",
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
@@ -140,6 +145,7 @@ def test_start_mounts_private_paths_and_labels_the_run(tmp_path: Path) -> None:
     assert "boostkit.ultrascan.run-id=unit-test" in calls
     assert f"type=bind,source={work},target={work}" in calls
     assert f"type=bind,source={results},target={results}" in calls
+    assert f"type=bind,source={offline},target={offline},readonly" in calls
     assert "source=/etc/passwd,target=/etc/passwd,readonly" in calls
 
 
@@ -214,3 +220,28 @@ def test_stages_go_through_the_container_helpers() -> None:
     assert 'ultrascan_container_exec_at "${BUILD_DIR}"' in builders
     assert "util-linux" in common
     assert "\n        cmake -S " not in builders
+
+
+def test_scenario_matrix_and_dataset_lock_agree() -> None:
+    scenarios = json.loads(
+        (CASE_DIR / "benchmark" / "scenarios.json").read_text(encoding="utf-8")
+    )
+    lock = json.loads(
+        (CASE_DIR / "benchmark" / "dataset-lock.json").read_text(encoding="utf-8")
+    )
+    entries = scenarios["legacy"] + scenarios["matrix"]
+    keys = [entry["key"] for entry in entries]
+    assert len(entries) == 9
+    assert len(keys) == len(set(keys))
+    assert len(scenarios["legacy"]) == 2
+    assert len(scenarios["matrix"]) == 7
+    legacy_keys = {entry["key"] for entry in scenarios["legacy"]}
+    for entry in entries:
+        assert entry["mode"] in {"rules", "ubc"}
+        assert entry["iterations"] >= 1
+        assert lock["files"][entry["rule"]]["kind"] == "rules"
+        assert lock["files"][entry["corpus"]]["kind"] == "corpus"
+        if entry["key"] in legacy_keys:
+            assert entry["greybox"] == ""
+        else:
+            assert entry["greybox"]
