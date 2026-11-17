@@ -85,8 +85,10 @@ make -C "${PERF_WORK_DIR}/glibc-src/benchtests" \
 
 ## 指标与产物
 
-只取两个长度、两个公开函数，共四项指标。`align1=0`、`align2=0` 表示两地址
-均按 0 偏移对齐；`memcpy` 取 `dst > src=0`，`memcmp` 取相等输入 `result=0`。
+**报告指标**只取两个长度、两个公开函数，共四项（写入
+`benchmark_glibc.json`）；**逐项明细**另外保留全部官方场景到 `items.jsonl`，
+不是只有 4 条。`align1=0`、`align2=0` 表示两地址均按 0 偏移对齐；`memcpy`
+取 `dst > src=0`，`memcmp` 取相等输入 `result=0`。
 
 | 函数 | 长度 | 官方结果中的场景 | 选取实现 | 报告指标数 | 单位与方向 |
 |---|---:|---|---|---:|---|
@@ -122,6 +124,22 @@ make -C "${PERF_WORK_DIR}/glibc-src/benchtests" \
 
 Framework 读取 `benchmark_glibc.json` 生成单架构指标，读取双架构 `items.jsonl`
 生成跨架构汇总和逐项 artifact，按 `memcpy`、`memcmp` 分组。
+
+### 产物
+
+| 产物 | 单架构 | 跨架构 | 内容 |
+|---|---|---|---|
+| `benchmark_glibc.json` | 有 | 两架构各一份 | 4 项原始指标，不含相对值 |
+| `items.jsonl` | 有 | 两架构各一份 | 全部官方场景的逐项原始数据 |
+| `benchtests/` | 有 | 两架构各一份 | `bench-memcpy.out`、`bench-memcmp.out` 完整官方 JSON |
+| `benchmark_bench.txt` | 有 | 两架构各一份 | 实际执行命令 |
+| `report.md` | 有 | 无 | 单架构报告：4 项原始指标 + 环境，不显示相对值 |
+| `<分类>-<软件>-<版本>.json` | 无 | 有 | 跨架构 `comparison.json`，含 `metrics` 和 `item_comparison` |
+| `<分类>-<软件>-<版本>-items.jsonl` | 无 | 有 | 全量逐项对比明细，含两边原始值和 `relative_performance` |
+| `combined-report.md` | 无 | 有 | 跨架构报告：指标对比 + 逐项汇总 + 最多 10 条样例 |
+
+单架构不会生成 `item_comparison`，也不会因为缺另一架构而失败；跨架构才生成
+逐项对比和汇总。全量明细始终单独存 artifact，报告只展示分组汇总和样例。
 
 脱离 Workflow 执行完整流程：
 
