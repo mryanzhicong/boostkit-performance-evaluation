@@ -121,8 +121,10 @@ def test_case_wiring_and_container_flags() -> None:
     assert case["metrics"]["collection"]["subgroup_path"] == "subgroup"
     content = (SCRIPTS / "common.sh").read_text()
     assert "--privileged" in content
+    assert '--user "$(id -u):$(id -g)"' in content
     assert "--cpuset-cpus=0-15" in content
     assert "--memory=128g" in content
+    assert 'HOME=${PERF_WORK_DIR}/home' in content
 
 
 def test_optimized_builder_fails_explicitly() -> None:

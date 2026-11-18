@@ -136,7 +136,7 @@ configure_runtime_paths() {
 initialize_runtime() {
     configure_runtime_paths || return $?
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TF_OUT_DIR}" "${TF_EVIDENCE_DIR}" \
-        "${PERF_WORK_DIR}/tmp" "${PERF_WORK_DIR}/assets"
+        "${PERF_WORK_DIR}/tmp" "${PERF_WORK_DIR}/home" "${PERF_WORK_DIR}/assets"
 }
 
 with_network_proxy() {
@@ -197,11 +197,13 @@ require_tensorflow_container() {
     log "starting single privileged TensorFlow container ${TF_CONTAINER_NAME} (cpuset 0-15, 128g)"
     docker run --detach --name "${TF_CONTAINER_NAME}" \
         --label "boostkit.tensorflow.run-id=${PERF_RUN_ID}" \
-        --network=host --privileged \
+        --network=host --privileged --user "$(id -u):$(id -g)" \
         --cpuset-cpus=0-15 --memory=128g \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount "type=bind,source=${TF_ASSET_DIR},target=${TF_ASSET_DIR},readonly" \
+        --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+        --mount type=bind,source=/etc/group,target=/etc/group,readonly \
         "${TF_IMAGE}" sleep infinity >/dev/null || return 40
 }
 
@@ -222,7 +224,7 @@ container_exec() {
         proxy=(-e "http_proxy=${PERF_PROXY}" -e "https_proxy=${PERF_PROXY}")
     fi
     docker exec "${proxy[@]}" -e "TMPDIR=${PERF_WORK_DIR}/tmp" \
-        -e "HOME=/root" "${TF_CONTAINER_NAME}" "$@"
+        -e "HOME=${PERF_WORK_DIR}/home" "${TF_CONTAINER_NAME}" "$@"
 }
 
 remove_tensorflow_container() {

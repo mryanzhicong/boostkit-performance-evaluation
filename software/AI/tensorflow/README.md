@@ -42,7 +42,7 @@
 ```bash
 docker run --detach --name "${TF_CONTAINER_NAME}" \
   --label "boostkit.tensorflow.run-id=${PERF_RUN_ID}" \
-  --network=host --privileged \
+  --network=host --privileged --user "$(id -u):$(id -g)" \
   --cpuset-cpus=0-15 --memory=128g \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
@@ -50,8 +50,10 @@ docker run --detach --name "${TF_CONTAINER_NAME}" \
   "${TF_IMAGE}" sleep infinity
 ```
 
-容器内以 root 运行，和测试指导一致；结果目录挂载到宿主机。停止阶段只删除带本次
-`boostkit.tensorflow.run-id` 标签的容器，不执行 `docker prune`。
+容器使用 Runner 的 UID/GID 运行，容器内 `HOME=${PERF_WORK_DIR}/home`。这样 Bazel
+输出和结果文件都属于 Runner 用户，`find`/清理阶段可以删除；不会在工作目录留下
+root 文件。结果目录挂载到宿主机，停止阶段只删除带本次 `boostkit.tensorflow.run-id`
+标签的容器，不执行 `docker prune`。
 
 ## predictor_server 构建
 
