@@ -3,6 +3,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 write_runtime_configurations() {
     mkdir -p "${RUNTIME_DIR}" || return 40
+    set_envoy_runtime_ports || return 40
+    printf 'ENVOY_BACKEND_PORT=%s\nENVOY_BACKEND_ADMIN_PORT=%s\nENVOY_DIRECT_PORT=%s\nENVOY_DIRECT_ADMIN_PORT=%s\nENVOY_PROXY_PORT=%s\nENVOY_PROXY_ADMIN_PORT=%s\n' \
+        "${ENVOY_BACKEND_PORT}" "${ENVOY_BACKEND_ADMIN_PORT}" \
+        "${ENVOY_DIRECT_PORT}" "${ENVOY_DIRECT_ADMIN_PORT}" \
+        "${ENVOY_PROXY_PORT}" "${ENVOY_PROXY_ADMIN_PORT}" \
+        > "${RUNTIME_DIR}/ports.env" || return 40
     openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
         -keyout "${RUNTIME_DIR}/tls.key" -out "${RUNTIME_DIR}/tls.crt" \
         -subj '/CN=localhost' >/dev/null 2>&1 || return 40
@@ -12,7 +18,7 @@ static_resources:
   listeners:
   - name: backend
     address:
-      socket_address: { address: 127.0.0.1, port_value: 18080 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_PORT} }
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -34,14 +40,14 @@ static_resources:
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 18081 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_ADMIN_PORT} }
 EOF
     cat > "${RUNTIME_DIR}/direct.yaml" <<EOF
 static_resources:
   listeners:
   - name: direct_tls
     address:
-      socket_address: { address: 127.0.0.1, port_value: 19000 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_DIRECT_PORT} }
     filter_chains:
     - transport_socket:
         name: envoy.transport_sockets.tls
@@ -71,14 +77,14 @@ static_resources:
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 19002 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_DIRECT_ADMIN_PORT} }
 EOF
     cat > "${RUNTIME_DIR}/proxy.yaml" <<EOF
 static_resources:
   listeners:
   - name: proxy_tls
     address:
-      socket_address: { address: 127.0.0.1, port_value: 19001 }
+      socket_address: { address: 127.0.0.1, port_value: ${ENVOY_PROXY_PORT} }
     filter_chains:
     - transport_socket:
         name: envoy.transport_sockets.tls
@@ -115,19 +121,95 @@ static_resources:
       - lb_endpoints:
         - endpoint:
             address:
-              socket_address: { address: 127.0.0.1, port_value: 18080 }
+              socket_address: { address: 127.0.0.1, port_value: ${ENVOY_BACKEND_PORT} }
 admin:
   access_log_path: /dev/null
   address:
-    socket_address: { address: 127.0.0.1, port_value: 19003 }
+    socket_address: { address: 127.0.0.1, port_value: ${ENVOY_PROXY_ADMIN_PORT} }
 EOF
 }
 
+start_envoy_container() {
+    local dnf_options=() cpu_set numa_node swap_limit expect_swap=false
+    local -a resource_args=()
+    local -a mounts=(--mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}")
+    if [[ "${RESULTS_DIR}" != "${PERF_WORK_DIR}" && "${RESULTS_DIR}" != "${PERF_WORK_DIR}/"* ]]; then
+        mounts+=(--mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}")
+    fi
+    mounts+=(--mount "type=bind,source=/etc/passwd,target=/etc/passwd,readonly")
+    mounts+=(--mount "type=bind,source=/etc/group,target=/etc/group,readonly")
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        if [[ ! -d "${ENVOY_CA_ANCHORS_DIR}" ]]; then
+            log_message "ERROR: proxy CA certificate directory is missing: ${ENVOY_CA_ANCHORS_DIR}"
+            return 30
+        fi
+        mounts+=(--mount "type=bind,source=${ENVOY_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
+    fi
+    if docker container inspect "${ENVOY_CONTAINER_NAME}" >/dev/null 2>&1; then
+        log_message "ERROR: refusing to reuse an existing Envoy container: ${ENVOY_CONTAINER_NAME}"
+        return 40
+    fi
+    validate_envoy_container_resources || return $?
+    read -r cpu_set numa_node <<< "$(select_envoy_cpu_set)" || {
+        log_message "ERROR: failed to select a 4-CPU set from the allowed topology"
+        return 40
+    }
+    if [[ -z "${cpu_set}" ]]; then
+        log_message "ERROR: no usable CPU set for the ${ENVOY_CONTAINER_CPUS}-CPU Envoy container"
+        return 40
+    fi
+    resource_args+=(
+        "--cpus=${ENVOY_CONTAINER_CPUS}"
+        "--cpuset-cpus=${cpu_set}"
+        "--memory=${ENVOY_CONTAINER_MEMORY}"
+    )
+    swap_limit="$(docker info --format '{{.SwapLimit}}' 2>/dev/null || true)"
+    if [[ "${swap_limit}" == true ]]; then
+        resource_args+=("--memory-swap=${ENVOY_CONTAINER_MEMORY}")
+        expect_swap=true
+    fi
+    [[ -z "${numa_node}" ]] || resource_args+=("--cpuset-mems=${numa_node}")
+    log_message "starting ${ENVOY_CONTAINER_CPUS}U${ENVOY_CONTAINER_MEMORY%[gG]}G Envoy container ${ENVOY_CONTAINER_NAME} from ${ENVOY_CONTAINER_IMAGE}: CPUs ${cpu_set}, NUMA ${numa_node:-unbound}"
+    docker run --detach --name "${ENVOY_CONTAINER_NAME}" \
+        --label "boostkit.envoy.run-id=${PERF_RUN_ID}" \
+        "${resource_args[@]}" \
+        --network=host --user "$(id -u):$(id -g)" \
+        --ulimit "nofile=1048576:1048576" \
+        "${mounts[@]}" "${ENVOY_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 40
+    if ! verify_envoy_container_resources "${cpu_set}" "${numa_node}" "${expect_swap}"; then
+        docker rm --force "${ENVOY_CONTAINER_NAME}" >/dev/null 2>&1 || true
+        return 40
+    fi
+
+    if [[ -n "${PERF_PROXY:-}" ]]; then
+        log_message "updating CA trust in the private Envoy container"
+        docker exec --user 0 "${ENVOY_CONTAINER_NAME}" update-ca-trust extract || {
+            log_message "ERROR: failed to update CA trust in the Envoy container"
+            return 30
+        }
+    fi
+    log_message "switching private Envoy container repositories to the Huawei openEuler mirror"
+    docker exec --user 0 "${ENVOY_CONTAINER_NAME}" sed -i \
+        -e '/^meta/ s/^\(.*\)$/#\1/g' \
+        -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+        /etc/yum.repos.d/openEuler.repo || {
+        log_message "ERROR: failed to update openEuler repositories in the Envoy container"
+        return 30
+    }
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message "installing Envoy/k6 runtime dependencies inside the private container"
+    docker exec --user 0 "${ENVOY_CONTAINER_NAME}" \
+        dnf "${dnf_options[@]}" install -y python3 bash libstdc++ || return 30
+}
+
 start_envoy_process() {
-    local name="$1" configuration="$2" pid_file="$3"
-    "${ENVOY_BIN}" --config-path "${configuration}" --disable-hot-restart \
-        > "${RUNTIME_DIR}/${name}.log" 2>&1 &
-    printf '%s\n' "$!" > "${pid_file}"
+    local name="$1" configuration="$2"
+    docker exec -d --user "$(id -u):$(id -g)" \
+        --env "TMPDIR=${TMPDIR}" "${ENVOY_CONTAINER_NAME}" \
+        bash -c "exec '${ENVOY_BIN}' --config-path '${configuration}' --disable-hot-restart > '${RUNTIME_DIR}/${name}.log' 2>&1" || {
+        log_message "ERROR: failed to start the ${name} Envoy process inside the container"
+        return 40
+    }
 }
 
 wait_for_https_service() {
@@ -153,14 +235,16 @@ start_envoy_runtime() {
         log_message "ERROR: Envoy runtime directory is not clean: ${RUNTIME_DIR}"
         return 20
     }
+    prepare_envoy_container_image || return $?
     write_runtime_configurations || {
         log_message "ERROR: failed to generate isolated Envoy runtime configurations"
         return 40
     }
-    start_envoy_process backend "${RUNTIME_DIR}/backend.yaml" "${BACKEND_PID_FILE}"
-    start_envoy_process direct "${RUNTIME_DIR}/direct.yaml" "${DIRECT_PID_FILE}"
-    start_envoy_process proxy "${RUNTIME_DIR}/proxy.yaml" "${PROXY_PID_FILE}"
-    wait_for_https_service 'https://127.0.0.1:19000/' || return $?
-    wait_for_https_service 'https://127.0.0.1:19001/' || return $?
-    log_message "Envoy direct-response and reverse-proxy scenarios are ready"
+    start_envoy_container || return $?
+    start_envoy_process backend "${RUNTIME_DIR}/backend.yaml" || return $?
+    start_envoy_process direct "${RUNTIME_DIR}/direct.yaml" || return $?
+    start_envoy_process proxy "${RUNTIME_DIR}/proxy.yaml" || return $?
+    wait_for_https_service "https://127.0.0.1:${ENVOY_DIRECT_PORT}/" || return $?
+    wait_for_https_service "https://127.0.0.1:${ENVOY_PROXY_PORT}/" || return $?
+    log_message "Envoy direct-response and reverse-proxy scenarios are ready inside ${ENVOY_CONTAINER_NAME}: backend ${ENVOY_BACKEND_PORT}, direct ${ENVOY_DIRECT_PORT}, proxy ${ENVOY_PROXY_PORT}"
 }
