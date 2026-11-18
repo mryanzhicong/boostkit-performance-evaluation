@@ -1,0 +1,52 @@
+name: fbthrift
+category: Acceleration
+enabled: true
+versions:
+  - "2022.11.14.00"
+test_tools:
+  Folly:
+    version: "2022.11.14.00"
+  Fizz:
+    version: "2022.11.14.00"
+  Wangle:
+    version: "2022.11.14.00"
+  fbthrift:
+    version: "2022.11.14.00"
+  AccLibBenchmark:
+    version: unknown
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_fbthrift
+    start:
+      script: scripts/stages/start.sh
+      function: start_fbthrift_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_fbthrift_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_fbthrift_runtime
+  timeout_minutes: 720
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_result:
+    path: benchmark_fbthrift.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
