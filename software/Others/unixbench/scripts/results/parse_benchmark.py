@@ -40,7 +40,10 @@ def positive(text: str) -> float:
     return value
 
 
-def parse_report(report: str, version: str, architecture: str) -> dict:
+REFERENCE_VCPUS = 32
+
+
+def parse_report(report: str, version: str, architecture: str, expected_copies: int | None = None) -> dict:
     if not re.search(r"BYTE UNIX Benchmarks \(Version 6\.0\.1\)", report):
         raise ValueError("not an official UnixBench 6.0.1 report")
     segments = re.split(r"(?=^Benchmark Run: )", report, flags=re.MULTILINE)
@@ -108,12 +111,19 @@ def parse_report(report: str, version: str, architecture: str) -> dict:
         }
     if copy_counts[0] != 1 or copy_counts[1] != system_cpu_counts[1] or system_cpu_counts[0] != system_cpu_counts[1]:
         raise ValueError("./Run did not use one copy followed by the detected CPU count")
+    required_copies = REFERENCE_VCPUS if expected_copies is None else expected_copies
+    if system_cpu_counts[1] != required_copies:
+        raise ValueError(
+            f"reference VM must run {required_copies} parallel copies, found {system_cpu_counts[1]}"
+        )
     return {
         "benchmark": "unixbench_system_index", "software": "unixbench",
         "version": version, "architecture": architecture,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "parameters": {"command": "./Run", "suite": "index", "copy_selection": "automatic",
-                       "iteration_policy": "upstream-default"},
+                       "iteration_policy": "upstream-default", "execution_environment": "kvm-vm",
+                       "vm_vcpus": REFERENCE_VCPUS, "vm_memory_gib": 64,
+                       "huge_page_size_kb": 2048, "cpu_pinning": "1:1-host-numa-node"},
         "runtime_context": {"system_cpus": system_cpu_counts[0], "copy_counts": copy_counts},
         "results": results,
     }
