@@ -1,0 +1,80 @@
+{
+  "benchmark": "opus_1.6.1_fixed_point",
+  "software": "opus",
+  "version": "1.6.1",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-19T10:33:40Z",
+  "parameters": {
+    "audio": {
+      "name": "speech_orig",
+      "url": "https://media.xiph.org/opus/samples/examples/speech_orig.wav",
+      "sha256": "5b7dc9704c006555c72edd2c113fa9f735d4a3a4309982c9e37fbfddcf4e21dd",
+      "seconds": 10.8,
+      "frames": 518400,
+      "channels": 1,
+      "sample_rate": 48000,
+      "sample_width": 2
+    },
+    "cases": [
+      {
+        "name": "speech_orig_16000_complexity5",
+        "bitrate": 16000,
+        "complexity": 5
+      },
+      {
+        "name": "speech_orig_16000_complexity10",
+        "bitrate": 16000,
+        "complexity": 10
+      },
+      {
+        "name": "speech_orig_24000_complexity10",
+        "bitrate": 24000,
+        "complexity": 10
+      }
+    ],
+    "application": "voip",
+    "frame_size_ms": 20,
+    "iterations": 20,
+    "warmup_iterations": 1,
+    "threads": 1,
+    "fixed_point": true,
+    "build_system": "autotools",
+    "source_mode": "unpatched",
+    "timing": "full_encode",
+    "affinity": "unbound",
+    "opus": "1.6.1",
+    "source_archive_sha256": "6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1"
+  },
+  "results": {
+    "speech_orig_16000_complexity5": {
+      "source_name": "speech_orig_16000_complexity5",
+      "value": 6.815106,
+      "unit": "ms/audio second",
+      "direction": "lower_is_better",
+      "group": "opus",
+      "subgroup": "16kbps_c5",
+      "bitrate": 16000,
+      "complexity": 5
+    },
+    "speech_orig_16000_complexity10": {
+      "source_name": "speech_orig_16000_complexity10",
+      "value": 9.436914,
+      "unit": "ms/audio second",
+      "direction": "lower_is_better",
+      "group": "opus",
+      "subgroup": "16kbps_c10",
+      "bitrate": 16000,
+      "complexity": 10
+    },
+    "speech_orig_24000_complexity10": {
+      "source_name": "speech_orig_24000_complexity10",
+      "value": 9.674833,
+      "unit": "ms/audio second",
+      "direction": "lower_is_better",
+      "group": "opus",
+      "subgroup": "24kbps_c10",
+      "bitrate": 24000,
+      "complexity": 10
+    }
+  }
+}
