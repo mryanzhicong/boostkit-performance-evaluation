@@ -1,0 +1,67 @@
+{
+  "benchmark": "ffmpeg_7.1.1_scale",
+  "software": "ffmpeg",
+  "version": "7.1.1",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-19T02:51:42Z",
+  "parameters": {
+    "videos": [
+      {
+        "name": "BQTerrace",
+        "filename": "BQTerrace_1920x1080_60-dianbo.yuv",
+        "sha256": "5677e7ef3806d99d899d80157d69a1b875d99b089ce62a781c4f2ac6ea4d07a7"
+      },
+      {
+        "name": "Film2012",
+        "filename": "Film2012_1920x1080_25_8bit_8Mbps.yuv",
+        "sha256": "27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc"
+      },
+      {
+        "name": "messi",
+        "filename": "messi_1920x1080_25_1000.yuv",
+        "sha256": "1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b"
+      }
+    ],
+    "width": 640,
+    "height": 360,
+    "pixel_format": "rgb24",
+    "scale_flags": "bilinear+accurate_rnd+bitexact",
+    "frames": 30,
+    "warmup_iterations": 1,
+    "iterations": 20,
+    "threads": 1,
+    "filter_threads": 1,
+    "timing": "full_command",
+    "affinity": "unbound",
+    "source_mode": "unpatched",
+    "ffmpeg": "7.1.1",
+    "configure": "--disable-everything --enable-ffmpeg --enable-ffprobe --enable-filter=scale,format,null,psnr,setpts --enable-swscale",
+    "source_archive_sha256": "9a6e57a446b671012612aaeb9df5126794d5ac8f2015ca220934f99a6a4e0601"
+  },
+  "results": {
+    "BQTerrace_640x360_rgb24": {
+      "source_name": "BQTerrace_640x360_rgb24",
+      "value": 3.165985,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "ffmpeg",
+      "subgroup": "BQTerrace"
+    },
+    "Film2012_640x360_rgb24": {
+      "source_name": "Film2012_640x360_rgb24",
+      "value": 2.634243,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "ffmpeg",
+      "subgroup": "Film2012"
+    },
+    "messi_640x360_rgb24": {
+      "source_name": "messi_640x360_rgb24",
+      "value": 3.470635,
+      "unit": "ms/frame",
+      "direction": "lower_is_better",
+      "group": "ffmpeg",
+      "subgroup": "messi"
+    }
+  }
+}
