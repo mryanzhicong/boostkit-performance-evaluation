@@ -17,6 +17,7 @@ FFMPEG_ARCHIVE_NAME="ffmpeg-${SOFTWARE_VERSION}.tar.gz"
 FFMPEG_ARCHIVE_DIR="${FFMPEG_ARCHIVE_DIR:-/home/runner/software/ffmpeg}"
 FFMPEG_VIDEO_DIR="${FFMPEG_VIDEO_DIR:-/home/runner/software/ffmpeg/video}"
 FFMPEG_IMAGE_ARCHIVE_DIR="${FFMPEG_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}"
+FFMPEG_REFERENCE_DIR="${FFMPEG_REFERENCE_DIR:-${SCRIPT_DIR}/scripts/reference}"
 FFMPEG_CA_ANCHORS_DIR="${FFMPEG_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 FFMPEG_CONTAINER_IMAGE_OVERRIDE="${FFMPEG_CONTAINER_IMAGE:-}"
 FFMPEG_CONTAINER_IMAGE=""
@@ -119,9 +120,14 @@ configure_runtime_paths() {
     [[ "${FFMPEG_VIDEO_DIR}" == /* ]] || FFMPEG_VIDEO_DIR="$(pwd -P)/${FFMPEG_VIDEO_DIR}"
     [[ "${FFMPEG_ARCHIVE_DIR}" == /* ]] || FFMPEG_ARCHIVE_DIR="$(pwd -P)/${FFMPEG_ARCHIVE_DIR}"
     FFMPEG_VIDEO_DIR="$(resolve_ffmpeg_video_dir)"
-    FFMPEG_SOURCE_DIR="${PERF_WORK_DIR}/ffmpeg-src"
-    FFMPEG_INSTALL_DIR="${PERF_WORK_DIR}/ffmpeg-install"
-    FFMPEG_CLIPS_DIR="${PERF_WORK_DIR}/clips"
+    FFMPEG_WORK_SCRIPTS="${PERF_WORK_DIR}/scripts"
+    FFMPEG_ORIGINAL_SOFTWARE="${PERF_WORK_DIR}/software"
+    FFMPEG_SOURCE_DIR="${FFMPEG_ORIGINAL_SOFTWARE}/ffmpeg-${SOFTWARE_VERSION}"
+    FFMPEG_INSTALL_DIR="${FFMPEG_SOURCE_DIR}/ffmpeg_install"
+    FFMPEG_CONTAINER_VIDEO_DIR="/home/test/Test/video"
+    FFMPEG_CONTAINER_CSV="${FFMPEG_WORK_SCRIPTS}/result_bench-ffmpeg.csv"
+    FFMPEG_CONTAINER_EVIDENCE="${FFMPEG_WORK_SCRIPTS}/.work/evidence.json"
+    FFMPEG_CLIPS_DIR="${FFMPEG_WORK_SCRIPTS}/.work"
     FFMPEG_EVIDENCE_DIR="${RESULTS_DIR}/benchmark_evidence"
     FFMPEG_CSV_PATH="${RESULTS_DIR}/result_bench-ffmpeg.csv"
     FFMPEG_RAW_LOG="${RESULTS_DIR}/benchmark_raw.log"
@@ -132,7 +138,9 @@ configure_runtime_paths() {
     PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-${RESULTS_DIR}/actual-version.txt}"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID
     export PERF_WORK_DIR RESULTS_DIR PERF_ACTUAL_VERSION_FILE
-    export FFMPEG_SOURCE_DIR FFMPEG_INSTALL_DIR FFMPEG_CLIPS_DIR
+    export FFMPEG_WORK_SCRIPTS FFMPEG_ORIGINAL_SOFTWARE FFMPEG_SOURCE_DIR
+    export FFMPEG_INSTALL_DIR FFMPEG_CLIPS_DIR FFMPEG_CONTAINER_VIDEO_DIR
+    export FFMPEG_CONTAINER_CSV FFMPEG_CONTAINER_EVIDENCE
     export FFMPEG_EVIDENCE_DIR FFMPEG_CSV_PATH FFMPEG_RAW_LOG
     export FFMPEG_VIDEO_DIR FFMPEG_CONTAINER_NAME
 }
@@ -140,8 +148,8 @@ configure_runtime_paths() {
 initialize_runtime() {
     configure_runtime_paths || return $?
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${PERF_WORK_DIR}/tmp" \
-        "${PERF_WORK_DIR}/home" "${FFMPEG_SOURCE_DIR}" "${FFMPEG_INSTALL_DIR}" \
-        "${FFMPEG_CLIPS_DIR}" "${FFMPEG_EVIDENCE_DIR}"
+        "${PERF_WORK_DIR}/home" "${FFMPEG_WORK_SCRIPTS}" \
+        "${FFMPEG_ORIGINAL_SOFTWARE}/downloads" "${FFMPEG_EVIDENCE_DIR}"
 }
 
 with_network_proxy() {
@@ -252,7 +260,7 @@ require_ffmpeg_container() {
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount "type=bind,source=${SCRIPT_DIR},target=${SCRIPT_DIR},readonly" \
-        --mount "type=bind,source=${FFMPEG_VIDEO_DIR},target=${FFMPEG_VIDEO_DIR},readonly" \
+        --mount "type=bind,source=${FFMPEG_VIDEO_DIR},target=${FFMPEG_CONTAINER_VIDEO_DIR},readonly" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
         "${cert_mount[@]}" \

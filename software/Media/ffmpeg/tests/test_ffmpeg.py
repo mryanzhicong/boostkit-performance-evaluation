@@ -99,13 +99,20 @@ def test_case_wiring_and_build_flags() -> None:
     assert case["outputs"]["benchmark_result_csv"]["path"] == "result_bench-ffmpeg.csv"
     assert case["metrics"]["collection"]["subgroup_path"] == "subgroup"
     base = (SCRIPTS / "builders" / "base.sh").read_text()
-    assert "--enable-filter=scale,format,null,psnr,setpts" in base
-    assert "--extra-cflags='-O3 -ffp-contract=off'" in base
-    assert "make -j8" in base
-    runner = (SCRIPTS / "results" / "run_benchmark.py").read_text()
-    assert "bilinear+accurate_rnd+bitexact" in runner
-    assert '"-threads", "1", "-filter_threads", "1"' in runner
-    assert "statistics.median" in runner
+    assert "build_install.sh" in base
+    assert "BENCH_ENV_READY" in base
+    reference = (SCRIPTS / "reference" / "bench.py").read_text()
+    assert "bilinear+accurate_rnd+bitexact" in reference
+    assert "'-threads', '1', '-filter_threads', '1'" in reference
+    assert "statistics.median" in reference
+    assert (SCRIPTS / "reference" / "build_install.sh").is_file()
+    assert (SCRIPTS / "reference" / "bootstrap_env.sh").is_file()
+    assert (SCRIPTS / "reference" / "run_bench.sh").is_file()
+    test_stage = (SCRIPTS / "stages" / "test.sh").read_text()
+    assert "run_bench.sh" in test_stage
+    assert "BENCH_ENV_READY" in test_stage
+    start_stage = (SCRIPTS / "stages" / "start.sh").read_text()
+    assert "${FFMPEG_WORK_SCRIPTS}/bench.py" in start_stage
 
 
 def test_optimized_builder_fails_explicitly() -> None:

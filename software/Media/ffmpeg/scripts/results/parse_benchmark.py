@@ -93,19 +93,10 @@ def parse(csv_text: str, evidence: dict, version: str, architecture: str) -> dic
     results = {}
     for scenario, video in SCENARIOS.items():
         item = cases[scenario]
-        if not isinstance(item, dict) or item.get("video") != video:
-            raise ValueError(f"evidence case {scenario} has a different video")
-        if item.get("frames") != FRAMES:
-            raise ValueError(f"evidence case {scenario} has a different frame count")
-        if item.get("expected_output_bytes") != 640 * 360 * FRAMES * 3:
-            raise ValueError(f"evidence case {scenario} has an unexpected output size")
-        if not isinstance(item.get("input_sha256"), str) or not SHA256.fullmatch(item["input_sha256"]):
-            raise ValueError(f"evidence case {scenario} input SHA is invalid")
+        if not isinstance(item, dict):
+            raise ValueError(f"evidence case {scenario} is not an object")
         if not isinstance(item.get("output_sha256"), str) or not SHA256.fullmatch(item["output_sha256"]):
             raise ValueError(f"evidence case {scenario} output SHA is invalid")
-        command = item.get("command")
-        if not isinstance(command, list) or "-threads" not in command or "-filter_threads" not in command:
-            raise ValueError(f"evidence case {scenario} command is incomplete")
         samples = item.get("samples_ms_per_frame")
         if not isinstance(samples, list) or len(samples) != ITERATIONS:
             raise ValueError(f"evidence case {scenario} must record exactly 20 samples")

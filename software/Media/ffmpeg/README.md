@@ -6,15 +6,18 @@
 FFmpeg，不绑核，编码/解码/滤镜线程均为 1。
 
 软件入口为 `ffmpeg_test.sh`。Framework 根据 `case.yaml` 依次调用构建、启动、测试
-和停止函数；`scripts/builders/base.sh` 负责容器、依赖和源码构建，
-`scripts/stages/` 负责运行检查与正式测试，`scripts/results/` 负责执行和解析。
+和停止函数。参考脚本 `run_bench.sh`、`build_install.sh`、`bench.py`、
+`bootstrap_env.sh` **逐字复制**在 `scripts/reference/`，构建阶段直接调用原
+`build_install.sh`，测试阶段直接调用原 `run_bench.sh`（它会调用原
+`build_install.sh` 和原 `bench.py`，`.stock-ready` 命中时跳过重复构建）。
+`scripts/stages/` 只负责容器、路径、结果搬运和校验。
 `optimized` 构建入口尚未实现，选择后明确失败。
 
 ## 软件与测试工具
 
 | 项目 | 来源与版本 | 本次任务中的位置 |
 |---|---|---|
-| FFmpeg | [GNU FFmpeg 7.1.1 官方源码包](https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.gz)，SHA-256 `9a6e57a446b671012612aaeb9df5126794d5ac8f2015ca220934f99a6a4e0601` | `${PERF_WORK_DIR}/ffmpeg-src`、`ffmpeg-install` |
+| FFmpeg | [GNU FFmpeg 7.1.1 官方源码包](https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.gz)，SHA-256 `9a6e57a446b671012612aaeb9df5126794d5ac8f2015ca220934f99a6a4e0601` | `${PERF_WORK_DIR}/software/ffmpeg-7.1.1`、`ffmpeg_install` |
 | 构建依赖 | GCC、Make、Python 3、pkg-config、curl、tar；x86_64 额外需要 NASM | 缺失时在容器内用 `dnf` 安装 |
 | 容器基础镜像 | openEuler 24.03 LTS SP4 官方 Docker 归档 | 优先 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载 |
 | 输入视频 | BQTerrace、Film2012、messi | `/home/runner/software/ffmpeg/video/`，缺失时回退 x264/Test 视频目录 |
@@ -35,7 +38,7 @@ docker run --detach --name "${FFMPEG_CONTAINER_NAME}" \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
   --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
   --mount "type=bind,source=${SCRIPT_DIR},target=${SCRIPT_DIR},readonly" \
-  --mount "type=bind,source=${FFMPEG_VIDEO_DIR},target=${FFMPEG_VIDEO_DIR},readonly" \
+  --mount "type=bind,source=${FFMPEG_VIDEO_DIR},target=/home/test/Test/video,readonly" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
   --mount type=bind,source=/etc/group,target=/etc/group,readonly \
   "${FFMPEG_CONTAINER_IMAGE}" sleep infinity
@@ -48,26 +51,31 @@ openEuler 24.03 LTS SP4 版本。设置 `PERF_PROXY` 时额外挂载 CA anchors 
 
 ## 构建
 
-容器内安装缺失依赖后执行：
+原脚本复制到私有工作目录，保持原目录假设：
 
-```bash
-cd "${PERF_WORK_DIR}/ffmpeg-src"
-./configure --prefix="${PERF_WORK_DIR}/ffmpeg-install" \
-  --enable-shared --disable-debug --disable-doc \
-  --disable-autodetect --disable-everything \
-  --enable-ffmpeg --enable-ffprobe \
-  --enable-protocol=file,pipe --enable-demuxer=rawvideo \
-  --enable-decoder=rawvideo --enable-encoder=rawvideo \
-  --enable-muxer=rawvideo,hash \
-  --enable-filter=scale,format,null,psnr,setpts --enable-swscale \
-  --extra-cflags="-O3 -ffp-contract=off" \
-  --extra-ldflags="-Wl,-O3"
-make -j8
-make install
+```text
+${PERF_WORK_DIR}/scripts/{run_bench.sh,build_install.sh,bench.py,bootstrap_env.sh}
+${PERF_WORK_DIR}/software/downloads/ffmpeg-7.1.1.tar.gz
+${PERF_WORK_DIR}/software/ffmpeg-7.1.1/
+${PERF_WORK_DIR}/software/ffmpeg-7.1.1/ffmpeg_install/
 ```
 
-构建后检查 `${PERF_WORK_DIR}/ffmpeg-install/bin/ffmpeg` 可执行，并把实际
-`ffmpeg -version` 首行写入日志。只构建本用例需要的组件，保留原生 SIMD，不修改源码。
+构建阶段直接调用原 `build_install.sh`：
+
+```bash
+export BENCH_ENV_READY="${PERF_WORK_DIR}/scripts"
+bash "${PERF_WORK_DIR}/scripts/build_install.sh"
+```
+
+`BENCH_ENV_READY` 让原 `bootstrap_env.sh` 跳过依赖自安装；gcc、make、pkg-config、
+curl、tar 和 x86_64 的 nasm 已由容器内 `dnf` 安装。原脚本仍执行自己的
+`configure`、`make -j8`、`make install` 和 `.stock-ready` 缓存逻辑，configure 参数
+与参考脚本完全一致。本地源码归档会先复制到
+`${PERF_WORK_DIR}/software/downloads/ffmpeg-7.1.1.tar.gz`，原脚本继续校验其
+SHA-256。
+
+构建后检查 `${PERF_WORK_DIR}/software/ffmpeg-7.1.1/ffmpeg_install/bin/ffmpeg`
+可执行；不修改原脚本和被测源码。
 
 ## 数据与运行顺序
 
@@ -85,17 +93,16 @@ make install
 | `Film2012_1920x1080_25_8bit_8Mbps.yuv` | `27d9bc94719516e6224efa0a46abbd64c53c610b7a802ef83b045260d006a1fc` |
 | `messi_1920x1080_25_1000.yuv` | `1097fcd4c6590e9affa93be5ed0b679f4d8c1366bdfa29381fa594f54b253c1b` |
 
-测试阶段把每个视频前 30 帧复制到私有工作目录，然后对每个视频执行：
+测试阶段直接调用原 `run_bench.sh`：
 
 ```bash
-"${PERF_WORK_DIR}/ffmpeg-install/bin/ffmpeg" \
-  -v error -nostdin -y -threads 1 -filter_threads 1 \
-  -f rawvideo -pixel_format yuv420p -video_size 1920x1080 -framerate <fps> \
-  -i "<视频前30帧>" \
-  -vf "scale=640:360:flags=bilinear+accurate_rnd+bitexact" \
-  -frames:v 30 -threads 1 -c:v rawvideo -pix_fmt rgb24 \
-  -f rawvideo <输出>
+export BENCH_ENV_READY="${PERF_WORK_DIR}/scripts"
+bash "${PERF_WORK_DIR}/scripts/run_bench.sh"
 ```
+
+原 `run_bench.sh` 会调用原 `build_install.sh`（`.stock-ready` 命中时跳过构建）和
+原 `bench.py`。`bench.py` 从 `/home/test/Test/video` 读取三个视频前 30 帧，写入
+`${PERF_WORK_DIR}/scripts/.work/`，并执行：
 
 - 先做 1 次预热，输出到私有文件，检查大小是否为 `640×360×30×3` 字节；该检查不计时。
 - 再执行 20 次，输出到 `/dev/null`，用完整命令耗时除以 30 帧后取中位数。
@@ -113,14 +120,14 @@ make install
 | messi | `messi_640x360_rgb24` |
 
 报告按 `ffmpeg` 分组、视频作为子组。每项必须 20 个样本，CSV 值为样本中位数；
-缺场景、FAIL、样本数不足、非正/非有限值、CSV 与证据不符、输入/输出 SHA 异常、
+缺场景、FAIL、样本数不足、非正/非有限值、CSV 与证据不符、输出 SHA 异常、
 输出尺寸不符都会让测试失败。
 
 | 产物 | 内容 |
 |---|---|
 | `benchmark_raw.log` | 正式测试完整控制台输出 |
 | `result_bench-ffmpeg.csv` | 3 行参考格式 CSV（`scenario,frames,ms_per_frame,status`） |
-| `benchmark_evidence/evidence.json` | 20 个样本、输入/输出 SHA、命令、输出尺寸 |
+| `benchmark_evidence/evidence.json` | 原 `bench.py` 写出的 20 个样本和输出 SHA |
 | `benchmark_ffmpeg.json` | Framework 归一化指标 |
 | `container_runtime.log` | 停止阶段保存的容器日志 |
 

@@ -6,22 +6,25 @@ run_ffmpeg_benchmarks() {
     initialize_runtime || return $?
     check_ffmpeg_container || return $?
     rm -rf "${FFMPEG_EVIDENCE_DIR}"
-    mkdir -p "${FFMPEG_EVIDENCE_DIR}" "${FFMPEG_CLIPS_DIR}"
-    log "running stock FFmpeg 7.1.1 scale benchmark: 30 frames, 1080p -> ${FFMPEG_WIDTH}x${FFMPEG_HEIGHT} ${FFMPEG_PIXEL_FORMAT}"
-    container_exec python3 "${SCRIPT_DIR}/scripts/results/run_benchmark.py" \
-        --video-dir "${FFMPEG_VIDEO_DIR}" \
-        --clips-dir "${FFMPEG_CLIPS_DIR}" \
-        --ffmpeg "${FFMPEG_INSTALL_DIR}/bin/ffmpeg" \
-        --lib-dir "${FFMPEG_INSTALL_DIR}/lib" \
-        --csv "${FFMPEG_CSV_PATH}" \
-        --evidence-dir "${FFMPEG_EVIDENCE_DIR}" \
-        --iterations "${FFMPEG_ITERATIONS}" \
-        --warmup-iterations "${FFMPEG_WARMUP_ITERATIONS}" \
-        --frames "${FFMPEG_FRAMES}" 2>&1 | tee "${FFMPEG_RAW_LOG}" || run_status="${PIPESTATUS[0]}"
+    mkdir -p "${FFMPEG_EVIDENCE_DIR}"
+    rm -f "${FFMPEG_CONTAINER_CSV}" "${FFMPEG_CONTAINER_EVIDENCE}"
+    log 'calling original run_bench.sh (build cache check + bench.py)'
+    container_exec env BENCH_ENV_READY="${FFMPEG_WORK_SCRIPTS}" \
+        bash "${FFMPEG_WORK_SCRIPTS}/run_bench.sh" 2>&1 | tee "${FFMPEG_RAW_LOG}" || run_status="${PIPESTATUS[0]}"
     if [[ "${run_status}" -ne 0 ]]; then
-        log "ERROR: FFmpeg benchmark exited ${run_status}"
+        log "ERROR: original run_bench.sh exited ${run_status}"
         return 50
     fi
+    [[ -s "${FFMPEG_CONTAINER_CSV}" ]] || {
+        log "ERROR: original bench.py did not write ${FFMPEG_CONTAINER_CSV}"
+        return 50
+    }
+    [[ -s "${FFMPEG_CONTAINER_EVIDENCE}" ]] || {
+        log "ERROR: original bench.py did not write ${FFMPEG_CONTAINER_EVIDENCE}"
+        return 50
+    }
+    cp -- "${FFMPEG_CONTAINER_CSV}" "${FFMPEG_CSV_PATH}" || return 50
+    cp -- "${FFMPEG_CONTAINER_EVIDENCE}" "${FFMPEG_EVIDENCE_DIR}/evidence.json" || return 50
     SOFTWARE_VERSION="${SOFTWARE_VERSION}" EXPECTED_ARCH="${EXPECTED_ARCH}" \
         python3 "${SCRIPT_DIR}/scripts/results/parse_benchmark.py" \
         "${FFMPEG_CSV_PATH}" "${FFMPEG_EVIDENCE_DIR}/evidence.json" \
