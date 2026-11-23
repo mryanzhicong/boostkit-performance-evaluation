@@ -15,13 +15,14 @@ run_ultrascan_benchmarks() {
     # The container-side driver owns every measured hsbench process, so Docker
     # management overhead never lands in a measurement window.  It only records
     # the raw hsbench output plus wall time and peak RSS; the numeric validation
-    # and the single Mean-throughput metric are produced on the host below.
-    log "running the two documented hsbench scenarios inside the private container: warmups=${ULTRASCAN_WARMUPS} reps=${ULTRASCAN_REPS} iterations=${ULTRASCAN_ITERATIONS} locale=C"
+    # and one Mean-throughput metric per scenario are produced on the host below.
+    log "running the hsbench matrix inside the private container: scenarios=9 warmups=${ULTRASCAN_WARMUPS} reps=${ULTRASCAN_REPS} locale=C"
     ultrascan_container_exec_at "${PERF_WORK_DIR}" \
         env LC_ALL=C LANG=C TZ=UTC \
         python3 "${SCRIPT_DIR}/scripts/results/parse_benchmark.py" drive \
         --hsbench "${HSBENCH_BIN}" \
-        --samples-root "${SAMPLES_ROOT}" \
+        --dataset-root "${ULTRASCAN_DATA_ROOT}" \
+        --dataset-manifest "${DATASET_MANIFEST}" \
         --dump-db "${DUMP_DB}" \
         --runs-dir "${RESULTS_DIR}/runs" \
         --warmups "${ULTRASCAN_WARMUPS}" \
@@ -45,6 +46,7 @@ run_ultrascan_benchmarks() {
         --runs-dir "${RESULTS_DIR}/runs" \
         --raw-output "${RESULTS_DIR}/benchmark_hsbench.txt" \
         --output "${RESULTS_DIR}/results.json" \
+        --dataset-manifest "${DATASET_MANIFEST}" \
         --version "${SOFTWARE_VERSION}" \
         --architecture "$(normalize_arch "${EXPECTED_ARCH}")" \
         --variant "${PERF_VARIANT}" \
