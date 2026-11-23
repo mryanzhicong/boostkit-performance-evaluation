@@ -1,0 +1,62 @@
+name: dav1d
+category: Media
+enabled: true
+versions:
+  - "1.5.4"
+test_tools:
+  aom:
+    version: "3.2.0"
+  meson:
+    version: "1.8.5"
+  ninja:
+    version: "1.13.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_dav1d
+    start:
+      script: scripts/stages/start.sh
+      function: start_dav1d_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_dav1d_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_dav1d_runtime
+  timeout_minutes: 360
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result_csv:
+    path: result_bench-dav1d.csv
+    stage: test
+    format: text
+    required: true
+  decode_evidence:
+    path: decode_evidence
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_dav1d.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group

@@ -54,7 +54,9 @@ mv "${PERF_WORK_DIR}/mysql-8.0.43-linux-glibc2.28-${EXPECTED_ARCH}" \
 实际脚本先检查本地包、校验 MD5，再解压并核对 `mysqld` 的实际版本；
 不会编译 MySQL，也不会向 `/usr/local/mysql` 或系统目录安装。
 
-`start_mysql_service` 创建单个容器，限制为 8 CPU 的总用量和 32 GiB 内存。
+`start_mysql_service` 创建单个容器，限制为 8 CPU 的总用量和 32 GiB 内存，
+并设置容器内 `nofile` 软、硬限制均为 65535，避免默认文件描述符上限
+压低 MySQL 的实际连接上限。
 容器可在 NUMA node 3 的全部可用 CPU 上调度，并从该节点分配内存；启动前会
 核对 node 3 至少有 8 个可用 CPU，否则失败。CPU 编号按机器拓扑读取，
 不会写死为 `288-383`。宿主机的 `${PERF_WORK_DIR}` 原路径挂载进容器，因此数据库文件
@@ -168,7 +170,9 @@ docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" \
 正式测试前会查询并保存 `innodb_flush_log_at_trx_commit`、
 `innodb_use_native_aio`、`log_bin`、`max_connections` 和
 `max_prepared_stmt_count` 的实际生效值。两种启动模式均校验预处理语句上限为
-`1048576`，以支持 64 张表、多线程的 Sysbench OLTP 场景；该值只是并发语句
+`1048576`，同时校验实际 `max_connections` 至少为 2048，并记录
+`open_files_limit`。如果 MySQL 因容器限制调低连接上限，启动阶段立即失败。
+预处理语句上限只是并发语句
 数量的上限，不会预先创建这么多语句。
 测试结束后再次通过任务 socket 正常关闭 MySQL，停止并移除本任务容器，
 然后清理私有数据目录。容器不安装 MySQL，也不修改宿主机的系统 MySQL。
@@ -218,7 +222,8 @@ make -j"$(getconf _NPROCESSORS_ONLN)"
 
 1. 初始化私有实例并建库 `sbtest`。
 2. 运行 Sysbench `oltp_read_write prepare`：64 张表，每张 10,000,000 行，
-   256 个准备线程。
+   256 个准备线程。即使 Sysbench 退出码为 0，只要工作线程输出 `FATAL`，
+   或数据库中缺少任意一张 `sbtest1`～`sbtest64` 表，就立即失败，不制作快照。
 3. 停止 MySQL，在私有目录复制一份已准备的数据快照，再按正式配置重启。
 4. 按顺序测试 `read_only`、`read_write`、`write_only`。每个场景先用
    `oltp_read_only`、64 线程预热 300 秒，再运行一轮正式测试。读写场景开始前

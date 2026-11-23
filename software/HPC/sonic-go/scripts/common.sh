@@ -18,6 +18,7 @@ TOOLCHAIN_TARGET="${TOOLCHAIN_TARGET:-go${GO_SRC_VERSION}-default}"
 GO_BOOTSTRAP_VERSION="${GO_BOOTSTRAP_VERSION:-1.27.0}"
 GO_RELEASE_URL="${GO_RELEASE_URL:-https://go.dev/dl}"
 GO_OFFLINE_DIR="${GO_OFFLINE_DIR:-/home/runner/software/golang}"
+SONIC_GO_MODULE_ARCHIVE="${SONIC_GO_MODULE_ARCHIVE:-/home/runner/software/sonic-go/sonic-go-${SOFTWARE_VERSION}-modules.tar.gz}"
 
 SOURCE_DIR=""
 OBJECTS_DIR=""
@@ -116,6 +117,19 @@ configure_runtime_paths() {
 initialize_runtime() {
     configure_runtime_paths
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${TMPDIR}" "${GOMODCACHE}" "${GOPATH}"
+}
+
+activate_sonic_offline_module_cache() {
+    if [[ ! -f "${PERF_WORK_DIR}/runtime/sonic-module-cache.ready" ]]; then
+        return 0
+    fi
+    if [[ ! -d "${GOMODCACHE}/cache/download" || \
+          ! -s "${GOPATH}/pkg/sumdb/sum.golang.org/latest" ]]; then
+        log_message "ERROR: the prepared offline Sonic module cache is incomplete"
+        return 50
+    fi
+    export GOPROXY="file://${GOMODCACHE}/cache/download"
+    export GOSUMDB="sum.golang.org https://127.0.0.1:1"
 }
 
 verify_go_toolchain() {

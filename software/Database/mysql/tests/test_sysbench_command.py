@@ -50,6 +50,38 @@ def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
     assert "ARG=--tables=64" in completed.stdout
 
 
+def test_run_sysbench_rejects_fatal_worker_error_even_when_exit_is_zero(tmp_path: Path) -> None:
+    fake_sysbench = tmp_path / "sysbench"
+    fake_sysbench.write_text('#!/bin/sh\nprintf "FATAL: error 1040: Too many connections\\n"\n', encoding="utf-8")
+    fake_sysbench.chmod(0o755)
+    completed = subprocess.run(
+        ["bash", "-c", f'source "{COMMON}"; SYSBENCH_BIN="{fake_sysbench}"; '
+         f'SYSBENCH_LUA_DIR="{tmp_path}"; RESULTS_DIR="{tmp_path}"; '
+         'mkdir -p "$RESULTS_DIR/sysbench-runs"; run_sysbench read_write 256 0 prepare'],
+        capture_output=True, text=True, check=False,
+    )
+    assert completed.returncode == 50
+    assert "reported FATAL errors despite exit code 0" in completed.stdout
+
+
+@pytest.mark.parametrize("table_count,expected_success", [(64, True), (63, False)])
+def test_prepared_table_count_checked_before_snapshot(
+    tmp_path: Path, table_count: int, expected_success: bool,
+) -> None:
+    fake_mysql = tmp_path / "mysql"
+    fake_mysql.write_text('#!/bin/sh\nprintf "%s\\n" "$TEST_TABLE_COUNT"\n', encoding="utf-8")
+    fake_mysql.chmod(0o755)
+    completed = subprocess.run(
+        ["bash", "-c", f'source "{TEST_SH}"; MYSQL_BIN="{fake_mysql}"; '
+         'MYSQL_HOST=127.0.0.1; MYSQL_PORT=3307; MYSQL_DB_USER=root; '
+         'MYSQL_PASSWORD=test-password; validate_prepared_sysbench_tables'],
+        env=os.environ | {"TEST_TABLE_COUNT": str(table_count)},
+        capture_output=True, text=True, check=False,
+    )
+    assert (completed.returncode == 0) is expected_success
+    assert ("verified all 64" if expected_success else "63 of 64") in completed.stdout
+
+
 def test_formal_sysbench_runs_highest_thread_count_first() -> None:
     assert "threads_for_scenario=(256 128 32 1)" in TEST_SH.read_text(encoding="utf-8")
 
@@ -191,6 +223,7 @@ def test_single_container_is_limited_and_keeps_sysbench_on_host(
     calls = (tmp_path / "docker-calls.log").read_text(encoding="utf-8")
     assert "--cpus=8" in calls
     assert "--memory=32g" in calls
+    assert "--ulimit nofile=65535:65535" in calls
     assert "--cpuset-cpus=288-383" in calls
     assert "--cpuset-mems=3" in calls
     assert "--network=host" in calls
@@ -242,7 +275,11 @@ def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, m
     fake_mysqld.write_text('#!/bin/sh\nprintf "ARG=%s\\n" "$@"\n', encoding="utf-8")
     fake_mysqld.chmod(0o755)
     fake_mysql = tmp_path / "mysql"
-    fake_mysql.write_text('#!/bin/sh\nprintf "%s\\n" "$TEST_EFFECTIVE_LIMIT"\n', encoding="utf-8")
+    fake_mysql.write_text(
+        '#!/bin/sh\nprintf "%s %s %s\\n" "$TEST_EFFECTIVE_LIMIT" '
+        '"$TEST_EFFECTIVE_CONNECTIONS" "$TEST_EFFECTIVE_OPEN_FILES"\n',
+        encoding="utf-8",
+    )
     fake_mysql.chmod(0o755)
     fake_mysqladmin = tmp_path / "mysqladmin"
     fake_mysqladmin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
@@ -255,6 +292,8 @@ def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, m
         "TEST_MYSQLADMIN": str(fake_mysqladmin),
         "TEST_MODE": mode,
         "TEST_EFFECTIVE_LIMIT": "1048576",
+        "TEST_EFFECTIVE_CONNECTIONS": "2048",
+        "TEST_EFFECTIVE_OPEN_FILES": "65535",
         "TEST_ROOT": str(tmp_path),
     }
     command = (
@@ -273,6 +312,7 @@ def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, m
     assert completed.returncode == 0, completed.stderr
     assert "ARG=--max-prepared-stmt-count=1048576" in completed.stdout
     assert "mysqld is ready" in completed.stdout
+    assert "verified MySQL limits: max_connections=2048, open_files_limit=65535" in completed.stdout
 
     environment["TEST_EFFECTIVE_LIMIT"] = "16382"
     completed = subprocess.run(
@@ -280,3 +320,12 @@ def test_mysql_launch_sets_and_checks_prepared_statement_limit(tmp_path: Path, m
     )
     assert completed.returncode != 0
     assert "max_prepared_stmt_count is 16382, expected 1048576" in completed.stdout
+
+    environment["TEST_EFFECTIVE_LIMIT"] = "1048576"
+    environment["TEST_EFFECTIVE_CONNECTIONS"] = "214"
+    environment["TEST_EFFECTIVE_OPEN_FILES"] = "1024"
+    completed = subprocess.run(
+        ["bash", "-c", command], env=environment, capture_output=True, text=True,
+    )
+    assert completed.returncode != 0
+    assert "max_connections is 214, expected at least 2048" in completed.stdout

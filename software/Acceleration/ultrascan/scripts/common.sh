@@ -18,23 +18,20 @@ ULTRASCAN_GIT_TAG="Ultrascan-v5.8.0"
 ULTRASCAN_GIT_COMMIT="2a2ab98890e878b6ff297f2ffe4cd2e14330b498"
 ULTRASCAN_SOURCE_ARCHIVE="Ultrascan-v5.8.0-2a2ab98.tar.gz"
 ULTRASCAN_SOURCE_ARCHIVE_SHA256="b0ad7d0126585581e93f621d1295066e7becf6d59c2179916c74e84e67f29b9b"
-ULTRASCAN_OFFLINE_DIR="${PERF_ULTRASCAN_OFFLINE_DIR:-/home/runner/software/ultrascan}"
+ULTRASCAN_OFFLINE_DIR="${PERF_ULTRASCAN_OFFLINE_DIR:-/home/runner/software/Ultrascan}"
+# Backward-compatible source archive location used by older runs of this case.
+ULTRASCAN_LEGACY_OFFLINE_DIR="${PERF_ULTRASCAN_LEGACY_DIR:-/home/runner/software/ultrascan}"
 
-# Intel "Hyperscan hsbench samples" package used by the documented benchmark:
-# rules pcre/snort_literals and corpus corpora/gutenberg.db.  The package is
-# prepared by the user (the docs extract it to /opt/Ultrascan/hsbench-samples);
-# it is not an Ultrascan build product.
-ULTRASCAN_SAMPLE_URL="https://cdrdv2.intel.com/v1/dl/getContent/739375"
-ULTRASCAN_SAMPLE_ZIP_NAME="hsbench-samples.zip"
-ULTRASCAN_SAMPLE_ZIP_SHA256="1f356096e138dda0b5e7798b028b5da5a9b4d1f15d7ec88a91a764f45b1120e6"
-ULTRASCAN_SAMPLE_LITERALS_SHA256="ac54e9982237fdf81912b00e4bb182fb859b7b406d109f0593e5709eadac44ee"
-ULTRASCAN_SAMPLE_GUTENBERG_SHA256="b1d621f8280cbbf0783e03af2ff21296628ca7c7c85f5ec67c6c92e8620318a6"
-ULTRASCAN_SAMPLES_DIRNAME="hsbench-samples"
-ULTRASCAN_DOC_SAMPLES_ROOT="/opt/Ultrascan/hsbench-samples"
+# Pre-placed hsbench dataset.  The user copies the contents of
+# `ultrascan-data.zip` here (13 files: 7 rule sets + 6 SQLite corpora); the
+# scripts never download the 2.05 GB archive on the runner.
+ULTRASCAN_DATA_DIRNAME="ultrascan-data"
+ULTRASCAN_DATA_ROOT="${PERF_ULTRASCAN_DATA_DIR:-}"
+ULTRASCAN_DATA_ZIP_NAME="ultrascan-data.zip"
+ULTRASCAN_DATASET_LOCK="${SCRIPT_DIR}/benchmark/dataset-lock.json"
 
 ULTRASCAN_REPS="${PERF_REPS:-5}"
 ULTRASCAN_WARMUPS="${PERF_ULTRASCAN_WARMUPS:-1}"
-ULTRASCAN_ITERATIONS=1
 ULTRASCAN_BUILD_JOBS="${PERF_ULTRASCAN_BUILD_JOBS:-}"
 
 SOURCE_DIR=""
@@ -44,11 +41,8 @@ HSBENCH_BIN=""
 HSDUMP_BIN=""
 DUMP_OUTPUT_ROOT=""
 DUMP_DB=""
-SAMPLES_ZIP_LOCAL=""
-SAMPLES_ROOT=""
-SAMPLES_RULES=""
-SAMPLES_CORPUS=""
 BUILD_STATE_FILE=""
+DATASET_MANIFEST=""
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
 STANDALONE_STOP_DONE="${STANDALONE_STOP_DONE:-0}"
@@ -110,13 +104,24 @@ configure_runtime_paths() {
     HSDUMP_BIN="${DUMP_BUILD_DIR}/bin/hsdump"
     DUMP_OUTPUT_ROOT="${PERF_WORK_DIR}/dump_output"
     DUMP_DB="${DUMP_OUTPUT_ROOT}/dump/db.raw"
-    SAMPLES_ZIP_LOCAL="${PERF_WORK_DIR}/downloads/${ULTRASCAN_SAMPLE_ZIP_NAME}"
-    SAMPLES_ROOT="${PERF_WORK_DIR}/${ULTRASCAN_SAMPLES_DIRNAME}"
-    SAMPLES_RULES="${SAMPLES_ROOT}/pcre/snort_literals"
-    SAMPLES_CORPUS="${SAMPLES_ROOT}/corpora/gutenberg.db"
+    if [[ -z "${ULTRASCAN_DATA_ROOT}" ]]; then
+        if [[ -f "${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_DATA_DIRNAME}/alexa200.db" ]]; then
+            ULTRASCAN_DATA_ROOT="${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_DATA_DIRNAME}"
+        elif [[ -f "${ULTRASCAN_OFFLINE_DIR}/alexa200.db" ]]; then
+            ULTRASCAN_DATA_ROOT="${ULTRASCAN_OFFLINE_DIR}"
+        elif [[ -f "${ULTRASCAN_LEGACY_OFFLINE_DIR}/${ULTRASCAN_DATA_DIRNAME}/alexa200.db" ]]; then
+            ULTRASCAN_DATA_ROOT="${ULTRASCAN_LEGACY_OFFLINE_DIR}/${ULTRASCAN_DATA_DIRNAME}"
+        elif [[ -f "${ULTRASCAN_LEGACY_OFFLINE_DIR}/alexa200.db" ]]; then
+            ULTRASCAN_DATA_ROOT="${ULTRASCAN_LEGACY_OFFLINE_DIR}"
+        else
+            ULTRASCAN_DATA_ROOT="${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_DATA_DIRNAME}"
+        fi
+    fi
+    DATASET_MANIFEST="${PERF_WORK_DIR}/dataset-manifest.json"
     BUILD_STATE_FILE="${PERF_WORK_DIR}/build-state.json"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR
     export PERF_WORK_DIR PERF_ACTUAL_VERSION_FILE TMPDIR
+    export ULTRASCAN_DATA_ROOT
 }
 
 initialize_runtime() {
@@ -255,38 +260,34 @@ check_architecture() {
 }
 
 # ---------------------------------------------------------------------------
-# Intel hsbench samples (user-prepared benchmark input)
+# Pre-placed Ultrascan hsbench dataset (user-prepared benchmark input)
 # ---------------------------------------------------------------------------
-prepare_samples_inputs() {
-    log "staging the Intel hsbench samples package (offline copy first, then download)"
-    python3 "${SCRIPT_DIR}/scripts/prepare_samples.py" download \
-        --offline-dir "${ULTRASCAN_OFFLINE_DIR}" \
-        --url "${ULTRASCAN_SAMPLE_URL}" \
-        --sha256 "${ULTRASCAN_SAMPLE_ZIP_SHA256}" \
-        --name "${ULTRASCAN_SAMPLE_ZIP_NAME}" \
-        --target "${SAMPLES_ZIP_LOCAL}" || {
-        log "ERROR: failed to stage the Intel hsbench samples package"
+prepare_dataset_inputs() {
+    [[ -d "${ULTRASCAN_DATA_ROOT}" ]] || {
+        log "ERROR: Ultrascan dataset directory is missing: ${ULTRASCAN_DATA_ROOT}"
+        log "       place the extracted contents of ${ULTRASCAN_DATA_ZIP_NAME} there"
         return 30
     }
-    rm -rf "${SAMPLES_ROOT}"
-    log "extracting the hsbench samples inside the private container (documented path ${ULTRASCAN_DOC_SAMPLES_ROOT})"
-    ultrascan_container_exec python3 "${SCRIPT_DIR}/scripts/prepare_samples.py" extract \
-        --zip "${SAMPLES_ZIP_LOCAL}" \
-        --dest "${SAMPLES_ROOT}" \
-        --rules-sha256 "${ULTRASCAN_SAMPLE_LITERALS_SHA256}" \
-        --corpus-sha256 "${ULTRASCAN_SAMPLE_GUTENBERG_SHA256}" \
-        --manifest "${PERF_WORK_DIR}/samples-manifest.json" || {
-        log "ERROR: failed to extract the Intel hsbench samples inside the container"
+    log "verifying the pre-placed Ultrascan dataset at ${ULTRASCAN_DATA_ROOT}"
+    ultrascan_container_exec python3 "${SCRIPT_DIR}/scripts/prepare_dataset.py" verify \
+        --root "${ULTRASCAN_DATA_ROOT}" \
+        --lock "${ULTRASCAN_DATASET_LOCK}" \
+        --manifest "${DATASET_MANIFEST}" || {
+        log "ERROR: the Ultrascan dataset failed size/SHA-256/SQLite verification"
         return 30
     }
 }
 
-verify_samples_integrity() {
-    ultrascan_container_exec python3 "${SCRIPT_DIR}/scripts/prepare_samples.py" verify \
-        --dest "${SAMPLES_ROOT}" \
-        --rules-sha256 "${ULTRASCAN_SAMPLE_LITERALS_SHA256}" \
-        --corpus-sha256 "${ULTRASCAN_SAMPLE_GUTENBERG_SHA256}" || {
-        log "ERROR: the hsbench samples do not match the pinned SHA-256 values"
+verify_dataset_integrity() {
+    [[ -f "${DATASET_MANIFEST}" ]] || {
+        log "ERROR: dataset manifest is missing: ${DATASET_MANIFEST}"
+        return 40
+    }
+    python3 "${SCRIPT_DIR}/scripts/prepare_dataset.py" verify \
+        --root "${ULTRASCAN_DATA_ROOT}" \
+        --lock "${ULTRASCAN_DATASET_LOCK}" \
+        --manifest "${PERF_WORK_DIR}/dataset-manifest.verify.json" >/dev/null || {
+        log "ERROR: the Ultrascan dataset no longer matches its pinned SHA-256 values"
         return 40
     }
 }
@@ -325,7 +326,7 @@ verify_measurement_inputs() {
         log "ERROR: build state is missing: ${BUILD_STATE_FILE}"
         return 40
     }
-    verify_samples_integrity || return $?
+    verify_dataset_integrity || return $?
     verify_universal_db || return $?
 }
 
@@ -453,6 +454,8 @@ sweep_ultrascan_stale_containers() {
 
 start_ultrascan_container() {
     local -a cert_mount=()
+    local -a data_mount=()
+    local -a offline_mount=()
     local case_dir_mount_suffix=""
     ultrascan_configure_container
     require_ultrascan_docker || return $?
@@ -461,6 +464,10 @@ start_ultrascan_container() {
         return 40
     fi
     sweep_ultrascan_stale_containers || true
+    [[ -d "${ULTRASCAN_DATA_ROOT}" ]] || {
+        log_message "ERROR: dataset directory is missing: ${ULTRASCAN_DATA_ROOT}"
+        return 40
+    }
     prepare_ultrascan_container_image || return $?
     # The case directory carries the benchmark sources and the timing harness, so
     # it is mounted read-only unless the standalone entry point keeps its results
@@ -477,6 +484,14 @@ start_ultrascan_container() {
         cert_mount+=(--mount "type=bind,source=${ULTRASCAN_CA_ANCHORS_DIR},target=/etc/pki/ca-trust/source/anchors,readonly")
     fi
     mkdir -p "${ULTRASCAN_CONTAINER_HOME}" || return 40
+    data_mount=()
+    offline_mount=()
+    if [ -d "${ULTRASCAN_OFFLINE_DIR}" ]; then
+        offline_mount+=(--mount "type=bind,source=${ULTRASCAN_OFFLINE_DIR},target=${ULTRASCAN_OFFLINE_DIR},readonly")
+    fi
+    if [ -n "${ULTRASCAN_DATA_ROOT}" ] && [ "${ULTRASCAN_DATA_ROOT}" != "${ULTRASCAN_OFFLINE_DIR}" ]; then
+        data_mount+=(--mount "type=bind,source=${ULTRASCAN_DATA_ROOT},target=${ULTRASCAN_DATA_ROOT},readonly")
+    fi
     log_message "starting private container ${ULTRASCAN_CONTAINER_NAME} (host network, shared work and result directories)"
     docker run --detach --name "${ULTRASCAN_CONTAINER_NAME}" \
         --label "boostkit.ultrascan.run-id=${PERF_RUN_ID}" \
@@ -486,6 +501,8 @@ start_ultrascan_container() {
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
         --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount "type=bind,source=${SCRIPT_DIR},target=${SCRIPT_DIR}${case_dir_mount_suffix}" \
+        "${offline_mount[@]}" \
+        "${data_mount[@]}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
         "${cert_mount[@]}" "${ULTRASCAN_CONTAINER_EXTRA_ARGS[@]}" \
