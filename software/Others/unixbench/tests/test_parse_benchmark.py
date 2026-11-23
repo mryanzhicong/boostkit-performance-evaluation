@@ -1,4 +1,4 @@
-"""UnixBench parser regression tests, including cross-architecture copy identity."""
+"""UnixBench parser regression tests, including reference VM copy identity."""
 
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -13,7 +13,7 @@ MODULE = module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
-def report(cpus: int = 16, missing: str = "", partial: bool = False) -> str:
+def report(cpus: int = 32, missing: str = "", partial: bool = False) -> str:
     parts = ["BYTE UNIX Benchmarks (Version 6.0.1)"]
     for copies in (1, cpus):
         parts.extend([
@@ -41,8 +41,11 @@ def test_complete_report_has_twenty_six_index_metrics() -> None:
     assert len(parsed["results"]) == 26
     assert not any(name.endswith("/result") for name in parsed["results"])
     assert len([name for name in parsed["results"] if name.startswith("1 copy/")]) == 13
-    assert parsed["runtime_context"]["copy_counts"] == [1, 16]
-    assert "16 copies/System Benchmarks Index Score" in parsed["results"]
+    assert parsed["runtime_context"]["copy_counts"] == [1, 32]
+    assert "32 copies/System Benchmarks Index Score" in parsed["results"]
+    assert parsed["parameters"]["execution_environment"] == "kvm-vm"
+    assert parsed["parameters"]["vm_vcpus"] == 32
+    assert parsed["parameters"]["vm_memory_gib"] == 64
 
 
 def test_real_upstream_row_layout() -> None:
@@ -53,12 +56,17 @@ def test_real_upstream_row_layout() -> None:
 
 
 def test_different_cpu_counts_change_metric_identity_not_parameters() -> None:
-    x86 = MODULE.parse_report(report(16), "6.0.1", "x86_64")
+    x86 = MODULE.parse_report(report(16), "6.0.1", "x86_64", expected_copies=16)
     arm = MODULE.parse_report(report(32), "6.0.1", "aarch64")
     assert x86["parameters"] == arm["parameters"]
     assert set(x86["results"]) & set(arm["results"]) == {
         name for name in x86["results"] if name.startswith("1 copy/")
     }
+
+
+def test_reference_vm_copy_count_is_enforced() -> None:
+    with pytest.raises(ValueError):
+        MODULE.parse_report(report(16), "6.0.1", "x86_64")
 
 
 @pytest.mark.parametrize("content", [report(missing="Pipe Throughput"), report(partial=True)])
@@ -67,26 +75,33 @@ def test_incomplete_index_fails(content: str) -> None:
         MODULE.parse_report(content, "6.0.1", "x86_64")
 
 
-def test_build_and_test_use_private_container() -> None:
+def test_build_and_test_use_reference_vm() -> None:
     case_dir = Path(__file__).resolve().parents[1]
     common = (case_dir / "scripts/common.sh").read_text(encoding="utf-8")
     build = (case_dir / "scripts/builders/base.sh").read_text(encoding="utf-8")
     test = (case_dir / "scripts/stages/test.sh").read_text(encoding="utf-8")
     stop = (case_dir / "scripts/stages/stop.sh").read_text(encoding="utf-8")
-    assert "openEuler-24.03-LTS-SP4" in common
-    assert "docker load" in common
-    assert "--network=host" in common
+    assert "openEuler-24.03-LTS-SP4" not in common or "cloud" in common
+    assert "libvirt" in common or "virsh" in common
+    assert "hugepages" in common
     assert "--cpus=" not in common and "--memory=" not in common
-    assert "--cpuset-cpus" not in common and "--cpuset-mems" not in common
-    assert 'source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}' in common
-    assert 'source=${RESULTS_DIR},target=${RESULTS_DIR}' in common
-    assert 'boostkit.unixbench.run-id=${PERF_RUN_ID}' in common
-    assert "require_unixbench_container" in build
-    assert "container_exec_root dnf" in build
-    assert "container_exec tar -xzf" in build
-    assert "container_exec make -C" in build
-    assert "container_exec sh -c" in test
-    assert "remove_unixbench_container" in stop
+    assert "docker" not in common
+    assert "require_unixbench_vm_host" in build
+    assert "start_unixbench_vm" in build
+    assert "verify_unixbench_guest_os" in build
+    assert "install_unixbench_guest_packages" in build
+    assert "vm_copy_in" in build
+    assert "vm_exec make -C" in build
+    assert "vm_exec_shell" in test and "./Run" in test
+    assert "stop_unixbench_vm" in stop
+
+
+def test_reference_vm_operating_system_is_verified() -> None:
+    case_dir = Path(__file__).resolve().parents[1]
+    common = (case_dir / "scripts/common.sh").read_text(encoding="utf-8")
+    assert "verify_unixbench_guest_os()" in common
+    assert "VERSION_ID" in common
+    assert "guest os-release" in common
 
 
 def test_local_archive_uses_upstream_url_basename() -> None:
