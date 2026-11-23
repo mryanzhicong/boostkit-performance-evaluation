@@ -103,14 +103,9 @@ copy_or_download_bootstrap_archive() {
     fi
 }
 
-# 编译 Go 源码需要 PATH 上有 bootstrap Go（make.bash 自举）。优先使用 Runner
-# 已有的 PATH Go；缺失时退回安装任务私有的官方二进制（离线目录优先，校验
-# SHA-256 后解压），避免依赖系统包。
+# 始终使用本次任务私有的官方 bootstrap Go，避免两台 Runner 的系统 Go
+# 版本不同导致构建结果不同。离线目录优先，下载包均校验 SHA-256。
 resolve_bootstrap_go() {
-    if command -v go >/dev/null 2>&1; then
-        log_message "using bootstrap Go from PATH: $(go version 2>/dev/null || echo unknown)"
-        return 0
-    fi
     local install_dir="${PERF_WORK_DIR}/bootstrap-go"
     local archive
     if [[ -e "${install_dir}" ]]; then
@@ -129,14 +124,79 @@ resolve_bootstrap_go() {
         log_message "ERROR: bootstrap Go binary is unavailable: ${install_dir}/bin/go"
         return 30
     fi
+    unset GOROOT
+    export GOROOT_BOOTSTRAP="${install_dir}"
     export PATH="${install_dir}/bin:${PATH}"
     log_message "installed private bootstrap Go ${GO_BOOTSTRAP_VERSION} for ${GO_ARCH}"
+}
+
+sonic_module_archive_checksum() {
+    case "${SOFTWARE_VERSION}" in
+        1.15.2) printf '%s\n' '4516f94b7288159156f57b8d12ea8e1af3d0c3c5242670f3e571f4b8618de7a0' ;;
+        *) return 1 ;;
+    esac
+}
+
+prepare_sonic_module_cache() {
+    local expected actual checksum
+
+    if [[ ! -e "${SONIC_GO_MODULE_ARCHIVE}" ]]; then
+        log_message "offline Sonic module archive is unavailable; using ${SONIC_GO_PROXY}"
+        return 0
+    fi
+    if [[ ! -f "${SONIC_GO_MODULE_ARCHIVE}" ]]; then
+        log_message "ERROR: offline Sonic module archive is not a file: ${SONIC_GO_MODULE_ARCHIVE}"
+        return 40
+    fi
+    expected="$(sonic_module_archive_checksum)" || {
+        log_message "ERROR: no verified Sonic module archive is declared for ${SOFTWARE_VERSION}"
+        return 40
+    }
+    actual="$(sha256sum "${SONIC_GO_MODULE_ARCHIVE}" | awk '{print $1}')" || return 40
+    if [[ "${actual}" != "${expected}" ]]; then
+        log_message "ERROR: Sonic module archive checksum mismatch: ${SONIC_GO_MODULE_ARCHIVE}"
+        return 40
+    fi
+    if ! tar -xzf "${SONIC_GO_MODULE_ARCHIVE}" -C "${GOMODCACHE}"; then
+        log_message "ERROR: failed to extract Sonic module archive: ${SONIC_GO_MODULE_ARCHIVE}"
+        return 40
+    fi
+    if [[ ! -d "${GOMODCACHE}/cache/download/sumdb/sum.golang.org" || \
+          ! -s "${GOMODCACHE}/pkg/sumdb/sum.golang.org/latest" || \
+          ! -s "${GOMODCACHE}/supplemental-go.work.sum" ]]; then
+        log_message "ERROR: offline Sonic module archive lacks signed Go checksum records"
+        return 40
+    fi
+    if ! mkdir -p "${GOPATH}/pkg/sumdb/sum.golang.org" || \
+       ! cp "${GOMODCACHE}/pkg/sumdb/sum.golang.org/latest" \
+            "${GOPATH}/pkg/sumdb/sum.golang.org/latest"; then
+        log_message "ERROR: failed to restore the signed Go checksum tree state"
+        return 40
+    fi
+    if [[ ! -f "${SOURCE_DIR}/go.work.sum" ]]; then
+        log_message "ERROR: Sonic source is missing go.work.sum"
+        return 40
+    fi
+    # Four indirect module hashes are absent from the upstream workspace sum.
+    # They were authenticated against the official sumdb when this pinned
+    # archive was built. Add them only to this task's private source checkout.
+    while IFS= read -r checksum; do
+        if [[ -n "${checksum}" ]] && ! grep -Fxq "${checksum}" "${SOURCE_DIR}/go.work.sum"; then
+            printf '%s\n' "${checksum}" >> "${SOURCE_DIR}/go.work.sum" || return 40
+        fi
+    done < "${GOMODCACHE}/supplemental-go.work.sum"
+    printf '%s\n' "${expected}" > "${PERF_WORK_DIR}/runtime/sonic-module-cache.ready" || return 40
+    # Keep checksum verification enabled. If the archive is incomplete, fail
+    # immediately instead of waiting for an unreachable public sumdb.
+    activate_sonic_offline_module_cache || return $?
+    log_message "using verified offline Sonic modules and signed checksum records from ${SONIC_GO_MODULE_ARCHIVE}"
 }
 
 download_sonic_modules() {
     local module
     local -a modules=()
 
+    prepare_sonic_module_cache || return $?
     mapfile -t modules < <(python3 - "${SOURCE_DIR}" <<'PYEOF'
 import sys
 from pathlib import Path

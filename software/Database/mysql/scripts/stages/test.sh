@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
+validate_prepared_sysbench_tables() {
+    local table_count
+    table_count="$(MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
+        "-h${MYSQL_HOST}" "-P${MYSQL_PORT}" "-u${MYSQL_DB_USER}" -N \
+        -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='sbtest' AND table_name REGEXP '^sbtest([1-9]|[1-5][0-9]|6[0-4])$'")" || {
+        log_message "ERROR: failed to inspect prepared Sysbench tables"
+        return 50
+    }
+    if [[ "${table_count}" != 64 ]]; then
+        log_message "ERROR: prepared Sysbench data has ${table_count} of 64 required tables; refusing to snapshot"
+        return 50
+    fi
+    log_message "verified all 64 prepared Sysbench tables"
+}
+
 run_mysql_benchmarks() {
     local scenario threads snapshot_bytes available_bytes
     local -a threads_for_scenario
@@ -33,6 +48,7 @@ run_mysql_benchmarks() {
         -e 'CREATE DATABASE IF NOT EXISTS sbtest' || return 50
     log_message 'preparing 64 Sysbench tables with 10,000,000 rows each (256 threads)'
     run_sysbench read_write 256 0 prepare || return 50
+    validate_prepared_sysbench_tables || return 50
 
     if [[ -e "${MYSQL_SNAPSHOT_DIR}" ]]; then
         log_message "ERROR: data snapshot already exists: ${MYSQL_SNAPSHOT_DIR}"
