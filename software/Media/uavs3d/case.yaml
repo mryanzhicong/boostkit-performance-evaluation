@@ -1,0 +1,58 @@
+name: uavs3d
+category: Media
+enabled: true
+versions:
+  - "1.2"
+test_tools:
+  uavs3e:
+    version: "1.3"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_uavs3d
+    start:
+      script: scripts/stages/start.sh
+      function: start_uavs3d_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_uavs3d_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_uavs3d_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result_csv:
+    path: result_bench-uavs3d.csv
+    stage: test
+    format: text
+    required: true
+  decode_evidence:
+    path: decode_evidence
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_uavs3d.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
