@@ -199,9 +199,55 @@ def test_base_build_dispatch_loads_the_base_builder(tmp_path):
         check=False,
     )
     assert completed.returncode == 30
-    assert "failed to clone Go source branch" in completed.stdout
-    assert (work_dir / "objects" / "go" / "src").is_dir()
+    assert "downloading official Go bootstrap archive" in completed.stdout
+    assert "Go bootstrap archive checksum mismatch" in completed.stdout
     assert not (results_dir / "build_variant.json").exists()
+
+
+def test_bootstrap_go_ignores_outdated_system_go(tmp_path):
+    fake_bin = tmp_path / "fake-bin"
+    fake_bin.mkdir()
+    system_go = fake_bin / "go"
+    system_go.write_text("#!/bin/sh\nprintf 'go version go1.21.4 linux/amd64\\n'\n")
+    system_go.chmod(0o755)
+    work_dir = tmp_path / "work"
+    work_dir.mkdir()
+
+    completed = subprocess.run(
+        [
+            "bash",
+            "-c",
+            '''
+source "$1"
+GO_ARCH=amd64
+copy_or_download_bootstrap_archive() { : > "$1"; }
+tar() {
+    mkdir -p "$4/bin"
+    printf '#!/bin/sh\\nprintf "go version go1.27.0 linux/amd64\\\\n"\\n' > "$4/bin/go"
+    chmod +x "$4/bin/go"
+}
+resolve_bootstrap_go
+[[ "$(command -v go)" == "${PERF_WORK_DIR}/bootstrap-go/bin/go" ]]
+[[ "${GOROOT_BOOTSTRAP}" == "${PERF_WORK_DIR}/bootstrap-go" ]]
+[[ ! ${GOROOT+x} ]]
+go version
+''',
+            "bash",
+            str(CASE_DIR / "scripts" / "builders" / "base.sh"),
+        ],
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "PERF_WORK_DIR": str(work_dir),
+            "GOROOT": "/usr/lib/golang",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "installed private bootstrap Go 1.27.0" in completed.stdout
+    assert "go version go1.27.0 linux/amd64" in completed.stdout
 
 
 def test_stop_stage_removes_the_private_runtime_directory(tmp_path):

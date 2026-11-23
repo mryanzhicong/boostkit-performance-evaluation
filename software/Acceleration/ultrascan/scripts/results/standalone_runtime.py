@@ -2,11 +2,10 @@
 """Collect environment/build evidence, validate the hsbench results and report.
 
 The case measures exactly one number per scenario: hsbench's
-``Mean throughput (overall)`` for the block-mode scan of the Intel
-``pcre/snort_literals`` rule set over ``corpora/gutenberg.db``, once through
-``hsbench -e`` (rules compiled on start) and once through ``hsbench -U``
-(loading the universal/fat bytecode that ``hsdump`` produced).  Everything else
-hsbench prints is raw evidence only, never a metric.
+``Mean throughput (overall)`` for a block-mode rule/corpus combination declared
+in ``benchmark/scenarios.json``.  The matrix contains two legacy reference
+scenarios (``-e`` and ``-U``) plus the seven rows supplied in the 2026-11-16
+data set.  Everything else hsbench prints is raw evidence only, never a metric.
 
 Three responsibilities live here:
 
@@ -15,14 +14,14 @@ Three responsibilities live here:
 
 ``build-info``
     Read ``${PERF_WORK_DIR}/build-state.json`` (written by the build stage) and
-    persist ``build_info.json``: source identity, Intel sample checksums, the
-    Release ``hsbench`` and Debug ``hsdump`` builds, the generated
-    ``dump/db.raw`` checksum and the container compiler.
+    persist ``build_info.json``: source identity, dataset checksums, the Release
+    ``hsbench`` and Debug ``hsdump`` builds, the generated ``dump/db.raw``
+    checksum and the container compiler.
 
 ``finalize``
     Strictly validate the ``results.json`` that ``parse_benchmark.py report``
     wrote, then merge it with status/build/environment evidence and render the
-    two-row Mean throughput report.  The validator fails closed: a missing
+    nine-row Mean throughput report.  The validator fails closed: a missing
     metric, an extra metric, a sample count mismatch, a non-positive or
     non-finite sample, or a median that does not match the samples is an error
     (exit code 70), never padded or swallowed.
@@ -45,20 +44,25 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# The complete metric contract of this case: exactly these two keys, in the
-# block mode, from the Mean throughput (overall) field.
-METRIC_KEYS = (
-    "hsbench_rules_block_mean_throughput_mbit_s",
-    "hsbench_ubc_block_mean_throughput_mbit_s",
+# The metric contract is derived from benchmark/scenarios.json so the shell
+# driver, the strict parser and the standalone validator cannot drift apart.
+_CASE_ROOT = Path(__file__).resolve().parents[2]
+if str(_CASE_ROOT) not in sys.path:
+    sys.path.insert(0, str(_CASE_ROOT))
+from scripts.results.parse_benchmark import (  # noqa: E402
+    DEFAULT_SCENARIOS,
+    load_scenarios,
+    metric_name,
 )
-METRIC_KEY_RE = re.compile(r"^hsbench_(rules|ubc)_block_mean_throughput_mbit_s$")
+
+SCENARIOS = load_scenarios(DEFAULT_SCENARIOS)
+METRIC_KEYS = tuple(metric_name(scenario) for scenario in SCENARIOS)
+METRIC_KEY_RE = re.compile(r"^hsbench_[a-z0-9_]+_mean_throughput_mbit_s$")
 EXPECTED_UNIT = "Mbit/s"
 EXPECTED_DIRECTION = "higher_is_better"
 EXPECTED_GROUP = "hsbench"
 EXPECTED_SOURCE_FIELD = "Mean throughput (overall)"
-EXPECTED_RULES = "pcre/snort_literals"
-EXPECTED_CORPUS = "corpora/gutenberg.db"
-EXPECTED_SCENARIOS = ("hsbench_rules_block", "hsbench_ubc_block")
+EXPECTED_SCENARIO_KEYS = tuple(scenario["key"] for scenario in SCENARIOS)
 FORBIDDEN_WORDS = ("BTL", "btl", "合成语料", "synthetic", "多核", "-march")
 REL_TOL = 1e-9
 # parse_benchmark.py rounds the reported median and the summary statistics to six
@@ -232,37 +236,64 @@ def copy_source(state: dict[str, Any]) -> dict[str, Any]:
     return copied
 
 
-def copy_samples(state: dict[str, Any]) -> dict[str, Any]:
-    samples = state.get("samples")
-    if not isinstance(samples, dict):
-        raise RuntimeError("build-state.json is missing the Intel samples identity")
-    zip_sha256 = samples.get("zip_sha256")
-    if not isinstance(zip_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", zip_sha256):
-        raise RuntimeError("build-state.json samples.zip_sha256 is not a SHA-256 value")
+def copy_dataset(state: dict[str, Any]) -> dict[str, Any]:
+    dataset = state.get("dataset")
+    if not isinstance(dataset, dict):
+        raise RuntimeError("build-state.json is missing the dataset identity")
+    root = dataset.get("root")
+    if not isinstance(root, str) or not root:
+        raise RuntimeError("build-state.json dataset.root is missing")
+    files = dataset.get("files")
+    if not isinstance(files, dict) or not files:
+        raise RuntimeError("build-state.json dataset.files is missing")
     copied: dict[str, Any] = {
-        "package": samples.get("package", "[Hyperscan] hsbench-samples"),
-        "zip_sha256": zip_sha256,
+        "root": root,
+        "source_zip": dataset.get("source_zip"),
+        "source_zip_sha256": dataset.get("source_zip_sha256"),
+        "files": {},
     }
-    for member in ("rules", "corpus"):
-        entry = samples.get(member)
+    for name, entry in files.items():
         if not isinstance(entry, dict):
-            raise RuntimeError(f"build-state.json samples.{member} is missing")
-        expected_path = EXPECTED_RULES if member == "rules" else EXPECTED_CORPUS
-        if entry.get("path") != expected_path:
+            raise RuntimeError(f"build-state.json dataset.files.{name} is invalid")
+        sha = entry.get("sha256")
+        crc = entry.get("crc32")
+        if sha is not None and (
+            not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{64}", sha)
+        ):
             raise RuntimeError(
-                f"build-state.json samples.{member}.path is {entry.get('path')!r}, "
-                f"expected {expected_path!r}"
+                f"build-state.json dataset.files.{name}.sha256 is not a SHA-256 value"
             )
-        member_sha = entry.get("sha256")
-        if not isinstance(member_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", member_sha):
+        if crc is not None and (
+            not isinstance(crc, str) or not re.fullmatch(r"[0-9a-f]{8}", crc)
+        ):
             raise RuntimeError(
-                f"build-state.json samples.{member}.sha256 is not a SHA-256 value"
+                f"build-state.json dataset.files.{name}.crc32 is not a CRC32 value"
             )
-        copied[member] = {
-            "path": entry["path"],
-            "sha256": member_sha,
+        if not sha and not crc:
+            raise RuntimeError(
+                f"build-state.json dataset.files.{name} has no digest"
+            )
+        kind = entry.get("kind")
+        if kind not in {"rules", "corpus"}:
+            raise RuntimeError(
+                f"build-state.json dataset.files.{name}.kind is invalid: {kind!r}"
+            )
+        copied["files"][name] = {
+            "kind": kind,
             "bytes": entry.get("bytes"),
         }
+        if sha:
+            copied["files"][name]["sha256"] = sha
+        if crc:
+            copied["files"][name]["crc32"] = crc
+        if kind == "corpus":
+            copied["files"][name].update({
+                "corpus_bytes": entry.get("corpus_bytes"),
+                "corpus_blocks": entry.get("corpus_blocks"),
+                "streams": entry.get("streams"),
+            })
+        else:
+            copied["files"][name]["expressions"] = entry.get("expressions")
     return copied
 
 
@@ -346,9 +377,10 @@ def record_build_info(
     """Copy the build-stage evidence into build_info.json.
 
     ``build-state.json`` is written by the build stage and is the single source
-    of truth for the source tag/commit, the Intel sample checksums, both cmake
-    builds (Release ``hsbench``, Debug ``hsdump`` with ``DUMP_SUPPORT``), the
-    generated ``dump/db.raw`` checksum and the container compiler.
+    of truth for the source tag/commit, the verified Ultrascan dataset
+    checksums, both cmake builds (Release ``hsbench``, Debug ``hsdump`` with
+    ``DUMP_SUPPORT``), the generated ``dump/db.raw`` checksum and the container
+    compiler.
     """
     state = load_json_or_fail(build_state, "build-state.json")
     if state.get("software") != "ultrascan":
@@ -356,7 +388,7 @@ def record_build_info(
             f"build-state.json belongs to {state.get('software')!r}, not ultrascan"
         )
     source = copy_source(state)
-    samples = copy_samples(state)
+    dataset = copy_dataset(state)
     build = copy_build(state)
     bytecode = copy_universal_bytecode(state)
     compiler = copy_compiler(state)
@@ -392,7 +424,7 @@ def record_build_info(
         "architecture": architecture,
         "run_id": run_id,
         "source": source,
-        "samples": samples,
+        "dataset": dataset,
         "build": build,
         "universal_bytecode": bytecode,
         "compiler": compiler,
@@ -448,7 +480,7 @@ def validate_metric(key: str, entry: Any) -> dict[str, Any]:
     if not isinstance(key, str) or METRIC_KEY_RE.match(key) is None:
         raise RuntimeError(f"unsupported metric name: {key!r}")
     if key not in METRIC_KEYS:
-        raise RuntimeError(f"metric {key} is not one of the two declared metrics")
+        raise RuntimeError(f"metric {key} is not one of the declared metrics")
     metric = require_dict(entry, f"metric {key}")
     if metric.get("source_name") != key:
         raise RuntimeError(
@@ -475,16 +507,6 @@ def validate_metric(key: str, entry: Any) -> dict[str, Any]:
     source_benchmark = metric.get("source_benchmark")
     if not isinstance(source_benchmark, str) or not source_benchmark:
         raise RuntimeError(f"metric {key} has no source_benchmark description")
-    if key == "hsbench_rules_block_mean_throughput_mbit_s":
-        if "without universal bytecode" not in source_benchmark or "-e" not in source_benchmark:
-            raise RuntimeError(
-                f"metric {key} does not describe the '-e' (no universal bytecode) run"
-            )
-    else:
-        if "with universal bytecode" not in source_benchmark or "-U" not in source_benchmark:
-            raise RuntimeError(
-                f"metric {key} does not describe the '-U' (universal bytecode) run"
-            )
 
     samples = metric.get("samples")
     if isinstance(samples, bool) or not isinstance(samples, int) or samples < 1:
@@ -539,13 +561,8 @@ def validate_benchmark_section(benchmark: dict[str, Any], measure_reps: int) -> 
     workload = benchmark.get("workload")
     if not isinstance(workload, str) or "hsbench" not in workload:
         raise RuntimeError("results.json benchmark.workload does not describe hsbench")
-    iterations = benchmark.get("iterations")
-    if isinstance(iterations, bool) or not isinstance(iterations, int) or iterations != 1:
-        raise RuntimeError(
-            f"results.json benchmark.iterations must be 1, got {iterations!r}"
-        )
     warmups = benchmark.get("warmups")
-    if isinstance(warmups, bool) or not isinstance(warmups, int) or warmups < 0:
+    if isinstance(warmups, bool) or not isinstance(warmups, int) or warmups < 1:
         raise RuntimeError(f"results.json benchmark.warmups is invalid: {warmups!r}")
     reps = benchmark.get("measure_reps")
     if isinstance(reps, bool) or not isinstance(reps, int) or reps < 1:
@@ -555,24 +572,29 @@ def validate_benchmark_section(benchmark: dict[str, Any], measure_reps: int) -> 
             f"results.json benchmark.measure_reps ({reps}) differs from the "
             f"run ({measure_reps})"
         )
-    samples_package = require_dict(
-        benchmark.get("samples_package"), "results.json benchmark.samples_package"
-    )
-    if samples_package.get("rules") != EXPECTED_RULES:
-        raise RuntimeError(
-            "results.json benchmark.samples_package.rules is "
-            f"{samples_package.get('rules')!r}, expected {EXPECTED_RULES!r}"
-        )
-    if samples_package.get("corpus") != EXPECTED_CORPUS:
-        raise RuntimeError(
-            "results.json benchmark.samples_package.corpus is "
-            f"{samples_package.get('corpus')!r}, expected {EXPECTED_CORPUS!r}"
-        )
     scenarios = benchmark.get("scenarios")
-    if not isinstance(scenarios, list) or tuple(scenarios) != EXPECTED_SCENARIOS:
+    if not isinstance(scenarios, list):
+        raise RuntimeError("results.json benchmark.scenarios must be a list")
+    observed = {}
+    for entry in scenarios:
+        entry = require_dict(entry, "results.json benchmark.scenarios[]")
+        key = entry.get("key")
+        if not isinstance(key, str) or key not in EXPECTED_SCENARIO_KEYS:
+            raise RuntimeError(f"results.json has an unexpected scenario: {key!r}")
+        if key in observed:
+            raise RuntimeError(f"results.json repeats scenario {key!r}")
+        expected = next(s for s in SCENARIOS if s["key"] == key)
+        for field in ("mode", "rule", "corpus", "iterations", "greybox"):
+            if entry.get(field) != expected[field]:
+                raise RuntimeError(
+                    f"results.json scenario {key}.{field} is {entry.get(field)!r}, "
+                    f"expected {expected[field]!r}"
+                )
+        observed[key] = entry
+    if set(observed) != set(EXPECTED_SCENARIO_KEYS):
         raise RuntimeError(
-            f"results.json benchmark.scenarios is {scenarios!r}, "
-            f"expected {list(EXPECTED_SCENARIOS)!r}"
+            "results.json benchmark.scenarios does not describe the full matrix: "
+            f"expected {list(EXPECTED_SCENARIO_KEYS)!r}, got {sorted(observed)!r}"
         )
 
 
@@ -636,13 +658,17 @@ def markdown_cell(value: Any) -> str:
     return str(value).replace("|", "\\|").replace("\r\n", "<br>").replace("\n", "<br>")
 
 
+def _scenario_label(scenario: dict[str, Any]) -> str:
+    if scenario["mode"] == "ubc":
+        return f"通用字节码 / {scenario['corpus']}（`hsbench -U dump/db.raw`）"
+    suffix = f"，-n {scenario['iterations']}"
+    if scenario["greybox"]:
+        suffix += f"，-G {scenario['greybox']}"
+    return f"{scenario['rule']} / {scenario['corpus']}{suffix}"
+
+
 SCENARIO_LABELS = {
-    "hsbench_rules_block_mean_throughput_mbit_s": (
-        "无通用字节码（`hsbench -e pcre/snort_literals`）"
-    ),
-    "hsbench_ubc_block_mean_throughput_mbit_s": (
-        "有通用字节码（`hsbench -U dump/db.raw`）"
-    ),
+    metric_name(scenario): _scenario_label(scenario) for scenario in SCENARIOS
 }
 
 
@@ -662,24 +688,32 @@ def render_report(result: dict[str, Any]) -> str:
     ]
     build_info = result.get("build_info", {})
     source = build_info.get("source", {}) if isinstance(build_info, dict) else {}
-    samples = build_info.get("samples", {}) if isinstance(build_info, dict) else {}
+    dataset = build_info.get("dataset", {}) if isinstance(build_info, dict) else {}
     build = build_info.get("build", {}) if isinstance(build_info, dict) else {}
     bytecode = build_info.get("universal_bytecode", {}) if isinstance(build_info, dict) else {}
     compiler = build_info.get("compiler", {}) if isinstance(build_info, dict) else {}
     release = build.get("release", {}) if isinstance(build, dict) else {}
     dump = build.get("dump", {}) if isinstance(build, dict) else {}
-    rules = samples.get("rules", {}) if isinstance(samples, dict) else {}
-    corpus = samples.get("corpus", {}) if isinstance(samples, dict) else {}
+    dataset_files = dataset.get("files", {}) if isinstance(dataset, dict) else {}
+    rules = next(
+        (entry for entry in dataset_files.values() if entry.get("kind") == "rules"),
+        {},
+    )
+    corpus = next(
+        (entry for entry in dataset_files.values() if entry.get("kind") == "corpus"),
+        {},
+    )
     for label, value in (
         ("实际软件版本", build_info.get("actual_version")),
         ("源码 Tag", source.get("tag")),
         ("源码 Commit", source.get("commit")),
         ("源码归档 SHA-256", source.get("archive_sha256")),
-        ("Intel 样本包 SHA-256", samples.get("zip_sha256")),
-        ("规则集", rules.get("path")),
-        ("规则集 SHA-256", rules.get("sha256")),
-        ("语料", corpus.get("path")),
-        ("语料 SHA-256", corpus.get("sha256")),
+        ("数据集目录", dataset.get("root")),
+        ("数据集 ZIP SHA-256", dataset.get("source_zip_sha256")),
+        ("规则集数量", len([e for e in dataset_files.values() if e.get("kind") == "rules"])),
+        ("语料数量", len([e for e in dataset_files.values() if e.get("kind") == "corpus"])),
+        ("示例规则集 SHA-256", rules.get("sha256")),
+        ("示例语料 SHA-256", corpus.get("sha256")),
         ("Release 构建", f"{release.get('build_type')} / target {release.get('target')}"),
         ("Debug 构建", f"{dump.get('build_type')} / target {dump.get('target')} / DUMP_SUPPORT {dump.get('dump_support')}"),
         ("通用字节码 db.raw", bytecode.get("dump_db")),
@@ -702,15 +736,18 @@ def render_report(result: dict[str, Any]) -> str:
         lines.append(f"| {label} | {markdown_cell(system_info.get(field))} |")
     lines.extend(["", "## 负载参数", "", "| 参数 | 值 |", "|---|---|"])
     benchmark = result.get("benchmark", {})
-    samples_package = benchmark.get("samples_package", {})
+    scenario_text = ", ".join(
+        f"{entry['key']} (-e {entry['rule']} / -c {entry['corpus']} / -n {entry['iterations']})"
+        if entry.get("mode") == "rules"
+        else f"{entry['key']} (-U / -c {entry['corpus']} / -n {entry['iterations']})"
+        for entry in benchmark.get("scenarios", []) or []
+    )
     for label, value in (
         ("负载", benchmark.get("workload")),
-        ("规则集", samples_package.get("rules")),
-        ("语料", samples_package.get("corpus")),
-        ("每轮扫描次数", benchmark.get("iterations")),
+        ("场景数量", len(benchmark.get("scenarios", []) or [])),
+        ("场景", scenario_text),
         ("预热次数", benchmark.get("warmups")),
         ("独立测量次数", benchmark.get("measure_reps")),
-        ("场景", ", ".join(benchmark.get("scenarios", []) or [])),
     ):
         lines.append(f"| {label} | {markdown_cell(value)} |")
     lines.extend([

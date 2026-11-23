@@ -1,0 +1,67 @@
+name: openvino
+category: AI
+enabled: true
+versions:
+  - "2026.2.1"
+test_tools:
+  torch:
+    version: "2.9.1"
+  torchvision:
+    version: "0.24.1"
+  onnx:
+    version: "1.19.1"
+  numpy:
+    version: "2.4.6"
+  pillow:
+    version: "13.0.0"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_openvino
+    start:
+      script: scripts/stages/start.sh
+      function: start_openvino_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_openvino_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_openvino_runtime
+  timeout_minutes: 360
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result_csv:
+    path: result_bench-openvino.csv
+    stage: test
+    format: text
+    required: true
+  benchmark_evidence:
+    path: benchmark_evidence
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_openvino.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
+    subgroup_path: subgroup

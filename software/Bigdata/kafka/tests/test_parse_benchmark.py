@@ -30,6 +30,39 @@ def test_extracts_exactly_two_original_throughputs() -> None:
     assert result["parameters"]["record_count"] == 10_000_000
 
 
+def test_records_the_benchmark_parameters_used_for_the_run() -> None:
+    result = MODULE.build_result(
+        PRODUCER,
+        CONSUMER,
+        10_000_000,
+        fetch_size=1048576,
+        threads=5,
+        record_size=1024,
+        partitions=72,
+        replication_factor=1,
+        producer_processes=8,
+        consumer_processes=8,
+        topics=8,
+    )
+    parameters = result["parameters"]
+    assert parameters["consumer"] == {"fetch_size_bytes": 1048576, "threads": 5}
+    assert parameters["topics"] == 8
+    assert parameters["partitions_per_topic"] == 9
+    assert parameters["records_per_topic"] == 1_250_000
+    assert parameters["producer_processes"] == 8
+    assert parameters["consumer_processes"] == 8
+    assert parameters["record_size_bytes"] == 1024
+    assert parameters["partitions"] == 72
+    assert parameters["replication_factor"] == 1
+    assert parameters["producer"]["acks"] == "all"
+    assert parameters["producer"]["retries"] == 0
+
+
+def test_rejects_topics_that_do_not_divide_the_records() -> None:
+    with pytest.raises(ValueError):
+        MODULE.build_result(PRODUCER, CONSUMER, 10_000_000, topics=3)
+
+
 def test_ignores_producer_progress_before_final_summary() -> None:
     progress = (
         "4429073 records sent, 885283.4 records/sec (864.53 MB/sec), "

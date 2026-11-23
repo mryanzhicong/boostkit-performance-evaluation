@@ -87,13 +87,25 @@ verify_source_version() {
 }
 
 fetch_source() {
+    local candidate archive=""
     ULTRASCAN_SOURCE_KIND=""
     ULTRASCAN_SOURCE_ORIGIN=""
-    if [[ -f "${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}" ]]; then
-        log "using offline source directory ${ULTRASCAN_OFFLINE_DIR}"
-        fetch_source_from_archive "${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}" || return $?
+    # The dataset lives in .../Ultrascan (capital U) per the delivery note, while
+    # older runners may still keep the source archive in .../ultrascan.
+    for candidate in \
+        "${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}" \
+        "${ULTRASCAN_LEGACY_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}" \
+        "${PERF_WORK_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}"; do
+        if [[ -f "${candidate}" ]]; then
+            archive="${candidate}"
+            break
+        fi
+    done
+    if [[ -n "${archive}" ]]; then
+        log "using offline source archive ${archive}"
+        fetch_source_from_archive "${archive}" || return $?
         ULTRASCAN_SOURCE_KIND="offline_archive"
-        ULTRASCAN_SOURCE_ORIGIN="${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}"
+        ULTRASCAN_SOURCE_ORIGIN="${archive}"
     else
         log "offline source archive is absent: ${ULTRASCAN_OFFLINE_DIR}/${ULTRASCAN_SOURCE_ARCHIVE}"
         fetch_source_from_git || return $?
@@ -176,7 +188,7 @@ generate_universal_db() {
     rm -rf "${DUMP_OUTPUT_ROOT}"
     ultrascan_container_exec_at "${PERF_WORK_DIR}" \
         "${HSDUMP_BIN}" \
-        -e "${SAMPLES_RULES}" \
+        -e "${ULTRASCAN_DATA_ROOT}/snort_literals" \
         -N \
         -U \
         -o "${DUMP_OUTPUT_ROOT}" || {
@@ -201,7 +213,8 @@ probe_runtime_version() {
     # Pin the C locale so the smoke output is byte-identical on every runner;
     # some aarch64 runners otherwise print grouped digits ("3,116").
     output="$(ultrascan_container_exec env LC_ALL=C LANG=C TZ=UTC "${HSBENCH_BIN}" \
-        -e "${SAMPLES_RULES}" -c "${SAMPLES_CORPUS}" -N -n 1 2>&1)" || {
+        -e "${ULTRASCAN_DATA_ROOT}/snort_literals" \
+        -c "${ULTRASCAN_DATA_ROOT}/gutenberg.db" -N -n 1 2>&1)" || {
         log "ERROR: the built hsbench failed its smoke scan"
         printf '%s\n' "${output}" >&2
         return 30
@@ -218,7 +231,7 @@ probe_runtime_version() {
         return 30
     }
     universal_output="$(ultrascan_container_exec env LC_ALL=C LANG=C TZ=UTC "${HSBENCH_BIN}" \
-        -U "${DUMP_DB}" -c "${SAMPLES_CORPUS}" -N -n 1 2>&1)" || {
+        -U "${DUMP_DB}" -c "${ULTRASCAN_DATA_ROOT}/gutenberg.db" -N -n 1 2>&1)" || {
         log "ERROR: the built hsbench could not load the generated universal bytecode database"
         printf '%s\n' "${universal_output}" >&2
         return 30
@@ -255,10 +268,7 @@ record_build_state() {
         "${HSDUMP_BIN}" \
         "${DUMP_DB}" \
         "${ULTRASCAN_DUMP_SHA256}" \
-        "${SAMPLES_ZIP_LOCAL}" \
-        "${SAMPLES_ROOT}" \
-        "${ULTRASCAN_SAMPLE_LITERALS_SHA256}" \
-        "${ULTRASCAN_SAMPLE_GUTENBERG_SHA256}" <<'PY'
+        "${DATASET_MANIFEST}" <<'PY'
 import hashlib
 import json
 import sys
@@ -268,7 +278,7 @@ from pathlib import Path
 (
     path, requested, actual, arch, source_kind, source_origin, commit, x86_fix,
     cmake_sha, jobs, compiler, hsbench_bin, hsdump_bin, dump_db, dump_sha,
-    samples_zip, samples_root, literals_sha, gutenberg_sha,
+    dataset_manifest,
 ) = sys.argv[1:]
 
 
@@ -279,6 +289,11 @@ def sha256_file(target: Path) -> str:
             digest.update(chunk)
     return digest.hexdigest()
 
+
+manifest = json.loads(Path(dataset_manifest).read_text(encoding="utf-8"))
+files = manifest.get("files")
+if not isinstance(files, dict) or not files:
+    raise SystemExit(f"dataset manifest has no files: {dataset_manifest}")
 
 payload = {
     "recorded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -295,21 +310,11 @@ payload = {
             "b0ad7d0126585581e93f621d1295066e7becf6d59c2179916c74e84e67f29b9b"
         ),
     },
-    "samples": {
-        "package": "[Hyperscan] hsbench-samples",
-        "zip": samples_zip,
-        "zip_sha256": sha256_file(Path(samples_zip)),
-        "root": samples_root,
-        "rules": {
-            "path": "pcre/snort_literals",
-            "file": f"{samples_root}/pcre/snort_literals",
-            "sha256": literals_sha,
-        },
-        "corpus": {
-            "path": "corpora/gutenberg.db",
-            "file": f"{samples_root}/corpora/gutenberg.db",
-            "sha256": gutenberg_sha,
-        },
+    "dataset": {
+        "root": manifest.get("root"),
+        "source_zip": manifest.get("source_zip"),
+        "source_zip_sha256": manifest.get("source_zip_sha256"),
+        "files": files,
     },
     "build": {
         "system": "cmake",
@@ -360,13 +365,13 @@ build_ultrascan_base() {
     check_architecture || return $?
     require_commands || return $?
     verify_directory_is_clean "${SOURCE_DIR}" "${BUILD_DIR}" "${DUMP_BUILD_DIR}" \
-        "${DUMP_OUTPUT_ROOT}" "${SAMPLES_ROOT}"
+        "${DUMP_OUTPUT_ROOT}"
 
+    prepare_dataset_inputs || return 30
     fetch_source || return 30
     apply_x86_build_fix || return 30
     build_hsbench || return 30
     build_hsdump || return 30
-    prepare_samples_inputs || return 30
     generate_universal_db || return 30
     probe_runtime_version || return 30
     record_build_state || return 30

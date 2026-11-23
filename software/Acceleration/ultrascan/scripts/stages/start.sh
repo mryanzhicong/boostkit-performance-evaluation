@@ -9,5 +9,5 @@ start_ultrascan_runtime() {
     hsbench_sha="$(sha256_of "${HSBENCH_BIN:-}" 2>/dev/null | cut -c1-16 || true)"
     dump_sha="$(ultrascan_container_exec sha256sum "${DUMP_DB}" | awk '{print $1}' | cut -c1-16)" || return 40
     log "ultrascan runtime is ready: hsbench=${hsbench_sha} universal_bytecode=${dump_sha}"
-    log "hsbench needs no background service; the two documented scenarios run in the test stage inside the private container"
+    log "hsbench needs no background service; the 9-scenario matrix runs in the test stage inside the private container"
 }
