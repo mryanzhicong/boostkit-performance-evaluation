@@ -1,0 +1,60 @@
+name: apr-util
+category: Toolchain
+enabled: true
+versions:
+  - "1.6.5"
+test_tools:
+  apr_library:
+    version: "1.7.5 (static library built from the pinned source archive)"
+  apr_util_library:
+    version: "1.6.5 (static library built from the pinned source archive)"
+  base64_bench:
+    version: "case-owned harness that only uses public APR-util base64 APIs"
+  upstream_testall:
+    version: "test/testall from the pinned 1.6.5 source archive (portable module set)"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_apr_util
+    start:
+      script: scripts/stages/start.sh
+      function: start_apr_util_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_apr_util_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_apr_util_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  apr_util_raw_output:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
