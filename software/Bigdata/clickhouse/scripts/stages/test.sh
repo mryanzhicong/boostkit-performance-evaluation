@@ -141,6 +141,7 @@ run_tpch_queries() {
                     > "${out_file}" 2>&1; then
                 log_error "TPC-H q${query_number} failed in round ${round}; last output:"
                 tail -n 20 "${out_file}" >&2 || true
+                df -h "${PERF_WORK_DIR}" >&2 || true
                 return 50
             fi
         done
@@ -178,6 +179,17 @@ run_clickhouse_benchmark() {
     create_schema || return $?
     load_tpch_data || return $?
     verify_row_counts || return $?
+    # The raw .tbl files are ~110 GiB at SF100 and are no longer needed; the
+    # TPC-H queries need that space for external aggregation temporary files.
+    log_message "removing raw TPC-H files to free space for query temp files"
+    rm -rf -- "${PERF_WORK_DIR}/tpch-data" || true
+    local free_bytes
+    free_bytes="$(df -B1 --output=avail "${PERF_WORK_DIR}" | tail -n 1 | tr -d ' ')"
+    log_message "free space before queries: $(( ${free_bytes:-0} / 1024 / 1024 / 1024 )) GiB"
+    (( ${free_bytes:-0} >= CH_SF * 1024 * 1024 * 1024 )) || {
+        log_error "only ${free_bytes:-0} bytes free; SF${CH_SF} queries need at least $(( CH_SF )) GiB"
+        return 50
+    }
     run_tpch_queries || return $?
 
     {

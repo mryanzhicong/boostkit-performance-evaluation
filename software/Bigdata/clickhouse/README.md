@@ -209,6 +209,10 @@ df -B1 --output=avail "${PERF_WORK_DIR}"
    把命令里的 `lineitem` 换成对应表名后重复执行。
 4. 校验 SF100 行数：lineitem 600,037,902、orders 150,000,000、partsupp 80,000,000、
    part 20,000,000、customer 15,000,000、supplier 1,000,000、nation 25、region 5。
+   **校验通过后删除 `${PERF_WORK_DIR}/tpch-data`**：SF100 的原始 `.tbl` 约 110 GiB，
+   而 q9 等查询会往 `${CH_DATA}/tmp` 写外部聚合临时文件；不删除会把盘写满
+   （报 `Code: 76 ... errno: 28, No space left on device`）。删除后要求至少
+   `SF × 1 GiB`（SF100 为 100 GiB）可用，否则直接失败。
 5. 22 条查询串行执行 3 轮，每条查询带唯一 `query_id=ck-<run-id>-r<轮>-q<编号>`；
    每轮结束后 `SYSTEM FLUSH LOGS`，轮询到 22 条 `QueryFinish` 后再从
    `system.query_log` 取 `query_duration_ms`，写入 `${CH_RESULT_DIR}/query_log.tsv`。
@@ -267,6 +271,10 @@ bash software/Bigdata/clickhouse/clickhouse_test.sh \
 - 本机适配只验证了构建、启动与健康检查，**未执行 TPC-H 查询**；SF100 的正式数字
   以流水线为准。SF100 预计造数 20~40 分钟、导入 10~20 分钟、22×3 查询 10~30 分钟，
   `timeout_minutes` 设为 600。
+- SF100 对磁盘要求高：导入阶段需要约 300 GiB（原始 110 GiB + ClickHouse 列存 +
+  合并余量），查询阶段删除原始文件后仍需至少 100 GiB 给外部聚合临时文件。q9 在
+  SF100 下是最重的查询，若仍报 `No space left on device`，需要更大的数据盘，而不是
+  修改查询口径。
 - 数据生成依赖 tpch-kit 的 `dbgen` 与容器内 gcc/make；离线环境下需要预置
   `tpch-kit-master.zip`，否则首次运行会联网下载。
 - `optimized` 变体未实现，选择后构建阶段明确返回非零。
