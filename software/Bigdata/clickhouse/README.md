@@ -161,7 +161,17 @@ docker exec --detach -e HOME="${PERF_WORK_DIR}" \
 2. 建库 `${CH_DATABASE}`（`tpch_sf1`）与 8 张 MergeTree 表，全部 `ORDER BY` 主键，
    不设分区键；金额列 `Decimal(15,2)`、日期列 `Date`、`l_orderkey/o_orderkey` 为
    `Int64`，其余整数 `Int32`。同时创建 q15 依赖的视图 `revenue0`。
-3. 逐表 `INSERT INTO ... FORMAT CSV` 导入，`--format_csv_delimiter='|'`。
+3. 逐表导入，`--format_csv_delimiter='|'`。以 lineitem 为例：
+
+   ```bash
+   "${CH_BIN}" client --host 127.0.0.1 --port "${CH_TCP_PORT}" \
+     --format_csv_delimiter='|' \
+     --query "INSERT INTO ${CH_DATABASE}.lineitem FORMAT CSV" \
+     < "${PERF_WORK_DIR}/tpch-data/sf1/lineitem.tbl"
+   ```
+
+   其余 `orders`、`part`、`partsupp`、`customer`、`supplier`、`nation`、`region`
+   把命令里的 `lineitem` 换成对应表名后重复执行。
 4. 校验 SF1 行数：lineitem 6,001,215、orders 1,500,000、partsupp 800,000、
    part 200,000、customer 150,000、supplier 10,000、nation 25、region 5。
 5. 22 条查询串行执行 3 轮，每条查询带唯一 `query_id=ck-<run-id>-r<轮>-q<编号>`；
