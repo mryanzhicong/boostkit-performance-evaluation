@@ -230,7 +230,7 @@ prepare_tpch_kit() {
 }
 
 build_doris_base() {
-    local actual
+    local raw_version version
     initialize_runtime || return $?
     install_host_dependencies || return $?
     require_docker || return $?
@@ -246,10 +246,14 @@ build_doris_base() {
     cp -- "${CASE_DIR}/scripts/tools/doris_client.py" "${PERF_WORK_DIR}/tools/" || return 30
     prepare_python_dependency || return $?
 
-    actual="$(read_doris_version)" || return 30
-    [[ "${actual}" == "${SOFTWARE_VERSION}"* ]] || {
-        log_error "unexpected Doris version: ${actual:-unknown}"; return 30;
+    raw_version="$(read_doris_version)" || return 30
+    # The BE binary reports the release candidate build string, e.g.
+    # 2.1.2-rc04; the Framework compares the plain release version.
+    version="${raw_version%%-rc*}"
+    [[ -n "${version}" && "${version}" == "${SOFTWARE_VERSION}" ]] || {
+        log_error "unexpected Doris version: ${raw_version:-unknown}"; return 30;
     }
-    printf '%s\n' "${actual}" > "${PERF_ACTUAL_VERSION_FILE}"
-    log_message "Doris ${actual} and BiSheng JDK are ready in ${DORIS_CONTAINER_NAME}"
+    printf '%s\n' "${version}" > "${PERF_ACTUAL_VERSION_FILE}"
+    printf '%s\n' "${raw_version}" > "${RESULTS_DIR}/doris_build_string.txt"
+    log_message "Doris ${raw_version} (release ${version}) and BiSheng JDK are ready in ${DORIS_CONTAINER_NAME}"
 }

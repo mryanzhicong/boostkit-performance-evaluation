@@ -68,7 +68,9 @@ Stream Load 直接使用。
 
 实际版本从 BE 二进制的 `--version` 输出读取（`doris_be --version` 打印
 `doris-2.1.2-rc04(AVX2) ...`；FE 的 `doris-fe.jar` 清单里是过期的
-`1.2-SNAPSHOT`，不能用），解析出 `2.1.2-rc04` 写入 `PERF_ACTUAL_VERSION_FILE`；
+`1.2-SNAPSHOT`，不能用）。Framework 要求实际版本与请求版本完全相等，因此去掉
+`-rcNN` 后缀得到 `2.1.2` 写入 `PERF_ACTUAL_VERSION_FILE`，完整的
+`2.1.2-rc04` build 字符串另存到 `${RESULTS_DIR}/doris_build_string.txt`；
 `build` 成功后写 `build_variant.json`。
 
 容器名称为 `boostkit-doris-<架构>-<run-id>`，创建命令如下：
