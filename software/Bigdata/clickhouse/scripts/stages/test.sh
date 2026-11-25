@@ -135,7 +135,14 @@ run_tpch_queries() {
             printf -v qid 'ck-%s-r%s-q%02d' "${PERF_RUN_ID}" "${round}" "${query_number}"
             printf -v qfile '%s/q%d.sql' "${query_dir}" "${query_number}"
             local out_file="${CH_RESULT_DIR}/q${query_number}_r${round}.out"
-            log_message "round ${round} q${query_number}/22 (${qid})"
+            local free_gib
+            free_gib=$(( $(df -B1 --output=avail "${PERF_WORK_DIR}" | tail -n 1 | tr -d ' ') / 1024 / 1024 / 1024 ))
+            (( free_gib >= 10 )) || {
+                log_error "only ${free_gib} GiB free before q${query_number} in round ${round}; aborting"
+                df -h "${PERF_WORK_DIR}" >&2 || true
+                return 50
+            }
+            log_message "round ${round} q${query_number}/22 (${qid}, free ${free_gib} GiB)"
             if ! ch_exec bash -c "'${CH_BIN}' client --host 127.0.0.1 --port '${CH_TCP_PORT}' \
                     --database '${CH_DATABASE}' --query_id '${qid}' --multiquery < '${qfile}'" \
                     > "${out_file}" 2>&1; then
