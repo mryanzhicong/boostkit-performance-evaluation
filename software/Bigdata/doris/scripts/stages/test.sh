@@ -90,6 +90,7 @@ EOF
 stream_load() {
     local table="$1" columns="$2" file="$3" response
     response="$(doris_exec curl -sS -L --location-trusted -u root: \
+        -H 'Expect: 100-continue' \
         -H 'format: csv' -H 'column_separator: |' -H "columns: ${columns}" \
         -T "${file}" \
         "http://127.0.0.1:${DORIS_HTTP_PORT}/api/${DORIS_DATABASE}/${table}/_stream_load")" || return 50
