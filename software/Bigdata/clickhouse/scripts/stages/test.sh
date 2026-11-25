@@ -181,6 +181,22 @@ run_clickhouse_benchmark() {
         log_error "SF${CH_SF} needs at least $(( required_bytes / 1024 / 1024 / 1024 )) GiB free, found ${available_bytes:-unknown}"
         return 50
     fi
+    # The host filesystem and the container's view can differ; record both and
+    # prove the tmp path is writable before spending time generating data.
+    {
+        printf 'host df %s:\n' "${PERF_WORK_DIR}"
+        df -h "${PERF_WORK_DIR}"
+        printf '\ncontainer df %s:\n' "${CH_DATA}/tmp"
+        ch_exec df -h "${CH_DATA}/tmp" 2>&1 || true
+        printf '\ncontainer mounts matching the work dir:\n'
+        ch_exec sh -c "cat /proc/mounts | grep -F '${PERF_WORK_DIR}'" 2>&1 || true
+    } > "${CH_RESULT_DIR}/container_disk.txt" 2>&1
+    log_message "disk view: $(grep -A1 'container df' "${CH_RESULT_DIR}/container_disk.txt" | tail -n 1)"
+    ch_exec sh -c "dd if=/dev/zero of='${CH_DATA}/tmp/.space-probe' bs=1M count=1024 conv=fsync status=none && rm -f '${CH_DATA}/tmp/.space-probe'" || {
+        log_error 'cannot write a 1 GiB probe under the container tmp path'
+        cat "${CH_RESULT_DIR}/container_disk.txt" >&2 || true
+        return 50
+    }
     prepare_tpch_kit || return $?
     generate_tpch_data || return $?
     create_schema || return $?
