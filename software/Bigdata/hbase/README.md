@@ -155,7 +155,9 @@ hbase org.apache.hadoop.hbase.PerformanceEvaluation \
 - 随机写用 mapreduce 模式，`--size` 单位 GB（必须 > 1），`--presplit` 是 region 数；
 - 随机读用客户端多线程模式，`--rows` 是每线程行数，读 3 轮，第 1 轮同样计入并取
   3 轮中位数（本用例没有单独的预热轮，读前已 flush+major_compact）；
-- 写吞吐 = `Row count / (Elapsed time in milliseconds / 1000)`；读吞吐只取
+- 写吞吐 = `Row count / (Elapsed time in milliseconds / 1000)`。mapreduce 模式下 PE
+会先为每个 map 打印一组 `Elapsed time`/`Row count`，最后再打印 driver 的 job 汇总；
+解析器只取**最后一组**（driver 总量），不能把 per-map 行当成整体。读吞吐只取
   `[ Avg TPS/QPS]` 那一行，**不取** `duration` 行的 `Avg: xxxms`（那会得到 20 万级
   的假数，bdperf FAQ Q1 已记录）。
 

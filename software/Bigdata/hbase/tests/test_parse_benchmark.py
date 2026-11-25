@@ -56,10 +56,17 @@ def test_rejects_missing_read_round() -> None:
         MODULE.build_result(raw(rounds=2), 3, 2, 16, 8, 100000)
 
 
-def test_uses_the_last_write_summary_when_the_log_repeats_it() -> None:
-    repeated = WRITE + WRITE.replace("2097152", "100").replace("25040", "100")
-    result = MODULE.build_result(repeated + raw()[len(WRITE):], 3, 2, 16, 8, 100000)
-    assert result["results"]["pe-randomWrite/throughput"]["value"] == pytest.approx(1000.0)
+def test_uses_the_driver_summary_after_per_map_summaries() -> None:
+    per_map = "".join(
+        f"\t\tElapsed time in milliseconds={elapsed}\n\t\tRow count=524288\n"
+        for elapsed in (5761, 5511, 5693, 5800)
+    )
+    driver = "\t\tElapsed time in milliseconds=22765\n\t\tRow count=2097152\n"
+    write = "===== randomWrite =====\n" + per_map + driver
+    result = MODULE.build_result(write + raw()[len(WRITE):], 3, 2, 16, 8, 100000)
+    assert result["results"]["pe-randomWrite/throughput"]["value"] == pytest.approx(
+        2097152 / 22.765, rel=1e-6
+    )
 
 
 @pytest.mark.parametrize("body", [
