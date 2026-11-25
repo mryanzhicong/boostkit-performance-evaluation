@@ -21,7 +21,7 @@ BIOS/电源策略保持 Runner 原状，只在结果目录记录实际值。软�
 |---|---|---|
 | HBase | [2.4.14 bin](https://repo.huaweicloud.com/apache/hbase/2.4.14/hbase-2.4.14-bin.tar.gz) | 优先读取 `/home/runner/software/hbase/` |
 | Hadoop | 3.3.6，x86_64 用 `hadoop-3.3.6.tar.gz`、aarch64 用 `hadoop-3.3.6-aarch64.tar.gz` | 优先读取 `/home/runner/software/hadoop/` |
-| ZooKeeper | 3.6.2 bin | 优先读取 `/home/runner/software/zookeeper/`（与 ZooKeeper 用例共用） |
+| ZooKeeper | 3.6.2 bin | 优先读取 `/home/runner/software/zookeeper/` |
 | JDK | BiSheng JDK `8u472-b11` | 优先读取 `/home/runner/software/bishengjdk/` |
 | 容器镜像 | openEuler 24.03 LTS SP4 Docker 归档 | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/` |
 | 测试工具 | HBase 自带 `org.apache.hadoop.hbase.PerformanceEvaluation` | 随 HBase 发行包提供，不单独安装 |
