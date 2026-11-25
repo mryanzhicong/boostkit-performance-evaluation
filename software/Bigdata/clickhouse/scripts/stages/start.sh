@@ -2,7 +2,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 write_private_configs() {
-    mkdir -p "${CH_DATA}/data" "${CH_DATA}/tmp" "${CH_DATA}/user_files" "${CH_LOG_DIR}" "${CH_RESULT_DIR}"
+    mkdir -p "${CH_DATA}/data" "${CH_DATA}/tmp" "${CH_DATA}/user_files" "${CH_DATA}/access" "${CH_LOG_DIR}" "${CH_RESULT_DIR}"
     mkdir -p "$(dirname "${CH_CONF}")"
     cat > "${CH_CONF}" <<EOF
 <clickhouse>
@@ -22,15 +22,27 @@ write_private_configs() {
     <users_config>users.xml</users_config>
     <max_server_memory_usage>${CH_MAX_SERVER_MEMORY_USAGE}</max_server_memory_usage>
     <mark_cache_size>${CH_MARK_CACHE_SIZE}</mark_cache_size>
+    <max_concurrent_queries>100</max_concurrent_queries>
+    <max_thread_pool_size>20000</max_thread_pool_size>
+    <uncompressed_cache_size>0</uncompressed_cache_size>
+    <mmap_cache_size>16384</mmap_cache_size>
+    <mlock_executable>false</mlock_executable>
+    <default_profile>default</default_profile>
+    <default_database>default</default_database>
     <pid_file>${PERF_WORK_DIR}/clickhouse.pid</pid_file>
     <query_log>
         <database>system</database>
         <table>query_log</table>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </query_log>
     <metric_log>
         <database>system</database>
         <table>metric_log</table>
     </metric_log>
+    <user_directories>
+        <users_xml><path>users.xml</path></users_xml>
+        <local_directory><path>${CH_DATA}/access/</path></local_directory>
+    </user_directories>
 </clickhouse>
 EOF
     cat > "${CH_USERS}" <<EOF
@@ -39,11 +51,11 @@ EOF
         <default>
             <max_threads>${CH_MAX_THREADS}</max_threads>
             <max_memory_usage>${CH_MAX_MEMORY_USAGE}</max_memory_usage>
+            <max_block_size>65536</max_block_size>
+            <log_queries>1</log_queries>
+            <log_query_threads>0</log_query_threads>
             <max_bytes_before_external_group_by>40000000000</max_bytes_before_external_group_by>
             <max_bytes_before_external_sort>40000000000</max_bytes_before_external_sort>
-            <join_algorithm>parallel_hash</join_algorithm>
-            <preferred_block_size_bytes>2000000</preferred_block_size_bytes>
-            <allow_asynchronous_read_from_io_pool_for_merge_tree>true</allow_asynchronous_read_from_io_pool_for_merge_tree>
         </default>
     </profiles>
     <users>

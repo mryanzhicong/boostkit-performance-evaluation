@@ -8,7 +8,7 @@
 容器规格固定为 32 个物理核（单 NUMA 节点）、128 GiB 内存、不限 memlock。
 **不修改任何内核参数**：THP、swap、`sysctl`、`limits.conf`、`drop_caches` 与
 BIOS/电源策略保持 Runner 原状，只在结果目录记录实际值。软件侧参数
-（`max_threads=32`、内存上限、`mark_cache_size`、三条 TPC-H 查询设置）按 bdperf
+（`max_threads=32`、内存上限、`mark_cache_size`、外部聚合/排序阈值）按 bdperf
 文档 §7.2 固定，两侧必须一致。
 
 入口为 `clickhouse_test.sh`。Framework 按 `case.yaml` 调用 build、start、test、
@@ -149,10 +149,21 @@ docker exec --user 0 "${CH_CONTAINER_NAME}" sed -i \
 <max_memory_usage>110000000000</max_memory_usage>
 <max_bytes_before_external_group_by>40000000000</max_bytes_before_external_group_by>
 <max_bytes_before_external_sort>40000000000</max_bytes_before_external_sort>
-<join_algorithm>parallel_hash</join_algorithm>
-<preferred_block_size_bytes>2000000</preferred_block_size_bytes>
-<allow_asynchronous_read_from_io_pool_for_merge_tree>true</allow_asynchronous_read_from_io_pool_for_merge_tree>
+<max_block_size>65536</max_block_size>
+<log_queries>1</log_queries>
+<log_query_threads>0</log_query_threads>
 ```
+
+bdperf 文档 §7.2 还列出 `join_algorithm='parallel_hash'`、
+`preferred_block_size_bytes=2000000`、
+`allow_asynchronous_read_from_io_pool_for_merge_tree=true` 三条查询设置，但其可执行
+脚本 `40_run_queries.sh` 和 `10_deploy_ck.sh` 都没有设置这三项。本用例以**可执行脚本**
+为准，不设置它们：强制 `parallel_hash` 会在 SF100 的六表 join 上放大内存并触发外部
+聚合落盘，反而偏离参考口径。`config.xml` 另按源脚本补齐
+`max_concurrent_queries=100`、`max_thread_pool_size=20000`、
+`uncompressed_cache_size=0`、`mmap_cache_size=16384`、`mlock_executable=false`、
+`query_log.flush_interval_milliseconds=7500`、`default_profile/default_database`
+与 `user_directories.local_directory=${CH_DATA}/access/`。
 
 端口不使用 9000/8123：9000 在多组件同机时可能被 HDFS NameNode 占用，且同机
 并行任务需要隔离；`tcp_port` 由 run ID 派生到 19000–19399，`http_port` 到
@@ -229,7 +240,7 @@ df -B1 --output=avail "${PERF_WORK_DIR}"
 | `tpch-qNN/duration_ms` | 每条查询 3 轮 `query_duration_ms` 的中位数 | ms | 越小越好 |
 
 共 23 项指标，分组为 `tpch-22-total` 与 `tpch-qNN`。固定负载参数写入 JSON 的
-`parameters`：SF、轮次、查询数、`max_threads`、内存上限、三条查询设置和计时口径。
+`parameters`：SF、轮次、查询数、`max_threads`、内存上限、`max_block_size` 和计时口径。
 解析器会拒绝：轮次或查询缺失、重复记录、非正/非有限耗时、查询编号越界。
 
 | 产物 | 内容 |
@@ -260,7 +271,7 @@ bash software/Bigdata/clickhouse/clickhouse_test.sh \
 |---|---|---|---|
 | 内核 / 系统调优 | THP=always、swapoff、`sysctl`、`limits.conf`、BIOS 电源策略 | **全部不做**，只记录 | 本仓库禁止修改内核参数 |
 | 容器规格 | 32U/128G（未写 cpuset 细节），`--privileged` | 32U/128G + cpuset 保留；**去掉 privileged** | 不再需要特权操作 |
-| 软件参数 | `max_threads=32`、110G/120G 内存、5G mark cache、三条查询设置 | **保持一致** | 跨架构可比 |
+| 软件参数 | `max_threads=32`、110G/120G 内存、5G mark cache、外部聚合阈值；文档 §7.2 的三条查询设置 | 前四项与源脚本一致；**三条查询设置不采用** | `40_run_queries.sh` 实际未设置这三项，文档与脚本冲突时以脚本为准 |
 | 端口 | 19000/18123 | 19000–19399 / 19500–19899，按 run ID 派生 | 同机并行隔离 |
 | 数据规模 | SF1 回归 / SF100 正式 | **SF100 正式**；`CLICKHOUSE_SF=1` 可做快速回归 | 与 bdperf 的正式口径一致 |
 | 系统用户 | 容器内 root | Runner UID/GID | 宿主可读可删 |
