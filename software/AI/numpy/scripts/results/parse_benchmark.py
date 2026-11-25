@@ -240,10 +240,21 @@ def validate_environment() -> dict:
         raise ValidationError(f"NUMPY_REPS/NUMPY_WARMUPS must be integers: {exc}") from exc
     require(reps >= 1, "NUMPY_REPS must be at least 1")
     require(warmups >= 0, "NUMPY_WARMUPS must be non-negative")
+    # Base measurements are pinned by NUMPY_BASELINE_COMMIT; the optimized
+    # variant measures a branch tip, so its build stage exports the resolved
+    # commit as NUMPY_EXPECTED_COMMIT.
+    expected_commit = (
+        os.environ.get("NUMPY_EXPECTED_COMMIT") or os.environ["NUMPY_BASELINE_COMMIT"]
+    ).strip()
+    require(
+        bool(expected_commit),
+        "NUMPY_EXPECTED_COMMIT/NUMPY_BASELINE_COMMIT must name the measured commit",
+    )
     return {
         "reps": reps,
         "warmups": warmups,
         "baseline_commit": os.environ["NUMPY_BASELINE_COMMIT"].strip(),
+        "expected_commit": expected_commit,
         "python": normalise_python(os.environ["NUMPY_PYTHON_SHORT"]),
         "software_version": os.environ["SOFTWARE_VERSION"],
         "variant": os.environ["PERF_VARIANT"],
@@ -261,9 +272,10 @@ def validate_run_metadata(payload: dict, environment: dict, path: Path) -> str:
     )
     commit = payload.get("commit_hash")
     require(
-        commit_matches(commit, environment["baseline_commit"]),
-        f"results commit_hash {commit!r} does not match NUMPY_BASELINE_COMMIT "
-        f"{environment['baseline_commit']!r}",
+        commit_matches(commit, environment["expected_commit"]),
+        f"results commit_hash {commit!r} does not match the expected commit "
+        f"{environment['expected_commit']!r} "
+        f"(NUMPY_BASELINE_COMMIT/NUMPY_EXPECTED_COMMIT)",
     )
     run_python = normalise_python(payload.get("python"))
     require(
@@ -451,6 +463,18 @@ def main(argv: list[str]) -> int:
         "measured": len(entries),
         "results": entries,
     }
+    if environment["variant"] == "optimized":
+        # Optional provenance of a branch-tip measurement: the branch, the commit
+        # the range excluded (HEAD~1), and the range itself.
+        tested_branch = os.environ.get("NUMPY_EXPECTED_BRANCH", "").strip()
+        parent_commit = os.environ.get("NUMPY_EXPECTED_PARENT", "").strip()
+        commit_range = os.environ.get("NUMPY_COMMIT_RANGE", "").strip()
+        if tested_branch:
+            document["branch"] = tested_branch
+        if parent_commit:
+            document["parent_commit"] = parent_commit
+        if commit_range:
+            document["commit_range"] = commit_range
     samples_document = {
         "commit": payload.get("commit_hash"),
         "reps": environment["reps"],
