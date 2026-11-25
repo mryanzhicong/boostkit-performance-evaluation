@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
+
+XLA_BUILD_PACKAGES=(git curl jq python3 tar gzip unzip findutils sed coreutils
+    which diffutils patch make gcc gcc-c++)
+
+install_build_dependencies() {
+    local -a dnf_options=()
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    log_message 'installing build packages inside the XLA container'
+    container_exec_root dnf "${dnf_options[@]}" install -y "${XLA_BUILD_PACKAGES[@]}" || {
+        log_message 'ERROR: failed to install build packages inside the XLA container'
+        return 30
+    }
+    local command_name
+    for command_name in git curl jq python3 tar unzip; do
+        container_exec command -v "${command_name}" >/dev/null 2>&1 || {
+            log_message "ERROR: required command is missing in the XLA container: ${command_name}"
+            return 30
+        }
+    done
+}
+
+# The bazelisk binary lives under PERF_WORK_DIR, which is bind-mounted into the
+# container; the offline archive is read on the host and staged there.
+fetch_bazelisk() {
+    local archive_name expected_sha256 local_archive
+    case "${EXPECTED_ARCH}" in
+        x86_64)
+            archive_name="bazelisk-linux-amd64"
+            expected_sha256="${BAZELISK_X86_64_SHA256}"
+            ;;
+        aarch64)
+            archive_name="bazelisk-linux-arm64"
+            expected_sha256="${BAZELISK_AARCH64_SHA256}"
+            ;;
+    esac
+    mkdir -p "$(dirname "${BAZELISK_BIN}")"
+    # Upstream release assets carry no version in the file name; the pinned
+    # SHA-256 below identifies the version.
+    local_archive="${XLA_ARCHIVE_DIR}/${archive_name}"
+    if [[ -x "${BAZELISK_BIN}" ]]; then
+        log_message "reusing cached bazelisk ${BAZELISK_VERSION}"
+    elif [[ -s "${local_archive}" ]]; then
+        log_message "using local bazelisk archive: ${local_archive}"
+        cp "${local_archive}" "${BAZELISK_BIN}" || return 30
+    else
+        log_message "downloading bazelisk ${BAZELISK_VERSION} for ${archive_name}"
+        with_network_proxy curl -fL --retry 3 --connect-timeout 30 \
+            -o "${BAZELISK_BIN}" \
+            "${BAZELISK_RELEASE_BASE}/${BAZELISK_VERSION}/${archive_name}" || return 30
+    fi
+    verify_sha256 "${BAZELISK_BIN}" "${expected_sha256}" || return 30
+    chmod 0755 "${BAZELISK_BIN}"
+}
+
+clone_xla() {
+    local attempt
+    for attempt in 1 2 3; do
+        log_message "cloning ${XLA_REPOSITORY} at ${XLA_COMMIT} inside the container (attempt ${attempt}/3)"
+        container_exec sh -c "rm -rf '${XLA_SRC_DIR}'" 2>/dev/null || true
+        if container_exec git clone --quiet --filter=blob:none \
+               -c http.postBuffer=524288000 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=60 \
+               "${XLA_REPOSITORY}" "${XLA_SRC_DIR}" \
+           && container_exec git -C "${XLA_SRC_DIR}" checkout --quiet --detach "${XLA_COMMIT}"; then
+            break
+        fi
+        if [[ "${attempt}" -ge 3 ]]; then
+            log_message "ERROR: cloning the XLA checkout failed after ${attempt} attempts"
+            return 30
+        fi
+        log_message "WARN: cloning the XLA checkout failed; retrying in 10s"
+        sleep 10
+    done
+    local actual_commit
+    actual_commit="$(container_exec git -C "${XLA_SRC_DIR}" rev-parse --short=12 HEAD)" || return 30
+    [[ "${actual_commit}" == "${SOFTWARE_VERSION}" ]] || {
+        log_message "ERROR: cloned XLA is ${actual_commit}, expected ${SOFTWARE_VERSION}"
+        return 30
+    }
+    [[ "$(container_exec git -C "${XLA_SRC_DIR}" rev-parse HEAD)" == "${XLA_COMMIT}" ]] || {
+        log_message 'ERROR: full commit verification failed'
+        return 30
+    }
+    printf '%s\n' "${actual_commit}" > "${PERF_ACTUAL_VERSION_FILE}"
+}
+
+select_bazel_repository_cache() {
+    local shared="${XLA_BAZEL_REPOSITORY_CACHE}"
+    if [[ -n "${shared}" ]] && mkdir -p "${shared}" 2>/dev/null && [[ -w "${shared}" ]]; then
+        BAZEL_REPOSITORY_CACHE="${shared}"
+        log_message "using shared bazel repository cache: ${shared}"
+        return 0
+    fi
+    [[ -n "${shared}" ]] && log_message "WARN: shared bazel repository cache is not writable: ${shared}"
+    BAZEL_REPOSITORY_CACHE="${PERF_WORK_DIR}/bazel-repository-cache"
+    mkdir -p "${BAZEL_REPOSITORY_CACHE}"
+    log_message "using task-private bazel repository cache: ${BAZEL_REPOSITORY_CACHE}"
+}
+
+build_xla_base() {
+    initialize_runtime || return $?
+    select_bazel_repository_cache || return $?
+    require_xla_container || return $?
+    install_build_dependencies || return $?
+    fetch_bazelisk || return $?
+    clone_xla || return $?
+    container_exec test -f "${XLA_SRC_DIR}/.bazelversion" || {
+        log_message 'ERROR: the pinned checkout has no .bazelversion'
+        return 40
+    }
+    log_message "building the official benchmark harness inside the container"
+    container_exec sh -c \
+        "cd '${XLA_SRC_DIR}' && \
+         if [ -f ./configure.py ]; then python3 ./configure.py --backend=CPU || true; fi && \
+         '${BAZELISK_BIN}' --output_user_root='${PERF_WORK_DIR}/bazel-root' \
+           build -c opt --config=nonccl --jobs='$(getconf _NPROCESSORS_ONLN)' \
+           --repository_cache='${BAZEL_REPOSITORY_CACHE}' \
+           //xla/tools/multihost_hlo_runner:hlo_runner_main \
+           //xla/tools:compute_xspace_stats_main" || return 40
+    container_exec test -x "${HLO_RUNNER_BIN}" || {
+        log_message 'ERROR: benchmark harness binaries are missing after the build'
+        return 40
+    }
+    container_exec test -x "${XSPACE_STATS_BIN}" || {
+        log_message 'ERROR: benchmark harness binaries are missing after the build'
+        return 40
+    }
+    container_exec test -f "${OFFICIAL_RUN_BENCHMARK}" || {
+        log_message 'ERROR: the official run_benchmark.sh is missing in the checkout'
+        return 40
+    }
+    log_message "XLA ${SOFTWARE_VERSION} built with the official benchmark harness"
+}

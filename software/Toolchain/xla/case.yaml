@@ -1,0 +1,58 @@
+name: xla
+category: Toolchain
+enabled: true
+versions:
+  - "1930995a8aab"
+test_tools:
+  xla_benchmark_harness:
+    version: "与被测软件版本一致"
+    revision: 1930995a8aabe45a13854f701b5b39ab732aef94
+  bazelisk:
+    version: "v1.29.0"
+  bazel:
+    version: "8.8.2"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_xla
+    start:
+      script: scripts/stages/start.sh
+      function: start_xla_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_xla_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_xla_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  hlo_benchmark_output:
+    path: hlo_benchmark_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result_dir:
+    path: benchmark_runs
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_xla.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
