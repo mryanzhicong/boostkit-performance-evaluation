@@ -41,7 +41,7 @@ Doris 官方发布页不提供 tar 包的独立校验文件；本用例在适配
 
 ```bash
 command -v docker >/dev/null && docker info >/dev/null
-ARCHIVE="${DORIS_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+ARCHIVE="${DORIS_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
 URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
 [[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
 [[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
