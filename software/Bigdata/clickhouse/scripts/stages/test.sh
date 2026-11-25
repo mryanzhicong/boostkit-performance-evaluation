@@ -6,39 +6,10 @@ ch_client() {
 }
 
 prepare_tpch_kit() {
-    local zip="${CH_TPCH_OFFLINE_DIR}/tpch-kit-master.zip"
     local kit="${PERF_WORK_DIR}/tpch-kit"
-    if [[ ! -d "${kit}/dbgen" ]]; then
-        if [[ -s "${zip}" ]]; then
-            log_message "using local tpch-kit: ${zip}"
-            cp -- "${zip}" "${PERF_WORK_DIR}/tpch-kit-master.zip" || return 30
-        else
-            log_message 'downloading tpch-kit'
-            with_network_proxy curl -fSL --retry 3 --connect-timeout 30 \
-                -o "${PERF_WORK_DIR}/tpch-kit-master.zip" \
-                "https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master" || return 30
-        fi
-        rm -rf "${PERF_WORK_DIR}/tpch-kit-extract"
-        mkdir -p "${PERF_WORK_DIR}/tpch-kit-extract"
-        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" \
-            "${PERF_WORK_DIR}/tpch-kit-extract" || return 30
-        # The archive's top directory name changes between commits; locate dbgen
-        # instead of assuming "tpch-kit-master".
-        local dbgen_dir
-        dbgen_dir="$(find "${PERF_WORK_DIR}/tpch-kit-extract" -maxdepth 3 -type d -name dbgen -print -quit)"
-        [[ -n "${dbgen_dir}" ]] || {
-            log_error 'tpch-kit archive has no dbgen directory'; return 30;
-        }
-        ln -sfn "$(dirname "${dbgen_dir}")" "${kit}"
-    fi
-    if ! ch_exec bash -c 'command -v gcc && command -v make' >/dev/null 2>&1; then
-        log_message 'installing gcc and make inside the container'
-        ch_exec_root install -y gcc make || return 30
-    fi
-    if [[ ! -x "${kit}/dbgen/dbgen" ]]; then
-        log_message 'building TPC-H dbgen in the container'
-        ch_exec bash -c "cd '${kit}/dbgen' && make -j\"\$(nproc)\"" >/dev/null || return 30
-    fi
+    [[ -x "${kit}/dbgen/dbgen" ]] || {
+        log_error 'TPC-H dbgen is missing; the build stage must prepare it'; return 30;
+    }
 }
 
 generate_tpch_data() {

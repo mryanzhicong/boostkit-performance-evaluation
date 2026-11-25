@@ -62,6 +62,10 @@ docker run --rm --network=none "${CH_CONTAINER_IMAGE}" cat /etc/os-release   # �
 
 后续 `start`/`test`/`stop` 只读 `container-image.txt`，不重复下载或 `docker load`。
 
+构建阶段还会在容器内安装并校验 `gcc`、`make`，把 tpch-kit 解包到
+`${PERF_WORK_DIR}/tpch-kit-extract` 并编译 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen`；
+`test` 阶段只负责生成数据、导入和跑查询，不再安装编译工具。
+
 三个官方 tgz 解包到 `${PERF_WORK_DIR}/ch-pkgs`；`clickhouse` 是 multiplexer 二进制，
 三个包里的同名文件只取 `common-static` 那一份，`server`/`client` 包仅用于满足
 发行版布局。实际使用的命令是：
@@ -156,7 +160,7 @@ docker exec --detach -e HOME="${PERF_WORK_DIR}" \
 
 ## 测试负载
 
-1. 在容器内编译 `dbgen`（缺 gcc/make 时先 `dnf install`），生成 SF1 数据到
+1. 使用构建阶段编译好的 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen` 生成 SF1 数据到
    `${PERF_WORK_DIR}/tpch-data/sf1`，并删除每行末尾的 `|`。
 2. 建库 `${CH_DATABASE}`（`tpch_sf1`）与 8 张 MergeTree 表，全部 `ORDER BY` 主键，
    不设分区键；金额列 `Decimal(15,2)`、日期列 `Date`、`l_orderkey/o_orderkey` 为

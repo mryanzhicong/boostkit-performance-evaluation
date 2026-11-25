@@ -129,6 +129,47 @@ start_private_container() {
     fi
 }
 
+install_container_tools() {
+    if ! ch_exec bash -c 'command -v gcc >/dev/null 2>&1 && command -v make >/dev/null 2>&1'; then
+        log_message 'installing gcc and make in the container'
+        ch_exec_root install -y gcc make || return 30
+    fi
+    ch_exec bash -c 'gcc --version >/dev/null 2>&1 && make --version >/dev/null 2>&1' || {
+        log_error 'gcc/make are not usable in the container'; return 30;
+    }
+}
+
+prepare_tpch_kit() {
+    local zip="${CH_TPCH_OFFLINE_DIR}/tpch-kit-master.zip"
+    local kit="${PERF_WORK_DIR}/tpch-kit"
+    if [[ ! -d "${kit}/dbgen" ]]; then
+        if [[ -s "${zip}" ]]; then
+            log_message "using local tpch-kit: ${zip}"
+            cp -- "${zip}" "${PERF_WORK_DIR}/tpch-kit-master.zip" || return 30
+        else
+            log_message 'downloading tpch-kit'
+            with_network_proxy curl -fSL --retry 3 --connect-timeout 30 \
+                -o "${PERF_WORK_DIR}/tpch-kit-master.zip" \
+                "https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master" || return 30
+        fi
+        rm -rf "${PERF_WORK_DIR}/tpch-kit-extract"
+        mkdir -p "${PERF_WORK_DIR}/tpch-kit-extract"
+        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" \
+            "${PERF_WORK_DIR}/tpch-kit-extract" || return 30
+        local dbgen_dir
+        dbgen_dir="$(find "${PERF_WORK_DIR}/tpch-kit-extract" -maxdepth 3 -type d -name dbgen -print -quit)"
+        [[ -n "${dbgen_dir}" ]] || { log_error 'tpch-kit archive has no dbgen'; return 30; }
+        ln -sfn "$(dirname "${dbgen_dir}")" "${kit}"
+    fi
+    if [[ ! -x "${kit}/dbgen/dbgen" ]]; then
+        log_message 'building TPC-H dbgen in the container'
+        ch_exec bash -c "cd '${kit}/dbgen' && make -j\"\$(nproc)\"" >/dev/null || {
+            log_error 'TPC-H dbgen build failed'; return 30;
+        }
+    fi
+    [[ -x "${kit}/dbgen/dbgen" ]] || { log_error 'TPC-H dbgen binary is missing'; return 30; }
+}
+
 build_clickhouse_base() {
     local actual
     initialize_runtime || return $?
@@ -137,6 +178,8 @@ build_clickhouse_base() {
     prepare_clickhouse_packages || return $?
     prepare_container_image || return $?
     start_private_container || return $?
+    install_container_tools || return $?
+    prepare_tpch_kit || return $?
 
     actual="$(ch_exec "${CH_BIN}" --version 2>&1 | tr -d '\r' \
         | sed -nE 's/.*version ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -n 1)" || return 30
