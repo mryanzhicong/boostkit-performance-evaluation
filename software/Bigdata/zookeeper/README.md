@@ -78,7 +78,7 @@ docker exec <容器> "${ZK_HOME}/bin/zkServer.sh" version
 输出写入 `PERF_ACTUAL_VERSION_FILE`；`build` 成功后写 `build_variant.json`。
 
 每次运行创建一个带任务标签的容器，名称为
-`boostkit-zookeeper-<架构>-<run-id>`。创建命令如下（`<...>` 由变量替换）：
+`boostkit-zookeeper-<架构>-<run-id>`。创建命令如下：
 
 ```bash
 docker run --detach --name "${ZK_CONTAINER_NAME}" \
