@@ -30,11 +30,13 @@ def parse_write(text: str) -> float:
     body = section[1].split("===== randomRead", 1)[0]
     rows = [int(value) for value in ROW_COUNT.findall(body)]
     elapsed = [int(value) for value in ELAPSED_MS.findall(body)]
-    if len(rows) != 1 or len(elapsed) != 1:
-        raise ValueError("randomWrite must report exactly one Row count and elapsed time")
-    if rows[0] <= 0 or elapsed[0] <= 0:
+    if not rows or not elapsed:
+        raise ValueError("randomWrite reported no Row count or elapsed time")
+    # HBase prints the driver summary last; the same lines can also appear in
+    # map-task logs, so use the final pair instead of requiring exactly one.
+    if rows[-1] <= 0 or elapsed[-1] <= 0:
         raise ValueError("randomWrite reported non-positive rows or elapsed time")
-    return rows[0] / (elapsed[0] / 1000.0)
+    return rows[-1] / (elapsed[-1] / 1000.0)
 
 
 def parse_reads(text: str, rounds: int) -> list[tuple[float, float]]:

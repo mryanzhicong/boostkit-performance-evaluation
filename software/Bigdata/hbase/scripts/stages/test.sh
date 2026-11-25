@@ -10,6 +10,7 @@ run_pe_write() {
         --presplit="${HBASE_PRESPLIT}" \
         randomWrite "${HBASE_WRITE_MAPS}" > "${log}" 2>&1 || return 50
     grep -q 'Row count=' "${log}" || { log_error 'randomWrite produced no Row count'; return 50; }
+    log_message "randomWrite summaries: $(grep -c 'Row count=' "${log}" || true) Row count, $(grep -c 'Elapsed time in milliseconds=' "${log}" || true) elapsed"
 }
 
 flush_and_compact() {

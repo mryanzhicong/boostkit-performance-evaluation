@@ -56,6 +56,12 @@ def test_rejects_missing_read_round() -> None:
         MODULE.build_result(raw(rounds=2), 3, 2, 16, 8, 100000)
 
 
+def test_uses_the_last_write_summary_when_the_log_repeats_it() -> None:
+    repeated = WRITE + WRITE.replace("2097152", "100").replace("25040", "100")
+    result = MODULE.build_result(repeated + raw()[len(WRITE):], 3, 2, 16, 8, 100000)
+    assert result["results"]["pe-randomWrite/throughput"]["value"] == pytest.approx(1000.0)
+
+
 @pytest.mark.parametrize("body", [
     WRITE.replace("Row count=2097152", ""),
     WRITE.replace("Elapsed time in milliseconds=25040", ""),
