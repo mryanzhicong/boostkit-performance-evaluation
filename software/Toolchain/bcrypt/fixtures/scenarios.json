@@ -1,0 +1,22 @@
+{
+  "software": "bcrypt",
+  "version": "6.0.0",
+  "suite": "bcrypt-cost-load",
+  "description": "Representative bcrypt load from the release manual: cost=10 hashing and comparison, executed single threaded in fresh Node.js processes. Cost=12 scenarios extend the same load to a four-times more expensive work factor.",
+  "password": "BoostKit-bcrypt-benchmark-2026",
+  "scenarios": [
+    { "id": "hash_sync_cost10", "op": "hash", "api": "sync", "cost": 10, "ops": 10 },
+    { "id": "hash_async_cost10", "op": "hash", "api": "async", "cost": 10, "ops": 10 },
+    { "id": "compare_sync_cost10", "op": "compare", "api": "sync", "cost": 10, "ops": 10 },
+    { "id": "compare_async_cost10", "op": "compare", "api": "async", "cost": 10, "ops": 10 },
+    { "id": "hash_sync_cost12", "op": "hash", "api": "sync", "cost": 12, "ops": 10 },
+    { "id": "compare_async_cost12", "op": "compare", "api": "async", "cost": 12, "ops": 10 }
+  ],
+  "selection": {
+    "upstream_suite": false,
+    "reason": "node.bcrypt.js ships no benchmark suite; the release manual defines a fixed cost=10 hash/compare load with ten synchronous operations. This case keeps that load, adds the asynchronous API (same C++ work on the libuv thread pool) and a cost=12 hashing scenario to cover a harder work factor.",
+    "excluded": [
+      "concurrent/parallel hashing, because the manual measures single-threaded throughput and the libuv thread pool size would otherwise become an untracked variable"
+    ]
+  }
+}
