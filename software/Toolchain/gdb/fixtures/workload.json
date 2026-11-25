@@ -1,0 +1,113 @@
+{
+  "comment": [
+    "Committed description of the deterministic GDB workload matrix.",
+    "The fixtures themselves are generated (scripts/fixtures/generate_fixtures.py) and",
+    "their digests are pinned in fixtures.json; this file fixes the sizes, the scenario",
+    "table and the upstream testsuite subset so the build stage can verify both."
+  ],
+  "parameters": {
+    "symbols_small": 1000,
+    "symbols_medium": 10000,
+    "symbols_large": 50000,
+    "breakpoints": 200,
+    "steps": 500,
+    "lookups": 5000,
+    "deep_frames": 2000
+  },
+  "fixture_cflags": "-g -O0 -fno-omit-frame-pointer -fno-inline -fno-optimize-sibling-calls",
+  "configure_options": [
+    "--prefix=<isolated prefix>",
+    "--with-python=python3",
+    "--disable-binutils",
+    "--disable-gas",
+    "--disable-ld",
+    "--disable-gprof",
+    "--disable-gold",
+    "--disable-sim",
+    "--disable-tui",
+    "--without-guile",
+    "--without-intel-pt",
+    "--with-system-gmp",
+    "--with-system-mpfr",
+    "--disable-nls"
+  ],
+  "binaries": [
+    "symbols_1000",
+    "symbols_10000",
+    "symbols_50000",
+    "steps_500",
+    "deep_2000"
+  ],
+  "core_file": "deep_2000.core",
+  "expected_fixture_sources": 8,
+  "scenarios": [
+    {
+      "name": "startup_version",
+      "kind": "fixture",
+      "fixture": "gdb",
+      "command": "gdb --version"
+    },
+    {
+      "name": "symbol_load_1000",
+      "kind": "fixture",
+      "fixture": "symbols_1000",
+      "command": "gdb -batch -ex 'info functions fn_00042' -ex quit symbols_1000"
+    },
+    {
+      "name": "symbol_load_50000",
+      "kind": "fixture",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -ex 'info functions fn_49975' -ex quit symbols_50000"
+    },
+    {
+      "name": "breakpoint_set_200",
+      "kind": "fixture",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x breakpoints.cmd symbols_50000"
+    },
+    {
+      "name": "step_500",
+      "kind": "fixture",
+      "fixture": "steps_500",
+      "command": "gdb -batch -x steps.cmd steps_500"
+    },
+    {
+      "name": "info_functions_10000",
+      "kind": "fixture",
+      "fixture": "symbols_10000",
+      "command": "gdb -batch -ex 'info functions' symbols_10000 | wc -l"
+    },
+    {
+      "name": "python_eval_5000",
+      "kind": "fixture",
+      "fixture": "symbols_50000",
+      "command": "gdb -batch -x python_eval.py symbols_50000"
+    },
+    {
+      "name": "backtrace_deep_2000",
+      "kind": "fixture",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex 'break crash_here' -ex run -ex bt deep_2000 | wc -l"
+    },
+    {
+      "name": "core_backtrace_2000",
+      "kind": "fixture",
+      "fixture": "deep_2000",
+      "command": "gdb -batch -ex bt deep_2000 deep_2000.core | wc -l"
+    },
+    {
+      "name": "upstream_testsuite_python",
+      "kind": "testsuite",
+      "fixture": "testsuite",
+      "command": "make check-gdb RUNTESTFLAGS=\"gdb.python/py-symbol.exp gdb.python/py-value.exp gdb.python/py-breakpoint.exp\""
+    }
+  ],
+  "testsuite": {
+    "tests": [
+      "gdb.python/py-symbol.exp",
+      "gdb.python/py-value.exp",
+      "gdb.base/break.exp"
+    ],
+    "min_expected_passes": 12
+  }
+}
