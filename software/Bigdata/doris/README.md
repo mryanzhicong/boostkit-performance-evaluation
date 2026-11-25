@@ -186,13 +186,16 @@ openEuler 最小镜像没有 util-linux；`start_be.sh` 还会在 `vm.max_map_co
 
    ```bash
    curl -sS -L --location-trusted -u root: \
+     -H 'Expect: 100-continue' \
      -H 'format: csv' -H 'column_separator: |' -H 'columns: <列名列表>' \
      -T <table>.tbl \
      http://127.0.0.1:<http_port>/api/tpch_sf1/<table>/_stream_load
    ```
 
    必须同时带 `-L` 和 `--location-trusted`，并解析返回 JSON 的 `Status` 字段；
-   失败时 HTTP 仍可能是 200。
+   失败时 HTTP 仍可能是 200。Doris 2.1.2 的 Stream Load 还要求请求带
+   `Expect: 100-continue`，缺少时返回
+   `{"status":"FAILED","msg":"There is no 100-continue header"}`。
 4. 校验 SF1 行数（同 ClickHouse 用例的 8 个数字），不一致直接失败。
 5. 用 pymysql 串行执行 22 条查询 × 3 轮，每轮开始前设置
    `parallel_pipeline_task_num=32`、`exec_mem_limit=107374182400`、
