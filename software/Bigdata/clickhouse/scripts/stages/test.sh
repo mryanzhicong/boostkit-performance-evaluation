@@ -157,7 +157,19 @@ run_tpch_queries() {
             fi
         done
         ch_client --query 'SYSTEM FLUSH LOGS' >/dev/null || return 50
-        output="$(ch_client --query "SELECT query_id, query_duration_ms, read_rows, memory_usage FROM system.query_log WHERE type = 'QueryFinish' AND query_id LIKE 'ck-${PERF_RUN_ID}-r${round}-%' FORMAT TSV" 2>/dev/null)" || return 50
+        # query_log is written asynchronously: poll briefly until all 22
+        # QueryFinish rows of this round are visible.
+        local attempt rows=0
+        for attempt in {1..15}; do
+            output="$(ch_client --query "SELECT query_id, query_duration_ms, read_rows, memory_usage FROM system.query_log WHERE type = 'QueryFinish' AND query_id LIKE 'ck-${PERF_RUN_ID}-r${round}-%' FORMAT TSV" 2>/dev/null)" || return 50
+            rows="$(printf '%s\n' "${output}" | grep -c "ck-${PERF_RUN_ID}-r${round}-q" || true)"
+            (( rows >= 22 )) && break
+            sleep 1
+        done
+        (( rows >= 22 )) || {
+            log_error "round ${round}: only ${rows} of 22 queries reached system.query_log"
+            return 50
+        }
         printf '%s\n' "${output}" >> "${query_log}"
     done
 }
