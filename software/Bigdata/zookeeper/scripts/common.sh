@@ -134,6 +134,11 @@ zk_exec_root() {
     docker exec --user 0 "${ZK_CONTAINER_NAME}" dnf "${proxy[@]}" "$@"
 }
 
+# Shared by start and test: every stage runs in a new shell.
+zk_mntr() {
+    zk_exec bash -c "exec 3<>/dev/tcp/127.0.0.1/${ZK_CLIENT_PORT}; printf 'mntr\n' >&3; cat <&3" 2>/dev/null
+}
+
 check_container() {
     [[ "$(docker inspect --format '{{.State.Running}}' "${ZK_CONTAINER_NAME}" 2>/dev/null)" == true ]] || {
         log_error "managed container is not running: ${ZK_CONTAINER_NAME}"; return 40;

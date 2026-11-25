@@ -21,10 +21,6 @@ autopurge.purgeInterval=6
 EOF
 }
 
-zk_mntr() {
-    zk_exec bash -c "exec 3<>/dev/tcp/127.0.0.1/${ZK_CLIENT_PORT}; printf 'mntr\n' >&3; cat <&3" 2>/dev/null
-}
-
 wait_for_zookeeper() {
     local attempt output
     for attempt in {1..60}; do
