@@ -37,23 +37,65 @@ Doris 官方发布页不提供 tar 包的独立校验文件；本用例在适配
 
 ## 获取、构建与容器启动
 
-构建阶段加载 openEuler 镜像（校验 `.sha256sum`、架构与 `/etc/os-release`），
-解包官方 tar 到 `${PERF_WORK_DIR}/apache-doris-2.1.2-bin-<x64|arm64>`，解包 BiSheng
+构建阶段先检查 Docker daemon 并加载 openEuler 24.03 LTS SP4 镜像：
+
+```bash
+command -v docker >/dev/null && docker info >/dev/null
+ARCHIVE="${DORIS_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+[[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
+[[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
+expected="$(awk 'NR == 1 {print $1}' "${ARCHIVE}.sha256sum")"
+actual="$(sha256sum "${ARCHIVE}")"
+[[ "${actual%% *}" == "${expected,,}" ]] || { echo "image SHA-256 mismatch"; exit 1; }
+output="$(docker load --input "${ARCHIVE}")"
+DORIS_CONTAINER_IMAGE="$(printf '%s\n' "${output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+printf '%s\n' "${DORIS_CONTAINER_IMAGE}" > "${PERF_WORK_DIR}/container-image.txt"
+docker image inspect --format '{{.Architecture}}' "${DORIS_CONTAINER_IMAGE}"   # x86_64→amd64、aarch64→arm64
+docker run --rm --network=none "${DORIS_CONTAINER_IMAGE}" cat /etc/os-release   # 必须是 openEuler 24.03 LTS SP4
+```
+
+随后解包官方 tar 到 `${PERF_WORK_DIR}/apache-doris-2.1.2-bin-<x64|arm64>`，解包 BiSheng
 JDK，把 `doris_client.py` 复制到 `${PERF_WORK_DIR}/tools`。镜像自带 python3，但
 没有 pip，且 dnf 源在部分环境不可用，因此 pymysql 采用**纯 Python wheel 直接解包**
 到 `${PERF_WORK_DIR}/python`，通过 `PYTHONPATH` 导入（适配时使用 1.2.4 的
 `py3-none-any` wheel）；不再依赖容器内 pip 或 dnf 安装 Python 包。镜像自带 curl，
 Stream Load 直接使用。
 
-实际版本从 FE 的 `doris-fe.jar` 清单读取后写入 `PERF_ACTUAL_VERSION_FILE`，
-不沿用请求值；`build` 成功后写 `build_variant.json`。
+实际版本从 BE 二进制的 `--version` 输出读取（`doris_be --version` 打印
+`doris-2.1.2-rc04(AVX2) ...`；FE 的 `doris-fe.jar` 清单里是过期的
+`1.2-SNAPSHOT`，不能用），解析出 `2.1.2-rc04` 写入 `PERF_ACTUAL_VERSION_FILE`；
+`build` 成功后写 `build_variant.json`。
 
-容器名称为 `boostkit-doris-<架构>-<run-id>`，创建命令与 ZooKeeper 用例相同：
-`--network=host`、Runner UID/GID、`--cpuset-cpus=0-31`、`--cpuset-mems=0`、
-`--memory=128g --memory-swap=128g`、`--ulimit nofile=1048576:1048576`、
-`--ulimit memlock=-1:-1`、工作目录与结果目录同路径挂载，不加 `--privileged`。
+容器名称为 `boostkit-doris-<架构>-<run-id>`，创建命令如下：
+
+```bash
+docker run --detach --name "${DORIS_CONTAINER_NAME}" \
+  --label "boostkit.doris.run-id=${PERF_RUN_ID}" \
+  --network=host \
+  --user "$(id -u):$(id -g)" \
+  --cpuset-cpus="${DORIS_CPUSET}" \
+  --cpuset-mems="${DORIS_MEMSET}" \
+  --memory="${DORIS_MEMORY}" \
+  --memory-swap="${DORIS_MEMORY_SWAP}" \
+  --ulimit nofile=1048576:1048576 \
+  --ulimit memlock=-1:-1 \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${DORIS_CONTAINER_IMAGE}" sleep infinity
+```
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `DORIS_CPUSET` | `0-31` | 单 NUMA 节点上的 32 个物理核，两个架构必须相同 |
+| `DORIS_MEMSET` | `0` | 与 cpuset 对应的 NUMA 节点 |
+| `DORIS_MEMORY` / `DORIS_MEMORY_SWAP` | `128g` / `128g` | 容器内存与 swap 额度，相等即容器内禁用 swap |
+| `DORIS_CONTAINER_IMAGE` | 上一步 `docker load` 的输出 | 不写死 tag |
+
 开发机冒烟可用 `DORIS_CPUSET`、`DORIS_MEMSET`、`DORIS_MEMORY`、
-`DORIS_MEMORY_SWAP` 覆盖并注明；正式 Runner 必须用默认值。
+`DORIS_MEMORY_SWAP` 覆盖并注明；正式 Runner 必须用默认值。容器不加
+`--privileged`。
 
 代理存在时挂载 CA 目录并在容器内 `update-ca-trust extract`；没有代理时不挂载。
 
