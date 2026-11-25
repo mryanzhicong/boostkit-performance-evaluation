@@ -38,10 +38,26 @@ BiSheng JDK 8u472 的固定校验值：
 
 ## 获取、构建与容器启动
 
-脚本先检查 Docker daemon，再用离线归档加载镜像：核对同名 `.sha256sum`、执行
-`docker load`、检查镜像架构（`x86_64 → amd64`、`aarch64 → arm64`），并确认容器内
-`/etc/os-release` 是 openEuler 24.03 LTS SP4。镜像引用写入
-`${PERF_WORK_DIR}/container-image.txt`，`start/test/stop` 复用，不重复加载。
+脚本先检查 Docker daemon，再用离线归档加载镜像：
+
+```bash
+command -v docker >/dev/null && docker info >/dev/null
+ARCHIVE="${ZOOKEEPER_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+[[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
+[[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
+expected="$(awk 'NR == 1 {print $1}' "${ARCHIVE}.sha256sum")"
+actual="$(sha256sum "${ARCHIVE}")"
+[[ "${actual%% *}" == "${expected,,}" ]] || { echo "image SHA-256 mismatch"; exit 1; }
+output="$(docker load --input "${ARCHIVE}")"
+ZK_CONTAINER_IMAGE="$(printf '%s\n' "${output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+printf '%s\n' "${ZK_CONTAINER_IMAGE}" > "${PERF_WORK_DIR}/container-image.txt"
+docker image inspect --format '{{.Architecture}}' "${ZK_CONTAINER_IMAGE}"   # x86_64→amd64、aarch64→arm64
+docker run --rm --network=none "${ZK_CONTAINER_IMAGE}" cat /etc/os-release   # 必须是 openEuler 24.03 LTS SP4
+```
+
+镜像引用写入 `${PERF_WORK_DIR}/container-image.txt`，`start/test/stop` 复用，不重复
+下载或加载。
 
 ZooKeeper 归档与 BiSheng JDK 先复制到 `${PERF_WORK_DIR}`，分别用 SHA-512 与
 SHA-256 校验后解包；ZkBench 在容器内编译：
@@ -49,7 +65,7 @@ SHA-256 校验后解包；ZkBench 在容器内编译：
 ```bash
 tar -xzf "${PERF_WORK_DIR}/apache-zookeeper-3.6.2-bin.tar.gz" -C "${PERF_WORK_DIR}"
 tar -xzf "${PERF_WORK_DIR}/bisheng-jdk-8u472-b11-linux-<arch>.tar.gz" -C "${PERF_WORK_DIR}"
-"${ZK_JDK_HOME}/bin/javac" -nowarn -cp "${ZK_HOME}/lib/*" \
+"${ZK_JDK_HOME}/bin/javac" -encoding UTF-8 -nowarn -cp "${ZK_HOME}/lib/*" \
   -d "${ZK_BENCH_DIR}" "${ZK_BENCH_DIR}/ZkBench.java"
 ```
 
