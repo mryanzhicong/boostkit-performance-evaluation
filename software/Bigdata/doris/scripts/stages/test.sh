@@ -16,8 +16,16 @@ prepare_tpch_kit() {
                 -o "${PERF_WORK_DIR}/tpch-kit-master.zip" \
                 "https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master" || return 30
         fi
-        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" "${PERF_WORK_DIR}" || return 30
-        [[ -d "${kit}/dbgen" ]] || { log_error 'tpch-kit archive has no dbgen'; return 30; }
+        rm -rf "${PERF_WORK_DIR}/tpch-kit-extract"
+        mkdir -p "${PERF_WORK_DIR}/tpch-kit-extract"
+        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" \
+            "${PERF_WORK_DIR}/tpch-kit-extract" || return 30
+        local dbgen_dir
+        dbgen_dir="$(find "${PERF_WORK_DIR}/tpch-kit-extract" -maxdepth 3 -type d -name dbgen -print -quit)"
+        [[ -n "${dbgen_dir}" ]] || {
+            log_error 'tpch-kit archive has no dbgen'; return 30;
+        }
+        ln -sfn "$(dirname "${dbgen_dir}")" "${kit}"
     fi
     if ! doris_exec bash -c 'command -v gcc && command -v make' >/dev/null 2>&1; then
         doris_exec_root install -y gcc make || return 30
