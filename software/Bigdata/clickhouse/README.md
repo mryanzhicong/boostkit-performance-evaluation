@@ -36,8 +36,31 @@ ClickHouse 官方只为源码发布 `sha256`，tgz 没有独立的校验文件�
 
 ## 获取、构建与容器启动
 
-脚本先检查 Docker daemon，再按与 ZooKeeper 用例相同的方式加载 openEuler 镜像：
-核对 `.sha256sum`、`docker load`、检查镜像架构和容器内 `/etc/os-release`。
+脚本先检查 Docker daemon：
+
+```bash
+command -v docker >/dev/null && docker info >/dev/null
+```
+
+openEuler 24.03 LTS SP4 镜像归档优先读取本地目录，缺失才从官方地址下载；下载后
+按 `.sha256sum` 校验、`docker load`、核对架构与发行版：
+
+```bash
+ARCHIVE="${CLICKHOUSE_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+[[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
+[[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
+expected="$(awk 'NR == 1 {print $1}' "${ARCHIVE}.sha256sum")"
+actual="$(sha256sum "${ARCHIVE}")"
+[[ "${actual%% *}" == "${expected,,}" ]] || { echo "image SHA-256 mismatch"; exit 1; }
+output="$(docker load --input "${ARCHIVE}")"
+CH_CONTAINER_IMAGE="$(printf '%s\n' "${output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+printf '%s\n' "${CH_CONTAINER_IMAGE}" > "${PERF_WORK_DIR}/container-image.txt"
+docker image inspect --format '{{.Architecture}}' "${CH_CONTAINER_IMAGE}"   # x86_64→amd64、aarch64→arm64
+docker run --rm --network=none "${CH_CONTAINER_IMAGE}" cat /etc/os-release   # 必须是 openEuler 24.03 LTS SP4
+```
+
+后续 `start`/`test`/`stop` 只读 `container-image.txt`，不重复下载或 `docker load`。
 
 三个官方 tgz 解包到 `${PERF_WORK_DIR}/ch-pkgs`；`clickhouse` 是 multiplexer 二进制，
 三个包里的同名文件只取 `common-static` 那一份，`server`/`client` 包仅用于满足
@@ -54,13 +77,35 @@ ln -sfn "${CH_PKG_DIR}/clickhouse-common-static-24.5.1.1763/usr/bin/clickhouse" 
 版本从解包后的二进制读取，写入 `PERF_ACTUAL_VERSION_FILE`；`build` 成功后写
 `build_variant.json`。
 
-容器名称为 `boostkit-clickhouse-<架构>-<run-id>`，创建命令与 ZooKeeper 用例一致：
-`--network=host`、Runner UID/GID、`--cpuset-cpus=0-31`、`--cpuset-mems=0`、
-`--memory=128g --memory-swap=128g`、`--ulimit nofile=1048576:1048576`、
-`--ulimit memlock=-1:-1`、工作目录与结果目录同路径挂载，不加 `--privileged`。
+容器名称为 `boostkit-clickhouse-<架构>-<run-id>`，创建命令如下：
+
+```bash
+docker run --detach --name "${CH_CONTAINER_NAME}" \
+  --label "boostkit.clickhouse.run-id=${PERF_RUN_ID}" \
+  --network=host \
+  --user "$(id -u):$(id -g)" \
+  --cpuset-cpus="${CH_CPUSET}" \
+  --cpuset-mems="${CH_MEMSET}" \
+  --memory="${CH_MEMORY}" \
+  --memory-swap="${CH_MEMORY_SWAP}" \
+  --ulimit nofile=1048576:1048576 \
+  --ulimit memlock=-1:-1 \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${CH_CONTAINER_IMAGE}" sleep infinity
+```
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `CH_CPUSET` | `0-31` | 单 NUMA 节点上的 32 个物理核，两个架构必须相同 |
+| `CH_MEMSET` | `0` | 与 cpuset 对应的 NUMA 节点 |
+| `CH_MEMORY` / `CH_MEMORY_SWAP` | `128g` / `128g` | 容器内存与 swap 额度，相等即容器内禁用 swap |
+| `CH_CONTAINER_IMAGE` | 上一步 `docker load` 的输出 | 不写死 tag，避免误用同名镜像 |
+
 开发机做冒烟时可用 `CLICKHOUSE_CPUSET`、`CLICKHOUSE_MEMSET`、
 `CLICKHOUSE_MEMORY`、`CLICKHOUSE_MEMORY_SWAP` 覆盖，并在结果里注明；
-正式 Runner 必须使用默认值。
+正式 Runner 必须使用默认值。容器不加 `--privileged`。
 
 代理存在时，CA 证书目录只读挂载并在容器内 `update-ca-trust extract`；没有代理
 时不挂载证书目录。
