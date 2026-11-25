@@ -25,7 +25,6 @@ generate_tpch_data() {
     local table
     for table in customer lineitem nation orders part partsupp region supplier; do
         mv "${PERF_WORK_DIR}/tpch-kit/dbgen/${table}.tbl" "${data_dir}/${table}.tbl" || return 50
-        sed -i 's/|$//' "${data_dir}/${table}.tbl" || return 50
     done
 }
 
@@ -86,22 +85,32 @@ load_tpch_data() {
     local data_dir="${PERF_WORK_DIR}/tpch-data/sf${CH_SF}" table
     for table in region nation supplier customer part partsupp orders lineitem; do
         log_message "loading ${table}"
-        ch_exec bash -c "'${CH_BIN}' client --host 127.0.0.1 --port '${CH_TCP_PORT}' \
+        # dbgen writes a trailing "|" on every line; strip it while streaming
+        # so a 100 GB table is never rewritten in place.
+        ch_exec bash -c "sed 's/|$//' '${data_dir}/${table}.tbl' | \
+            '${CH_BIN}' client --host 127.0.0.1 --port '${CH_TCP_PORT}' \
             --format_csv_delimiter='|' \
-            --query 'INSERT INTO ${CH_DATABASE}.${table} FORMAT CSV' < '${data_dir}/${table}.tbl'" || return 50
+            --query 'INSERT INTO ${CH_DATABASE}.${table} FORMAT CSV'" || return 50
     done
 }
 
 verify_row_counts() {
     local expected table actual
-    declare -A expected_counts=(
-        [region]=5 [nation]=25 [supplier]=10000 [customer]=150000
-        [part]=200000 [partsupp]=800000 [orders]=1500000 [lineitem]=6001215
-    )
-    if [[ "${CH_SF}" != 1 ]]; then
-        log_message "SF${CH_SF}: skipping the fixed SF1 row-count assertions"
-        return 0
-    fi
+    case "${CH_SF}" in
+        1)
+            declare -A expected_counts=(
+                [region]=5 [nation]=25 [supplier]=10000 [customer]=150000
+                [part]=200000 [partsupp]=800000 [orders]=1500000 [lineitem]=6001215
+            ) ;;
+        100)
+            declare -A expected_counts=(
+                [region]=5 [nation]=25 [supplier]=1000000 [customer]=15000000
+                [part]=20000000 [partsupp]=80000000 [orders]=150000000 [lineitem]=600037902
+            ) ;;
+        *)
+            log_message "SF${CH_SF}: skipping the fixed row-count assertions"
+            return 0 ;;
+    esac
     for table in "${!expected_counts[@]}"; do
         expected="${expected_counts[${table}]}"
         actual="$(ch_client --query "SELECT count() FROM ${CH_DATABASE}.${table}" 2>/dev/null | tr -d '[:space:]')"
@@ -154,6 +163,13 @@ run_clickhouse_benchmark() {
     initialize_runtime || return $?
     check_container || return $?
     mkdir -p "${CH_RESULT_DIR}"
+    local required_bytes available_bytes
+    required_bytes="$(( CH_SF * 3 * 1024 * 1024 * 1024 ))"
+    available_bytes="$(df -B1 --output=avail "${PERF_WORK_DIR}" | tail -n 1 | tr -d ' ')"
+    if [[ ! "${available_bytes}" =~ ^[0-9]+$ ]] || (( available_bytes < required_bytes )); then
+        log_error "SF${CH_SF} needs at least $(( required_bytes / 1024 / 1024 / 1024 )) GiB free, found ${available_bytes:-unknown}"
+        return 50
+    fi
     prepare_tpch_kit || return $?
     generate_tpch_data || return $?
     create_schema || return $?

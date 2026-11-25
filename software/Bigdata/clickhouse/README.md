@@ -1,7 +1,7 @@
 # ClickHouse 24.5.1.1763 性能测试
 
 本用例在单容器内运行单节点 ClickHouse 24.5.1.1763，用 TPC-H 22 条查询测量
-SF1 数据量下的查询耗时：主指标是 22 条查询的服务端耗时合计，辅助指标是每条查询
+**SF100（约 110GB 原始数据）**下的查询耗时：主指标是 22 条查询的服务端耗时合计，辅助指标是每条查询
 的中位耗时。ClickHouse 的安装包、容器和正式测试都在本次任务的私有容器内完成；
 `start`、`test`、`stop` 复用 `build` 创建的那一个容器。
 
@@ -171,27 +171,47 @@ docker exec --detach -e HOME="${PERF_WORK_DIR}" \
 
 ## 测试负载
 
-1. 使用构建阶段编译好的 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen` 生成 SF1 数据到
-   `${PERF_WORK_DIR}/tpch-data/sf1`，并删除每行末尾的 `|`。
-2. 建库 `${CH_DATABASE}`（`tpch_sf1`）与 8 张 MergeTree 表，全部 `ORDER BY` 主键，
+默认正式规模是 **SF100**（约 110GB 原始 `.tbl`，数据库 `tpch_sf100`）；需要快速
+回归时可用 `CLICKHOUSE_SF=1`，其余参数不变。
+
+开始前检查工作目录可用空间，要求至少 `SF × 3 GiB`（SF100 即 300 GiB），不足直接
+失败：
+
+```bash
+df -B1 --output=avail "${PERF_WORK_DIR}"
+```
+
+1. 使用构建阶段编译好的 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen` 生成数据：
+
+   ```bash
+   cd "${PERF_WORK_DIR}/tpch-kit/dbgen" && ./dbgen -f -s 100
+   mkdir -p "${PERF_WORK_DIR}/tpch-data/sf100"
+   for t in customer lineitem nation orders part partsupp region supplier; do
+       mv "${t}.tbl" "${PERF_WORK_DIR}/tpch-data/sf100/${t}.tbl"
+   done
+   ```
+
+   `dbgen` 每行结尾带 `|`，导入时用 `sed 's/|$//'` 流式去掉，不原地重写文件，
+   避免 SF100 时多占一份 110GB 临时空间。
+2. 建库 `${CH_DATABASE}`（`tpch_sf100`）与 8 张 MergeTree 表，全部 `ORDER BY` 主键，
    不设分区键；金额列 `Decimal(15,2)`、日期列 `Date`、`l_orderkey/o_orderkey` 为
    `Int64`，其余整数 `Int32`。同时创建 q15 依赖的视图 `revenue0`。
 3. 逐表导入，`--format_csv_delimiter='|'`。以 lineitem 为例：
 
    ```bash
-   "${CH_BIN}" client --host 127.0.0.1 --port "${CH_TCP_PORT}" \
-     --format_csv_delimiter='|' \
-     --query "INSERT INTO ${CH_DATABASE}.lineitem FORMAT CSV" \
-     < "${PERF_WORK_DIR}/tpch-data/sf1/lineitem.tbl"
+   sed 's/|$//' "${PERF_WORK_DIR}/tpch-data/sf100/lineitem.tbl" | \
+     "${CH_BIN}" client --host 127.0.0.1 --port "${CH_TCP_PORT}" \
+       --format_csv_delimiter='|' \
+       --query "INSERT INTO ${CH_DATABASE}.lineitem FORMAT CSV"
    ```
 
    其余 `orders`、`part`、`partsupp`、`customer`、`supplier`、`nation`、`region`
    把命令里的 `lineitem` 换成对应表名后重复执行。
-4. 校验 SF1 行数：lineitem 6,001,215、orders 1,500,000、partsupp 800,000、
-   part 200,000、customer 150,000、supplier 10,000、nation 25、region 5。
+4. 校验 SF100 行数：lineitem 600,037,902、orders 150,000,000、partsupp 80,000,000、
+   part 20,000,000、customer 15,000,000、supplier 1,000,000、nation 25、region 5。
 5. 22 条查询串行执行 3 轮，每条查询带唯一 `query_id=ck-<run-id>-r<轮>-q<编号>`；
-   每轮结束后 `SYSTEM FLUSH LOGS`，从 `system.query_log` 按 `QueryFinish` 和
-   `query_id` 前缀取 `query_duration_ms`，写入 `${CH_RESULT_DIR}/query_log.tsv`。
+   每轮结束后 `SYSTEM FLUSH LOGS`，轮询到 22 条 `QueryFinish` 后再从
+   `system.query_log` 取 `query_duration_ms`，写入 `${CH_RESULT_DIR}/query_log.tsv`。
 
 计时口径是**服务端** `query_duration_ms`，不是 `curl` 端到端；因此与 Doris 用例的
 端到端 wall 不可横向比较，只各自算跨架构比值。单条查询失败、查询日志缺项或行数
@@ -238,14 +258,15 @@ bash software/Bigdata/clickhouse/clickhouse_test.sh \
 | 容器规格 | 32U/128G（未写 cpuset 细节），`--privileged` | 32U/128G + cpuset 保留；**去掉 privileged** | 不再需要特权操作 |
 | 软件参数 | `max_threads=32`、110G/120G 内存、5G mark cache、三条查询设置 | **保持一致** | 跨架构可比 |
 | 端口 | 19000/18123 | 19000–19399 / 19500–19899，按 run ID 派生 | 同机并行隔离 |
-| 数据规模 | SF1 回归 / SF100 正式 | **只用 SF1**；SF100 未实现也未跑 | bdperf 只在 SF1 验证过；SF100 需要 110GB 数据与数小时 |
+| 数据规模 | SF1 回归 / SF100 正式 | **SF100 正式**；`CLICKHOUSE_SF=1` 可做快速回归 | 与 bdperf 的正式口径一致 |
 | 系统用户 | 容器内 root | Runner UID/GID | 宿主可读可删 |
 | 结果对照 | `results_arm/ck_tpch_sf1_aarch64.csv` | 不引用 | 对方未做本用例口径的容器/内核对齐 |
 
 ## 未验证与限制
 
-- 本机适配只验证了构建、启动与健康检查，**未执行 TPC-H 查询**；SF1 的正式数字
-  以流水线为准，SF100 未实现。
+- 本机适配只验证了构建、启动与健康检查，**未执行 TPC-H 查询**；SF100 的正式数字
+  以流水线为准。SF100 预计造数 20~40 分钟、导入 10~20 分钟、22×3 查询 10~30 分钟，
+  `timeout_minutes` 设为 600。
 - 数据生成依赖 tpch-kit 的 `dbgen` 与容器内 gcc/make；离线环境下需要预置
   `tpch-kit-master.zip`，否则首次运行会联网下载。
 - `optimized` 变体未实现，选择后构建阶段明确返回非零。
