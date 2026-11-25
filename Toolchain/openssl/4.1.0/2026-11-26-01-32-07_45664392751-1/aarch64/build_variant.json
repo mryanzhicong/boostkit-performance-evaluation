@@ -1,0 +1,53 @@
+{
+  "software": "openssl",
+  "variant": "base",
+  "version": "4.1.0",
+  "architecture": "aarch64",
+  "run_id": "45664392751-1",
+  "container_image": "openeuler-24.03-lts-sp4:latest",
+  "compiler": "gcc (GCC) 12.3.1 (openEuler 12.3.1-110.oe2403sp4)",
+  "build": {
+    "target": "linux-aarch64",
+    "cflags": "",
+    "version_a": [
+      "OpenSSL 4.1.0 23 Oct 2026 (Library: OpenSSL 4.1.0 23 Oct 2026)",
+      "built on: Wed Nov 25 17:25:45 2026 UTC",
+      "platform: linux-aarch64",
+      "options:  bn(64,64)",
+      "compiler: gcc -fPIC -pthread -Wa,--noexecstack -Wall -O3 -DOPENSSL_PIC -DNDEBUG",
+      "OPENSSLDIR: \"/home/runner/boostkit-perf/openssl/4.1.0/aarch64/45664392751-1/install-base/ssl\"",
+      "MODULESDIR: \"/home/runner/boostkit-perf/openssl/4.1.0/aarch64/45664392751-1/install-base/lib/ossl-modules\"",
+      "Seeding source: os-specific",
+      "CPUINFO: OPENSSL_armcap=0x26ffd"
+    ]
+  },
+  "archives": {
+    "openssl": {
+      "name": "openssl-openssl-4.1.0.tar.gz",
+      "sha256": "2a54158eb6861c07cefc92f1a1d68b12d5ecc0883d53c61a092995b221c7d5fe",
+      "bytes": 55917193
+    }
+  },
+  "binaries": {
+    "openssl": "c4bb76d5347d2c4b06473de360af1f42f597d1af3b0543cfdc9e91723c7ee7a6"
+  },
+  "parameters": {
+    "version": "4.1.0",
+    "variant": "base",
+    "seconds": 2,
+    "block_bytes": 16384,
+    "warmups": 1,
+    "reps": 5,
+    "harness_jobs": 8,
+    "scenarios": [
+      "sha256",
+      "sha512",
+      "aes_128_gcm",
+      "aes_256_gcm",
+      "chacha20_poly1305",
+      "rsa2048",
+      "ecdsa_p256",
+      "ed25519"
+    ]
+  }
+}
