@@ -64,6 +64,13 @@ NUMPY_REPOSITORY="https://gitcode.com/boostkit/numpy.git"
 NUMPY_BASELINE_COMMIT="289c872fc2cc3a82a63a66b4c1a32e8ef6e80fb6"
 NUMPY_BASELINE_TREE="4011714d5de68c10c60cf6f083c3a49c1de0dfc4"
 NUMPY_VERSION_FILE="numpy/version.py"
+# Optimized variant = the Kunpeng-optimized NumPy published on the `master`
+# branch of the same repository.  Its measured commit is the branch tip at
+# measurement time, so nothing is pinned here: the build stage resolves HEAD and
+# HEAD~1, checks the branch out, and records the commit graph in
+# NUMPY_SOURCE_RECORD for the start/test stages and the result parser.
+NUMPY_OPTIMIZED_BRANCH="master"
+NUMPY_OPTIMIZED_RANGE="HEAD~1..HEAD"
 # Every submodule, on every architecture.  The two x86-only ones are *not*
 # compiled on aarch64 (numpy gates the meson targets on the host machine), but
 # numpy's pyproject.toml lists their LICENSE files in `license-files`, and
@@ -162,6 +169,16 @@ ASV_LIST=""
 ASV_RESULTS_DIR=""
 ASV_HTML_DIR=""
 RUNTIME_VERSIONS_JSON=""
+NUMPY_SOURCE_RECORD=""
+NUMPY_EXPECTED_COMMIT=""
+NUMPY_EXPECTED_TREE=""
+NUMPY_EXPECTED_BRANCH=""
+NUMPY_EXPECTED_PARENT=""
+NUMPY_HEAD_BRANCH=""
+NUMPY_HEAD_COMMIT=""
+NUMPY_HEAD_TREE=""
+NUMPY_PARENT_COMMIT=""
+NUMPY_PARENT_TREE=""
 STANDALONE_OWNS_WORK_DIR="${STANDALONE_OWNS_WORK_DIR:-0}"
 STANDALONE_KEEP_WORK_DIR="${STANDALONE_KEEP_WORK_DIR:-0}"
 STANDALONE_STOP_DONE="${STANDALONE_STOP_DONE:-0}"
@@ -259,6 +276,7 @@ configure_runtime_paths() {
     ASV_RESULTS_DIR="${ASV_DIR}/results"
     ASV_HTML_DIR="${ASV_DIR}/html"
     RUNTIME_VERSIONS_JSON="${PERF_WORK_DIR}/runtime-versions.json"
+    NUMPY_SOURCE_RECORD="${PERF_WORK_DIR}/numpy-source.txt"
 
     export SOFTWARE_NAME SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT
     export PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR PERF_ACTUAL_VERSION_FILE TMPDIR
@@ -269,6 +287,9 @@ configure_runtime_paths() {
     export NUMPY_REPS NUMPY_WARMUPS NUMPY_STATISTIC
     export NUMPY_BASELINE_COMMIT ASV_SUITE_COMMIT ASV_VERSION NUMPY_REQUIREMENTS_LOCK
     export NUMPY_PYTHON_SHORT
+    export NUMPY_SOURCE_RECORD NUMPY_OPTIMIZED_BRANCH NUMPY_OPTIMIZED_RANGE
+    export NUMPY_HEAD_BRANCH NUMPY_HEAD_COMMIT NUMPY_HEAD_TREE
+    export NUMPY_PARENT_COMMIT NUMPY_PARENT_TREE
 }
 
 initialize_runtime() {
@@ -284,6 +305,45 @@ numpy_measurement_env() {
     printf '%s\n' \
         "${NUMPY_MEASUREMENT_ENV[@]}" \
         "HOME=${dir}"
+}
+
+# The optimized variant lets ASV build the measured commit itself (`python -m
+# build` in an isolated environment plus the per-commit benchmark virtualenv), so
+# exactly that invocation needs the package mirrors.  The measurement black hole
+# is lifted for it and the pinned pip index is handed over explicitly, so ASV's
+# environments and its isolated build resolve the same wheels the build stage
+# used.  Base measurements keep the black hole.
+numpy_pip_index_env() {
+    local index host
+    local -a hosts=()
+    for index in "${NUMPY_PIP_INDEXES[@]}"; do
+        host="${index#*://}"
+        hosts+=("${host%%/*}")
+    done
+    printf 'PIP_INDEX_URL=%s\n' "${NUMPY_PIP_INDEXES[0]}"
+    printf 'PIP_EXTRA_INDEX_URL=%s\n' "${NUMPY_PIP_INDEXES[*]:1}"
+    printf 'PIP_TRUSTED_HOST=%s\n' "${hosts[*]}"
+    printf 'PIP_DISABLE_PIP_VERSION_CHECK=1\n'
+}
+
+# Environment of an ASV invocation, one KEY=VALUE per line.
+numpy_asv_env() {
+    local dir="${1:-${PERF_WORK_DIR}/home}" entry
+    mkdir -p "${dir}" || return 30
+    if [ "${PERF_VARIANT}" = "optimized" ]; then
+        for entry in "${NUMPY_MEASUREMENT_ENV[@]}"; do
+            case "${entry}" in
+                http_proxy=*|https_proxy=*|HTTP_PROXY=*|HTTPS_PROXY=*|no_proxy=*|NO_PROXY=*)
+                    continue
+                    ;;
+            esac
+            printf '%s\n' "${entry}"
+        done
+        numpy_pip_index_env
+    else
+        printf '%s\n' "${NUMPY_MEASUREMENT_ENV[@]}"
+    fi
+    printf 'HOME=%s\n' "${dir}"
 }
 
 # ------------------------------------------------------------------------------
@@ -346,10 +406,53 @@ write_actual_version() {
     log_message "recorded actual software version: $(cat "${PERF_ACTUAL_VERSION_FILE}")"
 }
 
-# Prove that the container really carries the pinned interpreter, NumPy baseline,
-# vendored ASV suite (manifest-checked) and the shipped benchmark list.  Both the
-# start stage (before discovery) and the test stage (before the expensive run)
-# call this so neither can start from a half-built environment.
+# The base variant pins the measured commit in this file; the optimized variant
+# measures the tip of a branch, so its build stage resolves the commit graph and
+# records it.  Later stages read it back instead of guessing.
+numpy_source_record_value() {
+    local key="${1:?key required}" line
+    [ -f "${NUMPY_SOURCE_RECORD}" ] || return 1
+    while IFS= read -r line; do
+        case "${line}" in
+            "${key}="*) printf '%s\n' "${line#*=}"; return 0 ;;
+        esac
+    done < "${NUMPY_SOURCE_RECORD}"
+    return 1
+}
+
+# Resolve the commit the measured checkout must be at.  Idempotent: the build
+# stage already knows it, every other stage loads it from the source record.
+numpy_load_expected_source() {
+    if [ -n "${NUMPY_EXPECTED_COMMIT}" ]; then
+        return 0
+    fi
+    if [ "${PERF_VARIANT}" = "optimized" ]; then
+        NUMPY_EXPECTED_COMMIT="$(numpy_source_record_value head)" || {
+            log_message "ERROR: ${NUMPY_SOURCE_RECORD} is missing; the optimized build stage must run first"
+            return 30
+        }
+        NUMPY_EXPECTED_TREE="$(numpy_source_record_value head_tree)" || return 30
+        NUMPY_EXPECTED_BRANCH="$(numpy_source_record_value branch)" || return 30
+        NUMPY_EXPECTED_PARENT="$(numpy_source_record_value parent)" || return 30
+        if [ "${NUMPY_EXPECTED_BRANCH}" != "${NUMPY_OPTIMIZED_BRANCH}" ]; then
+            log_message "ERROR: ${NUMPY_SOURCE_RECORD} records branch ${NUMPY_EXPECTED_BRANCH}, expected ${NUMPY_OPTIMIZED_BRANCH}"
+            return 30
+        fi
+    else
+        NUMPY_EXPECTED_COMMIT="${NUMPY_BASELINE_COMMIT}"
+        NUMPY_EXPECTED_TREE="${NUMPY_BASELINE_TREE}"
+        NUMPY_EXPECTED_BRANCH=""
+        NUMPY_EXPECTED_PARENT=""
+    fi
+    export NUMPY_EXPECTED_COMMIT NUMPY_EXPECTED_TREE NUMPY_EXPECTED_BRANCH NUMPY_EXPECTED_PARENT
+    return 0
+}
+
+# Prove that the container really carries the pinned interpreter, the expected
+# NumPy source (commit + tree), the vendored ASV suite (manifest-checked) and the
+# shipped benchmark list.  Both the start stage (before discovery) and the test
+# stage (before the expensive run) call this so neither can start from a
+# half-built environment.
 numpy_verify_runtime_payload() {
     local python_version numpy_version commit tree machine_file count
     python_version="$(numpy_container_python_version)" || return 30
@@ -362,10 +465,11 @@ numpy_verify_runtime_payload() {
         log_message "ERROR: container NumPy is ${numpy_version}, expected ${SOFTWARE_VERSION}"
         return 30
     fi
+    numpy_load_expected_source || return $?
     commit="$(numpy_repo_commit)" || return 30
     tree="$(numpy_repo_tree)" || return 30
-    if [ "${commit}" != "${NUMPY_BASELINE_COMMIT}" ] || [ "${tree}" != "${NUMPY_BASELINE_TREE}" ]; then
-        log_message "ERROR: NumPy checkout is ${commit}/${tree}, expected ${NUMPY_BASELINE_COMMIT}/${NUMPY_BASELINE_TREE}"
+    if [ "${commit}" != "${NUMPY_EXPECTED_COMMIT}" ] || [ "${tree}" != "${NUMPY_EXPECTED_TREE}" ]; then
+        log_message "ERROR: NumPy checkout is ${commit}/${tree}, expected ${NUMPY_EXPECTED_COMMIT}/${NUMPY_EXPECTED_TREE}"
         return 30
     fi
     numpy_verify_asv_suite "${ASV_DIR}" || return $?
@@ -379,7 +483,7 @@ numpy_verify_runtime_payload() {
         log_message "ERROR: the benchmark id list unexpectedly shrank to ${count} entries"
         return 30
     fi
-    log_message "payload verified: CPython ${python_version}, NumPy ${numpy_version}, commit ${commit:0:8}, ${count} benchmark ids"
+    log_message "payload verified: CPython ${python_version}, NumPy ${numpy_version}, commit ${commit:0:8} (${NUMPY_EXPECTED_BRANCH:-${PERF_VARIANT}}), ${count} benchmark ids"
 }
 
 # The private openEuler container runtime (generated block) follows below.  Do

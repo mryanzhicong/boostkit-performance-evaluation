@@ -93,9 +93,10 @@ usage() {
     cat <<USAGE
 Usage: $(basename "$0") [OPTIONS]
 
-Build the pinned CPython runtime inside the private openEuler container, build
-the pinned NumPy 2.4.3 baseline from commit 289c872f, measure the vendored
-aggregate ASV suite and publish results/ plus html/.
+Build the pinned CPython runtime inside the private openEuler container, then measure
+either the pinned NumPy 2.4.3 baseline (PERF_VARIANT=base, commit 289c872f) or the
+Kunpeng-optimized master tip (PERF_VARIANT=optimized, HEAD; HEAD~1 is only the
+range's exclusion end), and publish results/ plus html/.
 
 Options:
   --version VERSION       numpy version (default: ${SOFTWARE_VERSION})
@@ -104,8 +105,8 @@ Options:
   -h, --help              Show this help
 
 Environment overrides:
-  SOFTWARE_VERSION, EXPECTED_ARCH, PERF_REPS, PERF_WARMUPS, PERF_BUILD_JOBS,
-  PERF_RUN_ID, RESULTS_DIR, PERF_WORK_DIR, PERF_PROXY
+  PERF_VARIANT (base|optimized), SOFTWARE_VERSION, EXPECTED_ARCH, PERF_REPS,
+  PERF_WARMUPS, PERF_BUILD_JOBS, PERF_RUN_ID, RESULTS_DIR, PERF_WORK_DIR, PERF_PROXY
 USAGE
 }
 

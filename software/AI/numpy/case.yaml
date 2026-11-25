@@ -4,13 +4,22 @@ enabled: true
 versions:
   - "2.4.3"
 test_tools:
-  # `numpy_baseline` is the software under test: the unmodified 2.4.3 import
-  # (GitCode commit 289c872f).  `asv_bench` is the aggregate ASV suite that
-  # lives on the boostkit main branch; it is vendored byte-for-byte under
-  # asv_bench/ and pinned by asv_bench/manifest.sha256.
+  # `numpy_baseline` is the software under test for variant=base: the unmodified
+  # 2.4.3 import (GitCode commit 289c872f).  `numpy_optimized` is the software
+  # under test for variant=optimized: the Kunpeng-optimized 2.4.3 published on
+  # the `master` branch of the same repository; it is measured at the branch tip
+  # (HEAD), so its revision is the branch name rather than a pinned hash.  The
+  # test stage runs `asv run HEAD~1..HEAD`, which resolves to the tip alone;
+  # HEAD~1 is only the range's exclusion end, recorded as provenance.
+  # `asv_bench` is the aggregate ASV suite that lives on the boostkit main
+  # branch; it is vendored byte-for-byte under asv_bench/ and pinned by
+  # asv_bench/manifest.sha256.
   numpy_baseline:
     version: "2.4.3"
     revision: "289c872fc2cc3a82a63a66b4c1a32e8ef6e80fb6"
+  numpy_optimized:
+    version: "2.4.3"
+    revision: "master"
   asv_bench:
     version: "2.4.3"
     revision: "95422b21eb5b43a2453e45b8531a3dd09c9b61ab"
