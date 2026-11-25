@@ -46,7 +46,7 @@ openEuler 24.03 LTS SP4 镜像归档优先读取本地目录，缺失才从官�
 按 `.sha256sum` 校验、`docker load`、核对架构与发行版：
 
 ```bash
-ARCHIVE="${CLICKHOUSE_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+ARCHIVE="${CLICKHOUSE_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
 URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
 [[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
 [[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
