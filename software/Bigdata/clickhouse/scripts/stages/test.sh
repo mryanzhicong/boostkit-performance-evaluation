@@ -134,10 +134,13 @@ run_tpch_queries() {
         for query_number in $(seq 1 22); do
             printf -v qid 'ck-%s-r%s-q%02d' "${PERF_RUN_ID}" "${round}" "${query_number}"
             printf -v qfile '%s/q%d.sql' "${query_dir}" "${query_number}"
+            local out_file="${CH_RESULT_DIR}/q${query_number}_r${round}.out"
+            log_message "round ${round} q${query_number}/22 (${qid})"
             if ! ch_exec bash -c "'${CH_BIN}' client --host 127.0.0.1 --port '${CH_TCP_PORT}' \
                     --database '${CH_DATABASE}' --query_id '${qid}' --multiquery < '${qfile}'" \
-                    > "${CH_RESULT_DIR}/q${query_number}_r${round}.out" 2>&1; then
-                log_error "TPC-H q${query_number} failed in round ${round}"
+                    > "${out_file}" 2>&1; then
+                log_error "TPC-H q${query_number} failed in round ${round}; last output:"
+                tail -n 20 "${out_file}" >&2 || true
                 return 50
             fi
         done
