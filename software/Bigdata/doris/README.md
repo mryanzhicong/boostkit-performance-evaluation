@@ -101,7 +101,19 @@ docker run --detach --name "${DORIS_CONTAINER_NAME}" \
 `DORIS_MEMORY_SWAP` 覆盖并注明；正式 Runner 必须用默认值。容器不加
 `--privileged`。
 
-代理存在时挂载 CA 目录并在容器内 `update-ca-trust extract`；没有代理时不挂载。
+容器创建后，脚本**总是**在本次容器内把 openEuler 软件源改为
+`repo.huaweicloud.com/openeuler`，并注释 `metalink` 行：
+
+```bash
+docker exec --user 0 "${DORIS_CONTAINER_NAME}" sed -i \
+  -e '/^meta/ s/^\(.*\)$/#\1/g' \
+  -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+  /etc/yum.repos.d/openEuler.repo
+```
+
+设置 `PERF_PROXY` 时，额外把 `/home/runner/software/anchors/` 只读挂到
+`/etc/pki/ca-trust/source/anchors/` 并执行 `update-ca-trust extract`；没有代理时
+不挂载证书目录。换源只作用于本次任务的容器，不改宿主机。
 
 ## 启动
 
