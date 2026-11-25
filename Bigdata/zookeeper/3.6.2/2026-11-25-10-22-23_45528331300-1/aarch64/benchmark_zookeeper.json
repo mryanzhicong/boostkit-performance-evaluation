@@ -1,0 +1,606 @@
+{
+  "parameters": {
+    "keyspace": 1000000,
+    "value_size_bytes": 1024,
+    "warmup_ops_per_thread": 2000,
+    "rounds": 3,
+    "modes": [
+      "read",
+      "update",
+      "mixed",
+      "create"
+    ],
+    "threads": [
+      1,
+      8,
+      32,
+      64
+    ],
+    "ops_per_thread": {
+      "1": 20000,
+      "8": 5000,
+      "32": 6250,
+      "64": 6250
+    },
+    "container_cpus": 32,
+    "jvm_flags": "-Xms4g -Xmx4g -XX:ActiveProcessorCount=8 -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch"
+  },
+  "results": {
+    "read-t1/throughput": {
+      "value": 6240.8,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t1"
+    },
+    "read-t1/single_core_throughput": {
+      "value": 195.025,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t1"
+    },
+    "read-t1/p50_ms": {
+      "value": 0.0744,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t1"
+    },
+    "read-t1/p95_ms": {
+      "value": 0.0907,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t1"
+    },
+    "read-t1/p99_ms": {
+      "value": 0.1502,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t1"
+    },
+    "read-t1/max_ms": {
+      "value": 12.076,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t1"
+    },
+    "read-t8/throughput": {
+      "value": 13216.8,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t8"
+    },
+    "read-t8/single_core_throughput": {
+      "value": 413.025,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t8"
+    },
+    "read-t8/p50_ms": {
+      "value": 0.1363,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t8"
+    },
+    "read-t8/p95_ms": {
+      "value": 0.1756,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t8"
+    },
+    "read-t8/p99_ms": {
+      "value": 0.3536,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t8"
+    },
+    "read-t8/max_ms": {
+      "value": 11.1619,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t8"
+    },
+    "read-t32/throughput": {
+      "value": 24914.5,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t32"
+    },
+    "read-t32/single_core_throughput": {
+      "value": 778.578,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t32"
+    },
+    "read-t32/p50_ms": {
+      "value": 0.5252,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t32"
+    },
+    "read-t32/p95_ms": {
+      "value": 0.6023,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t32"
+    },
+    "read-t32/p99_ms": {
+      "value": 0.7726,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t32"
+    },
+    "read-t32/max_ms": {
+      "value": 5.7958,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t32"
+    },
+    "read-t64/throughput": {
+      "value": 26480.0,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t64"
+    },
+    "read-t64/single_core_throughput": {
+      "value": 827.5,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "read-t64"
+    },
+    "read-t64/p50_ms": {
+      "value": 1.0353,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t64"
+    },
+    "read-t64/p95_ms": {
+      "value": 1.1493,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t64"
+    },
+    "read-t64/p99_ms": {
+      "value": 1.3381,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t64"
+    },
+    "read-t64/max_ms": {
+      "value": 6.8689,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "read-t64"
+    },
+    "update-t1/throughput": {
+      "value": 4301.2,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t1"
+    },
+    "update-t1/single_core_throughput": {
+      "value": 134.412,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t1"
+    },
+    "update-t1/p50_ms": {
+      "value": 0.1312,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t1"
+    },
+    "update-t1/p95_ms": {
+      "value": 0.2231,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t1"
+    },
+    "update-t1/p99_ms": {
+      "value": 0.2559,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t1"
+    },
+    "update-t1/max_ms": {
+      "value": 8.0634,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t1"
+    },
+    "update-t8/throughput": {
+      "value": 9954.5,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t8"
+    },
+    "update-t8/single_core_throughput": {
+      "value": 311.078,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t8"
+    },
+    "update-t8/p50_ms": {
+      "value": 0.3377,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t8"
+    },
+    "update-t8/p95_ms": {
+      "value": 0.3951,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t8"
+    },
+    "update-t8/p99_ms": {
+      "value": 0.5288,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t8"
+    },
+    "update-t8/max_ms": {
+      "value": 11.9924,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t8"
+    },
+    "update-t32/throughput": {
+      "value": 20825.4,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t32"
+    },
+    "update-t32/single_core_throughput": {
+      "value": 650.794,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t32"
+    },
+    "update-t32/p50_ms": {
+      "value": 0.6835,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t32"
+    },
+    "update-t32/p95_ms": {
+      "value": 0.8756,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t32"
+    },
+    "update-t32/p99_ms": {
+      "value": 6.595,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t32"
+    },
+    "update-t32/max_ms": {
+      "value": 26.4355,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t32"
+    },
+    "update-t64/throughput": {
+      "value": 23726.1,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t64"
+    },
+    "update-t64/single_core_throughput": {
+      "value": 741.441,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "update-t64"
+    },
+    "update-t64/p50_ms": {
+      "value": 1.2378,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t64"
+    },
+    "update-t64/p95_ms": {
+      "value": 1.4849,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t64"
+    },
+    "update-t64/p99_ms": {
+      "value": 1.855,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t64"
+    },
+    "update-t64/max_ms": {
+      "value": 27.2369,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "update-t64"
+    },
+    "mixed-t1/throughput": {
+      "value": 5234.2,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t1/single_core_throughput": {
+      "value": 163.569,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t1/p50_ms": {
+      "value": 0.1007,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t1/p95_ms": {
+      "value": 0.1511,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t1/p99_ms": {
+      "value": 0.242,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t1/max_ms": {
+      "value": 8.8364,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t1"
+    },
+    "mixed-t8/throughput": {
+      "value": 12422.1,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t8/single_core_throughput": {
+      "value": 388.191,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t8/p50_ms": {
+      "value": 0.1618,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t8/p95_ms": {
+      "value": 0.2869,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t8/p99_ms": {
+      "value": 0.4568,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t8/max_ms": {
+      "value": 6.8703,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t8"
+    },
+    "mixed-t32/throughput": {
+      "value": 21760.3,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t32/single_core_throughput": {
+      "value": 680.009,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t32/p50_ms": {
+      "value": 0.6478,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t32/p95_ms": {
+      "value": 0.7774,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t32/p99_ms": {
+      "value": 3.0304,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t32/max_ms": {
+      "value": 23.3162,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t32"
+    },
+    "mixed-t64/throughput": {
+      "value": 24652.2,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t64"
+    },
+    "mixed-t64/single_core_throughput": {
+      "value": 770.381,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "mixed-t64"
+    },
+    "mixed-t64/p50_ms": {
+      "value": 1.1964,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t64"
+    },
+    "mixed-t64/p95_ms": {
+      "value": 1.3446,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t64"
+    },
+    "mixed-t64/p99_ms": {
+      "value": 1.5997,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t64"
+    },
+    "mixed-t64/max_ms": {
+      "value": 28.1247,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "mixed-t64"
+    },
+    "create-t1/throughput": {
+      "value": 4428.8,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t1"
+    },
+    "create-t1/single_core_throughput": {
+      "value": 138.4,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t1"
+    },
+    "create-t1/p50_ms": {
+      "value": 0.1309,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t1"
+    },
+    "create-t1/p95_ms": {
+      "value": 0.2019,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t1"
+    },
+    "create-t1/p99_ms": {
+      "value": 0.2188,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t1"
+    },
+    "create-t1/max_ms": {
+      "value": 9.1667,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t1"
+    },
+    "create-t8/throughput": {
+      "value": 10000.3,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t8"
+    },
+    "create-t8/single_core_throughput": {
+      "value": 312.509,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t8"
+    },
+    "create-t8/p50_ms": {
+      "value": 0.3156,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t8"
+    },
+    "create-t8/p95_ms": {
+      "value": 0.377,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t8"
+    },
+    "create-t8/p99_ms": {
+      "value": 0.5928,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t8"
+    },
+    "create-t8/max_ms": {
+      "value": 17.3639,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t8"
+    },
+    "create-t32/throughput": {
+      "value": 19511.2,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t32"
+    },
+    "create-t32/single_core_throughput": {
+      "value": 609.725,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t32"
+    },
+    "create-t32/p50_ms": {
+      "value": 0.7519,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t32"
+    },
+    "create-t32/p95_ms": {
+      "value": 1.0228,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t32"
+    },
+    "create-t32/p99_ms": {
+      "value": 3.4499,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t32"
+    },
+    "create-t32/max_ms": {
+      "value": 40.332,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t32"
+    },
+    "create-t64/throughput": {
+      "value": 17474.7,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t64"
+    },
+    "create-t64/single_core_throughput": {
+      "value": 546.084,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "create-t64"
+    },
+    "create-t64/p50_ms": {
+      "value": 1.4234,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t64"
+    },
+    "create-t64/p95_ms": {
+      "value": 6.341,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t64"
+    },
+    "create-t64/p99_ms": {
+      "value": 11.5578,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t64"
+    },
+    "create-t64/max_ms": {
+      "value": 2316.3665,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "create-t64"
+    }
+  }
+}
