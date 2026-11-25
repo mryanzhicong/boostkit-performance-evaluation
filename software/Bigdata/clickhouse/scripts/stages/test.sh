@@ -143,12 +143,17 @@ verify_row_counts() {
 run_tpch_queries() {
     local round query_number qfile qid output
     local query_log="${CH_RESULT_DIR}/query_log.tsv"
+    # Only PERF_WORK_DIR/RESULTS_DIR are mounted into the container; copy the
+    # SQL files there instead of reading them from the repository path.
+    local query_dir="${PERF_WORK_DIR}/queries"
+    rm -rf "${query_dir}"
+    cp -a "${CASE_DIR}/scripts/queries" "${query_dir}" || return 50
     : > "${query_log}"
     for round in $(seq 1 "${CH_ROUNDS}"); do
         log_message "TPC-H round ${round}/${CH_ROUNDS}"
         for query_number in $(seq 1 22); do
             printf -v qid 'ck-%s-r%s-q%02d' "${PERF_RUN_ID}" "${round}" "${query_number}"
-            printf -v qfile '%s/scripts/queries/q%d.sql' "${CASE_DIR}" "${query_number}"
+            printf -v qfile '%s/q%d.sql' "${query_dir}" "${query_number}"
             if ! ch_exec bash -c "'${CH_BIN}' client --host 127.0.0.1 --port '${CH_TCP_PORT}' \
                     --database '${CH_DATABASE}' --query_id '${qid}' --multiquery < '${qfile}'" \
                     > "${CH_RESULT_DIR}/q${query_number}_r${round}.out" 2>&1; then
