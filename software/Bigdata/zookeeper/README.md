@@ -153,9 +153,9 @@ java -cp "${ZK_BENCH_DIR}:${ZK_HOME}/lib/*" ZkBench \
 | 用例 | 模式 | 并发 | 每线程操作数 |
 |---|---|---|---|
 | `<mode>-t1` | create/read/update/mixed | 1 | 20000 |
-| `<mode>-t8` | 同上 | 8 | 5000 |
-| `<mode>-t32` | 同上 | 32 | 6250 |
-| `<mode>-t64` | 同上 | 64 | 6250 |
+| `<mode>-t8` | create/read/update/mixed | 8 | 5000 |
+| `<mode>-t32` | create/read/update/mixed | 32 | 6250 |
+| `<mode>-t64` | create/read/update/mixed | 64 | 6250 |
 
 总操作数由并发档决定（20000 / 40000 / 200000 / 400000），每线程先做 2000 次预热，
 预热不计入统计。每个组合跑 3 轮；`--run-seq` 全局递增，保证 create 路径
