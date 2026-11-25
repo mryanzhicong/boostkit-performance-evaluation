@@ -128,23 +128,20 @@ prepare_bisheng_jdk() {
 prepare_python_dependency() {
     local wheel
     wheel="$(find "${DORIS_PYTHON_OFFLINE_DIR}" -maxdepth 1 -name 'pymysql-*.whl' -print -quit 2>/dev/null || true)"
-    if [[ -n "${wheel}" ]]; then
-        mkdir -p "${PERF_WORK_DIR}/wheels"
-        cp -- "${wheel}" "${PERF_WORK_DIR}/wheels/" || return 30
+    if [[ -z "${wheel}" ]]; then
+        log_message 'downloading the pure-Python pymysql wheel on the host'
+        mkdir -p "${DORIS_PYTHON_OFFLINE_DIR}"
+        python3 -m pip download --no-deps -d "${DORIS_PYTHON_OFFLINE_DIR}" \
+            -i https://repo.huaweicloud.com/repository/pypi/simple pymysql || return 30
+        wheel="$(find "${DORIS_PYTHON_OFFLINE_DIR}" -maxdepth 1 -name 'pymysql-*.whl' -print -quit)"
     fi
-    if ! doris_exec bash -c 'command -v python3' >/dev/null 2>&1; then
-        log_message 'installing Python in the container'
-        doris_exec_root install -y python3 python3-pip || return 30
-    fi
-    if ! doris_exec python3 -c 'import pymysql' >/dev/null 2>&1; then
-        if [[ -n "${wheel}" ]]; then
-            doris_exec python3 -m pip install --no-index \
-                --find-links "${PERF_WORK_DIR}/wheels" pymysql || return 30
-        else
-            log_message 'pymysql wheel is missing; downloading through the container proxy or network'
-            doris_exec python3 -m pip install pymysql || return 30
-        fi
-    fi
+    [[ -n "${wheel}" ]] || { log_error 'pymysql wheel is missing'; return 30; }
+    rm -rf -- "${PERF_WORK_DIR}/python"
+    mkdir -p "${PERF_WORK_DIR}/python"
+    python3 -m zipfile -e "${wheel}" "${PERF_WORK_DIR}/python" || return 30
+    doris_exec python3 -c 'import pymysql' || {
+        log_error 'pymysql is not importable in the container'; return 30;
+    }
 }
 
 start_private_container() {
@@ -180,16 +177,10 @@ start_private_container() {
 }
 
 read_doris_version() {
-    python3 - "${DORIS_FE}/lib/doris-fe.jar" <<'PY'
-import sys, zipfile
-path = sys.argv[1]
-with zipfile.ZipFile(path) as jar:
-    manifest = jar.read('META-INF/MANIFEST.MF').decode('utf-8', 'replace')
-for line in manifest.splitlines():
-    if line.lower().startswith(('implementation-version', 'version')):
-        print(line.split(':', 1)[1].strip())
-        break
-PY
+    # The FE jar manifest carries a stale 1.2-SNAPSHOT; the BE binary reports
+    # the real release, e.g. "doris-2.1.2-rc04(AVX2) RELEASE ...".
+    doris_exec bash -c "cd '${DORIS_HOME}' && be/lib/doris_be --version" 2>/dev/null \
+        | sed -nE 's/^doris-([^ (]+).*/\1/p' | head -n 1
 }
 
 build_doris_base() {
@@ -201,6 +192,8 @@ build_doris_base() {
     prepare_bisheng_jdk || return $?
     prepare_container_image || return $?
     start_private_container || return $?
+    docker exec --user 0 "${DORIS_CONTAINER_NAME}" sh -c \
+        'command -v hostname >/dev/null 2>&1 || { printf "#!/bin/sh\necho localhost\n" > /usr/local/bin/hostname && chmod +x /usr/local/bin/hostname; }' || return 30
     mkdir -p "${PERF_WORK_DIR}/tools"
     cp -- "${CASE_DIR}/scripts/tools/doris_client.py" "${PERF_WORK_DIR}/tools/" || return 30
     prepare_python_dependency || return $?

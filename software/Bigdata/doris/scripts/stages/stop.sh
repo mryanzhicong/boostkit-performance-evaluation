@@ -13,8 +13,11 @@ stop_doris_runtime() {
         log_error 'refusing to remove a container not owned by this task'; return 70;
     }
     if [[ "$(docker inspect --format '{{.State.Running}}' "${DORIS_CONTAINER_NAME}" 2>/dev/null)" == true ]]; then
-        doris_exec bash -c "cd '${DORIS_BE}' && bin/stop_be.sh --daemon" >/dev/null 2>&1 || true
-        doris_exec bash -c "cd '${DORIS_FE}' && bin/stop_fe.sh --daemon" >/dev/null 2>&1 || true
+        # pkill -f also matches the wrapping shell command, so use the exact
+        # BE process name and an anchored FE class name.
+        doris_exec bash -c 'pkill -9 -x doris_be || true'
+        doris_exec bash -c "pkill -9 -f 'org.apache.doris.DorisFE$' || true"
+        sleep 8
     fi
     if [[ -d "${DORIS_LOG_DIR}" ]] && find "${DORIS_LOG_DIR}" -type f -print -quit | grep -q .; then
         mkdir -p "${RESULTS_DIR}/service-logs"

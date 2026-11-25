@@ -33,10 +33,17 @@ def wait_fe(port: int, timeout: int) -> int:
 
 def add_backend(port: int, host: str, heartbeat_port: int) -> int:
     connection = connect(port)
-    with connection.cursor() as cursor:
-        cursor.execute(f'ALTER SYSTEM ADD BACKEND "{host}:{heartbeat_port}"')
-    connection.close()
-    print("BACKEND_ADDED")
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f'ALTER SYSTEM ADD BACKEND "{host}:{heartbeat_port}"')
+        print("BACKEND_ADDED")
+    except pymysql.err.OperationalError as exc:
+        message = str(exc)
+        if "already exists" not in message:
+            raise
+        print("BACKEND_ALREADY_REGISTERED")
+    finally:
+        connection.close()
     return 0
 
 

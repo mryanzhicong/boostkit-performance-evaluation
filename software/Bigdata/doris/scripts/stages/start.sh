@@ -44,13 +44,33 @@ start_doris_runtime() {
     write_private_configs || return 40
 
     log_message "starting Doris FE at 127.0.0.1:${DORIS_QUERY_PORT}"
-    doris_exec bash -c "cd '${DORIS_FE}' && bin/start_fe.sh --daemon" || return 40
+    # start_fe.sh requires getopt and the vendor scripts check kernel settings;
+    # both are unavailable by policy, so launch the FE main class directly.
+    mkdir -p "${DORIS_FE}/log" "${DORIS_BE}/log"
+    docker exec --detach \
+        -e "HOME=${PERF_WORK_DIR}" \
+        -e "DORIS_HOME=${DORIS_FE}" \
+        -e "PID_DIR=${DORIS_FE}/bin" \
+        -e "LOG_DIR=${DORIS_FE}/log" \
+        -e "CLASSPATH=${DORIS_FE}/lib/doris-fe.jar:${DORIS_FE}/conf:${DORIS_FE}/lib/*:${DORIS_FE}/lib" \
+        "${DORIS_CONTAINER_NAME}" "${DORIS_JDK_HOME}/bin/java" ${DORIS_FE_HEAP} \
+        -Dfile.encoding=UTF-8 -XX:-OmitStackTraceInFastThrow \
+        "-XX:OnOutOfMemoryError=kill -9 %p" org.apache.doris.DorisFE \
+        >> "${DORIS_RESULT_DIR}/fe_launch.log" 2>&1 || return 40
     doris_client wait-fe --port "${DORIS_QUERY_PORT}" --timeout 180 || {
         log_error 'Doris FE did not become ready'; return 40;
     }
 
     log_message "starting Doris BE at 127.0.0.1:${DORIS_BE_PORT}"
-    doris_exec bash -c "cd '${DORIS_BE}' && bin/start_be.sh --daemon" || return 40
+    docker exec --detach \
+        -e "HOME=${PERF_WORK_DIR}" \
+        -e "JAVA_HOME=${DORIS_JDK_HOME}" \
+        -e "PATH=${DORIS_JDK_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+        -e "DORIS_HOME=${DORIS_BE}" \
+        -e "PID_DIR=${DORIS_BE}/bin" \
+        -e "LOG_DIR=${DORIS_BE}/log" \
+        "${DORIS_CONTAINER_NAME}" "${DORIS_BE}/lib/doris_be" \
+        >> "${DORIS_RESULT_DIR}/be_launch.log" 2>&1 || return 40
     doris_client add-backend --port "${DORIS_QUERY_PORT}" \
         --host 127.0.0.1 --heartbeat-port "${DORIS_HEARTBEAT_PORT}" || {
         log_error 'failed to register the Doris BE'; return 40;
@@ -59,6 +79,11 @@ start_doris_runtime() {
         log_error 'Doris BE did not become alive'; return 40;
     }
 
+    {
+        printf 'vm.max_map_count=%s\n' "$(docker exec "${DORIS_CONTAINER_NAME}" cat /proc/sys/vm/max_map_count)"
+        printf 'swapon=\n'
+        docker exec "${DORIS_CONTAINER_NAME}" swapon -s 2>/dev/null || true
+    } > "${DORIS_RESULT_DIR}/kernel_state.txt" 2>&1 || true
     doris_client query --port "${DORIS_QUERY_PORT}" --sql 'SHOW FRONTENDS' \
         > "${DORIS_RESULT_DIR}/show_frontends.tsv" 2>&1 || return 40
     doris_client query --port "${DORIS_QUERY_PORT}" --sql 'SHOW BACKENDS' \

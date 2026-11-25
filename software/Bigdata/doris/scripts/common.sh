@@ -37,6 +37,15 @@ DORIS_DATABASE="tpch_sf${DORIS_SF}"
 log_message() { printf '[doris] [%s] %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*"; }
 log_error() { printf '[doris] [%s] ERROR: %s\n' "$(TZ=UTC-8 date '+%F %T')" "$*" >&2; }
 
+# SHA-256 of the official apache-doris-2.1.2-bin-<arch>.tar.gz archives.
+doris_package_sha256() {
+    case "$1" in
+        x86_64) printf '%s' '90384e528fea35f9ef58c4840cd12d73d3fdcaeba1c96c9ef5ac1b4d2caf7e41' ;;
+        aarch64) printf '%s' 'ae7b69e8f040fdecb6e9f3b496aca38c169d1668b37e1cee4293776d00f4f0f9' ;;
+        *) return 1 ;;
+    esac
+}
+
 doris_release_name() {
     case "${EXPECTED_ARCH}" in
         x86_64) printf 'apache-doris-%s-bin-x64.tar.gz' "${SOFTWARE_VERSION}" ;;
@@ -60,7 +69,11 @@ configure_runtime_paths() {
     RESULTS_DIR="${RESULTS_DIR:-${CASE_DIR}/results/${SOFTWARE_VERSION}/${PERF_RUN_ID}}"
     [[ "${RESULTS_DIR}" == /* ]] || RESULTS_DIR="$(pwd -P)/${RESULTS_DIR}"
     PERF_ACTUAL_VERSION_FILE="${PERF_ACTUAL_VERSION_FILE:-${PERF_WORK_DIR}/actual-version.txt}"
-    DORIS_HOME="${PERF_WORK_DIR}/apache-doris-${SOFTWARE_VERSION}-bin"
+    case "${EXPECTED_ARCH}" in
+        x86_64) DORIS_DIR_SUFFIX=x64 ;;
+        aarch64) DORIS_DIR_SUFFIX=arm64 ;;
+    esac
+    DORIS_HOME="${PERF_WORK_DIR}/apache-doris-${SOFTWARE_VERSION}-bin-${DORIS_DIR_SUFFIX}"
     DORIS_FE="${DORIS_HOME}/fe"
     DORIS_BE="${DORIS_HOME}/be"
     DORIS_JDK_HOME="${PERF_WORK_DIR}/bisheng-jdk"
@@ -112,6 +125,7 @@ require_docker() {
 
 doris_exec() {
     docker exec -e "HOME=${PERF_WORK_DIR}" -e "TMPDIR=${PERF_WORK_DIR}/tmp" \
+        -e "PYTHONPATH=${PERF_WORK_DIR}/python" \
         -e "JAVA_HOME=${DORIS_JDK_HOME}" \
         -e "PATH=${DORIS_JDK_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
         "${DORIS_CONTAINER_NAME}" "$@"

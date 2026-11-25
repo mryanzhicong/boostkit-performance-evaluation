@@ -38,11 +38,12 @@ Doris 官方发布页不提供 tar 包的独立校验文件；本用例在适配
 ## 获取、构建与容器启动
 
 构建阶段加载 openEuler 镜像（校验 `.sha256sum`、架构与 `/etc/os-release`），
-解包官方 tar 到 `${PERF_WORK_DIR}/apache-doris-2.1.2-bin`，解包 BiSheng JDK，
-复制 `doris_client.py` 与 pymysql wheel 到工作目录。容器内缺少 `python3` 时用
-`dnf install python3 python3-pip` 安装，并用本地 wheel
-`pip install --no-index --find-links ... pymysql`；缺 `curl` 时同样用 `dnf` 安装
-（Stream Load 依赖它）。
+解包官方 tar 到 `${PERF_WORK_DIR}/apache-doris-2.1.2-bin-<x64|arm64>`，解包 BiSheng
+JDK，把 `doris_client.py` 复制到 `${PERF_WORK_DIR}/tools`。镜像自带 python3，但
+没有 pip，且 dnf 源在部分环境不可用，因此 pymysql 采用**纯 Python wheel 直接解包**
+到 `${PERF_WORK_DIR}/python`，通过 `PYTHONPATH` 导入（适配时使用 1.2.4 的
+`py3-none-any` wheel）；不再依赖容器内 pip 或 dnf 安装 Python 包。镜像自带 curl，
+Stream Load 直接使用。
 
 实际版本从 FE 的 `doris-fe.jar` 清单读取后写入 `PERF_ACTUAL_VERSION_FILE`，
 不沿用请求值；`build` 成功后写 `build_variant.json`。
@@ -83,16 +84,27 @@ mem_limit = 90%
 storage_flood_stage_left_capacity_bytes = 10737418240
 ```
 
-随后依次执行：
+随后启动 FE 与 BE：
 
 ```bash
-docker exec <容器> bash -c 'cd ${FE} && bin/start_fe.sh --daemon'
+docker exec --detach -e DORIS_HOME=<fe> -e PID_DIR=<fe>/bin -e LOG_DIR=<fe>/log \
+  -e CLASSPATH=<fe>/lib/doris-fe.jar:<fe>/conf:<fe>/lib/*:<fe>/lib \
+  <容器> ${JDK_HOME}/bin/java -Xmx8g -Xms8g -Dfile.encoding=UTF-8 \
+  -XX:-OmitStackTraceInFastThrow org.apache.doris.DorisFE
+docker exec --detach -e JAVA_HOME=<jdk> -e DORIS_HOME=<be> -e PID_DIR=<be>/bin \
+  -e LOG_DIR=<be>/log <容器> <be>/lib/doris_be
 docker exec <容器> python3 ${PERF_WORK_DIR}/tools/doris_client.py wait-fe --port <query_port> --timeout 180
-docker exec <容器> bash -c 'cd ${BE} && bin/start_be.sh --daemon'
 docker exec <容器> python3 ${PERF_WORK_DIR}/tools/doris_client.py add-backend \
   --port <query_port> --host 127.0.0.1 --heartbeat-port <heartbeat_port>
 docker exec <容器> python3 ${PERF_WORK_DIR}/tools/doris_client.py wait-backend --port <query_port> --timeout 180
 ```
+
+**为什么不用发行包的 `start_fe.sh`/`start_be.sh`**：两个脚本都调用 `getopt`，而
+openEuler 最小镜像没有 util-linux；`start_be.sh` 还会在 `vm.max_map_count < 2000000`
+或存在 swap 时直接退出，这两项属于本仓库禁止修改的内核参数。因此本用例直接启动
+`org.apache.doris.DorisFE` 与 `be/lib/doris_be`，并把容器内实际
+`vm.max_map_count`、swap 状态记录到 `${DORIS_RESULT_DIR}/kernel_state.txt`，由报告
+如实说明"未按 Doris 建议调大内核参数"。
 
 就绪判断不是固定 `sleep`：`wait-fe` 反复建立 MySQL 连接直到成功，`wait-backend`
 反复执行 `SHOW BACKENDS` 并要求所有行 `Alive=true`。成功后把
@@ -174,6 +186,7 @@ bash software/Bigdata/doris/doris_test.sh \
 | 软件参数 | FE 8G、BE 90%、并行度 32、100G 查询内存 | **保持一致** | 跨架构可比 |
 | 端口 | 9030/8030/9010/9020、9050/9060/8040/8060 固定 | 从 29000 起按 run ID 偏移 | 同机并行隔离 |
 | 数据规模 | SF1 回归 / SF100 正式 | **只用 SF1**；SF100 未跑 | bdperf 只在 SF1 验证过 |
+| 启动方式 | `start_fe.sh`/`start_be.sh` | 直接启动 FE 主类与 BE 二进制 | 镜像缺 getopt；BE 脚本强制要求改内核参数 |
 | 系统用户 | 容器内 root | Runner UID/GID | 宿主可读可删 |
 | 结果对照 | `results_arm/doris_tpch_sf1_aarch64.csv` | 不引用 | 容器/内核对齐口径不同 |
 
@@ -183,6 +196,10 @@ bash software/Bigdata/doris/doris_test.sh \
   以流水线为准，SF100 未实现。
 - BE 启动硬性要求 `ulimit -n > 60000`；容器以 `--ulimit nofile=1048576` 兜住，
   不再在脚本里执行 `ulimit`。
+- Doris 建议 `vm.max_map_count >= 2000000`，本用例**不改内核参数**；实际值记录在
+  `kernel_state.txt`，正式跑大数据量前需确认 Runner 现有值是否足够。
+- 开发机冒烟时 FE 堆通过 `DORIS_FE_HEAP` 缩小到 4G（正式默认 8G），BE 的
+  `mem_limit=90%` 仍按发行包默认；这些覆盖只用于本地验证，正式 Runner 用默认值。
 - 数据生成与导入依赖容器内 gcc/make/curl 与 tpch-kit；离线环境需预置这些包或
   允许容器使用 dnf 源。
 - `optimized` 变体未实现，选择后构建阶段明确返回非零。
