@@ -123,10 +123,13 @@ start_private_container() {
         "${CH_CONTAINER_IMAGE}" sleep infinity >/dev/null || return 30
     if [[ -n "${PERF_PROXY:-}" ]]; then
         docker exec --user 0 "${CH_CONTAINER_NAME}" update-ca-trust extract || return 30
-        docker exec --user 0 "${CH_CONTAINER_NAME}" sed -i \
-            -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
-            /etc/yum.repos.d/openEuler.repo || return 30
     fi
+    # Switch the package source only inside this task's container: the official
+    # openEuler repo is slow or unreachable on many runners.
+    docker exec --user 0 "${CH_CONTAINER_NAME}" sed -i \
+        -e '/^meta/ s/^\(.*\)$/#\1/g' \
+        -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+        /etc/yum.repos.d/openEuler.repo || return 30
 }
 
 install_container_tools() {
