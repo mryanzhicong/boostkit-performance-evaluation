@@ -1,0 +1,49 @@
+name: zookeeper
+category: Bigdata
+enabled: true
+versions:
+  - "3.6.2"
+test_tools:
+  zkbench:
+    version: "3.6.2"
+    revision: "bundled with this case: scripts/tools/ZkBench.java"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_zookeeper
+    start:
+      script: scripts/stages/start.sh
+      function: start_zookeeper_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_zookeeper_benchmark
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_zookeeper_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_zookeeper_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_zookeeper.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
