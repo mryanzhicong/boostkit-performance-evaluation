@@ -103,10 +103,19 @@ docker run --detach --name "${ZK_CONTAINER_NAME}" \
 `ZOOKEEPER_MEMORY_SWAP` 覆盖，并在结果里注明；正式 Runner 必须使用默认值。
 容器不使用 `--privileged`。
 
-正式工作流设置 `PERF_PROXY` 时，脚本把 `/home/runner/software/anchors/`
-只读挂到 `/etc/pki/ca-trust/source/anchors/`，在容器内执行
-`update-ca-trust extract`，并把 openEuler 仓库地址换成
-`repo.huaweicloud.com/openeuler`。没有代理时不挂载证书目录。
+容器创建后，脚本**总是**在本次容器内把 openEuler 软件源改为
+`repo.huaweicloud.com/openeuler`，并注释 `metalink` 行：
+
+```bash
+docker exec --user 0 "${ZK_CONTAINER_NAME}" sed -i \
+  -e '/^meta/ s/^\(.*\)$/#\1/g' \
+  -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+  /etc/yum.repos.d/openEuler.repo
+```
+
+设置 `PERF_PROXY` 时，额外把 `/home/runner/software/anchors/` 只读挂到
+`/etc/pki/ca-trust/source/anchors/` 并执行 `update-ca-trust extract`；没有代理时
+不挂载证书目录。换源只作用于本次任务的容器，不改宿主机。
 
 ## 启动
 
