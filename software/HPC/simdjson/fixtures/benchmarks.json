@@ -1,0 +1,79 @@
+{
+  "version": "4.6.11",
+  "dom_parse": {
+    "iterations": 1000,
+    "files": ["twitter.json", "citm_catalog.json"]
+  },
+  "dom_parse_stream": {
+    "files": ["amazon_cellphones.ndjson"]
+  },
+  "suites": {
+    "bench_parse_call": [
+      "fast_minify_twitter",
+      "fast_minify_gsoc",
+      "unicode_validate_twitter",
+      "parse_twitter",
+      "parse_gsoc",
+      "parser_parse_error_code",
+      "parser_parse_exception",
+      "document_parse_error_code",
+      "document_parse_exception"
+    ],
+    "bench_dom_api": [
+      "recover_one_string",
+      "serialize_twitter",
+      "serialize_big_string_to_string",
+      "serialize_twitter_to_string",
+      "serialize_twitter_string_builder",
+      "numbers_scan",
+      "numbers_size_scan",
+      "numbers_type_scan",
+      "numbers_type_size_scan",
+      "numbers_load_scan",
+      "numbers_load_size_scan",
+      "numbers_exceptions_scan",
+      "numbers_exceptions_size_scan",
+      "numbers_type_exceptions_scan",
+      "numbers_type_exceptions_size_scan",
+      "numbers_exceptions_load_scan",
+      "numbers_exceptions_load_size_scan",
+      "twitter_count",
+      "twitter_default_profile",
+      "twitter_image_sizes",
+      "error_code_twitter_count",
+      "error_code_twitter_default_profile",
+      "error_code_twitter_image_sizes",
+      "parse_surrogate_pairs"
+    ],
+    "bench_ondemand": [
+      "json2msgpack<simdjson_ondemand>",
+      "json2msgpack<simdjson_dom>",
+      "partial_tweets<simdjson_ondemand>",
+      "partial_tweets<simdjson_dom>",
+      "distinct_user_id<simdjson_ondemand>",
+      "distinct_user_id<simdjson_ondemand_json_pointer>",
+      "distinct_user_id<simdjson_dom>",
+      "distinct_user_id<simdjson_dom_json_pointer>",
+      "find_tweet<simdjson_ondemand>",
+      "find_tweet<simdjson_dom>",
+      "top_tweet<simdjson_ondemand>",
+      "top_tweet<simdjson_ondemand_forward_only>",
+      "top_tweet<simdjson_dom>",
+      "kostya<simdjson_ondemand>",
+      "kostya<simdjson_dom>",
+      "large_random<simdjson_ondemand>",
+      "large_random<simdjson_dom>",
+      "amazon_cellphones<simdjson_dom<UNTHREADED>>",
+      "amazon_cellphones<simdjson_dom<THREADED>>",
+      "amazon_cellphones<simdjson_ondemand<UNTHREADED>>",
+      "amazon_cellphones<simdjson_ondemand<THREADED>>",
+      "large_amazon_cellphones<simdjson_dom<UNTHREADED>>",
+      "large_amazon_cellphones<simdjson_dom<THREADED>>",
+      "large_amazon_cellphones<simdjson_ondemand<UNTHREADED>>",
+      "large_amazon_cellphones<simdjson_ondemand<THREADED>>",
+      "accessor_simple<runtime_at_path_simple>",
+      "accessor_nested<runtime_at_path_nested>",
+      "accessor_deep<runtime_at_path_deep>"
+    ]
+  }
+}
