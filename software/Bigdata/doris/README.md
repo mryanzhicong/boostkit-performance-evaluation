@@ -62,6 +62,10 @@ JDK，把 `doris_client.py` 复制到 `${PERF_WORK_DIR}/tools`。镜像自带 py
 `py3-none-any` wheel）；不再依赖容器内 pip 或 dnf 安装 Python 包。镜像自带 curl，
 Stream Load 直接使用。
 
+构建阶段还会在容器内安装并校验 `gcc`、`make`、`curl`，把 tpch-kit 解包到
+`${PERF_WORK_DIR}/tpch-kit-extract` 并编译 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen`；
+`test` 阶段只生成数据、导入和跑查询，不再安装编译工具。
+
 实际版本从 BE 二进制的 `--version` 输出读取（`doris_be --version` 打印
 `doris-2.1.2-rc04(AVX2) ...`；FE 的 `doris-fe.jar` 清单里是过期的
 `1.2-SNAPSHOT`，不能用），解析出 `2.1.2-rc04` 写入 `PERF_ACTUAL_VERSION_FILE`；
@@ -158,7 +162,7 @@ openEuler 最小镜像没有 util-linux；`start_be.sh` 还会在 `vm.max_map_co
 
 ## 测试负载
 
-1. 容器内编译 `dbgen`（缺 gcc/make 时 `dnf install`），生成 SF1 数据到
+1. 使用构建阶段编译好的 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen` 生成 SF1 数据到
    `${PERF_WORK_DIR}/tpch-data/sf1`，删除每行末尾的 `|`。
 2. 建库 `tpch_sf1`（`DROP DATABASE IF EXISTS` 后重建），8 张表全部
    `DUPLICATE KEY`、`DISTRIBUTED BY HASH(<主键>) BUCKETS n`、
@@ -242,6 +246,7 @@ bash software/Bigdata/doris/doris_test.sh \
   `kernel_state.txt`，正式跑大数据量前需确认 Runner 现有值是否足够。
 - 开发机冒烟时 FE 堆通过 `DORIS_FE_HEAP` 缩小到 4G（正式默认 8G），BE 的
   `mem_limit=90%` 仍按发行包默认；这些覆盖只用于本地验证，正式 Runner 用默认值。
-- 数据生成与导入依赖容器内 gcc/make/curl 与 tpch-kit；离线环境需预置这些包或
-  允许容器使用 dnf 源。
+- gcc/make/curl 与 tpch-kit 在 `build` 阶段准备；如果 Runner 的容器源不可用，
+  构建会在 `dnf install` 处失败，不会拖到 `test` 阶段才暴露。离线环境需预置
+  tpch-kit 压缩包，或允许构建阶段访问容器源。
 - `optimized` 变体未实现，选择后构建阶段明确返回非零。

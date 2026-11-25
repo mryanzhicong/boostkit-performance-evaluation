@@ -6,33 +6,10 @@ doris_client() {
 }
 
 prepare_tpch_kit() {
-    local zip="${DORIS_TPCH_OFFLINE_DIR}/tpch-kit-master.zip"
     local kit="${PERF_WORK_DIR}/tpch-kit"
-    if [[ ! -d "${kit}/dbgen" ]]; then
-        if [[ -s "${zip}" ]]; then
-            cp -- "${zip}" "${PERF_WORK_DIR}/tpch-kit-master.zip" || return 30
-        else
-            with_network_proxy curl -fSL --retry 3 --connect-timeout 30 \
-                -o "${PERF_WORK_DIR}/tpch-kit-master.zip" \
-                "https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master" || return 30
-        fi
-        rm -rf "${PERF_WORK_DIR}/tpch-kit-extract"
-        mkdir -p "${PERF_WORK_DIR}/tpch-kit-extract"
-        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" \
-            "${PERF_WORK_DIR}/tpch-kit-extract" || return 30
-        local dbgen_dir
-        dbgen_dir="$(find "${PERF_WORK_DIR}/tpch-kit-extract" -maxdepth 3 -type d -name dbgen -print -quit)"
-        [[ -n "${dbgen_dir}" ]] || {
-            log_error 'tpch-kit archive has no dbgen'; return 30;
-        }
-        ln -sfn "$(dirname "${dbgen_dir}")" "${kit}"
-    fi
-    if ! doris_exec bash -c 'command -v gcc && command -v make' >/dev/null 2>&1; then
-        doris_exec_root install -y gcc make || return 30
-    fi
-    if [[ ! -x "${kit}/dbgen/dbgen" ]]; then
-        doris_exec bash -c "cd '${kit}/dbgen' && make -j\"\$(nproc)\"" >/dev/null || return 30
-    fi
+    [[ -x "${kit}/dbgen/dbgen" ]] || {
+        log_error 'TPC-H dbgen is missing; the build stage must prepare it'; return 30;
+    }
 }
 
 generate_tpch_data() {
@@ -131,9 +108,9 @@ PY
 
 load_tpch_data() {
     local data_dir="${PERF_WORK_DIR}/tpch-data/sf${DORIS_SF}"
-    if ! doris_exec bash -c 'command -v curl' >/dev/null 2>&1; then
-        doris_exec_root install -y curl || return 30
-    fi
+    doris_exec bash -c 'command -v curl >/dev/null 2>&1' || {
+        log_error 'curl is missing in the container; the build stage must install it'; return 30;
+    }
     stream_load region "r_regionkey,r_name,r_comment" "${data_dir}/region.tbl" || return 50
     stream_load nation "n_nationkey,n_name,n_regionkey,n_comment" "${data_dir}/nation.tbl" || return 50
     stream_load supplier "s_suppkey,s_name,s_address,s_nationkey,s_phone,s_acctbal,s_comment" "${data_dir}/supplier.tbl" || return 50

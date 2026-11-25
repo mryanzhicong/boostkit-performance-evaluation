@@ -183,6 +183,49 @@ read_doris_version() {
         | sed -nE 's/^doris-([^ (]+).*/\1/p' | head -n 1
 }
 
+install_container_tools() {
+    local -a missing=()
+    doris_exec bash -c 'command -v gcc' >/dev/null 2>&1 || missing+=(gcc)
+    doris_exec bash -c 'command -v make' >/dev/null 2>&1 || missing+=(make)
+    doris_exec bash -c 'command -v curl' >/dev/null 2>&1 || missing+=(curl)
+    if (( ${#missing[@]} > 0 )); then
+        log_message "installing container tools: ${missing[*]}"
+        doris_exec_root install -y "${missing[@]}" || return 30
+    fi
+    doris_exec bash -c 'gcc --version >/dev/null 2>&1 && make --version >/dev/null 2>&1 && curl --version >/dev/null 2>&1' || {
+        log_error 'gcc/make/curl are not usable in the container'; return 30;
+    }
+}
+
+prepare_tpch_kit() {
+    local zip="${DORIS_TPCH_OFFLINE_DIR}/tpch-kit-master.zip"
+    local kit="${PERF_WORK_DIR}/tpch-kit"
+    if [[ ! -d "${kit}/dbgen" ]]; then
+        if [[ -s "${zip}" ]]; then
+            cp -- "${zip}" "${PERF_WORK_DIR}/tpch-kit-master.zip" || return 30
+        else
+            with_network_proxy curl -fSL --retry 3 --connect-timeout 30 \
+                -o "${PERF_WORK_DIR}/tpch-kit-master.zip" \
+                "https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master" || return 30
+        fi
+        rm -rf "${PERF_WORK_DIR}/tpch-kit-extract"
+        mkdir -p "${PERF_WORK_DIR}/tpch-kit-extract"
+        python3 -m zipfile -e "${PERF_WORK_DIR}/tpch-kit-master.zip" \
+            "${PERF_WORK_DIR}/tpch-kit-extract" || return 30
+        local dbgen_dir
+        dbgen_dir="$(find "${PERF_WORK_DIR}/tpch-kit-extract" -maxdepth 3 -type d -name dbgen -print -quit)"
+        [[ -n "${dbgen_dir}" ]] || { log_error 'tpch-kit archive has no dbgen'; return 30; }
+        ln -sfn "$(dirname "${dbgen_dir}")" "${kit}"
+    fi
+    if [[ ! -x "${kit}/dbgen/dbgen" ]]; then
+        log_message 'building TPC-H dbgen in the container'
+        doris_exec bash -c "cd '${kit}/dbgen' && make -j\"\$(nproc)\"" >/dev/null || {
+            log_error 'TPC-H dbgen build failed'; return 30;
+        }
+    fi
+    [[ -x "${kit}/dbgen/dbgen" ]] || { log_error 'TPC-H dbgen binary is missing'; return 30; }
+}
+
 build_doris_base() {
     local actual
     initialize_runtime || return $?
@@ -194,6 +237,8 @@ build_doris_base() {
     start_private_container || return $?
     docker exec --user 0 "${DORIS_CONTAINER_NAME}" sh -c \
         'command -v hostname >/dev/null 2>&1 || { printf "#!/bin/sh\necho localhost\n" > /usr/local/bin/hostname && chmod +x /usr/local/bin/hostname; }' || return 30
+    install_container_tools || return $?
+    prepare_tpch_kit || return $?
     mkdir -p "${PERF_WORK_DIR}/tools"
     cp -- "${CASE_DIR}/scripts/tools/doris_client.py" "${PERF_WORK_DIR}/tools/" || return 30
     prepare_python_dependency || return $?
