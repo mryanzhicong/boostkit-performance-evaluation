@@ -1,0 +1,31 @@
+{
+  "parameters": {
+    "write_size_gb": 2,
+    "presplit_regions": 16,
+    "read_threads": 8,
+    "rows_per_thread": 100000,
+    "rounds": 3,
+    "write_mode": "mapreduce randomWrite",
+    "read_mode": "client randomRead --nomapred"
+  },
+  "results": {
+    "pe-randomWrite/throughput": {
+      "value": 92214.933,
+      "unit": "rows/s",
+      "direction": "higher_is_better",
+      "group": "pe-randomWrite"
+    },
+    "pe-randomRead/throughput": {
+      "value": 66562.0,
+      "unit": "ops/s",
+      "direction": "higher_is_better",
+      "group": "pe-randomRead"
+    },
+    "pe-randomRead/avg_latency": {
+      "value": 0.118,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "pe-randomRead"
+    }
+  }
+}
