@@ -1,0 +1,68 @@
+{
+  "version": "1.1.0",
+  "gtest_suite": "RapidJson",
+  "gtest_repeat": 5,
+  "architecture_suffixes": ["SSE2", "SSE42", "NEON"],
+  "corpora": {
+    "sample": {
+      "path": "bin/data/sample.json",
+      "bytes": 687491,
+      "sha256": "9a56aaca1ad7363e1c7852ad12a336980e789db91bd9aabad64eea702320ab6f"
+    },
+    "paragraphs": {
+      "path": "bin/types/paragraphs.json",
+      "bytes": 33764,
+      "sha256": "2a37599db74922aae1e7bcd692751660d3a3fea4ae8dd13c99d1c3063585c1a5"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "dom_parse",
+      "case": "DocumentParse_MemoryPoolAllocator",
+      "corpus": "sample",
+      "iterations": 1000
+    },
+    {
+      "name": "dom_parse_insitu",
+      "case": "DocumentParseInsitu_MemoryPoolAllocator",
+      "corpus": "sample",
+      "iterations": 1000
+    },
+    {
+      "name": "dom_parse_encoded_stream",
+      "case": "DocumentParseEncodedInputStream_MemoryStream",
+      "corpus": "sample",
+      "iterations": 1000
+    },
+    {
+      "name": "sax_parse",
+      "case": "ReaderParse_DummyHandler",
+      "corpus": "sample",
+      "iterations": 1000
+    },
+    {
+      "name": "sax_parse_paragraphs",
+      "case": "ReaderParse_DummyHandler_Paragraphs",
+      "corpus": "paragraphs",
+      "iterations": 10000
+    },
+    {
+      "name": "writer_string_buffer",
+      "case": "Writer_StringBuffer",
+      "corpus": "sample",
+      "iterations": 1000
+    },
+    {
+      "name": "writer_string_buffer_paragraphs",
+      "case": "Writer_StringBuffer_Paragraphs",
+      "corpus": "paragraphs",
+      "iterations": 10000
+    },
+    {
+      "name": "pretty_writer_string_buffer",
+      "case": "PrettyWriter_StringBuffer",
+      "corpus": "sample",
+      "iterations": 1000
+    }
+  ]
+}
