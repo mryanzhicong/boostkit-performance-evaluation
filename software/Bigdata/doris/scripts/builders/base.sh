@@ -164,6 +164,7 @@ start_private_container() {
         --ulimit nofile=1048576:1048576 \
         --ulimit memlock=-1:-1 \
         --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+        --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
         --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
         --mount type=bind,source=/etc/group,target=/etc/group,readonly \
         "${cert_mount[@]+"${cert_mount[@]}"}" \

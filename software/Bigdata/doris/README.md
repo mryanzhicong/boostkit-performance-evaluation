@@ -87,6 +87,7 @@ docker run --detach --name "${DORIS_CONTAINER_NAME}" \
   --ulimit nofile=1048576:1048576 \
   --ulimit memlock=-1:-1 \
   --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount "type=bind,source=${RESULTS_DIR},target=${RESULTS_DIR}" \
   --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
   --mount type=bind,source=/etc/group,target=/etc/group,readonly \
   "${DORIS_CONTAINER_IMAGE}" sleep infinity
@@ -98,6 +99,10 @@ docker run --detach --name "${DORIS_CONTAINER_NAME}" \
 | `DORIS_MEMSET` | `0` | 与 cpuset 对应的 NUMA 节点 |
 | `DORIS_MEMORY` / `DORIS_MEMORY_SWAP` | `128g` / `128g` | 容器内存与 swap 额度，相等即容器内禁用 swap |
 | `DORIS_CONTAINER_IMAGE` | 上一步 `docker load` 的输出 | 不写死 tag |
+
+`RESULTS_DIR` 也挂进容器：`doris_client.py` 在容器内把 `tpch_wall.csv` 写到
+`${DORIS_RESULT_DIR}`，只挂 `PERF_WORK_DIR` 时容器内没有这个路径，`mkdir -p` 会一路
+向上创建并最终在 `/home/runner/actions-runner` 处 `Permission denied`。
 
 开发机冒烟可用 `DORIS_CPUSET`、`DORIS_MEMSET`、`DORIS_MEMORY`、
 `DORIS_MEMORY_SWAP` 覆盖并注明；正式 Runner 必须用默认值。容器不加
