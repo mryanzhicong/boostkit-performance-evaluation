@@ -31,10 +31,11 @@ numpy_discover_benchmarks() {
         return 50
     fi
     first_regex="${exact[0]}"
-    log_message "forcing ASV discovery with ${#exact[@]} id regexes staged"
+    numpy_load_expected_source || return $?
+    log_message "forcing ASV discovery with ${#exact[@]} id regexes staged (commit ${NUMPY_EXPECTED_COMMIT:0:12})"
     numpy_container_exec_at "${ASV_DIR}" env "${NUMPY_MEASUREMENT_ENV[@]}" \
         "HOME=${PERF_WORK_DIR}/home" "${ASV_BIN}" run --python=same \
-        --set-commit-hash "${NUMPY_BASELINE_COMMIT}" --no-pull --quick \
+        --set-commit-hash "${NUMPY_EXPECTED_COMMIT}" --no-pull --quick \
         -b "${first_regex}" > "${log}" 2>&1 || {
         log_message "ERROR: ASV discovery failed, see asv-discover.log"
         tail -40 "${log}" || true

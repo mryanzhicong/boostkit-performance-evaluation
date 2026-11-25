@@ -3,8 +3,10 @@
 # numpy test stage -- the only stage that measures anything.
 # ==============================================================================
 # Runs the vendored aggregate ASV suite against the containerised NumPy 2.4.3
-# baseline, publishes the ASV report and then hands the raw ASV result file to
-# the strict host-side parser.  The parser is deliberately kept off the
+# checkout -- the pinned baseline commit, or for the optimized variant the
+# `master` branch tip that ASV builds itself from the HEAD~1..HEAD range --
+# publishes the ASV report and then hands the raw ASV result file to the strict
+# host-side parser.  The parser is deliberately kept off the
 # measured process tree: it re-reads the recorded samples and refuses anything
 # that is missing, duplicated, non-finite or shorter than the declared sampling
 # window.
@@ -24,8 +26,10 @@ numpy_run_asv_benchmarks() {
     local total_samples rc=0 started finished
     local -a exact=()
     local -a bench_args=()
+    local -a run_env=()
     total_samples=$(( NUMPY_WARMUPS + NUMPY_REPS ))
 
+    numpy_load_expected_source || return $?
     mapfile -t exact < <(numpy_container_exec "${VENV_PY}" \
         "${SCRIPT_DIR}/scripts/benchmarks/select_benchmarks.py" \
         --list "${ASV_LIST}" --emit-bench-args) || {
@@ -39,19 +43,36 @@ numpy_run_asv_benchmarks() {
     for regex in "${exact[@]}"; do
         bench_args+=(-b "${regex}")
     done
+    mapfile -t run_env < <(numpy_asv_env)
 
     log_message "measuring ${#exact[@]} benchmark ids: ${NUMPY_WARMUPS} warm-up sample(s) + ${NUMPY_REPS} retained samples per benchmark"
     started="$(date +%s)"
-    numpy_container_exec_at "${ASV_DIR}" env "${NUMPY_MEASUREMENT_ENV[@]}" \
-        "HOME=${PERF_WORK_DIR}/home" "${ASV_BIN}" run \
-        --config asv.conf.json \
-        --python=same \
-        --set-commit-hash "${NUMPY_BASELINE_COMMIT}" \
-        --no-pull \
-        --record-samples \
-        -a rounds=1 \
-        -a "repeat=${total_samples}" \
-        "${bench_args[@]}" 2>&1 | tee "${log}" || rc=$?
+    if [ "${PERF_VARIANT}" = "optimized" ]; then
+        # asv 0.6.4 refuses a commit range in an existing environment, so the
+        # optimized variant drops --python=same and lets ASV create its own
+        # environment and build the measured commit.  `HEAD~1..HEAD` resolves to
+        # exactly the branch tip (`git rev-list --first-parent`), the commit the
+        # build stage already recorded.
+        log_message "ASV builds ${NUMPY_OPTIMIZED_RANGE} itself (measured commit ${NUMPY_EXPECTED_COMMIT:0:12})"
+        numpy_container_exec_at "${ASV_DIR}" env "${run_env[@]}" "${ASV_BIN}" run \
+            "${NUMPY_OPTIMIZED_RANGE}" \
+            --config asv.conf.json \
+            --no-pull \
+            --record-samples \
+            -a rounds=1 \
+            -a "repeat=${total_samples}" \
+            "${bench_args[@]}" 2>&1 | tee "${log}" || rc=$?
+    else
+        numpy_container_exec_at "${ASV_DIR}" env "${run_env[@]}" "${ASV_BIN}" run \
+            --config asv.conf.json \
+            --python=same \
+            --set-commit-hash "${NUMPY_EXPECTED_COMMIT}" \
+            --no-pull \
+            --record-samples \
+            -a rounds=1 \
+            -a "repeat=${total_samples}" \
+            "${bench_args[@]}" 2>&1 | tee "${log}" || rc=$?
+    fi
     finished="$(date +%s)"
     if [ "${rc}" -ne 0 ]; then
         log_message "ERROR: the ASV measurement failed (exit ${rc}), see asv-run.log"
@@ -64,8 +85,9 @@ numpy_run_asv_benchmarks() {
 }
 
 numpy_collect_raw_evidence() {
-    local results_file machine_file commit_short
-    commit_short="${NUMPY_BASELINE_COMMIT:0:8}"
+    local results_file machine_file commit_short parent_short parent_file
+    numpy_load_expected_source || return $?
+    commit_short="${NUMPY_EXPECTED_COMMIT:0:8}"
     results_file="$(find "${ASV_RESULTS_DIR}" -name "${commit_short}-*.json" -type f 2>/dev/null | head -n 1)"
     if [ -z "${results_file}" ]; then
         log_message "ERROR: ASV recorded no result file for commit ${commit_short}"
@@ -83,9 +105,24 @@ numpy_collect_raw_evidence() {
         cp -f "${machine_file}" "${RUNS_DIR}/asv-machine.json" || return 30
     fi
     cp -f "${RESULTS_DIR}/asv-run.log" "${RUNS_DIR}/asv-run.log" 2>/dev/null || true
+    if [ "${PERF_VARIANT}" = "optimized" ]; then
+        # HEAD~1 only anchors the range: `git rev-list --first-parent
+        # HEAD~1..HEAD` selects the tip alone, so a parent record exists only if
+        # it was measured explicitly.  Copy it when present; never fail on it.
+        parent_short="${NUMPY_EXPECTED_PARENT:0:8}"
+        parent_file="$(find "${ASV_RESULTS_DIR}" -name "${parent_short}-*.json" -type f 2>/dev/null | head -n 1)"
+        if [ -n "${parent_file}" ]; then
+            cp -f "${parent_file}" "${RUNS_DIR}/asv-results-parent.json" || return 30
+        fi
+    fi
     numpy_container_exec_at "${ASV_DIR}" env "${NUMPY_MEASUREMENT_ENV[@]}" \
-        "HOME=${PERF_WORK_DIR}/home" "${ASV_BIN}" show "${NUMPY_BASELINE_COMMIT}" \
+        "HOME=${PERF_WORK_DIR}/home" "${ASV_BIN}" show "${NUMPY_EXPECTED_COMMIT}" \
         > "${RUNS_DIR}/asv-show.txt" 2>&1 || log_message "WARNING: asv show failed (non-fatal)"
+    if [ -n "${parent_file:-}" ] && [ -s "${RUNS_DIR}/asv-results-parent.json" ]; then
+        numpy_container_exec_at "${ASV_DIR}" env "${NUMPY_MEASUREMENT_ENV[@]}" \
+            "HOME=${PERF_WORK_DIR}/home" "${ASV_BIN}" show "${NUMPY_EXPECTED_PARENT}" \
+            > "${RUNS_DIR}/asv-show-parent.txt" 2>&1 || log_message "WARNING: asv show for the parent commit failed (non-fatal)"
+    fi
     log_message "raw ASV evidence copied into runs/"
 }
 
@@ -118,8 +155,13 @@ numpy_parse_measurement() {
         log_message "ERROR: ${host_python} is required for the strict result parser"
         return 50
     fi
-    log_message "validating the ASV result file with the strict parser"
-    "${host_python}" "${parser}" \
+    numpy_load_expected_source || return $?
+    log_message "validating the ASV result file with the strict parser (commit ${NUMPY_EXPECTED_COMMIT:0:12})"
+    NUMPY_EXPECTED_COMMIT="${NUMPY_EXPECTED_COMMIT}" \
+        NUMPY_EXPECTED_BRANCH="${NUMPY_EXPECTED_BRANCH}" \
+        NUMPY_EXPECTED_PARENT="${NUMPY_EXPECTED_PARENT}" \
+        NUMPY_COMMIT_RANGE="${NUMPY_OPTIMIZED_RANGE}" \
+        "${host_python}" "${parser}" \
         --results "${RUNS_DIR}/asv-results.json" \
         --benchmarks "${RUNS_DIR}/asv-benchmarks.json" \
         --list "${ASV_LIST}" \
