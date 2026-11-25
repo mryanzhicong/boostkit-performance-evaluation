@@ -41,19 +41,59 @@ BiSheng JDK 与 ZooKeeper/ClickHouse/Doris 用例使用同一组固定 SHA-256�
 
 ## 获取、构建与容器启动
 
-构建阶段加载 openEuler 镜像（校验 `.sha256sum`、架构、`/etc/os-release`），
-依次解包 HBase、Hadoop、ZooKeeper、BiSheng JDK 到 `${PERF_WORK_DIR}`。Hadoop 的
+构建阶段先检查 Docker daemon 并加载 openEuler 24.03 LTS SP4 镜像：
+
+```bash
+command -v docker >/dev/null && docker info >/dev/null
+ARCHIVE="${HBASE_IMAGE_ARCHIVE_DIR}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+[[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
+[[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
+expected="$(awk 'NR == 1 {print $1}' "${ARCHIVE}.sha256sum")"
+actual="$(sha256sum "${ARCHIVE}")"
+[[ "${actual%% *}" == "${expected,,}" ]] || { echo "image SHA-256 mismatch"; exit 1; }
+output="$(docker load --input "${ARCHIVE}")"
+CONTAINER_IMAGE="$(printf '%s\n' "${output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+printf '%s\n' "${CONTAINER_IMAGE}" > "${PERF_WORK_DIR}/container-image.txt"
+docker image inspect --format '{{.Architecture}}' "${CONTAINER_IMAGE}"   # x86_64→amd64、aarch64→arm64
+docker run --rm --network=none "${CONTAINER_IMAGE}" cat /etc/os-release    # 必须是 openEuler 24.03 LTS SP4
+```
+
+随后依次解包 HBase、Hadoop、ZooKeeper、BiSheng JDK 到 `${PERF_WORK_DIR}`。Hadoop 的
 `-aarch64` 包内顶层目录仍叫 `hadoop-3.3.6`，脚本按实际目录校验。随后在容器内执行
 `hbase version`，从输出读取 `2.4.14` 写入 `PERF_ACTUAL_VERSION_FILE`；`build`
 成功后写 `build_variant.json`。
 
-容器名称为 `boostkit-hbase-<架构>-<run-id>`，创建命令与 ZooKeeper 用例相同：
-`--network=host`、Runner UID/GID、`--cpuset-cpus=0-31`、`--cpuset-mems=0`、
-`--memory=128g --memory-swap=128g`、`--ulimit nofile=1048576:1048576`、
-`--ulimit memlock=-1:-1`，工作目录与结果目录同路径挂载，**不加 `--privileged`**。
+容器名称为 `boostkit-hbase-<架构>-<run-id>`，创建命令如下：
+
+```bash
+docker run --detach --name "${CONTAINER_NAME}" \
+  --label "boostkit.hbase.run-id=${PERF_RUN_ID}" \
+  --network=host \
+  --user "$(id -u):$(id -g)" \
+  --cpuset-cpus="${HBASE_CPUSET}" \
+  --cpuset-mems="${HBASE_MEMSET}" \
+  --memory="${HBASE_MEMORY}" \
+  --memory-swap="${HBASE_MEMORY_SWAP}" \
+  --ulimit nofile=1048576:1048576 \
+  --ulimit memlock=-1:-1 \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${CONTAINER_IMAGE}" sleep infinity
+```
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `HBASE_CPUSET` | `0-31` | 单 NUMA 节点上的 32 个物理核，两个架构必须相同 |
+| `HBASE_MEMSET` | `0` | 与 cpuset 对应的 NUMA 节点 |
+| `HBASE_MEMORY` / `HBASE_MEMORY_SWAP` | `128g` / `128g` | 容器内存与 swap 额度，相等即容器内禁用 swap |
+| `CONTAINER_IMAGE` | 上一步 `docker load` 的输出 | 不写死 tag |
+
 开发机冒烟可覆盖 `HBASE_CPUSET`、`HBASE_MEMSET`、`HBASE_MEMORY`、
 `HBASE_MEMORY_SWAP` 以及 `HBASE_RS_HEAP`/`HBASE_MASTER_HEAP`/`HBASE_DIRECT_MEMORY`/
-`HBASE_BUCKET_CACHE_MB`，并在结果里注明；正式 Runner 使用 bdperf 默认值。
+`HBASE_BUCKET_CACHE_MB`，并在结果里注明；正式 Runner 使用 bdperf 默认值。容器
+不加 `--privileged`。
 
 ## 启动
 
