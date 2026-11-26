@@ -1,0 +1,54 @@
+name: rinetd
+category: Toolchain
+enabled: true
+versions:
+  - "0.73"
+test_tools:
+  loopback-tcp:
+    version: "fixed loopback matrix, direct versus rinetd-forwarded"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_rinetd
+    start:
+      script: scripts/stages/start.sh
+      function: start_rinetd_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_rinetd_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_rinetd_runtime
+  timeout_minutes: 120
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  official_benchmark:
+    path: raw-output.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_rinetd.json
+    stage: test
+    format: json
+    required: true
+  run_samples:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
