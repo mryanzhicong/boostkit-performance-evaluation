@@ -1,0 +1,21 @@
+scenario|dimension|runner|target|scale|check|expected|tolerance|workload
+bencherl_bang_short|message|erlang_workload|perf_bench|1|int|256||bencherl bang handler, short argument set (16 senders x 16 messages, cores=1)
+bencherl_bang_long|message|erlang_workload|perf_bench|3|int|6241||bencherl bang handler, long argument set (79 senders x 79 messages, cores=1)
+bencherl_big_short|message|erlang_workload|perf_bench|1|int|8||bencherl big handler, short argument set (8 processes, cores=1)
+bencherl_big_long|message|erlang_workload|perf_bench|3|int|24||bencherl big handler, long argument set (24 processes, cores=1)
+bencherl_mbrot_short|compute|erlang_workload|perf_bench|1|int|32||bencherl mbrot handler, short argument set (2x2 pixels x 4 workers, cores=1)
+bencherl_mbrot_long|compute|erlang_workload|perf_bench|3|int|1372||bencherl mbrot handler, long argument set (7x7 pixels x 4 workers, cores=1)
+arith_int_small|compute|erlang_workload|perf_bench|2000000|int|794992328||integer add/multiply/modulo loop, 2M iterations
+arith_int_large|compute|erlang_workload|perf_bench|8000000|int|179965187||integer add/multiply/modulo loop, 8M iterations
+arith_float_small|compute|erlang_workload|perf_bench|2000000|float|287600047361.480834961000|1e-09|sqrt/divide/add loop, 2M iterations
+arith_float_large|compute|erlang_workload|perf_bench|8000000|float|4586514088936.675781250000|1e-09|sqrt/divide/add loop, 8M iterations
+list_ops_small|collections|erlang_workload|perf_bench|100000|int|99930||lists:seq/map/sort/sum over 100k elements
+list_ops_large|collections|erlang_workload|perf_bench|400000|int|398880||lists:seq/map/sort/sum over 400k elements
+map_ops_small|collections|erlang_workload|perf_bench|200000|int|857527997||map put/get over 200k keys
+map_ops_large|collections|erlang_workload|perf_bench|800000|int|858225909||map put/get over 800k keys
+binary_ops_small|binary|erlang_workload|perf_bench|20000|int|200010000||64-bit integer binary construction and split, 20k values
+binary_ops_large|binary|erlang_workload|perf_bench|80000|int|200039979||64-bit integer binary construction and split, 80k values
+ets_ops_small|collections|erlang_workload|perf_bench|100000|int|909522412||ets insert/lookup loop over 100k keys
+ets_ops_large|collections|erlang_workload|perf_bench|400000|int|92125953||ets insert/lookup loop over 400k keys
+pingpong_small|message|erlang_workload|perf_bench|100000|int|100000||process message passing ping-pong loop, 100k messages
+pingpong_large|message|erlang_workload|perf_bench|400000|int|400000||process message passing ping-pong loop, 400k messages
