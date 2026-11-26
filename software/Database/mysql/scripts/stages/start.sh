@@ -48,10 +48,8 @@ start_mysql_instance() {
 start_mysql_service() {
     local instance_id
     initialize_runtime || return $?
-    if [[ ! -x "${MYSQLD_BIN}" || ! -x "${MYSQL_BIN}" ]]; then
-        log_message "ERROR: MySQL is not deployed (run build first)"
-        return 40
-    fi
+    mysql_verify_installed_artifact || return $?
+    log_message "measured server: ${MYSQL_EXPECTED_ARTIFACT} (${MYSQL_INSTALLED_BANNER})"
     for ((instance_id = 1; instance_id <= MYSQL_INSTANCE_COUNT; instance_id++)); do
         configure_mysql_instance "${instance_id}" || return $?
         mkdir -p "${SERVICE_DIR}" "${MYSQL_TMP_DIR}"

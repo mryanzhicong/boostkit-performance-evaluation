@@ -50,6 +50,46 @@ def test_run_sysbench_uses_private_lua_workload(tmp_path: Path) -> None:
     assert "ARG=--tables=64" in completed.stdout
 
 
+def test_sysbench_links_the_client_library_of_the_deployed_server() -> None:
+    script = (CASE_DIR / "scripts" / "prepare_sysbench.sh").read_text(encoding="utf-8")
+    assert 'mysql_library_directory="$(cd "$(dirname "${mysql_config}")/.." && pwd)/lib"' in script
+    assert "-L${mysql_library_directory}" in script
+    assert "-Wl,-rpath,${mysql_library_directory}" in script
+
+
+def test_run_sysbench_exports_the_deployed_client_library(tmp_path: Path) -> None:
+    fake_sysbench = tmp_path / "sysbench"
+    fake_sysbench.write_text(
+        '#!/bin/sh\nprintf "LD_LIBRARY_PATH=%s\n" "$LD_LIBRARY_PATH"\n',
+        encoding="utf-8",
+    )
+    fake_sysbench.chmod(0o755)
+    mysql_base = tmp_path / "mysql"
+    (mysql_base / "lib").mkdir(parents=True)
+    environment = os.environ | {
+        "TEST_SCRIPT": str(COMMON),
+        "TEST_BIN": str(fake_sysbench),
+        "TEST_LUA_DIR": str(tmp_path / "lua"),
+        "TEST_RESULTS_DIR": str(tmp_path / "results"),
+        "TEST_MYSQL_BASE_DIR": str(mysql_base),
+    }
+    completed = subprocess.run(
+        [
+            "bash", "-c",
+            'source "$TEST_SCRIPT"; SYSBENCH_BIN="$TEST_BIN"; '
+            'SYSBENCH_LUA_DIR="$TEST_LUA_DIR"; RESULTS_DIR="$TEST_RESULTS_DIR"; '
+            'MYSQL_BASE_DIR="$TEST_MYSQL_BASE_DIR"; '
+            'mkdir -p "$RESULTS_DIR/sysbench-runs"; '
+            'run_sysbench read_write 2 0 prepare',
+        ],
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert f"LD_LIBRARY_PATH={mysql_base}/lib" in completed.stdout
+
+
 def test_run_sysbench_rejects_fatal_worker_error_even_when_exit_is_zero(tmp_path: Path) -> None:
     fake_sysbench = tmp_path / "sysbench"
     fake_sysbench.write_text('#!/bin/sh\nprintf "FATAL: error 1040: Too many connections\\n"\n', encoding="utf-8")

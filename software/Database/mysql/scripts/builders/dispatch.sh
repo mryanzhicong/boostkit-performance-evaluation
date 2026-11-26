@@ -14,6 +14,16 @@ build_mysql() {
             ;;
     esac
     initialize_runtime || return $?
+    if [[ "${PERF_VARIANT}" == optimized ]]; then
+        # The optimized builder records the artifact it deployed itself; the
+        # dispatch layer only verifies that the provenance file exists.
+        if [[ ! -s "${RESULTS_DIR}/build_variant.json" ]]; then
+            log_message "ERROR: optimized build did not record ${RESULTS_DIR}/build_variant.json"
+            return 40
+        fi
+        log_message "build variant recorded in ${RESULTS_DIR}/build_variant.json"
+        return 0
+    fi
     printf '{"variant":"%s","parameters":{"variant":"%s"}}\n' \
         "${PERF_VARIANT}" "${PERF_VARIANT}" > "${RESULTS_DIR}/build_variant.json"
 }

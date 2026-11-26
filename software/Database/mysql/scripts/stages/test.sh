@@ -27,6 +27,7 @@ run_mysql_benchmarks() {
         log_message "ERROR: multi-instance Sysbench testing is not enabled"
         return 50
     fi
+    mysql_verify_installed_artifact || return $?
     check_mysql_container || return 50
     require_mysql_tools || return $?
     if ! MYSQL_PWD="${MYSQL_PASSWORD}" "${MYSQL_BIN}" \
@@ -69,6 +70,16 @@ run_mysql_benchmarks() {
         -e 'SELECT @@innodb_flush_log_at_trx_commit, @@innodb_use_native_aio, @@log_bin, @@max_connections, @@max_prepared_stmt_count' \
         | { printf '# benchmark configuration: flush_at_commit native_aio log_bin max_connections max_prepared_stmt_count\n'; cat; } \
         | tee -a "${raw_output}" "${RESULTS_DIR}/mysql-benchmark-config.log" || return 50
+    if [[ "${PERF_VARIANT}" == optimized ]]; then
+        MYSQL_ARTIFACT_SHA256="$(mysql_source_record_value artifact_sha256 "${MYSQL_SOURCE_RECORD}" || true)"
+        export MYSQL_ARTIFACT_NAME="${MYSQL_EXPECTED_ARTIFACT}"
+        export MYSQL_ARTIFACT_SHA256
+        export MYSQL_ARTIFACT_RELEASE="${MYSQL_OPTIMIZED_RELEASE}"
+        export MYSQL_ARTIFACT_SOURCE="${MYSQL_OPTIMIZED_URL}"
+        printf '# measured artifact: %s sha256=%s release=%s\n' \
+            "${MYSQL_ARTIFACT_NAME}" "${MYSQL_ARTIFACT_SHA256}" "${MYSQL_ARTIFACT_RELEASE}" \
+            | tee -a "${raw_output}" "${RESULTS_DIR}/mysql-benchmark-config.log"
+    fi
 
     for scenario in read_only read_write write_only; do
         if [[ "${scenario}" == read_write ]]; then

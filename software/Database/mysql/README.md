@@ -7,17 +7,22 @@ Framework 通过 `case.yaml` 分别调用构建、启动、测试和停止脚本
 脚本也使用这些阶段函数。
 
 正式与开发工作流提供 `base`、`optimized` 下拉选项，默认 `base`。基础版调用
-`scripts/builders/base.sh` 部署官方二进制包；调优版入口位于
-`scripts/builders/optimized.sh`，目前**尚未实现**，选择后会在构建阶段明确失败，
-不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/` 下的脚本。
-`scripts/common.sh` 提供阶段间一致的私有路径、端口派发和服务管理函数，Sysbench
-客户端构建脚本在 `scripts/prepare_sysbench.sh`，结果解析位于 `scripts/results/`。
+`scripts/builders/base.sh` 部署 Oracle 官方二进制包；调优版调用
+`scripts/builders/optimized.sh`，部署 BoostKit 发布的 BoostDB-Percona 8.0.43-34
+二进制包。两者只在构建阶段不同：调优版把 RPM 的 payload 解包到同一个
+`${MYSQL_BASE_DIR}`，因此容器启动参数、挂载、数据目录、服务器参数和 Sysbench
+命令与基础版逐字一致，测试口径不变。调优版仅提供 aarch64 包，x86_64 上会在
+构建阶段明确失败，不会退回基础版。启动、测试和停止阶段共用 `scripts/stages/`
+下的脚本。`scripts/common.sh` 提供阶段间一致的私有路径、端口派发和服务管理函数，
+Sysbench 客户端构建脚本在 `scripts/prepare_sysbench.sh`，结果解析位于
+`scripts/results/`。
 
 ## 软件与测试工具
 
 | 项目 | 来源与版本 | 安装位置 |
 |---|---|---|
-| MySQL | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
+| MySQL（基础版） | Oracle MySQL 8.0.43 Linux Generic 二进制包 | `${PERF_WORK_DIR}/mysql` |
+| MySQL（调优版） | [BoostKit BoostDB-Percona 8.0.43-34](https://gitcode.com/boostkit/boostdb/releases/download/26.2/BoostDB-Percona-8.0.43-34.aarch64.rpm)（发布版本 26.2，仅 aarch64） | 同一路径 `${PERF_WORK_DIR}/mysql` |
 | 容器基础镜像 | [openEuler 24.03 LTS SP4 官方 Docker 归档](https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/) | 优先读取公共目录 `/home/runner/software/openEuler-24.03-LTS-SP4/`，缺失时下载到 `${PERF_WORK_DIR}`；校验 SHA-256 后 `docker load` |
 | Sysbench | [上游 Sysbench](https://github.com/akopytov/sysbench) 1.0.20，提交 `ebf1c90` | `${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20` |
 | LuaJIT | [上游 LuaJIT](https://github.com/LuaJIT/LuaJIT) v2.1，固定提交 `c6ffc141a8762b41703f9287d63d93622a13dd8f` | `${PERF_WORK_DIR}/sysbench-tools/luajit-<提交>`；编译前复制到 Sysbench 私有源码目录 |
@@ -289,11 +294,67 @@ bash software/Database/mysql/mysql_test.sh \
   --results-dir /home/runner/mysql-results/8.0.43
 ```
 
-独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；不指定时调优版
-结果位于该版本下的 `optimized/` 子目录。目前调优版只验证入口与明确失败行为，
-不执行性能测试；正式工作流中调优版归档到
-`Database/mysql/8.0.43/optimized/<时间戳_Run ID>/`，且不会更新基础版的
-`baseline.json`。构建阶段保存 `build_variant.json` 以标识实际选择。
+独立运行时 `--variant` 可选 `base` 或 `optimized`，默认 `base`；选择 `optimized`
+时结果位于该版本下的 `optimized/` 子目录，且不会更新基础版的 `baseline.json`。
+构建阶段保存 `build_variant.json`：调优版在其中记录所部署产物的
+`artifact.name`、`artifact.sha256`、`artifact.release` 与 `mysqld.sha256`，
+`results.json` 的顶层 `artifact` 字段同样记录这些信息，报告据此指出被测包，
+而不是只看出运行 ID。start 与 test 阶段在容器启动后重新校验 mysqld 的 SHA-256
+和 `--version`，构建产物被替换会直接失败。
 
 `stop` 阶段正常关闭本任务的 MySQL，并清理其私有数据目录。独立运行时默认
 清理整个私有工作目录；如需排错，可加 `--keep-workdir`。
+
+### 调优版产物与取点
+
+调优版部署 BoostKit 发布的 [BoostDB-Percona 8.0.43-34](https://gitcode.com/boostkit/boostdb/releases/download/26.2/BoostDB-Percona-8.0.43-34.aarch64.rpm)
+二进制包，发布版本 `26.2`：
+
+| 项目 | 值 |
+|---|---|
+| 包名 | `BoostDB-Percona-8.0.43-34.aarch64.rpm` |
+| SHA-256 | `3ce5a3ca119b6237cdb9ee0628dab7ba41aa49feba847de14f84562415306faa` |
+| 安装体积 | 约 1.83 GiB（29435 个文件，全部位于 `/usr/local/mysql` 下） |
+| 取点形态 | 发布 tag `26.2` 下的固定包，厂商不发布 MySQL 源码，版本与补丁级以包名和 tag 固定 |
+
+包优先从 `/home/runner/software/mysql/<包名>` 取，其次读取 `${PERF_WORK_DIR}`
+缓存，最后从上面的发布地址下载；下载落在 `${PERF_WORK_DIR}/<包名>.part`，
+SHA-256 与 `rpm -qp` 的 `NAME VERSION RELEASE ARCH` 双重校验通过后才改名为正式
+包。校验失败的缓存包会被删除，构建以非零状态退出。解包使用 `rpm2cpio | cpio`
+把 payload 展开到 `${PERF_WORK_DIR}/mysql-optimized-stage`，再整体移动到
+`${MYSQL_BASE_DIR}`，因此不需要在容器内安装软件包，也不需要额外权限。
+构建阶段的 `mysql-source.txt` 记录包名、SHA-256、版本、mysqld 的 SHA-256 与
+banner，start 和 test 阶段据此复核。
+
+该包依赖 `libldap.so.2`、`libsasl2.so.3`、`libtirpc.so.3`、`libnuma.so.1` 等
+Percona 常用库。容器首次运行该 mysqld 时，脚本用 `ldd` 找出容器内缺失的
+soname，再以 soname capability（例如 `libldap.so.2()(64bit)`）交给容器内的
+`dnf` 解析安装 `libaio`、`libnuma`、`libtirpc`、`openldap`、`cyrus-sasl-lib`
+等运行时库；这一操作只在容器用户态完成，容器启动参数与基础版完全相同。
+基础版沿用原有的 `libaio`、`numactl-libs` 安装路径。
+
+宿主机上构建的 Sysbench 会链接被测服务器的客户端库：基础版是
+`libmysqlclient.so.21`，调优版是 `libperconaserverclient.so.21`。构建脚本从
+`mysql_config` 推导出 `${MYSQL_BASE_DIR}/lib`，同时写入链接搜索路径与
+`rpath`，因此 Sysbench 二进制在任意目录启动都能解析到私有客户端库；
+`run_sysbench` 还额外导出同一目录的 `LD_LIBRARY_PATH` 作为兜底。两种变体的
+Sysbench 版本、编译选项与运行参数保持不变。
+
+### 已知限制
+
+- 调优版只支持 aarch64：BoostKit 26.2 只发布 aarch64 RPM，x86_64 上以
+  "no optimized MySQL package" 明确失败。
+- 只换取点与产物，不换测量内容：数据规模、场景顺序、线程矩阵、预热时长和
+  Sysbench 参数与基础版一致，两个变体的结果才可对照。
+- 未采用任何 OS/BIOS 调优：不写 `sysctl`、`/proc/sys`、`/sys`，不改 CPU
+  governor、THP、hugepage、tuned 或 MSR/BIOS；容器不使用 `--privileged`、
+  `--cap-add`，也不做 `taskset`、`numactl` 绑核。包内自带的 container aware
+  与线程池特性属于二进制本身的行为，随被测程序生效。
+- 宿主机与容器需要能在构建阶段访问 `gitcode.com`（或提前把 RPM 放到
+  `/home/runner/software/mysql/`），否则构建阶段报下载失败；可用
+  `MYSQL_OPTIMIZED_URL` 指向内网镜像。要改用其它发布版本或重新发布的包，
+  需同时设置 `MYSQL_OPTIMIZED_RELEASE` 与 `MYSQL_OPTIMIZED_SHA256`，只改
+  发布版本而不改校验值会在构建阶段失败。
+- 包内 `mysqld` 的 `GLIBCXX` 需求为 3.4.30，openEuler 24.03 容器自带
+  gcc 12.3.1，满足要求；若换用更旧的镜像，需要按 BoostKit 文档在容器内提供
+  更新的 `libstdc++`。

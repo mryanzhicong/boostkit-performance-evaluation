@@ -38,6 +38,17 @@ if [[ ! -x "${mysql_config}" ]]; then
     printf '[mysql] ERROR: MySQL mysql_config is missing: %s\n' "${mysql_config}" >&2
     exit 30
 fi
+# The client library name differs between the two variants: the Oracle archive
+# ships libmysqlclient.so.21 while the BoostKit package ships
+# libperconaserverclient.so.21.  Link the private Sysbench against the library
+# directory of the deployed server and embed it as an rpath, so the binary can
+# also resolve the client library when the tree is not on the loader path.
+mysql_library_directory="$(cd "$(dirname "${mysql_config}")/.." && pwd)/lib"
+if [[ ! -d "${mysql_library_directory}" ]]; then
+    printf '[mysql] ERROR: MySQL client library directory is missing: %s\n' \
+        "${mysql_library_directory}" >&2
+    exit 30
+fi
 mkdir -p "${work_directory}"
 rm -rf -- "${sysbench_source_directory}"
 printf '[mysql] cloning official Sysbench %s from %s\n' \
@@ -90,7 +101,9 @@ printf '[mysql] building upstream Sysbench %s with the private LuaJIT and timeou
 (
     cd "${sysbench_source_directory}"
     ./autogen.sh
-    PATH="$(dirname "${mysql_config}"):${PATH}" ./configure --with-mysql
+    PATH="$(dirname "${mysql_config}"):${PATH}" \
+        LDFLAGS="-L${mysql_library_directory} -Wl,-rpath,${mysql_library_directory} ${LDFLAGS:-}" \
+        ./configure --with-mysql
     make -j"$(getconf _NPROCESSORS_ONLN)"
 )
 if [[ ! -x "${sysbench_source_directory}/src/sysbench" ]]; then
@@ -106,8 +119,11 @@ for workload in read_write read_only write_only; do
         exit 40
     fi
     if ! LUA_PATH="${lua_directory}/?.lua;;" \
+        LD_LIBRARY_PATH="${mysql_library_directory}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
         "${sysbench_source_directory}/src/sysbench" "${script}" help >/dev/null; then
         printf '[mysql] ERROR: Sysbench cannot load workload script: %s\n' "${script}" >&2
+        printf '[mysql] ERROR: Sysbench cannot load its client library from %s\n' \
+            "${mysql_library_directory}" >&2
         exit 40
     fi
 done

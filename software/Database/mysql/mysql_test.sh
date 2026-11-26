@@ -146,8 +146,8 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Deploy MySQL 8.0.x from the official prebuilt tarball and run Sysbench OLTP
-benchmarks as a standalone performance evaluation. The optimized build is
-reserved and fails until its implementation is supplied.
+benchmarks as a standalone performance evaluation. The optimized variant
+deploys the BoostKit-published BoostDB package (aarch64 only) instead.
 Results default to results/<version>/<run-id>/ inside this directory.
 
 Options:
@@ -159,7 +159,9 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, PERF_VARIANT, RESULTS_DIR, PERF_WORK_DIR,
-  MYSQL_IMAGE_ARCHIVE_DIR, MYSQL_DATA_ROOT (only PERF_WORK_DIR/instances)
+  MYSQL_IMAGE_ARCHIVE_DIR, MYSQL_OPTIMIZED_URL, MYSQL_OPTIMIZED_RELEASE,
+  MYSQL_OPTIMIZED_SHA256,
+  MYSQL_DATA_ROOT (only PERF_WORK_DIR/instances)
 USAGE
 }
 

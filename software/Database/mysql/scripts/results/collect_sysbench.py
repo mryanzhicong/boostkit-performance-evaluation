@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Normalize the official Sysbench summaries from the MySQL OLTP matrix."""
 
+from __future__ import annotations
+
 import argparse
 import json
 import math
@@ -18,6 +20,12 @@ FIELDS = (
     ("TPS", TRANSACTIONS, "transactions/s", "higher_is_better"),
     ("QPS", QUERIES, "queries/s", "higher_is_better"),
     ("P95 latency", P95, "ms", "lower_is_better"),
+)
+ARTIFACT_FIELDS = (
+    ("MYSQL_ARTIFACT_NAME", "name"),
+    ("MYSQL_ARTIFACT_SHA256", "sha256"),
+    ("MYSQL_ARTIFACT_RELEASE", "release"),
+    ("MYSQL_ARTIFACT_SOURCE", "source_url"),
 )
 
 
@@ -64,6 +72,48 @@ def collect(runs_dir: Path) -> dict[str, dict]:
     return results
 
 
+def artifact_metadata() -> dict | None:
+    """Return the optimized artifact identity the test stage observed, if any.
+
+    The base variant is an official upstream tarball, so it keeps the document
+    shape it has always had; only the optimized variant carries the artifact
+    block, which is what the report uses to name the measured package.
+    """
+    if os.environ.get("PERF_VARIANT", "base") != "optimized":
+        return None
+    name = os.environ.get("MYSQL_ARTIFACT_NAME", "").strip()
+    if not name:
+        return None
+    return {
+        field: os.environ.get(env_name, "").strip()
+        for env_name, field in ARTIFACT_FIELDS
+    }
+
+
+def build_document(results: dict[str, dict]) -> dict:
+    variant = os.environ.get("PERF_VARIANT", "base")
+    document = {
+        "software": "mysql",
+        "version": os.environ["SOFTWARE_VERSION"],
+        "architecture": os.environ["EXPECTED_ARCH"],
+        "variant": variant,
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "parameters": {
+            "variant": variant,
+            "client": "sysbench 1.0.20 (ebf1c90) with upstream oltp lua workloads",
+            "database": "sbtest (64 tables, 10000000 rows)",
+            "scenarios": ["read_only", "read_write", "write_only"],
+            "threads": [256, 128, 32, 1],
+            "measurement_seconds": 120,
+        },
+        "results": results,
+    }
+    artifact = artifact_metadata()
+    if artifact is not None:
+        document["artifact"] = artifact
+    return document
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("runs_dir", type=Path)
@@ -73,22 +123,9 @@ def main() -> int:
         results = collect(args.runs_dir)
     except (OSError, ValueError) as exc:
         parser.exit(1, f"[mysql] ERROR: {exc}\n")
-    args.output.write_text(json.dumps({
-        "software": "mysql",
-        "version": os.environ["SOFTWARE_VERSION"],
-        "architecture": os.environ["EXPECTED_ARCH"],
-        "variant": os.environ.get("PERF_VARIANT", "base"),
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "parameters": {
-            "variant": os.environ.get("PERF_VARIANT", "base"),
-            "client": "sysbench 1.0.20 (ebf1c90) with upstream oltp lua workloads",
-            "database": "sbtest (64 tables, 10000000 rows)",
-            "scenarios": ["read_only", "read_write", "write_only"],
-            "threads": [256, 128, 32, 1],
-            "measurement_seconds": 120,
-        },
-        "results": results,
-    }, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(build_document(results), indent=2) + "\n", encoding="utf-8"
+    )
     print(f"[mysql] normalized {len(results)} Sysbench measurements")
     return 0
 

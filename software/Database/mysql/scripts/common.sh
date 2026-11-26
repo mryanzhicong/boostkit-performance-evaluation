@@ -30,6 +30,32 @@ MYSQL_CA_ANCHORS_DIR="${MYSQL_CA_ANCHORS_DIR:-/home/runner/software/anchors}"
 MYSQL_CONTAINER_IMAGE=""
 MYSQL_CONTAINER_NAME=""
 
+# Identity of the optimized (variant=optimized) artifact.
+#
+# The vendor publishes its Kunpeng-optimized MySQL only as a prebuilt package,
+# so this case cannot pin a source commit the way the other optimized variants
+# do.  It pins the release tag, the package name, and the sha256 of the
+# published package instead, and unpacks that package's payload into the same
+# private directory the base variant uses.  Every value below is asserted while
+# building and again before the server starts, so a swapped or rebuilt package
+# fails loudly instead of silently measuring a different server.
+MYSQL_OPTIMIZED_RELEASE="${MYSQL_OPTIMIZED_RELEASE:-26.2}"
+MYSQL_OPTIMIZED_VERSION="8.0.43"
+MYSQL_OPTIMIZED_RELEASE_NUMBER="34"
+MYSQL_OPTIMIZED_ARCH="aarch64"
+MYSQL_OPTIMIZED_ARTIFACT="BoostDB-Percona-${MYSQL_OPTIMIZED_VERSION}-${MYSQL_OPTIMIZED_RELEASE_NUMBER}.${MYSQL_OPTIMIZED_ARCH}.rpm"
+MYSQL_OPTIMIZED_SHA256="${MYSQL_OPTIMIZED_SHA256:-3ce5a3ca119b6237cdb9ee0628dab7ba41aa49feba847de14f84562415306faa}"
+MYSQL_OPTIMIZED_PAYLOAD_PREFIX="usr/local/mysql"
+MYSQL_OPTIMIZED_URL="${MYSQL_OPTIMIZED_URL:-https://gitcode.com/boostkit/boostdb/releases/download/${MYSQL_OPTIMIZED_RELEASE}/${MYSQL_OPTIMIZED_ARTIFACT}}"
+
+# Artifact provenance (written by the optimized builder, read by every stage).
+MYSQL_SOURCE_RECORD=""
+MYSQL_EXPECTED_ARTIFACT=""
+MYSQL_EXPECTED_SHA256=""
+MYSQL_EXPECTED_RELEASE_NUMBER=""
+MYSQL_INSTALLED_BANNER=""
+MYSQL_INSTALLED_SHA256=""
+
 # Lifecycle paths (assigned in configure_runtime_paths).
 MYSQL_BASE_DIR=""
 MYSQLD_BIN=""
@@ -135,6 +161,7 @@ configure_runtime_paths() {
     MYSQLD_BIN="${MYSQL_BASE_DIR}/bin/mysqld"
     MYSQL_BIN="${MYSQL_BASE_DIR}/bin/mysql"
     MYSQLADMIN_BIN="${MYSQL_BASE_DIR}/bin/mysqladmin"
+    MYSQL_SOURCE_RECORD="${PERF_WORK_DIR}/mysql-source.txt"
     MYSQL_INSTANCES_DIR="${MYSQL_DATA_ROOT}"
     if [[ -z "${MYSQL_BASE_PORT}" ]]; then
         local checksum
@@ -150,7 +177,7 @@ configure_runtime_paths() {
     SYSBENCH_BIN="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/sysbench"
     SYSBENCH_LUA_DIR="${PERF_WORK_DIR}/sysbench-tools/sysbench-1.0.20/src/lua"
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
-    export PERF_ACTUAL_VERSION_FILE TMPDIR
+    export PERF_ACTUAL_VERSION_FILE TMPDIR MYSQL_SOURCE_RECORD
 }
 
 initialize_runtime() {
@@ -163,6 +190,146 @@ initialize_runtime() {
         return 10
     fi
     mkdir -p "${RESULTS_DIR}" "${PERF_WORK_DIR}" "${SERVICE_DIR}" "${MYSQL_TMP_DIR}"
+}
+
+mysql_source_record_value() {
+    local key="$1"
+    local record="$2"
+
+    [[ -f "${record}" ]] || return 1
+    awk -F= -v key="${key}" '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "${record}"
+}
+
+mysql_sha256_of() {
+    local actual
+    actual="$(sha256sum "$1" 2>/dev/null)" || return 1
+    printf '%s\n' "${actual%% *}"
+}
+
+# Resolve the identity of the software the measured server must come from.
+# base keeps the official tarball pinned in scripts/builders/base.sh; optimized
+# reads the record the optimized builder wrote and rejects anything that does not
+# match the pinned release, package name, architecture and sha256.
+mysql_load_expected_artifact() {
+    if [[ -n "${MYSQL_EXPECTED_ARTIFACT}" ]]; then
+        return 0
+    fi
+    case "${PERF_VARIANT}" in
+        base)
+            MYSQL_EXPECTED_ARTIFACT="mysql-${SOFTWARE_VERSION}-linux-glibc2.28-${EXPECTED_ARCH}.tar.xz"
+            MYSQL_EXPECTED_SHA256=""
+            MYSQL_EXPECTED_RELEASE_NUMBER=""
+            ;;
+        optimized)
+            local recorded_artifact recorded_sha256 recorded_arch recorded_release
+            if [[ "${EXPECTED_ARCH}" != "${MYSQL_OPTIMIZED_ARCH}" ]]; then
+                log_message "ERROR: ${MYSQL_OPTIMIZED_ARTIFACT} is published for ${MYSQL_OPTIMIZED_ARCH} only; there is no optimized MySQL package for ${EXPECTED_ARCH}"
+                return 30
+            fi
+            if [[ ! -s "${MYSQL_SOURCE_RECORD}" ]]; then
+                log_message "ERROR: the optimized build did not record its artifact: ${MYSQL_SOURCE_RECORD}"
+                log_message "ERROR: build variant=optimized before starting the server"
+                return 30
+            fi
+            if [[ "$(mysql_source_record_value variant "${MYSQL_SOURCE_RECORD}")" != optimized ]]; then
+                log_message "ERROR: ${MYSQL_SOURCE_RECORD} was not written by the optimized build"
+                return 30
+            fi
+            recorded_artifact="$(mysql_source_record_value artifact "${MYSQL_SOURCE_RECORD}")"
+            recorded_sha256="$(mysql_source_record_value artifact_sha256 "${MYSQL_SOURCE_RECORD}")"
+            recorded_arch="$(mysql_source_record_value architecture "${MYSQL_SOURCE_RECORD}")"
+            recorded_release="$(mysql_source_record_value release "${MYSQL_SOURCE_RECORD}")"
+            if [[ "${recorded_artifact}" != "${MYSQL_OPTIMIZED_ARTIFACT}" || \
+                  "${recorded_sha256,,}" != "${MYSQL_OPTIMIZED_SHA256}" || \
+                  "${recorded_arch}" != "${MYSQL_OPTIMIZED_ARCH}" || \
+                  "${recorded_release}" != "${MYSQL_OPTIMIZED_RELEASE}" ]]; then
+                log_message "ERROR: ${MYSQL_SOURCE_RECORD} does not describe ${MYSQL_OPTIMIZED_ARTIFACT} from release ${MYSQL_OPTIMIZED_RELEASE}"
+                return 30
+            fi
+            MYSQL_EXPECTED_ARTIFACT="${MYSQL_OPTIMIZED_ARTIFACT}"
+            MYSQL_EXPECTED_SHA256="${MYSQL_OPTIMIZED_SHA256}"
+            MYSQL_EXPECTED_RELEASE_NUMBER="${MYSQL_OPTIMIZED_RELEASE_NUMBER}"
+            ;;
+        *)
+            log_message "ERROR: invalid build variant: ${PERF_VARIANT}"
+            return 10
+            ;;
+    esac
+    export MYSQL_EXPECTED_ARTIFACT MYSQL_EXPECTED_SHA256 MYSQL_EXPECTED_RELEASE_NUMBER
+}
+
+# Confirm that the deployed tree is the artifact the build recorded.  The base
+# variant is pinned by the official tarball the build fetched, so it only has to
+# report the expected server version; the optimized variant additionally has to
+# match the mysqld hash recorded at unpack time.
+mysql_verify_installed_artifact() {
+    local actual_version recorded_sha256
+
+    mysql_load_expected_artifact || return $?
+    if [[ ! -x "${MYSQLD_BIN}" || ! -x "${MYSQL_BIN}" ]]; then
+        log_message "ERROR: MySQL is not deployed (run build first)"
+        return 40
+    fi
+    MYSQL_INSTALLED_SHA256="$(mysql_sha256_of "${MYSQLD_BIN}")" || {
+        log_message "ERROR: cannot hash the deployed mysqld binary"
+        return 40
+    }
+    if [[ "${PERF_VARIANT}" == optimized ]]; then
+        recorded_sha256="$(mysql_source_record_value mysqld_sha256 "${MYSQL_SOURCE_RECORD}")"
+        if [[ -z "${recorded_sha256}" ]]; then
+            log_message "ERROR: ${MYSQL_SOURCE_RECORD} does not record the deployed mysqld hash"
+            return 30
+        fi
+        if [[ "${recorded_sha256}" != "${MYSQL_INSTALLED_SHA256}" ]]; then
+            log_message "ERROR: the deployed mysqld does not match the artifact unpacked from ${MYSQL_EXPECTED_ARTIFACT}"
+            return 30
+        fi
+    fi
+    MYSQL_INSTALLED_BANNER="$("${MYSQLD_BIN}" --version 2>/dev/null)" || {
+        log_message "ERROR: the deployed mysqld cannot report its version"
+        return 40
+    }
+    actual_version="$(sed -nE 's/.*Ver ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' <<< "${MYSQL_INSTALLED_BANNER}")"
+    if [[ "${actual_version}" != "${SOFTWARE_VERSION}" ]]; then
+        log_message "ERROR: the deployed mysqld is ${actual_version:-unknown}, expected ${SOFTWARE_VERSION}"
+        return 40
+    fi
+    export MYSQL_INSTALLED_BANNER MYSQL_INSTALLED_SHA256
+}
+
+# The optimized package links more runtime libraries than the official tarball.
+# Read what the deployed binary is missing inside the private container and let
+# dnf resolve those capabilities, so the package set follows the artifact
+# instead of a hand-maintained list.  Scriptlets are skipped because the
+# container mounts /etc/passwd and /etc/group read-only; ldconfig is run
+# explicitly afterwards instead.
+install_mysql_optimized_container_libraries() {
+    local ldd_report="${PERF_WORK_DIR}/mysql-ldd.txt"
+    local soname
+    local -a capability_specs=()
+    local -a dnf_options=(--setopt=install_weak_deps=False --setopt=tsflags=noscripts)
+
+    docker exec "${MYSQL_CONTAINER_NAME}" ldd "${MYSQLD_BIN}" > "${ldd_report}" 2>&1 || true
+    while IFS= read -r soname; do
+        [[ -n "${soname}" ]] || continue
+        capability_specs+=("${soname}()(64bit)")
+    done < <(awk '/=> not found/ { print $1 }' "${ldd_report}")
+    if [[ "${#capability_specs[@]}" -eq 0 ]]; then
+        log_message "ERROR: the optimized mysqld cannot run in ${MYSQL_CONTAINER_IMAGE} and ldd reports no missing soname; check the libraries it does link against"
+        tail -n 20 "${ldd_report}" || true
+        return 40
+    fi
+    log_message "installing MySQL runtime libraries missing from the private container: ${capability_specs[*]}"
+    [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+    docker exec --user 0 "${MYSQL_CONTAINER_NAME}" \
+        dnf "${dnf_options[@]}" install -y "${capability_specs[@]}" || {
+        log_message "ERROR: failed to install the MySQL runtime libraries missing from the container"
+        return 30
+    }
+    docker exec --user 0 "${MYSQL_CONTAINER_NAME}" ldconfig || {
+        log_message "ERROR: failed to refresh the container linker cache"
+        return 30
+    }
 }
 
 select_container_cpu_set() {
@@ -301,10 +468,14 @@ require_mysql_container() {
         return 30
     }
     if ! docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1; then
-        log_message "installing missing MySQL runtime libraries in the private container"
-        [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
-        docker exec --user 0 "${MYSQL_CONTAINER_NAME}" \
-            dnf "${dnf_options[@]}" install -y libaio numactl-libs || return 30
+        if [[ "${PERF_VARIANT}" == optimized ]]; then
+            install_mysql_optimized_container_libraries || return $?
+        else
+            log_message "installing missing MySQL runtime libraries in the private container"
+            [[ -z "${PERF_PROXY:-}" ]] || dnf_options+=("--setopt=proxy=${PERF_PROXY}")
+            docker exec --user 0 "${MYSQL_CONTAINER_NAME}" \
+                dnf "${dnf_options[@]}" install -y libaio numactl-libs || return 30
+        fi
         docker exec "${MYSQL_CONTAINER_NAME}" "${MYSQLD_BIN}" --version >/dev/null 2>&1 || {
             log_message "ERROR: MySQL binary cannot run in ${MYSQL_CONTAINER_IMAGE}"
             return 40
@@ -463,6 +634,13 @@ run_sysbench() {
     local raw_output="${RESULTS_DIR}/sysbench_raw.log"
     local run_output="${RESULTS_DIR}/sysbench-runs/${label}.log"
     local action=run
+    # The private Sysbench embeds the client library directory of the deployed
+    # server as an rpath; exporting it as well keeps a pre-built client usable
+    # when the server tree is moved between runs.
+    local -a command_environment=(LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;")
+    if [[ -n "${MYSQL_BASE_DIR:-}" && -d "${MYSQL_BASE_DIR}/lib" ]]; then
+        command_environment+=("LD_LIBRARY_PATH=${MYSQL_BASE_DIR}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}")
+    fi
     local -a command=(
         "${SYSBENCH_BIN}" --db-driver=mysql
         "--mysql-host=${MYSQL_HOST}" "--mysql-port=${MYSQL_PORT}"
@@ -480,7 +658,7 @@ run_sysbench() {
     command+=("${workload_script}" "${action}")
     printf '# %s: oltp_%s %s, threads=%s, time=%s\n' \
         "${label}" "${workload}" "${action}" "${threads}" "${duration}" | tee -a "${raw_output}" "${run_output}"
-    if ! LUA_PATH="${SYSBENCH_LUA_DIR}/?.lua;;" "${command[@]}" 2>&1 \
+    if ! env "${command_environment[@]}" "${command[@]}" 2>&1 \
         | tee -a "${raw_output}" "${run_output}"; then
         log_message "ERROR: Sysbench ${label} failed"
         return 50
