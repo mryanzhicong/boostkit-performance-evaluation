@@ -99,9 +99,14 @@ CINDERX_ENABLE_LTO=0 \
 
 Python 性能测试不启动后台服务。两个变体都检查私有解释器可执行、`--version`、
 `ssl`/`zlib`/`ctypes` 导入和 `pip` 可用。`optimized` 额外以
-`CINDERX_PLUGIN_ENABLE=1` 启动解释器，先 `import cinderx.jit as jit`，再确认
-`cinderx.is_initialized()`、`jit.is_available()` 与 `jit.is_enabled()` 均为真；
-否则启动阶段失败，不进入测量。`stop` 阶段没有待停止的进程。
+`CINDERX_PLUGIN_ENABLE=1` 启动解释器，先 `import cinderx.jit as jit`，再按 CinderX
+实际发布的接口确认 JIT 可用：`cinderx.is_initialized()` 为真、`jit.is_enabled()`
+为真，然后用 `jit.force_compile()` 编译一个平凡函数并确认 `jit.is_jit_compiled()`
+为真。`cinderx.jit` 没有 `is_available()` 接口（调用会 `AttributeError`），而
+`is_enabled()` 只说明 JIT 处于运行状态，所以用一次真实编译证明本地后端确实能产出
+并发布机器码。任一检查失败都让启动阶段返回 40，不进入测量。`test` 阶段在同一
+解释器配置下用 pyperformance venv 解释器重复同一组检查，失败返回 50。`stop` 阶段
+没有待停止的进程。
 
 ## 性能测试
 

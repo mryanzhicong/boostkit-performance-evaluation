@@ -106,10 +106,30 @@ import cinderx.jit as jit
 
 if not cinderx.is_initialized():
     raise SystemExit(f"CinderX is not initialized in the benchmark venv: {cinderx.get_import_error()}")
-if not jit.is_available():
-    raise SystemExit("CinderX JIT native APIs are not available in the benchmark venv")
+
+
+def _cinderx_probe(left, right):
+    return left + right
+
+
+# cinderx.jit publishes state and control entry points only; there is no
+# is_available() probe. An enabled flag proves configuration, so compile one
+# trivial function to prove the native backend can emit and publish code.
 if not jit.is_enabled():
-    raise SystemExit("CinderX JIT is not enabled in the benchmark venv")
+    raise SystemExit(
+        "CinderX JIT is not running in the benchmark venv; the native backend "
+        "is missing from this build or dispatch is off (check "
+        "CINDERX_PLUGIN_ENABLE, PYTHONJITAUTO and PYTHONJITDISABLE)"
+    )
+try:
+    jit.force_compile(_cinderx_probe)
+except Exception as exc:
+    raise SystemExit(
+        f"CinderX JIT cannot compile a trivial function in the benchmark venv: {type(exc).__name__}: {exc}"
+    ) from None
+if not jit.is_jit_compiled(_cinderx_probe):
+    raise SystemExit("CinderX JIT did not publish the trivial probe function in the benchmark venv")
+print(f"CinderX JIT enabled in the benchmark venv: {jit.is_enabled()}, probe compiled: {jit.is_jit_compiled(_cinderx_probe)}")
 ' || exit 50
 
         CINDERX_PLUGIN_ENABLE="${CINDERX_PLUGIN_ENV}" \

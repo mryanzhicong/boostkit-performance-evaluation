@@ -28,12 +28,31 @@ import cinderx.jit as jit
 
 if not cinderx.is_initialized():
     raise SystemExit(f"CinderX is not initialized: {cinderx.get_import_error()}")
-if not jit.is_available():
-    raise SystemExit("CinderX JIT native APIs are not available in this build")
+
+
+def _cinderx_probe(left, right):
+    return left + right
+
+
+# cinderx.jit publishes state and control entry points only; there is no
+# is_available() probe. An enabled flag proves configuration, so compile one
+# trivial function to prove the native backend can emit and publish code.
 if not jit.is_enabled():
-    raise SystemExit("CinderX JIT is not enabled; check CINDERX_PLUGIN_ENABLE and PYTHONJITAUTO")
+    raise SystemExit(
+        "CinderX JIT is not running; the native backend is missing from this "
+        "build or dispatch is off (check CINDERX_PLUGIN_ENABLE, PYTHONJITAUTO "
+        "and PYTHONJITDISABLE)"
+    )
+try:
+    jit.force_compile(_cinderx_probe)
+except Exception as exc:
+    raise SystemExit(
+        f"CinderX JIT cannot compile a trivial function: {type(exc).__name__}: {exc}"
+    ) from None
+if not jit.is_jit_compiled(_cinderx_probe):
+    raise SystemExit("CinderX JIT compiled a trivial function but did not publish it")
 print(f"CinderX initialized: {cinderx.__file__}")
-print(f"CinderX JIT available: {jit.is_available()}, enabled: {jit.is_enabled()}")
+print(f"CinderX JIT enabled: {jit.is_enabled()}, probe compiled: {jit.is_jit_compiled(_cinderx_probe)}")
 ' || {
             log_message "ERROR: CinderX is not active in the private CPython"
             return 40

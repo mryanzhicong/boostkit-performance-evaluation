@@ -278,6 +278,17 @@ def test_optimized_test_stage_uses_system_site_packages_venv():
     assert "jit.is_enabled()" in start_script
 
 
+def test_cinderx_activation_probe_uses_published_api():
+    start_script = (CASE_DIR / "scripts/stages/start.sh").read_text(encoding="utf-8")
+    test_script = (CASE_DIR / "scripts/stages/test.sh").read_text(encoding="utf-8")
+    for script in (start_script, test_script):
+        # cinderx.jit publishes state and control entry points only; guarding on
+        # an invented name turns every optimized run into an AttributeError.
+        assert "jit.is_available(" not in script
+        assert "jit.force_compile(" in script
+        assert "jit.is_jit_compiled(" in script
+
+
 def test_dispatch_preserves_an_existing_build_variant():
     dispatch = (CASE_DIR / "scripts/builders/dispatch.sh").read_text(encoding="utf-8")
     assert 'if [[ ! -f "${RESULTS_DIR}/build_variant.json" ]]' in dispatch
