@@ -1,0 +1,49 @@
+name: cubesandbox
+category: Others
+enabled: true
+versions:
+  - "0.8.0"
+test_tools:
+  cube-bench:
+    version: "0.8.0"
+    revision: 41748bb78d6384962b4e417ff9215720ea7472fd
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_cubesandbox
+    start:
+      script: scripts/stages/start.sh
+      function: start_cubesandbox_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_cubesandbox_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_cubesandbox_runtime
+  timeout_minutes: 420
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_cubesandbox.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
