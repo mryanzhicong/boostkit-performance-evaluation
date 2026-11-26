@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Environment capture and result files for standalone CubeSandbox runs."""
+
+from __future__ import annotations
+
+import json
+import os
+import platform
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+EXPECTED_METRICS = 15
+
+
+def stamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def load_json(path: Path) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return value if isinstance(value, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def command(*args: str) -> str:
+    try:
+        result = subprocess.run(args, text=True, capture_output=True, timeout=10, check=False)
+        return result.stdout.strip() if result.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def finalize(args: list[str]) -> int:
+    output, version, arch, run_id, command_status, cleanup_status, failed_stage = args
+    root = Path(output)
+    benchmark = load_json(root / "results.json")
+    metrics = {}
+    if command_status == "passed":
+        for name, item in benchmark.get("results", {}).items():
+            metrics[name] = {key: item[key] for key in ("value", "unit", "direction", "group")}
+        if len(metrics) != EXPECTED_METRICS:
+            command_status, failed_stage = "failed", "test"
+    status = "passed" if command_status == cleanup_status == "passed" else "failed"
+    result = {
+        "software": "cubesandbox", "category": "Others", "version": version,
+        "architecture": arch, "run_id": run_id, "status": status,
+        "cleanup_status": cleanup_status, "failed_stage": failed_stage or None,
+        "build_info": load_json(root / "build_info.json"),
+        "system_info": load_json(root / "system_info.json"),
+        "runtime_before": load_json(root / "runtime_before.json"),
+        "runtime_after": load_json(root / "runtime_after.json"),
+        "parameters": {
+            "variant": benchmark.get("variant"),
+            "warmups": benchmark.get("warmups"),
+            "samples": benchmark.get("samples"),
+            "levels": benchmark.get("levels"),
+            "total_per_sample": benchmark.get("total_per_sample"),
+        },
+        "metrics": metrics,
+        "error": "incomplete CubeSandbox result" if command_status == "failed" and len(metrics) != EXPECTED_METRICS else None,
+    }
+    write_json(root / "benchmark_cubesandbox.json", benchmark)
+    path = root / "results.json"
+    write_json(path, result)
+    write_json(root / "status.json", {
+        key: result[key] for key in ("software", "category", "version", "architecture", "run_id", "status", "failed_stage", "cleanup_status", "error")
+    })
+    lines = [f"# CubeSandbox {version} 独立测试报告", "", f"- 架构：`{arch}`", f"- 状态：`{status}`", "",
+             "| 并发 / 指标 | 数值 | 单位 |", "|---|---:|---|"]
+    for name, item in metrics.items():
+        lines.append(f"| {item['group']} / {name} | {item['value']:.4f} | {item['unit']} |")
+    (root / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return 0 if status == "passed" else 60
+
+
+def main() -> int:
+    action, *args = sys.argv[1:]
+    if action == "system":
+        write_json(Path(args[0]), {
+            "collected_at": stamp(), "architecture": platform.machine(),
+            "platform": platform.platform(), "kernel": platform.release(),
+            "cpu_count": os.cpu_count(), "cpu_model": command("lscpu"),
+            "glibc": command("getconf", "GNU_LIBC_VERSION"),
+            "docker": command("docker", "version", "--format", "{{.Server.Version}}"),
+        })
+    elif action == "runtime":
+        write_json(Path(args[0]), {
+            "collected_at": stamp(),
+            "memory": command("free", "-b"),
+            "kvm": command("ls", "-l", "/dev/kvm"),
+            "cube_units": command("systemctl", "list-units", "cube-*", "--all", "--no-legend"),
+            "docker_containers": command("docker", "ps", "--format", "{{.Names}}@{{.Status}}"),
+        })
+    elif action == "build-info":
+        output, version, version_file, arch, run_id = args
+        actual = Path(version_file).read_text(encoding="utf-8").strip()
+        if actual != version:
+            raise RuntimeError("built CubeSandbox version differs from requested version")
+        write_json(Path(output), {
+            "recorded_at": stamp(), "software": "cubesandbox", "category": "Others",
+            "requested_version": version, "actual_version": actual,
+            "architecture": arch, "run_id": run_id,
+        })
+    elif action == "finalize":
+        return finalize(args)
+    else:
+        raise ValueError(f"unknown action: {action}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
