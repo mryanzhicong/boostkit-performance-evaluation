@@ -1,0 +1,558 @@
+{
+  "software": "rapidjson",
+  "version": "1.1.0",
+  "architecture": "aarch64",
+  "variant": "base",
+  "run_id": "45739426420-1",
+  "parameters": {
+    "gtest_repeat": 5,
+    "warmups": 1,
+    "reps": 5,
+    "corpora": {
+      "sample": {
+        "path": "bin/data/sample.json",
+        "bytes": 687491,
+        "sha256": "9a56aaca1ad7363e1c7852ad12a336980e789db91bd9aabad64eea702320ab6f"
+      },
+      "paragraphs": {
+        "path": "bin/types/paragraphs.json",
+        "bytes": 33764,
+        "sha256": "2a37599db74922aae1e7bcd692751660d3a3fea4ae8dd13c99d1c3063585c1a5"
+      }
+    },
+    "scenarios": [
+      {
+        "name": "dom_parse",
+        "case": "DocumentParse_MemoryPoolAllocator",
+        "corpus": "sample",
+        "iterations": 1000
+      },
+      {
+        "name": "dom_parse_insitu",
+        "case": "DocumentParseInsitu_MemoryPoolAllocator",
+        "corpus": "sample",
+        "iterations": 1000
+      },
+      {
+        "name": "dom_parse_encoded_stream",
+        "case": "DocumentParseEncodedInputStream_MemoryStream",
+        "corpus": "sample",
+        "iterations": 1000
+      },
+      {
+        "name": "sax_parse",
+        "case": "ReaderParse_DummyHandler",
+        "corpus": "sample",
+        "iterations": 1000
+      },
+      {
+        "name": "sax_parse_paragraphs",
+        "case": "ReaderParse_DummyHandler_Paragraphs",
+        "corpus": "paragraphs",
+        "iterations": 10000
+      },
+      {
+        "name": "writer_string_buffer",
+        "case": "Writer_StringBuffer",
+        "corpus": "sample",
+        "iterations": 1000
+      },
+      {
+        "name": "writer_string_buffer_paragraphs",
+        "case": "Writer_StringBuffer_Paragraphs",
+        "corpus": "paragraphs",
+        "iterations": 10000
+      },
+      {
+        "name": "pretty_writer_string_buffer",
+        "case": "PrettyWriter_StringBuffer",
+        "corpus": "sample",
+        "iterations": 1000
+      }
+    ],
+    "metric_formula": {
+      "ns_per_op": "sum_ms * 1e6 / (gtest_repeat * iterations)",
+      "gb_per_s": "corpus_bytes * gtest_repeat * iterations * 1000 / (sum_ms * 1e9)"
+    }
+  },
+  "sampling": {
+    "warmups": 1,
+    "reps": 5,
+    "aggregation": "median",
+    "samples_per_metric": 5,
+    "metric_count": 16
+  },
+  "results": {
+    "dom_parse_ns_per_op": {
+      "value": 297400.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "dom_parse"
+    },
+    "dom_parse_gb_per_s": {
+      "value": 2.311671,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "dom_parse"
+    },
+    "dom_parse_insitu_ns_per_op": {
+      "value": 312000.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "dom_parse_insitu"
+    },
+    "dom_parse_insitu_gb_per_s": {
+      "value": 2.203497,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "dom_parse_insitu"
+    },
+    "dom_parse_encoded_stream_ns_per_op": {
+      "value": 621000.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "dom_parse_encoded_stream"
+    },
+    "dom_parse_encoded_stream_gb_per_s": {
+      "value": 1.107071,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "dom_parse_encoded_stream"
+    },
+    "sax_parse_ns_per_op": {
+      "value": 293200.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "sax_parse"
+    },
+    "sax_parse_gb_per_s": {
+      "value": 2.344785,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "sax_parse"
+    },
+    "sax_parse_paragraphs_ns_per_op": {
+      "value": 10300.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "sax_parse_paragraphs"
+    },
+    "sax_parse_paragraphs_gb_per_s": {
+      "value": 3.278058,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "sax_parse_paragraphs"
+    },
+    "writer_string_buffer_ns_per_op": {
+      "value": 184400.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "writer_string_buffer"
+    },
+    "writer_string_buffer_gb_per_s": {
+      "value": 3.728259,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "writer_string_buffer"
+    },
+    "writer_string_buffer_paragraphs_ns_per_op": {
+      "value": 8600.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "writer_string_buffer_paragraphs"
+    },
+    "writer_string_buffer_paragraphs_gb_per_s": {
+      "value": 3.926047,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "writer_string_buffer_paragraphs"
+    },
+    "pretty_writer_string_buffer_ns_per_op": {
+      "value": 231600.0,
+      "unit": "ns/op",
+      "direction": "lower_is_better",
+      "group": "pretty_writer_string_buffer"
+    },
+    "pretty_writer_string_buffer_gb_per_s": {
+      "value": 2.968441,
+      "unit": "GB/s",
+      "direction": "higher_is_better",
+      "group": "pretty_writer_string_buffer"
+    }
+  },
+  "samples": {
+    "dom_parse_ns_per_op": {
+      "values": [
+        297600.0,
+        299400.0,
+        294200.0,
+        297400.0,
+        296200.0
+      ],
+      "median": 297400.0,
+      "min": 294200.0,
+      "max": 299400.0,
+      "samples": 5
+    },
+    "dom_parse_gb_per_s": {
+      "values": [
+        2.310118,
+        2.296229,
+        2.336815,
+        2.311671,
+        2.321036
+      ],
+      "median": 2.311671,
+      "min": 2.296229,
+      "max": 2.336815,
+      "samples": 5
+    },
+    "dom_parse_insitu_ns_per_op": {
+      "values": [
+        308200.0,
+        314600.0,
+        309400.0,
+        312000.0,
+        313200.0
+      ],
+      "median": 312000.0,
+      "min": 308200.0,
+      "max": 314600.0,
+      "samples": 5
+    },
+    "dom_parse_insitu_gb_per_s": {
+      "values": [
+        2.230665,
+        2.185286,
+        2.222014,
+        2.203497,
+        2.195054
+      ],
+      "median": 2.203497,
+      "min": 2.185286,
+      "max": 2.230665,
+      "samples": 5
+    },
+    "dom_parse_encoded_stream_ns_per_op": {
+      "values": [
+        619200.0,
+        621000.0,
+        621200.0,
+        620600.0,
+        622400.0
+      ],
+      "median": 621000.0,
+      "min": 619200.0,
+      "max": 622400.0,
+      "samples": 5
+    },
+    "dom_parse_encoded_stream_gb_per_s": {
+      "values": [
+        1.110289,
+        1.107071,
+        1.106714,
+        1.107784,
+        1.104581
+      ],
+      "median": 1.107071,
+      "min": 1.104581,
+      "max": 1.110289,
+      "samples": 5
+    },
+    "sax_parse_ns_per_op": {
+      "values": [
+        286200.0,
+        294000.0,
+        293200.0,
+        292800.0,
+        295400.0
+      ],
+      "median": 293200.0,
+      "min": 286200.0,
+      "max": 295400.0,
+      "samples": 5
+    },
+    "sax_parse_gb_per_s": {
+      "values": [
+        2.402135,
+        2.338405,
+        2.344785,
+        2.347988,
+        2.327322
+      ],
+      "median": 2.344785,
+      "min": 2.327322,
+      "max": 2.402135,
+      "samples": 5
+    },
+    "sax_parse_paragraphs_ns_per_op": {
+      "values": [
+        10300.0,
+        10300.0,
+        10300.0,
+        10300.0,
+        10300.0
+      ],
+      "median": 10300.0,
+      "min": 10300.0,
+      "max": 10300.0,
+      "samples": 5
+    },
+    "sax_parse_paragraphs_gb_per_s": {
+      "values": [
+        3.278058,
+        3.278058,
+        3.278058,
+        3.278058,
+        3.278058
+      ],
+      "median": 3.278058,
+      "min": 3.278058,
+      "max": 3.278058,
+      "samples": 5
+    },
+    "writer_string_buffer_ns_per_op": {
+      "values": [
+        184400.0,
+        186000.0,
+        190800.0,
+        183600.0,
+        183800.0
+      ],
+      "median": 184400.0,
+      "min": 183600.0,
+      "max": 190800.0,
+      "samples": 5
+    },
+    "writer_string_buffer_gb_per_s": {
+      "values": [
+        3.728259,
+        3.696188,
+        3.603202,
+        3.744504,
+        3.74043
+      ],
+      "median": 3.728259,
+      "min": 3.603202,
+      "max": 3.744504,
+      "samples": 5
+    },
+    "writer_string_buffer_paragraphs_ns_per_op": {
+      "values": [
+        9100.0,
+        8600.0,
+        8460.0,
+        8720.0,
+        8520.0
+      ],
+      "median": 8600.0,
+      "min": 8460.0,
+      "max": 9100.0,
+      "samples": 5
+    },
+    "writer_string_buffer_paragraphs_gb_per_s": {
+      "values": [
+        3.71033,
+        3.926047,
+        3.991017,
+        3.872018,
+        3.962911
+      ],
+      "median": 3.926047,
+      "min": 3.71033,
+      "max": 3.991017,
+      "samples": 5
+    },
+    "pretty_writer_string_buffer_ns_per_op": {
+      "values": [
+        231600.0,
+        231600.0,
+        232400.0,
+        230600.0,
+        231400.0
+      ],
+      "median": 231600.0,
+      "min": 230600.0,
+      "max": 232400.0,
+      "samples": 5
+    },
+    "pretty_writer_string_buffer_gb_per_s": {
+      "values": [
+        2.968441,
+        2.968441,
+        2.958223,
+        2.981314,
+        2.971007
+      ],
+      "median": 2.968441,
+      "min": 2.958223,
+      "max": 2.981314,
+      "samples": 5
+    }
+  },
+  "evidence": {
+    "gtest_repeat": 5,
+    "architecture_suffixes": {
+      "dom_parse": "NEON",
+      "dom_parse_insitu": "NEON",
+      "dom_parse_encoded_stream": "NEON",
+      "sax_parse": "NEON",
+      "sax_parse_paragraphs": "NEON",
+      "writer_string_buffer": "NEON",
+      "writer_string_buffer_paragraphs": "NEON",
+      "pretty_writer_string_buffer": "NEON"
+    },
+    "iterations": {
+      "dom_parse": 1000,
+      "dom_parse_insitu": 1000,
+      "dom_parse_encoded_stream": 1000,
+      "sax_parse": 1000,
+      "sax_parse_paragraphs": 10000,
+      "writer_string_buffer": 1000,
+      "writer_string_buffer_paragraphs": 10000,
+      "pretty_writer_string_buffer": 1000
+    },
+    "corpus_bytes": {
+      "dom_parse": 687491,
+      "dom_parse_insitu": 687491,
+      "dom_parse_encoded_stream": 687491,
+      "sax_parse": 687491,
+      "sax_parse_paragraphs": 33764,
+      "writer_string_buffer": 687491,
+      "writer_string_buffer_paragraphs": 33764,
+      "pretty_writer_string_buffer": 687491
+    },
+    "ms_total_sum": {
+      "dom_parse": {
+        "rep0": 1470,
+        "rep1": 1488,
+        "rep2": 1497,
+        "rep3": 1471,
+        "rep4": 1487,
+        "rep5": 1481
+      },
+      "dom_parse_insitu": {
+        "rep0": 1570,
+        "rep1": 1541,
+        "rep2": 1573,
+        "rep3": 1547,
+        "rep4": 1560,
+        "rep5": 1566
+      },
+      "dom_parse_encoded_stream": {
+        "rep0": 3140,
+        "rep1": 3096,
+        "rep2": 3105,
+        "rep3": 3106,
+        "rep4": 3103,
+        "rep5": 3112
+      },
+      "sax_parse": {
+        "rep0": 1461,
+        "rep1": 1431,
+        "rep2": 1470,
+        "rep3": 1466,
+        "rep4": 1464,
+        "rep5": 1477
+      },
+      "sax_parse_paragraphs": {
+        "rep0": 515,
+        "rep1": 515,
+        "rep2": 515,
+        "rep3": 515,
+        "rep4": 515,
+        "rep5": 515
+      },
+      "writer_string_buffer": {
+        "rep0": 919,
+        "rep1": 922,
+        "rep2": 930,
+        "rep3": 954,
+        "rep4": 918,
+        "rep5": 919
+      },
+      "writer_string_buffer_paragraphs": {
+        "rep0": 434,
+        "rep1": 455,
+        "rep2": 430,
+        "rep3": 423,
+        "rep4": 436,
+        "rep5": 426
+      },
+      "pretty_writer_string_buffer": {
+        "rep0": 1166,
+        "rep1": 1158,
+        "rep2": 1158,
+        "rep3": 1162,
+        "rep4": 1153,
+        "rep5": 1157
+      }
+    },
+    "xml_testcase": {
+      "dom_parse": {
+        "rep0": "DocumentParse_MemoryPoolAllocator_NEON",
+        "rep1": "DocumentParse_MemoryPoolAllocator_NEON",
+        "rep2": "DocumentParse_MemoryPoolAllocator_NEON",
+        "rep3": "DocumentParse_MemoryPoolAllocator_NEON",
+        "rep4": "DocumentParse_MemoryPoolAllocator_NEON",
+        "rep5": "DocumentParse_MemoryPoolAllocator_NEON"
+      },
+      "dom_parse_insitu": {
+        "rep0": "DocumentParseInsitu_MemoryPoolAllocator_NEON",
+        "rep1": "DocumentParseInsitu_MemoryPoolAllocator_NEON",
+        "rep2": "DocumentParseInsitu_MemoryPoolAllocator_NEON",
+        "rep3": "DocumentParseInsitu_MemoryPoolAllocator_NEON",
+        "rep4": "DocumentParseInsitu_MemoryPoolAllocator_NEON",
+        "rep5": "DocumentParseInsitu_MemoryPoolAllocator_NEON"
+      },
+      "dom_parse_encoded_stream": {
+        "rep0": "DocumentParseEncodedInputStream_MemoryStream_NEON",
+        "rep1": "DocumentParseEncodedInputStream_MemoryStream_NEON",
+        "rep2": "DocumentParseEncodedInputStream_MemoryStream_NEON",
+        "rep3": "DocumentParseEncodedInputStream_MemoryStream_NEON",
+        "rep4": "DocumentParseEncodedInputStream_MemoryStream_NEON",
+        "rep5": "DocumentParseEncodedInputStream_MemoryStream_NEON"
+      },
+      "sax_parse": {
+        "rep0": "ReaderParse_DummyHandler_NEON",
+        "rep1": "ReaderParse_DummyHandler_NEON",
+        "rep2": "ReaderParse_DummyHandler_NEON",
+        "rep3": "ReaderParse_DummyHandler_NEON",
+        "rep4": "ReaderParse_DummyHandler_NEON",
+        "rep5": "ReaderParse_DummyHandler_NEON"
+      },
+      "sax_parse_paragraphs": {
+        "rep0": "ReaderParse_DummyHandler_Paragraphs_NEON",
+        "rep1": "ReaderParse_DummyHandler_Paragraphs_NEON",
+        "rep2": "ReaderParse_DummyHandler_Paragraphs_NEON",
+        "rep3": "ReaderParse_DummyHandler_Paragraphs_NEON",
+        "rep4": "ReaderParse_DummyHandler_Paragraphs_NEON",
+        "rep5": "ReaderParse_DummyHandler_Paragraphs_NEON"
+      },
+      "writer_string_buffer": {
+        "rep0": "Writer_StringBuffer_NEON",
+        "rep1": "Writer_StringBuffer_NEON",
+        "rep2": "Writer_StringBuffer_NEON",
+        "rep3": "Writer_StringBuffer_NEON",
+        "rep4": "Writer_StringBuffer_NEON",
+        "rep5": "Writer_StringBuffer_NEON"
+      },
+      "writer_string_buffer_paragraphs": {
+        "rep0": "Writer_StringBuffer_Paragraphs_NEON",
+        "rep1": "Writer_StringBuffer_Paragraphs_NEON",
+        "rep2": "Writer_StringBuffer_Paragraphs_NEON",
+        "rep3": "Writer_StringBuffer_Paragraphs_NEON",
+        "rep4": "Writer_StringBuffer_Paragraphs_NEON",
+        "rep5": "Writer_StringBuffer_Paragraphs_NEON"
+      },
+      "pretty_writer_string_buffer": {
+        "rep0": "PrettyWriter_StringBuffer_NEON",
+        "rep1": "PrettyWriter_StringBuffer_NEON",
+        "rep2": "PrettyWriter_StringBuffer_NEON",
+        "rep3": "PrettyWriter_StringBuffer_NEON",
+        "rep4": "PrettyWriter_StringBuffer_NEON",
+        "rep5": "PrettyWriter_StringBuffer_NEON"
+      }
+    }
+  }
+}
