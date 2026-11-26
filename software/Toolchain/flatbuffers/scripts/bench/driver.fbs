@@ -1,0 +1,14 @@
+// Case-owned FlatBuffers schema for the multi-scale builder/accessor matrix.
+//
+// It deliberately stays minimal: the only thing the matrix exercises is the
+// FlatBuffers builder (vector serialization, table, root offset and buffer
+// finishing) and the generated accessor (root lookup plus element traversal),
+// at several payload scales.  The upstream schema and its benchmark live in
+// benchmarks/cpp/flatbuffers/ and are measured separately.
+namespace fbperf;
+
+table Payload {
+  values:[uint32];
+}
+
+root_type Payload;
