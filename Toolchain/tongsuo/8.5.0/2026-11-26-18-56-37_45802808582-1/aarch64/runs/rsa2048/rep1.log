@@ -1,0 +1,21 @@
+Doing 2048 bits private rsa sign ops for 3s: 3359 2048 bits private RSA sign ops in 2.99s
+Doing 2048 bits public rsa verify ops for 3s: 130273 2048 bits public RSA verify ops in 3.00s
+Doing 2048 bits public rsa encrypt ops for 3s: 125727 2048 bits public RSA encrypt ops in 2.98s
+Doing 2048 bits private rsa decrypt ops for 3s: 3341 2048 bits private RSA decrypt ops in 3.00s
+Doing rsa2048 keygen ops for 3s: 48 rsa2048 KEM keygen ops in 3.06s
+Doing rsa2048 encaps ops for 3s: 121314 rsa2048 KEM encaps ops in 3.00s
+Doing rsa2048 decaps ops for 3s: 3360 rsa2048 KEM decaps ops in 2.99s
+Doing rsa2048 keygen ops for 3s: 47 rsa2048 signature keygen ops in 3.05s
+Doing rsa2048 signs ops for 3s: 3367 rsa2048 signature sign ops in 3.00s
+Doing rsa2048 verify ops for 3s: 129995 rsa2048 signature verify ops in 3.00s
+version: 3.5.4
+built on: Thu Nov 26 10:37:19 2026 UTC
+options: bn(64,64)
+compiler: gcc -fPIC -pthread -Wa,--noexecstack -Wall -O3 -DOPENSSL_USE_NODELETE -DOPENSSL_PIC -DOPENSSL_BUILDING_OPENSSL -DNDEBUG 
+CPUINFO: OPENSSL_armcap=0x6ffd
+                   sign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s
+rsa  2048 bits 0.000890s 0.000023s 0.000024s 0.000898s   1123.4  43424.3  42190.3   1113.7
+                               keygen    encaps    decaps keygens/s  encaps/s  decaps/s
+                    rsa2048 0.063750s 0.000025s 0.000890s      15.7   40438.0    1123.7
+                               keygen     signs    verify keygens/s    sign/s  verify/s
+                    rsa2048 0.064894s 0.000891s 0.000023s      15.4    1122.3   43331.7
