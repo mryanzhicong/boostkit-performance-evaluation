@@ -134,7 +134,7 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Build CPython from source and run the official pyperformance benchmarks.
-The optimized build is reserved and fails until its implementation is supplied.
+The optimized variant builds CPython the same way, then adds CinderX from source.
 
 Options:
   --version VERSION       CPython version (default: ${SOFTWARE_VERSION})
@@ -145,6 +145,8 @@ Options:
 
 Environment overrides:
   SOFTWARE_VERSION, EXPECTED_ARCH, PERF_VARIANT, RESULTS_DIR, PERF_WORK_DIR, CPYTHON_SOURCE_URL
+  CINDERX_REPOSITORY, CINDERX_REF, CINDERX_BUILD_TYPE, CINDERX_BUILD_JOBS, CINDERX_LOCAL_DEPS
+  CINDERX_ENABLE_PGO, CINDERX_ENABLE_LTO, CINDERX_PLUGIN_ENV, CINDERX_PYTHONJITAUTO
 USAGE
 }
 

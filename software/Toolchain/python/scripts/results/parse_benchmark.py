@@ -175,6 +175,32 @@ def main() -> int:
     pyperformance_version = os.environ.get("PYPERFORMANCE_VERSION", "")
     warmup = os.environ.get("PYPERFORMANCE_WARMUP", "")
     configure_options = os.environ.get("CONFIGURE_OPTIONS", "").split()
+    expected_commit = os.environ.get("PYTHON_EXPECTED_COMMIT", "").strip()
+    inherit_environ = (
+        "PIP_INDEX_URL,PIP_TRUSTED_HOST,http_proxy,https_proxy,no_proxy,"
+        "all_proxy,HTTP_PROXY,HTTPS_PROXY,NO_PROXY,ALL_PROXY"
+    )
+    cinderx_source: dict[str, str] = {}
+    if variant == "optimized":
+        if not expected_commit:
+            print(
+                "[python-parse] ERROR: optimized variant requires PYTHON_EXPECTED_COMMIT",
+                file=sys.stderr,
+            )
+            return 1
+        inherit_environ = (
+            f"{inherit_environ},CINDERX_PLUGIN_ENABLE,PYTHONJITAUTO,LD_LIBRARY_PATH"
+        )
+        cinderx_source = {
+            "repository": os.environ.get("CINDERX_REPOSITORY", ""),
+            "ref": os.environ.get("CINDERX_REF", ""),
+            "commit": expected_commit,
+            "commit_tree": os.environ.get("PYTHON_EXPECTED_TREE", ""),
+            "branch": os.environ.get("PYTHON_EXPECTED_BRANCH", ""),
+            "parent_commit": os.environ.get("PYTHON_EXPECTED_PARENT", ""),
+            "parent_tree": os.environ.get("PYTHON_EXPECTED_PARENT_TREE", ""),
+            "commit_range": os.environ.get("PYTHON_EXPECTED_RANGE", ""),
+        }
     normalized = {
         "benchmark": "python_official_pyperformance",
         "software": "python",
@@ -192,7 +218,7 @@ def main() -> int:
                 "--warmup",
                 warmup,
                 "--inherit-environ",
-                "PIP_INDEX_URL,PIP_TRUSTED_HOST,http_proxy,https_proxy,no_proxy,all_proxy,HTTP_PROXY,HTTPS_PROXY,NO_PROXY,ALL_PROXY",
+                inherit_environ,
                 "-o",
                 "benchmark.json",
             ],
@@ -213,6 +239,15 @@ def main() -> int:
         "runtime_context": runtime_context,
         "results": results,
     }
+    if variant == "optimized":
+        normalized["parameters"]["cinderx"] = cinderx_source
+        normalized["parameters"]["cinderx_build"] = {
+            "build_type": os.environ.get("CINDERX_BUILD_TYPE", ""),
+            "pgo": os.environ.get("CINDERX_ENABLE_PGO", ""),
+            "lto": os.environ.get("CINDERX_ENABLE_LTO", ""),
+            "plugin_enable": os.environ.get("CINDERX_PLUGIN_ENABLE", ""),
+            "python_jit_auto": os.environ.get("PYTHONJITAUTO", ""),
+        }
 
     normalized_output.parent.mkdir(parents=True, exist_ok=True)
     normalized_output.write_text(

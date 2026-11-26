@@ -14,6 +14,8 @@ build_python() {
             ;;
     esac
     initialize_runtime || return $?
-    printf '{"variant":"%s","parameters":{"variant":"%s"}}\n' \
-        "${PERF_VARIANT}" "${PERF_VARIANT}" > "${RESULTS_DIR}/build_variant.json"
+    if [[ ! -f "${RESULTS_DIR}/build_variant.json" ]]; then
+        printf '{"variant":"%s","parameters":{"variant":"%s"}}\n' \
+            "${PERF_VARIANT}" "${PERF_VARIANT}" > "${RESULTS_DIR}/build_variant.json"
+    fi
 }

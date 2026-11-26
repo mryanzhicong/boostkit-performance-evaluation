@@ -2,6 +2,8 @@
 
 实际执行适配前，先从[容器化软件性能用例适配 Skill](../skills/adapt-container-software/SKILL.md)开始，按其流程做边界调研、容器化实现和验收。本文定义仓库接入规范；Skill 定义执行顺序和检查点。Skill 及配套文件以仓库内版本为准。
 
+用例已存在、只需补 `variant=optimized` 时，从[优化版开箱测试 Skill](../skills/add-optimized-variant/SKILL.md)开始：先用[优化方案输入表](../skills/add-optimized-variant/assets/优化方案输入表.md)收齐组件优化方案（取点、构建开关与依赖、测量命令变化、验收标准），缺失项先问用户，不得猜取点。优化逻辑只允许修改容器用户态与被测源码，禁止修改 OS/BIOS 参数；两变体的容器启动参数必须一致，差异只能出现在构建阶段。
+
 新软件放在 `software/<category>/<software>/`。Framework 分阶段调用 `scripts/` 下的函数；独立入口运行同一组函数。`base` 与 `optimized` 只在构建阶段分流，后续启动、测试、解析使用同一套实现。
 
 新接入用例默认在本次任务专属的 Docker 容器内构建被测软件和测试工具，并在同一容器内执行正式测试。`build` 阶段创建容器，`start` 和 `test` 复用该容器，`stop` 仅清理本次任务的容器。任务明确要求虚拟机或宿主机客户端等例外时，在软件 README 中写明哪些环节在何处执行及原因。
