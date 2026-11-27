@@ -1,0 +1,54 @@
+name: stream
+category: HPC
+enabled: true
+versions:
+  - "5.10"
+test_tools:
+  stream:
+    version: "5.10"
+    revision: 6703f7504a38a8da96b353cadafa64d3c2d7a2d3
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_stream
+    start:
+      script: scripts/stages/start.sh
+      function: start_stream_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_stream_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_stream_runtime
+  timeout_minutes: 240
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  vm_environment:
+    path: vm-environment.txt
+    stage: build
+    format: text
+    required: true
+  benchmark_raw:
+    path: benchmark_stream_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_stream.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
