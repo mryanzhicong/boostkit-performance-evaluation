@@ -1,0 +1,49 @@
+name: e2b
+category: Others
+enabled: true
+versions:
+  - "2026.09"
+test_tools:
+  sandbox-bench:
+    version: "2026.09"
+    revision: br_26.3.0_devel
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_e2b
+    start:
+      script: scripts/stages/start.sh
+      function: start_e2b_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_e2b_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_e2b_runtime
+  timeout_minutes: 480
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: runs
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_e2b.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
