@@ -1,0 +1,272 @@
+{
+  "benchmark": "stream_memory_bandwidth",
+  "software": "stream",
+  "version": "5.10",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-27T19:48:58Z",
+  "parameters": {
+    "command": "./stream_200M",
+    "compile_flags": "-O3 -fopenmp -DSTREAM_ARRAY_SIZE=200000000 -DNTIMES=10 -mcmodel=large -mno-outline-atomics",
+    "array_size": 200000000,
+    "ntimes": 10,
+    "execution_environment": "kvm-vm",
+    "accelerator": "kvm",
+    "repetitions_total": 6,
+    "repetitions_warmup": 1,
+    "repetitions_measured": 5,
+    "statistic": "median-of-repetitions",
+    "memory_unit": "1 MB = 10^6 bytes (upstream STREAM convention)",
+    "compile_flags_upstream": "-O3 -fopenmp -DSTREAM_ARRAY_SIZE=200000000 -DNTIMES=10 -mcmodel=large",
+    "compile_extra_flags": "-mno-outline-atomics",
+    "hugepages": "1"
+  },
+  "samples": {
+    "total": 6,
+    "warmup": 1,
+    "measured": 5,
+    "vcpus": 32,
+    "validation_tolerance": 1e-13,
+    "measured_reps": {
+      "rep2": {
+        "kernels": {
+          "Copy": {
+            "best_rate_mb_s": 160795.6,
+            "avg_time_s": 0.02005,
+            "min_time_s": 0.019901,
+            "max_time_s": 0.02045
+          },
+          "Scale": {
+            "best_rate_mb_s": 158470.0,
+            "avg_time_s": 0.020283,
+            "min_time_s": 0.020193,
+            "max_time_s": 0.020418
+          },
+          "Add": {
+            "best_rate_mb_s": 153634.0,
+            "avg_time_s": 0.031435,
+            "min_time_s": 0.031243,
+            "max_time_s": 0.031716
+          },
+          "Triad": {
+            "best_rate_mb_s": 153727.8,
+            "avg_time_s": 0.03144,
+            "min_time_s": 0.031224,
+            "max_time_s": 0.031604
+          }
+        },
+        "threads": 32
+      },
+      "rep3": {
+        "kernels": {
+          "Copy": {
+            "best_rate_mb_s": 160263.8,
+            "avg_time_s": 0.020269,
+            "min_time_s": 0.019967,
+            "max_time_s": 0.020763
+          },
+          "Scale": {
+            "best_rate_mb_s": 158369.0,
+            "avg_time_s": 0.020262,
+            "min_time_s": 0.020206,
+            "max_time_s": 0.020339
+          },
+          "Add": {
+            "best_rate_mb_s": 153738.4,
+            "avg_time_s": 0.031562,
+            "min_time_s": 0.031222,
+            "max_time_s": 0.032653
+          },
+          "Triad": {
+            "best_rate_mb_s": 153747.8,
+            "avg_time_s": 0.031426,
+            "min_time_s": 0.03122,
+            "max_time_s": 0.031941
+          }
+        },
+        "threads": 32
+      },
+      "rep4": {
+        "kernels": {
+          "Copy": {
+            "best_rate_mb_s": 160087.9,
+            "avg_time_s": 0.02034,
+            "min_time_s": 0.019989,
+            "max_time_s": 0.020942
+          },
+          "Scale": {
+            "best_rate_mb_s": 158430.7,
+            "avg_time_s": 0.020305,
+            "min_time_s": 0.020198,
+            "max_time_s": 0.020446
+          },
+          "Add": {
+            "best_rate_mb_s": 154132.7,
+            "avg_time_s": 0.031349,
+            "min_time_s": 0.031142,
+            "max_time_s": 0.031722
+          },
+          "Triad": {
+            "best_rate_mb_s": 153693.8,
+            "avg_time_s": 0.031451,
+            "min_time_s": 0.031231,
+            "max_time_s": 0.032077
+          }
+        },
+        "threads": 32
+      },
+      "rep5": {
+        "kernels": {
+          "Copy": {
+            "best_rate_mb_s": 160361.5,
+            "avg_time_s": 0.020112,
+            "min_time_s": 0.019955,
+            "max_time_s": 0.020513
+          },
+          "Scale": {
+            "best_rate_mb_s": 158533.6,
+            "avg_time_s": 0.020236,
+            "min_time_s": 0.020185,
+            "max_time_s": 0.020324
+          },
+          "Add": {
+            "best_rate_mb_s": 153875.9,
+            "avg_time_s": 0.031448,
+            "min_time_s": 0.031194,
+            "max_time_s": 0.031923
+          },
+          "Triad": {
+            "best_rate_mb_s": 153880.6,
+            "avg_time_s": 0.03138,
+            "min_time_s": 0.031193,
+            "max_time_s": 0.031732
+          }
+        },
+        "threads": 32
+      },
+      "rep6": {
+        "kernels": {
+          "Copy": {
+            "best_rate_mb_s": 160722.5,
+            "avg_time_s": 0.020019,
+            "min_time_s": 0.01991,
+            "max_time_s": 0.020159
+          },
+          "Scale": {
+            "best_rate_mb_s": 158314.8,
+            "avg_time_s": 0.020264,
+            "min_time_s": 0.020213,
+            "max_time_s": 0.020316
+          },
+          "Add": {
+            "best_rate_mb_s": 153993.6,
+            "avg_time_s": 0.031347,
+            "min_time_s": 0.03117,
+            "max_time_s": 0.031733
+          },
+          "Triad": {
+            "best_rate_mb_s": 153496.9,
+            "avg_time_s": 0.031361,
+            "min_time_s": 0.031271,
+            "max_time_s": 0.031702
+          }
+        },
+        "threads": 32
+      }
+    }
+  },
+  "results": {
+    "stream.copy.best_rate": {
+      "source_name": "Copy best rate",
+      "source_column": "Copy: Best Rate MB/s",
+      "value": 160361.5,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "copy"
+    },
+    "stream.copy.avg_time": {
+      "source_name": "Copy average time",
+      "source_column": "Copy: Avg time",
+      "value": 0.020112,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "copy"
+    },
+    "stream.scale.best_rate": {
+      "source_name": "Scale best rate",
+      "source_column": "Scale: Best Rate MB/s",
+      "value": 158430.7,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "scale"
+    },
+    "stream.scale.avg_time": {
+      "source_name": "Scale average time",
+      "source_column": "Scale: Avg time",
+      "value": 0.020264,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "scale"
+    },
+    "stream.add.best_rate": {
+      "source_name": "Add best rate",
+      "source_column": "Add: Best Rate MB/s",
+      "value": 153875.9,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "add"
+    },
+    "stream.add.avg_time": {
+      "source_name": "Add average time",
+      "source_column": "Add: Avg time",
+      "value": 0.031435,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "add"
+    },
+    "stream.triad.best_rate": {
+      "source_name": "Triad best rate",
+      "source_column": "Triad: Best Rate MB/s",
+      "value": 153727.8,
+      "unit": "MB/s",
+      "direction": "higher_is_better",
+      "group": "triad"
+    },
+    "stream.triad.avg_time": {
+      "source_name": "Triad average time",
+      "source_column": "Triad: Avg time",
+      "value": 0.031426,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "triad"
+    },
+    "stream.array.size": {
+      "source_name": "Array size",
+      "source_column": "Array size = N (elements)",
+      "value": 200000000,
+      "unit": "elements",
+      "direction": "neutral",
+      "group": "workload"
+    },
+    "stream.kernel.iterations": {
+      "source_name": "Iterations per kernel",
+      "source_column": "Each kernel will be executed N times.",
+      "value": 10,
+      "unit": "iterations",
+      "direction": "neutral",
+      "group": "workload"
+    },
+    "stream.threads": {
+      "source_name": "OpenMP threads",
+      "source_column": "Number of Threads counted = N",
+      "value": 32,
+      "unit": "threads",
+      "direction": "neutral",
+      "group": "workload"
+    }
+  },
+  "raw_log": {
+    "name": "benchmark_stream_raw.log",
+    "sha256": "7273bce993b79cebf8fc5a504844380859d33e47584d2a9ce8af9531f6717cb0",
+    "bytes": 11075
+  }
+}

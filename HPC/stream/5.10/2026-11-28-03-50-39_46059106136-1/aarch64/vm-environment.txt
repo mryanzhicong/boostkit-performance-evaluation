@@ -1,0 +1,209 @@
+# collected_at: 2026-11-27T19:48:06Z
+# host: localhost.localdomain (aarch64)
+# host_accel: kvm
+# host_cpuset: 0-31 (cores=16 threads_per_core=2 vcpus=32 numa_node=0)
+# host_hugepages: HugePages_Total:   177921 HugePages_Free:    112347 
+# host_numa_cpus: 0-95
+# vm_name: boostkit-stream-aarch64-46059106136-1
+# vm_ip: 192.168.122.248
+# vm_memory_mib: 131072
+# vm_hugepages: 1
+# --- virsh dumpxml ---
+<domain type='kvm' id='1'>
+  <name>boostkit-stream-aarch64-46059106136-1</name>
+  <uuid>7729c115-b34a-46a9-b39e-e8de5c72c16b</uuid>
+  <description>boostkit STREAM reference VM: 32 vCPU (16 cores x 2 threads) pinned inside host NUMA node 0, 131072 MiB 2M huge pages (65536 pages), openEuler 24.03 LTS SP4</description>
+  <memory unit='KiB'>134217728</memory>
+  <currentMemory unit='KiB'>134217728</currentMemory>
+  <memoryBacking>
+    <hugepages>
+      <page size='2048' unit='KiB'/>
+    </hugepages>
+    <source type='memfd'/>
+    <access mode='shared'/>
+    <allocation mode='immediate' threads='4'/>
+  </memoryBacking>
+  <vcpu placement='static'>32</vcpu>
+  <cputune>
+    <vcpupin vcpu='0' cpuset='0'/>
+    <vcpupin vcpu='1' cpuset='1'/>
+    <vcpupin vcpu='2' cpuset='2'/>
+    <vcpupin vcpu='3' cpuset='3'/>
+    <vcpupin vcpu='4' cpuset='4'/>
+    <vcpupin vcpu='5' cpuset='5'/>
+    <vcpupin vcpu='6' cpuset='6'/>
+    <vcpupin vcpu='7' cpuset='7'/>
+    <vcpupin vcpu='8' cpuset='8'/>
+    <vcpupin vcpu='9' cpuset='9'/>
+    <vcpupin vcpu='10' cpuset='10'/>
+    <vcpupin vcpu='11' cpuset='11'/>
+    <vcpupin vcpu='12' cpuset='12'/>
+    <vcpupin vcpu='13' cpuset='13'/>
+    <vcpupin vcpu='14' cpuset='14'/>
+    <vcpupin vcpu='15' cpuset='15'/>
+    <vcpupin vcpu='16' cpuset='16'/>
+    <vcpupin vcpu='17' cpuset='17'/>
+    <vcpupin vcpu='18' cpuset='18'/>
+    <vcpupin vcpu='19' cpuset='19'/>
+    <vcpupin vcpu='20' cpuset='20'/>
+    <vcpupin vcpu='21' cpuset='21'/>
+    <vcpupin vcpu='22' cpuset='22'/>
+    <vcpupin vcpu='23' cpuset='23'/>
+    <vcpupin vcpu='24' cpuset='24'/>
+    <vcpupin vcpu='25' cpuset='25'/>
+    <vcpupin vcpu='26' cpuset='26'/>
+    <vcpupin vcpu='27' cpuset='27'/>
+    <vcpupin vcpu='28' cpuset='28'/>
+    <vcpupin vcpu='29' cpuset='29'/>
+    <vcpupin vcpu='30' cpuset='30'/>
+    <vcpupin vcpu='31' cpuset='31'/>
+    <emulatorpin cpuset='0-31'/>
+  </cputune>
+  <numatune>
+    <memory mode='strict' nodeset='0'/>
+  </numatune>
+  <resource>
+    <partition>/machine</partition>
+  </resource>
+  <os firmware='efi'>
+    <type arch='aarch64' machine='virt-9.1'>hvm</type>
+    <firmware>
+      <feature enabled='no' name='enrolled-keys'/>
+      <feature enabled='no' name='secure-boot'/>
+    </firmware>
+    <loader readonly='yes' type='pflash'>/usr/share/edk2/aarch64/QEMU_EFI-pflash.raw</loader>
+    <nvram template='/usr/share/edk2/aarch64/vars-template-pflash.raw'>/home/libvirt-images/runs/46059106136-1/nvram.fd</nvram>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <gic version='3'/>
+  </features>
+  <cpu mode='host-passthrough' check='none' migratable='off'>
+    <topology sockets='1' dies='1' clusters='1' cores='16' threads='2'/>
+  </cpu>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>preserve</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none' io='native'/>
+      <source file='/home/libvirt-images/runs/46059106136-1/system.qcow2' index='1'/>
+      <backingStore type='file' index='2'>
+        <format type='qcow2'/>
+        <source file='/home/libvirt-images/boostkit-stream-golden-aarch64.qcow2'/>
+        <backingStore/>
+      </backingStore>
+      <target dev='vda' bus='virtio'/>
+      <alias name='virtio-disk0'/>
+      <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+    </disk>
+    <controller type='pci' index='0' model='pcie-root'>
+      <alias name='pcie.0'/>
+    </controller>
+    <controller type='pci' index='1' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='1' port='0x8'/>
+      <alias name='pci.1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='pci' index='2' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='2' port='0x9'/>
+      <alias name='pci.2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <controller type='pci' index='3' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='3' port='0xa'/>
+      <alias name='pci.3'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+    </controller>
+    <interface type='network'>
+      <mac address='52:54:00:a6:00:a8'/>
+      <source network='default' portid='5797808c-dcaa-4f26-a9a1-2db14a805a1d' bridge='virbr0'/>
+      <target dev='vnet0'/>
+      <model type='virtio'/>
+      <alias name='net0'/>
+      <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <source path='/dev/pts/2'/>
+      <log file='/home/libvirt-images/runs/46059106136-1/console.log' append='off'/>
+      <target type='system-serial' port='0'>
+        <model name='pl011'/>
+      </target>
+      <alias name='serial0'/>
+    </serial>
+    <console type='pty' tty='/dev/pts/2'>
+      <source path='/dev/pts/2'/>
+      <log file='/home/libvirt-images/runs/46059106136-1/console.log' append='off'/>
+      <target type='serial' port='0'/>
+      <alias name='serial0'/>
+    </console>
+    <audio id='1' type='none'/>
+    <memballoon model='none'/>
+  </devices>
+  <seclabel type='dynamic' model='dac' relabel='yes'>
+    <label>+107:+107</label>
+    <imagelabel>+107:+107</imagelabel>
+  </seclabel>
+</domain>
+
+# --- guest os-release ---
+NAME="openEuler"
+VERSION="24.03 (LTS-SP4)"
+ID="openEuler"
+VERSION_ID="24.03"
+PRETTY_NAME="openEuler 24.03 (LTS-SP4)"
+ANSI_COLOR="0;31"
+
+# --- guest lscpu ---
+Architecture:                         aarch64
+CPU op-mode(s):                       64-bit
+Byte Order:                           Little Endian
+CPU(s):                               32
+On-line CPU(s) list:                  0-31
+Vendor ID:                            HiSilicon
+BIOS Vendor ID:                       QEMU
+Model name:                           -
+BIOS Model name:                      virt-9.1  CPU @ 2.0GHz
+BIOS CPU family:                      1
+Model:                                0
+Thread(s) per core:                   2
+Core(s) per socket:                   16
+Socket(s):                            1
+Stepping:                             0x0
+BogoMIPS:                             200.00
+Flags:                                fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve asimdfhm dit uscat ilrcpc flagm ssbs sb dcpodp sve2 sveaes svepmull svebitperm svesha3 svesm4 flagm2 frint svei8mm svebf16 i8mm bf16 dgh rng ecv afp rpres wfxt rprfm hbc ls64 ls64_v
+L1 cache:                             2 MiB (16 instances)
+L2 cache:                             8 MiB (16 instances)
+L3 cache:                             32 MiB (1 instance)
+NUMA node(s):                         1
+NUMA node0 CPU(s):                    0-31
+Vulnerability Gather data sampling:   Not affected
+Vulnerability Itlb multihit:          Not affected
+Vulnerability L1tf:                   Not affected
+Vulnerability Mds:                    Not affected
+Vulnerability Meltdown:               Not affected
+Vulnerability Mmio stale data:        Not affected
+Vulnerability Reg file data sampling: Not affected
+Vulnerability Retbleed:               Not affected
+Vulnerability Spec rstack overflow:   Not affected
+Vulnerability Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:             Mitigation; __user pointer sanitization
+Vulnerability Spectre v2:             Mitigation; CSV2, BHB
+Vulnerability Srbds:                  Not affected
+Vulnerability Tsa:                    Not affected
+Vulnerability Tsx async abort:        Not affected
+Vulnerability Vmscape:                Not affected
+# --- guest meminfo ---
+MemTotal:       131622996 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+# --- guest cmdline ---
+BOOT_IMAGE=/vmlinuz-6.6.0-159.4.3.154.oe2403sp4.aarch64 root=UUID=b5c1cf48-dab2-4d2e-bab7-3a05fe24f12f ro rootfstype=ext4 quiet oops=panic softlockup_panic=1 net.ifnames=0 biosdevname=0 nmi_watchdog=1 rd.shell=0 selinux=0 crashkernel=256M reserve_kbox_mem=16M crash_kexec_post_notifiers panic=3 no-steal-time use-sched-idle-time
