@@ -1,0 +1,2658 @@
+=== Celeborn service state ===
+{
+  "celeborn": {
+    "client_jar": "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/apache-celeborn-0.5.3-bin/spark/celeborn-client-spark-3-shaded_2.12-0.5.3.jar",
+    "master": {
+      "endpoint": "server1:9097",
+      "heap": "4g",
+      "http_port": 9098,
+      "recorded": "Master started"
+    },
+    "shuffle_manager": "org.apache.spark.shuffle.celeborn.SparkShuffleManager",
+    "storage_dirs": [
+      {
+        "device_id": 64770,
+        "path": "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1"
+      },
+      {
+        "device_id": 64770,
+        "path": "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2"
+      }
+    ],
+    "version": "0.5.3",
+    "worker": {
+      "count": 1,
+      "heap": "4g",
+      "http_port": 9099,
+      "off_heap": "8g",
+      "recorded": "Register worker successfully"
+    }
+  },
+  "java_home": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.512.b09-1.oe2403sp4.aarch64/jre",
+  "spark": {
+    "driver_memory": "24g",
+    "master": "local[*]",
+    "shuffle_partitions": 200,
+    "version": "3.5.2"
+  },
+  "workload": {
+    "scale_factor": 3,
+    "statements": 99,
+    "tpcds_kit_commit": "1b7fb7529edae091684201fab142d956d6afd881"
+  }
+}
+
+=== workload manifest ===
+{
+  "scale_factor": 3.0,
+  "statements": [
+    {
+      "name": "query1.sql",
+      "sha256": "91a6e4180089da3a292d9912b8179b410407cc2e8cc334b2e6d8a5cc1c152ae5"
+    },
+    {
+      "name": "query2.sql",
+      "sha256": "e50b7be750d21102fd975422fa15e9b39531298d9bab3740cbac31fcb69c5f9a"
+    },
+    {
+      "name": "query3.sql",
+      "sha256": "6fde47f2f70ac97a80dca9fc499c22b673a2e91e0dcb331057ab100526be2cb9"
+    },
+    {
+      "name": "query4.sql",
+      "sha256": "f05b30ef320bc7e3b4fca85a010f4add7c627a092c6cfbec0ef161c0572ed1e2"
+    },
+    {
+      "name": "query5.sql",
+      "sha256": "f23228f3fe7812d7beea88992d0a3690a5883aef4fdefd4f8f0df4d9026e390f"
+    },
+    {
+      "name": "query6.sql",
+      "sha256": "1c6cdf17d0c1aaafdb29fb2b6f0570e9436f8ed9af0fb7e60743f4b9a7e49599"
+    },
+    {
+      "name": "query7.sql",
+      "sha256": "e5138182e88ce75d9a58497b9c4d5e891f88e95c0aa35b327891924aaaf253aa"
+    },
+    {
+      "name": "query8.sql",
+      "sha256": "754df716d3dc65fb30210a0829b5c4433a875334ae6836d79614902dbcf1cfe0"
+    },
+    {
+      "name": "query9.sql",
+      "sha256": "3e6022f29c625959b0ff34134ac04632d9a4b6e98c5267cab0e374f5b0a95227"
+    },
+    {
+      "name": "query10.sql",
+      "sha256": "415df23d841ece156cea562402b6392ea248cc03a012af095da32574bfc00a08"
+    },
+    {
+      "name": "query11.sql",
+      "sha256": "3d6bd84e6ef15da793b2b5b9fcacfa3b78fff811f928a5eb38b0ebd71ec6b9ad"
+    },
+    {
+      "name": "query12.sql",
+      "sha256": "57fa9437dde7b2cff932b09eb2c0cfe128bc71deea36c7e18be076656082ad42"
+    },
+    {
+      "name": "query13.sql",
+      "sha256": "ed3e82c456a41549a222348e93a5a07094360b4ecc46f977e13339a3779135ac"
+    },
+    {
+      "name": "query14.sql",
+      "sha256": "efc0638a7a6c1b5028c4da3a70d24a7b0d1d1ba15e1fbeda3ae3b181202e7e51"
+    },
+    {
+      "name": "query15.sql",
+      "sha256": "229bfbf8bee0d39c2f64e94d43c49627d5bbd7b98b019ad154991f908fd0e697"
+    },
+    {
+      "name": "query16.sql",
+      "sha256": "eb0fff347d3047528f7b7f60582b5d12533caf2899a2e2475c0e77de02e48c6b"
+    },
+    {
+      "name": "query17.sql",
+      "sha256": "632aecd310162b8ee74e95d9c8680c725391445df9141fbd8914be04cd4f464d"
+    },
+    {
+      "name": "query18.sql",
+      "sha256": "3fb652cf5519013a37cb6f3bfdfa141b32c0bf0c60f4ff7f48e26e33a1521ab3"
+    },
+    {
+      "name": "query19.sql",
+      "sha256": "1ed568795c0af6840f499fe26785949d5516e4cd68c8ff1a6afb2da411198100"
+    },
+    {
+      "name": "query20.sql",
+      "sha256": "28c6e9091cb0a6dccab48d0c82c87df66766a38c0249e333d77e7e54b494ac14"
+    },
+    {
+      "name": "query21.sql",
+      "sha256": "7533b72193118fec24810a3b2e4e25835ac6bf8327201e65468571ac311b06f8"
+    },
+    {
+      "name": "query22.sql",
+      "sha256": "d2111814c6272a6992a65daaac86c825821c4b2c533f47498951503681a8cc7b"
+    },
+    {
+      "name": "query23.sql",
+      "sha256": "8b7249e359fdd42634a2d73a5a7d39d0017e7ecde9d170594e22bdc98d2c1353"
+    },
+    {
+      "name": "query24.sql",
+      "sha256": "5621085c27e932e9fc65fdc95467a3fada72382cf2b1112f993d630e3d42a00a"
+    },
+    {
+      "name": "query25.sql",
+      "sha256": "7f7cb650df0c3a9453c485b50c94411fd733a9a09bfb85b5e5dcf1176c327b91"
+    },
+    {
+      "name": "query26.sql",
+      "sha256": "3d2ff625f4e778473454e35300204c85055337d93c18f824bf7a761b06bbe80e"
+    },
+    {
+      "name": "query27.sql",
+      "sha256": "2df2cdc3d7a2e8fed4c05b95839d255781e72db05bd26d38cac706959cc77257"
+    },
+    {
+      "name": "query28.sql",
+      "sha256": "2ae3ff54b5d86dbf611c3e4d407e21db0c8eafbfd8c45a23f4597bccccba3cbb"
+    },
+    {
+      "name": "query29.sql",
+      "sha256": "039392ec52e3ebe898ac3a4743e62c85906ffea3195219cc097eab6052cc45e1"
+    },
+    {
+      "name": "query30.sql",
+      "sha256": "168cd53f1dff4975a08f53b759968d087a7f1579e4590ab24d8f7f3d5c3b4c58"
+    },
+    {
+      "name": "query31.sql",
+      "sha256": "c93f1f1e03d6d305a8ffd1fd77b4638d574cccef64ce575d976f19b9becb6a81"
+    },
+    {
+      "name": "query32.sql",
+      "sha256": "ceff6298772daee1b36b53be0ee13d56f94a9e93c0de3b5656b714b32ee79688"
+    },
+    {
+      "name": "query33.sql",
+      "sha256": "957d64f8adbe5854a93b71c71cd19df14e196a9861a6b4a8e7d80223119b0ff4"
+    },
+    {
+      "name": "query34.sql",
+      "sha256": "37f788c31f9f5b32057579e85eec87ee702d9a1021372096f8a8129a1a3af102"
+    },
+    {
+      "name": "query35.sql",
+      "sha256": "fd3cf73fe576022f930df4dc63503727073fbb6ebe2b4b5fbe97a69711c2e801"
+    },
+    {
+      "name": "query36.sql",
+      "sha256": "ba423ab4b0a9c9d9ebc4b9be0c50a8d029820812c8e9d7e46d289a5e3e9b286a"
+    },
+    {
+      "name": "query37.sql",
+      "sha256": "3ed7f785fcbfca944c1e00dcdc6c3eea8513e2c3c02324d750592314671eb0b5"
+    },
+    {
+      "name": "query38.sql",
+      "sha256": "4aab3e0140da2446e1645e78894227d7d62c5484cbcc92f0e6c2967612343d80"
+    },
+    {
+      "name": "query39.sql",
+      "sha256": "c7cfa9e51d0bad2ced4f9fca423e87e64f9820dfb03f47fe43cab1e71c6d5c44"
+    },
+    {
+      "name": "query40.sql",
+      "sha256": "37eb6cce20e14a6b6bdf5c169949014366accce3a439d8fc62ea77dbee34fcc4"
+    },
+    {
+      "name": "query41.sql",
+      "sha256": "c6ec1d2bf6cf9e673c34e8b3ebe874381d14acff297b216f7bf49663b19b401a"
+    },
+    {
+      "name": "query42.sql",
+      "sha256": "8d317a361dfc3a0a572ec7f0b6f9e7a4ded49f4d5d1cd41c8fa79a32d1e259bb"
+    },
+    {
+      "name": "query43.sql",
+      "sha256": "744935ab98791bb4929f95c868f6e5e2c4180a4b0895b498a98854f643ec4585"
+    },
+    {
+      "name": "query44.sql",
+      "sha256": "b31fe152b1d47bc1183f493399c362ca29a317728c953e011577bad2925b111a"
+    },
+    {
+      "name": "query45.sql",
+      "sha256": "43538239cd60321e25dc2bb11a1313a21bce47c67ae9e59f48173e3da0ab3dae"
+    },
+    {
+      "name": "query46.sql",
+      "sha256": "9daf388333e5d5fad7c5c867b74dc2079be6f5df94af1818646d7a90b91c5dca"
+    },
+    {
+      "name": "query47.sql",
+      "sha256": "604c0441693ff2a6b8b75d61dff5b68e5dcc7473a75824439ddf97e51ec0540b"
+    },
+    {
+      "name": "query48.sql",
+      "sha256": "595d506a5b5e03d24f6391f2c13e32a4380c5ddd4a4e7316bc24750fac3c238f"
+    },
+    {
+      "name": "query49.sql",
+      "sha256": "7fd318ce4974882b82f374b3c5bfa9555ea582ddf3bda55e857a2da7d5df5724"
+    },
+    {
+      "name": "query50.sql",
+      "sha256": "a222091e891235e2eac4cf65a1f277006d526beac0db4a23138382375db0e739"
+    },
+    {
+      "name": "query51.sql",
+      "sha256": "f230919abf2e4510ab51405460da5ed41a1d5e2a5c80ecb661c3f6b0bdfc08e6"
+    },
+    {
+      "name": "query52.sql",
+      "sha256": "78d9bdfe84351b63fdd4149d67fc6671ab5c08c72cab43033ded7759697d46a7"
+    },
+    {
+      "name": "query53.sql",
+      "sha256": "335768d98a46ad8af8428d0506acc122c17a63d8aaf1e2fb1dbc08a3da4ef48b"
+    },
+    {
+      "name": "query54.sql",
+      "sha256": "eb94ecda0e5cb3b93ea1846cb268afa94e0a5a397694bde23933e32663a62761"
+    },
+    {
+      "name": "query55.sql",
+      "sha256": "367ced965a6281e1ebcf7abd87c20d1ac1cf299dd666cb0a385c40bfb62fb377"
+    },
+    {
+      "name": "query56.sql",
+      "sha256": "6f3abe949a90d62151092ca8d216ac20ab6b20411059e3811f320effd4a0f51c"
+    },
+    {
+      "name": "query57.sql",
+      "sha256": "ade3246ef7e34d8bf4fdd3edb8ac34eeb1ea5023527ca2ded9cdff345332bd25"
+    },
+    {
+      "name": "query58.sql",
+      "sha256": "78a2e97fea540c91a90da98603bd76a73e7f6b60d30058929912ba090837fb45"
+    },
+    {
+      "name": "query59.sql",
+      "sha256": "aebd9f1141a204a14f7fc38d0caf9fb02d0d0718b70426dda2ca78fc59b4e17b"
+    },
+    {
+      "name": "query60.sql",
+      "sha256": "0a965ae3bf563f7756d1fe48af301edd2d92d913369c2b7df15c85f174e579bc"
+    },
+    {
+      "name": "query61.sql",
+      "sha256": "c77383623da2d80d2a87af830ecafdb5fcb7ba9ff917650c18b7ff1440234f37"
+    },
+    {
+      "name": "query62.sql",
+      "sha256": "29fab0e9da1efce49c3c7b0debbb4baac12683510d59f020f957bd426cb73883"
+    },
+    {
+      "name": "query63.sql",
+      "sha256": "c7041dc26a6534f4a6acf9419cc7229352252b37d50df9bc10516afdd2d46168"
+    },
+    {
+      "name": "query64.sql",
+      "sha256": "d3f93f5c164cb41ddb8ca53de7ff30ff3990994fad5c43577c1fa88f5b84d88d"
+    },
+    {
+      "name": "query65.sql",
+      "sha256": "a7112725b08dbdb6bffa8c5821f6601b4155ab8dc14eb71972e715cdfecb91e5"
+    },
+    {
+      "name": "query66.sql",
+      "sha256": "b09b1f0fd71df31fb067b2b9d1d2c8d68d8f3abf6dd9041fb08489b5ad99d9eb"
+    },
+    {
+      "name": "query67.sql",
+      "sha256": "6a83d428aa3d23a744229e1e84d07a417944d44aa7db0782b55a1193a6b01080"
+    },
+    {
+      "name": "query68.sql",
+      "sha256": "ee1be1d6e8acc938027fe0a217d2610e42bb46fb6a014e218d48036d2d582e4d"
+    },
+    {
+      "name": "query69.sql",
+      "sha256": "38031ded7eeecf4a5c77f1820c9602bb52c6e922f772236d3098ce857f9fc12a"
+    },
+    {
+      "name": "query70.sql",
+      "sha256": "2ec5d1a2d97bb4d2153d9bac47067bbd723c169c33c4e54213cf84b3288f39b1"
+    },
+    {
+      "name": "query71.sql",
+      "sha256": "5d5cf41689281ecf15586bc51fb3148d39782c24e8f13eafddc6c201ea4c34e6"
+    },
+    {
+      "name": "query72.sql",
+      "sha256": "6afc28fb7a6300172ef42cbf25bf8c0926f7b52b94d0ad017baa520dc6ecf804"
+    },
+    {
+      "name": "query73.sql",
+      "sha256": "fea73580ee82cfcc329d740a25adc7d823ebf988ad5331198cfb48d38100f050"
+    },
+    {
+      "name": "query74.sql",
+      "sha256": "132dd4d3a61bfa26577071f555761e8b8ca951ac90e51027dec8e4149af30e12"
+    },
+    {
+      "name": "query75.sql",
+      "sha256": "6f9cebd0adcb0e9ebd5d067ab104be2cf001276fc7d29f25987e536c6c26f91a"
+    },
+    {
+      "name": "query76.sql",
+      "sha256": "82708dfce1936d3df07d9cfc6ba3e9623983ac61e801bdd1ba3da16ba1a5f34f"
+    },
+    {
+      "name": "query77.sql",
+      "sha256": "41cdb19544d7411cec997cca61eb0b847c2fc619af993c6908cb88a2913e8b51"
+    },
+    {
+      "name": "query78.sql",
+      "sha256": "105cd4ca4c4d70c8fa90256c6b72b6b42cc6b2d7bf23245379144d5a2dcb1cf5"
+    },
+    {
+      "name": "query79.sql",
+      "sha256": "eba96a1583f69fd72d237e96c057a72e4f1e72c161f69c4fafe76da880be7b68"
+    },
+    {
+      "name": "query80.sql",
+      "sha256": "2068f4c3bea89b94139bdc5b41fb2069f6070087a677f5e0c4f0e3d89d2d31f7"
+    },
+    {
+      "name": "query81.sql",
+      "sha256": "ee516de84e82d0b7fd92a53c672337f97e5041efac493f02cdccf0cdde345ef4"
+    },
+    {
+      "name": "query82.sql",
+      "sha256": "f01250f62e6dfe8a6f4b22c952940af72189d8876fc15fb04c97b32e0a1278e7"
+    },
+    {
+      "name": "query83.sql",
+      "sha256": "d055e7139826af5b9b305db08fbcd64fdab7f93df08af7780c54bd80021b7e28"
+    },
+    {
+      "name": "query84.sql",
+      "sha256": "3c47ce21f5c1e68bd5276271059436171e9f18f41c83aca8ffcff79bb4e56b70"
+    },
+    {
+      "name": "query85.sql",
+      "sha256": "98b566b5b9143dec2b839f6f87d1c41871e77bde5eceb2bccf40c57ff96a2743"
+    },
+    {
+      "name": "query86.sql",
+      "sha256": "8daecc31485151ba21e04f104d56275d6ab02c210607be3aaa390474ff59879a"
+    },
+    {
+      "name": "query87.sql",
+      "sha256": "3d101074ad7c4035d91339a095672c8d8cf0fbe6bab9fe14290d35fad9b08bb0"
+    },
+    {
+      "name": "query88.sql",
+      "sha256": "3bb7685df01051567ca085a943d1a8a8c4c0e89e4d36f79f2e937edbcdf04323"
+    },
+    {
+      "name": "query89.sql",
+      "sha256": "fa92636d0bcad74034267da504dfd9a1685dde069bc86e5c664471b83204f49c"
+    },
+    {
+      "name": "query90.sql",
+      "sha256": "97caf9c47d63d4da12e38679f30ca6f359b4de5c93e94738f0dd282fcda47198"
+    },
+    {
+      "name": "query91.sql",
+      "sha256": "f3c142fd70f81afbf5b79f45fc7c0f3c09e1357e83772c4e442be06033ead923"
+    },
+    {
+      "name": "query92.sql",
+      "sha256": "b5f055dbcb536533186c25044d4583639c2322d3a5bd24d1280bebc0cd5babb7"
+    },
+    {
+      "name": "query93.sql",
+      "sha256": "32ee43abc48be362174ccf2c93d78b1f038bc510e84584a0852bc2bb2056563f"
+    },
+    {
+      "name": "query94.sql",
+      "sha256": "fa4aa37c4bff04eec3b06cb3fe6f94c2930c31ee0ac8641f8ed536347b8153eb"
+    },
+    {
+      "name": "query95.sql",
+      "sha256": "7f559cd513ea0e053fd60f5cba6332f4dfd824a604b357599f07265a3dd60c09"
+    },
+    {
+      "name": "query96.sql",
+      "sha256": "74fb9d4342b00d6bf127f2ea50d322feaac026b4aa965574f4849f75d230ef47"
+    },
+    {
+      "name": "query97.sql",
+      "sha256": "2048a3af3e82991a1adec52769622611a3223ec95b05515600a27216b25f16f6"
+    },
+    {
+      "name": "query98.sql",
+      "sha256": "59a40685e7a7543985d1fc8a5fab32c11bd1030e85b44a9e61819a14e3195dbc"
+    },
+    {
+      "name": "query99.sql",
+      "sha256": "4aed6ee45ecc4bd628c8f62ef5fe1661edc1eaf544104d856331db36a903e45b"
+    }
+  ],
+  "tables": [
+    {
+      "columns": [
+        "ss_sold_date_sk",
+        "ss_sold_time_sk",
+        "ss_item_sk",
+        "ss_customer_sk",
+        "ss_cdemo_sk",
+        "ss_hdemo_sk",
+        "ss_addr_sk",
+        "ss_store_sk",
+        "ss_promo_sk",
+        "ss_ticket_number",
+        "ss_quantity",
+        "ss_wholesale_cost",
+        "ss_list_price",
+        "ss_sales_price",
+        "ss_ext_discount_amt",
+        "ss_ext_sales_price",
+        "ss_ext_wholesale_cost",
+        "ss_ext_list_price",
+        "ss_ext_tax",
+        "ss_coupon_amt",
+        "ss_net_paid",
+        "ss_net_paid_inc_tax",
+        "ss_net_profit"
+      ],
+      "name": "store_sales"
+    },
+    {
+      "columns": [
+        "sr_returned_date_sk",
+        "sr_return_time_sk",
+        "sr_item_sk",
+        "sr_customer_sk",
+        "sr_cdemo_sk",
+        "sr_hdemo_sk",
+        "sr_addr_sk",
+        "sr_store_sk",
+        "sr_reason_sk",
+        "sr_ticket_number",
+        "sr_return_quantity",
+        "sr_return_amt",
+        "sr_return_tax",
+        "sr_return_amt_inc_tax",
+        "sr_fee",
+        "sr_return_ship_cost",
+        "sr_refunded_cash",
+        "sr_reversed_charge",
+        "sr_store_credit",
+        "sr_net_loss"
+      ],
+      "name": "store_returns"
+    },
+    {
+      "columns": [
+        "cs_sold_date_sk",
+        "cs_sold_time_sk",
+        "cs_ship_date_sk",
+        "cs_bill_customer_sk",
+        "cs_bill_cdemo_sk",
+        "cs_bill_hdemo_sk",
+        "cs_bill_addr_sk",
+        "cs_ship_customer_sk",
+        "cs_ship_cdemo_sk",
+        "cs_ship_hdemo_sk",
+        "cs_ship_addr_sk",
+        "cs_call_center_sk",
+        "cs_catalog_page_sk",
+        "cs_ship_mode_sk",
+        "cs_warehouse_sk",
+        "cs_item_sk",
+        "cs_promo_sk",
+        "cs_order_number",
+        "cs_quantity",
+        "cs_wholesale_cost",
+        "cs_list_price",
+        "cs_sales_price",
+        "cs_ext_discount_amt",
+        "cs_ext_sales_price",
+        "cs_ext_wholesale_cost",
+        "cs_ext_list_price",
+        "cs_ext_tax",
+        "cs_coupon_amt",
+        "cs_ext_ship_cost",
+        "cs_net_paid",
+        "cs_net_paid_inc_tax",
+        "cs_net_paid_inc_ship",
+        "cs_net_paid_inc_ship_tax",
+        "cs_net_profit"
+      ],
+      "name": "catalog_sales"
+    },
+    {
+      "columns": [
+        "cr_returned_date_sk",
+        "cr_returned_time_sk",
+        "cr_item_sk",
+        "cr_refunded_customer_sk",
+        "cr_refunded_cdemo_sk",
+        "cr_refunded_hdemo_sk",
+        "cr_refunded_addr_sk",
+        "cr_returning_customer_sk",
+        "cr_returning_cdemo_sk",
+        "cr_returning_hdemo_sk",
+        "cr_returning_addr_sk",
+        "cr_call_center_sk",
+        "cr_catalog_page_sk",
+        "cr_ship_mode_sk",
+        "cr_warehouse_sk",
+        "cr_reason_sk",
+        "cr_order_number",
+        "cr_return_quantity",
+        "cr_return_amount",
+        "cr_return_tax",
+        "cr_return_amt_inc_tax",
+        "cr_fee",
+        "cr_return_ship_cost",
+        "cr_refunded_cash",
+        "cr_reversed_charge",
+        "cr_store_credit",
+        "cr_net_loss"
+      ],
+      "name": "catalog_returns"
+    },
+    {
+      "columns": [
+        "ws_sold_date_sk",
+        "ws_sold_time_sk",
+        "ws_ship_date_sk",
+        "ws_item_sk",
+        "ws_bill_customer_sk",
+        "ws_bill_cdemo_sk",
+        "ws_bill_hdemo_sk",
+        "ws_bill_addr_sk",
+        "ws_ship_customer_sk",
+        "ws_ship_cdemo_sk",
+        "ws_ship_hdemo_sk",
+        "ws_ship_addr_sk",
+        "ws_web_page_sk",
+        "ws_web_site_sk",
+        "ws_ship_mode_sk",
+        "ws_warehouse_sk",
+        "ws_promo_sk",
+        "ws_order_number",
+        "ws_quantity",
+        "ws_wholesale_cost",
+        "ws_list_price",
+        "ws_sales_price",
+        "ws_ext_discount_amt",
+        "ws_ext_sales_price",
+        "ws_ext_wholesale_cost",
+        "ws_ext_list_price",
+        "ws_ext_tax",
+        "ws_coupon_amt",
+        "ws_ext_ship_cost",
+        "ws_net_paid",
+        "ws_net_paid_inc_tax",
+        "ws_net_paid_inc_ship",
+        "ws_net_paid_inc_ship_tax",
+        "ws_net_profit"
+      ],
+      "name": "web_sales"
+    },
+    {
+      "columns": [
+        "wr_returned_date_sk",
+        "wr_returned_time_sk",
+        "wr_item_sk",
+        "wr_refunded_customer_sk",
+        "wr_refunded_cdemo_sk",
+        "wr_refunded_hdemo_sk",
+        "wr_refunded_addr_sk",
+        "wr_returning_customer_sk",
+        "wr_returning_cdemo_sk",
+        "wr_returning_hdemo_sk",
+        "wr_returning_addr_sk",
+        "wr_web_page_sk",
+        "wr_reason_sk",
+        "wr_order_number",
+        "wr_return_quantity",
+        "wr_return_amt",
+        "wr_return_tax",
+        "wr_return_amt_inc_tax",
+        "wr_fee",
+        "wr_return_ship_cost",
+        "wr_refunded_cash",
+        "wr_reversed_charge",
+        "wr_account_credit",
+        "wr_net_loss"
+      ],
+      "name": "web_returns"
+    },
+    {
+      "columns": [
+        "inv_date_sk",
+        "inv_item_sk",
+        "inv_warehouse_sk",
+        "inv_quantity_on_hand"
+      ],
+      "name": "inventory"
+    },
+    {
+      "columns": [
+        "s_store_sk",
+        "s_store_id",
+        "s_rec_start_date",
+        "s_rec_end_date",
+        "s_closed_date_sk",
+        "s_store_name",
+        "s_number_employees",
+        "s_floor_space",
+        "s_hours",
+        "s_manager",
+        "s_market_id",
+        "s_geography_class",
+        "s_market_desc",
+        "s_market_manager",
+        "s_division_id",
+        "s_division_name",
+        "s_company_id",
+        "s_company_name",
+        "s_street_number",
+        "s_street_name",
+        "s_street_type",
+        "s_suite_number",
+        "s_city",
+        "s_county",
+        "s_state",
+        "s_zip",
+        "s_country",
+        "s_gmt_offset",
+        "s_tax_percentage"
+      ],
+      "name": "store"
+    },
+    {
+      "columns": [
+        "cc_call_center_sk",
+        "cc_call_center_id",
+        "cc_rec_start_date",
+        "cc_rec_end_date",
+        "cc_closed_date_sk",
+        "cc_open_date_sk",
+        "cc_name",
+        "cc_class",
+        "cc_employees",
+        "cc_sq_ft",
+        "cc_hours",
+        "cc_manager",
+        "cc_mkt_id",
+        "cc_mkt_class",
+        "cc_mkt_desc",
+        "cc_market_manager",
+        "cc_division",
+        "cc_division_name",
+        "cc_company",
+        "cc_company_name",
+        "cc_street_number",
+        "cc_street_name",
+        "cc_street_type",
+        "cc_suite_number",
+        "cc_city",
+        "cc_county",
+        "cc_state",
+        "cc_zip",
+        "cc_country",
+        "cc_gmt_offset",
+        "cc_tax_percentage"
+      ],
+      "name": "call_center"
+    },
+    {
+      "columns": [
+        "cp_catalog_page_sk",
+        "cp_catalog_page_id",
+        "cp_start_date_sk",
+        "cp_end_date_sk",
+        "cp_department",
+        "cp_catalog_number",
+        "cp_catalog_page_number",
+        "cp_description",
+        "cp_type"
+      ],
+      "name": "catalog_page"
+    },
+    {
+      "columns": [
+        "web_site_sk",
+        "web_site_id",
+        "web_rec_start_date",
+        "web_rec_end_date",
+        "web_name",
+        "web_open_date_sk",
+        "web_close_date_sk",
+        "web_class",
+        "web_manager",
+        "web_mkt_id",
+        "web_mkt_class",
+        "web_mkt_desc",
+        "web_market_manager",
+        "web_company_id",
+        "web_company_name",
+        "web_street_number",
+        "web_street_name",
+        "web_street_type",
+        "web_suite_number",
+        "web_city",
+        "web_county",
+        "web_state",
+        "web_zip",
+        "web_country",
+        "web_gmt_offset",
+        "web_tax_percentage"
+      ],
+      "name": "web_site"
+    },
+    {
+      "columns": [
+        "wp_web_page_sk",
+        "wp_web_page_id",
+        "wp_rec_start_date",
+        "wp_rec_end_date",
+        "wp_creation_date_sk",
+        "wp_access_date_sk",
+        "wp_autogen_flag",
+        "wp_customer_sk",
+        "wp_url",
+        "wp_type",
+        "wp_char_count",
+        "wp_link_count",
+        "wp_image_count",
+        "wp_max_ad_count"
+      ],
+      "name": "web_page"
+    },
+    {
+      "columns": [
+        "w_warehouse_sk",
+        "w_warehouse_id",
+        "w_warehouse_name",
+        "w_warehouse_sq_ft",
+        "w_street_number",
+        "w_street_name",
+        "w_street_type",
+        "w_suite_number",
+        "w_city",
+        "w_county",
+        "w_state",
+        "w_zip",
+        "w_country",
+        "w_gmt_offset"
+      ],
+      "name": "warehouse"
+    },
+    {
+      "columns": [
+        "c_customer_sk",
+        "c_customer_id",
+        "c_current_cdemo_sk",
+        "c_current_hdemo_sk",
+        "c_current_addr_sk",
+        "c_first_shipto_date_sk",
+        "c_first_sales_date_sk",
+        "c_salutation",
+        "c_first_name",
+        "c_last_name",
+        "c_preferred_cust_flag",
+        "c_birth_day",
+        "c_birth_month",
+        "c_birth_year",
+        "c_birth_country",
+        "c_login",
+        "c_email_address",
+        "c_last_review_date_sk"
+      ],
+      "name": "customer"
+    },
+    {
+      "columns": [
+        "ca_address_sk",
+        "ca_address_id",
+        "ca_street_number",
+        "ca_street_name",
+        "ca_street_type",
+        "ca_suite_number",
+        "ca_city",
+        "ca_county",
+        "ca_state",
+        "ca_zip",
+        "ca_country",
+        "ca_gmt_offset",
+        "ca_location_type"
+      ],
+      "name": "customer_address"
+    },
+    {
+      "columns": [
+        "cd_demo_sk",
+        "cd_gender",
+        "cd_marital_status",
+        "cd_education_status",
+        "cd_purchase_estimate",
+        "cd_credit_rating",
+        "cd_dep_count",
+        "cd_dep_employed_count",
+        "cd_dep_college_count"
+      ],
+      "name": "customer_demographics"
+    },
+    {
+      "columns": [
+        "d_date_sk",
+        "d_date_id",
+        "d_date",
+        "d_month_seq",
+        "d_week_seq",
+        "d_quarter_seq",
+        "d_year",
+        "d_dow",
+        "d_moy",
+        "d_dom",
+        "d_qoy",
+        "d_fy_year",
+        "d_fy_quarter_seq",
+        "d_fy_week_seq",
+        "d_day_name",
+        "d_quarter_name",
+        "d_holiday",
+        "d_weekend",
+        "d_following_holiday",
+        "d_first_dom",
+        "d_last_dom",
+        "d_same_day_ly",
+        "d_same_day_lq",
+        "d_current_day",
+        "d_current_week",
+        "d_current_month",
+        "d_current_quarter",
+        "d_current_year"
+      ],
+      "name": "date_dim"
+    },
+    {
+      "columns": [
+        "hd_demo_sk",
+        "hd_income_band_sk",
+        "hd_buy_potential",
+        "hd_dep_count",
+        "hd_vehicle_count"
+      ],
+      "name": "household_demographics"
+    },
+    {
+      "columns": [
+        "i_item_sk",
+        "i_item_id",
+        "i_rec_start_date",
+        "i_rec_end_date",
+        "i_item_desc",
+        "i_current_price",
+        "i_wholesale_cost",
+        "i_brand_id",
+        "i_brand",
+        "i_class_id",
+        "i_class",
+        "i_category_id",
+        "i_category",
+        "i_manufact_id",
+        "i_manufact",
+        "i_size",
+        "i_formulation",
+        "i_color",
+        "i_units",
+        "i_container",
+        "i_manager_id",
+        "i_product_name"
+      ],
+      "name": "item"
+    },
+    {
+      "columns": [
+        "ib_income_band_sk",
+        "ib_lower_bound",
+        "ib_upper_bound"
+      ],
+      "name": "income_band"
+    },
+    {
+      "columns": [
+        "p_promo_sk",
+        "p_promo_id",
+        "p_start_date_sk",
+        "p_end_date_sk",
+        "p_item_sk",
+        "p_cost",
+        "p_response_target",
+        "p_promo_name",
+        "p_channel_dmail",
+        "p_channel_email",
+        "p_channel_catalog",
+        "p_channel_tv",
+        "p_channel_radio",
+        "p_channel_press",
+        "p_channel_event",
+        "p_channel_demo",
+        "p_channel_details",
+        "p_purpose",
+        "p_discount_active"
+      ],
+      "name": "promotion"
+    },
+    {
+      "columns": [
+        "r_reason_sk",
+        "r_reason_id",
+        "r_reason_desc"
+      ],
+      "name": "reason"
+    },
+    {
+      "columns": [
+        "sm_ship_mode_sk",
+        "sm_ship_mode_id",
+        "sm_type",
+        "sm_code",
+        "sm_carrier",
+        "sm_contract"
+      ],
+      "name": "ship_mode"
+    },
+    {
+      "columns": [
+        "t_time_sk",
+        "t_time_id",
+        "t_time",
+        "t_hour",
+        "t_minute",
+        "t_second",
+        "t_am_pm",
+        "t_shift",
+        "t_sub_shift",
+        "t_meal_time"
+      ],
+      "name": "time_dim"
+    }
+  ],
+  "tpcds_kit_commit": "1b7fb7529edae091684201fab142d956d6afd881"
+}
+
+=== dataset ===
+{
+  "files": 55,
+  "path": "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/data/tpcds-3",
+  "scale_factor": 3.0,
+  "tables": [
+    {
+      "bytes": 1171823744,
+      "files": 1,
+      "name": "store_sales"
+    },
+    {
+      "bytes": 98811664,
+      "files": 1,
+      "name": "store_returns"
+    },
+    {
+      "bytes": 891966716,
+      "files": 1,
+      "name": "catalog_sales"
+    },
+    {
+      "bytes": 64610990,
+      "files": 1,
+      "name": "catalog_returns"
+    },
+    {
+      "bytes": 443767851,
+      "files": 1,
+      "name": "web_sales"
+    },
+    {
+      "bytes": 29674043,
+      "files": 1,
+      "name": "web_returns"
+    },
+    {
+      "bytes": 547911667,
+      "files": 16,
+      "name": "inventory"
+    },
+    {
+      "bytes": 8309,
+      "files": 1,
+      "name": "store"
+    },
+    {
+      "bytes": 3109,
+      "files": 1,
+      "name": "call_center"
+    },
+    {
+      "bytes": 1620074,
+      "files": 1,
+      "name": "catalog_page"
+    },
+    {
+      "bytes": 9273,
+      "files": 1,
+      "name": "web_site"
+    },
+    {
+      "bytes": 8572,
+      "files": 1,
+      "name": "web_page"
+    },
+    {
+      "bytes": 710,
+      "files": 1,
+      "name": "warehouse"
+    },
+    {
+      "bytes": 24762720,
+      "files": 1,
+      "name": "customer"
+    },
+    {
+      "bytes": 10260456,
+      "files": 1,
+      "name": "customer_address"
+    },
+    {
+      "bytes": 78739296,
+      "files": 16,
+      "name": "customer_demographics"
+    },
+    {
+      "bytes": 10244389,
+      "files": 1,
+      "name": "date_dim"
+    },
+    {
+      "bytes": 144453,
+      "files": 1,
+      "name": "household_demographics"
+    },
+    {
+      "bytes": 10104270,
+      "files": 1,
+      "name": "item"
+    },
+    {
+      "bytes": 308,
+      "files": 1,
+      "name": "income_band"
+    },
+    {
+      "bytes": 42305,
+      "files": 1,
+      "name": "promotion"
+    },
+    {
+      "bytes": 1364,
+      "files": 1,
+      "name": "reason"
+    },
+    {
+      "bytes": 1093,
+      "files": 1,
+      "name": "ship_mode"
+    },
+    {
+      "bytes": 5021380,
+      "files": 1,
+      "name": "time_dim"
+    }
+  ],
+  "total_bytes": 3389538919
+}
+
+=== warehouse load ===
+{
+  "scale_factor": "3",
+  "tables": [
+    {
+      "files": 1,
+      "name": "store_sales",
+      "rows": 8639377
+    },
+    {
+      "files": 1,
+      "name": "store_returns",
+      "rows": 862834
+    },
+    {
+      "files": 1,
+      "name": "catalog_sales",
+      "rows": 4319367
+    },
+    {
+      "files": 1,
+      "name": "catalog_returns",
+      "rows": 432000
+    },
+    {
+      "files": 1,
+      "name": "web_sales",
+      "rows": 2160165
+    },
+    {
+      "files": 1,
+      "name": "web_returns",
+      "rows": 215477
+    },
+    {
+      "files": 16,
+      "name": "inventory",
+      "rows": 28188000
+    },
+    {
+      "files": 1,
+      "name": "store",
+      "rows": 32
+    },
+    {
+      "files": 1,
+      "name": "call_center",
+      "rows": 10
+    },
+    {
+      "files": 1,
+      "name": "catalog_page",
+      "rows": 11718
+    },
+    {
+      "files": 1,
+      "name": "web_site",
+      "rows": 32
+    },
+    {
+      "files": 1,
+      "name": "web_page",
+      "rows": 90
+    },
+    {
+      "files": 1,
+      "name": "warehouse",
+      "rows": 6
+    },
+    {
+      "files": 1,
+      "name": "customer",
+      "rows": 188000
+    },
+    {
+      "files": 1,
+      "name": "customer_address",
+      "rows": 94000
+    },
+    {
+      "files": 16,
+      "name": "customer_demographics",
+      "rows": 1920800
+    },
+    {
+      "files": 1,
+      "name": "date_dim",
+      "rows": 73049
+    },
+    {
+      "files": 1,
+      "name": "household_demographics",
+      "rows": 7200
+    },
+    {
+      "files": 1,
+      "name": "item",
+      "rows": 36000
+    },
+    {
+      "files": 1,
+      "name": "income_band",
+      "rows": 20
+    },
+    {
+      "files": 1,
+      "name": "promotion",
+      "rows": 344
+    },
+    {
+      "files": 1,
+      "name": "reason",
+      "rows": 37
+    },
+    {
+      "files": 1,
+      "name": "ship_mode",
+      "rows": 20
+    },
+    {
+      "files": 1,
+      "name": "time_dim",
+      "rows": 86400
+    }
+  ],
+  "warehouse": "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/warehouse/tpcds-3"
+}
+
+=== per-sample shuffle evidence ===
+{
+  "application_id": "local-1795801024134",
+  "sample": 1,
+  "shuffle_bytes": 1704702760,
+  "storage_bytes_after_stop": 1704702760
+}
+{
+  "application_id": "local-1795801339625",
+  "sample": 2,
+  "shuffle_bytes": 1704709076,
+  "storage_bytes_after_stop": 1704709076
+}
+{
+  "application_id": "local-1795801662695",
+  "sample": 3,
+  "shuffle_bytes": 1704704792,
+  "storage_bytes_after_stop": 1704704792
+}
+{
+  "application_id": "local-1795801979571",
+  "sample": 4,
+  "shuffle_bytes": 1704707998,
+  "storage_bytes_after_stop": 1704707998
+}
+{
+  "application_id": "local-1795802284049",
+  "sample": 5,
+  "shuffle_bytes": 1704710227,
+  "storage_bytes_after_stop": 1704710227
+}
+{
+  "application_id": "local-1795802608033",
+  "sample": 6,
+  "shuffle_bytes": 1704705639,
+  "storage_bytes_after_stop": 1704705639
+}
+
+=== per-sample statement records ===
+
+--- sample1 ---
+{"application_id": "local-1795801024134", "record": "application", "sample": 1, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 13.708773}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.785011}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 0.978442}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 10.712634}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.343452}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.384958}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 2.183659}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 2.900009}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.51629}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 2.811229}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 5.200647}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.192114}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.186464}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 8.186942}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 1.602499}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 2.292691}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 2.639787}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 2.083448}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 1.839942}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 1.457585}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 2.17342}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 1.778632}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 7.069454}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 5.930791}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 2.861058}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.533147}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.697263}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 4.924183}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 3.034661}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.472692}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 5.908142}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 1.589964}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 1.999644}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 1.264995}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 5.296731}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 1.781758}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 1.973832}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 2.184538}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 3.827183}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.61636}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.826806}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 0.656469}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 1.263539}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.206593}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 1.024001}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 2.096053}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 2.995337}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 1.152016}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 2.786817}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 1.947493}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 4.266219}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 0.665386}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 1.934206}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 3.406136}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 0.60871}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 2.172255}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.370432}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 2.120272}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 1.993514}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 2.188946}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 2.495908}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.702074}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 1.720945}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 5.513712}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 4.062432}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 4.3319}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 3.005419}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 1.466819}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 3.628331}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 3.528578}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 1.816422}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 4.550246}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.542784}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 3.169443}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 3.556788}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 1.096579}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 24.015752}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 7.652786}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 1.473278}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 4.204053}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.276885}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 2.605}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.912516}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.644376}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.80754}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 0.975984}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 2.176128}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 5.746252}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 1.24275}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.724387}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 0.969638}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 0.971623}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 1.850818}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 1.609445}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 5.443814}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 1.193488}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 2.402797}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 1.691709}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 0.957251}
+{"bytes": 1704702760, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795801024134", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795801024134"], "files": 23084, "record": "shuffle_usage", "sample": 1}
+{"application_id": "local-1795801024134", "record": "summary", "sample": 1, "seconds": 290.363144, "statements": 99}
+
+--- sample2 ---
+{"application_id": "local-1795801339625", "record": "application", "sample": 2, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 12.730189}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.86369}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 1.001678}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 9.321257}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.993443}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.500334}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 1.686547}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 1.868195}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.753819}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 3.060804}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 10.210453}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.057899}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.752058}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 8.901938}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 1.048862}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 1.977995}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 2.868191}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 3.894593}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 1.053111}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 0.966282}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 1.463141}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 1.781456}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 5.304412}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 5.9189}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 3.10939}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.180682}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.172029}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 5.092459}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 3.021383}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.472214}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 3.999093}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 1.381214}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 2.915883}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 1.316037}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 3.373415}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 2.06355}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 1.872984}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 2.697096}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 4.31028}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.601773}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.811098}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 0.693262}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 0.647818}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.168051}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 0.850818}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 1.93782}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 3.123832}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 1.882041}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 2.791898}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 2.846418}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 2.849786}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 0.648346}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 0.969121}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 3.095645}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 1.382861}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 2.720826}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.410577}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 1.338201}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 2.353225}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 1.915395}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 1.103615}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.706529}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 0.920665}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 7.25072}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 2.103609}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 4.061414}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 4.330312}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 1.81217}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 2.109458}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 3.046497}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 1.402024}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 6.074743}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.900037}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 2.781026}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 3.568853}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 1.06785}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 20.321388}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 8.820203}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 2.391195}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 4.282474}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.644966}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 2.455468}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.981815}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.737264}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.886914}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 1.020567}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 6.132474}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 6.930375}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 2.059746}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.77481}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 1.038962}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 1.060009}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 1.886431}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 2.120975}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 9.442464}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 1.14545}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 3.428998}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 2.862854}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 1.382103}
+{"bytes": 1704709076, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795801339625", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795801339625"], "files": 23084, "record": "shuffle_usage", "sample": 2}
+{"application_id": "local-1795801339625", "record": "summary", "sample": 2, "seconds": 298.06288, "statements": 99}
+
+--- sample3 ---
+{"application_id": "local-1795801662695", "record": "application", "sample": 3, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 13.845222}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.815204}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 0.947136}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 9.016546}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.723574}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.359593}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 2.225016}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 1.736943}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.545245}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 3.090598}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 5.243617}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.249312}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.546005}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 7.812073}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 1.538893}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 2.138425}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 3.002806}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 3.751623}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 2.232326}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 0.917206}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 1.42373}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 2.455825}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 6.809261}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 6.45815}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 3.43966}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.691791}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.315732}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 5.705248}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 2.924637}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.459314}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 4.659838}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 1.577607}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 2.8022}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 1.756631}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 2.721586}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 1.460527}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 2.171156}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 1.851245}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 4.187039}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.545124}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.841556}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 1.101694}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 1.402135}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.151495}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 0.753387}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 2.050668}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 3.39623}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 2.737137}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 2.75719}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 2.163845}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 2.624243}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 1.267778}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 1.697993}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 3.430393}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 0.806572}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 1.945216}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.282126}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 2.340986}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 2.356439}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 1.903002}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 2.529571}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.762511}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 0.960472}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 4.6806}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 2.580041}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 5.575792}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 4.431903}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 1.147956}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 2.967546}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 3.987841}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 1.538205}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 4.612425}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.267104}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 3.302168}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 4.158855}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 0.999049}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 24.158436}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 6.503423}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 3.057521}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 3.376073}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.275416}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 2.127452}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.856961}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.670846}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.91461}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 1.003162}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 4.60704}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 6.393826}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 1.880493}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.860744}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 1.013485}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 1.168638}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 2.00301}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 1.757436}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 5.921669}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 0.802639}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 1.309735}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 1.838436}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 1.140344}
+{"bytes": 1704704792, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795801662695", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795801662695"], "files": 23084, "record": "shuffle_usage", "sample": 3}
+{"application_id": "local-1795801662695", "record": "summary", "sample": 3, "seconds": 292.327074, "statements": 99}
+
+--- sample4 ---
+{"application_id": "local-1795801979571", "record": "application", "sample": 4, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 12.271731}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.660843}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 1.045074}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 10.825041}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.580313}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.4861}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 1.678887}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 1.835184}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.146382}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 2.931835}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 4.804905}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.287171}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.151341}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 7.985576}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 0.809683}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 1.929825}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 2.679278}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 1.786644}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 1.759507}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 1.197711}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 1.069944}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 1.43155}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 5.259257}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 5.063835}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 2.857426}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.50677}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.178866}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 4.517085}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 3.105137}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.485441}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 5.304247}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 1.529594}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 2.741257}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 1.361952}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 3.597425}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 1.418378}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 1.809122}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 2.523011}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 4.299185}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.619616}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.776117}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 1.391385}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 1.371273}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.182541}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 0.909864}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 2.138499}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 2.946233}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 1.172867}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 3.299822}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 2.119482}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 2.980126}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 0.704067}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 1.936431}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 2.96738}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 1.45713}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 2.817431}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.067847}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 1.442339}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 1.85751}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 2.541985}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 1.375912}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.766017}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 1.274654}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 6.655905}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 2.236534}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 4.304217}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 3.87914}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 2.043228}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 2.260115}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 3.157581}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 2.087874}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 5.435197}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.611562}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 3.198981}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 3.899873}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 1.012123}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 25.082434}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 3.499747}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 1.053113}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 5.131775}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.23913}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 1.564679}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.920057}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.702314}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.764885}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 1.0816}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 4.056511}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 8.112016}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 1.053005}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.716506}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 1.033171}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 1.063099}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 1.888201}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 1.871839}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 6.394546}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 1.258041}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 1.854929}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 1.517192}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 0.857734}
+{"bytes": 1704707998, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795801979571", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795801979571"], "files": 23084, "record": "shuffle_usage", "sample": 4}
+{"application_id": "local-1795801979571", "record": "summary", "sample": 4, "seconds": 279.547795, "statements": 99}
+
+--- sample5 ---
+{"application_id": "local-1795802284049", "record": "application", "sample": 5, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 13.119713}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.807813}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 1.693651}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 10.612915}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.625364}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.353638}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 2.582757}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 1.901986}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.329258}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 3.30478}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 10.945375}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.332313}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.353436}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 8.008911}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 1.763167}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 1.943968}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 2.899164}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 1.969979}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 1.684795}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 1.559486}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 2.277571}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 2.16929}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 6.898873}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 5.264457}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 2.878974}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.494216}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.623711}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 4.522313}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 2.882344}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.455248}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 4.481651}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 0.860577}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 1.989048}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 2.034377}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 2.935032}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 1.574614}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 2.452772}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 2.453163}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 4.583844}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.78761}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.796226}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 0.633183}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 1.563692}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.198243}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 0.742173}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 3.737625}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 3.23729}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 1.8023}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 3.053959}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 2.56676}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 2.83235}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 0.680316}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 0.943381}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 2.33298}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 0.635873}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 2.5021}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.230999}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 3.276404}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 1.989402}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 3.062347}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 2.610852}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.82281}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 0.961436}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 5.092332}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 2.594052}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 4.333021}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 4.606021}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 2.077065}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 2.552122}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 2.75752}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 1.369836}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 3.903904}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.169413}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 4.809058}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 4.242371}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 1.415306}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 23.951219}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 8.336048}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 1.268834}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 5.109026}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.246456}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 2.8977}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.961202}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.717061}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.904455}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 0.973374}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 4.975639}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 6.120476}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 1.093814}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.720718}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 1.0148}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 1.026009}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 1.965648}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 1.541633}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 5.76721}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 1.046979}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 1.583943}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 2.082154}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 1.42572}
+{"bytes": 1704710227, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795802284049", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795802284049"], "files": 23084, "record": "shuffle_usage", "sample": 5}
+{"application_id": "local-1795802284049", "record": "summary", "sample": 5, "seconds": 299.29689, "statements": 99}
+
+--- sample6 ---
+{"application_id": "local-1795802608033", "record": "application", "sample": 6, "statements": 99}
+{"index": 1, "name": "query1.sql", "record": "statement", "rows": 0, "seconds": 12.444823}
+{"index": 2, "name": "query2.sql", "record": "statement", "rows": 2513, "seconds": 3.211025}
+{"index": 3, "name": "query3.sql", "record": "statement", "rows": 31, "seconds": 1.544002}
+{"index": 4, "name": "query4.sql", "record": "statement", "rows": 86, "seconds": 10.320411}
+{"index": 5, "name": "query5.sql", "record": "statement", "rows": 100, "seconds": 3.20839}
+{"index": 6, "name": "query6.sql", "record": "statement", "rows": 50, "seconds": 2.494895}
+{"index": 7, "name": "query7.sql", "record": "statement", "rows": 100, "seconds": 2.189144}
+{"index": 8, "name": "query8.sql", "record": "statement", "rows": 0, "seconds": 2.548679}
+{"index": 9, "name": "query9.sql", "record": "statement", "rows": 1, "seconds": 2.635489}
+{"index": 10, "name": "query10.sql", "record": "statement", "rows": 23, "seconds": 3.826484}
+{"index": 11, "name": "query11.sql", "record": "statement", "rows": 100, "seconds": 4.125339}
+{"index": 12, "name": "query12.sql", "record": "statement", "rows": 100, "seconds": 1.098829}
+{"index": 13, "name": "query13.sql", "record": "statement", "rows": 1, "seconds": 2.952378}
+{"index": 14, "name": "query14.sql", "record": "statement", "rows": 100, "seconds": 8.952108}
+{"index": 15, "name": "query15.sql", "record": "statement", "rows": 100, "seconds": 1.676447}
+{"index": 16, "name": "query16.sql", "record": "statement", "rows": 1, "seconds": 1.659639}
+{"index": 17, "name": "query17.sql", "record": "statement", "rows": 4, "seconds": 3.003921}
+{"index": 18, "name": "query18.sql", "record": "statement", "rows": 100, "seconds": 1.50783}
+{"index": 19, "name": "query19.sql", "record": "statement", "rows": 100, "seconds": 2.01022}
+{"index": 20, "name": "query20.sql", "record": "statement", "rows": 100, "seconds": 0.887712}
+{"index": 21, "name": "query21.sql", "record": "statement", "rows": 100, "seconds": 2.261103}
+{"index": 22, "name": "query22.sql", "record": "statement", "rows": 100, "seconds": 1.412968}
+{"index": 23, "name": "query23.sql", "record": "statement", "rows": 1, "seconds": 5.230139}
+{"index": 24, "name": "query24.sql", "record": "statement", "rows": 1, "seconds": 6.84241}
+{"index": 25, "name": "query25.sql", "record": "statement", "rows": 0, "seconds": 2.623758}
+{"index": 26, "name": "query26.sql", "record": "statement", "rows": 100, "seconds": 1.592469}
+{"index": 27, "name": "query27.sql", "record": "statement", "rows": 0, "seconds": 1.397305}
+{"index": 28, "name": "query28.sql", "record": "statement", "rows": 1, "seconds": 5.24629}
+{"index": 29, "name": "query29.sql", "record": "statement", "rows": 4, "seconds": 2.489742}
+{"index": 30, "name": "query30.sql", "record": "statement", "rows": 100, "seconds": 1.479211}
+{"index": 31, "name": "query31.sql", "record": "statement", "rows": 195, "seconds": 5.629979}
+{"index": 32, "name": "query32.sql", "record": "statement", "rows": 1, "seconds": 1.612105}
+{"index": 33, "name": "query33.sql", "record": "statement", "rows": 100, "seconds": 2.307933}
+{"index": 34, "name": "query34.sql", "record": "statement", "rows": 0, "seconds": 1.311532}
+{"index": 35, "name": "query35.sql", "record": "statement", "rows": 100, "seconds": 3.047244}
+{"index": 36, "name": "query36.sql", "record": "statement", "rows": 100, "seconds": 2.165454}
+{"index": 37, "name": "query37.sql", "record": "statement", "rows": 1, "seconds": 1.616614}
+{"index": 38, "name": "query38.sql", "record": "statement", "rows": 1, "seconds": 4.775673}
+{"index": 39, "name": "query39.sql", "record": "statement", "rows": 375, "seconds": 3.834035}
+{"index": 40, "name": "query40.sql", "record": "statement", "rows": 100, "seconds": 1.868441}
+{"index": 41, "name": "query41.sql", "record": "statement", "rows": 18, "seconds": 0.839945}
+{"index": 42, "name": "query42.sql", "record": "statement", "rows": 10, "seconds": 1.879069}
+{"index": 43, "name": "query43.sql", "record": "statement", "rows": 0, "seconds": 1.059658}
+{"index": 44, "name": "query44.sql", "record": "statement", "rows": 0, "seconds": 1.229607}
+{"index": 45, "name": "query45.sql", "record": "statement", "rows": 26, "seconds": 0.90918}
+{"index": 46, "name": "query46.sql", "record": "statement", "rows": 100, "seconds": 2.15265}
+{"index": 47, "name": "query47.sql", "record": "statement", "rows": 100, "seconds": 2.820318}
+{"index": 48, "name": "query48.sql", "record": "statement", "rows": 1, "seconds": 1.894703}
+{"index": 49, "name": "query49.sql", "record": "statement", "rows": 33, "seconds": 2.62742}
+{"index": 50, "name": "query50.sql", "record": "statement", "rows": 17, "seconds": 2.743666}
+{"index": 51, "name": "query51.sql", "record": "statement", "rows": 100, "seconds": 2.603459}
+{"index": 52, "name": "query52.sql", "record": "statement", "rows": 100, "seconds": 0.677616}
+{"index": 53, "name": "query53.sql", "record": "statement", "rows": 49, "seconds": 2.369108}
+{"index": 54, "name": "query54.sql", "record": "statement", "rows": 0, "seconds": 2.960952}
+{"index": 55, "name": "query55.sql", "record": "statement", "rows": 100, "seconds": 0.61873}
+{"index": 56, "name": "query56.sql", "record": "statement", "rows": 100, "seconds": 2.269055}
+{"index": 57, "name": "query57.sql", "record": "statement", "rows": 100, "seconds": 2.121347}
+{"index": 58, "name": "query58.sql", "record": "statement", "rows": 1, "seconds": 1.819677}
+{"index": 59, "name": "query59.sql", "record": "statement", "rows": 100, "seconds": 2.165773}
+{"index": 60, "name": "query60.sql", "record": "statement", "rows": 100, "seconds": 2.196918}
+{"index": 61, "name": "query61.sql", "record": "statement", "rows": 1, "seconds": 1.787963}
+{"index": 62, "name": "query62.sql", "record": "statement", "rows": 100, "seconds": 0.664914}
+{"index": 63, "name": "query63.sql", "record": "statement", "rows": 100, "seconds": 1.121008}
+{"index": 64, "name": "query64.sql", "record": "statement", "rows": 7, "seconds": 8.495301}
+{"index": 65, "name": "query65.sql", "record": "statement", "rows": 100, "seconds": 2.58804}
+{"index": 66, "name": "query66.sql", "record": "statement", "rows": 6, "seconds": 5.292336}
+{"index": 67, "name": "query67.sql", "record": "statement", "rows": 100, "seconds": 4.222035}
+{"index": 68, "name": "query68.sql", "record": "statement", "rows": 0, "seconds": 2.163443}
+{"index": 69, "name": "query69.sql", "record": "statement", "rows": 0, "seconds": 3.668889}
+{"index": 70, "name": "query70.sql", "record": "statement", "rows": 4, "seconds": 2.076086}
+{"index": 71, "name": "query71.sql", "record": "statement", "rows": 3283, "seconds": 1.83786}
+{"index": 72, "name": "query72.sql", "record": "statement", "rows": 100, "seconds": 7.587636}
+{"index": 73, "name": "query73.sql", "record": "statement", "rows": 0, "seconds": 1.269685}
+{"index": 74, "name": "query74.sql", "record": "statement", "rows": 100, "seconds": 3.900524}
+{"index": 75, "name": "query75.sql", "record": "statement", "rows": 100, "seconds": 3.446934}
+{"index": 76, "name": "query76.sql", "record": "statement", "rows": 100, "seconds": 1.33307}
+{"index": 77, "name": "query77.sql", "record": "statement", "rows": 73, "seconds": 23.850043}
+{"index": 78, "name": "query78.sql", "record": "statement", "rows": 100, "seconds": 7.08483}
+{"index": 79, "name": "query79.sql", "record": "statement", "rows": 100, "seconds": 2.740101}
+{"index": 80, "name": "query80.sql", "record": "statement", "rows": 100, "seconds": 4.160352}
+{"index": 81, "name": "query81.sql", "record": "statement", "rows": 100, "seconds": 1.188104}
+{"index": 82, "name": "query82.sql", "record": "statement", "rows": 2, "seconds": 2.041274}
+{"index": 83, "name": "query83.sql", "record": "statement", "rows": 100, "seconds": 0.941476}
+{"index": 84, "name": "query84.sql", "record": "statement", "rows": 100, "seconds": 0.631349}
+{"index": 85, "name": "query85.sql", "record": "statement", "rows": 10, "seconds": 1.909991}
+{"index": 86, "name": "query86.sql", "record": "statement", "rows": 100, "seconds": 1.043179}
+{"index": 87, "name": "query87.sql", "record": "statement", "rows": 1, "seconds": 2.867092}
+{"index": 88, "name": "query88.sql", "record": "statement", "rows": 1, "seconds": 6.932781}
+{"index": 89, "name": "query89.sql", "record": "statement", "rows": 100, "seconds": 1.339751}
+{"index": 90, "name": "query90.sql", "record": "statement", "rows": 1, "seconds": 0.720195}
+{"index": 91, "name": "query91.sql", "record": "statement", "rows": 5, "seconds": 1.058906}
+{"index": 92, "name": "query92.sql", "record": "statement", "rows": 1, "seconds": 1.081359}
+{"index": 93, "name": "query93.sql", "record": "statement", "rows": 0, "seconds": 1.402398}
+{"index": 94, "name": "query94.sql", "record": "statement", "rows": 1, "seconds": 1.744601}
+{"index": 95, "name": "query95.sql", "record": "statement", "rows": 1, "seconds": 7.329572}
+{"index": 96, "name": "query96.sql", "record": "statement", "rows": 1, "seconds": 1.73649}
+{"index": 97, "name": "query97.sql", "record": "statement", "rows": 1, "seconds": 2.061639}
+{"index": 98, "name": "query98.sql", "record": "statement", "rows": 5344, "seconds": 1.471608}
+{"index": 99, "name": "query99.sql", "record": "statement", "rows": 100, "seconds": 1.26485}
+{"bytes": 1704705639, "directories": ["/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-1/celeborn-worker/shuffle_data/local-1795802608033", "/home/runner/boostkit-perf/celeborn/0.5.3/aarch64/46042734695-1/celeborn/storage-2/celeborn-worker/shuffle_data/local-1795802608033"], "files": 23084, "record": "shuffle_usage", "sample": 6}
+{"application_id": "local-1795802608033", "record": "summary", "sample": 6, "seconds": 297.078308, "statements": 99}
+
+=== spark log excerpts ===
+
+--- sample1 ---
+last 120 lines:
+26/11/28 01:41:54 INFO Executor: Finished task 147.0 in stage 930.0 (TID 134207). 8598 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 199.0 in stage 930.0 (TID 134308) in 83 ms on 192.168.20.14 (executor driver) (150/200)
+26/11/28 01:41:54 INFO Executor: Finished task 26.0 in stage 930.0 (TID 134129). 8606 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 181.0 in stage 930.0 (TID 134304). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 98.0 in stage 930.0 (TID 134275). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 36.0 in stage 930.0 (TID 134255). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 135.0 in stage 930.0 (TID 134199) in 86 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 30.0 in stage 930.0 (TID 134132) in 88 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 01:41:54 INFO Executor: Finished task 130.0 in stage 930.0 (TID 134287). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 181.0 in stage 930.0 (TID 134304) in 83 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 147.0 in stage 930.0 (TID 134207) in 86 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 26.0 in stage 930.0 (TID 134129) in 88 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 98.0 in stage 930.0 (TID 134275) in 84 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 01:41:54 INFO Executor: Finished task 139.0 in stage 930.0 (TID 134203). 8622 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 36.0 in stage 930.0 (TID 134255) in 85 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 01:41:54 INFO Executor: Finished task 116.0 in stage 930.0 (TID 134281). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 118.0 in stage 930.0 (TID 134282). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 38.0 in stage 930.0 (TID 134256). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 177.0 in stage 930.0 (TID 134302). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 130.0 in stage 930.0 (TID 134287) in 84 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 01:41:54 INFO Executor: Finished task 23.0 in stage 930.0 (TID 134127). 8622 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 132.0 in stage 930.0 (TID 134289). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 139.0 in stage 930.0 (TID 134203) in 86 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 01:41:54 INFO Executor: Finished task 192.0 in stage 930.0 (TID 134240). 8582 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 40.0 in stage 930.0 (TID 134257). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 116.0 in stage 930.0 (TID 134281) in 84 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 118.0 in stage 930.0 (TID 134282) in 84 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 38.0 in stage 930.0 (TID 134256) in 85 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 01:41:54 INFO Executor: Finished task 48.0 in stage 930.0 (TID 134143). 8748 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 177.0 in stage 930.0 (TID 134302) in 83 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 01:41:54 INFO Executor: Finished task 156.0 in stage 930.0 (TID 134214). 8614 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 120.0 in stage 930.0 (TID 134284). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 23.0 in stage 930.0 (TID 134127) in 88 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 01:41:54 INFO Executor: Finished task 29.0 in stage 930.0 (TID 134252). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 132.0 in stage 930.0 (TID 134289) in 85 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 01:41:54 INFO Executor: Finished task 193.0 in stage 930.0 (TID 134241). 8590 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 160.0 in stage 930.0 (TID 134299). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 40.0 in stage 930.0 (TID 134257) in 86 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 01:41:54 INFO Executor: Finished task 27.0 in stage 930.0 (TID 134130). 8614 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 192.0 in stage 930.0 (TID 134240) in 86 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 01:41:54 INFO Executor: Finished task 153.0 in stage 930.0 (TID 134296). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 92.0 in stage 930.0 (TID 134173). 8598 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 156.0 in stage 930.0 (TID 134214) in 87 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 48.0 in stage 930.0 (TID 134143) in 89 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 29.0 in stage 930.0 (TID 134252) in 86 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 01:41:54 INFO Executor: Finished task 65.0 in stage 930.0 (TID 134266). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 120.0 in stage 930.0 (TID 134284) in 85 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 01:41:54 INFO Executor: Finished task 4.0 in stage 930.0 (TID 134112). 8622 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 179.0 in stage 930.0 (TID 134303). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 193.0 in stage 930.0 (TID 134241) in 86 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 01:41:54 INFO Executor: Finished task 44.0 in stage 930.0 (TID 134259). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 68.0 in stage 930.0 (TID 134269). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 95.0 in stage 930.0 (TID 134274). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 160.0 in stage 930.0 (TID 134299) in 85 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 01:41:54 INFO Executor: Finished task 191.0 in stage 930.0 (TID 134239). 8962 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 66.0 in stage 930.0 (TID 134267). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 27.0 in stage 930.0 (TID 134130) in 89 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 01:41:54 INFO Executor: Finished task 106.0 in stage 930.0 (TID 134184). 8606 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 153.0 in stage 930.0 (TID 134296) in 85 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 01:41:54 INFO Executor: Finished task 158.0 in stage 930.0 (TID 134297). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 92.0 in stage 930.0 (TID 134173) in 88 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 01:41:54 INFO Executor: Finished task 142.0 in stage 930.0 (TID 134205). 8748 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 108.0 in stage 930.0 (TID 134277). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 65.0 in stage 930.0 (TID 134266) in 85 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 01:41:54 INFO Executor: Finished task 110.0 in stage 930.0 (TID 134278). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 179.0 in stage 930.0 (TID 134303) in 84 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 01:41:54 INFO Executor: Finished task 119.0 in stage 930.0 (TID 134283). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 4.0 in stage 930.0 (TID 134112) in 90 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 01:41:54 INFO Executor: Finished task 84.0 in stage 930.0 (TID 134271). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 50.0 in stage 930.0 (TID 134260). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 0.0 in stage 930.0 (TID 134246). 8483 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 44.0 in stage 930.0 (TID 134259) in 86 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 191.0 in stage 930.0 (TID 134239) in 86 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 01:41:54 INFO Executor: Finished task 146.0 in stage 930.0 (TID 134294). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 95.0 in stage 930.0 (TID 134274) in 85 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 01:41:54 INFO Executor: Finished task 99.0 in stage 930.0 (TID 134276). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO Executor: Finished task 112.0 in stage 930.0 (TID 134279). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 66.0 in stage 930.0 (TID 134267) in 85 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 68.0 in stage 930.0 (TID 134269) in 85 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 158.0 in stage 930.0 (TID 134297) in 85 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 106.0 in stage 930.0 (TID 134184) in 89 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 01:41:54 INFO Executor: Finished task 61.0 in stage 930.0 (TID 134263). 8480 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 108.0 in stage 930.0 (TID 134277) in 86 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 142.0 in stage 930.0 (TID 134205) in 88 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 01:41:54 INFO Executor: Finished task 122.0 in stage 930.0 (TID 134192). 8724 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 110.0 in stage 930.0 (TID 134278) in 86 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 84.0 in stage 930.0 (TID 134271) in 86 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 01:41:54 INFO Executor: Finished task 165.0 in stage 930.0 (TID 134219). 8614 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 50.0 in stage 930.0 (TID 134260) in 87 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 119.0 in stage 930.0 (TID 134283) in 86 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 99.0 in stage 930.0 (TID 134276) in 86 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 146.0 in stage 930.0 (TID 134294) in 86 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 01:41:54 INFO Executor: Finished task 194.0 in stage 930.0 (TID 134242). 8895 bytes result sent to driver
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 0.0 in stage 930.0 (TID 134246) in 87 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 112.0 in stage 930.0 (TID 134279) in 86 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 122.0 in stage 930.0 (TID 134192) in 89 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 61.0 in stage 930.0 (TID 134263) in 87 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 165.0 in stage 930.0 (TID 134219) in 88 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 01:41:54 INFO TaskSetManager: Finished task 194.0 in stage 930.0 (TID 134242) in 87 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 01:41:54 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 01:41:54 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.095 s
+26/11/28 01:41:54 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 01:41:54 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 01:41:54 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 0.806417 s
+[celeborn] sample 1 query99.sql: 0.957s rows=100
+[celeborn] sample 1 stored 1704702760 shuffle bytes in 23084 files
+26/11/28 01:41:55 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 01:41:55 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 01:41:55 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 01:41:55 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795801024134
+26/11/28 01:41:55 INFO ApplicationHeartbeater: Unregister Application local-1795801024134 with response status: SUCCESS
+26/11/28 01:41:55 INFO MemoryStore: MemoryStore cleared
+26/11/28 01:41:55 INFO BlockManager: BlockManager stopped
+26/11/28 01:41:55 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 01:41:55 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 01:41:55 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 01:41:55 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 01:41:55 INFO ShutdownHookManager: Deleting directory /tmp/spark-fd089cc5-9ac6-47a0-b632-3a845e262456
+26/11/28 01:41:55 INFO ShutdownHookManager: Deleting directory /tmp/spark-9542ae39-7259-4b3d-80a1-cb4d6a20e18f
+26/11/28 01:41:55 INFO ShutdownHookManager: Deleting directory /tmp/spark-fd089cc5-9ac6-47a0-b632-3a845e262456/pyspark-6f82ce75-4e6c-4237-9d0e-ac61f7415079
+
+--- sample2 ---
+error lines:
+26/11/28 01:46:00 ERROR AsyncEventQueue: Dropping event from queue appStatus. This likely means one of the listeners is too slow and cannot keep up with the rate at which tasks are being started by the scheduler.
+last 120 lines:
+26/11/28 01:47:18 INFO Executor: Finished task 24.0 in stage 930.0 (TID 134251). 8480 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 167.0 in stage 930.0 (TID 134221). 8606 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 175.0 in stage 930.0 (TID 134228). 8606 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 164.0 in stage 930.0 (TID 134300) in 87 ms on 192.168.20.14 (executor driver) (148/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 30.0 in stage 930.0 (TID 134132) in 91 ms on 192.168.20.14 (executor driver) (149/200)
+26/11/28 01:47:18 INFO Executor: Finished task 14.0 in stage 930.0 (TID 134120). 8724 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 135.0 in stage 930.0 (TID 134199). 8724 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 18.0 in stage 930.0 (TID 134124) in 91 ms on 192.168.20.14 (executor driver) (150/200)
+26/11/28 01:47:18 INFO Executor: Finished task 185.0 in stage 930.0 (TID 134234). 8590 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 59.0 in stage 930.0 (TID 134151). 8614 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 15.0 in stage 930.0 (TID 134121). 8614 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 29.0 in stage 930.0 (TID 134252) in 89 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 114.0 in stage 930.0 (TID 134189) in 90 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 01:47:18 INFO Executor: Finished task 116.0 in stage 930.0 (TID 134281). 8480 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 145.0 in stage 930.0 (TID 134206). 8614 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 104.0 in stage 930.0 (TID 134182) in 90 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 152.0 in stage 930.0 (TID 134211) in 128 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 134.0 in stage 930.0 (TID 134290) in 126 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 24.0 in stage 930.0 (TID 134251) in 127 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 167.0 in stage 930.0 (TID 134221) in 127 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 135.0 in stage 930.0 (TID 134199) in 129 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 14.0 in stage 930.0 (TID 134120) in 131 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 01:47:18 INFO Executor: Finished task 100.0 in stage 930.0 (TID 134178). 8614 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 175.0 in stage 930.0 (TID 134228) in 128 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 01:47:18 INFO Executor: Finished task 67.0 in stage 930.0 (TID 134268). 8480 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 144.0 in stage 930.0 (TID 134293). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 59.0 in stage 930.0 (TID 134151) in 130 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 185.0 in stage 930.0 (TID 134234) in 128 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 15.0 in stage 930.0 (TID 134121) in 131 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 145.0 in stage 930.0 (TID 134206) in 129 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 01:47:18 INFO Executor: Finished task 112.0 in stage 930.0 (TID 134279). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 51.0 in stage 930.0 (TID 134261). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 116.0 in stage 930.0 (TID 134281) in 127 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 01:47:18 INFO Executor: Finished task 35.0 in stage 930.0 (TID 134254). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 67.0 in stage 930.0 (TID 134268) in 127 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 01:47:18 INFO Executor: Finished task 119.0 in stage 930.0 (TID 134283). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 100.0 in stage 930.0 (TID 134178) in 129 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 01:47:18 INFO Executor: Finished task 40.0 in stage 930.0 (TID 134257). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 144.0 in stage 930.0 (TID 134293) in 127 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 112.0 in stage 930.0 (TID 134279) in 127 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 51.0 in stage 930.0 (TID 134261) in 128 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 01:47:18 INFO Executor: Finished task 193.0 in stage 930.0 (TID 134241). 8633 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 35.0 in stage 930.0 (TID 134254) in 128 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 01:47:18 INFO Executor: Finished task 129.0 in stage 930.0 (TID 134286). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 49.0 in stage 930.0 (TID 134144). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 13.0 in stage 930.0 (TID 134119). 8641 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 119.0 in stage 930.0 (TID 134283) in 127 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 01:47:18 INFO Executor: Finished task 78.0 in stage 930.0 (TID 134162). 8641 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 20.0 in stage 930.0 (TID 134249). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 40.0 in stage 930.0 (TID 134257) in 128 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 01:47:18 INFO Executor: Finished task 48.0 in stage 930.0 (TID 134143). 8791 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 193.0 in stage 930.0 (TID 134241) in 128 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 01:47:18 INFO Executor: Finished task 181.0 in stage 930.0 (TID 134304). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 178.0 in stage 930.0 (TID 134230). 8799 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 118.0 in stage 930.0 (TID 134282). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 180.0 in stage 930.0 (TID 134231). 8756 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 95.0 in stage 930.0 (TID 134274). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 99.0 in stage 930.0 (TID 134276). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 198.0 in stage 930.0 (TID 134245). 8767 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 129.0 in stage 930.0 (TID 134286) in 127 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 01:47:18 INFO Executor: Finished task 199.0 in stage 930.0 (TID 134308). 8523 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 194.0 in stage 930.0 (TID 134242). 8938 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 23.0 in stage 930.0 (TID 134127). 8665 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 78.0 in stage 930.0 (TID 134162) in 131 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 49.0 in stage 930.0 (TID 134144) in 131 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 13.0 in stage 930.0 (TID 134119) in 132 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 20.0 in stage 930.0 (TID 134249) in 129 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 01:47:18 INFO Executor: Finished task 127.0 in stage 930.0 (TID 134196). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 48.0 in stage 930.0 (TID 134143) in 131 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 181.0 in stage 930.0 (TID 134304) in 127 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 01:47:18 INFO Executor: Finished task 192.0 in stage 930.0 (TID 134240). 8625 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 178.0 in stage 930.0 (TID 134230) in 129 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 118.0 in stage 930.0 (TID 134282) in 128 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 180.0 in stage 930.0 (TID 134231) in 129 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 01:47:18 INFO Executor: Finished task 173.0 in stage 930.0 (TID 134226). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 99.0 in stage 930.0 (TID 134276) in 128 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 01:47:18 INFO Executor: Finished task 169.0 in stage 930.0 (TID 134223). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 21.0 in stage 930.0 (TID 134126). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 42.0 in stage 930.0 (TID 134138). 8657 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 198.0 in stage 930.0 (TID 134245) in 129 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 95.0 in stage 930.0 (TID 134274) in 128 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 199.0 in stage 930.0 (TID 134308) in 127 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 194.0 in stage 930.0 (TID 134242) in 129 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 23.0 in stage 930.0 (TID 134127) in 132 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 01:47:18 INFO Executor: Finished task 184.0 in stage 930.0 (TID 134233). 8783 bytes result sent to driver
+26/11/28 01:47:18 INFO Executor: Finished task 195.0 in stage 930.0 (TID 134243). 8807 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 192.0 in stage 930.0 (TID 134240) in 129 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 127.0 in stage 930.0 (TID 134196) in 130 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 01:47:18 INFO Executor: Finished task 111.0 in stage 930.0 (TID 134187). 8756 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 173.0 in stage 930.0 (TID 134226) in 129 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 169.0 in stage 930.0 (TID 134223) in 129 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 42.0 in stage 930.0 (TID 134138) in 132 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 01:47:18 INFO Executor: Finished task 123.0 in stage 930.0 (TID 134193). 8914 bytes result sent to driver
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 21.0 in stage 930.0 (TID 134126) in 133 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 184.0 in stage 930.0 (TID 134233) in 130 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 111.0 in stage 930.0 (TID 134187) in 131 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 123.0 in stage 930.0 (TID 134193) in 131 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 01:47:18 INFO TaskSetManager: Finished task 195.0 in stage 930.0 (TID 134243) in 130 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 01:47:18 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 01:47:18 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.138 s
+26/11/28 01:47:18 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 01:47:18 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 01:47:18 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 1.199969 s
+[celeborn] sample 2 query99.sql: 1.382s rows=100
+26/11/28 01:47:18 INFO BlockManagerInfo: Removed broadcast_1857_piece0 on 192.168.20.14:13307 in memory (size: 33.1 KiB, free: 12.4 GiB)
+[celeborn] sample 2 stored 1704709076 shuffle bytes in 23084 files
+26/11/28 01:47:18 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 01:47:18 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 01:47:18 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 01:47:18 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795801339625
+26/11/28 01:47:18 INFO ApplicationHeartbeater: Unregister Application local-1795801339625 with response status: SUCCESS
+26/11/28 01:47:18 INFO MemoryStore: MemoryStore cleared
+26/11/28 01:47:18 INFO BlockManager: BlockManager stopped
+26/11/28 01:47:18 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 01:47:18 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 01:47:18 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 01:47:18 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 01:47:18 INFO ShutdownHookManager: Deleting directory /tmp/spark-a46fa7e0-a03c-4937-8690-8efca807d66c
+26/11/28 01:47:18 INFO ShutdownHookManager: Deleting directory /tmp/spark-a46fa7e0-a03c-4937-8690-8efca807d66c/pyspark-7fb63b49-173d-4c94-8624-81b4289ebc83
+26/11/28 01:47:18 INFO ShutdownHookManager: Deleting directory /tmp/spark-24b9f043-e91d-424d-b8cc-196b203f7691
+
+--- sample3 ---
+last 120 lines:
+26/11/28 01:52:35 INFO Executor: Finished task 53.0 in stage 930.0 (TID 134146). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 4.0 in stage 930.0 (TID 134112). 8622 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 158.0 in stage 930.0 (TID 134297) in 76 ms on 192.168.20.14 (executor driver) (148/200)
+26/11/28 01:52:35 INFO Executor: Finished task 37.0 in stage 930.0 (TID 134136). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 99.0 in stage 930.0 (TID 134276). 8480 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 129.0 in stage 930.0 (TID 134286) in 77 ms on 192.168.20.14 (executor driver) (149/200)
+26/11/28 01:52:35 INFO Executor: Finished task 188.0 in stage 930.0 (TID 134306). 8480 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 38.0 in stage 930.0 (TID 134256). 8480 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 174.0 in stage 930.0 (TID 134227) in 79 ms on 192.168.20.14 (executor driver) (150/200)
+26/11/28 01:52:35 INFO Executor: Finished task 139.0 in stage 930.0 (TID 134203). 8622 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 51.0 in stage 930.0 (TID 134261). 8480 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 92.0 in stage 930.0 (TID 134173) in 81 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 01:52:35 INFO Executor: Finished task 72.0 in stage 930.0 (TID 134157). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 79.0 in stage 930.0 (TID 134163). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 96.0 in stage 930.0 (TID 134176). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 31.0 in stage 930.0 (TID 134133) in 82 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 01:52:35 INFO Executor: Finished task 43.0 in stage 930.0 (TID 134139). 8740 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 172.0 in stage 930.0 (TID 134301). 8480 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 113.0 in stage 930.0 (TID 134188). 8863 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 112.0 in stage 930.0 (TID 134279) in 77 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 01:52:35 INFO Executor: Finished task 150.0 in stage 930.0 (TID 134209). 8622 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 86.0 in stage 930.0 (TID 134168). 8622 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 161.0 in stage 930.0 (TID 134216). 8732 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 62.0 in stage 930.0 (TID 134153) in 81 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 01:52:35 INFO Executor: Finished task 173.0 in stage 930.0 (TID 134226). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 4.0 in stage 930.0 (TID 134112) in 83 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 53.0 in stage 930.0 (TID 134146) in 82 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 01:52:35 INFO Executor: Finished task 193.0 in stage 930.0 (TID 134241). 8590 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 99.0 in stage 930.0 (TID 134276) in 77 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 37.0 in stage 930.0 (TID 134136) in 82 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 188.0 in stage 930.0 (TID 134306) in 76 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 51.0 in stage 930.0 (TID 134261) in 78 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 01:52:35 INFO Executor: Finished task 100.0 in stage 930.0 (TID 134178). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 186.0 in stage 930.0 (TID 134235). 8606 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 139.0 in stage 930.0 (TID 134203) in 81 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 01:52:35 INFO Executor: Finished task 109.0 in stage 930.0 (TID 134186). 8740 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 101.0 in stage 930.0 (TID 134179). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 14.0 in stage 930.0 (TID 134120). 8724 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 13.0 in stage 930.0 (TID 134119). 8598 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 72.0 in stage 930.0 (TID 134157) in 82 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 38.0 in stage 930.0 (TID 134256) in 79 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 01:52:35 INFO Executor: Finished task 9.0 in stage 930.0 (TID 134116). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 135.0 in stage 930.0 (TID 134199). 8724 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 154.0 in stage 930.0 (TID 134212). 8630 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 73.0 in stage 930.0 (TID 134158). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 97.0 in stage 930.0 (TID 134177). 8590 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 79.0 in stage 930.0 (TID 134163) in 82 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 01:52:35 INFO Executor: Finished task 114.0 in stage 930.0 (TID 134189). 8606 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 12.0 in stage 930.0 (TID 134118). 8590 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 77.0 in stage 930.0 (TID 134161). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 96.0 in stage 930.0 (TID 134176) in 82 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 43.0 in stage 930.0 (TID 134139) in 83 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 172.0 in stage 930.0 (TID 134301) in 77 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 01:52:35 INFO Executor: Finished task 156.0 in stage 930.0 (TID 134214). 8614 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 113.0 in stage 930.0 (TID 134188) in 81 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 01:52:35 INFO Executor: Finished task 69.0 in stage 930.0 (TID 134154). 8740 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 150.0 in stage 930.0 (TID 134209) in 80 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 86.0 in stage 930.0 (TID 134168) in 82 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 01:52:35 INFO Executor: Finished task 123.0 in stage 930.0 (TID 134193). 8871 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 161.0 in stage 930.0 (TID 134216) in 80 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 01:52:35 INFO Executor: Finished task 1.0 in stage 930.0 (TID 134109). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 173.0 in stage 930.0 (TID 134226) in 80 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 100.0 in stage 930.0 (TID 134178) in 81 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 193.0 in stage 930.0 (TID 134241) in 79 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 186.0 in stage 930.0 (TID 134235) in 79 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 109.0 in stage 930.0 (TID 134186) in 81 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 101.0 in stage 930.0 (TID 134179) in 81 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 01:52:35 INFO Executor: Finished task 90.0 in stage 930.0 (TID 134171). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 8.0 in stage 930.0 (TID 134115). 8748 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 111.0 in stage 930.0 (TID 134187). 8713 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 13.0 in stage 930.0 (TID 134119) in 84 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 9.0 in stage 930.0 (TID 134116) in 84 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 01:52:35 INFO Executor: Finished task 88.0 in stage 930.0 (TID 134169). 8903 bytes result sent to driver
+26/11/28 01:52:35 INFO Executor: Finished task 195.0 in stage 930.0 (TID 134243). 8764 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 14.0 in stage 930.0 (TID 134120) in 84 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 154.0 in stage 930.0 (TID 134212) in 80 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 01:52:35 INFO Executor: Finished task 155.0 in stage 930.0 (TID 134213). 8863 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 135.0 in stage 930.0 (TID 134199) in 81 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 01:52:35 INFO Executor: Finished task 81.0 in stage 930.0 (TID 134165). 8756 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 97.0 in stage 930.0 (TID 134177) in 82 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 01:52:35 INFO Executor: Finished task 194.0 in stage 930.0 (TID 134242). 8895 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 114.0 in stage 930.0 (TID 134189) in 82 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 01:52:35 INFO Executor: Finished task 166.0 in stage 930.0 (TID 134220). 8863 bytes result sent to driver
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 73.0 in stage 930.0 (TID 134158) in 83 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 12.0 in stage 930.0 (TID 134118) in 85 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 77.0 in stage 930.0 (TID 134161) in 83 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 156.0 in stage 930.0 (TID 134214) in 81 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 69.0 in stage 930.0 (TID 134154) in 83 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 123.0 in stage 930.0 (TID 134193) in 82 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 1.0 in stage 930.0 (TID 134109) in 85 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 90.0 in stage 930.0 (TID 134171) in 83 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 111.0 in stage 930.0 (TID 134187) in 82 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 8.0 in stage 930.0 (TID 134115) in 85 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 88.0 in stage 930.0 (TID 134169) in 83 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 195.0 in stage 930.0 (TID 134243) in 80 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 155.0 in stage 930.0 (TID 134213) in 81 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 81.0 in stage 930.0 (TID 134165) in 83 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 194.0 in stage 930.0 (TID 134242) in 80 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 01:52:35 INFO TaskSetManager: Finished task 166.0 in stage 930.0 (TID 134220) in 81 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 01:52:35 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 01:52:35 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.090 s
+26/11/28 01:52:35 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 01:52:35 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 01:52:35 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 0.991988 s
+[celeborn] sample 3 query99.sql: 1.140s rows=100
+[celeborn] sample 3 stored 1704704792 shuffle bytes in 23084 files
+26/11/28 01:52:35 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 01:52:35 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 01:52:35 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 01:52:35 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795801662695
+26/11/28 01:52:35 INFO ApplicationHeartbeater: Unregister Application local-1795801662695 with response status: SUCCESS
+26/11/28 01:52:35 INFO MemoryStore: MemoryStore cleared
+26/11/28 01:52:35 INFO BlockManager: BlockManager stopped
+26/11/28 01:52:35 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 01:52:35 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 01:52:35 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 01:52:35 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 01:52:35 INFO ShutdownHookManager: Deleting directory /tmp/spark-e82d6d88-6509-486e-b7ae-88f4a902f95b
+26/11/28 01:52:35 INFO ShutdownHookManager: Deleting directory /tmp/spark-65310c4b-cace-4904-825c-7fb2efba7968
+26/11/28 01:52:35 INFO ShutdownHookManager: Deleting directory /tmp/spark-e82d6d88-6509-486e-b7ae-88f4a902f95b/pyspark-5509e7ed-a0f0-4066-9255-1deb2d65c24d
+
+--- sample4 ---
+last 120 lines:
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 19.0 in stage 930.0 (TID 134125) in 91 ms on 192.168.20.14 (executor driver) (149/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 27.0 in stage 930.0 (TID 134130) in 91 ms on 192.168.20.14 (executor driver) (150/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 38.0 in stage 930.0 (TID 134256) in 87 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 01:57:39 INFO Executor: Finished task 85.0 in stage 930.0 (TID 134272). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 179.0 in stage 930.0 (TID 134303). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 188.0 in stage 930.0 (TID 134306) in 86 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 115.0 in stage 930.0 (TID 134280) in 86 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 01:57:39 INFO Executor: Finished task 24.0 in stage 930.0 (TID 134251). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 73.0 in stage 930.0 (TID 134158). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 37.0 in stage 930.0 (TID 134136). 8748 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 85.0 in stage 930.0 (TID 134272) in 87 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 01:57:39 INFO Executor: Finished task 190.0 in stage 930.0 (TID 134238). 8622 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 179.0 in stage 930.0 (TID 134303) in 86 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 24.0 in stage 930.0 (TID 134251) in 87 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 01:57:39 INFO Executor: Finished task 82.0 in stage 930.0 (TID 134166). 8740 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 73.0 in stage 930.0 (TID 134158) in 90 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 01:57:39 INFO Executor: Finished task 187.0 in stage 930.0 (TID 134236). 8724 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 137.0 in stage 930.0 (TID 134201). 8606 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 107.0 in stage 930.0 (TID 134185). 8756 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 37.0 in stage 930.0 (TID 134136) in 90 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 01:57:39 INFO Executor: Finished task 18.0 in stage 930.0 (TID 134124). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 190.0 in stage 930.0 (TID 134238) in 88 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 01:57:39 INFO Executor: Finished task 156.0 in stage 930.0 (TID 134214). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 129.0 in stage 930.0 (TID 134286). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 82.0 in stage 930.0 (TID 134166) in 89 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 01:57:39 INFO Executor: Finished task 143.0 in stage 930.0 (TID 134292). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 187.0 in stage 930.0 (TID 134236) in 88 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 01:57:39 INFO Executor: Finished task 177.0 in stage 930.0 (TID 134302). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 137.0 in stage 930.0 (TID 134201) in 89 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 18.0 in stage 930.0 (TID 134124) in 91 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 01:57:39 INFO Executor: Finished task 40.0 in stage 930.0 (TID 134257). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 107.0 in stage 930.0 (TID 134185) in 89 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 01:57:39 INFO Executor: Finished task 191.0 in stage 930.0 (TID 134239). 8962 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 156.0 in stage 930.0 (TID 134214) in 88 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 01:57:39 INFO Executor: Finished task 119.0 in stage 930.0 (TID 134283). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 129.0 in stage 930.0 (TID 134286) in 86 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 01:57:39 INFO Executor: Finished task 100.0 in stage 930.0 (TID 134178). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 97.0 in stage 930.0 (TID 134177). 8590 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 199.0 in stage 930.0 (TID 134308). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 16.0 in stage 930.0 (TID 134122). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 150.0 in stage 930.0 (TID 134209). 8622 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 140.0 in stage 930.0 (TID 134291). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 67.0 in stage 930.0 (TID 134268). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 40.0 in stage 930.0 (TID 134257) in 87 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 01:57:39 INFO Executor: Finished task 64.0 in stage 930.0 (TID 134265). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 184.0 in stage 930.0 (TID 134233). 8740 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 143.0 in stage 930.0 (TID 134292) in 87 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 177.0 in stage 930.0 (TID 134302) in 87 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 01:57:39 INFO Executor: Finished task 35.0 in stage 930.0 (TID 134254). 8480 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 161.0 in stage 930.0 (TID 134216). 8732 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 191.0 in stage 930.0 (TID 134239) in 89 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 01:57:39 INFO Executor: Finished task 195.0 in stage 930.0 (TID 134243). 8764 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 119.0 in stage 930.0 (TID 134283) in 87 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 01:57:39 INFO Executor: Finished task 6.0 in stage 930.0 (TID 134113). 8978 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 147.0 in stage 930.0 (TID 134207). 8598 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 100.0 in stage 930.0 (TID 134178) in 90 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 16.0 in stage 930.0 (TID 134122) in 92 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 01:57:39 INFO Executor: Finished task 127.0 in stage 930.0 (TID 134196). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 199.0 in stage 930.0 (TID 134308) in 87 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 01:57:39 INFO Executor: Finished task 59.0 in stage 930.0 (TID 134151). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 97.0 in stage 930.0 (TID 134177) in 90 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 01:57:39 INFO Executor: Finished task 192.0 in stage 930.0 (TID 134240). 8582 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 140.0 in stage 930.0 (TID 134291) in 87 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 01:57:39 INFO Executor: Finished task 128.0 in stage 930.0 (TID 134197). 8606 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 150.0 in stage 930.0 (TID 134209) in 89 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 64.0 in stage 930.0 (TID 134265) in 88 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 67.0 in stage 930.0 (TID 134268) in 88 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 184.0 in stage 930.0 (TID 134233) in 89 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 01:57:39 INFO Executor: Finished task 79.0 in stage 930.0 (TID 134163). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 35.0 in stage 930.0 (TID 134254) in 88 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 01:57:39 INFO Executor: Finished task 142.0 in stage 930.0 (TID 134205). 8748 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 175.0 in stage 930.0 (TID 134228). 8606 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 161.0 in stage 930.0 (TID 134216) in 89 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 6.0 in stage 930.0 (TID 134113) in 92 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 01:57:39 INFO Executor: Finished task 121.0 in stage 930.0 (TID 134191). 8614 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 195.0 in stage 930.0 (TID 134243) in 88 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 01:57:39 INFO Executor: Finished task 106.0 in stage 930.0 (TID 134184). 8606 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 147.0 in stage 930.0 (TID 134207) in 89 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 59.0 in stage 930.0 (TID 134151) in 91 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 127.0 in stage 930.0 (TID 134196) in 90 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 128.0 in stage 930.0 (TID 134197) in 90 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 01:57:39 INFO Executor: Finished task 180.0 in stage 930.0 (TID 134231). 8713 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 79.0 in stage 930.0 (TID 134163) in 92 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 192.0 in stage 930.0 (TID 134240) in 90 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 01:57:39 INFO Executor: Finished task 166.0 in stage 930.0 (TID 134220). 8863 bytes result sent to driver
+26/11/28 01:57:39 INFO Executor: Finished task 171.0 in stage 930.0 (TID 134225). 8748 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 142.0 in stage 930.0 (TID 134205) in 90 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 01:57:39 INFO Executor: Finished task 111.0 in stage 930.0 (TID 134187). 8713 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 175.0 in stage 930.0 (TID 134228) in 90 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 01:57:39 INFO Executor: Finished task 125.0 in stage 930.0 (TID 134195). 8855 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 121.0 in stage 930.0 (TID 134191) in 91 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 106.0 in stage 930.0 (TID 134184) in 91 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 180.0 in stage 930.0 (TID 134231) in 90 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 01:57:39 INFO Executor: Finished task 57.0 in stage 930.0 (TID 134149). 8724 bytes result sent to driver
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 171.0 in stage 930.0 (TID 134225) in 90 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 111.0 in stage 930.0 (TID 134187) in 91 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 166.0 in stage 930.0 (TID 134220) in 90 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 57.0 in stage 930.0 (TID 134149) in 92 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 01:57:39 INFO TaskSetManager: Finished task 125.0 in stage 930.0 (TID 134195) in 91 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 01:57:39 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 01:57:39 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.098 s
+26/11/28 01:57:39 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 01:57:39 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 01:57:39 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 0.711036 s
+[celeborn] sample 4 query99.sql: 0.858s rows=100
+[celeborn] sample 4 stored 1704707998 shuffle bytes in 23084 files
+26/11/28 01:57:39 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 01:57:39 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 01:57:39 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 01:57:39 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795801979571
+26/11/28 01:57:39 INFO ApplicationHeartbeater: Unregister Application local-1795801979571 with response status: SUCCESS
+26/11/28 01:57:39 INFO MemoryStore: MemoryStore cleared
+26/11/28 01:57:39 INFO BlockManager: BlockManager stopped
+26/11/28 01:57:39 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 01:57:39 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 01:57:39 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 01:57:40 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 01:57:40 INFO ShutdownHookManager: Deleting directory /tmp/spark-12d12278-3c75-418c-928f-e21d75ef0850
+26/11/28 01:57:40 INFO ShutdownHookManager: Deleting directory /tmp/spark-12d12278-3c75-418c-928f-e21d75ef0850/pyspark-28a23a1e-de16-4c3a-800a-bd2a607ecea8
+26/11/28 01:57:40 INFO ShutdownHookManager: Deleting directory /tmp/spark-7def69c6-0b5e-4575-ad6d-88e60eb8b052
+
+--- sample5 ---
+last 120 lines:
+26/11/28 02:03:03 INFO Executor: Finished task 20.0 in stage 930.0 (TID 134249). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 54.0 in stage 930.0 (TID 134147) in 89 ms on 192.168.20.14 (executor driver) (146/200)
+26/11/28 02:03:03 INFO Executor: Finished task 0.0 in stage 930.0 (TID 134246). 8483 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 30.0 in stage 930.0 (TID 134132). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 138.0 in stage 930.0 (TID 134202) in 88 ms on 192.168.20.14 (executor driver) (147/200)
+26/11/28 02:03:03 INFO Executor: Finished task 183.0 in stage 930.0 (TID 134305). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 139.0 in stage 930.0 (TID 134203) in 88 ms on 192.168.20.14 (executor driver) (148/200)
+26/11/28 02:03:03 INFO Executor: Finished task 22.0 in stage 930.0 (TID 134250). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 128.0 in stage 930.0 (TID 134197). 8606 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 60.0 in stage 930.0 (TID 134152). 8606 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 116.0 in stage 930.0 (TID 134281) in 86 ms on 192.168.20.14 (executor driver) (149/200)
+26/11/28 02:03:03 INFO Executor: Finished task 58.0 in stage 930.0 (TID 134150). 8772 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 124.0 in stage 930.0 (TID 134194). 8748 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 141.0 in stage 930.0 (TID 134204) in 88 ms on 192.168.20.14 (executor driver) (150/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 50.0 in stage 930.0 (TID 134260) in 87 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 02:03:03 INFO Executor: Finished task 72.0 in stage 930.0 (TID 134157). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 172.0 in stage 930.0 (TID 134301) in 86 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 02:03:03 INFO Executor: Finished task 106.0 in stage 930.0 (TID 134184). 8606 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 135.0 in stage 930.0 (TID 134199) in 88 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 02:03:03 INFO Executor: Finished task 167.0 in stage 930.0 (TID 134221). 8606 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 133.0 in stage 930.0 (TID 134198). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 187.0 in stage 930.0 (TID 134236). 8724 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 79.0 in stage 930.0 (TID 134163). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 115.0 in stage 930.0 (TID 134280) in 86 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 02:03:03 INFO Executor: Finished task 112.0 in stage 930.0 (TID 134279). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 71.0 in stage 930.0 (TID 134156) in 89 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 02:03:03 INFO Executor: Finished task 90.0 in stage 930.0 (TID 134171). 8748 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 20.0 in stage 930.0 (TID 134249) in 87 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 02:03:03 INFO Executor: Finished task 67.0 in stage 930.0 (TID 134268). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 0.0 in stage 930.0 (TID 134246) in 87 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 30.0 in stage 930.0 (TID 134132) in 90 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 02:03:03 INFO Executor: Finished task 153.0 in stage 930.0 (TID 134296). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 65.0 in stage 930.0 (TID 134266) in 86 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 02:03:03 INFO Executor: Finished task 110.0 in stage 930.0 (TID 134278). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 183.0 in stage 930.0 (TID 134305) in 86 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 22.0 in stage 930.0 (TID 134250) in 88 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 02:03:03 INFO Executor: Finished task 164.0 in stage 930.0 (TID 134300). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 29.0 in stage 930.0 (TID 134252). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 128.0 in stage 930.0 (TID 134197) in 89 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 58.0 in stage 930.0 (TID 134150) in 90 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 60.0 in stage 930.0 (TID 134152) in 90 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 124.0 in stage 930.0 (TID 134194) in 89 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 02:03:03 INFO Executor: Finished task 94.0 in stage 930.0 (TID 134175). 8740 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 23.0 in stage 930.0 (TID 134127). 8622 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 106.0 in stage 930.0 (TID 134184) in 89 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 02:03:03 INFO Executor: Finished task 78.0 in stage 930.0 (TID 134162). 8598 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 199.0 in stage 930.0 (TID 134308). 8480 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 72.0 in stage 930.0 (TID 134157) in 90 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 167.0 in stage 930.0 (TID 134221) in 89 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 133.0 in stage 930.0 (TID 134198) in 89 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 187.0 in stage 930.0 (TID 134236) in 88 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 02:03:03 INFO Executor: Finished task 145.0 in stage 930.0 (TID 134206). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 79.0 in stage 930.0 (TID 134163) in 90 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 90.0 in stage 930.0 (TID 134171) in 90 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 112.0 in stage 930.0 (TID 134279) in 87 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 67.0 in stage 930.0 (TID 134268) in 87 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 153.0 in stage 930.0 (TID 134296) in 87 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 110.0 in stage 930.0 (TID 134278) in 87 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 02:03:03 INFO Executor: Finished task 127.0 in stage 930.0 (TID 134196). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 29.0 in stage 930.0 (TID 134252) in 88 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 164.0 in stage 930.0 (TID 134300) in 87 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 78.0 in stage 930.0 (TID 134162) in 90 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 23.0 in stage 930.0 (TID 134127) in 91 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 94.0 in stage 930.0 (TID 134175) in 90 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 02:03:03 INFO Executor: Finished task 73.0 in stage 930.0 (TID 134158). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 199.0 in stage 930.0 (TID 134308) in 86 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 145.0 in stage 930.0 (TID 134206) in 89 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 02:03:03 INFO Executor: Finished task 45.0 in stage 930.0 (TID 134140). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 127.0 in stage 930.0 (TID 134196) in 89 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 02:03:03 INFO Executor: Finished task 80.0 in stage 930.0 (TID 134164). 8879 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 73.0 in stage 930.0 (TID 134158) in 90 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 02:03:03 INFO Executor: Finished task 104.0 in stage 930.0 (TID 134182). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 185.0 in stage 930.0 (TID 134234). 8590 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 45.0 in stage 930.0 (TID 134140) in 90 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 02:03:03 INFO Executor: Finished task 49.0 in stage 930.0 (TID 134144). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 136.0 in stage 930.0 (TID 134200). 8622 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 157.0 in stage 930.0 (TID 134215). 8748 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 107.0 in stage 930.0 (TID 134185). 8756 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 80.0 in stage 930.0 (TID 134164) in 91 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 02:03:03 INFO Executor: Finished task 176.0 in stage 930.0 (TID 134229). 8724 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 104.0 in stage 930.0 (TID 134182) in 90 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 02:03:03 INFO Executor: Finished task 121.0 in stage 930.0 (TID 134191). 8614 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 185.0 in stage 930.0 (TID 134234) in 89 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 02:03:03 INFO Executor: Finished task 162.0 in stage 930.0 (TID 134217). 8740 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 49.0 in stage 930.0 (TID 134144) in 91 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 02:03:03 INFO Executor: Finished task 37.0 in stage 930.0 (TID 134136). 8748 bytes result sent to driver
+26/11/28 02:03:03 INFO Executor: Finished task 180.0 in stage 930.0 (TID 134231). 8713 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 136.0 in stage 930.0 (TID 134200) in 90 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 107.0 in stage 930.0 (TID 134185) in 90 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 157.0 in stage 930.0 (TID 134215) in 90 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 176.0 in stage 930.0 (TID 134229) in 89 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 02:03:03 INFO Executor: Finished task 125.0 in stage 930.0 (TID 134195). 8855 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 121.0 in stage 930.0 (TID 134191) in 90 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 02:03:03 INFO Executor: Finished task 46.0 in stage 930.0 (TID 134141). 9018 bytes result sent to driver
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 162.0 in stage 930.0 (TID 134217) in 90 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 37.0 in stage 930.0 (TID 134136) in 92 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 125.0 in stage 930.0 (TID 134195) in 90 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 46.0 in stage 930.0 (TID 134141) in 91 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 02:03:03 INFO TaskSetManager: Finished task 180.0 in stage 930.0 (TID 134231) in 89 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 02:03:03 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 02:03:03 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.098 s
+26/11/28 02:03:03 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 02:03:03 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 02:03:03 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 1.273050 s
+[celeborn] sample 5 query99.sql: 1.426s rows=100
+[celeborn] sample 5 stored 1704710227 shuffle bytes in 23084 files
+26/11/28 02:03:04 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 02:03:04 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 02:03:04 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 02:03:04 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795802284049
+26/11/28 02:03:04 INFO ApplicationHeartbeater: Unregister Application local-1795802284049 with response status: SUCCESS
+26/11/28 02:03:04 INFO MemoryStore: MemoryStore cleared
+26/11/28 02:03:04 INFO BlockManager: BlockManager stopped
+26/11/28 02:03:04 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 02:03:04 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 02:03:04 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 02:03:04 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 02:03:04 INFO ShutdownHookManager: Deleting directory /tmp/spark-58fe1ba0-6a63-4979-9eb9-899fc71f697c/pyspark-f17e5739-7de8-4914-a4c4-fb4a6162df2e
+26/11/28 02:03:04 INFO ShutdownHookManager: Deleting directory /tmp/spark-b3b3a851-89a5-4f9a-b804-91b701f8d256
+26/11/28 02:03:04 INFO ShutdownHookManager: Deleting directory /tmp/spark-58fe1ba0-6a63-4979-9eb9-899fc71f697c
+
+--- sample6 ---
+last 120 lines:
+26/11/28 02:08:25 INFO Executor: Finished task 116.0 in stage 930.0 (TID 134281). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 106.0 in stage 930.0 (TID 134184). 8606 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 148.0 in stage 930.0 (TID 134208). 8622 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 38.0 in stage 930.0 (TID 134256). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 107.0 in stage 930.0 (TID 134185). 8756 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 116.0 in stage 930.0 (TID 134281) in 84 ms on 192.168.20.14 (executor driver) (151/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 106.0 in stage 930.0 (TID 134184) in 87 ms on 192.168.20.14 (executor driver) (152/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 148.0 in stage 930.0 (TID 134208) in 86 ms on 192.168.20.14 (executor driver) (153/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 136.0 in stage 930.0 (TID 134200) in 87 ms on 192.168.20.14 (executor driver) (154/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 38.0 in stage 930.0 (TID 134256) in 85 ms on 192.168.20.14 (executor driver) (155/200)
+26/11/28 02:08:25 INFO Executor: Finished task 169.0 in stage 930.0 (TID 134223). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 141.0 in stage 930.0 (TID 134204). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 132.0 in stage 930.0 (TID 134289). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 107.0 in stage 930.0 (TID 134185) in 87 ms on 192.168.20.14 (executor driver) (156/200)
+26/11/28 02:08:25 INFO Executor: Finished task 56.0 in stage 930.0 (TID 134262). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 140.0 in stage 930.0 (TID 134291). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 131.0 in stage 930.0 (TID 134288). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 85.0 in stage 930.0 (TID 134272). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 132.0 in stage 930.0 (TID 134289) in 84 ms on 192.168.20.14 (executor driver) (157/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 169.0 in stage 930.0 (TID 134223) in 87 ms on 192.168.20.14 (executor driver) (158/200)
+26/11/28 02:08:25 INFO Executor: Finished task 34.0 in stage 930.0 (TID 134253). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 56.0 in stage 930.0 (TID 134262) in 85 ms on 192.168.20.14 (executor driver) (159/200)
+26/11/28 02:08:25 INFO Executor: Finished task 44.0 in stage 930.0 (TID 134259). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 181.0 in stage 930.0 (TID 134304). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 131.0 in stage 930.0 (TID 134288) in 84 ms on 192.168.20.14 (executor driver) (160/200)
+26/11/28 02:08:25 INFO Executor: Finished task 61.0 in stage 930.0 (TID 134263). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 141.0 in stage 930.0 (TID 134204) in 87 ms on 192.168.20.14 (executor driver) (161/200)
+26/11/28 02:08:25 INFO Executor: Finished task 108.0 in stage 930.0 (TID 134277). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 85.0 in stage 930.0 (TID 134272) in 85 ms on 192.168.20.14 (executor driver) (162/200)
+26/11/28 02:08:25 INFO Executor: Finished task 173.0 in stage 930.0 (TID 134226). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 153.0 in stage 930.0 (TID 134296). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 34.0 in stage 930.0 (TID 134253) in 86 ms on 192.168.20.14 (executor driver) (163/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 140.0 in stage 930.0 (TID 134291) in 84 ms on 192.168.20.14 (executor driver) (164/200)
+26/11/28 02:08:25 INFO Executor: Finished task 197.0 in stage 930.0 (TID 134307). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 44.0 in stage 930.0 (TID 134259) in 85 ms on 192.168.20.14 (executor driver) (165/200)
+26/11/28 02:08:25 INFO Executor: Finished task 175.0 in stage 930.0 (TID 134228). 8606 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 181.0 in stage 930.0 (TID 134304) in 84 ms on 192.168.20.14 (executor driver) (166/200)
+26/11/28 02:08:25 INFO Executor: Finished task 115.0 in stage 930.0 (TID 134280). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 61.0 in stage 930.0 (TID 134263) in 85 ms on 192.168.20.14 (executor driver) (167/200)
+26/11/28 02:08:25 INFO Executor: Finished task 41.0 in stage 930.0 (TID 134258). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 153.0 in stage 930.0 (TID 134296) in 84 ms on 192.168.20.14 (executor driver) (168/200)
+26/11/28 02:08:25 INFO Executor: Finished task 97.0 in stage 930.0 (TID 134177). 8590 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 159.0 in stage 930.0 (TID 134298). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 173.0 in stage 930.0 (TID 134226) in 87 ms on 192.168.20.14 (executor driver) (169/200)
+26/11/28 02:08:25 INFO Executor: Finished task 35.0 in stage 930.0 (TID 134254). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 84.0 in stage 930.0 (TID 134271). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 17.0 in stage 930.0 (TID 134123). 8598 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 108.0 in stage 930.0 (TID 134277) in 85 ms on 192.168.20.14 (executor driver) (170/200)
+26/11/28 02:08:25 INFO Executor: Finished task 93.0 in stage 930.0 (TID 134174). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 8.0 in stage 930.0 (TID 134115). 8748 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 160.0 in stage 930.0 (TID 134299). 8480 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 175.0 in stage 930.0 (TID 134228) in 87 ms on 192.168.20.14 (executor driver) (171/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 115.0 in stage 930.0 (TID 134280) in 85 ms on 192.168.20.14 (executor driver) (172/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 197.0 in stage 930.0 (TID 134307) in 84 ms on 192.168.20.14 (executor driver) (173/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 41.0 in stage 930.0 (TID 134258) in 85 ms on 192.168.20.14 (executor driver) (174/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 159.0 in stage 930.0 (TID 134298) in 85 ms on 192.168.20.14 (executor driver) (175/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 97.0 in stage 930.0 (TID 134177) in 89 ms on 192.168.20.14 (executor driver) (176/200)
+26/11/28 02:08:25 INFO Executor: Finished task 42.0 in stage 930.0 (TID 134138). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 176.0 in stage 930.0 (TID 134229). 8724 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 84.0 in stage 930.0 (TID 134271) in 86 ms on 192.168.20.14 (executor driver) (177/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 35.0 in stage 930.0 (TID 134254) in 87 ms on 192.168.20.14 (executor driver) (178/200)
+26/11/28 02:08:25 INFO Executor: Finished task 137.0 in stage 930.0 (TID 134201). 8606 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 152.0 in stage 930.0 (TID 134211). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 8.0 in stage 930.0 (TID 134115) in 92 ms on 192.168.20.14 (executor driver) (179/200)
+26/11/28 02:08:25 INFO Executor: Finished task 145.0 in stage 930.0 (TID 134206). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 171.0 in stage 930.0 (TID 134225). 8748 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 93.0 in stage 930.0 (TID 134174) in 89 ms on 192.168.20.14 (executor driver) (180/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 42.0 in stage 930.0 (TID 134138) in 91 ms on 192.168.20.14 (executor driver) (181/200)
+26/11/28 02:08:25 INFO Executor: Finished task 123.0 in stage 930.0 (TID 134193). 8871 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 147.0 in stage 930.0 (TID 134207). 8598 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 155.0 in stage 930.0 (TID 134213). 8863 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 160.0 in stage 930.0 (TID 134299) in 85 ms on 192.168.20.14 (executor driver) (182/200)
+26/11/28 02:08:25 INFO Executor: Finished task 189.0 in stage 930.0 (TID 134237). 8622 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 17.0 in stage 930.0 (TID 134123) in 91 ms on 192.168.20.14 (executor driver) (183/200)
+26/11/28 02:08:25 INFO Executor: Finished task 113.0 in stage 930.0 (TID 134188). 8863 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 135.0 in stage 930.0 (TID 134199). 8724 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 176.0 in stage 930.0 (TID 134229) in 87 ms on 192.168.20.14 (executor driver) (184/200)
+26/11/28 02:08:25 INFO Executor: Finished task 178.0 in stage 930.0 (TID 134230). 8756 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 127.0 in stage 930.0 (TID 134196). 8614 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 168.0 in stage 930.0 (TID 134222). 8756 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 166.0 in stage 930.0 (TID 134220). 8863 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 194.0 in stage 930.0 (TID 134242). 8895 bytes result sent to driver
+26/11/28 02:08:25 INFO Executor: Finished task 125.0 in stage 930.0 (TID 134195). 8855 bytes result sent to driver
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 152.0 in stage 930.0 (TID 134211) in 88 ms on 192.168.20.14 (executor driver) (185/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 137.0 in stage 930.0 (TID 134201) in 89 ms on 192.168.20.14 (executor driver) (186/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 171.0 in stage 930.0 (TID 134225) in 88 ms on 192.168.20.14 (executor driver) (187/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 145.0 in stage 930.0 (TID 134206) in 88 ms on 192.168.20.14 (executor driver) (188/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 123.0 in stage 930.0 (TID 134193) in 89 ms on 192.168.20.14 (executor driver) (189/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 155.0 in stage 930.0 (TID 134213) in 88 ms on 192.168.20.14 (executor driver) (190/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 147.0 in stage 930.0 (TID 134207) in 88 ms on 192.168.20.14 (executor driver) (191/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 189.0 in stage 930.0 (TID 134237) in 87 ms on 192.168.20.14 (executor driver) (192/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 113.0 in stage 930.0 (TID 134188) in 89 ms on 192.168.20.14 (executor driver) (193/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 135.0 in stage 930.0 (TID 134199) in 89 ms on 192.168.20.14 (executor driver) (194/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 178.0 in stage 930.0 (TID 134230) in 87 ms on 192.168.20.14 (executor driver) (195/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 127.0 in stage 930.0 (TID 134196) in 90 ms on 192.168.20.14 (executor driver) (196/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 168.0 in stage 930.0 (TID 134222) in 89 ms on 192.168.20.14 (executor driver) (197/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 166.0 in stage 930.0 (TID 134220) in 89 ms on 192.168.20.14 (executor driver) (198/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 194.0 in stage 930.0 (TID 134242) in 88 ms on 192.168.20.14 (executor driver) (199/200)
+26/11/28 02:08:25 INFO TaskSetManager: Finished task 125.0 in stage 930.0 (TID 134195) in 90 ms on 192.168.20.14 (executor driver) (200/200)
+26/11/28 02:08:25 INFO TaskSchedulerImpl: Removed TaskSet 930.0, whose tasks have all completed, from pool 
+26/11/28 02:08:25 INFO DAGScheduler: ResultStage 930 (collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112) finished in 0.097 s
+26/11/28 02:08:25 INFO DAGScheduler: Job 523 is finished. Cancelling potential speculative or zombie tasks for this job
+26/11/28 02:08:25 INFO TaskSchedulerImpl: Killing all running tasks in stage 930: Stage finished
+26/11/28 02:08:25 INFO DAGScheduler: Job 523 finished: collect at /home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/software/Bigdata/celeborn/scripts/workload/run_queries.py:112, took 1.102184 s
+[celeborn] sample 6 query99.sql: 1.265s rows=100
+[celeborn] sample 6 stored 1704705639 shuffle bytes in 23084 files
+26/11/28 02:08:25 INFO SparkContext: SparkContext is stopping with exitCode 0.
+26/11/28 02:08:25 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+26/11/28 02:08:25 WARN ShuffleClientImpl: Shuffle client has been shutdown!
+26/11/28 02:08:25 INFO ApplicationHeartbeater: Stop Application heartbeat local-1795802608033
+26/11/28 02:08:25 INFO ApplicationHeartbeater: Unregister Application local-1795802608033 with response status: SUCCESS
+26/11/28 02:08:25 INFO MemoryStore: MemoryStore cleared
+26/11/28 02:08:25 INFO BlockManager: BlockManager stopped
+26/11/28 02:08:25 INFO BlockManagerMaster: BlockManagerMaster stopped
+26/11/28 02:08:25 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+26/11/28 02:08:25 INFO SparkContext: Successfully stopped SparkContext
+26/11/28 02:08:26 INFO ShutdownHookManager: Shutdown hook called
+26/11/28 02:08:26 INFO ShutdownHookManager: Deleting directory /tmp/spark-24551334-327f-441c-b388-81dfcdad0ab1/pyspark-fcca9bb8-f7e4-4686-bf4e-57cfeec04c06
+26/11/28 02:08:26 INFO ShutdownHookManager: Deleting directory /tmp/spark-d290c082-462f-4d06-a7ea-fc1895825e84
+26/11/28 02:08:26 INFO ShutdownHookManager: Deleting directory /tmp/spark-24551334-327f-441c-b388-81dfcdad0ab1
