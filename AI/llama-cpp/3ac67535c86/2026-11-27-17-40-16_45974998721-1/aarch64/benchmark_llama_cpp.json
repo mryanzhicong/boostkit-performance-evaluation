@@ -1,0 +1,75 @@
+{
+  "parameters": {
+    "backends": "CPU",
+    "embeddings": false,
+    "flash_attn": false,
+    "model_n_params": 566703104,
+    "model_name": "bge-m3-q8_0.gguf",
+    "model_sha256": "aa473d51f451a22f0fcf39ba3330c14bed38a385712b1113440f69df4047a173",
+    "model_size": 627711104,
+    "model_type": "bert 335M Q8_0",
+    "n_batch": 512,
+    "n_depth": 0,
+    "n_gen": 0,
+    "n_prompt": 512,
+    "n_threads": 1,
+    "n_ubatch": 512,
+    "omp_num_threads": 1,
+    "repetitions": 5,
+    "use_mmap": true
+  },
+  "results": {
+    "pp512,b512,t1/avg_latency_ms": {
+      "direction": "lower_is_better",
+      "group": "pp512,b512,t1",
+      "unit": "ms",
+      "value": 7381.124174
+    },
+    "pp512,b512,t1/latency_stddev_ms": {
+      "direction": "neutral",
+      "group": "pp512,b512,t1",
+      "unit": "ms",
+      "value": 18.130396
+    },
+    "pp512,b512,t1/prompt_throughput": {
+      "direction": "higher_is_better",
+      "group": "pp512,b512,t1",
+      "unit": "tokens/s",
+      "value": 69.366463
+    },
+    "pp512,b512,t1/prompt_throughput_stddev": {
+      "direction": "neutral",
+      "group": "pp512,b512,t1",
+      "unit": "tokens/s",
+      "value": 0.170591
+    }
+  },
+  "runtime_context": {
+    "build_commit": "3ac67535c",
+    "build_number": 5586,
+    "cpu_info": "CPU",
+    "gpu_info": "",
+    "metric_sources": {
+      "pp512,b512,t1/avg_latency_ms": "avg_ns / 1e6 (ns -> ms)",
+      "pp512,b512,t1/latency_stddev_ms": "stddev_ns / 1e6 (ns -> ms)",
+      "pp512,b512,t1/prompt_throughput": "avg_ts (tokens/s, direct)",
+      "pp512,b512,t1/prompt_throughput_stddev": "stddev_ts (tokens/s, direct)"
+    },
+    "model_filename": "/home/runner/boostkit-perf/llama-cpp/3ac67535c86/aarch64/45974998721-1/models/bge-m3-q8_0.gguf",
+    "samples_ns": [
+      7401232881,
+      7391880993,
+      7383188782,
+      7375800416,
+      7353517802
+    ],
+    "samples_ts": [
+      69.1777,
+      69.2652,
+      69.3467,
+      69.4162,
+      69.6265
+    ],
+    "test_time": "2026-11-27T09:38:25Z"
+  }
+}
