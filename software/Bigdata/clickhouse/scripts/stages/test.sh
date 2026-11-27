@@ -135,9 +135,10 @@ run_tpch_queries() {
             printf -v qid 'ck-%s-r%s-q%02d' "${PERF_RUN_ID}" "${round}" "${query_number}"
             printf -v qfile '%s/q%d.sql' "${query_dir}" "${query_number}"
             local out_file="${CH_RESULT_DIR}/q${query_number}_r${round}.out"
-            local free_gib
+            local free_gib min_free_gib
             free_gib=$(( $(df -B1 --output=avail "${PERF_WORK_DIR}" | tail -n 1 | tr -d ' ') / 1024 / 1024 / 1024 ))
-            (( free_gib >= 10 )) || {
+            min_free_gib=$(( CH_SF < 10 ? CH_SF : 10 ))
+            (( free_gib >= min_free_gib )) || {
                 log_error "only ${free_gib} GiB free before q${query_number} in round ${round}; aborting"
                 df -h "${PERF_WORK_DIR}" >&2 || true
                 return 50
@@ -191,7 +192,7 @@ run_clickhouse_benchmark() {
         printf '\ncontainer mounts matching the work dir:\n'
         ch_exec sh -c "cat /proc/mounts | grep -F '${PERF_WORK_DIR}'" 2>&1 || true
     } > "${CH_RESULT_DIR}/container_disk.txt" 2>&1
-    log_message "disk view: $(grep -A1 'container df' "${CH_RESULT_DIR}/container_disk.txt" | tail -n 1)"
+    log_message "disk view: $(grep -A2 'container df' "${CH_RESULT_DIR}/container_disk.txt" | tail -n 1)"
     ch_exec sh -c "dd if=/dev/zero of='${CH_DATA}/tmp/.space-probe' bs=1M count=1024 conv=fsync status=none && rm -f '${CH_DATA}/tmp/.space-probe'" || {
         log_error 'cannot write a 1 GiB probe under the container tmp path'
         cat "${CH_RESULT_DIR}/container_disk.txt" >&2 || true
@@ -202,8 +203,8 @@ run_clickhouse_benchmark() {
     create_schema || return $?
     load_tpch_data || return $?
     verify_row_counts || return $?
-    # The raw .tbl files are ~110 GiB at SF100 and are no longer needed; the
-    # TPC-H queries need that space for external aggregation temporary files.
+    # The raw .tbl files are no longer needed after loading and verification;
+    # remove them to free space for query temporary files.
     log_message "removing raw TPC-H files to free space for query temp files"
     rm -rf -- "${PERF_WORK_DIR}/tpch-data" || true
     local free_bytes
