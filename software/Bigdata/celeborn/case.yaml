@@ -1,0 +1,70 @@
+name: celeborn
+category: Bigdata
+enabled: true
+versions:
+  - "0.5.3"
+test_tools:
+  apache-celeborn:
+    version: "0.5.3"
+  apache-spark:
+    version: "3.5.2"
+  tpcds-kit:
+    version: "1b7fb7529edae091684201fab142d956d6afd881"
+    revision: "1b7fb7529edae091684201fab142d956d6afd881"
+  hive-testbench-hdp3:
+    version: "hdp3"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_celeborn
+    start:
+      script: scripts/stages/start.sh
+      function: start_celeborn_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_celeborn_benchmark
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_celeborn_runtime
+  timeout_minutes: 1440
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  versions:
+    path: versions.json
+    stage: build
+    format: json
+    required: true
+  service_state:
+    path: service-state.json
+    stage: start
+    format: json
+    required: true
+  dataset:
+    path: dataset.json
+    stage: test
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_celeborn_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_celeborn.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
