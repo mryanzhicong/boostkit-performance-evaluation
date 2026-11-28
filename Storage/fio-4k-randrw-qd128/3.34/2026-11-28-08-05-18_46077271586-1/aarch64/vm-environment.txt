@@ -1,0 +1,196 @@
+# collected_at: 2026-11-27T22:34:29Z
+host_arch: aarch64
+accelerator: kvm
+vm_name: boostkit-fio-aarch64-46077271586-1
+vm_ip: 192.168.122.234
+vm_vcpus: 4
+vm_memory_mib: 8192
+workload: randrw x bs=4k iodepth=128 numjobs=4 ramp=300s runtime=600s
+
+# host storage pool
+volume_group: fio-qd128-vg
+storage_root: /home/libvirt-images/fio-storage/fio-qd128
+logical_volumes: 4
+logical_volume_size_gib: 16
+pre_seeded: 4x16G
+lv1: /dev/fio-qd128-vg/data1 (17179869184 bytes)
+lv2: /dev/fio-qd128-vg/data2 (17179869184 bytes)
+lv3: /dev/fio-qd128-vg/data3 (17179869184 bytes)
+lv4: /dev/fio-qd128-vg/data4 (17179869184 bytes)
+vg:   fio-qd128-vg 67.98g 3.98g
+lv:   data1 16.00g /dev/loop0(0)
+lv:   data2 16.00g /dev/loop1(0)
+lv:   data3 16.00g /dev/loop2(0)
+lv:   data4 16.00g /dev/loop3(0)
+
+# domain definition
+  <domain type='kvm' id='1'>
+    <name>boostkit-fio-aarch64-46077271586-1</name>
+    <uuid>f34a4547-9db0-47f7-ac44-0b2352a1b1e6</uuid>
+    <description>boostkit fio reference VM: 4 vCPU, 8192 MiB, 4 logical volume(s) from fio-qd128-vg, openEuler 24.03 LTS SP4</description>
+    <memory unit='KiB'>8388608</memory>
+    <currentMemory unit='KiB'>8388608</currentMemory>
+    <vcpu placement='static'>4</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os firmware='efi'>
+      <type arch='aarch64' machine='virt-9.1'>hvm</type>
+      <firmware>
+        <feature enabled='no' name='enrolled-keys'/>
+        <feature enabled='no' name='secure-boot'/>
+      </firmware>
+      <loader readonly='yes' type='pflash'>/usr/share/edk2/aarch64/QEMU_EFI-pflash.raw</loader>
+      <nvram template='/usr/share/edk2/aarch64/vars-template-pflash.raw'>/home/libvirt-images/runs/46077271586-1/nvram.fd</nvram>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <gic version='3'/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='off'/>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>preserve</on_crash>
+    <devices>
+      <emulator>/usr/libexec/qemu-kvm</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2' cache='none' io='native'/>
+        <source file='/home/libvirt-images/runs/46077271586-1/system.qcow2' index='5'/>
+        <backingStore type='file' index='6'>
+          <format type='qcow2'/>
+          <source file='/home/libvirt-images/boostkit-fio-golden-aarch64.qcow2'/>
+          <backingStore/>
+        </backingStore>
+        <target dev='vda' bus='virtio'/>
+        <alias name='virtio-disk0'/>
+        <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+      </disk>
+      <disk type='block' device='disk'>
+        <driver name='qemu' type='raw' cache='none' io='native'/>
+        <source dev='/dev/fio-qd128-vg/data1' index='4'/>
+        <backingStore/>
+        <target dev='vdb' bus='virtio'/>
+        <alias name='virtio-disk1'/>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+      </disk>
+      <disk type='block' device='disk'>
+        <driver name='qemu' type='raw' cache='none' io='native'/>
+        <source dev='/dev/fio-qd128-vg/data2' index='3'/>
+        <backingStore/>
+        <target dev='vdc' bus='virtio'/>
+        <alias name='virtio-disk2'/>
+        <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
+      </disk>
+      <disk type='block' device='disk'>
+        <driver name='qemu' type='raw' cache='none' io='native'/>
+        <source dev='/dev/fio-qd128-vg/data3' index='2'/>
+        <backingStore/>
+        <target dev='vdd' bus='virtio'/>
+        <alias name='virtio-disk3'/>
+        <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
+      </disk>
+      <disk type='block' device='disk'>
+        <driver name='qemu' type='raw' cache='none' io='native'/>
+        <source dev='/dev/fio-qd128-vg/data4' index='1'/>
+        <backingStore/>
+        <target dev='vde' bus='virtio'/>
+        <alias name='virtio-disk4'/>
+        <address type='pci' domain='0x0000' bus='0x06' slot='0x00' function='0x0'/>
+      </disk>
+      <controller type='pci' index='0' model='pcie-root'>
+        <alias name='pcie.0'/>
+      </controller>
+      <controller type='pci' index='1' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='1' port='0x8'/>
+        <alias name='pci.1'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='pci' index='2' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='2' port='0x9'/>
+        <alias name='pci.2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+      </controller>
+      <controller type='pci' index='3' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='3' port='0xa'/>
+        <alias name='pci.3'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+      </controller>
+      <controller type='pci' index='4' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='4' port='0xb'/>
+        <alias name='pci.4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x3'/>
+      </controller>
+      <controller type='pci' index='5' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='5' port='0xc'/>
+        <alias name='pci.5'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x4'/>
+      </controller>
+      <controller type='pci' index='6' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='6' port='0xd'/>
+        <alias name='pci.6'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x5'/>
+      </controller>
+      <controller type='pci' index='7' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='7' port='0xe'/>
+        <alias name='pci.7'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x6'/>
+      </controller>
+      <interface type='network'>
+        <mac address='52:54:00:36:33:21'/>
+        <source network='default' portid='29930c0c-970a-4aac-bbfb-eb9be654a648' bridge='virbr0'/>
+        <target dev='vnet0'/>
+        <model type='virtio'/>
+        <alias name='net0'/>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <source path='/dev/pts/2'/>
+        <log file='/home/libvirt-images/runs/46077271586-1/console.log' append='off'/>
+        <target type='system-serial' port='0'>
+          <model name='pl011'/>
+        </target>
+        <alias name='serial0'/>
+      </serial>
+      <console type='pty' tty='/dev/pts/2'>
+        <source path='/dev/pts/2'/>
+        <log file='/home/libvirt-images/runs/46077271586-1/console.log' append='off'/>
+        <target type='serial' port='0'/>
+        <alias name='serial0'/>
+      </console>
+      <audio id='1' type='none'/>
+      <memballoon model='none'/>
+    </devices>
+    <seclabel type='dynamic' model='dac' relabel='yes'>
+      <label>+107:+107</label>
+      <imagelabel>+107:+107</imagelabel>
+    </seclabel>
+  </domain>
+  
+
+# guest os-release
+  NAME="openEuler"
+  VERSION="24.03 (LTS-SP4)"
+  ID="openEuler"
+  VERSION_ID="24.03"
+  PRETTY_NAME="openEuler 24.03 (LTS-SP4)"
+  ANSI_COLOR="0;31"
+  
+
+# guest block devices
+  vda size_sectors=83886080 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+  vdb size_sectors=33554432 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+  vdc size_sectors=33554432 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+  vdd size_sectors=33554432 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+  vde size_sectors=33554432 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+
+# guest fio version
+  fio-3.34

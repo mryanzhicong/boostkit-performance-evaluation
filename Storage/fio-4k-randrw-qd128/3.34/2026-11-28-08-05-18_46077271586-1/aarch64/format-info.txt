@@ -1,0 +1,36 @@
+# collected_at: 2026-11-27T22:34:32Z
+job_file: /root/fio/randrw_4k.fio
+command: taskset -c 0 fio randrw_4k.fio
+fio_version: unknown
+numjobs: 4
+iodepth: 128
+block_size: 4k
+rw: randrw
+ramp_time_seconds: 300
+runtime_seconds: 600
+
+# guest job file
+  [global]
+  ioengine=libaio
+  direct=1
+  numjobs=4
+  thread
+  bs=4k
+  rw=randrw
+  rwmixwrite=30
+  rwmixread=70
+  iodepth=128
+  ramp_time=300
+  runtime=600
+  time_based
+  
+  [randrw_4k]
+  filename=/dev/vdb:/dev/vdc:/dev/vdd:/dev/vde
+  size=100%
+  group_reporting
+
+# guest block devices used by this run
+  /dev/vdb sectors=33554432 scheduler=[none] mq-deadline kyber bfq 
+  /dev/vdc sectors=33554432 scheduler=[none] mq-deadline kyber bfq 
+  /dev/vdd sectors=33554432 scheduler=[none] mq-deadline kyber bfq 
+  /dev/vde sectors=33554432 scheduler=[none] mq-deadline kyber bfq 
