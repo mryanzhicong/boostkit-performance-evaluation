@@ -84,7 +84,7 @@ meson setup "${PERF_WORK_DIR}/build-cpu" "${PERF_WORK_DIR}/dpdk-26.11" \
   -Ddeveloper_mode=disabled \
   -Denable_apps=test \
   -Denable_drivers=mempool/ring \
-  -Denable_libs=cmdline,hash,mbuf,mempool,ring,net,kvargs,rcu,timer \
+  -Denable_libs=cmdline,hash,mbuf,mempool,ring,net,kvargs,rcu,timer,ptr_compress \
   -Dmax_lcores=detect \
   -Dmax_numa_nodes=detect
 ninja -C "${PERF_WORK_DIR}/build-cpu" -j "$(nproc)"
@@ -174,6 +174,7 @@ python3 software/HPC/dpdk/scripts/results/parse_benchmark.py \
 | 差异 | 当前做法与原因 |
 |---|---|
 | 编译平台选项 | 指南主命令用 `-Dplatform=native` 并提示 ARM SoC/GCC 不支持时改用 `-Dplatform=generic`；按确认口径，本基础版两架构统一采用 `-Dplatform=generic`，避免 ARM native 识别差异，保证同口径通用基线。 |
+| `enable_libs` 依赖补齐 | 指南 `-Denable_libs` 未列出 `ptr_compress`，但 DPDK 26.11.0 `app/test/meson.build` 中 `test_ring_perf.c` 显式依赖 `ptr_compress`（缺失时 Meson 会跳过编译导致 `ring_perf_autotest` 不可用）；本用例追加 `ptr_compress` 并在构建后校验 4 个测试入口均已编入 `dpdk-test`。 |
 | `sudo` 与 `numactl --membind` | 指南在宿主机使用 `sudo numactl --membind=0`；本用例运行于非特权私有容器，设置私有 `XDG_RUNTIME_DIR` 后无需 `sudo`，按确认口径不启用 `numactl --membind`（保持零额外容器安全例外），核号仍固定取自 NUMA 0。 |
 | 核心编号选择 | 指南中 `BENCH_CPU=2`、`BENCH_PAIR=2,3` 为示例；本用例在容器内由 `select_cpus.py` 按 `lscpu` 与 `Cpus_allowed_list` 动态选取 NUMA 0 同 socket 独立物理核，并将实际核号记入 `runtime_context`。 |
 | Mempool 范围 | 指南列出 1 核 / 2 核 / 4 核并建议“先只执行单核”；按确认口径，本用例包含前 4 项（`hash` 1 核、`ring` 2 核、`memcpy` 1 核、`mempool` 1 核），不包含 2 核/4 核 mempool 长测。 |

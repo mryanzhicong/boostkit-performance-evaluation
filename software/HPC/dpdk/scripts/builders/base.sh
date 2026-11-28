@@ -24,7 +24,7 @@ if parts < (0, 61):
 }
 
 build_dpdk_base() {
-    local archive sha256_value source_version build_cpu ver_out actual_ver cache_line_size ldd_out status=0
+    local archive sha256_value source_version build_cpu ver_out actual_ver cache_line_size ldd_out test_cmd status=0
     local -a dnf_options=()
     initialize_runtime || return $?
     [[ "$(normalize_arch "$(uname -m)")" == "${EXPECTED_ARCH}" ]] || {
@@ -73,7 +73,7 @@ build_dpdk_base() {
         -Ddeveloper_mode=disabled \
         -Denable_apps=test \
         -Denable_drivers=mempool/ring \
-        -Denable_libs=cmdline,hash,mbuf,mempool,ring,net,kvargs,rcu,timer \
+        -Denable_libs=cmdline,hash,mbuf,mempool,ring,net,kvargs,rcu,timer,ptr_compress \
         -Dmax_lcores=detect \
         -Dmax_numa_nodes=detect \
         2>&1 | tee "${RESULTS_DIR}/meson-setup.log"
@@ -93,6 +93,12 @@ build_dpdk_base() {
         log "ERROR: built dpdk-test binary missing: ${DPDK_TEST_BIN}"
         return 40
     }
+    for test_cmd in hash_perf_autotest ring_perf_autotest memcpy_perf_autotest mempool_perf_autotest_1core; do
+        grep -aFq "${test_cmd}" "${DPDK_TEST_BIN}" || {
+            log "ERROR: required autotest command not compiled into dpdk-test: ${test_cmd}"
+            return 40
+        }
+    done
     ldd_out="$(container_exec ldd "${DPDK_TEST_BIN}")" || {
         log 'ERROR: ldd failed on dpdk-test inside the container'
         return 40
