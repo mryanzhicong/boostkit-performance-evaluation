@@ -455,9 +455,14 @@ create_libvirt_vms() {
         emit_libvirt_vm_xml "${index}" | sudo -n tee "${xml}" >/dev/null || {
             log "ERROR: failed to render the definition of VM ${index}"; return 40
         }
-        sudo -n virsh define "${xml}" >/dev/null || {
-            log "ERROR: libvirt rejected the definition of VM ${index}"; return 40
-        }
+        # A leftover NVRAM store of an earlier definition carries the old domain
+        # UUID, and libvirt then refuses to define the recreated domain.
+        sudo -n rm -f "${dir}/nvram.fd" 2>/dev/null || true
+        if ! sudo -n virsh define "${xml}" >/dev/null 2>"$(libvirt_vm_dir "${index}")/define.err"; then
+            log "ERROR: libvirt rejected the definition of VM ${index}"
+            sed -n '1,5p' "$(libvirt_vm_dir "${index}")/define.err" >&2 || true
+            return 40
+        fi
     done
     log "defined ${LIBVIRT_VM_COUNT} lifecycle VM(s) without starting them"
 }
