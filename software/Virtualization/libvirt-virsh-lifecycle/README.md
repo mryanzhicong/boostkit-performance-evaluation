@@ -63,21 +63,28 @@ sudo umount /mnt/boostkit-libvirt-2203-golden && sudo qemu-nbd --disconnect /dev
 ```
 
 4. 定义参考虚拟机（只 define，不 start）：4 vCPU 绑到同一 NUMA 节点内连续的 4 个物理核、内存 `numatune`
-严格绑定该节点，磁盘为 golden 镜像的 qcow2 叠加盘（`cache=none`、`io=native`），串口日志落
-`${PERF_WORK_DIR}/vm/vm0/console.log`：
+严格绑定该节点，磁盘为 golden 镜像的 qcow2 叠加盘（`cache=none`、`io=native`）。QEMU 以 `qemu`
+用户运行，而 `/home/runner` 为 `700`，叠加盘、NVRAM 与串口日志因此落在镜像根目录下的一级目录
+（`/home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/`），域 XML 与地址文件仍写在
+`${PERF_WORK_DIR}/vm/vm0/`：
 
 ```bash
+sudo mkdir -p /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0
 sudo qemu-img create -q -f qcow2 -F qcow2 -b /home/libvirt-images/boostkit-libvirt-2203-golden-${ARCH}.qcow2 \
-  ${PERF_WORK_DIR}/vm/vm0/system.qcow2
+  /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/system.qcow2
+sudo chmod 644 /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/system.qcow2
 sudo virsh define ${PERF_WORK_DIR}/vm/vm0/vm.xml
 sudo virsh dominfo boostkit-libvirt-lifecycle-${ARCH}-${PERF_RUN_ID}-0   # State: shut off
 ```
 
-5. 首次启动校验 guest 系统版本与 vCPU 数，然后关机并把虚机留在 `shut off` 状态供测量轮次使用：
+5. 首次启动校验 guest 系统版本与 vCPU 数，然后关机并把虚机留在 `shut off` 状态供测量轮次使用。
+`virsh console` 需要控制终端，因此测量时用 `script -qec` 包一层伪终端，并按下回车等 guest 打印
+`login:` 提示（`util-linux` 提供 `script`）：
 
 ```bash
 sudo virsh start boostkit-libvirt-lifecycle-${ARCH}-${PERF_RUN_ID}-0
 ssh -i /home/runner/software/libvirt/vm/id_ed25519 root@<guest-ip> 'cat /etc/os-release; nproc'   # 22.03 / 4
+printf '\n' | script -qec "sudo virsh console boostkit-libvirt-lifecycle-${ARCH}-${PERF_RUN_ID}-0 --force" /dev/null
 sudo virsh shutdown boostkit-libvirt-lifecycle-${ARCH}-${PERF_RUN_ID}-0
 ```
 

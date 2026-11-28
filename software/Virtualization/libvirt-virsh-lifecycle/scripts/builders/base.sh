@@ -53,7 +53,7 @@ build_libvirt_virsh_lifecycle_base() {
     wait_libvirt_vm_ssh 0 || { log 'ERROR: the reference VM never answered over SSH'; return 40; }
     release="$(verify_libvirt_guest_os)" || return $?
     printf '%s\n' "${release}" > "${PERF_ACTUAL_VERSION_FILE}"
-    stop_libvirt_vm 0 || return $?
+    graceful_shutdown_lifecycle_vm 0 || return $?
     virsh_wait_state "${LIBVIRT_VM_NAMES[0]}" "shut off" || {
         log 'ERROR: the reference VM did not return to the shut off state'; return 40
     }

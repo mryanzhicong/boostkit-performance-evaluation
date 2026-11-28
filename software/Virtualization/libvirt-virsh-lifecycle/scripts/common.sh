@@ -28,7 +28,7 @@ LIBVIRT_VM_ACCEL="${LIBVIRT_VM_ACCEL:-auto}"
 LIBVIRT_REPS="${LIBVIRT_REPS:-6}"
 LIBVIRT_WARMUP_REPS="${LIBVIRT_WARMUP_REPS:-1}"
 LIBVIRT_START_TIMEOUT="${LIBVIRT_START_TIMEOUT:-180}"
-LIBVIRT_CONSOLE_TIMEOUT="${LIBVIRT_CONSOLE_TIMEOUT:-30}"
+LIBVIRT_CONSOLE_TIMEOUT="${LIBVIRT_CONSOLE_TIMEOUT:-120}"
 LIBVIRT_SYSFS_NODE_ROOT="${LIBVIRT_SYSFS_NODE_ROOT:-/sys/devices/system/node}"
 LIBVIRT_GOLDEN_IMAGE="${LIBVIRT_GOLDEN_IMAGE:-}"
 
@@ -86,6 +86,7 @@ configure_runtime_paths() {
     }
     TMPDIR="${PERF_WORK_DIR}/tmp"
     LIBVIRT_VM_RUN_DIR="${PERF_WORK_DIR}/vm"
+    LIBVIRT_VM_DISK_ROOT="${LIBVIRT_VM_DISK_ROOT:-${LIBVIRT_VM_IMAGE_DIR}/boostkit-libvirt-vm-runs/${PERF_RUN_ID}}"
     LIBVIRT_VM_PLAN_FILE="${PERF_WORK_DIR}/vms.tsv"
     LIBVIRT_ENV_FILE="${PERF_WORK_DIR}/vm-environment.json"
     LIBVIRT_GOLDEN_IMAGE="${LIBVIRT_GOLDEN_IMAGE:-${LIBVIRT_VM_IMAGE_DIR}/boostkit-libvirt-2203-golden-${EXPECTED_ARCH}.qcow2}"
@@ -104,6 +105,10 @@ configure_runtime_paths() {
     }
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR LIBVIRT_VM_RUN_DIR LIBVIRT_VM_PLAN_FILE LIBVIRT_ENV_FILE
+    # The stage scripts, the parsers and the evidence writers are separate
+    # processes, so every workload knob has to be exported here.
+    export LIBVIRT_VM_CORES LIBVIRT_VM_MEM_MIB LIBVIRT_REPS LIBVIRT_WARMUP_REPS LIBVIRT_VM_COUNT
+    export LIBVIRT_VM_DISK_ROOT
     export LIBVIRT_GOLDEN_IMAGE
 }
 
@@ -166,6 +171,10 @@ libvirt_emulator_element() {
 }
 
 libvirt_vm_dir() { printf '%s/vm%s\n' "${LIBVIRT_VM_RUN_DIR}" "$1"; }
+
+# QEMU runs as the qemu user, so the disks stay outside /home/runner (mode 700)
+# and inside the world traversable image root.
+libvirt_vm_disk_dir() { printf '%s/vm%s\n' "${LIBVIRT_VM_DISK_ROOT}" "$1"; }
 libvirt_vm_ip_file() { printf '%s/ip\n' "$(libvirt_vm_dir "$1")"; }
 read_libvirt_vm_ip() {
     local file
@@ -191,7 +200,7 @@ emit_libvirt_vm_xml() {
     local cpuset="${LIBVIRT_VM_CPUSETS[${index}]}"
     local node="${LIBVIRT_VM_NODES[${index}]}"
     local dir arch_machine arch_type features cpu_block
-    dir="$(libvirt_vm_dir "${index}")"
+    dir="$(libvirt_vm_disk_dir "${index}")"
     if [[ "${EXPECTED_ARCH}" == x86_64 ]]; then
         arch_type="x86_64"; arch_machine="q35"
         features="    <acpi/>\n    <apic/>"
@@ -274,7 +283,7 @@ sweep_libvirt_stale_vms() {
         log "removing stale lifecycle VM: ${name}"
         sudo -n virsh destroy "${name}" >/dev/null 2>&1 || true
         sudo -n virsh undefine "${name}" --nvram >/dev/null 2>&1 || sudo -n virsh undefine "${name}" >/dev/null 2>&1 || true
-    done < <(sudo -n virsh list --all --name 2>/dev/null | grep -E '^boostkit-libvirt-lifecycle-' || true)
+    done < <(sudo -n virsh list --all --name 2>/dev/null | grep -E '^boostkit-libvirt-lifecycle-${EXPECTED_ARCH}-' || true)
 }
 
 vm_ssh_opts() {
@@ -432,13 +441,17 @@ load_libvirt_vms() {
 create_libvirt_vms() {
     local index dir xml
     for ((index = 0; index < LIBVIRT_VM_COUNT; index++)); do
-        dir="$(libvirt_vm_dir "${index}")"
+        # QEMU runs as the qemu user and cannot traverse /home/runner (mode 700),
+        # so the disk, the NVRAM and the serial log live under the image root.
+        dir="$(libvirt_vm_disk_dir "${index}")"
         sudo -n mkdir -p "${dir}" || return 30
         sudo -n chmod 755 "${dir}" || return 30
         sudo -n qemu-img create -q -f qcow2 -F qcow2 -b "${LIBVIRT_GOLDEN_IMAGE}" "${dir}/system.qcow2" || {
             log "ERROR: failed to create the overlay disk of VM ${index}"; return 40
         }
-        xml="${dir}/vm.xml"
+        sudo -n chmod 644 "${dir}/system.qcow2" || return 30
+        mkdir -p "$(libvirt_vm_dir "${index}")" || return 30
+        xml="$(libvirt_vm_dir "${index}")/vm.xml"
         emit_libvirt_vm_xml "${index}" | sudo -n tee "${xml}" >/dev/null || {
             log "ERROR: failed to render the definition of VM ${index}"; return 40
         }
@@ -484,32 +497,52 @@ start_libvirt_vm_timed() {
     printf '%s\n' "$(( (end - begin) / 1000000 ))"
 }
 
-# `virsh console` is interactive, so the probe sends one newline and looks for a
-# login prompt in the captured output; the timeout killing the console session is
-# the expected outcome.
+# `virsh console` needs a controlling terminal, so the probe runs it under a
+# pseudo terminal via `script`, sends one newline and stops as soon as the guest
+# prints its login prompt.  The measured value is the wall clock until the prompt.
 console_libvirt_vm_probe() {
-    local index="$1" log_file="$2" name="${LIBVIRT_VM_NAMES[$1]}" begin end
+    local index="$1" log_file="$2" name="${LIBVIRT_VM_NAMES[$1]}"
+    local begin end waited=0 limit=$(( LIBVIRT_CONSOLE_TIMEOUT * 2 )) status=50 console_pid
+    : > "${log_file}"
     begin="$(date +%s%N)"
     ( printf '\n'; sleep "${LIBVIRT_CONSOLE_TIMEOUT}" ) | \
-        timeout "$((LIBVIRT_CONSOLE_TIMEOUT + 10))" sudo -n virsh console "${name}" --force \
-        > "${log_file}" 2>&1 || true
+        script -qec "sudo -n virsh console ${name} --force" /dev/null > "${log_file}" 2>&1 &
+    console_pid=$!
+    while (( waited < limit )); do
+        if grep -qiE 'login:|Password:' "${log_file}" 2>/dev/null; then
+            status=0
+            break
+        fi
+        sleep 0.5
+        waited=$(( waited + 1 ))
+    done
     end="$(date +%s%N)"
-    grep -qiE 'login:|Password:|openEuler|Welcome to' "${log_file}" || {
-        log "ERROR: virsh console of ${name} never reached a login prompt"
+    kill "${console_pid}" 2>/dev/null || true
+    pkill -f "virsh console ${name}" 2>/dev/null || true
+    wait "${console_pid}" 2>/dev/null || true
+    if (( status != 0 )); then
+        log "ERROR: virsh console of ${name} never reached a login prompt (see ${log_file})"
         return 50
-    }
+    fi
     printf '%s\n' "$(( (end - begin) / 1000000 ))"
 }
 
+# The guest answers over SSH once it has really booted.  A stale DHCP lease from a
+# previous run can hand out a dead address, so a failed probe drops the address and
+# resolves it again instead of waiting on the wrong guest.
 wait_libvirt_vm_ssh() {
-    local index="$1" attempt cpus
+    local index="$1" attempt cpus ip
     for attempt in $(seq 1 120); do
         if [[ -z "$(read_libvirt_vm_ip "${index}")" ]]; then
             wait_libvirt_vm_address "${index}" || true
         fi
-        cpus="$(vm_exec "${index}" nproc 2>/dev/null || true)"
-        if [[ "${cpus}" == "${LIBVIRT_VM_CORES}" ]]; then
-            return 0
+        ip="$(read_libvirt_vm_ip "${index}")"
+        if [[ -n "${ip}" ]]; then
+            cpus="$(vm_exec "${index}" nproc 2>/dev/null || true)"
+            if [[ "${cpus}" == "${LIBVIRT_VM_CORES}" ]]; then
+                return 0
+            fi
+            save_libvirt_vm_ip "${index}" ""
         fi
         sleep 2
     done
@@ -530,17 +563,25 @@ verify_libvirt_guest_os() {
     printf '%s\n' "${version:-openEuler ${version_id}}"
 }
 
-stop_libvirt_vm() {
+# Graceful `virsh shutdown` with a destroy fallback; the domain stays defined.
+graceful_shutdown_lifecycle_vm() {
     local index="$1" name="${LIBVIRT_VM_NAMES[$1]}" state
     state="$(virsh_domain_state "${name}")"
-    if [[ "${state}" == "running" ]]; then
-        sudo -n virsh shutdown "${name}" >/dev/null 2>&1 || true
-        virsh_wait_state "${name}" "shut off" || {
-            log "WARNING: ${name} ignored the graceful shutdown and is destroyed"
-            sudo -n virsh destroy "${name}" >/dev/null 2>&1 || true
-            virsh_wait_state "${name}" "shut off" || true
-        }
-    fi
+    [[ "${state}" == "running" ]] || return 0
+    sudo -n virsh shutdown "${name}" >/dev/null 2>&1 || {
+        log "ERROR: virsh shutdown ${name} failed"; return 50
+    }
+    virsh_wait_state "${name}" "shut off" || {
+        log "WARNING: ${name} ignored the graceful shutdown and is destroyed"
+        sudo -n virsh destroy "${name}" >/dev/null 2>&1 || true
+        virsh_wait_state "${name}" "shut off" || return 50
+    }
+    return 0
+}
+
+stop_libvirt_vm() {
+    local index="$1" name="${LIBVIRT_VM_NAMES[$1]}" state
+    graceful_shutdown_lifecycle_vm "${index}" || true
     sudo -n virsh destroy "${name}" >/dev/null 2>&1 || true
     sudo -n virsh undefine "${name}" --nvram >/dev/null 2>&1 || \
         sudo -n virsh undefine "${name}" >/dev/null 2>&1 || true
@@ -556,6 +597,9 @@ stop_all_libvirt_vms() {
     done
     if [[ -n "${LIBVIRT_VM_RUN_DIR:-}" && "${LIBVIRT_VM_RUN_DIR}" == */vm ]]; then
         sudo -n rm -rf "${LIBVIRT_VM_RUN_DIR}" 2>/dev/null || true
+    fi
+    if [[ -n "${LIBVIRT_VM_DISK_ROOT:-}" && "${LIBVIRT_VM_DISK_ROOT}" == */boostkit-libvirt-vm-runs/* ]]; then
+        sudo -n rm -rf "${LIBVIRT_VM_DISK_ROOT}" 2>/dev/null || true
     fi
     log "stopped and removed ${LIBVIRT_VM_COUNT:-0} lifecycle VM(s)"
 }

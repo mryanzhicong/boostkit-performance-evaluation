@@ -97,6 +97,7 @@ configure_runtime_paths() {
     }
     TMPDIR="${PERF_WORK_DIR}/tmp"
     LIBVIRT_VM_RUN_DIR="${PERF_WORK_DIR}/vm"
+    LIBVIRT_VM_DISK_ROOT="${LIBVIRT_VM_DISK_ROOT:-${LIBVIRT_VM_IMAGE_DIR}/boostkit-libvirt-vm-runs/${PERF_RUN_ID}}"
     LIBVIRT_VM_PLAN_FILE="${PERF_WORK_DIR}/vms.tsv"
     LIBVIRT_ENV_FILE="${PERF_WORK_DIR}/vm-environment.json"
     LIBVIRT_GOLDEN_IMAGE="${LIBVIRT_GOLDEN_IMAGE:-${LIBVIRT_VM_IMAGE_DIR}/boostkit-libvirt-golden-${EXPECTED_ARCH}.qcow2}"
@@ -115,6 +116,11 @@ configure_runtime_paths() {
     }
     export SOFTWARE_VERSION EXPECTED_ARCH PERF_VARIANT PERF_RUN_ID RESULTS_DIR PERF_WORK_DIR
     export PERF_ACTUAL_VERSION_FILE TMPDIR LIBVIRT_VM_RUN_DIR LIBVIRT_VM_PLAN_FILE LIBVIRT_ENV_FILE
+    # The stage scripts, the parsers and the evidence writers are separate
+    # processes, so every workload knob has to be exported here.
+    export LIBVIRT_VM_CORES LIBVIRT_VM_MEM_MIB LIBVIRT_REPS LIBVIRT_WARMUP_REPS LIBVIRT_VM_COUNT
+    export LIBVIRT_COPIES LIBVIRT_VM_ACCEL_USED
+    export LIBVIRT_VM_DISK_ROOT
     export LIBVIRT_GOLDEN_IMAGE
 }
 
@@ -301,6 +307,10 @@ libvirt_vm_dir() {
     printf '%s/vm%s\n' "${LIBVIRT_VM_RUN_DIR}" "$1"
 }
 
+# QEMU runs as the qemu user, so the disks stay outside /home/runner (mode 700)
+# and inside the world traversable image root.
+libvirt_vm_disk_dir() { printf '%s/vm%s\n' "${LIBVIRT_VM_DISK_ROOT}" "$1"; }
+
 libvirt_vm_ip_file() {
     printf '%s/ip\n' "$(libvirt_vm_dir "$1")"
 }
@@ -332,7 +342,7 @@ emit_libvirt_vm_xml() {
     local cpuset="${LIBVIRT_VM_CPUSETS[${index}]}"
     local node="${LIBVIRT_VM_NODES[${index}]}"
     local dir arch_machine arch_type features cpu_block emulator
-    dir="$(libvirt_vm_dir "${index}")"
+    dir="$(libvirt_vm_disk_dir "${index}")"
     if [[ "${EXPECTED_ARCH}" == x86_64 ]]; then
         arch_type="x86_64"
         arch_machine="q35"
@@ -421,7 +431,7 @@ sweep_libvirt_stale_vms() {
         log "removing stale reference VM: ${name}"
         sudo -n virsh destroy "${name}" >/dev/null 2>&1 || true
         sudo -n virsh undefine "${name}" --nvram >/dev/null 2>&1 || sudo -n virsh undefine "${name}" >/dev/null 2>&1 || true
-    done < <(sudo -n virsh list --all --name 2>/dev/null | grep -E '^boostkit-libvirt-' || true)
+    done < <(sudo -n virsh list --all --name 2>/dev/null | grep -E '^boostkit-libvirt-${EXPECTED_ARCH}-' || true)
     if [[ -d "${LIBVIRT_VM_RUN_DIR}" ]]; then
         find "${LIBVIRT_VM_RUN_DIR}" -mindepth 1 -maxdepth 1 -type d ! -name 'vm*' -exec sudo -n rm -rf {} + 2>/dev/null || true
     fi
@@ -505,11 +515,19 @@ wait_libvirt_vm_address() {
 }
 
 wait_libvirt_vm_ssh() {
-    local index="$1" attempt cpus
+    local index="$1" attempt cpus ip
+    if [[ -z "$(read_libvirt_vm_ip "${index}")" ]]; then
+        wait_libvirt_vm_address "${index}" || true
+    fi
     for attempt in $(seq 1 150); do
         cpus="$(vm_exec "${index}" nproc 2>/dev/null || true)"
         if [[ "${cpus}" == "${LIBVIRT_VM_CORES}" ]]; then
             return 0
+        fi
+        # A stale DHCP lease of a previous run can point at a dead guest.
+        if (( attempt % 15 == 0 )); then
+            save_libvirt_vm_ip "${index}" ""
+            wait_libvirt_vm_address "${index}" || true
         fi
         sleep 2
     done
@@ -519,13 +537,17 @@ wait_libvirt_vm_ssh() {
 create_libvirt_vms() {
     local index dir xml
     for ((index = 0; index < LIBVIRT_VM_COUNT; index++)); do
-        dir="$(libvirt_vm_dir "${index}")"
+        # QEMU runs as the qemu user and cannot traverse /home/runner (mode 700),
+        # so the disk, the NVRAM and the serial log live under the image root.
+        dir="$(libvirt_vm_disk_dir "${index}")"
         sudo -n mkdir -p "${dir}" || return 30
         sudo -n chmod 755 "${dir}" || return 30
         sudo -n qemu-img create -q -f qcow2 -F qcow2 -b "${LIBVIRT_GOLDEN_IMAGE}" "${dir}/system.qcow2" || {
             log "ERROR: failed to create the overlay disk of VM ${index}"; return 40
         }
-        xml="${dir}/vm.xml"
+        sudo -n chmod 644 "${dir}/system.qcow2" || return 30
+        mkdir -p "$(libvirt_vm_dir "${index}")" || return 30
+        xml="$(libvirt_vm_dir "${index}")/vm.xml"
         emit_libvirt_vm_xml "${index}" | sudo -n tee "${xml}" >/dev/null || {
             log "ERROR: failed to render the definition of VM ${index}"; return 40
         }
@@ -674,6 +696,10 @@ install_libvirt_guest_packages_offline() {
 fetch_unixbench_archive() {
     local archive="${PERF_WORK_DIR}/${UNIXBENCH_ARCHIVE_NAME}"
     local cached="${UNIXBENCH_ARCHIVE_DIR}/${UNIXBENCH_ARCHIVE_NAME}"
+    if [[ -n "${UNIXBENCH_ARCHIVE_PATH:-}" && -f "${UNIXBENCH_ARCHIVE_PATH}" ]]; then
+        printf '%s\n' "${UNIXBENCH_ARCHIVE_PATH}"
+        return 0
+    fi
     if [[ -f "${archive}" ]]; then
         printf '%s\n' "${archive}"
         return 0
@@ -753,6 +779,11 @@ prepare_all_libvirt_guests() {
     done
     for index in "${pids[@]}"; do wait "${index}" || status=1; done
     ((status == 0)) || { log 'ERROR: guest optimisation failed'; return 40; }
+    # Stage the archive once: the parallel preparations must not race on it.
+    UNIXBENCH_ARCHIVE_PATH="$(fetch_unixbench_archive)" || {
+        log 'ERROR: cannot stage the UnixBench master archive'; return 30
+    }
+    export UNIXBENCH_ARCHIVE_PATH
     pids=()
     for ((index = 0; index < LIBVIRT_VM_COUNT; index++)); do
         prepare_libvirt_guest "${index}" > "${LIBVIRT_VM_RUN_DIR}/prepare-vm${index}.log" 2>&1 &
@@ -814,6 +845,9 @@ stop_libvirt_vms() {
     done
     if [[ -n "${LIBVIRT_VM_RUN_DIR:-}" && "${LIBVIRT_VM_RUN_DIR}" == */vm ]]; then
         sudo -n rm -rf "${LIBVIRT_VM_RUN_DIR}" 2>/dev/null || true
+    fi
+    if [[ -n "${LIBVIRT_VM_DISK_ROOT:-}" && "${LIBVIRT_VM_DISK_ROOT}" == */boostkit-libvirt-vm-runs/* ]]; then
+        sudo -n rm -rf "${LIBVIRT_VM_DISK_ROOT}" 2>/dev/null || true
     fi
     log "stopped and removed ${LIBVIRT_VM_COUNT:-0} reference VMs"
 }

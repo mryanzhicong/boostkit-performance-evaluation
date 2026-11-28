@@ -29,23 +29,25 @@ PY
 }
 
 run_lifecycle_rep() {
-    local rep="$1" index=0 start_ms console_ms begin boot_seconds
+    local rep="$1" index=0 start_ms console_ms begin_ns end_ns boot_seconds
     log "repetition ${rep}/${LIBVIRT_REPS}: virsh start, virsh list and virsh console"
     check_libvirt_vms_defined || return $?
-    begin="$(date +%s)"
+    begin_ns="$(date +%s%N)"
     start_ms="$(start_libvirt_vm_timed "${index}")" || return $?
-    boot_seconds=$(( $(date +%s) - begin ))
+    # The guest address proves that the guest actually booted, so the observed
+    # boot time is measured up to that lease, not up to the virsh call.
     wait_libvirt_vm_address "${index}" || { log 'ERROR: the VM never obtained a network address'; return 40; }
+    wait_libvirt_vm_ssh "${index}" || { log 'ERROR: the guest never answered over SSH'; return 40; }
+    end_ns="$(date +%s%N)"
+    boot_seconds="$(awk -v begin="${begin_ns}" -v end="${end_ns}" \
+        'BEGIN { printf "%.3f", (end - begin) / 1000000000 }')"
     console_ms="$(console_libvirt_vm_probe "${index}" "${REP_DIR}/rep${rep}-console.log")" || return $?
     if ! vm_exec "${index}" true >/dev/null 2>&1; then
         log 'WARNING: the guest does not answer over SSH after the console probe'
     fi
     write_lifecycle_rep "${rep}" "${start_ms}" "${console_ms}" "${boot_seconds}" passed
-    log "repetition ${rep}: virsh start ${start_ms} ms, console ready in ${console_ms} ms"
-    stop_libvirt_vm "${index}" || return $?
-    virsh_wait_state "${LIBVIRT_VM_NAMES[${index}]}" "shut off" || {
-        log 'ERROR: the VM did not return to the shut off state'; return 40
-    }
+    log "repetition ${rep}: virsh start ${start_ms} ms, boot ${boot_seconds} s, console ready in ${console_ms} ms"
+    graceful_shutdown_lifecycle_vm "${index}" || return $?
     sudo -n virsh undefine "${LIBVIRT_VM_NAMES[${index}]}" --nvram >/dev/null 2>&1 || \
         sudo -n virsh undefine "${LIBVIRT_VM_NAMES[${index}]}" >/dev/null 2>&1 || true
     create_libvirt_vms || return $?

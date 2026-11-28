@@ -2,12 +2,15 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 
 run_vm_benchmark() {
-    local index="$1" log_file="$2"
+    local index="$1" log_file="$2" ip
+    local -a options=()
     # The reference procedure runs the complete official suite with one copy per
-    # vCPU: ./Run -c 4 inside a 4 vCPU guest.
-    timeout "${LIBVIRT_REP_TIMEOUT}" \
-        vm_exec_shell "${index}" "cd '${UNIXBENCH_GUEST_DIR}' && ./Run -c ${LIBVIRT_COPIES}" \
-        > "${log_file}" 2>&1 || {
+    # vCPU: ./Run -c 4 inside a 4 vCPU guest.  `timeout` has to wrap the ssh call
+    # itself, because it cannot execute a shell function.
+    ip="$(libvirt_guest_ip "${index}")" || return 40
+    mapfile -t options < <(vm_ssh_opts)
+    timeout "${LIBVIRT_REP_TIMEOUT}" ssh "${options[@]}" "root@${ip}" \
+        "cd '${UNIXBENCH_GUEST_DIR}' && ./Run -c ${LIBVIRT_COPIES}" > "${log_file}" 2>&1 || {
         log "ERROR: ./Run -c ${LIBVIRT_COPIES} failed on VM ${index}; see ${log_file}"
         return 50
     }

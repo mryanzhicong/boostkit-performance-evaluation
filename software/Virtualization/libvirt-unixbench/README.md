@@ -68,11 +68,16 @@ printf '%s  %s\n' f57ab9d1d61e920bce58ee05c82c70dca8490d30662d21d7bef1579a1a7971
 
 5. 创建虚拟机：每 4 个宿主机核 1 台虚拟机，规格 4 vCPU / 8192 MiB；从 `lscpu -p=CPU,CORE,SOCKET,NODE,ONLINE`
 读取拓扑，把每台虚拟机的 4 个 vCPU 依次绑到**同一 NUMA 节点内连续的 4 个物理核**（每核取第一个在线线程），
-用 `numatune` 把内存严格绑定到该节点，磁盘用 golden 镜像的 qcow2 叠加盘（`cache=none`、`io=native`）：
+用 `numatune` 把内存严格绑定到该节点，磁盘用 golden 镜像的 qcow2 叠加盘（`cache=none`、`io=native`）。
+QEMU 以 `qemu` 用户运行，而 `/home/runner` 为 `700`，所以叠加盘、NVRAM 与串口日志放在镜像根目录下的
+一级目录（`/home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/`），域 XML 与地址文件仍写在
+`${PERF_WORK_DIR}/vm/vm0/`：
 
 ```bash
+sudo mkdir -p /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0
 sudo qemu-img create -q -f qcow2 -F qcow2 -b /home/libvirt-images/boostkit-libvirt-golden-${ARCH}.qcow2 \
-  ${PERF_WORK_DIR}/vm/vm0/system.qcow2
+  /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/system.qcow2
+sudo chmod 644 /home/libvirt-images/boostkit-libvirt-vm-runs/${PERF_RUN_ID}/vm0/system.qcow2
 sudo virsh define ${PERF_WORK_DIR}/vm/vm0/vm.xml   # <vcpupin/> + <emulatorpin/> + <numatune mode='strict'/>
 sudo virsh start boostkit-libvirt-${ARCH}-${PERF_RUN_ID}-0
 sudo virsh domifaddr boostkit-libvirt-${ARCH}-${PERF_RUN_ID}-0 --source lease
