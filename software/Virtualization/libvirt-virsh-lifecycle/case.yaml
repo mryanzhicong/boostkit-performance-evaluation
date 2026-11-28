@@ -1,0 +1,50 @@
+name: libvirt-virsh-lifecycle
+category: Virtualization
+enabled: true
+versions:
+  - "22.03-LTS-SP3"
+test_tools:
+  libvirt:
+    version: "9.10.0"
+  linux:
+    version: "22.03-LTS-SP3"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_libvirt_virsh_lifecycle
+    start:
+      script: scripts/stages/start.sh
+      function: start_libvirt_virsh_lifecycle_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_libvirt_virsh_lifecycle_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_libvirt_virsh_lifecycle_runtime
+  timeout_minutes: 60
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  repetitions:
+    path: reps
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_virsh_lifecycle.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
