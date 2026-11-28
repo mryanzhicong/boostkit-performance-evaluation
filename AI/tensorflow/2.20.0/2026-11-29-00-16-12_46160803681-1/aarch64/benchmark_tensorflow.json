@@ -1,0 +1,206 @@
+{
+  "benchmark": "tensorflow_modelzoo_serving",
+  "software": "tensorflow",
+  "version": "2.20.0",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-28T16:15:03Z",
+  "parameters": {
+    "model": "din_mmoe",
+    "run_modes": [
+      "baseline"
+    ],
+    "qps_list": [
+      565
+    ],
+    "warmup_s": 5,
+    "duration_s": 30,
+    "repetitions": 5,
+    "thread_num": 16,
+    "client_thread_num": 1,
+    "request_batch_size": "1-100",
+    "max_inflight": 100,
+    "image": "benchmark-infer:v1.0.0",
+    "image_sha256": "1d8c92359952471bb2d957327e28413d6a1b47a4c8762e5efe9365abdde38ebe",
+    "source_commit": "c3cf9c8b8cc64690cf8ad6088ae364347c9c578e",
+    "assets_sha256": "e2dcd0199a34b0182cccc5cce0010357b1118a50c4d5ee52306832446c12fc96",
+    "tensorflow_version": "2.20.0",
+    "source_branch": "dev_2.20.0"
+  },
+  "summary": {
+    "repetitions": 5,
+    "rows": 1,
+    "rows_per_repetition": 1,
+    "metric_groups": 1,
+    "aggregate_csv": "/home/runner/actions-runner/_work/boostkit-performance-evaluation/boostkit-performance-evaluation/.perf-output/AI/tensorflow/2.20.0/aarch64/46160803681-1/tensorflow-benchmark/results.csv",
+    "actual_qps_sum": 564.631,
+    "total_requests_sum": 16950.0,
+    "success_total": 16950.0,
+    "failure_total": 0.0,
+    "dropped_total": 0.0,
+    "avg_p99_latency_us": 6001.0,
+    "avg_server_cpu_pct": 37.87
+  },
+  "runtime_context": {
+    "tensorflow_version": "2.20.0",
+    "image": "benchmark-infer:v1.0.0",
+    "image_sha256": "1d8c92359952471bb2d957327e28413d6a1b47a4c8762e5efe9365abdde38ebe",
+    "source_commit": "c3cf9c8b8cc64690cf8ad6088ae364347c9c578e",
+    "assets_sha256": "e2dcd0199a34b0182cccc5cce0010357b1118a50c4d5ee52306832446c12fc96",
+    "benchmark_metadata": {}
+  },
+  "results": {
+    "din_mmoe/baseline/qps=565/actual_qps": {
+      "source_name": "din_mmoe/baseline/qps=565/actual_qps",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].actual_qps)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 564.631,
+      "unit": "queries/s",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        564.608,
+        564.633,
+        564.634,
+        564.631,
+        564.62
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/total_requests": {
+      "source_name": "din_mmoe/baseline/qps=565/total_requests",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].total)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 16950.0,
+      "unit": "requests",
+      "direction": "neutral",
+      "samples": 5,
+      "sample_values": [
+        16950.0,
+        16950.0,
+        16950.0,
+        16950.0,
+        16950.0
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/success": {
+      "source_name": "din_mmoe/baseline/qps=565/success",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].success)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 16950.0,
+      "unit": "requests",
+      "direction": "higher_is_better",
+      "samples": 5,
+      "sample_values": [
+        16950.0,
+        16950.0,
+        16950.0,
+        16950.0,
+        16950.0
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/failure": {
+      "source_name": "din_mmoe/baseline/qps=565/failure",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].failure)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 0.0,
+      "unit": "requests",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/dropped": {
+      "source_name": "din_mmoe/baseline/qps=565/dropped",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].dropped)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 0.0,
+      "unit": "requests",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "statistic": "median",
+      "derived": "max(total - success - failure, 0)"
+    },
+    "din_mmoe/baseline/qps=565/p99_latency_us": {
+      "source_name": "din_mmoe/baseline/qps=565/p99_latency_us",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].p99_latency_us)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 6001.0,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        6066.0,
+        6001.0,
+        5951.0,
+        5987.0,
+        6009.0
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/server_cpu_pct_avg": {
+      "source_name": "din_mmoe/baseline/qps=565/server_cpu_pct_avg",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].server_cpu_pct_avg)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 37.87,
+      "unit": "%",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        38.04,
+        37.96,
+        37.59,
+        37.84,
+        37.87
+      ],
+      "statistic": "median"
+    },
+    "din_mmoe/baseline/qps=565/server_cpu_cores_avg": {
+      "source_name": "din_mmoe/baseline/qps=565/server_cpu_cores_avg",
+      "source_file": "results.csv",
+      "source_field": "median(results[*].server_cpu_cores_avg)",
+      "group": "din_mmoe",
+      "subgroup": "baseline",
+      "value": 6.06,
+      "unit": "cores",
+      "direction": "lower_is_better",
+      "samples": 5,
+      "sample_values": [
+        6.09,
+        6.07,
+        6.01,
+        6.05,
+        6.06
+      ],
+      "statistic": "median"
+    }
+  }
+}
