@@ -1,0 +1,196 @@
+{
+  "benchmark": "fio_4k_random_read_write",
+  "software": "fio",
+  "version": "3.34",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-28T02:34:13Z",
+  "parameters": {
+    "command": "taskset -c 0 fio randrw_4k.fio",
+    "job_file": "randrw_4k.fio",
+    "workload": {
+      "rw": "randrw",
+      "block_size": "4k",
+      "numjobs": 1,
+      "iodepth": 1,
+      "rwmixwrite": 30,
+      "rwmixread": 70,
+      "ramp_time_seconds": 300,
+      "runtime_seconds": 600,
+      "time_based": true
+    },
+    "execution_environment": "kvm-vm",
+    "accelerator": "kvm",
+    "repetitions_total": 6,
+    "repetitions_warmup": 1,
+    "repetitions_measured": 5,
+    "statistic": "median-of-repetitions"
+  },
+  "samples": {
+    "total": 6,
+    "warmup": 1,
+    "measured": 5,
+    "numjobs": 1,
+    "iodepth": 1,
+    "measured_reps": {
+      "rep2": {
+        "read": {
+          "iops": 21300.0,
+          "bw_mib_s": 83.4,
+          "clat_avg_us": 28.07,
+          "clat_p99_us": 34.56,
+          "duration_ms": 600001
+        },
+        "write": {
+          "iops": 9151.0,
+          "bw_mib_s": 35.7,
+          "clat_avg_us": 28.44,
+          "clat_p99_us": 35.07,
+          "duration_ms": 600001
+        }
+      },
+      "rep3": {
+        "read": {
+          "iops": 21300.0,
+          "bw_mib_s": 83.4,
+          "clat_avg_us": 28.07,
+          "clat_p99_us": 34.56,
+          "duration_ms": 600001
+        },
+        "write": {
+          "iops": 9150.0,
+          "bw_mib_s": 35.7,
+          "clat_avg_us": 28.45,
+          "clat_p99_us": 35.07,
+          "duration_ms": 600001
+        }
+      },
+      "rep4": {
+        "read": {
+          "iops": 21600.0,
+          "bw_mib_s": 84.4,
+          "clat_avg_us": 27.85,
+          "clat_p99_us": 34.05,
+          "duration_ms": 600001
+        },
+        "write": {
+          "iops": 9258.0,
+          "bw_mib_s": 36.2,
+          "clat_avg_us": 28.24,
+          "clat_p99_us": 34.05,
+          "duration_ms": 600001
+        }
+      },
+      "rep5": {
+        "read": {
+          "iops": 21500.0,
+          "bw_mib_s": 84.1,
+          "clat_avg_us": 27.9,
+          "clat_p99_us": 34.56,
+          "duration_ms": 600001
+        },
+        "write": {
+          "iops": 9227.0,
+          "bw_mib_s": 36.0,
+          "clat_avg_us": 28.31,
+          "clat_p99_us": 35.07,
+          "duration_ms": 600001
+        }
+      },
+      "rep6": {
+        "read": {
+          "iops": 21700.0,
+          "bw_mib_s": 84.6,
+          "clat_avg_us": 27.72,
+          "clat_p99_us": 33.54,
+          "duration_ms": 600001
+        },
+        "write": {
+          "iops": 9285.0,
+          "bw_mib_s": 36.3,
+          "clat_avg_us": 28.15,
+          "clat_p99_us": 34.05,
+          "duration_ms": 600001
+        }
+      }
+    }
+  },
+  "results": {
+    "fio.read.iops": {
+      "value": 21500.0,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "read"
+    },
+    "fio.read.bw_mib": {
+      "value": 84.1,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "read"
+    },
+    "fio.read.clat_avg_us": {
+      "value": 27.9,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "read"
+    },
+    "fio.read.clat_p99_us": {
+      "value": 34.56,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "read"
+    },
+    "fio.write.iops": {
+      "value": 9227.0,
+      "unit": "IOPS",
+      "direction": "higher_is_better",
+      "group": "write"
+    },
+    "fio.write.bw_mib": {
+      "value": 36.0,
+      "unit": "MiB/s",
+      "direction": "higher_is_better",
+      "group": "write"
+    },
+    "fio.write.clat_avg_us": {
+      "value": 28.31,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "write"
+    },
+    "fio.write.clat_p99_us": {
+      "value": 35.07,
+      "unit": "us",
+      "direction": "lower_is_better",
+      "group": "write"
+    },
+    "fio.numjobs": {
+      "value": 1,
+      "unit": "jobs",
+      "direction": "neutral",
+      "group": "workload"
+    },
+    "fio.iodepth": {
+      "value": 1,
+      "unit": "queue_depth",
+      "direction": "neutral",
+      "group": "workload"
+    },
+    "fio.block_size_kib": {
+      "value": 4,
+      "unit": "KiB",
+      "direction": "neutral",
+      "group": "workload"
+    },
+    "fio.runtime_seconds": {
+      "value": 600,
+      "unit": "s",
+      "direction": "neutral",
+      "group": "workload"
+    }
+  },
+  "raw_log": {
+    "name": "benchmark_fio_raw.log",
+    "sha256": "2890edb83556b57279a16341ecc3497017c9a91e0f8fad922a33221bf90716c1",
+    "bytes": 17128
+  }
+}

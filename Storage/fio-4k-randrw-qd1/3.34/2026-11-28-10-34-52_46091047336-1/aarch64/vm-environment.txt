@@ -1,0 +1,145 @@
+# collected_at: 2026-11-28T01:04:07Z
+host_arch: aarch64
+accelerator: kvm
+vm_name: boostkit-fio-aarch64-46091047336-1
+vm_ip: 192.168.122.86
+vm_vcpus: 4
+vm_memory_mib: 8192
+workload: randrw x bs=4k iodepth=1 numjobs=1 ramp=300s runtime=600s
+
+# host storage pool
+volume_group: fio-qd1-vg
+storage_root: /home/libvirt-images/fio-storage/fio-qd1
+logical_volumes: 1
+logical_volume_size_gib: 16
+pre_seeded: 1x16G
+lv1: /dev/fio-qd1-vg/data1 (17179869184 bytes)
+vg:   fio-qd1-vg <17.00g 1020.00m
+lv:   data1 16.00g /dev/loop4(0)
+
+# domain definition
+  <domain type='kvm' id='1'>
+    <name>boostkit-fio-aarch64-46091047336-1</name>
+    <uuid>8107dc31-5eea-4ce2-8e98-4011d5990953</uuid>
+    <description>boostkit fio reference VM: 4 vCPU, 8192 MiB, 1 logical volume(s) from fio-qd1-vg, openEuler 24.03 LTS SP4</description>
+    <memory unit='KiB'>8388608</memory>
+    <currentMemory unit='KiB'>8388608</currentMemory>
+    <vcpu placement='static'>4</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os firmware='efi'>
+      <type arch='aarch64' machine='virt-9.1'>hvm</type>
+      <firmware>
+        <feature enabled='no' name='enrolled-keys'/>
+        <feature enabled='no' name='secure-boot'/>
+      </firmware>
+      <loader readonly='yes' type='pflash'>/usr/share/edk2/aarch64/QEMU_EFI-pflash.raw</loader>
+      <nvram template='/usr/share/edk2/aarch64/vars-template-pflash.raw'>/home/libvirt-images/runs/46091047336-1/nvram.fd</nvram>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <gic version='3'/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='off'/>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>preserve</on_crash>
+    <devices>
+      <emulator>/usr/libexec/qemu-kvm</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2' cache='none' io='native'/>
+        <source file='/home/libvirt-images/runs/46091047336-1/system.qcow2' index='2'/>
+        <backingStore type='file' index='3'>
+          <format type='qcow2'/>
+          <source file='/home/libvirt-images/boostkit-fio-golden-aarch64.qcow2'/>
+          <backingStore/>
+        </backingStore>
+        <target dev='vda' bus='virtio'/>
+        <alias name='virtio-disk0'/>
+        <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+      </disk>
+      <disk type='block' device='disk'>
+        <driver name='qemu' type='raw' cache='none' io='native'/>
+        <source dev='/dev/fio-qd1-vg/data1' index='1'/>
+        <backingStore/>
+        <target dev='vdb' bus='virtio'/>
+        <alias name='virtio-disk1'/>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+      </disk>
+      <controller type='pci' index='0' model='pcie-root'>
+        <alias name='pcie.0'/>
+      </controller>
+      <controller type='pci' index='1' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='1' port='0x8'/>
+        <alias name='pci.1'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='pci' index='2' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='2' port='0x9'/>
+        <alias name='pci.2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+      </controller>
+      <controller type='pci' index='3' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='3' port='0xa'/>
+        <alias name='pci.3'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+      </controller>
+      <controller type='pci' index='4' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='4' port='0xb'/>
+        <alias name='pci.4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x3'/>
+      </controller>
+      <interface type='network'>
+        <mac address='52:54:00:eb:8d:2b'/>
+        <source network='default' portid='c76fc67b-e203-46d5-a8b1-f372404f4a80' bridge='virbr0'/>
+        <target dev='vnet0'/>
+        <model type='virtio'/>
+        <alias name='net0'/>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <source path='/dev/pts/3'/>
+        <log file='/home/libvirt-images/runs/46091047336-1/console.log' append='off'/>
+        <target type='system-serial' port='0'>
+          <model name='pl011'/>
+        </target>
+        <alias name='serial0'/>
+      </serial>
+      <console type='pty' tty='/dev/pts/3'>
+        <source path='/dev/pts/3'/>
+        <log file='/home/libvirt-images/runs/46091047336-1/console.log' append='off'/>
+        <target type='serial' port='0'/>
+        <alias name='serial0'/>
+      </console>
+      <audio id='1' type='none'/>
+      <memballoon model='none'/>
+    </devices>
+    <seclabel type='dynamic' model='dac' relabel='yes'>
+      <label>+107:+107</label>
+      <imagelabel>+107:+107</imagelabel>
+    </seclabel>
+  </domain>
+  
+
+# guest os-release
+  NAME="openEuler"
+  VERSION="24.03 (LTS-SP4)"
+  ID="openEuler"
+  VERSION_ID="24.03"
+  PRETTY_NAME="openEuler 24.03 (LTS-SP4)"
+  ANSI_COLOR="0;31"
+  
+
+# guest block devices
+  vda size_sectors=83886080 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+  vdb size_sectors=33554432 rotational=1 scheduler=[none] mq-deadline kyber bfq 
+
+# guest fio version
+  fio-3.34
