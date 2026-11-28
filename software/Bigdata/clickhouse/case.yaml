@@ -1,0 +1,50 @@
+name: clickhouse
+category: Bigdata
+enabled: true
+versions:
+  - "24.5.1.1763"
+test_tools:
+  clickhouse-client:
+    version: "24.5.1.1763"
+  tpch-dbgen:
+    version: "gregrahn/tpch-kit master"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_clickhouse
+    start:
+      script: scripts/stages/start.sh
+      function: start_clickhouse_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_clickhouse_benchmark
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_clickhouse_runtime
+  timeout_minutes: 300
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_clickhouse_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_clickhouse.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group

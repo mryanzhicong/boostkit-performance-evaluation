@@ -1,0 +1,281 @@
+# ClickHouse 24.5.1.1763 性能测试
+
+本用例在单容器内运行单节点 ClickHouse 24.5.1.1763，用 TPC-H 22 条查询测量
+**SF1（约 1.1GB 原始数据）**下的查询耗时：主指标是 22 条查询的服务端耗时合计，辅助指标是每条查询
+的中位耗时。ClickHouse 的安装包、容器和正式测试都在本次任务的私有容器内完成；
+`start`、`test`、`stop` 复用 `build` 创建的那一个容器。
+
+容器规格固定为 32 个物理核（单 NUMA 节点）、128 GiB 内存、不限 memlock。
+**不修改任何内核参数**：THP、swap、`sysctl`、`limits.conf`、`drop_caches` 与
+BIOS/电源策略保持 Runner 原状，只在结果目录记录实际值。软件侧参数
+（`max_threads=32`、内存上限、`mark_cache_size`、外部聚合/排序阈值）按 bdperf
+文档 §7.2 固定，两侧必须一致。
+
+入口为 `clickhouse_test.sh`。Framework 按 `case.yaml` 调用 build、start、test、
+stop 四个函数，独立入口调用同一组函数。`scripts/builders/base.sh` 负责镜像与三个
+官方 tgz 的准备，`scripts/stages/` 负责配置、启动、造数、跑查询和清理，
+`scripts/results/` 负责解析。`optimized` 构建入口尚未实现，选择后明确失败。
+
+## 软件与测试工具
+
+| 项目 | 来源与版本 | 本次任务中的位置 |
+|---|---|---|
+| ClickHouse | 官方 tgz：`clickhouse-{common-static,server,client}-24.5.1.1763-{amd64,arm64}.tgz`，来自 `https://packages.clickhouse.com/tgz/stable/` | 优先读取 `/home/runner/software/clickhouse/`；缺失才下载到 `${PERF_WORK_DIR}/ch-pkgs` |
+| 容器镜像 | openEuler 24.03 LTS SP4 官方 Docker 归档 | 优先读取 `/home/runner/software/openEuler-24.03-LTS-SP4/openEuler-docker.<arch>.tar.xz` 及同名 `.sha256sum` |
+| 数据生成 | [tpch-kit](https://codeload.github.com/gregrahn/tpch-kit/zip/refs/heads/master) 的 `dbgen` | 优先读取 `/home/runner/software/tpch/tpch-kit-master.zip`；缺失才下载到 `${PERF_WORK_DIR}` |
+| 查询 | 本用例 `scripts/queries/q1.sql` … `q22.sql` | 其中 q2/q4/q17/q19/q20/q21/q22 为 ClickHouse 适配版，结果已与 TPC-H 官方答案对齐 |
+
+ClickHouse 官方只为源码发布 `sha256`，tgz 没有独立的校验文件。本用例在适配时从
+`packages.clickhouse.com` 下载三个官方包并计算 SHA-256，固定写在
+`scripts/common.sh` 的 `ch_package_sha256` 中；每次构建都先校验再解包。文件名
+与校验值随请求版本、架构固定，不允许用其他来源的同名包替代。
+
+离线目录可用环境变量指向其他位置：`CLICKHOUSE_OFFLINE_DIR`、
+`CLICKHOUSE_TPCH_OFFLINE_DIR`、`CLICKHOUSE_IMAGE_ARCHIVE_DIR`、
+`CLICKHOUSE_CA_ANCHORS_DIR`。生产 Runner 使用上表默认值。
+
+## 获取、构建与容器启动
+
+脚本先检查 Docker daemon：
+
+```bash
+command -v docker >/dev/null && docker info >/dev/null
+```
+
+openEuler 24.03 LTS SP4 镜像归档优先读取本地目录，缺失才从官方地址下载；下载后
+按 `.sha256sum` 校验、`docker load`、核对架构与发行版：
+
+```bash
+ARCHIVE="${CLICKHOUSE_IMAGE_ARCHIVE_DIR:-/home/runner/software/openEuler-24.03-LTS-SP4}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+URL="https://repo.openeuler.org/openEuler-24.03-LTS-SP4/docker_img/${EXPECTED_ARCH}/openEuler-docker.${EXPECTED_ARCH}.tar.xz"
+[[ -s "${ARCHIVE}" ]] || curl -fSL --retry 3 -o "${ARCHIVE}" "${URL}"
+[[ -s "${ARCHIVE}.sha256sum" ]] || curl -fSL --retry 3 -o "${ARCHIVE}.sha256sum" "${URL}.sha256sum"
+expected="$(awk 'NR == 1 {print $1}' "${ARCHIVE}.sha256sum")"
+actual="$(sha256sum "${ARCHIVE}")"
+[[ "${actual%% *}" == "${expected,,}" ]] || { echo "image SHA-256 mismatch"; exit 1; }
+output="$(docker load --input "${ARCHIVE}")"
+CH_CONTAINER_IMAGE="$(printf '%s\n' "${output}" | sed -nE 's/^Loaded image( ID)?: (.+)$/\2/p' | tail -n 1)"
+printf '%s\n' "${CH_CONTAINER_IMAGE}" > "${PERF_WORK_DIR}/container-image.txt"
+docker image inspect --format '{{.Architecture}}' "${CH_CONTAINER_IMAGE}"   # x86_64→amd64、aarch64→arm64
+docker run --rm --network=none "${CH_CONTAINER_IMAGE}" cat /etc/os-release   # 必须是 openEuler 24.03 LTS SP4
+```
+
+后续 `start`/`test`/`stop` 只读 `container-image.txt`，不重复下载或 `docker load`。
+
+构建阶段还会在容器内安装并校验 `gcc`、`make`，把 tpch-kit 解包到
+`${PERF_WORK_DIR}/tpch-kit-extract` 并编译 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen`；
+`test` 阶段只负责生成数据、导入和跑查询，不再安装编译工具。
+
+三个官方 tgz 解包到 `${PERF_WORK_DIR}/ch-pkgs`；`clickhouse` 是 multiplexer 二进制，
+三个包里的同名文件只取 `common-static` 那一份，`server`/`client` 包仅用于满足
+发行版布局。实际使用的命令是：
+
+```bash
+tar -xzf "${CH_PKG_DIR}/clickhouse-common-static-24.5.1.1763-${CH_PACKAGE_ARCH}.tgz" -C "${CH_PKG_DIR}"
+tar -xzf "${CH_PKG_DIR}/clickhouse-server-24.5.1.1763-${CH_PACKAGE_ARCH}.tgz" -C "${CH_PKG_DIR}"
+tar -xzf "${CH_PKG_DIR}/clickhouse-client-24.5.1.1763-${CH_PACKAGE_ARCH}.tgz" -C "${CH_PKG_DIR}"
+ln -sfn "${CH_PKG_DIR}/clickhouse-common-static-24.5.1.1763/usr/bin/clickhouse" "${CH_BIN}"
+"${CH_BIN}" --version
+```
+
+版本从解包后的二进制读取，写入 `PERF_ACTUAL_VERSION_FILE`；`build` 成功后写
+`build_variant.json`。
+
+容器名称为 `boostkit-clickhouse-<架构>-<run-id>`，创建命令如下：
+
+```bash
+docker run --detach --name "${CH_CONTAINER_NAME}" \
+  --label "boostkit.clickhouse.run-id=${PERF_RUN_ID}" \
+  --network=host \
+  --user "$(id -u):$(id -g)" \
+  --cpuset-cpus="${CH_CPUSET}" \
+  --cpuset-mems="${CH_MEMSET}" \
+  --memory="${CH_MEMORY}" \
+  --memory-swap="${CH_MEMORY_SWAP}" \
+  --ulimit nofile=1048576:1048576 \
+  --ulimit memlock=-1:-1 \
+  --mount "type=bind,source=${PERF_WORK_DIR},target=${PERF_WORK_DIR}" \
+  --mount type=bind,source=/etc/passwd,target=/etc/passwd,readonly \
+  --mount type=bind,source=/etc/group,target=/etc/group,readonly \
+  "${CH_CONTAINER_IMAGE}" sleep infinity
+```
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `CH_CPUSET` | `0-31` | 单 NUMA 节点上的 32 个物理核，两个架构必须相同 |
+| `CH_MEMSET` | `0` | 与 cpuset 对应的 NUMA 节点 |
+| `CH_MEMORY` / `CH_MEMORY_SWAP` | `128g` / `128g` | 容器内存与 swap 额度，相等即容器内禁用 swap |
+| `CH_CONTAINER_IMAGE` | 上一步 `docker load` 的输出 | 不写死 tag，避免误用同名镜像 |
+
+开发机做冒烟时可用 `CLICKHOUSE_CPUSET`、`CLICKHOUSE_MEMSET`、
+`CLICKHOUSE_MEMORY`、`CLICKHOUSE_MEMORY_SWAP` 覆盖，并在结果里注明；
+正式 Runner 必须使用默认值。容器不加 `--privileged`。
+
+容器创建后，脚本**总是**在本次容器内把 openEuler 软件源改为
+`repo.huaweicloud.com/openeuler`，并注释 `metalink` 行：
+
+```bash
+docker exec --user 0 "${CH_CONTAINER_NAME}" sed -i \
+  -e '/^meta/ s/^\(.*\)$/#\1/g' \
+  -e 's/repo.openeuler.org/repo.huaweicloud.com\/openeuler/g' \
+  /etc/yum.repos.d/openEuler.repo
+```
+
+设置 `PERF_PROXY` 时，额外把 `/home/runner/software/anchors/` 只读挂到
+`/etc/pki/ca-trust/source/anchors/` 并执行 `update-ca-trust extract`；没有代理时
+不挂载证书目录。换源只作用于本次任务的容器，不改宿主机。
+
+## 启动
+
+`start` 校验容器正在运行且标签属于本任务，写入 `config.xml` 与 `users.xml`：
+
+```xml
+<tcp_port>19000+offset</tcp_port>
+<http_port>19500+offset</http_port>
+<listen_host>127.0.0.1</listen_host>
+<path>${CH_DATA}/data/</path>
+<tmp_path>${CH_DATA}/tmp/</tmp_path>
+<user_files_path>${CH_DATA}/user_files/</user_files_path>
+<max_server_memory_usage>120000000000</max_server_memory_usage>
+<mark_cache_size>5368709120</mark_cache_size>
+<query_log><database>system</database><table>query_log</table></query_log>
+<metric_log><database>system</database><table>metric_log</table></metric_log>
+```
+
+`users.xml` 的 `default` profile 固定：
+
+```xml
+<max_threads>32</max_threads>
+<max_memory_usage>110000000000</max_memory_usage>
+<max_bytes_before_external_group_by>40000000000</max_bytes_before_external_group_by>
+<max_bytes_before_external_sort>40000000000</max_bytes_before_external_sort>
+<max_block_size>65536</max_block_size>
+<log_queries>1</log_queries>
+<log_query_threads>0</log_query_threads>
+```
+
+bdperf 文档 §7.2 还列出 `join_algorithm='parallel_hash'`、
+`preferred_block_size_bytes=2000000`、
+`allow_asynchronous_read_from_io_pool_for_merge_tree=true` 三条查询设置，但其可执行
+脚本 `40_run_queries.sh` 和 `10_deploy_ck.sh` 都没有设置这三项。本用例以**可执行脚本**
+为准，不设置它们。`config.xml` 另按源脚本补齐
+`max_concurrent_queries=100`、`max_thread_pool_size=20000`、
+`uncompressed_cache_size=0`、`mmap_cache_size=16384`、`mlock_executable=false`、
+`query_log.flush_interval_milliseconds=7500`、`default_profile/default_database`
+与 `user_directories.local_directory=${CH_DATA}/access/`。
+
+端口不使用 9000/8123：9000 在多组件同机时可能被 HDFS NameNode 占用，且同机
+并行任务需要隔离；`tcp_port` 由 run ID 派生到 19000–19399，`http_port` 到
+19500–19899，均绑定 `127.0.0.1`。启动命令：
+
+```bash
+docker exec --detach -e HOME="${PERF_WORK_DIR}" \
+  "${CH_CONTAINER_NAME}" sh -c \
+  "exec '${CH_BIN}' server --config-file='${CH_CONF}' >>'${CH_LOG_DIR}/stdout.log' 2>&1"
+```
+
+就绪判断是有界轮询，不是固定 `sleep`：最多 120 秒内反复执行
+`clickhouse client --host 127.0.0.1 --port <tcp_port> --query 'SELECT 1'`，返回 1
+才算就绪；随后把 `version()/timezone()/uptime()` 与三项固定设置的查询结果写入
+`${CH_RESULT_DIR}/server_settings.txt`。
+
+## 测试负载
+
+默认规模是 **SF1**（约 1.1GB 原始 `.tbl`，数据库 `tpch_sf1`），与 bdperf 参考包实际验证通过的规模及默认脚本参数一致；也可通过 `CLICKHOUSE_SF` 覆盖规模。
+
+开始前检查工作目录可用空间，要求至少 `SF × 3 GiB`（SF1 即 3 GiB），不足直接
+失败：
+
+```bash
+df -B1 --output=avail "${PERF_WORK_DIR}"
+```
+
+1. 使用构建阶段编译好的 `${PERF_WORK_DIR}/tpch-kit/dbgen/dbgen` 生成数据：
+
+   ```bash
+   cd "${PERF_WORK_DIR}/tpch-kit/dbgen" && ./dbgen -f -s 1
+   mkdir -p "${PERF_WORK_DIR}/tpch-data/sf1"
+   for t in customer lineitem nation orders part partsupp region supplier; do
+       mv "${t}.tbl" "${PERF_WORK_DIR}/tpch-data/sf1/${t}.tbl"
+   done
+   ```
+
+   `dbgen` 每行结尾带 `|`，导入时用 `sed 's/|$//'` 流式去掉，不原地重写文件。
+2. 建库 `${CH_DATABASE}`（`tpch_sf1`）与 8 张 MergeTree 表，全部 `ORDER BY` 主键，
+   不设分区键；金额列 `Decimal(15,2)`、日期列 `Date`、`l_orderkey/o_orderkey` 为
+   `Int64`，其余整数 `Int32`。同时创建 q15 依赖的视图 `revenue0`。
+3. 逐表导入，`--format_csv_delimiter='|'`。以 lineitem 为例：
+
+   ```bash
+   sed 's/|$//' "${PERF_WORK_DIR}/tpch-data/sf1/lineitem.tbl" | \
+     "${CH_BIN}" client --host 127.0.0.1 --port "${CH_TCP_PORT}" \
+       --format_csv_delimiter='|' \
+       --query "INSERT INTO ${CH_DATABASE}.lineitem FORMAT CSV"
+   ```
+
+   其余 `orders`、`part`、`partsupp`、`customer`、`supplier`、`nation`、`region`
+   把命令里的 `lineitem` 换成对应表名后重复执行。
+4. 校验 SF1 行数：lineitem 6,001,215、orders 1,500,000、partsupp 800,000、
+   part 200,000、customer 150,000、supplier 10,000、nation 25、region 5。
+   校验通过后删除 `${PERF_WORK_DIR}/tpch-data` 释放空间，并要求至少
+   `SF × 1 GiB`（SF1 为 1 GiB）可用，否则直接失败。
+5. 22 条查询串行执行 3 轮，每条查询带唯一 `query_id=ck-<run-id>-r<轮>-q<编号>`；
+   每轮结束后 `SYSTEM FLUSH LOGS`，轮询到 22 条 `QueryFinish` 后再从
+   `system.query_log` 取 `query_duration_ms`，写入 `${CH_RESULT_DIR}/query_log.tsv`。
+
+计时口径是**服务端** `query_duration_ms`，不是 `curl` 端到端；因此与 Doris 用例的
+端到端 wall 不可横向比较，只各自算跨架构比值。单条查询失败、查询日志缺项或行数
+不符都会让测试失败。
+
+## 指标与产物
+
+| 指标 | 原始字段 | 单位 | 方向 |
+|---|---|---|---|
+| `tpch-22-total/total_time` | 22 条 `query_duration_ms` 每轮求和后取中位数 ÷ 1000 | s | 越小越好 |
+| `tpch-qNN/duration_ms` | 每条查询 3 轮 `query_duration_ms` 的中位数 | ms | 越小越好 |
+
+共 23 项指标，分组为 `tpch-22-total` 与 `tpch-qNN`。固定负载参数写入 JSON 的
+`parameters`：SF、轮次、查询数、`max_threads`、内存上限、`max_block_size` 和计时口径。
+解析器会拒绝：轮次或查询缺失、重复记录、非正/非有限耗时、查询编号越界。
+
+| 产物 | 内容 |
+|---|---|
+| `clickhouse-official/query_log.tsv` | 每轮 22 条的 `query_id`、耗时、扫描行数、内存 |
+| `clickhouse-official/server_settings.txt` | 版本、时区、uptime 与固定设置 |
+| `benchmark_clickhouse_raw.log` | 设置、查询日志与失败查询的完整输出 |
+| `benchmark_clickhouse.json` | 23 项指标与固定负载参数 |
+| `build_variant.json` | 本次选择的构建类型 |
+| `service-logs/` | 停止阶段保存的 ClickHouse 日志 |
+| `results.json`、`report.md` | 独立入口生成的结果与报告 |
+
+脱离 Workflow 执行完整流程：
+
+```bash
+bash software/Bigdata/clickhouse/clickhouse_test.sh \
+  --version 24.5.1.1763 \
+  --variant base \
+  --results-dir /home/runner/clickhouse-results/24.5.1.1763
+```
+
+独立运行可用 `--keep-workdir` 保留私有工作目录；默认只删除本次独立运行创建的
+`/home/runner/boostkit-perf/clickhouse/local-*`，调用者指定的目录不会被删除。
+
+## 与 bdperf 参考文档的差异
+
+| 项目 | bdperf `03_ClickHouse单容器性能测试.md` | 本用例 | 原因 |
+|---|---|---|---|
+| 内核 / 系统调优 | THP=always、swapoff、`sysctl`、`limits.conf`、BIOS 电源策略 | **全部不做**，只记录 | 本仓库禁止修改内核参数 |
+| 容器规格 | 32U/128G（未写 cpuset 细节），`--privileged` | 32U/128G + cpuset 保留；**去掉 privileged** | 不再需要特权操作 |
+| 软件参数 | `max_threads=32`、110G/120G 内存、5G mark cache、外部聚合阈值；文档 §7.2 的三条查询设置 | 前四项与源脚本一致；**三条查询设置不采用** | `40_run_queries.sh` 实际未设置这三项，文档与脚本冲突时以脚本为准 |
+| 端口 | 19000/18123 | 19000–19399 / 19500–19899，按 run ID 派生 | 同机并行隔离 |
+| 数据规模 | 实测仅 SF1（脚本默认 `SF=1`，文档另提 SF100 口径但未跑） | **默认 SF1**；可通过 `CLICKHOUSE_SF` 覆盖 | 与 bdperf 实际验证口径及 22 条原样 SQL 对齐 |
+| 系统用户 | 容器内 root | Runner UID/GID | 宿主可读可删 |
+| 结果对照 | `results_arm/ck_tpch_sf1_aarch64.csv` | 不引用 | 对方未做本用例口径的容器/内核对齐 |
+
+## 未验证与限制
+
+- 本机适配只验证了构建、启动与健康检查，**未执行 TPC-H 查询**；SF1 正式数字以流水线为准，`timeout_minutes` 设为 300。
+- `bdperf` 原版 `q8.sql` / `q9.sql` 使用 `FROM part, supplier, lineitem, ...` 逗号连接，在 ClickHouse 24.5 上会先对无连接条件的 `part` 与 `supplier` 做笛卡尔积；在 SF100 下 `q9` 耗时超 70 分钟并触发外部聚合临时文件耗尽磁盘/inode（`errno: 28, No space left on device`），因此在不改写参考 SQL 的前提下默认采用 SF1。
+- 数据生成依赖 tpch-kit 的 `dbgen` 与容器内 gcc/make；离线环境下需要预置
+  `tpch-kit-master.zip`，否则首次运行会联网下载。
+- `optimized` 变体未实现，选择后构建阶段明确返回非零。
