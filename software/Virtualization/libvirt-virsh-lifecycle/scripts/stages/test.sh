@@ -59,6 +59,7 @@ run_libvirt_virsh_lifecycle_benchmarks() {
     # Every stage runs in its own process, so the runtime and the VM plan have to
     # be loaded again before the repetitions touch LIBVIRT_VM_NAMES.
     initialize_runtime || return $?
+    resolve_libvirt_accel || return $?
     require_libvirt_host || return $?
     load_libvirt_vms || return $?
     check_libvirt_vms_defined || return $?

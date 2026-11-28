@@ -25,6 +25,7 @@ run_libvirt_unixbench_benchmarks() {
     local runs_root rep index pid failures total
     local -a pids=()
     initialize_runtime || return $?
+    resolve_libvirt_accel || return $?
     load_libvirt_vms || return $?
     check_libvirt_vms || return $?
     runs_root="${RESULTS_DIR}/runs"

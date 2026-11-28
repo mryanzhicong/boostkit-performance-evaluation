@@ -195,6 +195,10 @@ vm_pin_lines() {
 }
 
 emit_libvirt_vm_xml() {
+    if [[ -z "${LIBVIRT_VM_ACCEL_USED}" ]]; then
+        log 'ERROR: the virtualization accelerator was not resolved in this stage'
+        return 10
+    fi
     local index="$1"
     local name="${LIBVIRT_VM_NAMES[${index}]}"
     local cpuset="${LIBVIRT_VM_CPUSETS[${index}]}"
