@@ -56,6 +56,12 @@ run_lifecycle_rep() {
 
 run_libvirt_virsh_lifecycle_benchmarks() {
     local rep status=0
+    # Every stage runs in its own process, so the runtime and the VM plan have to
+    # be loaded again before the repetitions touch LIBVIRT_VM_NAMES.
+    initialize_runtime || return $?
+    require_libvirt_host || return $?
+    load_libvirt_vms || return $?
+    check_libvirt_vms_defined || return $?
     REP_DIR="${RESULTS_DIR}/reps"
     rm -rf "${REP_DIR}"
     mkdir -p "${REP_DIR}"
