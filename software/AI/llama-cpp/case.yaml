@@ -1,0 +1,53 @@
+name: llama-cpp
+category: AI
+enabled: true
+versions:
+  - "3ac67535c86"
+test_tools:
+  llama_bench:
+    version: "与被测软件版本一致"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_llama_cpp
+    start:
+      script: scripts/stages/start.sh
+      function: start_llama_cpp_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_llama_cpp_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_llama_cpp_runtime
+  timeout_minutes: 180
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  benchmark_raw:
+    path: benchmark_llama_bench.json
+    stage: test
+    format: text
+    required: true
+  benchmark_log:
+    path: benchmark_llama_bench.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_llama_cpp.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
