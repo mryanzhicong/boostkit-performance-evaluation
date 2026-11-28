@@ -1,0 +1,59 @@
+name: mariadb
+category: Database
+enabled: true
+versions:
+  - "11.8.10"
+test_tools:
+  sysbench:
+    version: "1.0.20"
+    revision: ebf1c90
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_mariadb
+    start:
+      script: scripts/stages/start.sh
+      function: start_mariadb_service
+    test:
+      script: scripts/stages/test.sh
+      function: run_mariadb_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_mariadb_service
+  timeout_minutes: 360
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  sysbench_output:
+    path: sysbench_raw.log
+    stage: test
+    format: text
+    required: true
+  aggregate_result:
+    path: results.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: aggregate_result
+  collection:
+    path: results
+    name_path: source_name
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    matrix:
+      group_path: scenario
+      row_path: threads
+      row_label: 线程数
+      column_path: source_field
+      column_order:
+        - TPS
+        - QPS
+        - P95 latency
+      single_note: TPS、QPS 越大越好；P95 延迟越小越好。
