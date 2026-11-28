@@ -1,0 +1,54 @@
+name: dpdk
+category: HPC
+enabled: true
+versions:
+  - "26.11.0"
+test_tools:
+  dpdk_test:
+    version: "与被测软件版本一致"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_dpdk
+    start:
+      script: scripts/stages/start.sh
+      function: start_dpdk_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_dpdk_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_dpdk_runtime
+  timeout_minutes: 360
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  smoke_log:
+    path: smoke.log
+    stage: start
+    format: text
+    required: true
+  benchmark_logs:
+    path: logs
+    stage: test
+    format: directory
+    required: true
+  benchmark_result:
+    path: benchmark_dpdk.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
+    subgroup_path: subgroup
