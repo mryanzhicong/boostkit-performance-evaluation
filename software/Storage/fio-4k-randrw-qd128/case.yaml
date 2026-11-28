@@ -1,0 +1,63 @@
+name: fio-4k-randrw-qd128
+category: Storage
+enabled: true
+versions:
+  - "3.34"
+test_tools:
+  fio:
+    version: "3.34"
+execution:
+  type: shell-functions
+  stages:
+    build:
+      script: scripts/builders/dispatch.sh
+      function: build_fio
+    start:
+      script: scripts/stages/start.sh
+      function: start_fio_runtime
+    test:
+      script: scripts/stages/test.sh
+      function: run_fio_benchmarks
+    stop:
+      script: scripts/stages/stop.sh
+      function: stop_fio_runtime
+  timeout_minutes: 200
+outputs:
+  build_variant:
+    path: build_variant.json
+    stage: build
+    format: json
+    required: true
+  vm_environment:
+    path: vm-environment.txt
+    stage: build
+    format: text
+    required: true
+  fio_job_file:
+    path: randrw_4k.fio
+    stage: build
+    format: text
+    required: true
+  format_info:
+    path: format-info.txt
+    stage: test
+    format: text
+    required: true
+  benchmark_raw:
+    path: benchmark_fio_raw.log
+    stage: test
+    format: text
+    required: true
+  benchmark_result:
+    path: benchmark_fio.json
+    stage: test
+    format: json
+    required: true
+metrics:
+  source: benchmark_result
+  collection:
+    path: results
+    value_path: value
+    unit_path: unit
+    direction_path: direction
+    group_path: group
