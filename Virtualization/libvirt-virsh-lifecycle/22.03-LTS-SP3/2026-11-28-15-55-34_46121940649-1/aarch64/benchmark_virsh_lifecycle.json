@@ -1,0 +1,84 @@
+{
+  "benchmark": "libvirt_virsh_lifecycle",
+  "software": "libvirt-virsh-lifecycle",
+  "version": "22.03-LTS-SP3",
+  "architecture": "aarch64",
+  "timestamp": "2026-11-28T07:53:53Z",
+  "parameters": {
+    "sequence": "virsh start -> virsh list -> virsh console -> virsh shutdown",
+    "vm_count": 1,
+    "vcpus_per_vm": 4,
+    "memory_mib_per_vm": 8192,
+    "execution_environment": "kvm-vm",
+    "guest_os": "openEuler 22.03 LTS SP3",
+    "repetitions": 6,
+    "warmup_repetitions": 1,
+    "measured_repetitions": 5,
+    "aggregation": "median across the measured repetitions"
+  },
+  "results": {
+    "libvirt.virsh_start_ok": {
+      "source_name": "virsh start reaches the running state in every measured repetition",
+      "value": 1.0,
+      "unit": "bool",
+      "direction": "higher_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.virsh_list_running_ok": {
+      "source_name": "virsh list reports the domain as running in every measured repetition",
+      "value": 1.0,
+      "unit": "bool",
+      "direction": "higher_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.virsh_console_ok": {
+      "source_name": "virsh console reaches a guest login prompt in every measured repetition",
+      "value": 1.0,
+      "unit": "bool",
+      "direction": "higher_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.virsh_start_ms": {
+      "source_name": "virsh start time until the domain is running",
+      "value": 653.0,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.virsh_console_probe_ms": {
+      "source_name": "time until virsh console answers with a guest login prompt",
+      "value": 3515.0,
+      "unit": "ms",
+      "direction": "lower_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.guest_boot_observed_seconds": {
+      "source_name": "observed boot time from virsh start to the guest address",
+      "value": 42.584,
+      "unit": "s",
+      "direction": "lower_is_better",
+      "group": "virsh lifecycle"
+    },
+    "libvirt.measured_reps": {
+      "source_name": "measured repetitions",
+      "value": 5.0,
+      "unit": "repetition",
+      "direction": "neutral",
+      "group": "sampling"
+    },
+    "libvirt.vcpus_per_vm": {
+      "source_name": "vCPU of the lifecycle VM",
+      "value": 4.0,
+      "unit": "vcpu",
+      "direction": "neutral",
+      "group": "topology"
+    },
+    "libvirt.memory_gib_per_vm": {
+      "source_name": "memory of the lifecycle VM",
+      "value": 8.0,
+      "unit": "GiB",
+      "direction": "neutral",
+      "group": "topology"
+    }
+  }
+}
