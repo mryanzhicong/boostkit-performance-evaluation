@@ -1,0 +1,191 @@
+EAL: Detected CPU lcores: 384
+EAL: Detected NUMA nodes: 4
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /home/runner/boostkit-perf/dpdk/26.11.0/aarch64/46099929541-1/run/dpdk/cpu-46099929541-1-ring-run1/mp_socke
+EAL: Selected IOVA mode 'VA'
+APP: HPET is not enabled, using TSC as default timer
+RTE>>ring_perf_autotest
+
+### Testing single element enq/deq ###
+legacy APIs - SP/SC - single - cycles per elem: 2.225
+legacy APIs - MP/MC - single - cycles per elem: 4.661
+
+### Testing burst enq/deq ###
+legacy APIs - SP/SC - burst (n:8  ) - cycles per elem: 0.348
+legacy APIs - SP/SC - burst (n:32 ) - cycles per elem: 0.113
+legacy APIs - SP/SC - burst (n:64 ) - cycles per elem: 0.075
+legacy APIs - SP/SC - burst (n:128) - cycles per elem: 0.064
+legacy APIs - SP/SC - burst (n:256) - cycles per elem: 0.061
+legacy APIs - MP/MC - burst (n:8  ) - cycles per elem: 0.665
+legacy APIs - MP/MC - burst (n:32 ) - cycles per elem: 0.194
+legacy APIs - MP/MC - burst (n:64 ) - cycles per elem: 0.123
+legacy APIs - MP/MC - burst (n:128) - cycles per elem: 0.091
+legacy APIs - MP/MC - burst (n:256) - cycles per elem: 0.074
+
+### Testing bulk enq/deq ###
+legacy APIs - SP/SC - bulk (n:8  ) - cycles per elem: 0.313
+legacy APIs - SP/SC - bulk (n:32 ) - cycles per elem: 0.106
+legacy APIs - SP/SC - bulk (n:64 ) - cycles per elem: 0.073
+legacy APIs - SP/SC - bulk (n:128) - cycles per elem: 0.063
+legacy APIs - SP/SC - bulk (n:256) - cycles per elem: 0.061
+legacy APIs - MP/MC - bulk (n:8  ) - cycles per elem: 0.654
+legacy APIs - MP/MC - bulk (n:32 ) - cycles per elem: 0.190
+legacy APIs - MP/MC - bulk (n:64 ) - cycles per elem: 0.119
+legacy APIs - MP/MC - bulk (n:128) - cycles per elem: 0.090
+legacy APIs - MP/MC - bulk (n:256) - cycles per elem: 0.074
+
+### Testing empty bulk deq ###
+legacy APIs - SP/SC - bulk (n:8  ) - cycles per elem: 0.006
+legacy APIs - MP/MC - bulk (n:8  ) - cycles per elem: 0.015
+
+### Testing using two physical cores ###
+legacy APIs - SP/SC - bulk (n:8  ) - cycles per elem: 2.174
+legacy APIs - SP/SC - bulk (n:32 ) - cycles per elem: 0.707
+legacy APIs - SP/SC - bulk (n:64 ) - cycles per elem: 0.374
+legacy APIs - SP/SC - bulk (n:128) - cycles per elem: 0.232
+legacy APIs - SP/SC - bulk (n:256) - cycles per elem: 0.148
+
+### Testing using two physical cores ###
+legacy APIs - MP/MC - bulk (n:8  ) - cycles per elem: 2.818
+legacy APIs - MP/MC - bulk (n:32 ) - cycles per elem: 1.097
+legacy APIs - MP/MC - bulk (n:64 ) - cycles per elem: 0.574
+legacy APIs - MP/MC - bulk (n:128) - cycles per elem: 0.249
+legacy APIs - MP/MC - bulk (n:256) - cycles per elem: 0.164
+
+### Testing using all worker nodes ###
+
+Bulk enq/dequeue count on size 8
+Core [2] count = 12979009
+Core [4] count = 12971455
+Total count (size: 8): 25950464
+
+Bulk enq/dequeue count on size 32
+Core [2] count = 12969515
+Core [4] count = 12965380
+Total count (size: 32): 25934895
+
+Bulk enq/dequeue count on size 64
+Core [2] count = 12970376
+Core [4] count = 12976374
+Total count (size: 64): 25946750
+
+Bulk enq/dequeue count on size 128
+Core [2] count = 12972412
+Core [4] count = 12976881
+Total count (size: 128): 25949293
+
+Bulk enq/dequeue count on size 256
+Core [2] count = 12969686
+Core [4] count = 12985483
+Total count (size: 256): 25955169
+
+### Testing single element enq/deq ###
+elem APIs (size:16B) - SP/SC - single - cycles per elem: 2.260
+elem APIs (size:16B) - MP/MC - single - cycles per elem: 4.555
+
+### Testing burst enq/deq ###
+elem APIs (size:16B) - SP/SC - burst (n:8  ) - cycles per elem: 0.357
+elem APIs (size:16B) - SP/SC - burst (n:32 ) - cycles per elem: 0.112
+elem APIs (size:16B) - SP/SC - burst (n:64 ) - cycles per elem: 0.072
+elem APIs (size:16B) - SP/SC - burst (n:128) - cycles per elem: 0.058
+elem APIs (size:16B) - SP/SC - burst (n:256) - cycles per elem: 0.058
+elem APIs (size:16B) - MP/MC - burst (n:8  ) - cycles per elem: 0.657
+elem APIs (size:16B) - MP/MC - burst (n:32 ) - cycles per elem: 0.204
+elem APIs (size:16B) - MP/MC - burst (n:64 ) - cycles per elem: 0.126
+elem APIs (size:16B) - MP/MC - burst (n:128) - cycles per elem: 0.085
+elem APIs (size:16B) - MP/MC - burst (n:256) - cycles per elem: 0.071
+
+### Testing bulk enq/deq ###
+elem APIs (size:16B) - SP/SC - bulk (n:8  ) - cycles per elem: 0.333
+elem APIs (size:16B) - SP/SC - bulk (n:32 ) - cycles per elem: 0.103
+elem APIs (size:16B) - SP/SC - bulk (n:64 ) - cycles per elem: 0.066
+elem APIs (size:16B) - SP/SC - bulk (n:128) - cycles per elem: 0.057
+elem APIs (size:16B) - SP/SC - bulk (n:256) - cycles per elem: 0.058
+elem APIs (size:16B) - MP/MC - bulk (n:8  ) - cycles per elem: 0.639
+elem APIs (size:16B) - MP/MC - bulk (n:32 ) - cycles per elem: 0.200
+elem APIs (size:16B) - MP/MC - bulk (n:64 ) - cycles per elem: 0.133
+elem APIs (size:16B) - MP/MC - bulk (n:128) - cycles per elem: 0.089
+elem APIs (size:16B) - MP/MC - bulk (n:256) - cycles per elem: 0.079
+
+### Testing empty bulk deq ###
+elem APIs (size:16B) - SP/SC - bulk (n:8  ) - cycles per elem: 0.007
+elem APIs (size:16B) - MP/MC - bulk (n:8  ) - cycles per elem: 0.019
+
+### Testing using two physical cores ###
+elem APIs (size:16B) - SP/SC - bulk (n:8  ) - cycles per elem: 2.468
+elem APIs (size:16B) - SP/SC - bulk (n:32 ) - cycles per elem: 0.706
+elem APIs (size:16B) - SP/SC - bulk (n:64 ) - cycles per elem: 0.459
+elem APIs (size:16B) - SP/SC - bulk (n:128) - cycles per elem: 0.266
+elem APIs (size:16B) - SP/SC - bulk (n:256) - cycles per elem: 0.188
+
+### Testing using two physical cores ###
+elem APIs (size:16B) - MP/MC - bulk (n:8  ) - cycles per elem: 4.030
+elem APIs (size:16B) - MP/MC - bulk (n:32 ) - cycles per elem: 1.243
+elem APIs (size:16B) - MP/MC - bulk (n:64 ) - cycles per elem: 0.640
+elem APIs (size:16B) - MP/MC - bulk (n:128) - cycles per elem: 0.319
+elem APIs (size:16B) - MP/MC - bulk (n:256) - cycles per elem: 0.216
+
+### Testing using all worker nodes ###
+
+Bulk enq/dequeue count on size 8
+Core [2] count = 12966520
+Core [4] count = 12975470
+Total count (size: 8): 25941990
+
+Bulk enq/dequeue count on size 32
+Core [2] count = 12969516
+Core [4] count = 12976975
+Total count (size: 32): 25946491
+
+Bulk enq/dequeue count on size 64
+Core [2] count = 12964884
+Core [4] count = 12987083
+Total count (size: 64): 25951967
+
+Bulk enq/dequeue count on size 128
+Core [2] count = 12959692
+Core [4] count = 12957722
+Total count (size: 128): 25917414
+
+Bulk enq/dequeue count on size 256
+Core [2] count = 12954903
+Core [4] count = 12984698
+Total count (size: 256): 25939601
+
+### Testing compression gain ###
+### Testing zero copy ###
+elem APIs (size: 8B) - burst zero copy (n:8  ) - cycles per elem: 2.036
+elem APIs (size: 8B) - burst zero copy (n:32 ) - cycles per elem: 0.693
+elem APIs (size: 8B) - burst zero copy (n:64 ) - cycles per elem: 0.359
+elem APIs (size: 8B) - burst zero copy (n:128) - cycles per elem: 0.219
+elem APIs (size: 8B) - burst zero copy (n:256) - cycles per elem: 0.144
+
+### Testing zero copy with compression (16b) ###
+elem APIs (size: 8B) - burst zero copy (n:8  ) - cycles per elem: 2.132
+elem APIs (size: 8B) - burst zero copy (n:32 ) - cycles per elem: 0.574
+elem APIs (size: 8B) - burst zero copy (n:64 ) - cycles per elem: 0.337
+elem APIs (size: 8B) - burst zero copy (n:128) - cycles per elem: 0.177
+elem APIs (size: 8B) - burst zero copy (n:256) - cycles per elem: 0.098
+
+### Testing zero copy with compression (32b) ###
+elem APIs (size: 8B) - burst zero copy (n:8  ) - cycles per elem: 2.062
+elem APIs (size: 8B) - burst zero copy (n:32 ) - cycles per elem: 0.666
+elem APIs (size: 8B) - burst zero copy (n:64 ) - cycles per elem: 0.361
+elem APIs (size: 8B) - burst zero copy (n:128) - cycles per elem: 0.201
+elem APIs (size: 8B) - burst zero copy (n:256) - cycles per elem: 0.115
+
+### Potential gain from compression (16-bit offsets) ###
+Gain of  -4.7% for burst of 8   elems
+Gain of  17.1% for burst of 32  elems
+Gain of   6.2% for burst of 64  elems
+Gain of  19.2% for burst of 128 elems
+Gain of  32.4% for burst of 256 elems
+
+### Potential gain from compression (32-bit offsets) ###
+Gain of  -1.3% for burst of 8   elems
+Gain of   3.8% for burst of 32  elems
+Gain of  -0.6% for burst of 64  elems
+Gain of   8.4% for burst of 128 elems
+Gain of  20.1% for burst of 256 elems
+Test OK
+RTE>>EAL: Cannot find action: mp_eal
